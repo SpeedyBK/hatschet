@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include <HatScheT/Exception.h>
-#include <HatScheT/SchedulerASAP.h>
+#include <HatScheT/ASAPScheduler.h>
+#include <HatScheT/Graph.h>
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -72,6 +73,10 @@ int main(int argc, char *args[])
 
   try
   {
+  	HatScheT::Graph g;
+  	HatScheT::ASAPScheduler sched(g);	
+  	
+  	sched.schedule();
   	
   }
   catch(HatScheT::Exception &e)
