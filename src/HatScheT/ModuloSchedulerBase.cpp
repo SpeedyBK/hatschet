@@ -3,12 +3,14 @@
 namespace HatScheT
 {
 
-	int ModuloSchedulerBase::computeMinII()
+  int ModuloSchedulerBase::computeMinMaxII()
 	{
-	}
+    //ToDo: implement
+  }
 	
-	int ModuloSchedulerBase::computeMaxII()
+  int ModuloSchedulerBase::computeMaxSL()
 	{
+    //ToDo: implement
 	}
 	
 }

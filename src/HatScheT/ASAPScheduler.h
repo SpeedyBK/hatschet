@@ -5,12 +5,15 @@
 namespace HatScheT
 {
 
-  class ASAPScheduler : SchedulerBase
-  {
-    public:
-    
-	    using SchedulerBase::SchedulerBase;
-	
-			virtual void schedule();
-	};
+/*!
+ * \brief Implementation of a simple ASAP scheduler
+ */
+class ASAPScheduler : SchedulerBase
+{
+public:
+
+  using SchedulerBase::SchedulerBase;
+
+  virtual void schedule();
+};
 }
