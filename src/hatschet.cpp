@@ -68,7 +68,7 @@ int main(int argc, char *args[])
       HatScheT::Graph g = gmlr.readGraph(str.c_str());
       cout << g << endl;
       #else
-      cout << "Warning: You chose the graphml parameter, but XerseC was not found. Make to to prove the path to XercesC as CMAKE_PREFIX_PATH"
+      cout << "Warning: You chose the graphml parameter, but XerseC was not found. Make to to prove the path to XercesC as CMAKE_PREFIX_PATH" << endl;
       #endif
     }
     else
