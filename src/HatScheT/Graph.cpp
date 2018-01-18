@@ -41,6 +41,7 @@ Vertex& Graph::getVertex(int id)
 int Graph::addEdge(Edge &e)
 {
   edges[++maxEdgeId] = &e;
+  e.setID(maxEdgeId);
   return maxEdgeId;
 }
 
@@ -64,6 +65,25 @@ Edge& Graph::getEdge(int id)
     return *(it->second);
   else
     throw Exception("Failure in accessing non-existing edge id: " + std::to_string(id));
+}
+
+ostream& operator<<(ostream& os, const Graph& g)
+{
+  os << "Printing Graph Info:" << endl;
+
+  for(auto a:g.vertices)
+  {
+    Vertex* v = a.second;
+    os << *v << endl;
+  }
+
+  for(auto a:g.edges)
+  {
+    Edge* e = a.second;
+    os << *e << endl;
+  }
+
+  return os;
 }
 
 }

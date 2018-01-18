@@ -11,14 +11,22 @@ namespace HatScheT
 class Edge
 {
 public:
-    Edge(int id, Vertex &src, Vertex &dst);
+    Edge(Vertex &src, Vertex &dst);
 
     Vertex& getVertexSrc(){ return Vsrc; }
     Vertex& getVertexDst(){ return Vdst; }
 
-    double getDelay(){ return delay; }
+    const string getVertexSrcName() const {return this->Vsrc.getName();}
+    const string getVertexDstName() const {return this->Vdst.getName();}
+
+    const double getDelay() const { return delay; }
     void setDelay(double delay){ this->delay = delay; }
 
+    const int getID() const {return this->id;}
+    void setID(int id){this->id = id;}
+
+    const bool getBackward() const {return this->backward;}
+    void setBackward(bool b) {this->backward = b;}
     //ToDo: add distance (no idea what it means in the UML)
 
     /*!
@@ -31,11 +39,12 @@ public:
 
 protected:
     int id;
+    bool backward;
 
     Vertex &Vsrc;
     Vertex &Vdst;
 
     double delay;
 };
-
+ostream& operator<<(ostream& os, const Edge& e);
 }

@@ -7,7 +7,6 @@
 
 namespace HatScheT
 {
-
 /*!
  * \brief Implementation of the Moovac scheduler
  *

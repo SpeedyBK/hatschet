@@ -69,8 +69,13 @@ public:
    * \param id The if of the edge
    */
   Edge& getEdge(int id);
-
-
+  /*!
+   * \brief operator <<
+   * \param os
+   * \param g
+   * \return
+   */
+  friend ostream& operator<<(ostream& os, const Graph& g);
 protected:
   /*!
    * The container for vertices

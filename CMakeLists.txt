@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.8)
 project (hatschet)
 
+#-------------------------
+#Find ScaLP
 FIND_LIBRARY(SCALP_LIB
         NAMES libScaLP libScaLP.so libScaLP.dylib
 	HINTS "${SCALP_PREFIX_PATH}/lib"
@@ -18,15 +20,58 @@ ELSE (SCALP_H AND SCALP_LIB)
     MESSAGE(FATAL_ERROR "Could not find ScaLP (${SCALP_H},${SCALP_LIB}). Please specify path by setting SCALP_PREFIX_PATH (-DSCALP_PREFIX_PATH=<path to scalp install dir>)")
 ENDIF (SCALP_H AND SCALP_LIB)
 
-add_library(hatschet 
+#-------------------------
+#Find XerxesC lib
+FIND_LIBRARY(XERCESC_LIB
+        NAMES xerces-c
+        HINTS "${XERCESC_LIB_PREFIX_PATH}"
+        DOC "Directory of the XercesC library")
 
+IF (XERCESC_LIB)
+    MESSAGE(STATUS "Found XercesC Lib: ${XERCESC_LIB}")
+ELSE (XERCESC_LIB)
+    MESSAGE(STATUS "Could not find XercesC Lib (${XERCESC_LIB}). Please specify path by setting XERCESC_LIB_PREFIX_PATH (-DXERCESC_LIB_PREFIX_PATH=<path to xerces lib dir>)")
+ENDIF (XERCESC_LIB)
+
+#-------------------------
+#Find XerxesC headers
+FIND_PATH(XERCESC_H
+          parsers/SAXParser.hpp
+          HINTS "${XERCESC_H_PREFIX_PATH}"
+          DOC "Path to main XercesC header files"
+)
+
+IF (XERCESC_H)
+    MESSAGE(STATUS "Found XercesC Headers: ${XERCESC_H}")
+ELSE (XERCESC_H)
+    MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_H_PREFIX_PATH (-DXERCESC_H_PREFIX_PATH=<path to xerces include dir>)")
+ENDIF (XERCESC_H)
+
+#-------------------------
+#set define for XercesC
+IF (XERCESC_H AND XERCESC_LIB)
+    add_definitions(-DUSE_XERCESC)
+    MESSAGE(STATUS "Found XercesC: GraphML parser will be available")
+ELSE (XERCESC_H AND XERCESC_LIB)
+    MESSAGE(STATUS "Did not found XercesC: GraphML parser will not be available")
+ENDIF (XERCESC_H AND XERCESC_LIB)
+
+add_library(hatschet
+src/HatScheT/Vertex.cpp
+src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp 
 src/HatScheT/Exception.cpp
 src/HatScheT/ASAPScheduler.cpp 
 src/HatScheT/SchedulerBase.cpp 
+src/HatScheT/MoovacScheduler.cpp
+src/HatScheT/IterativeSchedulerBase.cpp
+src/HatScheT/ILPSchedulerBase.cpp
+src/HatScheT/ResourceConstrainedSchedulerBase.cpp
+src/HatScheT/ResourceModel.cpp
 src/HatScheT/ModuloSchedulerBase.cpp
+src/HatScheT/graphReader/graphReader.cpp
+src/HatScheT/graphReader/graphMLReader.cpp
 )
-
 
 add_executable(hatschet-bin src/hatschet.cpp)
 
@@ -38,4 +83,6 @@ include_directories(${SCALP_H} src/)
 
 target_link_libraries(hatschet-bin hatschet)
 target_link_libraries(hatschet-bin ${SCALP_LIB})
+target_link_libraries(hatschet-bin ${XERCESC_LIB})
+
 
