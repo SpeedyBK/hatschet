@@ -1,0 +1,801 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <graph id="graph4" edgedefault="directed">
+    <node id="modsched_info">
+      <data key="minII"> 3 </data>
+      <data key="maxII"> 4 </data>
+      <data key="resource_limits">
+        <resource id="0" limit="2147483647" isUnlimited="true" />
+        <resource id="1" limit="1" isUnlimited="false" />
+        <resource id="2" limit="1" isUnlimited="false" />
+      </data>
+    </node>
+    <!-- OP1011 LOOP INIT -->
+    <node id="0">
+      <data key="name"> op0 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> LoopInit </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1012 LOOP END -->
+    <node id="1">
+      <data key="name"> op1 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> LoopEnd </data>
+      <data key="nymble_type"> none </data>
+    </node>
+    <!-- 1 -->
+    <node id="2">
+      <data key="name"> op2 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Constant(0x1) </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1365 MUX %tmp98 = phi i32 [ %.pre219, %for.body326.i.for.body326.i_crit_edge ], [ %add319.i, %for.body326.i.preheader ] -->
+    <node id="3">
+      <data key="name"> op3 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Mux </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1366 MemRead -->
+    <node id="4">
+      <data key="name"> op4 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 1 </data>
+      <data key="nymble_operator"> MemRead </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT -->
+    <node id="5">
+      <data key="name"> op5 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> FromOuterLoop </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1371 ADD -->
+    <node id="6">
+      <data key="name"> op6 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Add </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] -->
+    <node id="7">
+      <data key="name"> op7 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Mux </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1373 IterationOutput -->
+    <node id="8">
+      <data key="name"> op8 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> IterationOutput </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1374 IterationInput -->
+    <node id="9">
+      <data key="name"> op9 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> IterationInput </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1376 datapath.graph.operations.Greater -->
+    <node id="10">
+      <data key="name"> op10 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Greater </data>
+      <data key="nymble_type"> int_1 </data>
+    </node>
+    <!-- 0 -->
+    <node id="11">
+      <data key="name"> op11 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Constant(0x0) </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1375 PREDICATION -->
+    <node id="12">
+      <data key="name"> op12 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predication </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- 8 -->
+    <node id="13">
+      <data key="name"> op13 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Constant(0x8) </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1381 INIT -->
+    <node id="14">
+      <data key="name"> op14 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1380 PREDICATION -->
+    <node id="15">
+      <data key="name"> op15 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predication </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- 4294967295 -->
+    <node id="16">
+      <data key="name"> op16 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Constant(0xffffffff) </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1383 << 2 -->
+    <node id="17">
+      <data key="name"> op17 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> ConstantShift </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1384 ADD -->
+    <node id="18">
+      <data key="name"> op18 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Add </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1385 TRUE -->
+    <node id="19">
+      <data key="name"> op19 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1386 IterationOutput -->
+    <node id="20">
+      <data key="name"> op20 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> IterationOutput </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1387 IterationInput -->
+    <node id="21">
+      <data key="name"> op21 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> IterationInput </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1388 PREDICATION -->
+    <node id="22">
+      <data key="name"> op22 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predication </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1394 OuterLoop INPUT  OP1393 Inner Loop INPUT -->
+    <node id="23">
+      <data key="name"> op23 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> FromOuterLoop </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1396 INIT -->
+    <node id="24">
+      <data key="name"> op24 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1395 PREDICATION -->
+    <node id="25">
+      <data key="name"> op25 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predication </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1398 << 2 -->
+    <node id="26">
+      <data key="name"> op26 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> ConstantShift </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1399 ADD -->
+    <node id="27">
+      <data key="name"> op27 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Add </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1400 << -->
+    <node id="28">
+      <data key="name"> op28 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> VariableShift </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- 1 -->
+    <node id="29">
+      <data key="name"> op29 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Constant(0x1) </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1402 BitsizeConversion -->
+    <node id="30">
+      <data key="name"> op30 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> BitsizeConversion </data>
+      <data key="nymble_type"> uint_5 </data>
+    </node>
+    <!-- OP1403 MemWrite -->
+    <node id="31">
+      <data key="name"> op31 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 2 </data>
+      <data key="nymble_operator"> MemWrite </data>
+      <data key="nymble_type"> uint_32 </data>
+    </node>
+    <!-- OP1404 TRUE -->
+    <node id="32">
+      <data key="name"> op32 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP3520 FALSE -->
+    <node id="33">
+      <data key="name"> op33 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP3568 FALSE -->
+    <node id="34">
+      <data key="name"> op34 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP3569 FALSE -->
+    <node id="35">
+      <data key="name"> op35 </data>
+      <data key="latency"> 0 </data>
+      <data key="uses_resource_kind"> 0 </data>
+      <data key="nymble_operator"> Predicate </data>
+      <data key="nymble_type"> uint_1 </data>
+    </node>
+    <!-- OP1011 LOOP INIT ==> OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT -->
+    <edge id="0_5" source="0" target="5">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP1394 OuterLoop INPUT  OP1393 Inner Loop INPUT -->
+    <edge id="0_23" source="0" target="23">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP1374 IterationInput -->
+    <edge id="0_9" source="0" target="9">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP1387 IterationInput -->
+    <edge id="0_21" source="0" target="21">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> 1 -->
+    <edge id="0_2" source="0" target="2">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> 0 -->
+    <edge id="0_11" source="0" target="11">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> 8 -->
+    <edge id="0_13" source="0" target="13">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> 4294967295 -->
+    <edge id="0_16" source="0" target="16">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> 1 -->
+    <edge id="0_29" source="0" target="29">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1373 IterationOutput ==> OP1012 LOOP END -->
+    <edge id="8_1" source="8" target="1">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1386 IterationOutput ==> OP1012 LOOP END -->
+    <edge id="20_1" source="20" target="1">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1403 MemWrite ==> OP1012 LOOP END -->
+    <edge id="31_1" source="31" target="1">
+      <data key="latency"> 2 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP3520 FALSE ==> OP1012 LOOP END -->
+    <edge id="33_1" source="33" target="1">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1395 PREDICATION ==> OP1365 MUX %tmp98 = phi i32 [ %.pre219, %for.body326.i.for.body326.i_crit_edge ], [ %add319.i, %for.body326.i.preheader ] -->
+    <edge id="25_3" source="25" target="3">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1388 PREDICATION ==> OP1365 MUX %tmp98 = phi i32 [ %.pre219, %for.body326.i.for.body326.i_crit_edge ], [ %add319.i, %for.body326.i.preheader ] -->
+    <edge id="22_3" source="22" target="3">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1384 ADD ==> OP1366 MemRead -->
+    <edge id="18_4" source="18" target="4">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1385 TRUE ==> OP1366 MemRead -->
+    <edge id="19_4" source="19" target="4">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] ==> OP1371 ADD -->
+    <edge id="7_6" source="7" target="6">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- 4294967295 ==> OP1371 ADD -->
+    <edge id="16_6" source="16" target="6">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1380 PREDICATION ==> OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] -->
+    <edge id="15_7" source="15" target="7">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1375 PREDICATION ==> OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] -->
+    <edge id="12_7" source="12" target="7">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1371 ADD ==> OP1373 IterationOutput -->
+    <edge id="6_8" source="6" target="8">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] ==> OP1376 datapath.graph.operations.Greater -->
+    <edge id="7_10" source="7" target="10">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- 0 ==> OP1376 datapath.graph.operations.Greater -->
+    <edge id="11_10" source="11" target="10">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP3569 FALSE ==> OP1375 PREDICATION -->
+    <edge id="35_12" source="35" target="12">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1374 IterationInput ==> OP1375 PREDICATION -->
+    <edge id="9_12" source="9" target="12">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP1381 INIT -->
+    <edge id="0_14" source="0" target="14">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1381 INIT ==> OP1380 PREDICATION -->
+    <edge id="14_15" source="14" target="15">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 8 ==> OP1380 PREDICATION -->
+    <edge id="13_15" source="13" target="15">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1371 ADD ==> OP1383 << 2 -->
+    <edge id="6_17" source="6" target="17">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT ==> OP1384 ADD -->
+    <edge id="5_18" source="5" target="18">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1383 << 2 ==> OP1384 ADD -->
+    <edge id="17_18" source="17" target="18">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1376 datapath.graph.operations.Greater ==> OP1385 TRUE -->
+    <edge id="10_19" source="10" target="19">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1366 MemRead ==> OP1386 IterationOutput -->
+    <edge id="4_20" source="4" target="20">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP3568 FALSE ==> OP1388 PREDICATION -->
+    <edge id="34_22" source="34" target="22">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1387 IterationInput ==> OP1388 PREDICATION -->
+    <edge id="21_22" source="21" target="22">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP1396 INIT -->
+    <edge id="0_24" source="0" target="24">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1394 OuterLoop INPUT  OP1393 Inner Loop INPUT ==> OP1395 PREDICATION -->
+    <edge id="23_25" source="23" target="25">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1396 INIT ==> OP1395 PREDICATION -->
+    <edge id="24_25" source="24" target="25">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] ==> OP1398 << 2 -->
+    <edge id="7_26" source="7" target="26">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT ==> OP1399 ADD -->
+    <edge id="5_27" source="5" target="27">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1398 << 2 ==> OP1399 ADD -->
+    <edge id="26_27" source="26" target="27">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1365 MUX %tmp98 = phi i32 [ %.pre219, %for.body326.i.for.body326.i_crit_edge ], [ %add319.i, %for.body326.i.preheader ] ==> OP1400 << -->
+    <edge id="3_28" source="3" target="28">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1402 BitsizeConversion ==> OP1400 << -->
+    <edge id="30_28" source="30" target="28">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- 1 ==> OP1402 BitsizeConversion -->
+    <edge id="29_30" source="29" target="30">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1400 << ==> OP1403 MemWrite -->
+    <edge id="28_31" source="28" target="31">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1399 ADD ==> OP1403 MemWrite -->
+    <edge id="27_31" source="27" target="31">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1404 TRUE ==> OP1403 MemWrite -->
+    <edge id="32_31" source="32" target="31">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 1 ==> OP1404 TRUE -->
+    <edge id="2_32" source="2" target="32">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1376 datapath.graph.operations.Greater ==> OP3520 FALSE -->
+    <edge id="10_33" source="10" target="33">
+      <data key="latency"> 0 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP3568 FALSE -->
+    <edge id="0_34" source="0" target="34">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1011 LOOP INIT ==> OP3569 FALSE -->
+    <edge id="0_35" source="0" target="35">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- 0 ==> OP1385 TRUE -->
+    <edge id="11_19" source="11" target="19">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT ==> OP1403 MemWrite -->
+    <edge id="5_31" source="5" target="31">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 4294967295 ==> OP1383 << 2 -->
+    <edge id="16_17" source="16" target="17">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 0 ==> OP3520 FALSE -->
+    <edge id="11_33" source="11" target="33">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 0 ==> OP1366 MemRead -->
+    <edge id="11_4" source="11" target="4">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1394 OuterLoop INPUT  OP1393 Inner Loop INPUT ==> OP1365 MUX %tmp98 = phi i32 [ %.pre219, %for.body326.i.for.body326.i_crit_edge ], [ %add319.i, %for.body326.i.preheader ] -->
+    <edge id="23_3" source="23" target="3">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 1 ==> OP1400 << -->
+    <edge id="29_28" source="29" target="28">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 1 ==> OP1403 MemWrite -->
+    <edge id="29_31" source="29" target="31">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 1 ==> OP1403 MemWrite -->
+    <edge id="2_31" source="2" target="31">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1376 datapath.graph.operations.Greater ==> OP1012 LOOP END -->
+    <edge id="10_1" source="10" target="1">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 4294967295 ==> OP1366 MemRead -->
+    <edge id="16_4" source="16" target="4">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 4294967295 ==> OP1373 IterationOutput -->
+    <edge id="16_8" source="16" target="8">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1370 OuterLoop INPUT  OP1368 Inner Loop INPUT ==> OP1366 MemRead -->
+    <edge id="5_4" source="5" target="4">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 8 ==> OP1372 MUX %k.3.i197 = phi i32 [ %dec330.i, %for.body326.i.for.body326.i_crit_edge ], [ 8, %for.body326.i.preheader ] -->
+    <edge id="13_7" source="13" target="7">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- 4294967295 ==> OP1384 ADD -->
+    <edge id="16_18" source="16" target="18">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 0 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1376 datapath.graph.operations.Greater ==> OP1011 LOOP INIT -->
+    <edge id="10_0" source="10" target="0">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 1 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+    <!-- OP1373 IterationOutput ==> OP1374 IterationInput -->
+    <edge id="8_9" source="8" target="9">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 1 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1386 IterationOutput ==> OP1387 IterationInput -->
+    <edge id="20_21" source="20" target="21">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 1 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 1 </data>
+    </edge>
+    <!-- OP1366 MemRead ==> OP1403 MemWrite -->
+    <edge id="4_31" source="4" target="31">
+      <data key="latency"> 1 </data>
+      <data key="backward"> 1 </data>
+      <data key="firm"> 0 </data>
+      <data key="data"> 0 </data>
+    </edge>
+  </graph>
+</graphml>
