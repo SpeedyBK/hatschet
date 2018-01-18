@@ -4,9 +4,10 @@ project (hatschet)
 #-------------------------
 #Find ScaLP
 FIND_LIBRARY(SCALP_LIB
-        NAMES libScaLP libScaLP.so libScaLP.dylib
+  NAMES libScaLP libScaLP.so libScaLP.dylib
 	HINTS "${SCALP_PREFIX_PATH}/lib"
-	DOC "Directory of the ScaLP library")
+	DOC "Directory of the ScaLP library"
+)
 
 FIND_PATH(SCALP_H
           ScaLP/Solver.h
@@ -24,13 +25,13 @@ ENDIF (SCALP_H AND SCALP_LIB)
 #Find XerxesC lib
 FIND_LIBRARY(XERCESC_LIB
         NAMES xerces-c
-        HINTS "${XERCESC_LIB_PREFIX_PATH}"
+        HINTS "${XERCESC_LIBRARY_PATH}"
         DOC "Directory of the XercesC library")
 
 IF (XERCESC_LIB)
     MESSAGE(STATUS "Found XercesC Lib: ${XERCESC_LIB}")
 ELSE (XERCESC_LIB)
-    MESSAGE(STATUS "Could not find XercesC Lib (${XERCESC_LIB}). Please specify path by setting XERCESC_LIB_PREFIX_PATH (-DXERCESC_LIB_PREFIX_PATH=<path to xerces lib dir>)")
+    MESSAGE(STATUS "Could not find XercesC Lib (${XERCESC_LIB}). Please specify path by setting XERCESC_LIBRARY_PATH (-DXERCESC_LIBRARY_PATH=<path to xerces lib dir>)")
 ENDIF (XERCESC_LIB)
 
 #-------------------------
@@ -44,7 +45,7 @@ FIND_PATH(XERCESC_H
 IF (XERCESC_H)
     MESSAGE(STATUS "Found XercesC Headers: ${XERCESC_H}")
 ELSE (XERCESC_H)
-    MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_H_PREFIX_PATH (-DXERCESC_H_PREFIX_PATH=<path to xerces include dir>)")
+    MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_H_PREFIX_PATH (-DXERCESC_INCLUDE_PATH=<path to xerces include dir>)")
 ENDIF (XERCESC_H)
 
 #-------------------------
