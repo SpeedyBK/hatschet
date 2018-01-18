@@ -36,7 +36,7 @@ ENDIF (XERCESC_LIB)
 #-------------------------
 #Find XerxesC headers
 FIND_PATH(XERCESC_H
-          parsers/SAXParser.hpp
+          xercesc/parsers/SAXParser.hpp
           HINTS "${XERCESC_H_PREFIX_PATH}"
           DOC "Path to main XercesC header files"
 )
