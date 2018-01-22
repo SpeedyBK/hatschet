@@ -16,9 +16,8 @@ class ResourceModel
 public:
   ResourceModel(Graph &g);
 
-
-
 protected:
   Graph &g;
+
 };
 }

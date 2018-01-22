@@ -62,7 +62,6 @@ public:
    */
   int addEdge(Edge &e, unsigned id);
 
-
   /*!
    * Returns the reference to edge with id 'id', an Exception is thrown if id does not exist
    *
@@ -76,6 +75,50 @@ public:
    * \return
    */
   friend ostream& operator<<(ostream& os, const Graph& g);
+  /*!
+   * \brief getMaxLatency
+   * \return
+   */
+  unsigned int getMaxLatency();
+  /*!
+   * \brief getNumberOfVertices
+   * \return
+   */
+  unsigned int getNumberOfVertices(){
+    return this->vertices.size();
+  }
+  /*!
+   * \brief verticesBegin
+   * \return
+   */
+  const std::map<unsigned,Vertex*>::iterator verticesBegin()
+  {
+      return vertices.begin();
+  }
+  /*!
+   * \brief verticesEnd
+   * \return
+   */
+  const std::map<unsigned,Vertex*>::iterator verticesEnd()
+  {
+      return vertices.begin();
+  }
+  /*!
+   * \brief edgesBegin
+   * \return
+   */
+  const std::map<unsigned,Edge*>::iterator edgesBegin()
+  {
+      return edges.begin();
+  }
+  /*!
+   * \brief edgesEnd
+   * \return
+   */
+  const std::map<unsigned,Edge*>::iterator edgesEnd()
+  {
+      return edges.end();
+  }
 protected:
   /*!
    * The container for vertices

@@ -39,15 +39,42 @@ public:
    */
   void setSolverTimeout(long timeoutInSeconds);
 
+protected:
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
    */
   virtual void constructProblem() = 0;
-
-protected:
   /*!
    * A pointer to the ScaLP solver
    */
   ScaLP::Solver *solver;
+  /*!
+   * \brief optimalResult
+   */
+  bool optimalResult;
+  /*!
+   * \brief solverQuiet
+   */
+  bool solverQuiet;
+  /*!
+   * \brief solverTimeout default is 1 hour
+   */
+  long solverTimeout;
+  /*!
+   * \brief timeoutCounter
+   */
+  unsigned int timeoutCounter;
+  /*!
+   * \brief solvingTime
+   */
+  double solvingTime;
+  /*!
+   * \brief totalTime
+   */
+  double totalTime;
+  /*!
+   * \brief threads
+   */
+  unsigned int threads;
 };
 }

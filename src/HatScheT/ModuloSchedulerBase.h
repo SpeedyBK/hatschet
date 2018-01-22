@@ -21,8 +21,8 @@ public:
   int computeMaxSL();
 
 protected:
+  unsigned int II;
 
-  int II;
 };
 
 }

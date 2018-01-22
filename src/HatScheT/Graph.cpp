@@ -58,6 +58,27 @@ int Graph::addEdge(Edge &e, unsigned id)
   }
 }
 
+unsigned int Graph::getMaxLatency()
+{
+    unsigned int maxLatency = 0;
+
+    for(std::map<unsigned,Vertex*>::iterator it = this->vertices.begin(); it!=this->vertices.end(); ++it)
+    {
+        Vertex* v = it->second;
+
+        if(v->getLatency() > maxLatency) maxLatency = v->getLatency();
+    }
+
+    for(std::map<unsigned,Edge*>::iterator it = this->edges.begin(); it!=this->edges.end(); ++it)
+    {
+        Edge* e = it->second;
+
+        if(e->getDelay() > maxLatency) maxLatency = e->getDelay();
+    }
+
+    return maxLatency;
+}
+
 Edge& Graph::getEdge(int id)
 {
   edge_t::iterator it = edges.find(id);
