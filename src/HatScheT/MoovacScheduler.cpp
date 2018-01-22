@@ -61,7 +61,7 @@ void MoovacScheduler::schedule()
     //solve it
     solver->solve();
 
-    if(this-schedFound == false) this->II++;
+    if(this->schedFound == false) this->II++;
   }
 
 
