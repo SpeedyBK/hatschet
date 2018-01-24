@@ -70,8 +70,9 @@ src/HatScheT/ILPSchedulerBase.cpp
 src/HatScheT/ResourceConstrainedSchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/ModuloSchedulerBase.cpp
-src/HatScheT/graphReader/graphReader.cpp
-src/HatScheT/graphReader/graphMLReader.cpp
+src/HatScheT/reader/Reader.cpp
+src/HatScheT/reader/GraphMLGraphReader.cpp
+src/HatScheT/reader/GraphMLResourceReader.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)

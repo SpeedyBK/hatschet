@@ -1,5 +1,5 @@
 #ifdef USE_XERCESC
-#include "graphMLReader.h"
+#include "GraphMLGraphReader.h"
 #include "xercesc/sax2/SAX2XMLReader.hpp"
 #include "xercesc/sax2/XMLReaderFactory.hpp"
 #include "xercesc/util/XMLString.hpp"
@@ -11,7 +11,7 @@
 
 namespace HatScheT {
 
-GraphMLReader::GraphMLReader()
+GraphMLGraphReader::GraphMLGraphReader()
 {
   this->nodeTagFound = false;
   this->edgeTagFound = false;
@@ -20,12 +20,12 @@ GraphMLReader::GraphMLReader()
   this->dataTagFound = false;
 }
 
-GraphMLReader::~GraphMLReader()
+GraphMLGraphReader::~GraphMLGraphReader()
 {
 
 }
 
-void GraphMLReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
+void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
 {
   string name = XMLString::transcode(localname);
 
@@ -54,7 +54,7 @@ void GraphMLReader::endElement(const XMLCh * const uri, const XMLCh * const loca
 
 }
 
-void GraphMLReader::characters(const XMLCh * const chars, const XMLSize_t length)
+void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
   if(this->dataTagFound == true)
   {
@@ -81,7 +81,7 @@ void GraphMLReader::characters(const XMLCh * const chars, const XMLSize_t length
   }
 }
 
-void GraphMLReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
+void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
   string name = XMLString::transcode(localname);
 
@@ -141,7 +141,7 @@ void GraphMLReader::startElement(const XMLCh * const uri, const XMLCh * const lo
 
 }
 
-Graph& GraphMLReader::readGraph(const char *path)
+Graph& GraphMLGraphReader::readGraph(const char *path)
 {
   cout << "graphMLReader.parseGraph: Start parsing from path: " << path << endl;
 

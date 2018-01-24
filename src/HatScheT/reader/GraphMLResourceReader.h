@@ -1,8 +1,9 @@
 
 #pragma once
 #ifdef USE_XERCESC
-#include "graphReader.h"
+#include "Reader.h"
 #include "xercesc/sax2/DefaultHandler.hpp"
+#include "../Exception.h"
 
 using namespace xercesc;
 using namespace std;
@@ -10,23 +11,31 @@ using namespace std;
 namespace HatScheT
 {
 /*!
- * \brief The graphMLReader class use this class to parse graph objects from graphML representations
+ * \brief The graphMLReader class use this class to parse resource objects from graphML representations
  */
-class GraphMLReader : public GraphReader, DefaultHandler
+class GraphMLResourceReader : public Reader, DefaultHandler
 {
 public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLReader();
-  ~GraphMLReader();
+  GraphMLResourceReader();
+  ~GraphMLResourceReader();
   /*!
      * \brief readGraph the main function of the graphML parser
      * \param path
      * \param readGraph
      * \return
      */
-  virtual Graph& readGraph(const char* path) final;
+  virtual Graph& readGraph(const char* path){
+    string p(path);
+    throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
+  /*!
+   * \brief readResourceModel dont use the function in this class
+   * \param path
+   * \return
+   */
+  virtual ResourceModel& readResourceModel(const char* path, Graph& g);
 private:
 
   /*!
@@ -62,30 +71,15 @@ private:
    * \brief nodeTagFound
    */
   bool nodeTagFound;
-  /*!
-   * \brief edgeTagFound
-   */
-  bool edgeTagFound;
-  /*!
-   * \brief nameTagFound
-   */
-  bool nameTagFound;
-  /*!
-   * \brief latencyTagFound
-   */
-  bool latencyTagFound;
+
   /*!
    * \brief dataTagFound
    */
   bool dataTagFound;
   /*!
-   * \brief currVertex
+   * \brief resourceTagFound
    */
-  Vertex* currVertex;
-  /*!
-   * \brief currEdge
-   */
-  Edge* currEdge;
+  bool resourceTagFound;
   };
 }
 
