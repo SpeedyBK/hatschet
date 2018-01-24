@@ -38,14 +38,14 @@ ENDIF (XERCESC_LIB)
 #Find XerxesC headers
 FIND_PATH(XERCESC_H
           xercesc/parsers/SAXParser.hpp
-          HINTS "${XERCESC_H_PREFIX_PATH}"
+          HINTS "${XERCESC_INCLUDE_PATH}"
           DOC "Path to main XercesC header files"
 )
 
 IF (XERCESC_H)
     MESSAGE(STATUS "Found XercesC Headers: ${XERCESC_H}")
 ELSE (XERCESC_H)
-    MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_H_PREFIX_PATH (-DXERCESC_INCLUDE_PATH=<path to xerces include dir>)")
+    MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_INCLUDE_PATH (-DXERCESC_INCLUDE_PATH=<path to xerces include dir>)")
 ENDIF (XERCESC_H)
 
 #-------------------------
