@@ -44,7 +44,7 @@ protected:
     Vertex &Vsrc;
     Vertex &Vdst;
 
-    double delay;
+    int delay;
 };
 ostream& operator<<(ostream& os, const Edge& e);
 }
