@@ -5,6 +5,7 @@
 #include <HatScheT/ASAPScheduler.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/reader/GraphMLGraphReader.h>
+#include <HatScheT/reader/GraphMLResourceReader.h>
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -64,9 +65,13 @@ int main(int argc, char *args[])
     {
       #ifdef USE_XERCESC
       string str = std::string(value);
-      HatScheT::GraphMLGraphReader gmlr;
-      HatScheT::Graph g = gmlr.readGraph(str.c_str());
+      HatScheT::GraphMLGraphReader readerGraph;
+      HatScheT::Graph g = readerGraph.readGraph(str.c_str());
       cout << g << endl;
+
+      HatScheT::GraphMLResourceReader readerRes(g);
+      HatScheT::ResourceModel rm = readerRes.readResourceModel(str.c_str());
+
       #else
       cout << "Warning: You chose the graphml parameter, but XerseC was not found. Make to to prove the path to XercesC as CMAKE_PREFIX_PATH" << endl;
       #endif

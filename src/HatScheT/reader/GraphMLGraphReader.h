@@ -33,11 +33,14 @@ public:
    * \param path
    * \return
    */
-  virtual ResourceModel& readResourceModel(const char* path, Graph& g){
+  virtual ResourceModel& readResourceModel(const char* path){
     string p(path);
     throw Exception("GraphMLGraphReader.readResourcemodel: Dont use this class to read resource: " + p);}
 private:
-
+  /*!
+     * \brief g used to add elemets to the graph during parsing process
+     */
+  Graph g;
   /*!
      * \brief startElement
      * \param uri

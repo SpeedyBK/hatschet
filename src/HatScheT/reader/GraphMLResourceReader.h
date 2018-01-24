@@ -19,10 +19,10 @@ public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLResourceReader();
+  GraphMLResourceReader(Graph& g);
   ~GraphMLResourceReader();
   /*!
-     * \brief readGraph the main function of the graphML parser
+     * \brief readGraph Dont use this class to read graphs!
      * \param path
      * \param readGraph
      * \return
@@ -31,13 +31,28 @@ public:
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
   /*!
-   * \brief readResourceModel dont use the function in this class
+   * \brief readResourceModel use this class to read resource models from a graphml representation
+   * see the attached chstone benchmark for info about how you resource should be build in this case
+   * this function will generate a new resourcemodel object instance
    * \param path
    * \return
    */
-  virtual ResourceModel& readResourceModel(const char* path, Graph& g);
+  virtual ResourceModel& readResourceModel(const char* path);
+  /*!
+   * \brief getMinII might be noted in the graphlml files
+   * \return
+   */
+  int getMinII(){return this->minII;}
+  /*!
+   * \brief getMaxII might be noted in the graphlml files
+   * \return
+   */
+  int getMaxII(){return this->maxII;}
 private:
-
+  /*!
+   * \brief rm
+   */
+  ResourceModel* rm;
   /*!
      * \brief startElement
      * \param uri
@@ -67,10 +82,6 @@ private:
    */
   void characters    (   const XMLCh *const      chars,
       const XMLSize_t     length);
-   /*!
-   * \brief nodeTagFound
-   */
-  bool nodeTagFound;
 
   /*!
    * \brief dataTagFound
@@ -80,6 +91,22 @@ private:
    * \brief resourceTagFound
    */
   bool resourceTagFound;
+  /*!
+   * \brief minII
+   */
+  int minII;
+  /*!
+   * \brief maxII
+   */
+  int maxII;
+  /*!
+   * \brief minIITagFound
+   */
+  bool minIITagFound;
+  /*!
+   * \brief maxIITagFound
+   */
+  bool maxIITagFound;
   };
 }
 

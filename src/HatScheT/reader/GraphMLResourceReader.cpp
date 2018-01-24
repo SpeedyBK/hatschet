@@ -12,11 +12,16 @@
 
 namespace HatScheT {
 
-GraphMLResourceReader::GraphMLResourceReader()
+GraphMLResourceReader::GraphMLResourceReader(Graph& g)
 {
-  this->nodeTagFound = false;
+  this->rm = new ResourceModel(g);
+
   this->resourceTagFound = false;
   this->dataTagFound = false;
+  this->minIITagFound = false;
+  this->maxIITagFound = false;
+  this->minII = -1;
+  this->maxII = -1;
 }
 
 GraphMLResourceReader::~GraphMLResourceReader()
@@ -32,18 +37,49 @@ void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * co
 
 void GraphMLResourceReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
+  if(this->minIITagFound == true)
+  {
+    this->minII = atoi(XMLString::transcode(chars));
+  }
 
+  if(this->maxIITagFound == true)
+  {
+    this->maxII = atoi(XMLString::transcode(chars));
+  }
 }
 
 void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
+  string name = XMLString::transcode(localname);
 
+  if(name == "data")
+  {
+    string keystring = XMLString::transcode(attrs.getValue(XMLString::transcode("key")));
+
+    if(keystring == "minII")
+    {
+      this->minIITagFound = true;
+    }
+
+    if(keystring == "maxII")
+    {
+      this->maxIITagFound = true;
+    }
+  }
+
+  if(name == "resource")
+  {
+    string idstring = XMLString::transcode(attrs.getValue(XMLString::transcode("id")));
+    string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
+    string isunlimiedtstring = XMLString::transcode(attrs.getValue(XMLString::transcode("isUnlimited")));
+
+    //this->rm->makeResource(idstring, stoi(limitstring));
+  }
 }
 
-ResourceModel& GraphMLResourceReader::readResourceModel(const char *path,Graph& g)
+ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 {
   cout << "GraphMLResourceReader.readResourceModel: Start parsing from path: " << path << endl;
-  ResourceModel rm = ResourceModel(g);
 
   try {
     XMLPlatformUtils::Initialize();
@@ -97,7 +133,7 @@ ResourceModel& GraphMLResourceReader::readResourceModel(const char *path,Graph& 
 
   cout << "GraphMLResourceReader.readResourceModel:  Finished parsing from path: " << path << endl;
 
-  return rm;
+  return *(this->rm);
 }
 
 }

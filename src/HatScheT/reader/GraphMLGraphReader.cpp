@@ -13,6 +13,8 @@ namespace HatScheT {
 
 GraphMLGraphReader::GraphMLGraphReader()
 {
+  this->g = HatScheT::Graph();
+
   this->nodeTagFound = false;
   this->edgeTagFound = false;
   this->nameTagFound = false;

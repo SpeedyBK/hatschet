@@ -85,8 +85,13 @@ public:
    * \return
    */
   unsigned int getNumberOfVertices(){
-    return this->vertices.size();
-  }
+    return this->vertices.size();}
+  /*!
+   * \brief setName
+   * \param s
+   */
+  void setName(string s){this->name = s;}
+  const string getName() const {return this->name;}
   /*!
    * \brief verticesBegin
    * \return
@@ -139,6 +144,10 @@ protected:
    * This int is used to track the next valid edge id
    */
   int maxEdgeId;
+  /*!
+   * \brief name
+   */
+  string name;
 };
 
 }

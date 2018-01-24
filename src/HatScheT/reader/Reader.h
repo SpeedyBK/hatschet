@@ -23,14 +23,15 @@ public:
      * \return a reference to the read Graph is returned
      */
   virtual Graph& readGraph(const char* path)=0;
-
-  virtual ResourceModel& readResourceModel(const char* path, Graph& g)=0;
-protected:
   /*!
-     * \brief g used to add elemets to the graph during parsing process
-     */
-  Graph g;
-private:
+   * \brief readResourceModel this function will generate a new resourcemodel object instance
+   * \param path
+   * \param g
+   * \return
+   */
+  virtual ResourceModel& readResourceModel(const char* path)=0;
+protected:
+
 
 };
 

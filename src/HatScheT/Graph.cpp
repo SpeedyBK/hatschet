@@ -6,8 +6,9 @@ namespace HatScheT {
 
 Graph::Graph()
 {
-  maxVertexId=0;
-  maxEdgeId=0;
+  this->maxVertexId=0;
+  this->maxEdgeId=0;
+  this->name = "";
 }
 
 int Graph::addVertex(Vertex &v)
