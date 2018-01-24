@@ -3,7 +3,7 @@
 namespace HatScheT
 {
 
-Edge::Edge(Vertex &src, Vertex &dst) : Vsrc(src), Vdst(dst)
+Edge::Edge(Vertex &src, Vertex &dst, int delay, bool backward, DependencyType dependencyType) : Vsrc(src), Vdst(dst), delay(delay), backward(backward), dependencyType(dependencyType)
 {
   backward = 0;
   id = -1;

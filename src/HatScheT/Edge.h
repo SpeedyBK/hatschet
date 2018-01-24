@@ -11,7 +11,9 @@ namespace HatScheT
 class Edge
 {
 public:
-    Edge(Vertex &src, Vertex &dst);
+		enum DependencyType { Data, Precedence };
+
+    Edge(Vertex &src, Vertex &dst, int delay=0, bool backward=false, DependencyType dependencyType=Data);
 
     Vertex& getVertexSrc(){ return Vsrc; }
     Vertex& getVertexDst(){ return Vdst; }
@@ -40,11 +42,12 @@ public:
 protected:
     int id;
     bool backward;
+		DependencyType dependencyType;
+    int delay;
 
     Vertex &Vsrc;
     Vertex &Vdst;
 
-    int delay;
 };
 ostream& operator<<(ostream& os, const Edge& e);
 }
