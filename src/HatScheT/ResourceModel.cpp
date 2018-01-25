@@ -29,14 +29,14 @@ void ReservationTable::addReservation(Resource* resource, int start, int duratio
 std::set<Resource*> ReservationTable::getResources() const
 {
   std::set<Resource*> res;
-  for (auto p : reservationTable)
+  for (const auto& p : reservationTable)
     res.insert(p.first);
   return res;
 }
 
 std::list<BlockReservation> ReservationTable::getReservations(Resource* resource) const
 {
-  auto it = reservationTable.find(resource);
+  const auto it = reservationTable.find(resource);
   return it != reservationTable.end() ? it->second : std::list<BlockReservation>();
 }
 
@@ -47,11 +47,11 @@ bool ReservationTable::usesResourceAt(Resource* resource, int timestep) const
 
 int ReservationTable::getResourceDemandAt(Resource* resource, int timestep) const
 {
-  auto it = reservationTable.find(resource);
+  const auto it = reservationTable.find(resource);
   if (it == reservationTable.end())
     return false;
 
-  auto blocks = it->second;
+  const auto& blocks = it->second;
   return (int) std::count_if(blocks.begin(), blocks.end(),
                [timestep] (BlockReservation B) -> bool {
                  return B.start <= timestep && timestep < B.start + B.duration;
@@ -73,14 +73,14 @@ Resource* ReservationTable::getSingleResource() const
   return reservationTable.begin()->first;
 }
 
-BlockReservation* ReservationTable::getSingleReservation() const
+BlockReservation ReservationTable::getSingleReservation() const
 {
   if (reservationTable.size() != 1)
-    return nullptr;
-  auto blocks = reservationTable.begin()->second;
+    return BlockReservation(-1, -1);
+  const auto& blocks = reservationTable.begin()->second;
   if (blocks.size() != 1)
-    return nullptr;
-  return &*blocks.begin();
+    return BlockReservation(-1, -1);
+  return *blocks.begin();
 }
 
 bool ReservationTable::isEmpty() const
@@ -90,16 +90,14 @@ bool ReservationTable::isEmpty() const
 
 bool ReservationTable::isSimple() const
 {
-  if (BlockReservation* block = getSingleReservation())
-    return block->start == 0 && block->duration == 1;
-  return false;
+  auto block = getSingleReservation();
+  return block.start == 0 && block.duration == 1;
 }
 
 bool ReservationTable::isBlock() const
 {
-  if (BlockReservation* block = getSingleReservation())
-    return block->start == 0 && block->duration > 1;
-  return false;
+  auto block = getSingleReservation();
+  return block.start == 0 && block.duration > 1;
 }
 
 bool ReservationTable::isComplex() const
@@ -123,8 +121,8 @@ void ReservationTable::dump() const
     cout << setw(3) << t << " |";
   cout << endl << hline << endl;
 
-  for (auto p : reservationTable) {
-    auto* resource = p.first;
+  for (const auto& p : reservationTable) {
+    auto resource = p.first;
     cout << setw(nameColumnWidth) << (resource->name + "(" + to_string(resource->id) + ")").substr(0, 20) << " |";
     for (int t = 0; t < latency; ++t)
       cout << setw(3) << getResourceDemandAt(resource, t) << " |";
@@ -132,4 +130,90 @@ void ReservationTable::dump() const
   }
   cout << hline << endl;
 }
+
+Resource* ResourceModel::makeResource(std::string name)
+{
+  return makeResource(name, 1);
+}
+
+Resource* ResourceModel::makeResource(std::string name, int available)
+{
+  return &*(resources.emplace(resources.end(), resources.size(), name, available));
+}
+
+ReservationTable* ResourceModel::makeReservationTable(int latency)
+{
+  return &*(reservationTables.emplace(reservationTables.end(), reservationTables.size(), latency));
+}
+
+ReservationTable* ResourceModel::getEmptyReservationTable(int latency)
+{
+  return makeReservationTable(latency);
+}
+
+ReservationTable* ResourceModel::getSimpleReservationTable(int latency, Resource* resource)
+{
+  auto rt = makeReservationTable(latency);
+  rt->addReservation(resource);
+  return rt;
+}
+
+ReservationTable* ResourceModel::getBlockReservationTable(int latency, Resource* resource, int duration)
+{
+  auto rt = makeReservationTable(latency);
+  rt->addReservation(resource, 0, duration);
+  return rt;
+}
+
+void ResourceModel::registerVertex(const Vertex *v, const ReservationTable *reservationTable)
+{
+  vertexMap[v] = reservationTable;
+}
+
+const ReservationTable* ResourceModel::getReservationTable(const Vertex *v) const
+{
+  const auto it = vertexMap.find(v);
+  return it != vertexMap.end() ? it->second : nullptr;
+}
+
+std::list<const ReservationTable*> ResourceModel::getReservationTables() const
+{
+  std::list<const ReservationTable*> resTabs;
+  for (const auto& rt : reservationTables)
+    resTabs.push_back(&rt);
+  return resTabs;
+}
+
+bool ResourceModel::isUnlimited(const Vertex *v) const
+{
+  const auto it = vertexMap.find(v);
+  if (it == vertexMap.end())
+    throw new Exception("Unregistered vertex");
+  return it->second->isEmpty();
+}
+
+bool ResourceModel::isResourceConstrained(const Vertex *v) const
+{
+  return ! isUnlimited(v);
+}
+
+std::set<const Vertex*> ResourceModel::getFilteredVertices(std::function<bool(const ReservationTable*)> predicate) const
+{
+  std::set<const Vertex*> filteredVertices;
+  for (const auto& p : vertexMap)
+    if (predicate(p.second))
+      filteredVertices.insert(p.first);
+  return filteredVertices;
+}
+
+std::set<const Vertex*> ResourceModel::getUnlimitedVertices() const
+{
+  return getFilteredVertices([] (const ReservationTable* rt) -> bool { return rt->isEmpty(); });
+}
+
+std::set<const Vertex*> ResourceModel::getResourceConstrainedVertices(const ReservationTable* reservationTable) const
+{
+  return getFilteredVertices([reservationTable] (const ReservationTable* rt) -> bool { return rt == reservationTable; });
+}
+
 }
