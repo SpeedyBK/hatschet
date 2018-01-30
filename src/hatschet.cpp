@@ -4,8 +4,8 @@
 #include <HatScheT/Exception.h>
 #include <HatScheT/ASAPScheduler.h>
 #include <HatScheT/Graph.h>
-#include <HatScheT/reader/GraphMLGraphReader.h>
-#include <HatScheT/reader/GraphMLResourceReader.h>
+#include <HatScheT/utility/reader/GraphMLGraphReader.h>
+#include <HatScheT/utility/reader/GraphMLResourceReader.h>
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string

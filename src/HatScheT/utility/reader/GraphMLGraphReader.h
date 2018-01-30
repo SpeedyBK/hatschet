@@ -2,9 +2,6 @@
 #pragma once
 #ifdef USE_XERCESC
 #include "Reader.h"
-#include "xercesc/sax2/DefaultHandler.hpp"
-#include "../Exception.h"
-#include "../ResourceModel.h"
 
 using namespace xercesc;
 using namespace std;

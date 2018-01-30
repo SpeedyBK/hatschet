@@ -1,5 +1,5 @@
 #ifdef USE_XERCESC
-#include "../ResourceModel.h"
+#include "../../ResourceModel.h"
 #include "GraphMLResourceReader.h"
 #include "xercesc/sax2/SAX2XMLReader.hpp"
 #include "xercesc/sax2/XMLReaderFactory.hpp"

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../Graph.h"
-#include "../ResourceModel.h"
+#include "../../Graph.h"
+#include "../../ResourceModel.h"
+#include "../../Exception.h"
+#include "xercesc/sax2/DefaultHandler.hpp"
 
 namespace HatScheT
 {

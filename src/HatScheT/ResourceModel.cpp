@@ -31,7 +31,7 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
     const ReservationTable* rt = it.second;
     Resource* r = rt->getSingleResource();
 
-    os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latancy of " << rt->latency << endl;
+    os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latency of " << rt->latency << endl;
   }
 
   return os;
