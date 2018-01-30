@@ -19,7 +19,7 @@ public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLResourceReader(Graph& g);
+  GraphMLResourceReader();
   ~GraphMLResourceReader();
   /*!
      * \brief readGraph Dont use this class to read graphs!

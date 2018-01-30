@@ -12,9 +12,9 @@
 
 namespace HatScheT {
 
-GraphMLResourceReader::GraphMLResourceReader(Graph& g)
+GraphMLResourceReader::GraphMLResourceReader()
 {
-  this->rm = new ResourceModel(g);
+  this->rm = new ResourceModel();
 
   this->resourceTagFound = false;
   this->dataTagFound = false;
@@ -72,8 +72,13 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
     string idstring = XMLString::transcode(attrs.getValue(XMLString::transcode("id")));
     string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
     string isunlimiedtstring = XMLString::transcode(attrs.getValue(XMLString::transcode("isUnlimited")));
+    string latency = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
 
-    //this->rm->makeResource(idstring, stoi(limitstring));
+    if(isunlimiedtstring == "false")
+    {
+      auto res = this->rm->makeResource(idstring, stoi(limitstring));
+      this->rm->makeSimpleReservationTable(stoi(latency), res);
+    }
   }
 }
 

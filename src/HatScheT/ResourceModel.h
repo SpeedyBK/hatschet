@@ -71,17 +71,18 @@ private:
 class ResourceModel
 {
 public:
-  // TODO: graph is unused. Remove?
-  ResourceModel(Graph &g) : g(g) { }
+  ResourceModel();
+  friend ostream& operator<<(ostream& os, const ResourceModel& rm);
 
   // factories for Resources
+  // Patrick ToDo(?): check for uniqueness
   Resource* makeResource(std::string name);
   Resource* makeResource(std::string name, int available);
 
   // factories for ReservationTables. Any of these can be extended to be a complex table.
-  ReservationTable* getEmptyReservationTable(int latency);
-  ReservationTable* getSimpleReservationTable(int latency, Resource* resource);
-  ReservationTable* getBlockReservationTable(int latency, Resource* resource, int duration);
+  ReservationTable* makeEmptyReservationTable(int latency);
+  ReservationTable* makeSimpleReservationTable(int latency, Resource* resource);
+  ReservationTable* makeBlockReservationTablee(int latency, Resource* resource, int duration);
 
   // association of vertices/reservation tables
   void registerVertex(const Vertex* v, const ReservationTable* reservationTable);
@@ -89,20 +90,26 @@ public:
 
   // access to all known reservation tables
   std::list<const ReservationTable*> getReservationTables() const;
+  const ReservationTable* getEmptyReservationTableByLatency(int l) const;
 
   // convenience
   bool isUnlimited(const Vertex* v) const;
   bool isResourceConstrained(const Vertex* v) const;
+  int getLatency(const Vertex* v) const;
   std::set<const Vertex*> getUnlimitedVertices() const;
   std::set<const Vertex*> getResourceConstrainedVertices(const ReservationTable* reservationTable) const;
+  Resource *getResource(std::string name) const;
+  bool resourceExists(std::string name) const;
+  ReservationTable* getRelatedRtByName(std::string name) const;
 
 protected:
-  Graph &g;
+
 
 private:
   std::map<const Vertex*, const ReservationTable*> vertexMap;
   std::list<Resource> resources;
   std::list<ReservationTable> reservationTables;
+  std::map<Resource*, ReservationTable*> resRtRelations;
 
   ReservationTable* makeReservationTable(int latency);
   std::set<const Vertex*> getFilteredVertices(std::function<bool(const ReservationTable*)> predicate) const;

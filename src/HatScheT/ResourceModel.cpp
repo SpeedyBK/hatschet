@@ -9,6 +9,34 @@
 namespace HatScheT
 {
 
+ResourceModel::ResourceModel()
+{
+
+}
+
+ostream& operator<<(ostream& os, const ResourceModel& rm)
+{
+  for(auto it:rm.resources)
+  {
+    Resource* r = &it;
+
+    os << "Resource Model has resource: " << r->name << " with " << r->availableUnits << " available units" << endl;
+  }
+
+  if(rm.vertexMap.size() == 0) os << "No vertices are registered to this resource model!" << endl;
+
+  for(auto it:rm.vertexMap)
+  {
+    const Vertex* v = it.first;
+    const ReservationTable* rt = it.second;
+    Resource* r = rt->getSingleResource();
+
+    os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latancy of " << rt->latency << endl;
+  }
+
+  return os;
+}
+
 void ReservationTable::addReservation(Resource* resource)
 {
   addReservation(resource, 0);
@@ -131,6 +159,28 @@ void ReservationTable::dump() const
   cout << hline << endl;
 }
 
+bool ResourceModel::resourceExists(string name) const
+{
+  for(const Resource &r:resources)
+  {
+    if(r.name == name) return true;
+  }
+
+  return false;
+}
+
+Resource* ResourceModel::getResource(string name) const
+{
+  for(auto it:resources)
+  {
+    Resource* r = &it;
+
+    if(r->name == name) return r;
+  }
+
+  throw Exception("ResourceModel.getResource: Requested Resource not found: " + name);
+}
+
 Resource* ResourceModel::makeResource(std::string name)
 {
   return makeResource(name, 1);
@@ -141,28 +191,51 @@ Resource* ResourceModel::makeResource(std::string name, int available)
   return &*(resources.emplace(resources.end(), resources.size(), name, available));
 }
 
+const ReservationTable* ResourceModel::getEmptyReservationTableByLatency(int l) const
+{
+  for(const ReservationTable &r:reservationTables)
+  {
+    if(r.latency == l) return &r;
+  }
+
+  throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + l);
+}
+
 ReservationTable* ResourceModel::makeReservationTable(int latency)
 {
   return &*(reservationTables.emplace(reservationTables.end(), reservationTables.size(), latency));
 }
 
-ReservationTable* ResourceModel::getEmptyReservationTable(int latency)
+ReservationTable* ResourceModel::makeEmptyReservationTable(int latency)
 {
   return makeReservationTable(latency);
 }
 
-ReservationTable* ResourceModel::getSimpleReservationTable(int latency, Resource* resource)
+ReservationTable* ResourceModel::makeSimpleReservationTable(int latency, Resource* resource)
 {
   auto rt = makeReservationTable(latency);
   rt->addReservation(resource);
+  this->resRtRelations.insert(make_pair(resource, rt));
   return rt;
 }
 
-ReservationTable* ResourceModel::getBlockReservationTable(int latency, Resource* resource, int duration)
+ReservationTable* ResourceModel::makeBlockReservationTablee(int latency, Resource* resource, int duration)
 {
   auto rt = makeReservationTable(latency);
   rt->addReservation(resource, 0, duration);
+  this->resRtRelations.insert(make_pair(resource, rt));
   return rt;
+}
+
+ReservationTable* ResourceModel::getRelatedRtByName(std::string name) const
+{
+  for(auto it:resRtRelations)
+  {
+    Resource* r = it.first;
+    if(r->name == name) return it.second;
+  }
+
+  throw Exception("ResourceModel.getRelatedRtByName: Requested Reservation Table to Resource not found: " + name);
 }
 
 void ResourceModel::registerVertex(const Vertex *v, const ReservationTable *reservationTable)
@@ -190,6 +263,15 @@ bool ResourceModel::isUnlimited(const Vertex *v) const
   if (it == vertexMap.end())
     throw new Exception("Unregistered vertex");
   return it->second->isEmpty();
+}
+
+int ResourceModel::getLatency(const Vertex *v) const
+{
+  const auto it = vertexMap.find(v);
+  if (it == vertexMap.end())
+    throw new Exception("Unregistered vertex");
+
+  return it->second->latency;
 }
 
 bool ResourceModel::isResourceConstrained(const Vertex *v) const

@@ -33,7 +33,7 @@ void MoovacScheduler::setUpSolverSettings()
 
 void MoovacScheduler::constructProblem()
 {
-  this->SLMax = this->g.getNumberOfVertices() * ( this->g.getMaxLatency() + 1);
+  //this->SLMax = this->g.getNumberOfVertices() * ( this->g.getMaxLatency() + 1);
 
   this->setTVectorVariables();
   this->fillRegVector();
@@ -78,12 +78,12 @@ void MoovacScheduler::setTVectorVariables()
     int id = v->getId();
 
     //17
-     t_vector.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - v->getLatency()));
+     //t_vector.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - v->getLatency()));
     //store tIndex
     this->t_vectorIndices.insert(make_pair(v,t_vector.size()-1));
 
     //16
-    this->solver->addConstraint(t_vector.back() + v->getLatency() <= this->SLMax);
+    //this->solver->addConstraint(t_vector.back() + v->getLatency() <= this->SLMax);
   }
 }
 

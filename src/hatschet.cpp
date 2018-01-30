@@ -65,12 +65,21 @@ int main(int argc, char *args[])
     {
       #ifdef USE_XERCESC
       string str = std::string(value);
-      HatScheT::GraphMLGraphReader readerGraph;
-      HatScheT::Graph g = readerGraph.readGraph(str.c_str());
-      cout << g << endl;
+      try
+      {
+        HatScheT::GraphMLResourceReader readerRes;
+        HatScheT::ResourceModel rm = readerRes.readResourceModel(str.c_str());
+        cout << rm << endl;
 
-      HatScheT::GraphMLResourceReader readerRes(g);
-      HatScheT::ResourceModel rm = readerRes.readResourceModel(str.c_str());
+        HatScheT::GraphMLGraphReader readerGraph(&rm);
+        HatScheT::Graph g = readerGraph.readGraph(str.c_str());
+        cout << g << endl;
+        cout << rm << endl;
+      }
+      catch(HatScheT::Exception &e)
+      {
+        std::cerr << "Error: " << e << std::endl;
+      }
 
       #else
       cout << "Warning: You chose the graphml parameter, but XerseC was not found. Make to to prove the path to XercesC as CMAKE_PREFIX_PATH" << endl;

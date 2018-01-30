@@ -16,12 +16,6 @@ public:
 
   const int getId() const { return id; }
   /*!
-     * \brief setLatency
-     * \param l
-     */
-  void setLatency(int l){this->latency = l;}
-  const int getLatency() const {return this->latency;}
-  /*!
    * \brief setName
    * \param s
    */
@@ -38,7 +32,6 @@ public:
 
 protected:
   string name;
-  int latency;
   const int id;
   std::string resourceType; //ToDo: Probably the type has to be changed to something else
 };

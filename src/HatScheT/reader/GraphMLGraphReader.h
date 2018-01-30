@@ -4,6 +4,7 @@
 #include "Reader.h"
 #include "xercesc/sax2/DefaultHandler.hpp"
 #include "../Exception.h"
+#include "../ResourceModel.h"
 
 using namespace xercesc;
 using namespace std;
@@ -19,7 +20,7 @@ public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLGraphReader();
+  GraphMLGraphReader(ResourceModel* rm);
   ~GraphMLGraphReader();
   /*!
      * \brief readGraph the main function of the graphML parser
@@ -37,6 +38,7 @@ public:
     string p(path);
     throw Exception("GraphMLGraphReader.readResourcemodel: Dont use this class to read resource: " + p);}
 private:
+  ResourceModel* rm;
   /*!
      * \brief g used to add elemets to the graph during parsing process
      */
@@ -90,6 +92,10 @@ private:
    * \brief dataTagFound
    */
   bool dataTagFound;
+  /*!
+   * \brief resourceTagFound
+   */
+  bool resourceTagFound;
   /*!
    * \brief currVertex
    */

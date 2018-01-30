@@ -76,11 +76,6 @@ public:
    */
   friend ostream& operator<<(ostream& os, const Graph& g);
   /*!
-   * \brief getMaxLatency
-   * \return
-   */
-  unsigned int getMaxLatency();
-  /*!
    * \brief getNumberOfVertices
    * \return
    */

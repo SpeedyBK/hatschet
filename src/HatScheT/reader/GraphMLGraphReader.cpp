@@ -8,18 +8,21 @@
 #include "stack"
 #include "iostream"
 #include "fstream"
+#include <algorithm>
 
 namespace HatScheT {
 
-GraphMLGraphReader::GraphMLGraphReader()
+GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm)
 {
   this->g = HatScheT::Graph();
+  this->rm = rm;
 
   this->nodeTagFound = false;
   this->edgeTagFound = false;
   this->nameTagFound = false;
   this->latencyTagFound = false;
   this->dataTagFound = false;
+  this->resourceTagFound = false;
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -49,9 +52,8 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
   {
     this->dataTagFound = false;
 
-    if(this->nameTagFound) this->nameTagFound = false;
-    else if(this->latencyTagFound) this->latencyTagFound = false;
-    //else if(this->backwardTagFound) this->backwardTagFound = false;
+    if(this->nameTagFound == true) this->nameTagFound = false;
+    if(this->resourceTagFound == true) this->resourceTagFound = false;
   }
 
 }
@@ -67,9 +69,18 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
         this->currVertex->setName(XMLString::transcode(chars));
       }
 
-      if(this->latencyTagFound)
+      if(this->resourceTagFound)
       {
-         this->currVertex->setLatency(atoi(XMLString::transcode(chars)));
+        std::string name = XMLString::transcode(chars);
+        //remove whitespaces
+        std::string::iterator end_pos = std::remove(name.begin(), name.end(), ' ');
+        name.erase(end_pos, name.end());
+
+        if(this->rm->resourceExists(name) == true)
+        {
+          auto rt = this->rm->getRelatedRtByName(name);
+          this->rm->registerVertex(this->currVertex, rt);
+        }
       }
     }
 
@@ -126,9 +137,9 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
           this->nameTagFound = true;
       }
 
-      if (key == "latency")
+      if (key == "uses_resource_kind")
       {
-          this->latencyTagFound = true;
+          this->resourceTagFound = true;
       }
     }
 
