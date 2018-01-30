@@ -99,8 +99,10 @@ public:
   std::set<const Vertex*> getUnlimitedVertices() const;
   std::set<const Vertex*> getResourceConstrainedVertices(const ReservationTable* reservationTable) const;
   Resource *getResource(std::string name) const;
+  Resource* getResource(Vertex* v) const;
   bool resourceExists(std::string name) const;
-  ReservationTable* getRelatedRtByName(std::string name) const;
+  ReservationTable* getRelatedRtByResName(std::string name) const;
+
 
 protected:
 

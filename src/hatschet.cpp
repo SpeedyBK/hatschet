@@ -6,6 +6,7 @@
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
+#include <HatScheT/utility/writer/DotWriter.h>
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -75,6 +76,10 @@ int main(int argc, char *args[])
         HatScheT::Graph g = readerGraph.readGraph(str.c_str());
         cout << g << endl;
         cout << rm << endl;
+
+        HatScheT::DotWriter dw("example", &g, &rm);
+        dw.setDisplayNames(true);
+        dw.write();
       }
       catch(HatScheT::Exception &e)
       {

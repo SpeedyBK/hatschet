@@ -78,7 +78,7 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
 
         if(this->rm->resourceExists(name) == true)
         {
-          auto rt = this->rm->getRelatedRtByName(name);
+          auto rt = this->rm->getRelatedRtByResName(name);
           this->rm->registerVertex(this->currVertex, rt);
         }
       }

@@ -101,7 +101,7 @@ public:
    */
   const std::map<unsigned,Vertex*>::iterator verticesEnd()
   {
-      return vertices.begin();
+      return vertices.end();
   }
   /*!
    * \brief edgesBegin

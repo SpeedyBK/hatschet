@@ -169,6 +169,26 @@ bool ResourceModel::resourceExists(string name) const
   return false;
 }
 
+Resource* ResourceModel::getResource(Vertex* v) const
+{
+  const auto it = vertexMap.find(v);
+
+  if(it != vertexMap.end())
+  {
+    const ReservationTable* rt = it->second;
+
+    for(auto it2:resRtRelations)
+    {
+      if(rt == it2.second)
+      {
+        return it2.first;
+      }
+    }
+  }
+
+  throw Exception("ResourceModel.getResource: Requested vertex not found: " + v->getName());
+}
+
 Resource* ResourceModel::getResource(string name) const
 {
   for(auto it:resources)
@@ -227,7 +247,7 @@ ReservationTable* ResourceModel::makeBlockReservationTablee(int latency, Resourc
   return rt;
 }
 
-ReservationTable* ResourceModel::getRelatedRtByName(std::string name) const
+ReservationTable* ResourceModel::getRelatedRtByResName(std::string name) const
 {
   for(auto it:resRtRelations)
   {
