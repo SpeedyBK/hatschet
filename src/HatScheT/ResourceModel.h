@@ -36,12 +36,12 @@ private:
 class ReservationBlock
 {
 public:
-  ReservationBlock(std::string resourceName, int startTime) : resourceName(resourceName), startTime(startTime) {}
+  ReservationBlock(Resource* resource, int startTime) : resource(resource), startTime(startTime) {}
 
-  string getResourceName() const {return this->resourceName;}
-  int getStartTime() const {return this->startTime;}
+  const Resource* getResource() const {return this->resource;}
+  const int getStartTime() const {return this->startTime;}
 protected:
-  const string resourceName;
+  const Resource* resource;
   const int startTime;
 private:
 };
@@ -50,7 +50,7 @@ class ReservationTable : public Resource
 {
 public:
   ReservationTable(std::string name) : Resource(name, -1, -1, -1) {}
-
+  ReservationBlock& makeReservationBlock(Resource* r, int startTime);
 
   //convenience
   virtual bool isReservationTable(){return true;}
@@ -61,7 +61,7 @@ protected:
 
 
 private:
-
+  std::list<ReservationBlock> blocks;
 };
 
 class ResourceModel

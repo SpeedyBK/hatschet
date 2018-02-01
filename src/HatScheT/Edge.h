@@ -11,42 +11,51 @@ namespace HatScheT
 class Edge
 {
 public:
-		enum DependencyType { Data, Precedence };
+  enum DependencyType { Data, Precedence };
+   /**
+   * @brief Edge Constructor
+   * @param Vsrc The source vertex
+   * @param Vdst The destination vertex
+   * @param delay The delay (=no of registers) on an edge
+   * @param backward Flag that is true if edge is a backward edge
+   * @param dependencyType Enum to distinguish dependencies and data edges
+   */
+  Edge(Vertex &src, Vertex &dst, int delay=0, bool backward=false, DependencyType dependencyType=Data);
 
-    Edge(Vertex &src, Vertex &dst, int delay=0, bool backward=false, DependencyType dependencyType=Data);
+  Vertex& getVertexSrc(){ return Vsrc; }
+  Vertex& getVertexDst(){ return Vdst; }
 
-    Vertex& getVertexSrc(){ return Vsrc; }
-    Vertex& getVertexDst(){ return Vdst; }
+  const string getVertexSrcName() const {return this->Vsrc.getName();}
+  const string getVertexDstName() const {return this->Vdst.getName();}
 
-    const string getVertexSrcName() const {return this->Vsrc.getName();}
-    const string getVertexDstName() const {return this->Vdst.getName();}
+  const double getDelay() const { return delay; }
+  void setDelay(double delay){ this->delay = delay; }
 
-    const double getDelay() const { return delay; }
-    void setDelay(double delay){ this->delay = delay; }
+  const int getID() const {return this->id;}
+  void setID(int id){this->id = id;}
 
-    const int getID() const {return this->id;}
-    void setID(int id){this->id = id;}
+  const bool getBackward() const {return this->backward;}
+  void setBackward(bool b) {this->backward = b;}
 
-    const bool getBackward() const {return this->backward;}
-    void setBackward(bool b) {this->backward = b;}
-    //ToDo: add distance (no idea what it means in the UML)
+  //ToDo: add distance (no idea what it means in the UML)
 
-    /*!
-     * \brief < operator used for map container
-     */
-    bool operator<(const Edge& eref) const
-    {
-      return id < eref.id;
-    }
+  /*! DEPRECATED!! Remove me when not further in use !
+   *
+   * \brief < operator used for map container
+   */
+  bool operator<(const Edge& eref) const
+  {
+    return id < eref.id;
+  }
 
 protected:
-    int id;
-    bool backward;
-		DependencyType dependencyType;
-    int delay;
+  int id;
+  bool backward;
+  DependencyType dependencyType;
+  int delay;
 
-    Vertex &Vsrc;
-    Vertex &Vdst;
+  Vertex &Vsrc;
+  Vertex &Vdst;
 
 };
 ostream& operator<<(ostream& os, const Edge& e);

@@ -90,6 +90,11 @@ int ReservationTable::getLatency() const
   return latency;*/
 }
 
+ReservationBlock& ReservationTable::makeReservationBlock(Resource *r, int startTime)
+{
+  return *(this->blocks.emplace(this->blocks.end(),r, startTime));
+}
+
 Resource &ResourceModel::makeResource(string name, int limit, int latency, int blockingTime)
 {
   return *(this->resources.emplace(this->resources.end(),name, limit, latency, blockingTime));
@@ -315,7 +320,7 @@ const ReservationTable* ResourceModel::getEmptyReservationTableByLatency(int l) 
     if(r.latency == l && r.isEmpty() == true) return &r;
   }
 
-  throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + l);
+  throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + to_string(l));
 }
 
 ReservationTable* ResourceModel::makeReservationTable(int latency)
