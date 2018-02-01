@@ -47,19 +47,19 @@ void DotWriter::write()
     if(displayNames==true) nodeName = v->getName();
     else if(displayNames==false) nodeName = to_string(v->getId());
 
-    bool limitedResource = this->rm->isResourceConstrained(v);
+    //bool limitedResource = this->rm->isResourceConstrained(v);
     unsigned int rId = 0;
 
-    if(limitedResource == true)
+    //if(limitedResource == true)
     {
-      Resource* r = this->rm->getResource(v);
-      rId = r->id;
+      //Resource* r = this->rm->getResource(v);
+      //rId = r->id;
     }
 
     node_string << "vertex" << v->getId() << "[label=\"";
     node_string << nodeName << "\\" << "n";
     node_string << "\",fontsize=10,shape=circle";
-    if(limitedResource == true) node_string << ",style=\"filled\", color=\"black\"" << ",fillcolor=\""+ colors[rId] +"\"";
+    //if(limitedResource == true) node_string << ",style=\"filled\", color=\"black\"" << ",fillcolor=\""+ colors[rId] +"\"";
     node_string << "];\n";
 
     fprintf(graphfilepointer,"%s",node_string.str().c_str());

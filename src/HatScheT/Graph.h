@@ -20,7 +20,6 @@ class Graph
 {
 public:
   Graph();
-
   /*!
    * Adds a vertex to the graph, assigns a non-existing id and returns it
    *
@@ -28,7 +27,6 @@ public:
    * \return The id of the vertex
    */
   int addVertex(Vertex &v);
-
   /*!
    * Adds a vertex to the graph with id
    *
@@ -37,14 +35,12 @@ public:
    * \return The id of the vertex or -1 if id already exists
    */
   int addVertex(Vertex &v, unsigned id);
-
   /*!
    * Returns the reference to vertex with id 'id', an Exception is thrown if id does not exist
    *
    * \param id The if of the vertex
    */
   Vertex& getVertex(int id);
-
   /*!
    * Adds an edge to the graph
    *
@@ -52,7 +48,6 @@ public:
    * \return The id of the edge
    */
   int addEdge(Edge &e);
-
   /*!
    * Adds a edge to the graph with id
    *
@@ -61,7 +56,6 @@ public:
    * \return The id of the edge or -1 if id already exists
    */
   int addEdge(Edge &e, unsigned id);
-
   /*!
    * Returns the reference to edge with id 'id', an Exception is thrown if id does not exist
    *

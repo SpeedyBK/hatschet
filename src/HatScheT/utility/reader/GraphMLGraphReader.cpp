@@ -76,11 +76,6 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
         std::string::iterator end_pos = std::remove(name.begin(), name.end(), ' ');
         name.erase(end_pos, name.end());
 
-        if(this->rm->resourceExists(name) == true)
-        {
-          auto rt = this->rm->getRelatedRtByResName(name);
-          this->rm->registerVertex(this->currVertex, rt);
-        }
       }
     }
 

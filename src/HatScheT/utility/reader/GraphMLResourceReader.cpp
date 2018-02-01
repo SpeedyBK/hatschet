@@ -15,13 +15,9 @@ namespace HatScheT {
 GraphMLResourceReader::GraphMLResourceReader()
 {
   this->rm = new ResourceModel();
-
-  this->resourceTagFound = false;
-  this->dataTagFound = false;
-  this->minIITagFound = false;
-  this->maxIITagFound = false;
-  this->minII = -1;
-  this->maxII = -1;
+  this->reservationTableTagFound = false;
+  this->blogTagFound = false;
+  this->currRtName = "";
 }
 
 GraphMLResourceReader::~GraphMLResourceReader()
@@ -31,54 +27,44 @@ GraphMLResourceReader::~GraphMLResourceReader()
 
 void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
 {
+  string name = XMLString::transcode(localname);
 
+  if(name == "rt")
+  {
+    this->rm->makeReservationTable(this->currRtName);
 
+    this->reservationTableTagFound = false;
+    this->blocks.clear();
+  }
 }
 
 void GraphMLResourceReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
-  if(this->minIITagFound == true)
-  {
-    this->minII = atoi(XMLString::transcode(chars));
-  }
 
-  if(this->maxIITagFound == true)
-  {
-    this->maxII = atoi(XMLString::transcode(chars));
-  }
 }
 
 void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
-  string name = XMLString::transcode(localname);
+  string tag = XMLString::transcode(localname);
 
-  if(name == "data")
+  if(tag == "resource")
   {
-    string keystring = XMLString::transcode(attrs.getValue(XMLString::transcode("key")));
+    string namestring = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
+    string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
+    string latencystring = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
+    string blockingtimestring = XMLString::transcode(attrs.getValue(XMLString::transcode("blockingTime")));
 
-    if(keystring == "minII")
-    {
-      this->minIITagFound = true;
-    }
+    int limit = -1;
+    if(limitstring != "inf") limit = stoi(limitstring);
 
-    if(keystring == "maxII")
-    {
-      this->maxIITagFound = true;
-    }
+    this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
   }
 
-  if(name == "resource")
+  if(tag == "rt")
   {
-    string idstring = XMLString::transcode(attrs.getValue(XMLString::transcode("id")));
-    string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
-    string isunlimiedtstring = XMLString::transcode(attrs.getValue(XMLString::transcode("isUnlimited")));
-    string latency = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
+    this->reservationTableTagFound = true;
 
-    if(isunlimiedtstring == "false")
-    {
-      auto res = this->rm->makeResource(idstring, stoi(limitstring));
-      this->rm->makeSimpleReservationTable(stoi(latency), res);
-    }
+    this->currRtName = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
   }
 }
 

@@ -3,7 +3,10 @@
 #include "../../Graph.h"
 #include "../../ResourceModel.h"
 #include "../../Exception.h"
+
+#ifdef USE_XERCESC
 #include "xercesc/sax2/DefaultHandler.hpp"
+#endif //USE_XERCESC
 
 namespace HatScheT
 {

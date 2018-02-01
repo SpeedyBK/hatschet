@@ -7,6 +7,7 @@
 #include <set>
 #include <list>
 #include <functional>
+#include <HatScheT/Exception.h>
 
 namespace HatScheT
 {
@@ -14,9 +15,87 @@ namespace HatScheT
 class Resource
 {
 public:
+  Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {}
+
+  //convenience
+  virtual bool isReservationTable(){return false;}
+  virtual int getLimit() const {return this->limit;}
+  virtual int getLatency() const {return this->latency;}
+  virtual int getBlockingTime() const {return this->blockingTime;}
+  std::string getName() const {return this->name;}
+protected:
+  const std::string name;
+  const int limit;
+  const int latency;
+  const int blockingTime;
+
+private:
+
+};
+
+class ReservationBlock
+{
+public:
+  ReservationBlock(std::string resourceName, int startTime) : resourceName(resourceName), startTime(startTime) {}
+
+  string getResourceName() const {return this->resourceName;}
+  int getStartTime() const {return this->startTime;}
+protected:
+  const string resourceName;
+  const int startTime;
+private:
+};
+
+class ReservationTable : public Resource
+{
+public:
+  ReservationTable(std::string name) : Resource(name, -1, -1, -1) {}
+
+
+  //convenience
+  virtual bool isReservationTable(){return true;}
+  virtual int getLimit() const;
+  virtual int getLatency() const;
+  virtual int getBlockingTime() const {throw new Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
+protected:
+
+
+private:
+
+};
+
+class ResourceModel
+{
+public:
+  ResourceModel();
+  friend ostream& operator<<(ostream& os, const ResourceModel& rm);
+
+  //factories
+  Resource& makeResource(std::string name, int limit, int latency, int blockingTime);
+  ReservationTable& makeReservationTable(string name);
+
+  //registration
+  void registerVertex(const Vertex* v, const Resource* r);
+
+  //convenience
+  const Resource* getResource(const Vertex* v) const;
+protected:
+
+private:
+  map<const Vertex*, const Resource*> registrations;
+  std::list<Resource> resources;
+  std::list<ReservationTable> tables;
+};
+
+/*class Resource
+{
+public:
   const int id;
   const std::string name;
   const int availableUnits;
+  //here needed?! (PS)
+  //const int latency;
+  //const int blockingTime;
 
   Resource(int id, std::string name, int availableUnits) : id(id), name(name), availableUnits(availableUnits) { }
 };
@@ -63,11 +142,12 @@ public:
 
 private:
   std::map<Resource*, std::list<BlockReservation>> reservationTable;
-};
+};*/
 
 /*!
  * \brief ResourceModel
  */
+/*
 class ResourceModel
 {
 public:
@@ -103,7 +183,6 @@ public:
   bool resourceExists(std::string name) const;
   ReservationTable* getRelatedRtByResName(std::string name) const;
 
-
 protected:
 
 
@@ -115,5 +194,5 @@ private:
 
   ReservationTable* makeReservationTable(int latency);
   std::set<const Vertex*> getFilteredVertices(std::function<bool(const ReservationTable*)> predicate) const;
-};
+};*/
 }

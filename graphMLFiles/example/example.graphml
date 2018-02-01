@@ -6,35 +6,30 @@
     <node id="modsched_info">
       <data key="minII"> 2 </data>
       <data key="maxII"> 10 </data>
-      <data key="resource_limits">
-        <resource id="Adder" limit="1" isUnlimited="false" latency="3" />
-        <resource id="Multiplier" limit="1" isUnlimited="false" latency="5" />
-		<resource id="Gain" limit="1" isUnlimited="false" latency="1" />
-      </data>
     </node>
     <node id="1">
       <data key="name"> Add1 </data>
-      <data key="uses_resource_kind">Adder</data>
+      <data key="uses_rt">simpleAdd</data>
     </node>
 	<node id="2">
       <data key="name"> Mult1 </data>
-      <data key="uses_resource_kind">Multiplier</data>
+      <data key="uses_rt">simpleMult</data>
     </node>
 	<node id="3">
       <data key="name"> Add2 </data>
-      <data key="uses_resource_kind">Adder</data>
+      <data key="uses_rt">simpleAdd</data>
     </node>
 	<node id="4">
       <data key="name"> Gain1 </data>
-      <data key="uses_resource_kind">Gain</data>
+      <data key="uses_rt">simpleGain</data>
     </node>
 	<node id="5">
       <data key="name"> Mult2 </data>
-      <data key="uses_resource_kind">Multiplier</data>
+      <data key="uses_rt">simpleMult</data>
     </node>
 	<node id="6">
       <data key="name"> Gain </data>
-      <data key="uses_resource_kind">Gain</data>
+      <data key="uses_rt">simpleGain</data>
     </node>
     <edge id="1_2" source="1" target="2">
       <data key="latency"> 0 </data>

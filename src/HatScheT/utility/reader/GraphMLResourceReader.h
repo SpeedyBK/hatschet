@@ -36,16 +36,6 @@ public:
    * \return
    */
   virtual ResourceModel& readResourceModel(const char* path);
-  /*!
-   * \brief getMinII might be noted in the graphlml files
-   * \return
-   */
-  int getMinII(){return this->minII;}
-  /*!
-   * \brief getMaxII might be noted in the graphlml files
-   * \return
-   */
-  int getMaxII(){return this->maxII;}
 private:
   /*!
    * \brief rm
@@ -80,31 +70,22 @@ private:
    */
   void characters    (   const XMLCh *const      chars,
       const XMLSize_t     length);
-
   /*!
-   * \brief dataTagFound
+   * \brief reservationTableTagFound
    */
-  bool dataTagFound;
+  bool reservationTableTagFound;
   /*!
-   * \brief resourceTagFound
+   * \brief blogTagFound
    */
-  bool resourceTagFound;
+  bool blogTagFound;
   /*!
-   * \brief minII
+   * \brief currRtName
    */
-  int minII;
+  string currRtName;
   /*!
-   * \brief maxII
+   * \brief blocks contianer to store indermediate parsing results of reservation tables
    */
-  int maxII;
-  /*!
-   * \brief minIITagFound
-   */
-  bool minIITagFound;
-  /*!
-   * \brief maxIITagFound
-   */
-  bool maxIITagFound;
+  set<pair<Resource*, int> > blocks;
   };
 }
 

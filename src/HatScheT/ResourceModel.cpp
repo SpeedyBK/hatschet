@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include <HatScheT/Exception.h>
+
 
 namespace HatScheT
 {
@@ -20,6 +20,93 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
   {
     Resource* r = &it;
 
+    if(r->getLimit() > 0) os << "Resource Model has limited resource: " << r->getName() << " with limit " << r->getLimit() << ", latency "
+                             << r->getLatency() << ", blockingTime " << r->getBlockingTime() << endl;
+    if(r->getLimit() == -1) os << "Resource Model has unlimited resource: " << r->getName() << " with latency "
+                               << r->getLatency() << ", blockingTime " << r->getBlockingTime() << endl;
+  }
+
+  //if(rm.vertexMap.size() == 0) os << "No vertices are registered to this resource model!" << endl;
+
+  /*for(auto it:rm.vertexMap)
+  {
+    const Vertex* v = it.first;
+    const ReservationTable* rt = it.second;
+
+    if(rt->isEmpty() == false)
+    {
+      Resource* r = rt->getSingleResource();
+      os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latency of " << rt->latency << endl;
+    }
+  }*/
+
+  return os;
+}
+
+void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
+{
+  this->registrations.insert({v, r});
+}
+
+const Resource* ResourceModel::getResource(const Vertex *v) const
+{
+  const auto it = this->registrations.find(v);
+  if(it == this->registrations.end()) throw new Exception("ResourceModel.getResource: vertex not registered " + v->getName());
+  else return it->second;
+}
+
+int ReservationTable::getLimit() const
+{
+  /*int limit = 0;
+
+  for(auto it:this->table)
+  {
+    Resource* r = it.first;
+
+    //unlimited
+    if(limit == -1 ) continue;
+    //init with first real limit
+    if(limit == 0) limit = r->getLimit();
+    else if(limit > 0)
+    {
+      if(r->getLimit() < limit) limit = r->getLimit();
+    }
+  }
+
+  return limit;*/
+}
+
+int ReservationTable::getLatency() const
+{
+  /*int latency = 0;
+
+  for(auto it:this->table)
+  {
+    Resource* r = it.first;
+
+    if(latency < (r->getLatency()+it.second)) latency = r->getLatency()+it.second;
+  }
+
+  return latency;*/
+}
+
+Resource &ResourceModel::makeResource(string name, int limit, int latency, int blockingTime)
+{
+  return *(this->resources.emplace(this->resources.end(),name, limit, latency, blockingTime));
+}
+
+ReservationTable &ResourceModel::makeReservationTable(string name)
+{
+  return *(this->tables.emplace(this->tables.end(), name));
+}
+
+/*
+ostream& operator<<(ostream& os, const ResourceModel& rm)
+{
+  for(auto it:rm.resources)
+  {
+    Resource* r = &it;
+
     os << "Resource Model has resource: " << r->name << " with " << r->availableUnits << " available units" << endl;
   }
 
@@ -29,9 +116,19 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
   {
     const Vertex* v = it.first;
     const ReservationTable* rt = it.second;
-    Resource* r = rt->getSingleResource();
 
-    os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latency of " << rt->latency << endl;
+    if(rt->isEmpty() == false)
+    {
+      Resource* r = rt->getSingleResource();
+      os << "Vertex " << v->getName() << " is registered to resource " << r->name << " with latency of " << rt->latency << endl;
+    }
+  }
+
+  for(auto it: rm.reservationTables)
+  {
+    ReservationTable* rm = &it;
+
+    rm->dump();
   }
 
   return os;
@@ -215,7 +312,7 @@ const ReservationTable* ResourceModel::getEmptyReservationTableByLatency(int l) 
 {
   for(const ReservationTable &r:reservationTables)
   {
-    if(r.latency == l) return &r;
+    if(r.latency == l && r.isEmpty() == true) return &r;
   }
 
   throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + l);
@@ -316,6 +413,6 @@ std::set<const Vertex*> ResourceModel::getUnlimitedVertices() const
 std::set<const Vertex*> ResourceModel::getResourceConstrainedVertices(const ReservationTable* reservationTable) const
 {
   return getFilteredVertices([reservationTable] (const ReservationTable* rt) -> bool { return rt == reservationTable; });
-}
+}*/
 
 }

@@ -70,16 +70,16 @@ int main(int argc, char *args[])
       {
         HatScheT::GraphMLResourceReader readerRes;
         HatScheT::ResourceModel rm = readerRes.readResourceModel(str.c_str());
+        //cout << rm << endl;
+
+        //HatScheT::GraphMLGraphReader readerGraph(&rm);
+        //HatScheT::Graph g = readerGraph.readGraph(str.c_str());
+        //cout << g << endl;
         cout << rm << endl;
 
-        HatScheT::GraphMLGraphReader readerGraph(&rm);
-        HatScheT::Graph g = readerGraph.readGraph(str.c_str());
-        cout << g << endl;
-        cout << rm << endl;
-
-        HatScheT::DotWriter dw("example", &g, &rm);
-        dw.setDisplayNames(true);
-        dw.write();
+        //HatScheT::DotWriter dw("example", &g, &rm);
+        //dw.setDisplayNames(true);
+        //dw.write();
       }
       catch(HatScheT::Exception &e)
       {
