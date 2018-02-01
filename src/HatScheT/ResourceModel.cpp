@@ -218,7 +218,7 @@ const ReservationTable* ResourceModel::getEmptyReservationTableByLatency(int l) 
     if(r.latency == l) return &r;
   }
 
-  throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + l);
+  throw Exception("ResourceModel.getEmptyReservationTablesByLatency: Requested latency not found: " + to_string(l));
 }
 
 ReservationTable* ResourceModel::makeReservationTable(int latency)

@@ -11,17 +11,45 @@ Graph::Graph()
   this->name = "";
 }
 
+Graph::~Graph()
+{
+  for(Vertex *v : vertices)
+    delete v;
+}
+
+Vertex& Graph::createVertex()
+{
+  return createVertex(++maxVertexId);
+}
+
+Vertex& Graph::createVertex(int id)
+{
+  Vertex *v = new Vertex(id);
+  vertices.insert(v);
+  return *v;
+}
+
+Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Edge::DependencyType dependencyType)
+{
+  Edge *e = new Edge(Vsrc,Vdst,delay,backward,dependencyType);
+  edges.insert(e);
+  return *e;
+}
+
+
+/* ToDo: Remove me
 int Graph::addVertex(Vertex &v)
 {
-  vertices[++maxVertexId] = &v;
+  verticesOld[++maxVertexId] = &v;
   return maxVertexId;
 }
+*/
 
 int Graph::addVertex(Vertex &v, unsigned id)
 {
-  if(vertices.find(id) == vertices.end())
+  if(verticesOld.find(id) == verticesOld.end())
   {
-    vertices[id] = &v;
+    verticesOld[id] = &v;
     return id;
   }
   else
@@ -32,8 +60,8 @@ int Graph::addVertex(Vertex &v, unsigned id)
 
 Vertex& Graph::getVertex(int id)
 {
-  vertex_t::iterator it = vertices.find(id);
-  if(it != vertices.end())
+  vertex_t::iterator it = verticesOld.find(id);
+  if(it != verticesOld.end())
     return *(it->second);
   else
     throw Exception("Failure in accessing non-existing vertex id: " + std::to_string(id));
@@ -41,16 +69,16 @@ Vertex& Graph::getVertex(int id)
 
 int Graph::addEdge(Edge &e)
 {
-  edges[++maxEdgeId] = &e;
+  edgesOld[++maxEdgeId] = &e;
   e.setID(maxEdgeId);
   return maxEdgeId;
 }
 
 int Graph::addEdge(Edge &e, unsigned id)
 {
-  if(edges.find(id) == edges.end())
+  if(edgesOld.find(id) == edgesOld.end())
   {
-    edges[id] = &e;
+    edgesOld[id] = &e;
     return id;
   }
   else
@@ -61,8 +89,8 @@ int Graph::addEdge(Edge &e, unsigned id)
 
 Edge& Graph::getEdge(int id)
 {
-  edge_t::iterator it = edges.find(id);
-  if(it != edges.end())
+  edge_t::iterator it = edgesOld.find(id);
+  if(it != edgesOld.end())
     return *(it->second);
   else
     throw Exception("Failure in accessing non-existing edge id: " + std::to_string(id));
@@ -72,13 +100,13 @@ ostream& operator<<(ostream& os, const Graph& g)
 {
   os << "Printing Graph Info:" << endl;
 
-  for(auto a:g.vertices)
+  for(auto a:g.verticesOld)
   {
     Vertex* v = a.second;
     os << *v << endl;
   }
 
-  for(auto a:g.edges)
+  for(auto a:g.edgesOld)
   {
     Edge* e = a.second;
     os << *e << endl;

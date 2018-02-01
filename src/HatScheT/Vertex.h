@@ -21,9 +21,11 @@ public:
    */
   void setName(string s){this->name = s;}
   const string getName() const {return this->name;}
-  /*!
-     * \brief < operator used for map container
-     */
+
+  /*! DEPRECATED!! Remove me when not further in use !
+   *
+   * \brief < operator used for map container
+   */
   bool operator<(const Vertex& vref) const
   {
     return id < vref.id;
