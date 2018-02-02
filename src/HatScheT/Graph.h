@@ -22,8 +22,6 @@ class Graph
 public:
   Graph();
   ~Graph();
-
-
   /*!
    * Creates a vertex, assigns a non-existing id and inserts it in the graph
    *
@@ -48,9 +46,13 @@ public:
    * @return A reference to the created edge
    */
   Edge &createEdge(Vertex &Vsrc, Vertex &Vdst, int delay=0, bool backward=false, Edge::DependencyType dependencyType=Edge::Data);
-
+  /*!
+   * \brief operator <<
+   * \param os
+   * \param g
+   * \return
+   */
   friend ostream& operator<<(ostream& os, const Graph& g);
-
   /*!
    * \brief getNumberOfVertices
    * \return
@@ -59,7 +61,16 @@ public:
   {
     return this->vertices.size();
   }
-
+  /*!
+   * \brief isEmpty test whether this graph has vertices
+   * \return
+   */
+  bool isEmpty();
+  /*!
+   * \brief getVertexById
+   * \param id
+   * \return
+   */
   Vertex& getVertexById(int id) const;
 
   /*!
@@ -67,32 +78,39 @@ public:
    * \param s
    */
   void setName(string s){this->name = s;}
-
   const string getName() const {return this->name;}
-
+  /*!
+   * \brief verticesBegin iterate over vertices
+   * \return
+   */
   const std::set<Vertex*>::iterator verticesBegin()
   {
       return vertices.begin();
   }
-
-
+  /*!
+   * \brief verticesEnd iterate over vertices
+   * \return
+   */
   const std::set<Vertex*>::iterator verticesEnd()
   {
       return vertices.end();
   }
-
-
+  /*!
+   * \brief edgesBegin iterate over edges
+   * \return
+   */
   const std::set<Edge*>::iterator edgesBegin()
   {
       return edges.begin();
   }
-
-
+  /*!
+   * \brief edgesEnd iterate over edges
+   * \return
+   */
   const std::set<Edge*>::iterator edgesEnd()
   {
       return edges.end();
   }
-
 protected:
   /*!
    * The container for vertices

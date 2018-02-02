@@ -29,6 +29,23 @@ void DotWriter::write()
   colors.push_back("violetred3");
   colors.push_back("purple");
 
+  //assign resource
+  std::map<const Resource*, int> resColAssignments;
+
+  int i = 0;
+  for(auto it = this->rm->resourcesBegin(); it != this->rm->resourcesEnd(); ++it)
+  {
+    const Resource* r = *it;
+    //skip unlimited
+    if(r->getLimit() == -1) continue;
+
+    resColAssignments.insert({r, i});
+    i++;
+
+    //only 7 supported
+    if(i == 6) break;
+  }
+
   FILE* graphfilepointer = NULL;
   graphfilepointer = fopen((this->path+".dot").c_str(),"w");
 
@@ -49,17 +66,17 @@ void DotWriter::write()
 
     //bool limitedResource = this->rm->isResourceConstrained(v);
     unsigned int rId = 0;
+    const Resource* r = this->rm->getResource(v);
 
-    //if(limitedResource == true)
-    {
-      //Resource* r = this->rm->getResource(v);
-      //rId = r->id;
+    if(r->getLimit() != -1)
+    {     
+      rId = resColAssignments.at(r);
     }
 
     node_string << "vertex" << v->getId() << "[label=\"";
     node_string << nodeName << "\\" << "n";
     node_string << "\",fontsize=10,shape=circle";
-    //if(limitedResource == true) node_string << ",style=\"filled\", color=\"black\"" << ",fillcolor=\""+ colors[rId] +"\"";
+    if(r->getLimit() != -1) node_string << ",style=\"filled\", color=\"black\"" << ",fillcolor=\""+ colors[rId] +"\"";
     node_string << "];\n";
 
     fprintf(graphfilepointer,"%s",node_string.str().c_str());

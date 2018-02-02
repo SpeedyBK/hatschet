@@ -233,6 +233,22 @@ public:
    * \return
    */
   bool isEmpty();
+  /*!
+   * \brief resourcesBegin iterate over resources
+   * \return
+   */
+  const std::list<Resource*>::iterator resourcesBegin()
+  {
+      return resources.begin();
+  }
+  /*!
+   * \brief resourcesEnd iterate over resources
+   * \return
+   */
+  const std::list<Resource*>::iterator resourcesEnd()
+  {
+      return resources.end();
+  }
 private:
   /*!
    * \brief registrations

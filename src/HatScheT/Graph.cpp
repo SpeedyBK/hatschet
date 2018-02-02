@@ -36,6 +36,12 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Ed
   return *e;
 }
 
+bool Graph::isEmpty()
+{
+  if(this->vertices.size() == 0) return true;
+  return false;
+}
+
 Vertex& Graph::getVertexById(int id) const
 {
   for(auto a:this->vertices)

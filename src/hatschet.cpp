@@ -103,9 +103,7 @@ int main(int argc, char *args[])
           cout << "Empty Resource Model Provided for graph parsing! Provide a valid resource model using  --graphmlrespath=" << endl;
         }
 
-        //HatScheT::DotWriter dw("example", &g, &rm);
-        //dw.setDisplayNames(true);
-        //dw.write();
+
       }
       catch(HatScheT::Exception &e)
       {
@@ -118,7 +116,13 @@ int main(int argc, char *args[])
     }
     else if(getCmdParameter(args[i],"--dot=",value))
     {
-
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Writing to dotfile " << value << ".dot" << endl;
+        HatScheT::DotWriter dw(value, &g, &rm);
+        dw.setDisplayNames(true);
+        dw.write();
+      }
     }
     else
     {
