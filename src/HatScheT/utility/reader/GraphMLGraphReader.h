@@ -17,7 +17,7 @@ public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLGraphReader(ResourceModel* rm);
+  GraphMLGraphReader(ResourceModel* rm, Graph *g);
   ~GraphMLGraphReader();
   /*!
      * \brief readGraph the main function of the graphML parser
@@ -39,7 +39,7 @@ private:
   /*!
      * \brief g used to add elemets to the graph during parsing process
      */
-  Graph g;
+  Graph* g;
   /*!
      * \brief startElement
      * \param uri
@@ -94,13 +94,15 @@ private:
    */
   bool resourceTagFound;
   /*!
-   * \brief currVertex
+   * \brief currVertexId
    */
-  Vertex* currVertex;
-  /*!
-   * \brief currEdge
-   */
-  Edge* currEdge;
+  int currVertexId;
+  int dstId;
+  int srcId;
+  int edgeLatency;
+  bool edgeBackward;
+  string currVertexResName;
+
   };
 }
 

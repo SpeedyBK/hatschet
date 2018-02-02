@@ -40,7 +40,7 @@ void DotWriter::write()
   //write vertices to dot
   for(auto it = this->g->verticesBegin(); it != this->g->verticesEnd(); it++)
   {
-    Vertex* v =  it->second;
+    Vertex* v =  *it;
     stringstream node_string;
     string nodeName;
 
@@ -68,7 +68,7 @@ void DotWriter::write()
   //write edges to dot
   for(auto it = this->g->edgesBegin(); it != this->g->edgesEnd(); it++)
   {
-    Edge* e = it->second;
+    Edge* e = *it;
     Vertex& srcVertex = e->getVertexSrc();
     Vertex& dstVertex = e->getVertexDst();
     stringstream edge_string;

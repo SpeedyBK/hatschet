@@ -12,9 +12,9 @@
 
 namespace HatScheT {
 
-GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm)
+GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
 {
-  this->g = HatScheT::Graph();
+  this->g = g;
   this->rm = rm;
 
   this->nodeTagFound = false;
@@ -23,6 +23,12 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm)
   this->latencyTagFound = false;
   this->dataTagFound = false;
   this->resourceTagFound = false;
+
+  this->currVertexId = -1;
+  this->dstId = -1;
+  this->srcId = -1;
+  this->edgeLatency = -1;
+  this->edgeBackward = false;
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -36,14 +42,20 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
 
   if(name == "node" && this->nodeTagFound == true)
   {
-    this->g.addVertex(*(this->currVertex), this->currVertex->getId());
+    Vertex* v = &this->g->createVertex(this->currVertexId);
+    Resource* r = this->rm->getResource(this->currVertexResName);
+
+    this->rm->registerVertex(v, r);
 
     this->nodeTagFound = false;
   }
 
   if(name == "edge")
   {
-    this->g.addEdge(*(this->currEdge));
+    Vertex& source = this->g->getVertexById(this->srcId);
+    Vertex& target = this->g->getVertexById(this->dstId);
+
+    this->g->createEdge(source, target, this->edgeLatency, this->edgeBackward);
 
     this->edgeTagFound = false;
   }
@@ -66,7 +78,7 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
     {
       if(this->nameTagFound)
       {
-        this->currVertex->setName(XMLString::transcode(chars));
+
       }
 
       if(this->resourceTagFound)
@@ -76,9 +88,7 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
         std::string::iterator end_pos = std::remove(name.begin(), name.end(), ' ');
         name.erase(end_pos, name.end());
 
-        Resource* r = this->rm->getResource(name);
-
-        this->rm->registerVertex(this->currVertex, r);
+        this->currVertexResName = name;
       }
     }
 
@@ -86,7 +96,12 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
     {
       if(this->latencyTagFound)
       {
-         this->currEdge->setDelay(atoi(XMLString::transcode(chars)));
+        /*std::string latency = XMLString::transcode(chars);
+        //remove whitespaces
+        std::string::iterator end_pos = std::remove(latency.begin(), latency.end(), ' ');
+        latency.erase(end_pos, latency.end());*/
+
+         this->edgeLatency = atoi(XMLString::transcode(chars));
       }
     }
   }
@@ -103,9 +118,10 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
     if(idstring != "modsched_info")
     {
       this->nodeTagFound = true;
-      Vertex* v = new Vertex(stoi(idstring));
+      //Vertex* v = new Vertex(stoi(idstring));
 
-      this->currVertex = v;
+      //this->currVertex = v;
+      this->currVertexId = stoi(idstring);
     }
   }
 
@@ -116,11 +132,8 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
     string sourcestring = XMLString::transcode(attrs.getValue(XMLString::transcode("source")));
     string targetstring = XMLString::transcode(attrs.getValue(XMLString::transcode("target")));
 
-    Vertex& source = this->g.getVertex(stoi(sourcestring));
-    Vertex& target = this->g.getVertex(stoi(targetstring));
-
-    Edge* e = new Edge(source, target);
-    this->currEdge = e;
+    this->srcId = stoi(sourcestring);
+    this->dstId = stoi(targetstring);
   }
 
   if(name == "data")
@@ -208,7 +221,7 @@ Graph& GraphMLGraphReader::readGraph(const char *path)
 
   cout << "graphMLReader.parseGraph: Finished parsing from path: " << path << endl;
 
-  return (this->g);
+  return *(this->g);
 }
 
 }

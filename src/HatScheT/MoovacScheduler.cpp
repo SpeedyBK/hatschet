@@ -72,9 +72,9 @@ void MoovacScheduler::schedule()
 
 void MoovacScheduler::setTVectorVariables()
 {
-  for(std::map<unsigned,Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
   {
-    Vertex* v = it->second;
+    Vertex* v = *it;
     int id = v->getId();
 
     //17
@@ -89,9 +89,9 @@ void MoovacScheduler::setTVectorVariables()
 
 void MoovacScheduler::fillRegVector()
 {
-  for(std::map<unsigned,Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
   {
-    Edge* e = it->second;
+    Edge* e = *it;
 
     Vertex& srcV = e->getVertexSrc();
     Vertex& dstV = e->getVertexDst();

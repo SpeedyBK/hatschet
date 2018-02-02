@@ -38,7 +38,6 @@ public:
    * \return The vertex
    */
   Vertex& createVertex(int id);
-
   /*!
    * @brief creates an edge in the graph
    * @param Vsrc The source vertex
@@ -58,9 +57,10 @@ public:
    */
   unsigned int getNumberOfVertices()
   {
-//    return this->vertices.count();
-    return this->verticesOld.size();
+    return this->vertices.size();
   }
+
+  Vertex& getVertexById(int id) const;
 
   /*!
    * \brief setName
@@ -69,110 +69,39 @@ public:
   void setName(string s){this->name = s;}
 
   const string getName() const {return this->name;}
-  /*!
-   * \brief verticesBegin
-   * \return
-   */
 
-
-  /*! The following methods are DEPRECATED !*/
-
-
-
-  /*!
-   * Adds a vertex to the graph, assigns a non-existing id and returns it
-   *
-   * \param v The vertex to be added
-   * \return The id of the vertex
-   */
-//  int addVertex(Vertex &v);
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * Adds a vertex to the graph with id
-   *
-   * \param v The vertex to be added
-   * \param id The id, the vertex should be assigned to
-   * \return The id of the vertex or -1 if id already exists
-   */
-  int addVertex(Vertex &v, unsigned id);
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * Returns the reference to vertex with id 'id', an Exception is thrown if id does not exist
-   *
-   * \param id The if of the vertex
-   */
-  Vertex& getVertex(int id);
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * Adds an edge to the graph
-   *
-   * \param e The edge to be added
-   * \return The id of the edge
-   */
-  int addEdge(Edge &e);
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * Adds a edge to the graph with id
-   *
-   * \param v The edge to be added
-   * \param id The id, the edge should be assigned to
-   * \return The id of the edge or -1 if id already exists
-   */
-  int addEdge(Edge &e, unsigned id);
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * Returns the reference to edge with id 'id', an Exception is thrown if id does not exist
-   *
-   * \param id The if of the edge
-   */
-  Edge& getEdge(int id);
-  /*!
-   * \brief operator <<
-   * \param os
-   * \param g
-   * \return
-   */
-
-  /*! DEPRECATED!! Remove me when not further in use ! */
-  const std::map<unsigned,Vertex*>::iterator verticesBegin()
+  const std::set<Vertex*>::iterator verticesBegin()
   {
-      return verticesOld.begin();
+      return vertices.begin();
   }
 
-  /*! DEPRECATED!! Remove me when not further in use ! */
-  const std::map<unsigned,Vertex*>::iterator verticesEnd()
+
+  const std::set<Vertex*>::iterator verticesEnd()
   {
-      return verticesOld.end();
+      return vertices.end();
   }
 
-  /*! DEPRECATED!! Remove me when not further in use ! */
-  const std::map<unsigned,Edge*>::iterator edgesBegin()
+
+  const std::set<Edge*>::iterator edgesBegin()
   {
-      return edgesOld.begin();
+      return edges.begin();
   }
 
-  /*! DEPRECATED!! Remove me when not further in use ! */
-  const std::map<unsigned,Edge*>::iterator edgesEnd()
+
+  const std::set<Edge*>::iterator edgesEnd()
   {
-      return edgesOld.end();
+      return edges.end();
   }
 
 protected:
   /*!
    * The container for vertices
    */
-  vertex_t verticesOld;  /*! DEPRECATED!! Remove me when not further in use ! */
   std::set<Vertex*> vertices;
 
   /*!
    * The container for edges
    */
-  edge_t edgesOld;  /*! DEPRECATED!! Remove me when not further in use ! */
   std::set<Edge*> edges;
 
   /*!

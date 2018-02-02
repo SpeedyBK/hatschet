@@ -11,7 +11,7 @@ Edge::Edge(Vertex &src, Vertex &dst, int delay, bool backward, DependencyType de
 
 ostream& operator<<(ostream& os, const Edge& e)
 {
-   os << "Edge Id: " << e.getID() << ". From Node" << e.getVertexSrcName()<< " to " << e.getVertexDstName() << "(Delay " << e.getDelay() << ", Backward " << to_string(e.getBackward()) << ")";
+   os << "Edge Id: " << e.getID() << ". From Node " << e.getVertexSrcName()<< " to " << e.getVertexDstName() << " (Delay " << e.getDelay() << ", Backward " << to_string(e.getBackward()) << ")";
 
   return os;
 }

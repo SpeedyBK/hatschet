@@ -36,79 +36,28 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Ed
   return *e;
 }
 
-
-/* ToDo: Remove me
-int Graph::addVertex(Vertex &v)
+Vertex& Graph::getVertexById(int id) const
 {
-  verticesOld[++maxVertexId] = &v;
-  return maxVertexId;
-}
-*/
-
-int Graph::addVertex(Vertex &v, unsigned id)
-{
-  if(verticesOld.find(id) == verticesOld.end())
+  for(auto a:this->vertices)
   {
-    verticesOld[id] = &v;
-    return id;
+    Vertex* v = a;
+    if(v->getId() == id) return *v;
   }
-  else
-  {
-    return -1;
-  }
-}
-
-Vertex& Graph::getVertex(int id)
-{
-  vertex_t::iterator it = verticesOld.find(id);
-  if(it != verticesOld.end())
-    return *(it->second);
-  else
-    throw Exception("Failure in accessing non-existing vertex id: " + std::to_string(id));
-}
-
-int Graph::addEdge(Edge &e)
-{
-  edgesOld[++maxEdgeId] = &e;
-  e.setID(maxEdgeId);
-  return maxEdgeId;
-}
-
-int Graph::addEdge(Edge &e, unsigned id)
-{
-  if(edgesOld.find(id) == edgesOld.end())
-  {
-    edgesOld[id] = &e;
-    return id;
-  }
-  else
-  {
-    return -1;
-  }
-}
-
-Edge& Graph::getEdge(int id)
-{
-  edge_t::iterator it = edgesOld.find(id);
-  if(it != edgesOld.end())
-    return *(it->second);
-  else
-    throw Exception("Failure in accessing non-existing edge id: " + std::to_string(id));
 }
 
 ostream& operator<<(ostream& os, const Graph& g)
 {
   os << "Printing Graph Info:" << endl;
 
-  for(auto a:g.verticesOld)
+  for(auto a:g.vertices)
   {
-    Vertex* v = a.second;
+    Vertex* v = a;
     os << *v << endl;
   }
 
-  for(auto a:g.edgesOld)
+  for(auto a:g.edges)
   {
-    Edge* e = a.second;
+    Edge* e = a;
     os << *e << endl;
   }
 
