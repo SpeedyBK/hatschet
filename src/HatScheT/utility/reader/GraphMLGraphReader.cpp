@@ -76,6 +76,9 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
         std::string::iterator end_pos = std::remove(name.begin(), name.end(), ' ');
         name.erase(end_pos, name.end());
 
+        Resource* r = this->rm->getResource(name);
+
+        this->rm->registerVertex(this->currVertex, r);
       }
     }
 
@@ -132,7 +135,7 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
           this->nameTagFound = true;
       }
 
-      if (key == "uses_resource_kind")
+      if (key == "uses_resource")
       {
           this->resourceTagFound = true;
       }

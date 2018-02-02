@@ -17,7 +17,6 @@ GraphMLResourceReader::GraphMLResourceReader()
   this->rm = new ResourceModel();
   this->reservationTableTagFound = false;
   this->blogTagFound = false;
-  this->currRtName = "";
 }
 
 GraphMLResourceReader::~GraphMLResourceReader()
@@ -30,12 +29,10 @@ void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * co
   string name = XMLString::transcode(localname);
 
   if(name == "rt")
-  {
-    this->rm->makeReservationTable(this->currRtName);
-
+  {   
     this->reservationTableTagFound = false;
-    this->blocks.clear();
   }
+
 }
 
 void GraphMLResourceReader::characters(const XMLCh * const chars, const XMLSize_t length)
@@ -64,7 +61,16 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
   {
     this->reservationTableTagFound = true;
 
-    this->currRtName = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
+    this->currRt = &(this->rm->makeReservationTable(XMLString::transcode(attrs.getValue(XMLString::transcode("name")))));
+  }
+
+  if(tag == "block")
+  {
+    string resourcenamestring = XMLString::transcode(attrs.getValue(XMLString::transcode("resourceName")));
+    int startTime = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("startTime"))));
+    Resource* r = this->rm->getResource(resourcenamestring);
+
+    this->currRt->makeReservationBlock(r, startTime);
   }
 }
 

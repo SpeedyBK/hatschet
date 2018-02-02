@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
 	<Resources>
-		<resource name="Adder150MHzFloat" limit="1" latency="3" blockingTime="1" />
+		<resource name="Adder" limit="1" latency="3" blockingTime="1" />
 		<resource name="Multiplier" limit="1" latency="5" blockingTime="1" />
 		<resource name="Gain" limit="inf" latency="5" blockingTime="1" />
 	</Resources>
 	<ReservationTables>
 		<rt name="MAC" >
-			<block id="1" resourceName="Multiplier" startTime="0" />
-			<block id="2" resourceName="Adder150MHzFloat" startTime="5" />
+			<block resourceName="Multiplier" startTime="0" />
+			<block resourceName="Adder" startTime="5" />
 		</rt>
-		<rt name="ThreeMult">
-			<block id="1" resourceName="Multiplier" startTime="0" />
-			<block id="2" resourceName="Multiplier" startTime="1" />
-			<block id="3" resourceName="Multiplier" startTime="2" />
+		<rt name="ThreeMultAndGain">
+			<block resourceName="Multiplier" startTime="0" />
+			<block resourceName="Multiplier" startTime="1" />
+			<block resourceName="Multiplier" startTime="2" />
+			<block resourceName="Gain" startTime="1" />
 		</rt>
 	</ReservationTables>
 </ModelInformation>

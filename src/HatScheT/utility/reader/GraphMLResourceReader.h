@@ -79,13 +79,9 @@ private:
    */
   bool blogTagFound;
   /*!
-   * \brief currRtName
+   * \brief currRt
    */
-  string currRtName;
-  /*!
-   * \brief blocks contianer to store indermediate parsing results of reservation tables
-   */
-  set<pair<Resource*, int> > blocks;
+  ReservationTable* currRt;
   };
 }
 

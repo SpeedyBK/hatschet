@@ -9,27 +9,27 @@
     </node>
     <node id="1">
       <data key="name"> Add1 </data>
-      <data key="uses_rt">simpleAdd</data>
+      <data key="uses_resource">Adder</data>
     </node>
 	<node id="2">
       <data key="name"> Mult1 </data>
-      <data key="uses_rt">simpleMult</data>
+      <data key="uses_resource">Multiplier</data>
     </node>
 	<node id="3">
       <data key="name"> Add2 </data>
-      <data key="uses_rt">simpleAdd</data>
+      <data key="uses_resource">Adder</data>
     </node>
 	<node id="4">
       <data key="name"> Gain1 </data>
-      <data key="uses_rt">simpleGain</data>
+      <data key="uses_resource">Gain</data>
     </node>
 	<node id="5">
       <data key="name"> Mult2 </data>
-      <data key="uses_rt">simpleMult</data>
+      <data key="uses_resource">Multiplier</data>
     </node>
 	<node id="6">
       <data key="name"> Gain </data>
-      <data key="uses_rt">simpleGain</data>
+      <data key="uses_resource">Gain</data>
     </node>
     <edge id="1_2" source="1" target="2">
       <data key="latency"> 0 </data>

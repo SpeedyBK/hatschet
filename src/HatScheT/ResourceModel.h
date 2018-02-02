@@ -11,188 +11,241 @@
 
 namespace HatScheT
 {
-
+/*!
+ * \brief The Resource class define a limited or unlimited resource, e.g. singlePrecAdd or doublePrecMult
+ * use -1 as limit for an unlimited resource
+ */
 class Resource
 {
 public:
+  /*!
+   * \brief Resource
+   * \param name
+   * \param limit use -1 as limit for an unlimited resource
+   * \param latency the number of clock cycles the resource need to perform the operation on one data sample
+   * \param blockingTime the number of clock cycles the resource is blocked until the next data sample can be inserted
+   */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {}
-
-  //convenience
-  virtual bool isReservationTable(){return false;}
-  virtual int getLimit() const {return this->limit;}
-  virtual int getLatency() const {return this->latency;}
-  virtual int getBlockingTime() const {return this->blockingTime;}
-  std::string getName() const {return this->name;}
+  /*!
+   * \brief isReservationTable
+   * \return
+   */
+  virtual bool isReservationTable(){
+    return false;}
+  /*!
+   * \brief getLimit
+   * \return
+   */
+  virtual int getLimit() const {
+    return this->limit;}
+  /*!
+   * \brief getLatency
+   * \return
+   */
+  virtual int getLatency() const {
+    return this->latency;}
+  /*!
+   * \brief getBlockingTime
+   * \return
+   */
+  virtual int getBlockingTime() const {
+    return this->blockingTime;}
+  /*!
+   * \brief getName
+   * \return
+   */
+  std::string getName() const {
+    return this->name;}
 protected:
+  /*!
+   * \brief name
+   */
   const std::string name;
+  /*!
+   * \brief limit
+   */
   const int limit;
+  /*!
+   * \brief latency
+   */
   const int latency;
+  /*!
+   * \brief blockingTime
+   */
   const int blockingTime;
-
-private:
-
 };
 
+/*!
+ * \brief The ReservationBlock class descripes one of possible many resource occupied by a reservation table at a specific start time
+ */
 class ReservationBlock
 {
 public:
-  ReservationBlock(Resource* resource, int startTime) : resource(resource), startTime(startTime) {}
-
+  /*!
+   * \brief ReservationBlock
+   * \param resource provide the occupied resource
+   * \param startTime provide the start time
+   */
+  ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {}
+  /*!
+   * \brief operator <<
+   * \param os
+   * \param rb
+   * \return
+   */
+  friend ostream& operator<<(ostream& os, const ReservationBlock& rb);
+  /*!
+   * \brief getResource
+   * \return
+   */
   const Resource* getResource() const {return this->resource;}
+  /*!
+   * \brief getStartTime
+   * \return
+   */
   const int getStartTime() const {return this->startTime;}
-protected:
-  const Resource* resource;
-  const int startTime;
 private:
+  /*!
+   * \brief resource
+   */
+  const Resource* resource;
+  /*!
+   * \brief startTime
+   */
+  const int startTime;
 };
 
+/*!
+ * \brief The ReservationTable class descripe a complex operation that is composite of many resources/operations
+ * one of each operations is called a reservation block
+ */
 class ReservationTable : public Resource
 {
 public:
+  /*!
+   * \brief ReservationTable latency and limit are calculated based on the used reservation block resources
+   * \param name provide a name
+   */
   ReservationTable(std::string name) : Resource(name, -1, -1, -1) {}
-  ReservationBlock& makeReservationBlock(Resource* r, int startTime);
-
-  //convenience
-  virtual bool isReservationTable(){return true;}
+  /*!
+   * \brief operator <<
+   * \param os
+   * \param rt
+   * \return
+   */
+  friend ostream& operator<<(ostream& os, const ReservationTable& rt);
+  /*!
+   * \brief makeReservationBlock factory to generate and add a reservation block to this reservation tbale
+   * \param r
+   * \param startTime
+   * \return
+   */
+  ReservationBlock &makeReservationBlock(Resource* r, int startTime);
+  /*!
+   * \brief isReservationTable
+   * \return
+   */
+  virtual bool isReservationTable(){
+    return true;}
+  /*!
+   * \brief getLimit limit is lowest limit of all resources used
+   * \return
+   */
   virtual int getLimit() const;
+  /*!
+   * \brief getLatency latency is the last finished block
+   * \return
+   */
   virtual int getLatency() const;
-  virtual int getBlockingTime() const {throw new Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
-protected:
-
-
+  /*!
+   * \brief getBlockingTime
+   * \return
+   */
+  virtual int getBlockingTime() const {
+    throw new Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
 private:
-  std::list<ReservationBlock> blocks;
+  /*!
+   * \brief blocks
+   */
+  std::list<ReservationBlock*> blocks;
 };
-
-class ResourceModel
-{
-public:
-  ResourceModel();
-  friend ostream& operator<<(ostream& os, const ResourceModel& rm);
-
-  //factories
-  Resource& makeResource(std::string name, int limit, int latency, int blockingTime);
-  ReservationTable& makeReservationTable(string name);
-
-  //registration
-  void registerVertex(const Vertex* v, const Resource* r);
-
-  //convenience
-  const Resource* getResource(const Vertex* v) const;
-protected:
-
-private:
-  map<const Vertex*, const Resource*> registrations;
-  std::list<Resource> resources;
-  std::list<ReservationTable> tables;
-};
-
-/*class Resource
-{
-public:
-  const int id;
-  const std::string name;
-  const int availableUnits;
-  //here needed?! (PS)
-  //const int latency;
-  //const int blockingTime;
-
-  Resource(int id, std::string name, int availableUnits) : id(id), name(name), availableUnits(availableUnits) { }
-};
-
-struct BlockReservation
-{
-  const int start, duration;
-
-  BlockReservation(int start, int duration) : start(start), duration(duration) { }
-};
-
-class ReservationTable
-{
-public:
-  const int id;
-  const int latency;
-
-  ReservationTable(int id, int latency) : id(id), latency(latency) { }
-
-  // builder interface
-  void addReservation(Resource* resource);
-  void addReservation(Resource* resource, int start);
-  void addReservation(Resource* resource, int start, int duration);
-
-  // query interface
-  //  1) "raw" access to the table
-  std::set<Resource*>         getResources() const;
-  std::list<BlockReservation> getReservations(Resource* resource) const;
-  //  2) query a specific timestep
-  bool                        usesResourceAt(Resource* resource, int timestep) const;
-  int                         getResourceDemandAt(Resource* resource, int timestep) const;
-  //  3) summary view
-  int                         getMaxResourceDemand(Resource* resource) const;
-  //  4) convenience access for simple and block tables. Return nullptr or {-1,-1} if the query cannot be answered uniquely.
-  Resource*                   getSingleResource() const;
-  BlockReservation            getSingleReservation() const;
-
-  bool isEmpty() const;
-  bool isSimple() const;
-  bool isBlock() const;
-  bool isComplex() const;
-
-  void dump() const;
-
-private:
-  std::map<Resource*, std::list<BlockReservation>> reservationTable;
-};*/
 
 /*!
- * \brief ResourceModel
+ * \brief The ResourceModel class use this class to manage the resources of your implementation to schedule your data flow graph
  */
-/*
 class ResourceModel
 {
 public:
+  /*!
+   * \brief ResourceModel
+   */
   ResourceModel();
+  /*!
+   * \brief operator <<
+   * \param os
+   * \param rm
+   * \return
+   */
   friend ostream& operator<<(ostream& os, const ResourceModel& rm);
-
-  // factories for Resources
-  // Patrick ToDo(?): check for uniqueness
-  Resource* makeResource(std::string name);
-  Resource* makeResource(std::string name, int available);
-
-  // factories for ReservationTables. Any of these can be extended to be a complex table.
-  ReservationTable* makeEmptyReservationTable(int latency);
-  ReservationTable* makeSimpleReservationTable(int latency, Resource* resource);
-  ReservationTable* makeBlockReservationTablee(int latency, Resource* resource, int duration);
-
-  // association of vertices/reservation tables
-  void registerVertex(const Vertex* v, const ReservationTable* reservationTable);
-  const ReservationTable* getReservationTable(const Vertex* v) const;
-
-  // access to all known reservation tables
-  std::list<const ReservationTable*> getReservationTables() const;
-  const ReservationTable* getEmptyReservationTableByLatency(int l) const;
-
-  // convenience
-  bool isUnlimited(const Vertex* v) const;
-  bool isResourceConstrained(const Vertex* v) const;
-  int getLatency(const Vertex* v) const;
-  std::set<const Vertex*> getUnlimitedVertices() const;
-  std::set<const Vertex*> getResourceConstrainedVertices(const ReservationTable* reservationTable) const;
+  /*!
+   * \brief makeResource generate a resource in your resource model
+   * \param name
+   * \param limit
+   * \param latency
+   * \param blockingTime
+   * \return
+   */
+  Resource &makeResource(std::string name, int limit, int latency, int blockingTime);
+  /*!
+   * \brief makeReservationTable generate a more complex operation
+   * \param name
+   * \return
+   */
+  ReservationTable& makeReservationTable(string name);
+  /*!
+   * \brief makeReservationBlock generate a reservation block of resource r in reservation table rt at start time
+   * \param rt
+   * \param r
+   * \param startTime
+   * \return
+   */
+  ReservationBlock& makeReservationBlock(ReservationTable* rt, Resource* r, int startTime);
+  /*!
+   * \brief registerVertex register a vertex to resource
+   * \param v
+   * \param r
+   */
+  void registerVertex(const Vertex* v, const Resource* r);
+  /*!
+   * \brief getResource
+   * \param v
+   * \return
+   */
+  const Resource *getResource(const Vertex* v) const;
+  /*!
+   * \brief getResource
+   * \param name
+   * \return
+   */
   Resource *getResource(std::string name) const;
-  Resource* getResource(Vertex* v) const;
-  bool resourceExists(std::string name) const;
-  ReservationTable* getRelatedRtByResName(std::string name) const;
-
-protected:
-
-
+  /*!
+   * \brief isEmpty
+   * \return
+   */
+  bool isEmpty();
 private:
-  std::map<const Vertex*, const ReservationTable*> vertexMap;
-  std::list<Resource> resources;
-  std::list<ReservationTable> reservationTables;
-  std::map<Resource*, ReservationTable*> resRtRelations;
+  /*!
+   * \brief registrations
+   */
+  map<const Vertex*, const Resource*> registrations;
+  /*!
+   * \brief resources
+   */
+  std::list<Resource*> resources;
+  /*!
+   * \brief tables
+   */
+  std::list<ReservationTable*> tables;
+};
 
-  ReservationTable* makeReservationTable(int latency);
-  std::set<const Vertex*> getFilteredVertices(std::function<bool(const ReservationTable*)> predicate) const;
-};*/
 }

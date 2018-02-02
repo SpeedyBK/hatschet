@@ -37,7 +37,8 @@ void print_short_help()
     std::cout << "--solver=[Gurobi|CPLEX|SCIP|LPSolve]    ILP solver (if available in ScaLP library), also a comma separated wish list of solvers can be provided" << std::endl;
     std::cout << "--timeout=[int]                         ILP solver Timeout in seconds" << std::endl;
     std::cout << "--threads=[int]                         Number of threads for the ILP solver" << std::endl;
-    std::cout << "--graphmlpath=[string]                  Path to graphML File you want to read. (Make sure XercesC is enabled)" << std::endl;
+    std::cout << "--graphmlrespath=[string]               Path to graphML Resource File you want to read. (Make sure XercesC is enabled)" << std::endl;
+    std::cout << "--graphmlgraphpath=[string]             Path to graphML Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
     std::cout << std::endl;
 
 }
@@ -46,7 +47,9 @@ int main(int argc, char *args[])
   std::string ilpSolver="";
   int threads=0;
   int timeout=-1; //default -1 means no timeout
-  
+  HatScheT::GraphMLResourceReader readerRes;
+  HatScheT::ResourceModel rm;
+
   //parse command line
   for (int i = 1; i < argc; i++) {
     char* value;
@@ -62,20 +65,41 @@ int main(int argc, char *args[])
     {
       ilpSolver = std::string(value);
     }
-    else if(getCmdParameter(args[i],"--graphmlpath=",value))
+    else if(getCmdParameter(args[i],"--graphmlrespath=",value))
+    {
+      #ifdef USE_XERCESC
+      string str = std::string(value);
+      try
+      {       
+        rm = readerRes.readResourceModel(str.c_str());
+      }
+      catch(HatScheT::Exception &e)
+      {
+        std::cerr << "Error: " << e << std::endl;
+      }
+
+      #else
+      cout << "Warning: You chose the graphml parameter, but XerseC was not found. Make to to prove the path to XercesC as CMAKE_PREFIX_PATH" << endl;
+      #endif
+    }
+    else if(getCmdParameter(args[i],"--graphmlgraphpath=",value))
     {
       #ifdef USE_XERCESC
       string str = std::string(value);
       try
       {
-        HatScheT::GraphMLResourceReader readerRes;
-        HatScheT::ResourceModel rm = readerRes.readResourceModel(str.c_str());
-        //cout << rm << endl;
+        if(rm.isEmpty() == false)
+        {
+          HatScheT::GraphMLGraphReader readerGraph(&rm);
+          HatScheT::Graph g = readerGraph.readGraph(str.c_str());
+          cout << g << endl;
+          cout << rm << endl;
+        }
 
-        //HatScheT::GraphMLGraphReader readerGraph(&rm);
-        //HatScheT::Graph g = readerGraph.readGraph(str.c_str());
-        //cout << g << endl;
-        cout << rm << endl;
+        else
+        {
+          cout << "Empty Resource Model Provided for graph parsing! Provide a valid resource model using  --graphmlrespath=" << endl;
+        }
 
         //HatScheT::DotWriter dw("example", &g, &rm);
         //dw.setDisplayNames(true);
