@@ -122,6 +122,35 @@ int main(int argc, char *args[])
         HatScheT::DotWriter dw(value, &g, &rm);
         dw.setDisplayNames(true);
         dw.write();
+      }    
+    }
+    else if(getCmdParameter(args[i],"--test=",value))
+    {
+      string str = std::string(value);
+      if(str=="READ")
+      {
+        string resStr = "graphMLFiles/example/exampleResourceModel.xml";
+        string graphStr = "graphMLFiles/example/example.graphml";
+        rm = readerRes.readResourceModel(resStr.c_str());
+
+        HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+        g = readerGraph.readGraph(graphStr.c_str());
+
+        if(rm.getNoOfResource() != 3){
+          cout << "Incorrect no of resource read: " << rm.getNoOfResource() << " instead of 3!" << endl;
+          exit(-1);
+        }
+
+        if(rm.getNoOfReservationTables() != 2){
+          cout << "Incorrect no of reservation tables read: " << rm.getNoOfResource() << " instead of 2!" << endl;
+          exit(-1);
+        }
+
+        if(g.getNumberOfVertices() != 6){
+          cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 6!" << endl;
+          exit(-1);
+        }
+
       }
     }
     else

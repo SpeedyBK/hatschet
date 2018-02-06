@@ -249,6 +249,16 @@ public:
   {
       return resources.end();
   }
+  /*!
+   * \brief getNoOfResource
+   * \return
+   */
+  const int getNoOfResource() const {return this->resources.size();}
+  /*!
+   * \brief getNoOfReservationTables
+   * \return
+   */
+  const int getNoOfReservationTables() const {return this->tables.size();}
 private:
   /*!
    * \brief registrations

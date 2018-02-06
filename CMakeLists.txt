@@ -1,8 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 project (hatschet)
 
-#-------------------------
+####################
 #Find ScaLP
+####################
 FIND_LIBRARY(SCALP_LIB
   NAMES libScaLP libScaLP.so libScaLP.dylib
 	HINTS "${SCALP_PREFIX_PATH}/lib"
@@ -21,8 +22,9 @@ ELSE (SCALP_H AND SCALP_LIB)
     MESSAGE(FATAL_ERROR "Could not find ScaLP (${SCALP_H},${SCALP_LIB}). Please specify path by setting SCALP_PREFIX_PATH (-DSCALP_PREFIX_PATH=<path to scalp install dir>)")
 ENDIF (SCALP_H AND SCALP_LIB)
 
-#-------------------------
+####################
 #Find XerxesC lib
+####################
 FIND_LIBRARY(XERCESC_LIB
         NAMES xerces-c
         HINTS "${XERCESC_LIBRARY_PATH}"
@@ -34,8 +36,9 @@ ELSE (XERCESC_LIB)
     MESSAGE(STATUS "Could not find XercesC Lib (${XERCESC_LIB}). Please specify path by setting XERCESC_LIBRARY_PATH (-DXERCESC_LIBRARY_PATH=<path to xerces lib dir>)")
 ENDIF (XERCESC_LIB)
 
-#-------------------------
+####################
 #Find XerxesC headers
+####################
 FIND_PATH(XERCESC_H
           xercesc/parsers/SAXParser.hpp
           HINTS "${XERCESC_INCLUDE_PATH}"
@@ -48,8 +51,9 @@ ELSE (XERCESC_H)
     MESSAGE(STATUS "Could not find XercesC Headers (${XERCESC_H}). Please specify path by setting XERCESC_INCLUDE_PATH (-DXERCESC_INCLUDE_PATH=<path to xerces include dir>)")
 ENDIF (XERCESC_H)
 
-#-------------------------
+####################
 #set define for XercesC
+####################
 IF (XERCESC_H AND XERCESC_LIB)
     add_definitions(-DUSE_XERCESC)
     MESSAGE(STATUS "Found XercesC: GraphML parser will be available")
@@ -90,3 +94,10 @@ target_link_libraries(hatschet-bin ${SCALP_LIB})
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
 
 
+####################
+# testing
+####################
+
+enable_testing()
+
+add_test("Read" "./hatschet" "--test=READ")
