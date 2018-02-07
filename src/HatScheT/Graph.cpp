@@ -36,6 +36,19 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Ed
   return *e;
 }
 
+bool Graph::isSourceVertex(Vertex *v)
+{
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* dstV = &e->getVertexDst();
+
+    if(dstV == v) return false;
+  }
+
+  return true;
+}
+
 bool Graph::isEmpty()
 {
   if(this->vertices.size() == 0) return true;

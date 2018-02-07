@@ -7,6 +7,7 @@
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
+#include <HatScheT/MoovacScheduler.h>
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -136,13 +137,13 @@ int main(int argc, char *args[])
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         g = readerGraph.readGraph(graphStr.c_str());
 
-        if(rm.getNoOfResource() != 3){
-          cout << "Incorrect no of resource read: " << rm.getNoOfResource() << " instead of 3!" << endl;
+        if(rm.getNoOfResources() != 3){
+          cout << "Incorrect no of resource read: " << rm.getNoOfResources() << " instead of 3!" << endl;
           exit(-1);
         }
 
         if(rm.getNoOfReservationTables() != 2){
-          cout << "Incorrect no of reservation tables read: " << rm.getNoOfResource() << " instead of 2!" << endl;
+          cout << "Incorrect no of reservation tables read: " << rm.getNoOfReservationTables() << " instead of 2!" << endl;
           exit(-1);
         }
 
@@ -151,6 +152,28 @@ int main(int argc, char *args[])
           exit(-1);
         }
 
+      }
+
+      if(str=="MOOVAC")
+      {
+        string resStr = "graphMLFiles/example/MoovacExampleRM.xml";
+        string graphStr = "graphMLFiles/example/MoovacExample.graphml";
+        rm = readerRes.readResourceModel(resStr.c_str());
+
+        HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+        g = readerGraph.readGraph(graphStr.c_str());
+
+        int maxLatencyConstraint = 18;
+        HatScheT::MoovacScheduler sched(g, {"CPLEX", "Gurobi"}, rm, 2, maxLatencyConstraint-1);
+        sched.setMaxLatencyConstraint(maxLatencyConstraint);
+        sched.setSolverQuiet(false);
+
+        sched.schedule();
+
+        if(sched.getII() != 5){
+          cout << "Wrong II determined: " << sched.getII() << " instead of 5!" << endl;
+          exit(-1);
+        }
       }
     }
     else
@@ -168,10 +191,8 @@ int main(int argc, char *args[])
 
   try
   {
-  	HatScheT::Graph g;
-  	HatScheT::ASAPScheduler sched(g);	
-  	
-  	sched.schedule();
+    HatScheT::Graph g;
+    HatScheT::ASAPScheduler sched(g);
   	
   }
   catch(HatScheT::Exception &e)

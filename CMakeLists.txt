@@ -100,4 +100,5 @@ target_link_libraries(hatschet-bin ${XERCESC_LIB})
 
 enable_testing()
 
-add_test("Read" "./hatschet" "--test=READ")
+add_test("XercesC_Read" "./hatschet" "--test=READ")
+add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")

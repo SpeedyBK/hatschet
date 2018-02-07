@@ -40,9 +40,18 @@ public:
    * \return The length of the schedule (i.e., the maximum start time)
    */
   int getScheduleLenght();
+  /*!
+   * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
+   * \param l
+   */
+  void setMaxLatencyConstraint(int l){this->maxLatencyConStraint =l;}
+  int getMaxLatencyConstraint(){return this->maxLatencyConStraint;}
 
 protected:
-
+  /*!
+   * \brief maxLatencyConStraint default is -1 (unlimited)
+   */
+  int maxLatencyConStraint;
   /*!
    * \brief Container for the start times
    */

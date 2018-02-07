@@ -170,4 +170,63 @@ bool ResourceModel::isEmpty()
   return false;
 }
 
+set<const Vertex*> ResourceModel::getVerticesOfResource(Resource *r) const
+{
+  set<const Vertex*> vertices;
+
+  for(auto it:this->registrations)
+  {
+    const Resource* rr = it.second;
+    if(rr==r) vertices.insert(it.first);
+  }
+
+  return vertices;
+}
+
+int ResourceModel::getNoOfVerticesRegisteredToResource(Resource *r) const
+{
+  int count = 0;
+
+  for(auto it:this->registrations)
+  {
+    const Resource* rr = it.second;
+    if(r==rr) count++;
+  }
+
+  return count;
+}
+
+int ResourceModel::getMaxLatency() const
+{
+  int maxLat = 0;
+
+  for(auto it:this->registrations)
+  {
+    const Resource* rr = it.second;
+
+    if(rr->getLatency()>maxLat)
+    {
+      maxLat = rr->getLatency();
+    }
+  }
+
+  return maxLat;
+}
+
+int ResourceModel::getVertexLatency(Vertex *v) const
+{
+  for(auto it:this->registrations)
+  {
+    const Vertex* rv = it.first;
+    const Resource* rr = it.second;
+
+    if(rv==v)
+    {
+      return rr->getLatency();
+    }
+  }
+
+  throw new Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
+}
+
 }

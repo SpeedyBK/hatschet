@@ -67,6 +67,12 @@ public:
    */
   bool isEmpty();
   /*!
+   * \brief isSourceVertex
+   * \param v
+   * \return
+   */
+  bool isSourceVertex(Vertex* v);
+  /*!
    * \brief getVertexById
    * \param id
    * \return

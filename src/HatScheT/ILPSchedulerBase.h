@@ -39,11 +39,22 @@ public:
    */
   void setSolverTimeout(long timeoutInSeconds);
 
+  /*!
+   * \brief setSolverQuiet manage solver output cout
+   * \param b
+   */
+  void setSolverQuiet(bool b){this->solverQuiet = b;}
+  bool getSolverQuiet(){return this->solverQuiet;}
+
 protected:
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
    */
   virtual void constructProblem() = 0;
+  /*!
+   * \brief setObjective This pure virtual function has to be implemented in the derived classes to set the objective
+   */
+  virtual void setObjective() = 0;
   /*!
    * A pointer to the ScaLP solver
    */

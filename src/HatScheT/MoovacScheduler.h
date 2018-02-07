@@ -15,7 +15,7 @@ namespace HatScheT
  * Presented at the Proceedings of the International Conference on Compilers, Architectures and Synthesis for Embedded Systems (CASES) 2016
  *
  */
-class MoovacScheduler :  public SchedulerBase, ILPSchedulerBase, ModuloSchedulerBase, ResourceConstrainedSchedulerBase
+class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public ResourceConstrainedSchedulerBase
 {
 public:
   MoovacScheduler(Graph& g, std::list<std::string> solverWishlist, ResourceModel &resourceModel, unsigned int minII, unsigned int maxII);
@@ -30,7 +30,15 @@ protected:
    * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
    */
   virtual void constructProblem();
+  /*!
+   * \brief setObjective currently asap
+   */
+  virtual void setObjective();
 private:
+  /*!
+   * \brief setSourceVerticesToZero pin all source vertices(inputs, constants,...) to starttime 0
+   */
+  void setSourceVerticesToZero();
   /*!
    * \brief resetContainer
    */
@@ -82,11 +90,11 @@ private:
   /*!
    * \brief t_vectorIndices
    */
-  map<Vertex*, unsigned int> t_vectorIndices;
+  map<const Vertex*, unsigned int> t_vectorIndices;
   /*!
    * \brief reg_vectorIndices
    */
-  map<Edge*, unsigned int> reg_vectorIndices;
+  map<const Edge*, unsigned int> reg_vectorIndices;
   /*!
    * \brief schedFound
    */

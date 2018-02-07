@@ -253,12 +253,36 @@ public:
    * \brief getNoOfResource
    * \return
    */
-  const int getNoOfResource() const {return this->resources.size();}
+  const int getNoOfResources() const {return this->resources.size();}
   /*!
    * \brief getNoOfReservationTables
    * \return
    */
   const int getNoOfReservationTables() const {return this->tables.size();}
+  /*!
+   * \brief getVertexLatency determine the latency of a registered vertex
+   * \param v
+   * \return
+   */
+  int getVertexLatency(Vertex* v) const;
+  /*!
+   * \brief getMaxLatency determine the maximal latency of all registered latencies
+   * TODO: HANDLE LATENCY/DELAY OF EDGES
+   * \return
+   */
+  int getMaxLatency() const;
+  /*!
+   * \brief getNoOfVerticesRegisteredToResource
+   * \param r
+   * \return
+   */
+  int getNoOfVerticesRegisteredToResource(Resource* r) const;
+  /*!
+   * \brief getVerticesOfResources
+   * \param r
+   * \return
+   */
+  set<const Vertex*> getVerticesOfResource(Resource* r) const;
 private:
   /*!
    * \brief registrations
