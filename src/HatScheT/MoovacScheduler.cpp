@@ -8,12 +8,11 @@ MoovacScheduler::MoovacScheduler(Graph &g, std::list<std::string>  solverWishlis
   this->minII = minII;
   this->maxII = maxII;
   this->SLMax = 0;
-  this->schedFound = false;
 }
 
 void MoovacScheduler::resetContainer()
 {
-  if(this->solver->getBackendName() != "Dynamic: Gurobi") this->solver->reset();
+  this->solver->reset();
   this->m_container.clear();
   this->regVector.clear();
   this->r_container.clear();
@@ -46,7 +45,7 @@ void MoovacScheduler::constructProblem()
   }
   else
   {
-     throw new Exception("MoovacScheduler.constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConStraint));
+     throw new Exception("MoovacScheduler.constructProblem: irregular maxLatencyConstraint " + this->maxLatencyConStraint);
   }
 
   this->setTVectorVariables();
@@ -84,8 +83,6 @@ void MoovacScheduler::schedule()
     //cleanup
     this->resetContainer();
 
-    if(this->solver->getBackendName() == "Dynamic: Gurobi") this->solver = new ScaLP::Solver({"Gurobi"});
-
     //setup solver
     this->setUpSolverSettings();
 
@@ -98,10 +95,6 @@ void MoovacScheduler::schedule()
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE)
     {
       this->schedFound = true;
-    }
-    else
-    {
-        this->schedFound = false;
     }
 
     else
