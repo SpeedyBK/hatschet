@@ -97,6 +97,12 @@ target_link_libraries(hatschet-bin ${XERCESC_LIB})
 
 
 ####################
+# HaTScheTConfig.cmake
+####################
+
+configure_file("${PROJECT_SOURCE_DIR}/HaTScheTConfig.cmake.in" "${PROJECT_SOURCE_DIR}/HaTScheTConfig.cmake" @ONLY)
+
+####################
 # testing
 ####################
 
