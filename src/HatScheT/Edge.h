@@ -39,15 +39,6 @@ public:
 
   //ToDo: add distance (no idea what it means in the UML)
 
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
-   * \brief < operator used for map container
-   */
-  bool operator<(const Edge& eref) const
-  {
-    return id < eref.id;
-  }
-
 protected:
   int id;
   bool backward;

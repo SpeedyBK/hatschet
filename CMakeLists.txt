@@ -69,6 +69,7 @@ src/HatScheT/Exception.cpp
 src/HatScheT/ASAPScheduler.cpp 
 src/HatScheT/SchedulerBase.cpp 
 src/HatScheT/MoovacScheduler.cpp
+src/HatScheT/MoovacMinRegScheduler.cpp
 src/HatScheT/IterativeSchedulerBase.cpp
 src/HatScheT/ILPSchedulerBase.cpp
 src/HatScheT/ResourceConstrainedSchedulerBase.cpp

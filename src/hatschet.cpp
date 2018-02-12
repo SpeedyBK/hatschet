@@ -7,7 +7,7 @@
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
-#include <HatScheT/MoovacScheduler.h>
+#include <HatScheT/MoovacMinRegScheduler.h>
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -172,6 +172,11 @@ int main(int argc, char *args[])
 
         if(sched.getII() != 5){
           cout << "Wrong II determined: " << sched.getII() << " instead of 5!" << endl;
+          exit(-1);
+        }
+
+        if(sched.getNoOfImplementedRegisters() != 9){
+          cout << "Wrong number of registers determined: " << sched.getNoOfImplementedRegisters() << " instead of 9!" << endl;
           exit(-1);
         }
       }

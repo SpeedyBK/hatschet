@@ -24,6 +24,11 @@ public:
    * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.
    */
   virtual void schedule();
+  /*!
+   * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
+   * \return
+   */
+  virtual int getNoOfImplementedRegisters();
 
 protected:
   /*!
@@ -34,7 +39,10 @@ protected:
    * \brief setObjective currently asap
    */
   virtual void setObjective();
-private:
+  /*!
+   * \brief setGeneralConstraints read the paper for further information
+   */
+  virtual void setGeneralConstraints();
   /*!
    * \brief setSourceVerticesToZero pin all source vertices(inputs, constants,...) to starttime 0
    */
@@ -52,17 +60,13 @@ private:
    */
   void setTVectorVariables();
   /*!
-   * \brief fillRegVector fill the container for ILP variables of registers
+   * \brief fillRegVector not in moovac
    */
-  void fillRegVector();
+  virtual void fillRegVector(){ }
   /*!
    * \brief setModuloAndResourceConstraints read the paper for further information
    */
   void setModuloAndResourceConstraints();
-  /*!
-   * \brief setGeneralConstraints read the paper for further information
-   */
-  void setGeneralConstraints();
   /*!
    * \brief m_container
    */
@@ -71,6 +75,10 @@ private:
    * \brief regVector
    */
   vector<ScaLP::Variable> regVector;
+  /*!
+   * \brief r_vector from moovac paper
+   */
+  vector<ScaLP::Variable> r_vector;
   /*!
    * \brief r_container
    */
@@ -91,6 +99,10 @@ private:
    * \brief t_vectorIndices
    */
   map<const Vertex*, unsigned int> t_vectorIndices;
+  /*!
+   * \brief r_vectorIndices
+   */
+  map<const Vertex*, unsigned int> r_vectorIndices;
   /*!
    * \brief reg_vectorIndices
    */

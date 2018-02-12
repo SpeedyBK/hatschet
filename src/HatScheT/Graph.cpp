@@ -32,6 +32,7 @@ Vertex& Graph::createVertex(int id)
 Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Edge::DependencyType dependencyType)
 {
   Edge *e = new Edge(Vsrc,Vdst,delay,backward,dependencyType);
+  e->setID(edges.size()+1);
   edges.insert(e);
   return *e;
 }
@@ -53,6 +54,21 @@ bool Graph::isEmpty()
 {
   if(this->vertices.size() == 0) return true;
   return false;
+}
+
+set<const Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+{
+  set<const Vertex*> vset;
+
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* srcV = &e->getVertexSrc();
+
+    if(srcV == v) vset.insert(&e->getVertexDst());
+  }
+
+  return vset;
 }
 
 Vertex& Graph::getVertexById(int id) const

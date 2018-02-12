@@ -78,7 +78,12 @@ public:
    * \return
    */
   Vertex& getVertexById(int id) const;
-
+  /*!
+   * \brief getSubsequentVertices get the subsequent vertices of v
+   * \param v
+   * \return
+   */
+  set<const Vertex*> getSubsequentVertices(const Vertex* v) const;
   /*!
    * \brief setName
    * \param s

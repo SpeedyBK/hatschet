@@ -265,6 +265,7 @@ public:
    * \return
    */
   int getVertexLatency(Vertex* v) const;
+  int getVertexLatency(const Vertex* v) const;
   /*!
    * \brief getMaxLatency determine the maximal latency of all registered latencies
    * TODO: HANDLE LATENCY/DELAY OF EDGES

@@ -213,6 +213,22 @@ int ResourceModel::getMaxLatency() const
   return maxLat;
 }
 
+int ResourceModel::getVertexLatency(const Vertex *v) const
+{
+  for(auto it:this->registrations)
+  {
+    const Vertex* rv = it.first;
+    const Resource* rr = it.second;
+
+    if(rv==v)
+    {
+      return rr->getLatency();
+    }
+  }
+
+  throw new Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
+}
+
 int ResourceModel::getVertexLatency(Vertex *v) const
 {
   for(auto it:this->registrations)
