@@ -74,17 +74,21 @@ void MoovacScheduler::setObjective()
 
 void MoovacScheduler::schedule()
 {
+  cout << "MoovacScheduler.schedule: start" << endl;
+
   this->timeoutCounter = 0;
   this->totalTime = 0;
   this->II = this->minII;
 
   while(this->II <= this->maxII)
   {
+    cout << "MoovacScheduler.schedule: next II "  << to_string(this->II) << endl;
     //cleanup
     this->resetContainer();
 
     //setup solver
     this->setUpSolverSettings();
+
 
     //construct the problem
     this->constructProblem();
@@ -111,6 +115,8 @@ void MoovacScheduler::schedule()
     std::cout<< "Schedule found! II is " << this->II << std::endl;
     std::cout<< this->solver->getResult() << std::endl;
   }
+
+  cout << "MoovacScheduler.schedule: finished" << endl;
 
   //fill solution structure
   //startTimes[...] = ...
@@ -156,13 +162,8 @@ void MoovacScheduler::setGeneralConstraints()
     unsigned int srcTVecIndex = this->t_vectorIndices[src];
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
-    //not needed? better calc them
-    //unsigned regVecIndex = this->reg_vectorIndices[e];
 
     this->solver->addConstraint(this->II*(e->getDelay()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
-    //not needed? better calc them
-    /*this->solver->addConstraint(t_vector[dstTVecIndex] - t_vector[srcTVecIndex]
-                                    - this->resourceModel.getVertexLatency(src) - e->getDelay() - this->regVector[regVecIndex] == 0);*/
   }
 }
 
@@ -263,6 +264,7 @@ void MoovacScheduler::setModuloAndResourceConstraints()
       if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
 
       int ak = r->getLimit();
+      if(ak==-1) continue;
       set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
 
       //declare y-vector
