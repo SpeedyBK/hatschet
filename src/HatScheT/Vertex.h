@@ -13,17 +13,18 @@ class Vertex
 {
 public:
   Vertex(int id);
-
+  /*!
+   * \brief getId
+   * \return
+   */
   const int getId() const { return id; }
   /*!
-   * \brief setName
+   * \brief setName optional
    * \param s
    */
   void setName(string s){this->name = s;}
   const string getName() const {return this->name;}
-
-  /*! DEPRECATED!! Remove me when not further in use !
-   *
+  /*!
    * \brief < operator used for map container
    */
   bool operator<(const Vertex& vref) const
@@ -31,11 +32,15 @@ public:
     return id < vref.id;
   }
 
-
 protected:
+  /*!
+   * \brief name optional
+   */
   string name;
+  /*!
+   * \brief id mandatory
+   */
   const int id;
-  std::string resourceType; //ToDo: Probably the type has to be changed to something else
 };
 ostream& operator<<(ostream& os, const Vertex& v);
 }

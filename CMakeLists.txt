@@ -81,6 +81,7 @@ src/HatScheT/utility/reader/GraphMLResourceReader.cpp
 src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
+src/HatScheT/utility/Utility.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)

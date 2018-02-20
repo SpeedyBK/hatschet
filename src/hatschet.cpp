@@ -126,18 +126,12 @@ int main(int argc, char *args[])
         dw.write();
       }    
     }
+    //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
       string str = std::string(value);
-      if(str=="READ")
-      {
-        if(HatScheT::Tests::readTest()==false) exit(-1);
-      }
-
-      if(str=="MOOVAC")
-      {
-        if(HatScheT::Tests::moovacTest()==false) exit(-1);
-      }
+      if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
+      if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
     }
     else
     {
@@ -155,8 +149,7 @@ int main(int argc, char *args[])
   try
   {
     HatScheT::Graph g;
-    HatScheT::ASAPScheduler sched(g);
-  	
+    HatScheT::ASAPScheduler sched(g); 	
   }
   catch(HatScheT::Exception &e)
   {

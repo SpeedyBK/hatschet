@@ -67,7 +67,6 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
     if(this->nameTagFound == true) this->nameTagFound = false;
     if(this->resourceTagFound == true) this->resourceTagFound = false;
   }
-
 }
 
 void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t length)
@@ -96,11 +95,6 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
     {
       if(this->latencyTagFound)
       {
-        /*std::string latency = XMLString::transcode(chars);
-        //remove whitespaces
-        std::string::iterator end_pos = std::remove(latency.begin(), latency.end(), ' ');
-        latency.erase(end_pos, latency.end());*/
-
          this->edgeLatency = atoi(XMLString::transcode(chars));
       }
     }
@@ -118,9 +112,6 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
     if(idstring != "modsched_info")
     {
       this->nodeTagFound = true;
-      //Vertex* v = new Vertex(stoi(idstring));
-
-      //this->currVertex = v;
       this->currVertexId = stoi(idstring);
     }
   }
