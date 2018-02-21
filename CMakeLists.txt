@@ -110,3 +110,4 @@ enable_testing()
 
 add_test("XercesC_Read" "./hatschet" "--test=READ")
 add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")
+add_test("API" "./hatschet" "--test=API")

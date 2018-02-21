@@ -132,6 +132,7 @@ int main(int argc, char *args[])
       string str = std::string(value);
       if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
+      if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
     }
     else
     {

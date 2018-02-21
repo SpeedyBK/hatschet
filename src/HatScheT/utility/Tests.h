@@ -16,6 +16,11 @@ public:
    * \return
    */
   static bool moovacTest();
+  /*!
+   * \brief apiTest tests API functionality
+   * \return
+   */
+  static bool apiTest();
 
 };
 }
