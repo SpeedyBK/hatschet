@@ -3,7 +3,7 @@
 namespace HatScheT
 {
 
-MoovacScheduler::MoovacScheduler(Graph &g, std::list<std::string>  solverWishlist, ResourceModel &resourceModel, unsigned int minII, unsigned int maxII) : SchedulerBase(g), ILPSchedulerBase(solverWishlist), ResourceConstrainedSchedulerBase(resourceModel)
+MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int minII, unsigned int maxII) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->minII = minII;
   this->maxII = maxII;

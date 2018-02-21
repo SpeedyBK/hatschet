@@ -3,7 +3,6 @@
 #include <HatScheT/SchedulerBase.h>
 #include <HatScheT/ILPSchedulerBase.h>
 #include <HatScheT/ModuloSchedulerBase.h>
-#include <HatScheT/ResourceConstrainedSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -15,10 +14,10 @@ namespace HatScheT
  * Presented at the Proceedings of the International Conference on Compilers, Architectures and Synthesis for Embedded Systems (CASES) 2016
  *
  */
-class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public ResourceConstrainedSchedulerBase
+class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {
 public:
-  MoovacScheduler(Graph& g, std::list<std::string> solverWishlist, ResourceModel &resourceModel, unsigned int minII, unsigned int maxII);
+  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int minII, unsigned int maxII);
   /*!
    * \brief schedule the schedule method of moocav will try to find the smallest possible II respecting the minII/maxII bounds iteratively.
    * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.

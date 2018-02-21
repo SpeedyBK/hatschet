@@ -4,6 +4,7 @@
 #include <HatScheT/Vertex.h>
 #include <HatScheT/Edge.h>
 #include <map>
+#include <HatScheT/ResourceModel.h>
 
 namespace HatScheT
 {
@@ -18,7 +19,7 @@ class SchedulerBase
 {
 public:
 
-  SchedulerBase(Graph& g);
+  SchedulerBase(Graph& g,ResourceModel &resourceModel);
 
   virtual void schedule() = 0;
 
@@ -46,8 +47,18 @@ public:
    */
   void setMaxLatencyConstraint(int l){this->maxLatencyConStraint =l;}
   int getMaxLatencyConstraint(){return this->maxLatencyConStraint;}
+  /*!
+   * \brief getBindings calculate a naive binding in base class
+   * should be overloaded by scheduler that determine specific bindings
+   * \return
+   */
+  //virtual std::map<Vertex*,int> getBindings();
 
 protected:
+  /*!
+   * \brief resourceModel
+   */
+  ResourceModel &resourceModel;
   /*!
    * \brief maxLatencyConStraint default is -1 (unlimited)
    */
@@ -56,7 +67,10 @@ protected:
    * \brief Container for the start times
    */
   std::map<Vertex*,int> startTimes;
-
+  //redundant?
+  //std::map<Edge*,int> lifeTimes;
+  //only calculate
+  //std::map<Vertex*,int> bindings;
   /*!
    * \brief A reference to the data dependency graph
    */

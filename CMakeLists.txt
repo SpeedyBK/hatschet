@@ -72,7 +72,6 @@ src/HatScheT/MoovacScheduler.cpp
 src/HatScheT/MoovacMinRegScheduler.cpp
 src/HatScheT/IterativeSchedulerBase.cpp
 src/HatScheT/ILPSchedulerBase.cpp
-src/HatScheT/ResourceConstrainedSchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/ModuloSchedulerBase.cpp
 src/HatScheT/utility/reader/Reader.cpp

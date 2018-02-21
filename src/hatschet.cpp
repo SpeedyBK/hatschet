@@ -149,7 +149,8 @@ int main(int argc, char *args[])
   try
   {
     HatScheT::Graph g;
-    HatScheT::ASAPScheduler sched(g); 	
+    HatScheT::ResourceModel rm;
+    HatScheT::ASAPScheduler sched(g,rm);
   }
   catch(HatScheT::Exception &e)
   {

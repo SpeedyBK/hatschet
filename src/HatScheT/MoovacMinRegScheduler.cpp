@@ -3,8 +3,8 @@
 namespace HatScheT
 {
 
-MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, std::list<std::string>  solverWishlist, ResourceModel &resourceModel, unsigned int minII, unsigned int maxII)
-    : MoovacScheduler(g, solverWishlist, resourceModel, minII, maxII)
+MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int minII, unsigned int maxII)
+    : MoovacScheduler(g, resourceModel, solverWishlist, minII, maxII)
 {
   this->minII = minII;
   this->maxII = maxII;

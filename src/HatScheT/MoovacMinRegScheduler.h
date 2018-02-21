@@ -10,7 +10,7 @@ namespace HatScheT
 class MoovacMinRegScheduler : public MoovacScheduler
 {
 public:
-    MoovacMinRegScheduler(Graph& g, std::list<std::string> solverWishlist, ResourceModel &resourceModel, unsigned int minII, unsigned int maxII);
+    MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int minII, unsigned int maxII);
 protected:
     /*!
      * \brief setGeneralConstraints read the paper for further information
