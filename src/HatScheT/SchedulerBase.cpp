@@ -6,10 +6,10 @@ namespace HatScheT
     this->maxLatencyConStraint = -1;
   }
 
-  int SchedulerBase::getScheduleLenght()
+  int SchedulerBase::getScheduleLength()
   {
     int maxTime=0;
-    for(std::pair<Vertex,int> vtPair : startTimes)
+    for(std::pair<Vertex*,int> vtPair : startTimes)
     {
       if(vtPair.second > maxTime) maxTime = vtPair.second;
     }
@@ -18,7 +18,7 @@ namespace HatScheT
 
   int SchedulerBase::getStartTime(Vertex &v)
   {
-    std::map<Vertex,int>::iterator it = startTimes.find(v);
+    std::map<Vertex*,int>::iterator it = startTimes.find(&v);
     if(it != startTimes.end())
       return it->second;
     else

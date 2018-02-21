@@ -68,6 +68,10 @@ protected:
    */
   void setModuloAndResourceConstraints();
   /*!
+   * \brief fillSolutionStructure pass the solution of the modulo schedule
+   */
+  void fillSolutionStructure();
+  /*!
    * \brief m_container
    */
   vector< vector<ScaLP::Variable> > m_container;
@@ -107,10 +111,6 @@ protected:
    * \brief reg_vectorIndices
    */
   map<const Edge*, unsigned int> reg_vectorIndices;
-  /*!
-   * \brief schedFound
-   */
-  bool schedFound;
   /*!
    * \brief considerAlgorithmicDelays
    */

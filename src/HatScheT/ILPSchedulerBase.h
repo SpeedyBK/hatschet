@@ -45,6 +45,15 @@ public:
    */
   void setSolverQuiet(bool b){this->solverQuiet = b;}
   bool getSolverQuiet(){return this->solverQuiet;}
+  /*!
+   * \brief printResult
+   */
+  void printResult(){std::cout<< this->solver->getResult() << std::endl;}
+  /*!
+   * \brief getScheduleFound
+   * \return
+   */
+  bool getScheduleFound(){return this->scheduleFound;}
 
 protected:
   /*!
@@ -63,6 +72,10 @@ protected:
    * \brief optimalResult
    */
   bool optimalResult;
+  /*!
+   * \brief scheduleFound
+   */
+  bool scheduleFound;
   /*!
    * \brief solverQuiet
    */

@@ -26,7 +26,7 @@ public:
    * \brief Returns the start times of all nodes
    * \return The start times of all nodes
    */
-  std::map<Vertex,int>& getStartTimes(){ return startTimes; }
+  std::map<Vertex*,int>& getStartTimes(){ return startTimes; }
 
   /*!
    * \brief Gets the start time of vertex v
@@ -39,7 +39,7 @@ public:
    * \brief Returns the length of the schedule (i.e., the maximum start time)
    * \return The length of the schedule (i.e., the maximum start time)
    */
-  int getScheduleLenght();
+  int getScheduleLength();
   /*!
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
@@ -55,7 +55,7 @@ protected:
   /*!
    * \brief Container for the start times
    */
-  std::map<Vertex,int> startTimes;
+  std::map<Vertex*,int> startTimes;
 
   /*!
    * \brief A reference to the data dependency graph

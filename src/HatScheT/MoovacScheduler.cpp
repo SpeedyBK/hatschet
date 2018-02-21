@@ -63,63 +63,57 @@ void MoovacScheduler::constructProblem()
 void MoovacScheduler::setObjective()
 {
     ScaLP::Term sum;
-
-    for(ScaLP::Variable &v:t_vector)
-    {
+    for(ScaLP::Variable &v:t_vector){
       sum = sum + v;
     }
-
     this->solver->setObjective(ScaLP::minimize(sum));
 }
 
 void MoovacScheduler::schedule()
 {
-  cout << "MoovacScheduler.schedule: start" << endl;
-
   this->timeoutCounter = 0;
   this->totalTime = 0;
   this->II = this->minII;
 
   while(this->II <= this->maxII)
   {
-    cout << "MoovacScheduler.schedule: next II "  << to_string(this->II) << endl;
-    //cleanup
     this->resetContainer();
-
-    //setup solver
     this->setUpSolverSettings();
-
-
-    //construct the problem
     this->constructProblem();
 
-    //solve it
     ScaLP::status stat = this->solver->solve();
 
-    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE)
-    {
-      this->schedFound = true;
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE){
+      this->scheduleFound = true;
     }
-
-    else
-    {
+    else{
       this->solver->writeLP(to_string(this->II));
     }
 
-    if(this->schedFound == false) (this->II)++;
-    else if(this->schedFound == true) break;
+    if(this->scheduleFound == false) (this->II)++;
+    else if(this->scheduleFound == true) break;
   }
 
-  if(this->schedFound == true)
+  if(this->scheduleFound == true)
   {
-    std::cout<< "Schedule found! II is " << this->II << std::endl;
-    std::cout<< this->solver->getResult() << std::endl;
+    this->r = this->solver->getResult();
+    //fill solution structure
+    //startTimes[...] = ...
+    this->fillSolutionStructure();
   }
+}
 
-  cout << "MoovacScheduler.schedule: finished" << endl;
+void MoovacScheduler::fillSolutionStructure()
+{
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
+  {
+    Vertex* v = *it;
+    unsigned int index =this->t_vectorIndices.at(v);
+    ScaLP::Variable svTemp = this->t_vector[index];
 
-  //fill solution structure
-  //startTimes[...] = ...
+    int startTime = this->r.values[svTemp];
+    this->startTimes.insert(make_pair(v, startTime));
+  }
 }
 
 void MoovacScheduler::setTVectorVariables()
@@ -169,7 +163,7 @@ void MoovacScheduler::setGeneralConstraints()
 
 int MoovacScheduler::getNoOfImplementedRegisters()
 {
-  if (this->schedFound==false) return -1;
+  if (this->scheduleFound==false) return -1;
 
   int noOfRegs = 0;
 

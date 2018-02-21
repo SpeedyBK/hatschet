@@ -13,6 +13,7 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->solverTimeout = 3600;
   this->solvingTime = 0;
   this->totalTime = 0;
+  this->scheduleFound = false;
 }
 
 ILPSchedulerBase::~ILPSchedulerBase()
