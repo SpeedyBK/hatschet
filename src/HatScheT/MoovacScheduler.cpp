@@ -15,7 +15,6 @@ void MoovacScheduler::resetContainer()
   this->solver->reset();
   this->m_container.clear();
   this->regVector.clear();
-  this->r_container.clear();
   this->t_vectorIndices.clear();
   this->reg_vectorIndices.clear();
   this->t_vector.clear();
@@ -83,12 +82,7 @@ void MoovacScheduler::schedule()
 
     ScaLP::status stat = this->solver->solve();
 
-    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE){
-      this->scheduleFound = true;
-    }
-    else{
-      this->solver->writeLP(to_string(this->II));
-    }
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
 
     if(this->scheduleFound == false) (this->II)++;
     else if(this->scheduleFound == true) break;
@@ -97,9 +91,10 @@ void MoovacScheduler::schedule()
   if(this->scheduleFound == true)
   {
     this->r = this->solver->getResult();
-    //fill solution structure
-    //startTimes[...] = ...
+
     this->fillSolutionStructure();
+
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
   }
 }
 
@@ -163,8 +158,15 @@ void MoovacScheduler::setGeneralConstraints()
 
 std::map<const Vertex *, int> MoovacScheduler::getBindings()
 {
-  if (this->scheduleFound==false) throw new Exception("MoovacScheduler.getBindings: schedule was found yet!");
+  if (this->scheduleFound==false || this->startTimes.size()==0) throw new Exception("MoovacScheduler.getBindings: schedule was found!");
   std::map<const Vertex*,int> bindings;
+
+  for(auto it:this->startTimes){
+    const Vertex* v = it.first;
+    ScaLP::Variable bv = this->r_vector[this->r_vectorIndices[v]];
+    ScaLP::Result r = this->solver->getResult();
+    bindings.insert(make_pair(v,r.values[bv]));
+  }
 
   return bindings;
 }
@@ -277,10 +279,13 @@ void MoovacScheduler::setModuloAndResourceConstraints()
       vector<vector<ScaLP::Variable> > eps_matrix;
       //declare mu-matrix
       vector<vector<ScaLP::Variable> > mu_matrix;
+      //store corresponding pointer
+      vector<vector<pair<const Vertex*, const Vertex*> > > corrVerticesMatrix;
 
       for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++)
-      {
+      {        
         const Vertex* v1 = (*it2);
+
         int tIndex = this->t_vectorIndices.at(v1);
         //18
         this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
@@ -293,7 +298,7 @@ void MoovacScheduler::setModuloAndResourceConstraints()
         //13
         this->solver->addConstraint(this->t_vector[tIndex] - y_vector.back()*this->II - m_vector.back() == 0);
         //14
-        this->solver->addConstraint(r_vector.back() <= ak - 1);
+        this->solver->addConstraint(this->r_vector.back() <= ak - 1);
         //15
         this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
@@ -301,10 +306,12 @@ void MoovacScheduler::setModuloAndResourceConstraints()
         vector<ScaLP::Variable> eps_vector;
         //declare mu-vector
         vector<ScaLP::Variable> mu_vector;
+        vector<pair<const Vertex*, const Vertex*> > corrVerticesVec;
 
         for(set<const Vertex*>::iterator it3 = verOfRes.begin(); it3 != verOfRes.end(); it3++)
         {
           const Vertex* v2 = (*it3);
+          corrVerticesVec.push_back(make_pair(v1,v2));
 
           if(v1 != v2)
           {
@@ -321,9 +328,9 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
         eps_matrix.push_back(eps_vector);
         mu_matrix.push_back(mu_vector);
+        corrVerticesMatrix.push_back(corrVerticesVec);
       }
 
-      this->r_container.push_back(r_vector);
       this->m_container.push_back(m_vector);
       y_container.push_back(y_vector);
       eps_container.push_back(eps_matrix);
@@ -331,9 +338,9 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
       if(eps_matrix.size() > 1)
       {
-        for(uint j = 0; j < eps_matrix.size(); j++)
+        for(unsigned int j = 0; j < eps_matrix.size(); j++)
         {
-          for(uint k = 0; k < eps_matrix.size(); k++)
+          for(unsigned int k = 0; k < eps_matrix.size(); k++)
           {
             if(k!=j && j<k)
             {
@@ -345,10 +352,13 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
             if(k!=j)
             {
+              pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
+              ScaLP::Variable vj =  r_vector[this->r_vectorIndices[vPair.first]];
+              ScaLP::Variable vk =  r_vector[this->r_vectorIndices[vPair.second]];
               //7
-              this->solver->addConstraint(r_vector[j]-r_vector[k] - (ak*eps_matrix[j][k]) + ak >= 1);
+              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) + ak >= 1);
               //8
-              this->solver->addConstraint(r_vector[j]-r_vector[k] - (ak*eps_matrix[j][k]) <= 0);
+              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) <= 0);
               //10
               this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
               //11

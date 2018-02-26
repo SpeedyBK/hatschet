@@ -14,6 +14,7 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->solvingTime = 0;
   this->totalTime = 0;
   this->scheduleFound = false;
+  this->writeLPFile = false;
 }
 
 ILPSchedulerBase::~ILPSchedulerBase()

@@ -54,6 +54,11 @@ public:
    * \return
    */
   bool getScheduleFound(){return this->scheduleFound;}
+  /*!
+   * \brief setWriteLPFile
+   * \param b
+   */
+  void setWriteLPFile(bool b){this->writeLPFile =b;}
 
 protected:
   /*!
@@ -100,5 +105,9 @@ protected:
    * \brief threads
    */
   unsigned int threads;
+  ///
+  /// \brief writeResultFile
+  ///
+  bool writeLPFile;
 };
 }

@@ -89,10 +89,6 @@ protected:
    */
   vector<ScaLP::Variable> r_vector;
   /*!
-   * \brief r_container
-   */
-  vector<vector<ScaLP::Variable> > r_container;
-  /*!
    * \brief y_container
    */
   vector<vector<ScaLP::Variable> > y_container;
