@@ -34,6 +34,11 @@ public:
    * \return
    */
   virtual std::map<const Vertex*,int> getBindings();
+  /*!
+   * \brief getLifeTimes considering II
+   * \return
+   */
+  virtual std::map<Edge*,int> getLifeTimes();
 
 protected:
   /*!

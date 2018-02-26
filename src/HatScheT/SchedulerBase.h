@@ -53,7 +53,11 @@ public:
    * \return
    */
   virtual std::map<const Vertex*,int> getBindings();
-
+  /*!
+   * \brief getLifeTimes II = scheduleLength
+   * \return
+   */
+  virtual std::map<Edge*,int> getLifeTimes();
 protected:
   /*!
    * \brief resourceModel
