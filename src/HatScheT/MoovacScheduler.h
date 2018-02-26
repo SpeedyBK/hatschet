@@ -28,6 +28,12 @@ public:
    * \return
    */
   virtual int getNoOfImplementedRegisters();
+  /*!
+   * \brief getBindings getBdings based on solution of the ilp solver
+   * non limited resources are assumed to be bound on pairwise different hardware units
+   * \return
+   */
+  virtual std::map<const Vertex*,int> getBindings();
 
 protected:
   /*!

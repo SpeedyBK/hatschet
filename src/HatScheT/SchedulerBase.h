@@ -52,7 +52,7 @@ public:
    * should be overloaded by scheduler that determine specific bindings
    * \return
    */
-  //virtual std::map<Vertex*,int> getBindings();
+  virtual std::map<const Vertex*,int> getBindings();
 
 protected:
   /*!
@@ -67,10 +67,6 @@ protected:
    * \brief Container for the start times
    */
   std::map<Vertex*,int> startTimes;
-  //redundant?
-  //std::map<Edge*,int> lifeTimes;
-  //only calculate
-  //std::map<Vertex*,int> bindings;
   /*!
    * \brief A reference to the data dependency graph
    */

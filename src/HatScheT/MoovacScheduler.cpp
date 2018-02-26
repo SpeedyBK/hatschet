@@ -161,6 +161,14 @@ void MoovacScheduler::setGeneralConstraints()
   }
 }
 
+std::map<const Vertex *, int> MoovacScheduler::getBindings()
+{
+  if (this->scheduleFound==false) throw new Exception("MoovacScheduler.getBindings: schedule was found yet!");
+  std::map<const Vertex*,int> bindings;
+
+  return bindings;
+}
+
 int MoovacScheduler::getNoOfImplementedRegisters()
 {
   if (this->scheduleFound==false) return -1;
