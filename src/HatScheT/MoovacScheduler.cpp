@@ -1,4 +1,5 @@
 #include <HatScheT/MoovacScheduler.h>
+#include "utility/Utility.h"
 
 namespace HatScheT
 {
@@ -189,6 +190,47 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
   return bindings;
 }
 
+int MoovacScheduler::getNoOfMuxInputs()
+{
+  if (this->scheduleFound==false) return -1;
+
+  int noOfMuxInputs = 0;
+
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
+  {
+    Resource* r = *it;
+    //unlimited in paralell without mux
+    if(r->getLimit()==-1) continue;
+    else{
+      set<const Vertex*> verticesOfR = this->resourceModel.getVerticesOfResource(r);
+      int bindings = r->getLimit();
+
+      //iterate over possible bindings
+      for(int i = 0; i < bindings; i++)
+      {
+        set<const Vertex*> verticesOfSameResourceBinding;
+
+        for(auto it3:verticesOfR)
+        {
+          const Vertex* candidateV = it3;
+          int candidateVRIndex = this->r_vectorIndices[candidateV];
+          ScaLP::Result r = this->solver->getResult();
+
+          if(r.values[this->r_vector[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
+        }
+
+        const Vertex* v = *verticesOfSameResourceBinding.begin();
+        int vInputs=Utility::getNoOfInputs(&(this->g), v);
+
+        noOfMuxInputs += vInputs*verticesOfSameResourceBinding.size();
+      }
+
+    }
+  }
+
+  return noOfMuxInputs;
+}
+
 int MoovacScheduler::getNoOfImplementedRegisters()
 {
   if (this->scheduleFound==false) return -1;
@@ -200,7 +242,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
     Resource* r = *it;
     set<const Vertex*> verticesOfR = this->resourceModel.getVerticesOfResource(r);
 
-    //unlimited resource are assummed to be implemented in paralell with resource register sharing
+    //unlimited resource are assummed to be implemented in paralell
     if(r->getLimit() == -1)
     {
       int maxLifetime = 0;
@@ -226,7 +268,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
       noOfRegs += maxLifetime;
     }
 
-    //limited resource with register sharing
+    //limited resource
     else
     {
       int bindings = r->getLimit();

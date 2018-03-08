@@ -12,6 +12,7 @@ class Utility
 {
 public:
  static bool examplUtilityFunction(ResourceModel* rm, Graph *g);
+ static int getNoOfInputs(Graph* g, const Vertex* v);
 
 };
 }
