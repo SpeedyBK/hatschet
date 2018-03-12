@@ -59,7 +59,12 @@ public:
    * \param b
    */
   void setWriteLPFile(bool b){this->writeLPFile =b;}
-
+  /*!
+   * \brief setThreads
+   * \param i
+   */
+  void setThreads(unsigned int i){this->threads=i;}
+  unsigned int getThreads(){return this->threads;}
 protected:
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
