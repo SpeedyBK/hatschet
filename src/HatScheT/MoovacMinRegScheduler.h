@@ -15,7 +15,7 @@ public:
      * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
      * \return
      */
-    virtual int getNoOfImplementedRegisters();
+    //virtual int getNoOfImplementedRegisters();
 protected:
     /*!
      * \brief setGeneralConstraints read the paper for further information
@@ -29,5 +29,11 @@ protected:
      * \brief fillRegVector fill the container for ILP variables of registers
      */
     virtual void fillRegVector();
+    /*!
+     * \brief getOutGoingEdgesOfResource get all edges that start from a vertex of resource r
+     * \param r
+     * \return
+     */
+    vector<Edge*> getOutGoingEdgesOfResource(Resource* r);
 };
 }

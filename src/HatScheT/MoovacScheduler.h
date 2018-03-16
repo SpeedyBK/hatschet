@@ -123,10 +123,6 @@ protected:
    */
   map<const Edge*, unsigned int> reg_vectorIndices;
   /*!
-   * \brief considerAlgorithmicDelays
-   */
-  bool considerAlgorithmicDelays;
-  /*!
    * \brief sampleLatency
    */
   unsigned int sampleLatency;

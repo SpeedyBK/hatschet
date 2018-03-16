@@ -71,6 +71,16 @@ set<const Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
   return vset;
 }
 
+Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const
+{
+  for(auto e:this->edges)
+  {
+    if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
+  }
+
+  throw new Exception("Graph.getEdge: Edge not found!");
+}
+
 Vertex& Graph::getVertexById(int id) const
 {
   for(auto a:this->vertices)

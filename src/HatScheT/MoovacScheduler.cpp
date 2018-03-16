@@ -85,6 +85,8 @@ void MoovacScheduler::schedule()
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
 
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
+
     if(this->scheduleFound == false) (this->II)++;
     else if(this->scheduleFound == true) break;
   }
@@ -93,9 +95,7 @@ void MoovacScheduler::schedule()
   {
     this->r = this->solver->getResult();
 
-    this->fillSolutionStructure();
-
-    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
+    this->fillSolutionStructure();   
   }
 }
 
@@ -245,10 +245,11 @@ int MoovacScheduler::getNoOfImplementedRegisters()
     //unlimited resource are assummed to be implemented in paralell
     if(r->getLimit() == -1)
     {
-      int maxLifetime = 0;
-
+      //iterate of every implementation unit of resource r
       for(auto it2:verticesOfR)
       {
+        int maxLifetime = 0;
+
         const Vertex* v = it2;
         int vTIndex = this->t_vectorIndices[v];
         set<const Vertex*> followingVertices = this->g.getSubsequentVertices(v);
@@ -256,16 +257,17 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         for(auto it3:followingVertices)
         {
           const Vertex* followV = it3;
+          Edge* e = &this->g.getEdge(v,followV);
           int followVTIndex = this->t_vectorIndices[followV];
           ScaLP::Result r = this->solver->getResult();
 
-          int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v);
+          int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDelay();
           if(currLifetime > maxLifetime) maxLifetime = currLifetime;
         }
-      }
 
-      //add the max lifetime to overall registercount, because they are implemented using register sharing
-      noOfRegs += maxLifetime;
+        //add the max lifetime to overall registercount, because they are implemented using register sharing
+        noOfRegs += maxLifetime;
+      }     
     }
 
     //limited resource
@@ -287,9 +289,10 @@ int MoovacScheduler::getNoOfImplementedRegisters()
           if(r.values[this->r_vector[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
         }
 
+        int maxLifetime = 0;
+
         for(auto it3:verticesOfSameResourceBinding)
         {
-          int maxLifetime = 0;
           const Vertex* v = it3;
           int vTIndex = this->t_vectorIndices[v];
           set<const Vertex*> followingVertices = this->g.getSubsequentVertices(v);
@@ -297,19 +300,18 @@ int MoovacScheduler::getNoOfImplementedRegisters()
           for(auto it4:followingVertices)
           {
             const Vertex* followV = it4;
+            Edge* e = &this->g.getEdge(v,followV);
             int followVTIndex = this->t_vectorIndices[followV];
-            ScaLP::Result r = this->solver->getResult();
+            ScaLP::Result res = this->solver->getResult();
 
-            int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v);
+            int currLifetime = res.values[this->t_vector[followVTIndex]] - res.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDelay();
 
-            cout << v->getName() << " - " << followV->getName() << ": " << currLifetime << endl;
             if(currLifetime > maxLifetime) maxLifetime = currLifetime;
           }
-
-          //add the max lifetime to overall registercount, because they are implemented using register sharing
-          noOfRegs += maxLifetime;
         }
 
+        //add the max lifetime to overall registercount, because they are implemented using register sharing
+        noOfRegs += maxLifetime;
       }
     }
   }

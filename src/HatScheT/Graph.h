@@ -79,6 +79,13 @@ public:
    */
   Vertex& getVertexById(int id) const;
   /*!
+   * \brief getEdge
+   * \param srcV
+   * \param dstV
+   * \return
+   */
+  Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
+  /*!
    * \brief getSubsequentVertices get the subsequent vertices of v
    * \param v
    * \return
