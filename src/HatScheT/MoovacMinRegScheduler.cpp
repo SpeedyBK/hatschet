@@ -45,6 +45,21 @@ void MoovacMinRegScheduler::fillRegVector()
   }
 }
 
+int MoovacMinRegScheduler::getNoOfImplementedRegisters()
+{
+  if (this->scheduleFound==false) return -1;
+
+  ScaLP::Result r = this->solver->getResult();
+  int noOfRegs = 0;
+
+  for(ScaLP::Variable &reg:regVector)
+  {
+    noOfRegs+=r.values[reg];
+  }
+
+  return noOfRegs;
+}
+
 void MoovacMinRegScheduler::setObjective()
 {
     ScaLP::Term sum;

@@ -11,6 +11,11 @@ class MoovacMinRegScheduler : public MoovacScheduler
 {
 public:
     MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int minII, unsigned int maxII);
+    /*!
+     * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
+     * \return
+     */
+    virtual int getNoOfImplementedRegisters();
 protected:
     /*!
      * \brief setGeneralConstraints read the paper for further information
