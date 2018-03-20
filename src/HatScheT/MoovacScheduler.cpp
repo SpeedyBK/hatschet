@@ -45,7 +45,7 @@ void MoovacScheduler::constructProblem()
   }
   else
   {
-     throw new Exception("MoovacScheduler.constructProblem: irregular maxLatencyConstraint " + this->maxLatencyConStraint);
+     throw new Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConStraint));
   }
 
   this->setTVectorVariables();

@@ -22,6 +22,8 @@ ostream& operator<<(ostream& os, const ReservationBlock& rb)
 
   os << "\t" << "ReservationBlock of Resource " << rb.resource->getName() << " with limit " << limit << ", latency " << rb.resource->getLatency()
      << ", blockingTime " << rb.resource->getBlockingTime() << " and startTime " << rb.startTime << endl;
+
+  return os;
 }
 
 ostream& operator<<(ostream& os, const ReservationTable& rt)
@@ -34,6 +36,7 @@ ostream& operator<<(ostream& os, const ReservationTable& rt)
 
     os << *rb;
   }
+  return os;
 }
 
 ostream& operator<<(ostream& os, const ResourceModel& rm)
@@ -162,6 +165,7 @@ Resource *ResourceModel::getResource(string name) const
 
     if(r->getName() == name) return r;
   }
+  throw new Exception("MoovacScheduler.constructProblem: Could not find resource with name " + name);
 }
 
 bool ResourceModel::isEmpty()
