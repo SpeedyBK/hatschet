@@ -29,9 +29,9 @@ Vertex& Graph::createVertex(int id)
   return *v;
 }
 
-Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, bool backward, Edge::DependencyType dependencyType)
+Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int delay, Edge::DependencyType dependencyType)
 {
-  Edge *e = new Edge(Vsrc,Vdst,delay,backward,dependencyType);
+  Edge *e = new Edge(Vsrc,Vdst,delay,dependencyType);
   e->setID(edges.size()+1);
   edges.insert(e);
   return *e;

@@ -41,11 +41,10 @@ public:
    * @param Vsrc The source vertex
    * @param Vdst The destination vertex
    * @param delay The delay (=no of registers) on an edge
-   * @param backward Flag that is true if edge is a backward edge
    * @param dependencyType Enum to distinguish dependencies and data edges
    * @return A reference to the created edge
    */
-  Edge &createEdge(Vertex &Vsrc, Vertex &Vdst, int delay=0, bool backward=false, Edge::DependencyType dependencyType=Edge::Data);
+  Edge &createEdge(Vertex &Vsrc, Vertex &Vdst, int delay=0, Edge::DependencyType dependencyType=Edge::Data);
   /*!
    * \brief operator <<
    * \param os

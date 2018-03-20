@@ -100,9 +100,7 @@ private:
   int dstId;
   int srcId;
   int edgeLatency;
-  bool edgeBackward;
   string currVertexResName;
-
   };
 }
 

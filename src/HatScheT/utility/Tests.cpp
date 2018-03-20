@@ -104,17 +104,10 @@ bool Tests::apiTest()
     {6, 9}
   };
 
-  std::vector<std::pair<int, int>> backEdges = {
-    {7,  11},
-    {12, 10}
-  };
-
   for (auto fe : fwdEdges)
-    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0, false);
+    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);
   for (auto ce : chainingEdges)
-    g.createEdge(g.getVertexById(ce.first), g.getVertexById(ce.second), 1, false);
-  for (auto be : backEdges)
-    g.createEdge(g.getVertexById(be.first), g.getVertexById(be.second), 0, true);
+    g.createEdge(g.getVertexById(ce.first), g.getVertexById(ce.second), 1);
 
   for (int i = 1; i <= 12; ++i) {
     auto &v = g.getVertexById(i);

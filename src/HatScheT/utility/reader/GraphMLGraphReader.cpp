@@ -28,7 +28,6 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
   this->dstId = -1;
   this->srcId = -1;
   this->edgeLatency = -1;
-  this->edgeBackward = false;
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -55,7 +54,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
     Vertex& source = this->g->getVertexById(this->srcId);
     Vertex& target = this->g->getVertexById(this->dstId);
 
-    this->g->createEdge(source, target, this->edgeLatency, this->edgeBackward);
+    this->g->createEdge(source, target, this->edgeLatency);
 
     this->edgeTagFound = false;
   }
