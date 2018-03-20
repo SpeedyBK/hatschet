@@ -56,7 +56,7 @@ std::map<Edge*,int> SchedulerBase::getLifeTimes()
     Edge* e = *it;
     Vertex* vSrc = &e->getVertexSrc();
     Vertex* vDst = &e->getVertexDst();
-    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDelay()*this->getScheduleLength();
+    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->getScheduleLength();
 
     if(lifetime < 0) throw new Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));

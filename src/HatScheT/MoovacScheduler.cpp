@@ -153,7 +153,7 @@ void MoovacScheduler::setGeneralConstraints()
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDelay()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
   }
 }
 
@@ -167,7 +167,7 @@ std::map<Edge*,int> MoovacScheduler::getLifeTimes()
     Edge* e = *it;
     Vertex* vSrc = &e->getVertexSrc();
     Vertex* vDst = &e->getVertexDst();
-    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDelay()*this->II;
+    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->II;
 
     if(lifetime < 0) throw new Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));
@@ -261,7 +261,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
           int followVTIndex = this->t_vectorIndices[followV];
           ScaLP::Result r = this->solver->getResult();
 
-          int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDelay();
+          int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
           if(currLifetime > maxLifetime) maxLifetime = currLifetime;
         }
 
@@ -304,7 +304,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
             int followVTIndex = this->t_vectorIndices[followV];
             ScaLP::Result res = this->solver->getResult();
 
-            int currLifetime = res.values[this->t_vector[followVTIndex]] - res.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDelay();
+            int currLifetime = res.values[this->t_vector[followVTIndex]] - res.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
 
             if(currLifetime > maxLifetime) maxLifetime = currLifetime;
           }

@@ -90,7 +90,7 @@ void DotWriter::write()
     Vertex& dstVertex = e->getVertexDst();
     stringstream edge_string;
 
-    int latency = e->getDelay();
+    int latency = e->getDistance();
     string latencyString;
     if(latency > 0) latencyString = to_string(latency);
     else latencyString = "";

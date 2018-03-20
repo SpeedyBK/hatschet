@@ -40,11 +40,11 @@ public:
    * @brief creates an edge in the graph
    * @param Vsrc The source vertex
    * @param Vdst The destination vertex
-   * @param delay The delay (=no of registers) on an edge
+   * @param distance The distance (=no of registers) on an edge
    * @param dependencyType Enum to distinguish dependencies and data edges
    * @return A reference to the created edge
    */
-  Edge &createEdge(Vertex &Vsrc, Vertex &Vdst, int delay=0, Edge::DependencyType dependencyType=Edge::Data);
+  Edge &createEdge(Vertex &Vsrc, Vertex &Vdst, int distance=0, Edge::DependencyType dependencyType=Edge::Data);
   /*!
    * \brief operator <<
    * \param os
