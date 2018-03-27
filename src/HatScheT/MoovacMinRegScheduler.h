@@ -10,7 +10,7 @@ namespace HatScheT
 class MoovacMinRegScheduler : public MoovacScheduler
 {
 public:
-    MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int minII, unsigned int maxII);
+    MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int maxII);
     /*!
      * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
      * \return

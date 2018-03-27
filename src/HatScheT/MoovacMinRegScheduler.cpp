@@ -3,10 +3,10 @@
 namespace HatScheT
 {
 
-MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int minII, unsigned int maxII)
-    : MoovacScheduler(g, resourceModel, solverWishlist, minII, maxII)
+MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int maxII)
+    : MoovacScheduler(g, resourceModel, solverWishlist, maxII)
 {
-  this->minII = minII;
+  this->minII = this->computeMinII(&g,&resourceModel);
   this->maxII = maxII;
   this->SLMax = 0;
 }
@@ -24,7 +24,6 @@ void MoovacMinRegScheduler::setGeneralConstraints()
 
     unsigned regVecIndex = this->reg_vectorIndices[e];
 
-    //this->solver->addConstraint(this->II*(e->getDelay()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
     this->solver->addConstraint((this->II)*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex]
                     - this->resourceModel.getVertexLatency(src) - this->regVector[regVecIndex] == 0);
   }

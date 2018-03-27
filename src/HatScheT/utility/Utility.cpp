@@ -23,4 +23,46 @@ int Utility::getNoOfInputs(Graph *g, const Vertex *v)
   return no;
 }
 
+int Utility::calcMinII(ResourceModel *rm, Graph *g)
+{
+  int resMII = Utility::calcResMII(rm,g);
+  int recMII = Utility::calcRecMII(g);
+
+  if(resMII>recMII) return resMII;
+
+  return recMII;
+}
+
+int Utility::calcResMII(ResourceModel *rm, Graph *g)
+{
+  int resMII = 0;
+
+  for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+    //skip unlimited resources
+    if(r->getLimit()==-1)continue;
+    int opsUsingR = rm->getNoOfVerticesRegisteredToResource(r);
+    int avSlots = r->getLimit();
+
+    if(avSlots<=0) throw new Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
+    int tempMax = opsUsingR/avSlots + (opsUsingR % avSlots != 0);
+
+    if(tempMax>resMII) resMII=tempMax;
+  }
+
+  return resMII;
+}
+
+int Utility::calcRecMII(Graph *g)
+{
+  int recMII=0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){
+    Edge* e = *it;
+    if(e->getDistance() > recMII) recMII = e->getDistance();
+  }
+
+  return recMII;
+}
+
 }

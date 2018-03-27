@@ -21,7 +21,7 @@ bool Tests::moovacTest()
   g = readerGraph.readGraph(graphStr.c_str());
 
   int maxLatencyConstraint = 18;
-  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"}, 2, maxLatencyConstraint-1);
+  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"}, maxLatencyConstraint-1);
   sched.setMaxLatencyConstraint(maxLatencyConstraint);
   sched.setSolverQuiet(false);
 

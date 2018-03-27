@@ -1,12 +1,12 @@
 #include <HatScheT/ModuloSchedulerBase.h>
+#include <HatScheT/utility/Utility.h>
 
 namespace HatScheT
 {
 
-  int ModuloSchedulerBase::computeMinMaxII()
+  int ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm)
 	{
-    //ToDo: implement
-    return -1;
+    return Utility::calcMinII(rm,g);
   }
 	
   int ModuloSchedulerBase::computeMaxSL()
