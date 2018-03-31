@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include <HatScheT/Exception.h>
-#include <HatScheT/ASAPScheduler.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
@@ -146,17 +145,6 @@ int main(int argc, char *args[])
   std::cout << "settings:" << std::endl;
   std::cout << "timeout=" << timeout << std::endl;
   std::cout << "threads=" << threads << std::endl;
-
-  try
-  {
-    HatScheT::Graph g;
-    HatScheT::ResourceModel rm;
-    HatScheT::ASAPScheduler sched(g,rm);
-  }
-  catch(HatScheT::Exception &e)
-  {
-    std::cerr << "Error: " << e << std::endl;
-  }
 
   return 0;
 }

@@ -20,9 +20,10 @@ class SchedulerBase
 public:
 
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
-
+  /*!
+   * \brief schedule main method for all schedulers, not implemented in base class
+   */
   virtual void schedule() = 0;
-
   /*!
    * \brief Returns the start times of all nodes
    * \return The start times of all nodes

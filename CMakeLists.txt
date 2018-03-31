@@ -66,7 +66,6 @@ src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp 
 src/HatScheT/Exception.cpp
-src/HatScheT/ASAPScheduler.cpp 
 src/HatScheT/SchedulerBase.cpp 
 src/HatScheT/MoovacScheduler.cpp
 src/HatScheT/MoovacMinRegScheduler.cpp
@@ -81,6 +80,7 @@ src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
+src/HatScheT/scheduler/ASAPScheduler.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)
