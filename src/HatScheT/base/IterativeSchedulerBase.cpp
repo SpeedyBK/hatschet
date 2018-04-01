@@ -1,4 +1,4 @@
-#include <HatScheT/IterativeSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 
 namespace HatScheT
 {

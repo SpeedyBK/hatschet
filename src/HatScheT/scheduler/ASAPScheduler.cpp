@@ -3,7 +3,7 @@
 namespace HatScheT
 {
 
-ASAPSCheduler::ASAPSCheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel)
+ASAPScheduler::ASAPScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel)
 {
 
 }

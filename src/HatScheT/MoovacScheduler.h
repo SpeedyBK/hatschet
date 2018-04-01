@@ -1,8 +1,8 @@
 #pragma once
 
-#include <HatScheT/SchedulerBase.h>
-#include <HatScheT/ILPSchedulerBase.h>
-#include <HatScheT/ModuloSchedulerBase.h>
+#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT

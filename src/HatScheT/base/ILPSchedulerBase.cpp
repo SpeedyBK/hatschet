@@ -1,4 +1,4 @@
-#include <HatScheT/ILPSchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/Exception.h>
 
 namespace HatScheT

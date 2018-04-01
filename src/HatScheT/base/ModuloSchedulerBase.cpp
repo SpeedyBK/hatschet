@@ -1,4 +1,4 @@
-#include <HatScheT/ModuloSchedulerBase.h>
+#include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/utility/Utility.h>
 
 namespace HatScheT

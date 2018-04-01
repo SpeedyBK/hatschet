@@ -1,16 +1,16 @@
 #pragma once
 
-#include <HatScheT/SchedulerBase.h>
+#include <HatScheT/base/SchedulerBase.h>
 
 namespace HatScheT
 {
 
 
 
-class ASAPSCheduler : public SchedulerBase
+class ASAPScheduler : public SchedulerBase
 {
 public:
-  ASAPSCheduler(Graph& g,ResourceModel &resourceModel);
+  ASAPScheduler(Graph& g,ResourceModel &resourceModel);
 
 protected:
 private:
