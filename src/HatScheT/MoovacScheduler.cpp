@@ -252,7 +252,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
         const Vertex* v = it2;
         int vTIndex = this->t_vectorIndices[v];
-        set<const Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+        set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
 
         for(auto it3:followingVertices)
         {
@@ -295,7 +295,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         {
           const Vertex* v = it3;
           int vTIndex = this->t_vectorIndices[v];
-          set<const Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+          set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
 
           for(auto it4:followingVertices)
           {

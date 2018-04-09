@@ -71,9 +71,9 @@ int Graph::getNoOfInputs(const Vertex *v) const
   return inputs;
 }
 
-set<const Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+set<Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
 {
-  set<const Vertex*> vset;
+  set<Vertex*> vset;
 
   for(auto it:this->edges)
   {

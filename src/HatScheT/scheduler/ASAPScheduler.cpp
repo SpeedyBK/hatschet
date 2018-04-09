@@ -16,9 +16,9 @@ void ASAPScheduler::schedule()
   std::map<Vertex*,int> input_counts;
 
   //init resources
-  for(auto it=this->resourceModel.resourcesBegin(); it!=this->resourceModel.resourcesEnd(); it++){
+  /*for(auto it=this->resourceModel.resourcesBegin(); it!=this->resourceModel.resourcesEnd(); it++){
     Resource* r = *it;
-  }
+  }*/
 
   //initialize vertices
   for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
@@ -45,6 +45,28 @@ void ASAPScheduler::schedule()
     //check for hardware constraints, hardware available
     if(r->getLimit() != -1){
 
+    }
+
+    set<Vertex*> subVertices = this->g.getSubsequentVertices(v);
+
+    for(auto it=subVertices.begin(); it!=subVertices.end(); ++it){
+      Vertex* subV = *it;
+
+      Edge* e = &this->g.getEdge(v,subV);
+      if(e->getDistance() > 0){
+        throw new Exception("ASAPScheduler::schedule: register are not supported yet!");
+      }
+
+      for(auto it=this->startTimes.begin();it!=this->startTimes.end();++it){
+        if(subV==it->first && ((this->startTimes[v]+r->getLatency())>it->second))
+          it->second = this->startTimes[v] + r->getLatency();
+      }
+
+      input_counts[subV]--;
+      // if there are no more inputs left, add n to the stack
+      if(input_counts[subV]==0){
+        stack.push(subV);
+      }
     }
   }
 }

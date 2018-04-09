@@ -21,6 +21,11 @@ public:
    * \return
    */
   static bool apiTest();
+  /*!
+   * \brief asapTest test asap scheduler
+   * \return
+   */
+  static bool asapTest();
 
 };
 }
