@@ -8,6 +8,7 @@
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
+#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -49,6 +50,7 @@ int main(int argc, char *args[])
   std::string ilpSolver="";
   int threads=0;
   int timeout=-1; //default -1 means no timeout
+  bool lennart=false;
   HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
@@ -67,6 +69,11 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--solver=",value))
     {
       ilpSolver = std::string(value);
+    }
+    else if(getCmdParameter(args[i],"--lennart=",value))
+    {
+      if(std::string(value)=="1")
+      lennart=true;
     }
     else if(getCmdParameter(args[i],"--resource=",value))
     {
@@ -145,6 +152,11 @@ int main(int argc, char *args[])
   std::cout << "settings:" << std::endl;
   std::cout << "timeout=" << timeout << std::endl;
   std::cout << "threads=" << threads << std::endl;
+
+  if(lennart==true){
+      HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(g,rm);
+      gbms->schedule();
+  }
 
   return 0;
 }

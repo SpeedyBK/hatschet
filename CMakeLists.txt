@@ -81,6 +81,7 @@ src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
+src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)
