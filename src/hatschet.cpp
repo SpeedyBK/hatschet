@@ -8,11 +8,9 @@
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
-<<<<<<< HEAD
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
-=======
 #include "HatScheT/scheduler/ASAPScheduler.h"
->>>>>>> cfca9f55128f8fbbdebe161844277c50b57b8e2e
+
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
