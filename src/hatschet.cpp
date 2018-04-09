@@ -8,7 +8,11 @@
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
+<<<<<<< HEAD
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
+=======
+#include "HatScheT/scheduler/ASAPScheduler.h"
+>>>>>>> cfca9f55128f8fbbdebe161844277c50b57b8e2e
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -132,6 +136,20 @@ int main(int argc, char *args[])
         dw.write();
       }    
     }
+    else if(getCmdParameter(args[i],"--asap=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting ASAP schedule" << endl;
+        HatScheT::ASAPScheduler asap(g,rm);
+        asap.schedule();
+        cout << "Printing ASAP schedule" << endl;
+        for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
+          cout << it->first->getName() << " at " << it->second << endl;
+        }
+        cout << "Finished ASAP schedule" << endl;
+      }
+    }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
@@ -139,6 +157,7 @@ int main(int argc, char *args[])
       if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
+      if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
     }
     else
     {

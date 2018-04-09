@@ -89,7 +89,13 @@ public:
    * \param v
    * \return
    */
-  set<const Vertex*> getSubsequentVertices(const Vertex* v) const;
+  set<Vertex*> getSubsequentVertices(const Vertex* v) const;
+  /*!
+   * \brief getNoOfInputs
+   * \param v
+   * \return
+   */
+  int getNoOfInputs(const Vertex* v) const;
   /*!
    * \brief setName
    * \param s

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModelInformation Version="1.0">
+	<Resources>
+		<resource name="Adder" limit="1" latency="2" blockingTime="1" />
+		<resource name="Multiplier" limit="-1" latency="3" blockingTime="1" />
+	</Resources>
+</ModelInformation>

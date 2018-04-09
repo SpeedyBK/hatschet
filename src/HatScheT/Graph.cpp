@@ -56,9 +56,24 @@ bool Graph::isEmpty()
   return false;
 }
 
-set<const Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+int Graph::getNoOfInputs(const Vertex *v) const
 {
-  set<const Vertex*> vset;
+  int inputs = 0;
+
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* vDst = &e->getVertexDst();
+
+    if(vDst==v) inputs++;
+  }
+
+  return inputs;
+}
+
+set<Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+{
+  set<Vertex*> vset;
 
   for(auto it:this->edges)
   {
