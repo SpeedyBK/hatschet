@@ -87,7 +87,7 @@ bool Tests::asapHCTest()
     if(it->second > lastStartTime) lastStartTime = it->second;
   }
 
-  if(lastStartTime==8) return true;
+  if(lastStartTime==7) return true;
   return false;
 }
 

@@ -65,6 +65,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
 
     if(this->nameTagFound == true) this->nameTagFound = false;
     if(this->resourceTagFound == true) this->resourceTagFound = false;
+    if(this->latencyTagFound == true) this->latencyTagFound = false;
   }
 }
 

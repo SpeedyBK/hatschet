@@ -49,9 +49,15 @@ void ASAPScheduler::schedule()
     for(auto it=subVertices.begin(); it!=subVertices.end(); ++it){
       Vertex* subV = *it;
 
+      //algorithmic delays are considered as inputs to the circuit
       Edge* e = &this->g.getEdge(v,subV);
       if(e->getDistance() > 0){
-        throw new Exception("ASAPScheduler::schedule: register are not supported yet!");
+        this->startTimes[subV] = std::max(this->startTimes[subV], 0);
+        input_counts[subV]--;
+        if(input_counts[subV]==0){
+          stack.push(subV);
+        }
+        continue;
       }
 
       //set start time

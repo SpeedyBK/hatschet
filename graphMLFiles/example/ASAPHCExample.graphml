@@ -29,7 +29,7 @@
     </node>
 	 <node id="7">
       <data key="name"> Add3 </data>
-      <data key="uses_resource">Adder</data>
+      <data key="uses_resource">Multiplier</data>
     </node>
 	<node id="8">
       <data key="name"> Gain2 </data>
@@ -41,7 +41,7 @@
     </node>
 	<node id="10">
       <data key="name"> Add4 </data>
-      <data key="uses_resource">Adder</data>
+      <data key="uses_resource">Multiplier</data>
     </node>
 	<node id="11">
       <data key="name"> Add5 </data>
@@ -88,11 +88,11 @@
       <data key="backward"> 0 </data>
     </edge>
 	<edge id="10_1" source="10" target="1">
-      <data key="latency"> 0 </data>
+      <data key="latency"> 1 </data>
       <data key="backward"> 0 </data>
     </edge>
 	<edge id="11_1" source="11" target="1">
-      <data key="latency"> 0 </data>
+      <data key="latency"> 1 </data>
       <data key="backward"> 0 </data>
     </edge>
   </graph>

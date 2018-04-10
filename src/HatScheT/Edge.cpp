@@ -10,7 +10,7 @@ Edge::Edge(Vertex &src, Vertex &dst, int distance, DependencyType dependencyType
 
 ostream& operator<<(ostream& os, const Edge& e)
 {
-   os << "Edge Id: " << e.getID() << ". From Node " << e.getVertexSrcName()<< " to " << e.getVertexDstName() << " (Delay " << e.getDistance() << ")";
+   os << "Edge Id: " << e.getID() << ". From Node " << e.getVertexSrcName()<< " to " << e.getVertexDstName() << " (Distance " << e.getDistance() << ")";
 
   return os;
 }
