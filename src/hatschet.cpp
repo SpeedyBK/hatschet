@@ -143,7 +143,7 @@ int main(int argc, char *args[])
         asap.schedule();
         cout << "Printing ASAP schedule" << endl;
         for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
-          cout << it->first->getName() << " at " << it->second << endl;
+          cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
         cout << "Finished ASAP schedule" << endl;
       }
@@ -156,6 +156,7 @@ int main(int argc, char *args[])
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
       if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
+      if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
     }
     else
     {

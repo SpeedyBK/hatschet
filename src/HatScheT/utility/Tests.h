@@ -26,6 +26,12 @@ public:
    * \return
    */
   static bool asapTest();
+  /*!
+   * \brief asapHCTest
+   * \return
+   */
+  static bool asapHCTest();
+
 
 };
 }
