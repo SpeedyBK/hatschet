@@ -10,6 +10,7 @@
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ALAPScheduler.h"
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -148,6 +149,20 @@ int main(int argc, char *args[])
         cout << "Finished ASAP schedule" << endl;
       }
     }
+    else if(getCmdParameter(args[i],"--alap=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting ALAP schedule" << endl;
+        HatScheT::ALAPScheduler alap(g,rm);
+        alap.schedule();
+        cout << "Printing ALAP schedule" << endl;
+        for(auto it=alap.getStartTimes().begin(); it!=alap.getStartTimes().end(); ++it){
+          cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
+        }
+        cout << "Finished ALAP schedule" << endl;
+      }
+    }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
@@ -157,6 +172,7 @@ int main(int argc, char *args[])
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
       if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
       if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
+      if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
     }
     else
     {

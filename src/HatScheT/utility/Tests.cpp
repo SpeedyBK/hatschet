@@ -5,6 +5,8 @@
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
@@ -57,12 +59,10 @@ bool Tests::asapTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int lastStartTime = 0;
-  for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
-    if(it->second > lastStartTime) lastStartTime = it->second;
-  }
+  int sum = Utility::sumOfStarttimes(asap.getStartTimes());
 
-  if(lastStartTime==17) return true;
+  if(sum==51) return true;
+  cout << "Tests::asapTest: Sum of start times expected to be 51, but is " << sum << endl;
   return false;
 }
 
@@ -82,12 +82,33 @@ bool Tests::asapHCTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int lastStartTime = 0;
-  for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
-    if(it->second > lastStartTime) lastStartTime = it->second;
-  }
+  int sum = Utility::sumOfStarttimes(asap.getStartTimes());
 
-  if(lastStartTime==7) return true;
+  if(sum==29) return true;
+  cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
+  return false;
+}
+
+bool Tests::alapHCTest()
+{
+  HatScheT::GraphMLResourceReader readerRes;
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+
+  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
+  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  rm = readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  g = readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::ALAPScheduler alap(g,rm);
+  alap.schedule();
+
+  int sum = Utility::sumOfStarttimes(alap.getStartTimes());
+
+  if(sum==44) return true;
+  cout << "Tests::alapHCTest: Sum of start times expected to be 44, but is " << sum << endl;
   return false;
 }
 

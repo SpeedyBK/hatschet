@@ -65,4 +65,15 @@ int Utility::calcRecMII(Graph *g)
   return recMII;
 }
 
+int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
+{
+  int sum = 0;
+
+  for(auto it=startTimes.begin();it!=startTimes.end();++it){
+    sum+=it->second;
+  }
+
+  return sum;
+}
+
 }

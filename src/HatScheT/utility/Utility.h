@@ -52,6 +52,12 @@ public:
   * \return
   */
  static int calcRecMII(Graph *g);
+ /*!
+  * \brief sumOfStarttimes
+  * \param startTimes
+  * \return
+  */
+ static int sumOfStarttimes(std::map<Vertex*,int>& startTimes);
 
 };
 }

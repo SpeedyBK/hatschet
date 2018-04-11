@@ -104,11 +104,23 @@ public:
    */
   set<Vertex*> getSubsequentVertices(const Vertex* v) const;
   /*!
+   * \brief getProceedingVertices get the proceeding vertices of v
+   * \param v
+   * \return
+   */
+  set<Vertex*> getProceedingVertices(const Vertex* v) const;
+  /*!
    * \brief getNoOfInputs
    * \param v
    * \return
    */
   int getNoOfInputs(const Vertex* v) const;
+  /*!
+   * \brief getNoOfOuputs
+   * \param v
+   * \return
+   */
+  int getNoOfOutputs(const Vertex* v) const;
   /*!
    * \brief setName
    * \param s

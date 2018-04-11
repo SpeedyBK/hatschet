@@ -12,7 +12,94 @@ ALAPScheduler::ALAPScheduler(Graph &g, ResourceModel &resourceModel) : Scheduler
 
 void ALAPScheduler::schedule()
 {
+  std::stack<Vertex*> stack;
+  std::map<Vertex*,int> ouput_counts;
 
+  //initialize vertices
+  for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
+    Vertex* v = *it;
+    this->startTimes.emplace(v,1);
+
+    int outputCount = this->g.getNoOfOutputs(v);
+    ouput_counts.emplace(v,outputCount);
+
+    // put nodes without inport to the stack, start ASAP schedule with them
+    if(outputCount==0)
+    {
+      //check for limited resources with no inputs
+      int time = 0;
+      const Resource* r = this->resourceModel.getResource(v);
+      while (this->resourceAvailable(r,v,time) == false) {
+        time++;
+      }
+
+      this->startTimes[v] = time;
+      stack.push(v);
+    }
+  }
+
+  //schedule
+  while(stack.empty()==false){
+    Vertex* v = stack.top();
+    const Resource* r = this->resourceModel.getResource(v);
+    stack.pop();
+
+    set<Vertex*> procVertices = this->g.getProceedingVertices(v);
+
+    for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
+      Vertex* procV = *it;
+
+      //algorithmic delays are considered as inputs to the circuit
+      Edge* e = &this->g.getEdge(procV,v);
+      if(e->getDistance() > 0){
+        this->startTimes[procV] = std::min(this->startTimes[procV], 0);
+        ouput_counts[procV]--;
+        if(ouput_counts[procV]==0){
+          stack.push(procV);
+        }
+        continue;
+      }
+
+      //set start time
+      int time = std::min(this->startTimes[v] - r->getLatency(), this->startTimes[procV]);
+      const Resource* rSub = this->resourceModel.getResource(procV);
+
+      while (this->resourceAvailable(rSub,procV,time) == false) {
+        time--;
+      }
+
+      this->startTimes[procV] = time;
+
+      ouput_counts[procV]--;
+      // if there are no more inputs left, add n to the stack
+      if(ouput_counts[procV]==0){
+        stack.push(procV);
+      }
+    }
+  }
+
+  int offset=0;
+
+  for(const auto &p:this->startTimes) offset = std::min(offset,p.second);
+  for(auto &p:this->startTimes) p.second -=offset;
+}
+
+bool ALAPScheduler::resourceAvailable(const Resource *r, Vertex* checkV, int timeStep)
+{
+  //unlimited
+  if(r->getLimit()==-1) return true;
+
+  int instancesUsed = 0;
+
+  for(auto it=this->startTimes.begin(); it!=this->startTimes.end(); ++it){
+    if(it->second == timeStep){
+      Vertex* v = it->first;
+      if(checkV != v && this->resourceModel.getResource(v) == r) instancesUsed++;
+    }
+  }
+
+  if(instancesUsed < r->getLimit()) return true;
+  return false;
 }
 
 }

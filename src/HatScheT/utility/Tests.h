@@ -36,7 +36,10 @@ public:
    * \return
    */
   static bool asapHCTest();
-
-
+  /*!
+   * \brief alapHCTest
+   * \return
+   */
+  static bool alapHCTest();
 };
 }
