@@ -110,18 +110,6 @@ public:
    */
   set<Vertex*> getProceedingVertices(const Vertex* v) const;
   /*!
-   * \brief getNoOfInputs
-   * \param v
-   * \return
-   */
-  int getNoOfInputs(const Vertex* v) const;
-  /*!
-   * \brief getNoOfOuputs
-   * \param v
-   * \return
-   */
-  int getNoOfOutputs(const Vertex* v) const;
-  /*!
    * \brief setName
    * \param s
    */

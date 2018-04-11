@@ -32,6 +32,13 @@ public:
   */
  static int getNoOfInputs(Graph* g, const Vertex* v);
  /*!
+  * \brief getNoOfOutputs determine the number of outputs a vertex v has in graph g
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfOutputs(Graph* g, const Vertex* v);
+ /*!
   * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
   * minII min(ResMII,RecMII)
   * \param rm

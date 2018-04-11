@@ -23,6 +23,21 @@ int Utility::getNoOfInputs(Graph *g, const Vertex *v)
   return no;
 }
 
+int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
+{
+  int outputs = 0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
+  {
+    Edge* e = *it;
+    Vertex* vSrc = &e->getVertexSrc();
+
+    if(vSrc==v) outputs++;
+  }
+
+  return outputs;
+}
+
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);

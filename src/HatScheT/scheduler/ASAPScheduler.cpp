@@ -21,7 +21,7 @@ void ASAPScheduler::schedule()
     Vertex* v = *it;
     this->startTimes.emplace(v,-1);
 
-    int inputCount = this->g.getNoOfInputs(v);
+    int inputCount = Utility::getNoOfInputs(&this->g,v);
     input_counts.emplace(v,inputCount);
 
     // put nodes without inport to the stack, start ASAP schedule with them

@@ -21,7 +21,7 @@ void ALAPScheduler::schedule()
     Vertex* v = *it;
     this->startTimes.emplace(v,1);
 
-    int outputCount = this->g.getNoOfOutputs(v);
+    int outputCount = Utility::getNoOfOutputs(&this->g,v);
     ouput_counts.emplace(v,outputCount);
 
     // put nodes without inport to the stack, start ASAP schedule with them

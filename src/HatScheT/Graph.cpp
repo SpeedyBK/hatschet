@@ -56,36 +56,6 @@ bool Graph::isEmpty()
   return false;
 }
 
-int Graph::getNoOfOutputs(const Vertex *v) const
-{
-  int outputs = 0;
-
-  for(auto it:this->edges)
-  {
-    Edge* e = it;
-    Vertex* vSrc = &e->getVertexSrc();
-
-    if(vSrc==v) outputs++;
-  }
-
-  return outputs;
-}
-
-int Graph::getNoOfInputs(const Vertex *v) const
-{
-  int inputs = 0;
-
-  for(auto it:this->edges)
-  {
-    Edge* e = it;
-    Vertex* vDst = &e->getVertexDst();
-
-    if(vDst==v) inputs++;
-  }
-
-  return inputs;
-}
-
 set<Vertex *> Graph::getProceedingVertices(const Vertex *v) const
 {
   set<Vertex*> vset;
