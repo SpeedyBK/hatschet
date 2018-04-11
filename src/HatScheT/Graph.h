@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
 #include "Vertex.h"

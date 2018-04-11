@@ -66,6 +66,31 @@ bool Tests::asapTest()
   return false;
 }
 
+bool Tests::asapHCTest()
+{
+  HatScheT::GraphMLResourceReader readerRes;
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+
+  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
+  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  rm = readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  g = readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::ASAPScheduler asap(g,rm);
+  asap.schedule();
+
+  int lastStartTime = 0;
+  for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
+    if(it->second > lastStartTime) lastStartTime = it->second;
+  }
+
+  if(lastStartTime==7) return true;
+  return false;
+}
+
 bool Tests::readTest()
 {
   HatScheT::GraphMLResourceReader readerRes;

@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 #include <string>
 
@@ -26,6 +31,12 @@ public:
    * \return
    */
   static bool asapTest();
+  /*!
+   * \brief asapHCTest
+   * \return
+   */
+  static bool asapHCTest();
+
 
 };
 }
