@@ -23,6 +23,18 @@ public:
 protected:
 private:
     //implent methods
-
+  /*!
+   * \brief getVertexWithLeastNoOfConnections
+   * \param g
+   * \return
+   */
+  Vertex* getVertexWithLeastNoOfConnections(Graph* g);
+  /*!
+   * \brief getNoOfConnections
+   * \param g
+   * \param v
+   * \return
+   */
+  int getNoOfConnections(Graph* g, Vertex* v);
 };
 }

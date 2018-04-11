@@ -61,6 +61,14 @@ public:
     return this->vertices.size();
   }
   /*!
+   * \brief getNumberOfEdges
+   * \return
+   */
+  unsigned int getNumberOfEdges()
+  {
+    return this->edges.size();
+  }
+  /*!
    * \brief isEmpty test whether this graph has vertices
    * \return
    */

@@ -7,11 +7,11 @@
       <data key="name"> Add1 </data>
       <data key="uses_resource">Adder</data>
     </node>
-	<node id="2">
+    <node id="2">
       <data key="name"> Mult1 </data>
       <data key="uses_resource">Multiplier</data>
     </node>
-	<node id="3">
+    <node id="3">
       <data key="name"> Add2 </data>
       <data key="uses_resource">Adder</data>
     </node>
@@ -19,11 +19,11 @@
       <data key="latency"> 0 </data>
       <data key="backward"> 0 </data>
     </edge>
-	<edge id="2_3" source="2" target="3">
+    <edge id="2_3" source="2" target="3">
       <data key="latency"> 0 </data>
       <data key="backward"> 0 </data>
     </edge>
-	<edge id="1_3" source="1" target="3">
+    <edge id="1_3" source="1" target="3">
       <data key="latency"> 0 </data>
       <data key="backward"> 0 </data>
     </edge>
