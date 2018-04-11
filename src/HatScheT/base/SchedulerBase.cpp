@@ -12,7 +12,8 @@ int SchedulerBase::getScheduleLength()
   int maxTime=0;
   for(std::pair<Vertex*,int> vtPair : startTimes)
   {
-    if(vtPair.second > maxTime) maxTime = vtPair.second;
+    Vertex* v = vtPair.first;
+    if((vtPair.second+resourceModel.getVertexLatency(v)) > maxTime) maxTime = (vtPair.second+resourceModel.getVertexLatency(v));
   }
   return maxTime;
 }

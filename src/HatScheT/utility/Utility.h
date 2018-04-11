@@ -52,6 +52,8 @@ public:
   * \return
   */
  static int calcRecMII(Graph *g);
+
+ //static int
  /*!
   * \brief sumOfStarttimes
   * \param startTimes
