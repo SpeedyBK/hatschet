@@ -28,13 +28,6 @@ public:
 
 protected:
 private:
-  /*!
-   * \brief resourceAvailable
-   * \param r the resource that is looked for
-   * \param checkV avoid self counting
-   * \param timeStep the time step that is checked
-   * \return
-   */
-  bool resourceAvailable(const Resource *r, Vertex *checkV, int timeStep);
+
 };
 }

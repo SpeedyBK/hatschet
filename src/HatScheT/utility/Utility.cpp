@@ -76,4 +76,22 @@ int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
   return sum;
 }
 
+bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel* rm, const Resource *r, Vertex *checkV, int timeStep)
+{
+  //unlimited
+  if(r->getLimit()==-1) return true;
+
+  int instancesUsed = 0;
+
+  for(auto it=startTimes.begin(); it!=startTimes.end(); ++it){
+    if(it->second == timeStep){
+      Vertex* v = it->first;
+      if(checkV != v && rm->getResource(v) == r) instancesUsed++;
+    }
+  }
+
+  if(instancesUsed < r->getLimit()) return true;
+  return false;
+}
+
 }

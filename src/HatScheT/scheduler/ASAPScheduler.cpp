@@ -1,4 +1,5 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/utility/Utility.h>
 #include <stack>
 #include <map>
 
@@ -29,7 +30,7 @@ void ASAPScheduler::schedule()
       //check for limited resources with no inputs
       int time = 0;
       const Resource* r = this->resourceModel.getResource(v);
-      while (this->resourceAvailable(r,v,time) == false) {
+      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time) == false) {
         time++;
       }
 
@@ -64,7 +65,7 @@ void ASAPScheduler::schedule()
       int time = std::max(this->startTimes[v] + r->getLatency(), this->startTimes[subV]);
       const Resource* rSub = this->resourceModel.getResource(subV);
 
-      while (this->resourceAvailable(rSub,subV,time) == false) {
+      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,v,time) == false) {
         time++;
       }
 
@@ -77,24 +78,6 @@ void ASAPScheduler::schedule()
       }
     }
   }
-}
-
-bool ASAPScheduler::resourceAvailable(const Resource *r, Vertex* checkV, int timeStep)
-{
-  //unlimited
-  if(r->getLimit()==-1) return true;
-
-  int instancesUsed = 0;
-
-  for(auto it=this->startTimes.begin(); it!=this->startTimes.end(); ++it){
-    if(it->second == timeStep){
-      Vertex* v = it->first;
-      if(checkV != v && this->resourceModel.getResource(v) == r) instancesUsed++;
-    }
-  }
-
-  if(instancesUsed < r->getLimit()) return true;
-  return false;
 }
 
 }

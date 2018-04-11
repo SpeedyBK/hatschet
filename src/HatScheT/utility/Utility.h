@@ -58,6 +58,15 @@ public:
   * \return
   */
  static int sumOfStarttimes(std::map<Vertex*,int>& startTimes);
-
+ /*!
+  * \brief resourceAvailable
+  * \param startTimes map of starttimes
+  * \param ResourceModel the used resource model
+  * \param r the resource that is looked for
+  * \param checkV avoid self counting
+  * \param timeStep the time step that is checked
+  * \return
+  */
+ static  bool resourceAvailable(std::map<Vertex*,int>& startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV, int timeStep);
 };
 }
