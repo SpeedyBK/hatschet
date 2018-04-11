@@ -53,6 +53,12 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
   return resMII;
 }
 
+int Utility::calcMaxII(SchedulerBase *sb)
+{
+  sb->schedule();;
+  return sb->getScheduleLength();
+}
+
 int Utility::calcRecMII(Graph *g)
 {
   int recMII=0;

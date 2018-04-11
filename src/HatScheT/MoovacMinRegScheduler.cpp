@@ -1,13 +1,16 @@
 #include <HatScheT/MoovacMinRegScheduler.h>
+#include <HatScheT/utility/Utility.h>
+#include <HatScheT/scheduler/ASAPScheduler.h>
 
 namespace HatScheT
 {
 
-MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int maxII)
-    : MoovacScheduler(g, resourceModel, solverWishlist, maxII)
+MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
+    : MoovacScheduler(g, resourceModel, solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = maxII;
+  HatScheT::ASAPScheduler asap(g,resourceModel);
+  this->maxII = Utility::calcMaxII(&asap);
   this->SLMax = 0;
 }
 

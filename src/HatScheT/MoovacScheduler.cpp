@@ -1,13 +1,15 @@
 #include <HatScheT/MoovacScheduler.h>
 #include "utility/Utility.h"
+#include <HatScheT/scheduler/ASAPScheduler.h>
 
 namespace HatScheT
 {
 
-MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int maxII) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = maxII;
+  HatScheT::ASAPScheduler asap(g,resourceModel);
+  this->maxII = Utility::calcMaxII(&asap);
   this->SLMax = 0;
 }
 

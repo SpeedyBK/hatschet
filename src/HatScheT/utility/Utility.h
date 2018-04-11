@@ -7,6 +7,7 @@
 #include <string>
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
+#include "HatScheT/base/SchedulerBase.h"
 
 namespace HatScheT
 {
@@ -53,7 +54,7 @@ public:
   */
  static int calcRecMII(Graph *g);
 
- //static int
+ static int calcMaxII(SchedulerBase* sb);
  /*!
   * \brief sumOfStarttimes
   * \param startTimes
