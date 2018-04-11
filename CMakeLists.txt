@@ -81,6 +81,8 @@ src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
+src/HatScheT/scheduler/ALAPScheduler.cpp
+src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
 )
 
