@@ -78,6 +78,7 @@ src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
 src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
+src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
