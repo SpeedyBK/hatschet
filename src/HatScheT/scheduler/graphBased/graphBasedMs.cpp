@@ -24,18 +24,20 @@ void GraphBasedMs::schedule()
     if(this->g.isEmpty()==true) cout << "The inserted graph is empty!" << endl;
     if(this->g.getNumberOfVertices()>=1) cout << "The inserted graph has more than one vertex!" << endl;
 
+    // Create new ASAPScheduler pointer and schedule current graph
     ASAPScheduler* asap = new ASAPScheduler(g,resourceModel);
 
     asap->schedule();
 
 
-
+    // Get Asap schedule length
     int n = asap->getScheduleLength();
 
     cout << "Scheduling length is " << n << endl;
 
     n = 7;
 
+    // create vector of vectors (matrix) for conflicts and vector(s) for constrained ressources (missing!)
     vector<vector<int>> conflMatrix(n, vector<int>(n));
     vector<int> sampleVec(n);
     int tempSort;
@@ -48,6 +50,7 @@ void GraphBasedMs::schedule()
     sampleVec[5] = 1;
     sampleVec[6] = 0;
 
+    // write columnwise to matrix
     for (int j = 0;j<n;j++)
     {
         for (int i = 0;i<n;i++)
@@ -55,6 +58,7 @@ void GraphBasedMs::schedule()
             conflMatrix[i][j] = sampleVec[i];
         }
 
+        // shuffle all elements down by one and copy last sample to top
         tempSort = sampleVec[6];
         for (int i = n-1;i>=1;i--)
         {
@@ -66,6 +70,7 @@ void GraphBasedMs::schedule()
     conflMatrix[0][4] = 1;
     //    conflMatrix[2][3] = 1;
 
+    // print matrix row-wise
     for (int j = 0; j<n; j++)
     {
         for (int i = 0; i<n; i++)
@@ -80,11 +85,13 @@ void GraphBasedMs::schedule()
     if (debug == 0)
     {
 
+        // create new graph pointer and vector of vertices
         HatScheT::Graph* conflGraph = new HatScheT::Graph();
         vector<HatScheT::Vertex*> conflVertices;
         //        vector<int> numEdges(n);
         //    vector<int> conflVertices(7);
 
+        //create a vertice for each sample
         for (int i = 0; i<n;i++)
         {
             //       Vertex *conflVertices[i] = new Vertex;
@@ -96,11 +103,11 @@ void GraphBasedMs::schedule()
             int firstOne = -1;
 
             for (int i = 0;i<n;i++)
-            {
+            {   //search for first one in row and skip to next column
                 if ((conflMatrix[j][i] == 1) & (firstOne == -1)){firstOne = i; continue;}
                 if (conflMatrix[j][i] == 1)
                 {
-
+                    // create edges between first found sample and all following samples
                     conflGraph->createEdge(*conflVertices[firstOne],*conflVertices[i]);
 
                     cout << "Created Edge between Sample " << firstOne << " and Sample " << i << endl;
@@ -111,6 +118,7 @@ void GraphBasedMs::schedule()
 
         cout << "Number of overall connections: " << conflGraph->getNumberOfEdges() << endl;
 
+        // create vector for "used" vertices in heuristic approach
         vector<Vertex*> sampleVertices;
 
         //        sampleVertices.push_back(conflVertices[3]);
@@ -125,9 +133,15 @@ void GraphBasedMs::schedule()
 
         cout << "Vertex with the least amount of connections is: " << GraphBasedMs::getVertexWithLeastNoOfConnections(conflGraph,sampleVertices)->getName() << endl;
 
+        cout << endl << endl;
 
+        cout << "Starting heuristic now:" << endl << endl;
 
-        vector<int> sampleTimes = this->getSampleTimesWithHeuristic(conflGraph, sampleVertices);
+        // create vector for
+        vector<int> sampleTimes;
+
+        // call recursive heuristic function
+        GraphBasedMs::getSampleTimesWithHeuristic(conflGraph, sampleVertices, sampleTimes);
 
         for (int i = 0; i != sampleTimes.size(); ++i){
             cout << sampleTimes[i] << "\t";}
@@ -143,20 +157,28 @@ Vertex* GraphBasedMs::getVertexWithLeastNoOfConnections(Graph *g, vector<Vertex*
     Vertex* returnVertex;
     int edgeCount=g->getNumberOfEdges();
 
+    // iterate through all vertices
     for(auto it=g->verticesBegin(); it!=g->verticesEnd(); ++it){
         Vertex* v = *it;
 
-        int match = -1;
+        // used vertices can not exceed total number of vertices
+        if ( vVec.size() <= g->getNumberOfVertices()){
 
-        for (int k = 0; k!=vVec.size(); ++k)
-        {if (v==vVec[k]) {match = 1;}}
+            int match = -1;
 
-        if (match != 1) {
-            int tempEdgeCount = this->getNoOfConnections(g,v,vVec);
-            if(tempEdgeCount<edgeCount){
-                edgeCount= tempEdgeCount;
-                returnVertex = v;
-                cout << "Vertex with least edges: " << v->getName() << endl;
+            // compare current vertex to used vertices
+            for (int k = 0; k!=vVec.size(); ++k)
+            {if (v==vVec[k]) {match = 1;}}
+
+            // if there is no conflict, get number of connections
+            if (match != 1) {
+                int tempEdgeCount = this->getNoOfConnections(g,v,vVec);
+                // compare previous edgecount with current (temp)edgecount
+                if ((tempEdgeCount<edgeCount) & (tempEdgeCount != g->getNumberOfEdges())){
+                    edgeCount= tempEdgeCount;
+                    returnVertex = v;
+                    cout << "Vertex with least edges: " << v->getName() << endl;
+                }
             }
         }
     }
@@ -167,18 +189,25 @@ Vertex* GraphBasedMs::getVertexWithLeastNoOfConnections(Graph *g, vector<Vertex*
 int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 {
     int number=0;
-
+    // iterate through all edges
     for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it){
         Edge* e = *it;
 
-        if(v==&e->getVertexSrc() || v==&e->getVertexDst()){
+        // used vertices can not exceed total number of vertices
+        if ( vVec.size() <= g->getNumberOfVertices()){
 
-            int match = -1;
+            // if current vertex is either source or destination of iterating edge then
+            if(v==&e->getVertexSrc() || v==&e->getVertexDst()){
 
-            for (int k = 0; k!=vVec.size(); ++k)
-            {if (v==vVec[k]) {match = 1;}}
+                int match = -1;
 
-            if (match !=1) number++;
+                // compare current vertex to used vertices
+                for (int k = 0; k!=vVec.size(); ++k)
+                {if (v==vVec[k]) {match = 1; number = g->getNumberOfEdges();}}
+
+                // if there is no conflict, increase number of connections
+                if (match !=1) number++;
+            }
         }
     }
 
@@ -186,31 +215,91 @@ int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 }
 
 
-vector<int> GraphBasedMs::getSampleTimesWithHeuristic(Graph *g, vector<Vertex*> vVec){
-
-    vector<int> sampleInsertTimes;
+void GraphBasedMs::getSampleTimesWithHeuristic(Graph *g, vector<Vertex*> vVec, vector<int> &sampleTimes){
 
     Vertex* tempVertex = GraphBasedMs::getVertexWithLeastNoOfConnections(g, vVec);
 
-    int lastVecSize = sampleInsertTimes.size();
-
+    // add vertex with least number of connections to "used" vertices
     vVec.push_back(tempVertex);
-    sampleInsertTimes.push_back(tempVertex->getId());
 
-    cout << tempVertex->getName() << endl;
+    GraphBasedMs::removeUsedVertices(g,tempVertex,vVec);
 
-    if (sampleInsertTimes.size() != 0){
+    // get last vector size
+    int lastVecSize = sampleTimes.size();
+
+
+
+    cout << "Current sample: " << tempVertex->getId() << endl;
+
+    // add sample time of vertex to sampling time vector
+    sampleTimes.push_back(tempVertex->getId());
+
+    // if there are any samples
+    if (sampleTimes.size() != 0){
         cout << "vVec size: " << vVec.size() << endl;
-        cout << "sampleInsertTimes size: " << sampleInsertTimes.size() <<endl;
-        cout << "lastVecSize : " << lastVecSize << endl;
-        if (lastVecSize == sampleInsertTimes.size()){
-            return sampleInsertTimes;
+        cout << "sampleTimes size: " << sampleTimes.size() <<endl;
+        cout << "lastVecSize : " << lastVecSize << endl << endl;
+        // if nothing changed between last function call and current function call
+        if ((lastVecSize == sampleTimes.size()) || (sampleTimes.size() == g->getNumberOfVertices()) ){
+            return;
         }
-        else sampleInsertTimes = GraphBasedMs::getSampleTimesWithHeuristic(g,vVec);
+        else GraphBasedMs::getSampleTimesWithHeuristic(g,vVec,sampleTimes);
     }
     else{
-        sampleInsertTimes.push_back(-1);
-        return sampleInsertTimes;
+        sampleTimes.push_back(-1);
+        return;
+    }
+}
+
+void GraphBasedMs::removeUsedVertices(Graph* g, Vertex* v, vector<Vertex*> &vVec){
+
+    // iterate through all edges
+    for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it){
+        Edge* e = *it;
+
+        // used vertices can not exceed total number of vertices
+        if ( vVec.size() <= g->getNumberOfVertices()){
+
+
+            int vert = 0;
+            int vecSize = vVec.size();
+
+            // if current vertex is either source or destination of iterating edge then add to used list
+            if(v==&e->getVertexSrc()){
+
+//                for (int vert = 0; vert!=vVec.size(); ++vert){
+                while (vert < vecSize){
+                    if (vVec[vert] != &e->getVertexDst()){
+                        vVec.push_back(&e->getVertexDst());
+                        cout << "Removed destination vertex : " << e->getVertexDstName() << endl;
+                        vecSize = vVec.size();
+//                        vert = 0;
+//                        --vert;
+//                        break;
+                    }
+//                    else {continue;}
+                    ++vert;
+//                    cout << vert<< endl;
+                }
+            }
+            else if (v==&e->getVertexDst()){
+
+//                for (int vert = 0; vert!=vVec.size(); ++vert){
+                while (vert < vecSize){
+                    if (vVec[vert] != &e->getVertexSrc()){
+                        vVec.push_back(&e->getVertexSrc());
+                        cout << "Removed source vertex : " << e->getVertexSrcName() << endl;
+                        vecSize = vVec.size();
+//                        vert = 0;
+//                        --vert;
+//                        break;
+                    }
+//                    else {continue;}
+                    ++vert;
+//                    cout << vert<< endl;
+                }
+            }
+        }
     }
 }
 }

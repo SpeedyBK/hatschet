@@ -28,14 +28,16 @@ private:
   /*!
    * \brief getVertexWithLeastNoOfConnections
    * \param g
+   * \param vVec
    * \return
    */
-
   Vertex* getVertexWithLeastNoOfConnections(Graph* g, vector<Vertex*> vVec);
+
   /*!
    * \brief getNoOfConnections
    * \param g
    * \param v
+   * \param vVec
    * \return
    */
   int getNoOfConnections(Graph* g, Vertex* v, vector<Vertex*> vVec);
@@ -44,10 +46,16 @@ private:
    * \brief getSampleTimesWithHeuristic
    * \param g
    * \param vVec
-   * \return
+   * \param sampleTimes
    */
-  vector<int> getSampleTimesWithHeuristic(Graph* g, vector<Vertex*> vVec);
-//  vector<int> getSampleTimesWithHeuristic(Graph* g, vector<Vertex> vVec);
+  void getSampleTimesWithHeuristic(Graph* g, vector<Vertex*> vVec,vector<int> &sampleTimes);
 
+  /*!
+   * \brief removeUsedVertices
+   * \param g
+   * \param v
+   * \param vVec
+   */
+void removeUsedVertices(Graph* g, Vertex* v, vector<Vertex *> &vVec);
 };
 }
