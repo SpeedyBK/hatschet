@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
 #include <HatScheT/MoovacScheduler.h>
@@ -5,7 +10,9 @@
 
 namespace HatScheT
 {
-
+/*!
+ * \brief The SGMScheduler class An ILP-based modulo scheduler that uses connected subgraphs for scheduling
+ */
 class SGMScheduler : public MoovacScheduler
 {
 public:
@@ -16,12 +23,13 @@ public:
    */
   SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 
-  /*!
-   * \brief schedule determine a II using the graph based modulo scheduler
-   */
-  virtual void schedule();
+  void addOccurenceSet(vector<vector<Edge* > > occSet);
 
 protected:
+  /*!
+   * \brief setGeneralConstraints read the paper for further information
+   */
+  virtual void setGeneralConstraints();
 private:
 
 };

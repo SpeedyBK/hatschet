@@ -13,9 +13,20 @@ SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<str
   this->SLMax = 0;
 }
 
-void SGMScheduler::schedule()
+void SGMScheduler::setGeneralConstraints()
 {
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* src = &(e->getVertexSrc());
+    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    Vertex* dst = &(e->getVertexDst());
+    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+  }
+
+  //add subgraph connections
 }
 
 }
