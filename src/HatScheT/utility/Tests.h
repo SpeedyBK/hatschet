@@ -51,5 +51,10 @@ public:
    * \return
    */
   static bool occurrenceSetTest();
+  /*!
+   * \brief occurrenceSetCombinationTest
+   * \return
+   */
+  static bool occurrenceSetCombinationTest();
 };
 }

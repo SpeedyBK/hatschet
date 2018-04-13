@@ -7,8 +7,7 @@
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
-#include "HatScheT/utility/subgraphs/Occurrence.h"
-#include "HatScheT/utility/subgraphs/OccurrenceSet.h"
+#include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
 
 namespace HatScheT {
 
@@ -311,6 +310,59 @@ bool Tests::occurrenceTest()
     g2.createEdge(g2.getVertexById(fe.first), g2.getVertexById(fe.second), 0);
   if(occ.addEdge(&g2.getEdge(&g2.getVertexById(1),&g2.getVertexById(2))) == true){
     cout << "Tests.occurrenceTest: adding an unconncted edge tfrom another graph was possible but shouldnt be!" << endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool Tests::occurrenceSetCombinationTest()
+{
+  HatScheT::Graph g;
+  for (int i = 1; i <= 7; ++i)
+    g.createVertex(i);
+
+  std::vector<std::pair<int, int>> edges = {
+    {1,  5},
+    {2,  5},
+    {3,  6},
+    {4,  6},
+    {5,  7},
+    {6,  7}
+  };
+  for (auto fe : edges)
+    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);
+
+  //generate 4 occurrences
+  HatScheT::Occurrence occ1(&g);
+  occ1.addEdge(&g.getEdge(&g.getVertexById(3),&g.getVertexById(6)));
+  HatScheT::Occurrence occ2(&g);
+  occ2.addEdge(&g.getEdge(&g.getVertexById(1),&g.getVertexById(5)));
+  HatScheT::Occurrence occ3(&g);
+  occ3.addEdge(&g.getEdge(&g.getVertexById(2),&g.getVertexById(5)));
+  HatScheT::Occurrence occ4(&g);
+  occ4.addEdge(&g.getEdge(&g.getVertexById(4),&g.getVertexById(6)));
+
+  //generate 2 occurrencesets
+  OccurrenceSet occs1(&g);
+  occs1.addOccurrence(&occ1);
+  occs1.addOccurrence(&occ2);
+  OccurrenceSet occs2(&g);
+  occs2.addOccurrence(&occ3);
+  occs2.addOccurrence(&occ4);
+
+  //generate occurrenceSetCombination
+  OccurrenceSetCombination occsC(&g);
+
+  //add first occurrenceSet
+  if(occsC.addOccurrenceSet(&occs1)==false){
+    cout << "Tests.occurrenceSetCombinationTest: adding a first occurrenceset failed!" << endl;
+    return false;
+  }
+
+  //try toadd second occurrenceSet with conflicts
+  if(occsC.addOccurrenceSet(&occs2)==true){
+    cout << "Tests.occurrenceSetCombinationTest: added a second occurrenceset that has conflicts, but this shouldn be possible!" << endl;
     return false;
   }
 

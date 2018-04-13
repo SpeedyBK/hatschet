@@ -175,6 +175,7 @@ int main(int argc, char *args[])
       if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
       if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
       if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
+      if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
     }
     else
     {
