@@ -107,7 +107,7 @@ ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 
     else
     {
-      cout << "GraphMLResourceReader.readResourceModel:  File not fount! (" << xmlFile << ")" << endl;
+      cout << "GraphMLResourceReader.readResourceModel:  File not found! (" << xmlFile << ")" << endl;
     }
   }
   catch (const XMLException& toCatch) {

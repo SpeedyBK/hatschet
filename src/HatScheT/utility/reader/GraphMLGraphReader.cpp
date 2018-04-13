@@ -189,7 +189,7 @@ Graph& GraphMLGraphReader::readGraph(const char *path)
 
     else
     {
-      cout << "graphMLReader.parseGraph: File not fount! (" << xmlFile << ")" << endl;
+      cout << "graphMLReader.parseGraph: File not found! (" << xmlFile << ")" << endl;
     }
   }
   catch (const XMLException& toCatch) {
