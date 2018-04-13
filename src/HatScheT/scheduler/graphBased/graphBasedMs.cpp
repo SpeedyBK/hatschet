@@ -34,8 +34,23 @@ void GraphBasedMs::schedule()
     int n = asap->getScheduleLength();
 
     cout << "Scheduling length is " << n << endl;
+    cout << "Start times of vertices: " << endl;
 
-    n = 7;
+
+    for (auto it=g.verticesBegin(); it!=g.verticesEnd();++it){
+        Vertex* anotherVertexPointer = *it;
+        cout << "Start time of " << anotherVertexPointer->getName() << " : " << asap->getStartTime(*anotherVertexPointer) << endl;
+    }
+
+
+//    for (int i = 1; i!=g.getNumberOfVertices()+1;++i){
+//        Vertex* anotherVertexPointer = g.getVertexById(i);
+//        cout << "Start time of " << anotherVertexPointer->getName() << " : " << asap->getStartTime(anotherVertexPointer) << endl;
+//    }
+
+
+
+//    n = 7;
 
     // create vector of vectors (matrix) for conflicts and vector(s) for constrained ressources (missing!)
     vector<vector<int>> conflMatrix(n, vector<int>(n));
@@ -67,7 +82,7 @@ void GraphBasedMs::schedule()
         sampleVec[0] = tempSort;
     }
 
-    conflMatrix[0][4] = 1;
+    //    conflMatrix[0][4] = 1;
     //    conflMatrix[2][3] = 1;
 
     // print matrix row-wise
@@ -137,13 +152,13 @@ void GraphBasedMs::schedule()
 
         cout << "Starting heuristic now:" << endl << endl;
 
-        // create vector for
+        // create vector for recursive function call
         vector<int> sampleTimes;
 
         // call recursive heuristic function
         GraphBasedMs::getSampleTimesWithHeuristic(conflGraph, sampleVertices, sampleTimes);
 
-        for (int i = 0; i != sampleTimes.size(); ++i){
+        for (int i = sampleTimes.size()-1; i >= 0; --i){
             cout << sampleTimes[i] << "\t";}
         cout << endl;
 
@@ -163,16 +178,9 @@ Vertex* GraphBasedMs::getVertexWithLeastNoOfConnections(Graph *g, vector<Vertex*
 
         // used vertices can not exceed total number of vertices
         if ( vVec.size() <= g->getNumberOfVertices()){
-
-            int match = -1;
-
-            // compare current vertex to used vertices
-            for (int k = 0; k!=vVec.size(); ++k)
-            {if (v==vVec[k]) {match = 1;}}
-
-            // if there is no conflict, get number of connections
-            if (match != 1) {
+            if (!GraphBasedMs::isVertexInVector(vVec,v)){
                 int tempEdgeCount = this->getNoOfConnections(g,v,vVec);
+
                 // compare previous edgecount with current (temp)edgecount
                 if ((tempEdgeCount<edgeCount) & (tempEdgeCount != g->getNumberOfEdges())){
                     edgeCount= tempEdgeCount;
@@ -198,15 +206,7 @@ int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 
             // if current vertex is either source or destination of iterating edge then
             if(v==&e->getVertexSrc() || v==&e->getVertexDst()){
-
-                int match = -1;
-
-                // compare current vertex to used vertices
-                for (int k = 0; k!=vVec.size(); ++k)
-                {if (v==vVec[k]) {match = 1; number = g->getNumberOfEdges();}}
-
-                // if there is no conflict, increase number of connections
-                if (match !=1) number++;
+                if (!GraphBasedMs::isVertexInVector(vVec,v)) ++number;
             }
         }
     }
@@ -217,37 +217,40 @@ int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 
 void GraphBasedMs::getSampleTimesWithHeuristic(Graph *g, vector<Vertex*> vVec, vector<int> &sampleTimes){
 
-    Vertex* tempVertex = GraphBasedMs::getVertexWithLeastNoOfConnections(g, vVec);
+    if (vVec.size() < g->getNumberOfVertices()){
 
-    // add vertex with least number of connections to "used" vertices
-    vVec.push_back(tempVertex);
+        Vertex* tempVertex = GraphBasedMs::getVertexWithLeastNoOfConnections(g, vVec);
 
-    GraphBasedMs::removeUsedVertices(g,tempVertex,vVec);
+        // add vertex with least number of connections to "used" vertices
+        vVec.push_back(tempVertex);
 
-    // get last vector size
-    int lastVecSize = sampleTimes.size();
+        GraphBasedMs::removeUsedVertices(g,tempVertex,vVec);
+
+        // get last vector size
+        int lastVecSize = sampleTimes.size();
 
 
 
-    cout << "Current sample: " << tempVertex->getId() << endl;
+        cout << "Current sample: " << tempVertex->getId() << endl;
 
-    // add sample time of vertex to sampling time vector
-    sampleTimes.push_back(tempVertex->getId());
+        // add sample time of vertex to sampling time vector
+        sampleTimes.push_back(tempVertex->getId());
 
-    // if there are any samples
-    if (sampleTimes.size() != 0){
-        cout << "vVec size: " << vVec.size() << endl;
-        cout << "sampleTimes size: " << sampleTimes.size() <<endl;
-        cout << "lastVecSize : " << lastVecSize << endl << endl;
-        // if nothing changed between last function call and current function call
-        if ((lastVecSize == sampleTimes.size()) || (sampleTimes.size() == g->getNumberOfVertices()) ){
+        // if there are any samples
+        if (sampleTimes.size() != 0){
+            cout << "vVec size: " << vVec.size() << endl;
+            cout << "sampleTimes size: " << sampleTimes.size() <<endl;
+            cout << "lastVecSize : " << lastVecSize << endl << endl;
+            // if nothing changed between last function call and current function call
+            if ((lastVecSize == sampleTimes.size()) || (sampleTimes.size() == g->getNumberOfVertices()) ){
+                return;
+            }
+            else GraphBasedMs::getSampleTimesWithHeuristic(g,vVec,sampleTimes);
+        }
+        else{
+            sampleTimes.push_back(-1);
             return;
         }
-        else GraphBasedMs::getSampleTimesWithHeuristic(g,vVec,sampleTimes);
-    }
-    else{
-        sampleTimes.push_back(-1);
-        return;
     }
 }
 
@@ -257,49 +260,42 @@ void GraphBasedMs::removeUsedVertices(Graph* g, Vertex* v, vector<Vertex*> &vVec
     for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it){
         Edge* e = *it;
 
+        int vecSize = vVec.size();
+
         // used vertices can not exceed total number of vertices
-        if ( vVec.size() <= g->getNumberOfVertices()){
-
-
-            int vert = 0;
-            int vecSize = vVec.size();
+        if ( vecSize <= g->getNumberOfVertices()){
 
             // if current vertex is either source or destination of iterating edge then add to used list
             if(v==&e->getVertexSrc()){
 
-//                for (int vert = 0; vert!=vVec.size(); ++vert){
-                while (vert < vecSize){
-                    if (vVec[vert] != &e->getVertexDst()){
-                        vVec.push_back(&e->getVertexDst());
-                        cout << "Removed destination vertex : " << e->getVertexDstName() << endl;
-                        vecSize = vVec.size();
-//                        vert = 0;
-//                        --vert;
-//                        break;
-                    }
-//                    else {continue;}
-                    ++vert;
-//                    cout << vert<< endl;
+                // if vertex is not found, add to vector
+                if (!GraphBasedMs::isVertexInVector(vVec,&e->getVertexDst())){
+                    vVec.push_back(&e->getVertexDst());
+                    cout << "Removed destination vertex : " << e->getVertexDstName() << endl;
+                    vecSize = vVec.size();
                 }
             }
             else if (v==&e->getVertexDst()){
 
-//                for (int vert = 0; vert!=vVec.size(); ++vert){
-                while (vert < vecSize){
-                    if (vVec[vert] != &e->getVertexSrc()){
-                        vVec.push_back(&e->getVertexSrc());
-                        cout << "Removed source vertex : " << e->getVertexSrcName() << endl;
-                        vecSize = vVec.size();
-//                        vert = 0;
-//                        --vert;
-//                        break;
-                    }
-//                    else {continue;}
-                    ++vert;
-//                    cout << vert<< endl;
+                // if vertex is not found, add to vector
+                if (!GraphBasedMs::isVertexInVector(vVec,&e->getVertexSrc())){
+                    vVec.push_back(&e->getVertexSrc());
+                    cout << "Removed source vertex : " << e->getVertexSrcName() << endl;
+                    vecSize = vVec.size();
                 }
             }
         }
     }
+}
+
+bool GraphBasedMs::isVertexInVector(vector<Vertex*> vVec, Vertex *v){
+
+    bool isMember = false;
+
+    for (int i=0;i<vVec.size(); ++i){
+        if (vVec[i] == v) {isMember = true;}
+    }
+
+    return isMember;
 }
 }

@@ -57,5 +57,13 @@ private:
    * \param vVec
    */
 void removeUsedVertices(Graph* g, Vertex* v, vector<Vertex *> &vVec);
+
+/*!
+ * \brief isVertexInVector
+ * \param vVec
+ * \param v
+ * \return
+ */
+bool isVertexInVector(vector<Vertex*> vVec, Vertex* v);
 };
 }
