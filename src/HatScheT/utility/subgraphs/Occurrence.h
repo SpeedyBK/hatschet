@@ -30,12 +30,12 @@ public:
    * \brief getEdges
    * \return
    */
-  std::set<Edge*> getEdges(){return this->edges;}
+  std::set<Edge*> getEdges() const {return this->edges;}
   /*!
    * \brief getVertices
    * \return
    */
-  std::set<Vertex*> getVertices(){return this->vertices;}
+  std::set<Vertex*> getVertices() const {return this->vertices;}
 protected:
 
 private:
@@ -58,5 +58,6 @@ private:
    */
   std::set<Vertex*> vertices;
 };
+ostream& operator<<(ostream& os, const Occurrence& o);
 }
 

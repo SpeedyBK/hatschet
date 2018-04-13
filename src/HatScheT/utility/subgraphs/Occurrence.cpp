@@ -8,6 +8,24 @@ Occurrence::Occurrence(Graph *g)
   this->g =g;
 }
 
+ostream& operator<<(ostream& os, const Occurrence& o)
+{
+  os << "---Printing Occurrence---" << endl;
+  os << "---Printing Vertices---" << endl;
+  for(auto it=o.getVertices().begin();it!=o.getVertices().end();++it){
+    Vertex* v = *it;
+    os << *v << endl;
+  }
+  os << "---Printing Edges---" << endl;
+  for(auto it=o.getEdges().begin();it!=o.getEdges().end();++it){
+    Edge* e = *it;
+    os << *e << endl;
+  }
+
+  os << "---Finished Printing Occurrence---" << endl;
+  return os;
+}
+
 bool Occurrence::addEdge(Edge *e)
 {
   if(this->edges.size()==0){
