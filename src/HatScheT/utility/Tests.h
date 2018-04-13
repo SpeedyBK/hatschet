@@ -46,5 +46,10 @@ public:
    * \return
    */
   static bool occurrenceTest();
+  /*!
+   * \brief occurrenceSetTest
+   * \return
+   */
+  static bool occurrenceSetTest();
 };
 }

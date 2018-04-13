@@ -126,11 +126,16 @@ bool Utility::edgeIsInGraph(Graph *g, Edge *e)
 
 bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
 {
-  for(auto it=occ1->getVertices().begin();it!=occ1->getVertices().end();++it){
-    Vertex* v = *it;
-    const bool is_in = occ2->getVertices().find(v) != occ2->getVertices().end();
+  set<Vertex*> occ1Set = occ1->getVertices();
+  set<Vertex*> occ2Set = occ2->getVertices();
 
-    if(is_in==true) return false;
+  for(auto it:occ1Set){
+    Vertex* v = it;
+    const bool is_in = occ2Set.find(v) != occ2Set.end();
+
+    if(is_in==true){
+      return false;
+    }
   }
   return true;
 }

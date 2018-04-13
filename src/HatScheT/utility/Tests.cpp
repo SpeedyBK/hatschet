@@ -8,6 +8,7 @@
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/Occurrence.h"
+#include "HatScheT/utility/subgraphs/OccurrenceSet.h"
 
 namespace HatScheT {
 
@@ -203,6 +204,59 @@ bool Tests::apiTest()
   return true;
 }
 
+bool Tests::occurrenceSetTest()
+{
+  HatScheT::Graph g;
+  for (int i = 1; i <= 7; ++i)
+    g.createVertex(i);
+
+  std::vector<std::pair<int, int>> edges = {
+    {1,  5},
+    {2,  5},
+    {3,  6},
+    {4,  6},
+    {5,  7},
+    {6,  7}
+  };
+  for (auto fe : edges)
+    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);
+
+  //generate occurrenceSet
+  HatScheT::OccurrenceSet occs(&g);
+
+  //generate 3 occurrences
+  HatScheT::Occurrence occ1(&g);
+  occ1.addEdge(&g.getEdge(&g.getVertexById(3),&g.getVertexById(6)));
+  occ1.addEdge(&g.getEdge(&g.getVertexById(4),&g.getVertexById(6)));
+
+  HatScheT::Occurrence occ2(&g);
+  occ2.addEdge(&g.getEdge(&g.getVertexById(1),&g.getVertexById(5)));
+  occ2.addEdge(&g.getEdge(&g.getVertexById(2),&g.getVertexById(5)));
+
+  HatScheT::Occurrence occ3(&g);
+  occ3.addEdge(&g.getEdge(&g.getVertexById(5),&g.getVertexById(7)));
+  occ3.addEdge(&g.getEdge(&g.getVertexById(6),&g.getVertexById(7)));
+
+  //try to add first occurrence
+  if(occs.addOccurrence(&occ1) == false){
+    return false;
+  }
+
+  //try to add second occurrence
+  if(occs.addOccurrence(&occ2) == false){
+    cout << "Tests.occurrenceSetTest: Tried to add a conflict free occurrence but it failed!" << endl;
+    return false;
+  }
+
+  //try to add third occurrence
+  if(occs.addOccurrence(&occ3) == true){
+    cout << "Tests.occurrenceSetTest: Tried to add a conflicted occurrence but it shouldnt be possible!" << endl;
+    return false;
+  }
+
+  return true;
+}
+
 bool Tests::occurrenceTest()
 {
   HatScheT::Graph g;
@@ -215,7 +269,7 @@ bool Tests::occurrenceTest()
     {3,  6},
     {4,  6},
     {5,  7},
-    {6,  6}
+    {6,  7}
   };
   for (auto fe : edges)
     g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);

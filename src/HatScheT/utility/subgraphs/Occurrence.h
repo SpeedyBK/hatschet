@@ -41,6 +41,8 @@ public:
    * \return
    */
   Graph* getGraph() const {return this->g;}
+
+  friend ostream& operator<<(ostream& os, const Occurrence& o);
 protected:
 
 private:
@@ -63,6 +65,6 @@ private:
    */
   std::set<Vertex*> vertices;
 };
-ostream& operator<<(ostream& os, const Occurrence& o);
+
 }
 

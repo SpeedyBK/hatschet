@@ -12,13 +12,13 @@ ostream& operator<<(ostream& os, const Occurrence& o)
 {
   os << "---Printing Occurrence---" << endl;
   os << "---Printing Vertices---" << endl;
-  for(auto it=o.getVertices().begin();it!=o.getVertices().end();++it){
-    Vertex* v = *it;
+  for(auto it:o.vertices){
+    Vertex* v = it;
     os << *v << endl;
   }
   os << "---Printing Edges---" << endl;
-  for(auto it=o.getEdges().begin();it!=o.getEdges().end();++it){
-    Edge* e = *it;
+  for(auto it:o.edges){
+    Edge* e = it;
     os << *e << endl;
   }
 
