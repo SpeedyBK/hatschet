@@ -41,5 +41,10 @@ public:
    * \return
    */
   static bool alapHCTest();
+  /*!
+   * \brief occurrenceTest
+   * \return
+   */
+  static bool occurrenceTest();
 };
 }

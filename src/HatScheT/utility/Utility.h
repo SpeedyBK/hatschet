@@ -78,5 +78,12 @@ public:
   * \return
   */
  static  bool resourceAvailable(std::map<Vertex*,int>& startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV, int timeStep);
+ /*!
+  * \brief edgeIsInGraph
+  * \param g
+  * \param e
+  * \return
+  */
+ static bool edgeIsInGraph(Graph* g, Edge* e);
 };
 }

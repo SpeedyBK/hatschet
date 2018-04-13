@@ -173,6 +173,7 @@ int main(int argc, char *args[])
       if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
       if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
       if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
+      if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
     }
     else
     {

@@ -115,4 +115,13 @@ bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceMod
   return false;
 }
 
+bool Utility::edgeIsInGraph(Graph *g, Edge *e)
+{
+  for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
+    Edge* iterE = *it;
+    if(iterE==e) return true;
+  }
+  return false;
+}
+
 }

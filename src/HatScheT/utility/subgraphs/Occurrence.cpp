@@ -1,4 +1,5 @@
 #include <HatScheT/utility/subgraphs/Occurrence.h>
+#include <HatScheT/utility/Utility.h>
 
 namespace HatScheT
 {
@@ -14,6 +15,11 @@ bool Occurrence::addEdge(Edge *e)
     this->vertices.insert(&e->getVertexDst());
     this->vertices.insert(&e->getVertexSrc());
     return true;
+  }
+
+  if(Utility::edgeIsInGraph(this->g, e) == false){
+    cout << "Occurrence.addEdge: WARNING tried to add an edge that is not in g!" << endl;
+    return false;
   }
 
   const bool is_in = this->edges.find(e) != this->edges.end();

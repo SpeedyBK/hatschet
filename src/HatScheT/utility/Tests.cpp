@@ -7,6 +7,7 @@
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
+#include "HatScheT/utility/subgraphs/Occurrence.h"
 
 namespace HatScheT {
 
@@ -199,6 +200,66 @@ bool Tests::apiTest()
   dw.write();
 
   cout << "No actual API tests performed yet" << endl;
+  return true;
+}
+
+bool Tests::occurrenceTest()
+{
+  HatScheT::Graph g;
+  for (int i = 1; i <= 7; ++i)
+    g.createVertex(i);
+
+  std::vector<std::pair<int, int>> edges = {
+    {1,  5},
+    {2,  5},
+    {3,  6},
+    {4,  6},
+    {5,  7},
+    {6,  6}
+  };
+  for (auto fe : edges)
+    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);
+
+  HatScheT::Occurrence occ(&g);
+
+  //add first edge
+  if(occ.addEdge(&g.getEdge(&g.getVertexById(3),&g.getVertexById(6))) == false){
+    cout << "Tests.occurrenceTest: adding a first edge to occurrence failed!" << endl;
+    return false;
+  }
+
+  //add second egdge, valid connected subgraph
+  if(occ.addEdge(&g.getEdge(&g.getVertexById(4),&g.getVertexById(6))) == false){
+    cout << "Tests.occurrenceTest: adding second (valid) edge to occurrence failed!" << endl;
+    return false;
+  }
+
+  //try to add the edge a second time
+  if(occ.addEdge(&g.getEdge(&g.getVertexById(4),&g.getVertexById(6))) == true){
+    cout << "Tests.occurrenceTest: adding duplicate edge to occurrence was possible but shouldnt be!" << endl;
+    return false;
+  }
+
+  //try to add unconnected edge
+  if(occ.addEdge(&g.getEdge(&g.getVertexById(5),&g.getVertexById(7))) == true){
+    cout << "Tests.occurrenceTest: adding an unconncted edge to occurrence was possible but shouldnt be!" << endl;
+    return false;
+  }
+
+  //generate another edge that is not in g and try to add it
+  HatScheT::Graph g2;
+  for (int i = 1; i <= 2; ++i)
+    g2.createVertex(i);
+  std::vector<std::pair<int, int>> g2edge = {
+    {1,  2}
+  };
+  for (auto fe : g2edge)
+    g2.createEdge(g2.getVertexById(fe.first), g2.getVertexById(fe.second), 0);
+  if(occ.addEdge(&g2.getEdge(&g2.getVertexById(1),&g2.getVertexById(2))) == true){
+    cout << "Tests.occurrenceTest: adding an unconncted edge tfrom another graph was possible but shouldnt be!" << endl;
+    return false;
+  }
+
   return true;
 }
 
