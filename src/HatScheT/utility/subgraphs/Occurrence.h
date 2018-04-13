@@ -36,6 +36,11 @@ public:
    * \return
    */
   std::set<Vertex*> getVertices() const {return this->vertices;}
+  /*!
+   * \brief getGraph return the graph the occurrence is in
+   * \return
+   */
+  Graph* getGraph() const {return this->g;}
 protected:
 
 private:

@@ -8,6 +8,7 @@
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/base/SchedulerBase.h"
+#include "HatScheT/utility/subgraphs/Occurrence.h"
 
 namespace HatScheT
 {
@@ -60,7 +61,11 @@ public:
   * \return
   */
  static int calcRecMII(Graph *g);
-
+ /*!
+  * \brief calcMaxII
+  * \param sb
+  * \return
+  */
  static int calcMaxII(SchedulerBase* sb);
  /*!
   * \brief sumOfStarttimes
@@ -85,5 +90,12 @@ public:
   * \return
   */
  static bool edgeIsInGraph(Graph* g, Edge* e);
+ /*!
+  * \brief occurrencesAreConflictFree
+  * \param occ1
+  * \param occ2
+  * \return
+  */
+ static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
 };
 }

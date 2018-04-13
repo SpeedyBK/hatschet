@@ -124,4 +124,15 @@ bool Utility::edgeIsInGraph(Graph *g, Edge *e)
   return false;
 }
 
+bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
+{
+  for(auto it=occ1->getVertices().begin();it!=occ1->getVertices().end();++it){
+    Vertex* v = *it;
+    const bool is_in = occ2->getVertices().find(v) != occ2->getVertices().end();
+
+    if(is_in==true) return false;
+  }
+  return true;
+}
+
 }
