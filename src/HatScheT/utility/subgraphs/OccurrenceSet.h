@@ -4,7 +4,6 @@
   All rights reserved.
 */
 #pragma once
-#include <HatScheT/Graph.h>
 #include <HatScheT/utility/subgraphs/Occurrence.h>
 #include <vector>
 
@@ -32,6 +31,11 @@ public:
    * \return
    */
   std::set<Occurrence*> getOccurrences() const {return this->occurrences;}
+  /*!
+   * \brief getGraph return the graph the occurrenceSets are in
+   * \return
+   */
+  Graph* getGraph() const {return this->g;}
 protected:
 
 private:

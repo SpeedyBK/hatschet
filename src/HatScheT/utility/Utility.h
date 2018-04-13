@@ -8,7 +8,7 @@
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/base/SchedulerBase.h"
-#include "HatScheT/utility/subgraphs/Occurrence.h"
+#include "HatScheT/utility/subgraphs/OccurrenceSet.h"
 
 namespace HatScheT
 {
@@ -97,5 +97,12 @@ public:
   * \return
   */
  static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
+ /*!
+  * \brief occurenceSetsAreConflictFree
+  * \param occs1
+  * \param occs2
+  * \return
+  */
+ static bool occurenceSetsAreConflictFree(OccurrenceSet* occs1, OccurrenceSet* occs2);
 };
 }

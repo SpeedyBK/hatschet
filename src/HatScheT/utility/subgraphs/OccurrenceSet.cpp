@@ -19,7 +19,7 @@ bool OccurrenceSet::addOccurrence(Occurrence *occ)
     //check whether occ is new
     const bool is_in = this->occurrences.find(occ) != this->occurrences.end();
     if(is_in==true){
-      cout << "Occurrence.addEdge: WARNING tried to add an already existing occurrence!" << endl;
+      cout << "OccurrenceSet.addOccurrence: WARNING tried to add an already existing occurrence!" << endl;
       return false;
     }
 
@@ -27,7 +27,7 @@ bool OccurrenceSet::addOccurrence(Occurrence *occ)
     for(auto it:this->occurrences){
       Occurrence* iterOcc = it;
       if(Utility::occurrencesAreConflictFree(occ,iterOcc)==false){
-        cout << "Occurrence.addEdge: WARNING tried to add an occurrence that has a conflict with an aleady added one!" << endl;
+        cout << "OccurrenceSet.addOccurrence: WARNING tried to add an occurrence that has a conflict with an aleady added one!" << endl;
         return false;
       }
     }

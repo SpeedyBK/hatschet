@@ -140,4 +140,21 @@ bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
   return true;
 }
 
+bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2)
+{
+  set<Occurrence*> occs1Set = occs1->getOccurrences();
+  set<Occurrence*> occs2Set = occs2->getOccurrences();
+
+  for(auto it:occs1Set){
+    Occurrence* occ = it;
+    for(auto it2:occs2Set){
+      Occurrence* occ2 = it2;
+
+      if(Utility::occurrencesAreConflictFree(occ,occ2)==false) return false;
+    }
+  }
+
+  return true;
+}
+
 }

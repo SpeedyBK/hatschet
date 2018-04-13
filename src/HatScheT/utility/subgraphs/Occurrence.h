@@ -41,7 +41,12 @@ public:
    * \return
    */
   Graph* getGraph() const {return this->g;}
-
+  /*!
+   * \brief operator << overloaded stream operator for cout
+   * \param os
+   * \param o
+   * \return
+   */
   friend ostream& operator<<(ostream& os, const Occurrence& o);
 protected:
 
