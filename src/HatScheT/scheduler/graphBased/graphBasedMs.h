@@ -65,5 +65,13 @@ void removeUsedVertices(Graph* g, Vertex* v, vector<Vertex *> &vVec);
  * \return
  */
 bool isVertexInVector(vector<Vertex*> vVec, Vertex* v);
+
+/*!
+ * \brief isMemberInVector
+ * \param vVec
+ * \param v
+ */
+template<typename T> bool isMemberInVector(vector<T> vVec, T v);
+
 };
 }
