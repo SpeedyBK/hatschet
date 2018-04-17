@@ -316,6 +316,11 @@ bool Tests::occurrenceTest()
   return true;
 }
 
+bool Tests::sgmSchedulerTest()
+{
+  return true;
+}
+
 bool Tests::occurrenceSetCombinationTest()
 {
   HatScheT::Graph g;

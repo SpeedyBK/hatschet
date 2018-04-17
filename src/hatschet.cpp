@@ -9,6 +9,7 @@
 #include <HatScheT/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 
@@ -176,6 +177,7 @@ int main(int argc, char *args[])
       if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
       if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
       if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
+      if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
     }
     else
     {

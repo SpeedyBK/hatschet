@@ -56,5 +56,10 @@ public:
    * \return
    */
   static bool occurrenceSetCombinationTest();
+  /*!
+   * \brief sgmSchedulerTest
+   * \return
+   */
+  static bool sgmSchedulerTest();
 };
 }
