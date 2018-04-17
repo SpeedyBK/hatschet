@@ -7,6 +7,7 @@
 
 #include <HatScheT/MoovacScheduler.h>
 #include <vector>
+#include <HatScheT/utility/subgraphs/OccurrenceSetCombination.h>
 
 namespace HatScheT
 {
@@ -21,7 +22,7 @@ public:
    * \param g
    * \param resourceModel
    */
-  SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+  SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist, OccurrenceSetCombination* occSC);
 
   void addOccurenceSet(vector<vector<Edge* > > occSet);
 
@@ -31,6 +32,7 @@ protected:
    */
   virtual void setGeneralConstraints();
 private:
+  OccurrenceSetCombination* occSC;
 
 };
 }

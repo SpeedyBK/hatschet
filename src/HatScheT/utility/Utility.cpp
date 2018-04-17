@@ -76,7 +76,7 @@ int Utility::calcMaxII(SchedulerBase *sb)
 
 int Utility::calcRecMII(Graph *g)
 {
-  int recMII=0;
+  int recMII=1;
 
   for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){
     Edge* e = *it;

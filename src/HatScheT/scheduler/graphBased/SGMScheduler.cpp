@@ -5,12 +5,13 @@
 namespace HatScheT
 {
 
-SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist) : MoovacScheduler(g, resourceModel, solverWishlist)
+SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, OccurrenceSetCombination *occSC) : MoovacScheduler(g, resourceModel, solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
   this->SLMax = 0;
+  this->occSC = occSC;
 }
 
 void SGMScheduler::setGeneralConstraints()
