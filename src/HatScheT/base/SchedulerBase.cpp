@@ -9,10 +9,11 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : g(g), res
 
 int SchedulerBase::getScheduleLength()
 {
-  int maxTime=0;
+  int maxTime=-1;
   for(std::pair<Vertex*,int> vtPair : startTimes)
   {
     Vertex* v = vtPair.first;
+
     if((vtPair.second+resourceModel.getVertexLatency(v)) > maxTime) maxTime = (vtPair.second+resourceModel.getVertexLatency(v));
   }
   return maxTime;
@@ -25,6 +26,14 @@ int SchedulerBase::getStartTime(Vertex &v)
     return it->second;
   else
     return -1;
+}
+
+void SchedulerBase::printStartTimes()
+{
+  for(auto it:this->startTimes){
+    Vertex* v = it.first;
+    cout << v->getName() << " at " << it.second << endl;
+  }
 }
 
 std::map<const Vertex *, int> SchedulerBase::getBindings()

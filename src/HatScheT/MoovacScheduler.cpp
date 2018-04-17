@@ -22,6 +22,7 @@ void MoovacScheduler::resetContainer()
   this->reg_vectorIndices.clear();
   this->t_vector.clear();
   this->r_vectorIndices.clear();
+  this->r_vector.resize(0);
 }
 
 void MoovacScheduler::setUpSolverSettings()
@@ -31,8 +32,8 @@ void MoovacScheduler::setUpSolverSettings()
   else solver->quiet = false;
 
   //set solver timeout
-  solver->timeout = this->solverTimeout;
-  solver->threads = this->threads;
+  this->solver->timeout = this->solverTimeout;
+  this->solver->threads = this->threads;
 }
 
 void MoovacScheduler::constructProblem()
@@ -50,7 +51,7 @@ void MoovacScheduler::constructProblem()
      throw new Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConStraint));
   }
 
-  this->setTVectorVariables();
+  this->setVectorVariables();
   this->fillRegVector();
 
   //add constraints
@@ -89,7 +90,10 @@ void MoovacScheduler::schedule()
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
-    if(this->scheduleFound == false) (this->II)++;
+    if(this->scheduleFound == false){
+
+      (this->II)++;
+    }
     else if(this->scheduleFound == true) break;
   }
 
@@ -99,6 +103,8 @@ void MoovacScheduler::schedule()
 
     this->fillSolutionStructure();   
   }
+
+  else this->II = -1;
 }
 
 void MoovacScheduler::fillSolutionStructure()
@@ -110,11 +116,11 @@ void MoovacScheduler::fillSolutionStructure()
     ScaLP::Variable svTemp = this->t_vector[index];
 
     int startTime = this->r.values[svTemp];
-    this->startTimes.insert(make_pair(v, startTime));
+    this->startTimes.insert(make_pair(v, startTime));cout << "adding " << v->getName() << " at " << startTime << endl;
   }
 }
 
-void MoovacScheduler::setTVectorVariables()
+void MoovacScheduler::setVectorVariables()
 {
   for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
   {
@@ -128,6 +134,23 @@ void MoovacScheduler::setTVectorVariables()
 
     //16
     this->solver->addConstraint(t_vector.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
+  }
+
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
+  {
+    Resource* r = *it;
+    if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
+
+    int ak = r->getLimit();
+    if(ak==-1) continue;
+    set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
+    for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++)
+    {
+      const Vertex* v1 = (*it2);
+      //18
+      this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
+      this->r_vectorIndices.insert(make_pair(v1, this->r_vector.size() -1));
+    }
   }
 }
 
@@ -324,7 +347,6 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 void MoovacScheduler::setModuloAndResourceConstraints()
 {
     this->m_container.resize(0);
-    this->r_vector.resize(0);
 
     for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
     {
@@ -352,8 +374,9 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
         int tIndex = this->t_vectorIndices.at(v1);
         //18
-        this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
-        this->r_vectorIndices.insert(make_pair(v1, this->r_vector.size() -1));
+        //this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
+        //this->r_vectorIndices.insert(make_pair(v1, this->r_vector.size() -1));
+        int rvecIndex = this->r_vectorIndices.at(v1);
         //19
         m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
         //20
@@ -362,7 +385,7 @@ void MoovacScheduler::setModuloAndResourceConstraints()
         //13
         this->solver->addConstraint(this->t_vector[tIndex] - y_vector.back()*this->II - m_vector.back() == 0);
         //14
-        this->solver->addConstraint(this->r_vector.back() <= ak - 1);
+        this->solver->addConstraint(this->r_vector[rvecIndex] <= ak - 1);
         //15
         this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
@@ -396,9 +419,9 @@ void MoovacScheduler::setModuloAndResourceConstraints()
       }
 
       this->m_container.push_back(m_vector);
-      y_container.push_back(y_vector);
-      eps_container.push_back(eps_matrix);
-      mu_container.push_back(mu_matrix);
+      this->y_container.push_back(y_vector);
+      this->eps_container.push_back(eps_matrix);
+      this->mu_container.push_back(mu_matrix);
 
       if(eps_matrix.size() > 1)
       {
@@ -417,8 +440,8 @@ void MoovacScheduler::setModuloAndResourceConstraints()
             if(k!=j)
             {
               pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-              ScaLP::Variable vj =  r_vector[this->r_vectorIndices[vPair.first]];
-              ScaLP::Variable vk =  r_vector[this->r_vectorIndices[vPair.second]];
+              ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
+              ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
               //7
               this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) + ak >= 1);
               //8

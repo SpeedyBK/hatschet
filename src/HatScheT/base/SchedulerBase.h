@@ -64,6 +64,10 @@ public:
    * \return
    */
   virtual std::map<Edge*,int> getLifeTimes();
+  /*!
+   * \brief printStartTimes
+   */
+  void printStartTimes();
 protected:
   /*!
    * \brief resourceModel

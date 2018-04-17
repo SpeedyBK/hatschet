@@ -47,8 +47,8 @@ void SGMScheduler::setGeneralConstraints()
   }
 
   //add constraints (lifetimes on corressponding edges have to be the same)
-  for(int i=0; i<edgesContainer.size()-1; i++){
-    for(int j=0;j<edgesContainer[i].size(); j++){
+  for(int i=0; i<edgesContainer.size()-1;i++){
+    for(int j=0;j<edgesContainer[i].size();j++){
       Edge* e1 = edgesContainer[i][j];
       Vertex* src1 = &(e1->getVertexSrc());
       unsigned int srcTVecIndex1 = this->t_vectorIndices[src1];
@@ -63,6 +63,20 @@ void SGMScheduler::setGeneralConstraints()
 
       this->solver->addConstraint(this->II*(e1->getDistance()) - t_vector[srcTVecIndex1] + t_vector[dstTVecIndex1] - this->resourceModel.getVertexLatency(src1)
                                  - this->II*(e2->getDistance()) + t_vector[srcTVecIndex2] - t_vector[dstTVecIndex2] + this->resourceModel.getVertexLatency(src2) == 0);
+    }
+  }
+
+  //ToDo add binding
+  //same position on subgraph on the same unit
+  //no other to the same unit
+  for(int i=0;i<vertsContainer.size()-1;i++){
+    for(int j=0;j<vertsContainer[i].size();j++){
+      Vertex* v1= vertsContainer[i][j];
+      int rvecIndex1 = this->r_vectorIndices.at(v1);
+      Vertex* v2= vertsContainer[i+1][j];
+      int rvecIndex2 = this->r_vectorIndices.at(v2);
+
+      this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);
     }
   }
 

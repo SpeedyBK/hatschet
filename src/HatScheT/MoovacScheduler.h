@@ -78,7 +78,7 @@ protected:
   /*!
    * \brief setTVectorVariables fill the container for ILP variables of vertex starting times
    */
-  void setTVectorVariables();
+  void setVectorVariables();
   /*!
    * \brief fillRegVector not in moovac
    */

@@ -8,6 +8,7 @@
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 
 namespace HatScheT {
 
@@ -318,7 +319,70 @@ bool Tests::occurrenceTest()
 
 bool Tests::sgmSchedulerTest()
 {
-  return true;
+  HatScheT::Graph g;
+  for (int i = 1; i <= 12; ++i)
+    g.createVertex(i);
+
+  std::vector<std::pair<int, int>> edges = {
+    {1,  3},
+    {2,  3},
+    {5,  7},
+    {6,  7},
+    {4,  8},
+    {4,  9},
+    {7,  9},
+    {3,  8},
+    {8,  10},
+    {9,  10},
+    {10,  11},
+    {11,  12}
+  };
+  for (auto fe : edges)
+    g.createEdge(g.getVertexById(fe.first), g.getVertexById(fe.second), 0);
+
+  HatScheT::ResourceModel rm;
+  Resource& addRes = rm.makeResource("Adder",3,3,1);
+  Resource& multRes = rm.makeResource("Mult",1,3,1);
+
+  for(int i = 1; i <= 12; ++i){
+    if(i!=2 && i!=6 && i!=9) rm.registerVertex(&g.getVertexById(i),&addRes);
+    else rm.registerVertex(&g.getVertexById(i),&multRes);
+  }
+
+  //generate occurrences
+  HatScheT::Occurrence occ1(&g);
+  occ1.addEdge(&g.getEdge(&g.getVertexById(1),&g.getVertexById(3)));
+  occ1.addEdge(&g.getEdge(&g.getVertexById(2),&g.getVertexById(3)));
+  HatScheT::Occurrence occ2(&g);
+  occ2.addEdge(&g.getEdge(&g.getVertexById(5),&g.getVertexById(7)));
+  occ2.addEdge(&g.getEdge(&g.getVertexById(6),&g.getVertexById(7)));
+  HatScheT::Occurrence occ3(&g);
+  occ3.addEdge(&g.getEdge(&g.getVertexById(8),&g.getVertexById(10)));
+  occ3.addEdge(&g.getEdge(&g.getVertexById(9),&g.getVertexById(10)));
+
+  //generate OccurrenceSet cand combination
+  OccurrenceSet occs(&g);
+  occs.addOccurrence(&occ1);
+  occs.addOccurrence(&occ2);
+  occs.addOccurrence(&occ3);
+  OccurrenceSetCombination occsC(&g);
+  occsC.addOccurrenceSet(&occs);
+
+  HatScheT::SGMScheduler sgms(g,rm,{"CPLEX", "Gurobi"},&occsC);
+  sgms.setSolverQuiet(true);
+  sgms.schedule();
+
+  cout << "subgraph II is " << sgms.getII() << endl;
+  cout << "subgraph latency is " << sgms.getScheduleLength() << endl;
+
+  HatScheT::MoovacScheduler ms(g,rm,{"CPLEX", "Gurobi"});
+  ms.setSolverQuiet(true);
+  ms.schedule();
+
+  cout << "moovac II is " << ms.getII() << endl;
+  cout << "moovac latency is " << ms.getScheduleLength() << endl;
+
+  return false;
 }
 
 bool Tests::occurrenceSetCombinationTest()
