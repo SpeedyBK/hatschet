@@ -27,8 +27,12 @@ void SGMScheduler::setGeneralConstraints()
     this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
   }
 
-  //add subgraph connections
+  //manage subgraph connections in the ilp formulation
   set<OccurrenceSet*> occSets = this->occSC->getOccurrenceSets();
+
+  //fetch corresponding vertices and edges
+  vector<vector<Vertex*> > vertsContainer;
+  vector<vector<Edge*> > edgesContainer;
 
   for(auto it=occSets.begin(); it!=occSets.end();++it){
     OccurrenceSet* occS = *it;
@@ -36,6 +40,29 @@ void SGMScheduler::setGeneralConstraints()
 
     for(auto it2=occurrences.begin();it2!=occurrences.end();++it2){
       Occurrence* occ = *it2;
+
+      vertsContainer.push_back(occ->getVertices());
+      edgesContainer.push_back(occ->getEdges());
+    }
+  }
+
+  //add constraints (lifetimes on corressponding edges have to be the same)
+  for(int i=0; i<edgesContainer.size()-1; i++){
+    for(int j=0;j<edgesContainer[i].size(); j++){
+      Edge* e1 = edgesContainer[i][j];
+      Vertex* src1 = &(e1->getVertexSrc());
+      unsigned int srcTVecIndex1 = this->t_vectorIndices[src1];
+      Vertex* dst1 = &(e1->getVertexDst());
+      unsigned int dstTVecIndex1 = this->t_vectorIndices[dst1];
+
+      Edge* e2 = edgesContainer[i+1][j];
+      Vertex* src2 = &(e2->getVertexSrc());
+      unsigned int srcTVecIndex2 = this->t_vectorIndices[src2];
+      Vertex* dst2 = &(e2->getVertexDst());
+      unsigned int dstTVecIndex2 = this->t_vectorIndices[dst2];
+
+      this->solver->addConstraint(this->II*(e1->getDistance()) - t_vector[srcTVecIndex1] + t_vector[dstTVecIndex1] - this->resourceModel.getVertexLatency(src1)
+                                 - this->II*(e2->getDistance()) + t_vector[srcTVecIndex2] - t_vector[dstTVecIndex2] + this->resourceModel.getVertexLatency(src2) == 0);
     }
   }
 
