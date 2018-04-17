@@ -28,6 +28,17 @@ void SGMScheduler::setGeneralConstraints()
   }
 
   //add subgraph connections
+  set<OccurrenceSet*> occSets = this->occSC->getOccurrenceSets();
+
+  for(auto it=occSets.begin(); it!=occSets.end();++it){
+    OccurrenceSet* occS = *it;
+    set<Occurrence*> occurrences = occS->getOccurrences();
+
+    for(auto it2=occurrences.begin();it2!=occurrences.end();++it2){
+      Occurrence* occ = *it2;
+    }
+  }
+
 }
 
 }

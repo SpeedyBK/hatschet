@@ -6,6 +6,7 @@
 #pragma once
 
 #include <HatScheT/Graph.h>
+#include <vector>
 
 namespace HatScheT
 {
@@ -30,12 +31,12 @@ public:
    * \brief getEdges
    * \return
    */
-  std::set<Edge*> getEdges() const {return this->edges;}
+  std::vector<Edge*> getEdges() const {return this->edges;}
   /*!
    * \brief getVertices
    * \return
    */
-  std::set<Vertex*> getVertices() const {return this->vertices;}
+  std::vector<Vertex*> getVertices() const {return this->vertices;}
   /*!
    * \brief getGraph return the graph the occurrence is in
    * \return
@@ -48,6 +49,18 @@ public:
    * \return
    */
   friend ostream& operator<<(ostream& os, const Occurrence& o);
+  /*!
+   * \brief edgeIsNew
+   * \param e
+   * \return
+   */
+  bool edgeIsNew(Edge* e);
+  /*!
+   * \brief vertexIsNew
+   * \param v
+   * \return
+   */
+  bool vertexIsNew(Vertex* v);
 protected:
 
 private:
@@ -64,11 +77,11 @@ private:
   /*!
    * The container for edges
    */
-  std::set<Edge*> edges;
+  std::vector<Edge*> edges;
   /*!
    * The container for vertices
    */
-  std::set<Vertex*> vertices;
+  std::vector<Vertex*> vertices;
 };
 
 }

@@ -24,7 +24,6 @@ public:
    */
   SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist, OccurrenceSetCombination* occSC);
 
-  void addOccurenceSet(vector<vector<Edge* > > occSet);
 
 protected:
   /*!

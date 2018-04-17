@@ -26,12 +26,33 @@ ostream& operator<<(ostream& os, const Occurrence& o)
   return os;
 }
 
+bool Occurrence::edgeIsNew(Edge *e)
+{
+  for(auto it:this->edges){
+    Edge* eIter = it;
+
+    if(eIter==e) return false;
+  }
+  return true;
+}
+
+bool Occurrence::vertexIsNew(Vertex *v)
+{
+  for(auto it:this->vertices){
+    Vertex* vIter = it;
+
+    if(vIter==v) return false;
+  }
+
+  return true;
+}
+
 bool Occurrence::addEdge(Edge *e)
 {
   if(this->edges.size()==0){
-    this->edges.insert(e);
-    this->vertices.insert(&e->getVertexDst());
-    this->vertices.insert(&e->getVertexSrc());
+    this->edges.push_back(e);
+    if(this->vertexIsNew(&e->getVertexDst())) this->vertices.push_back(&e->getVertexDst());
+    if(this->vertexIsNew(&e->getVertexSrc())) this->vertices.push_back(&e->getVertexSrc());
     return true;
   }
 
@@ -40,17 +61,15 @@ bool Occurrence::addEdge(Edge *e)
     return false;
   }
 
-  const bool is_in = this->edges.find(e) != this->edges.end();
-
-  if(is_in==true){
+  if(this->edgeIsNew(e)==false){
     cout << "Occurrence.addEdge: WARNING tried to add an existing edge" << endl;
     return false;
   }
 
   if(this->isConnected(e)==true){
-    this->edges.insert(e);
-    this->vertices.insert(&e->getVertexDst());
-    this->vertices.insert(&e->getVertexSrc());
+    this->edges.push_back(e);
+    if(this->vertexIsNew(&e->getVertexDst())) this->vertices.push_back(&e->getVertexDst());
+    if(this->vertexIsNew(&e->getVertexSrc())) this->vertices.push_back(&e->getVertexSrc());
     return true;
   }
   else{
