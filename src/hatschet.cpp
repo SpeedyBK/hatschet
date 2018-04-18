@@ -12,6 +12,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/Verifier.h"
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -162,6 +163,27 @@ int main(int argc, char *args[])
           cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
         cout << "Finished ALAP schedule" << endl;
+      }
+    }
+    else if(getCmdParameter(args[i],"--moovac=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting Moovac schedule" << endl;
+        std::list<std::string> wish = {"Gurobi"};
+        HatScheT::MoovacScheduler mv(g, rm, wish);
+        mv.schedule();
+
+        if (mv.getScheduleFound()) {
+          cout << "Printing Moovac schedule" << endl;
+          for (auto it = mv.getStartTimes().begin(); it != mv.getStartTimes().end(); ++it) {
+            cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second
+                 << endl;
+          }
+          cout << "Finished Moovac schedule" << endl;
+          if (HatScheT::verifyModuloSchedule(g, rm, mv.getStartTimes(), mv.getII()))
+            cout << ">>> Moovac schedule verified <<<" << endl;
+        }
       }
     }
     //HatScheT Auto Test Function
