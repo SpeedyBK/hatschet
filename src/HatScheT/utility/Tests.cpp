@@ -330,7 +330,7 @@ bool Tests::sgmSchedulerTest()
     {6,  7},
     {4,  8},
     {4,  9},
-    {7,  9},
+    {7,  11},
     {3,  8},
     {8,  10},
     {9,  10},
@@ -348,6 +348,9 @@ bool Tests::sgmSchedulerTest()
     if(i!=2 && i!=6 && i!=9) rm.registerVertex(&g.getVertexById(i),&addRes);
     else rm.registerVertex(&g.getVertexById(i),&multRes);
   }
+
+  cout << g << endl;
+  cout << rm << endl;
 
   //generate occurrences
   HatScheT::Occurrence occ1(&g);
@@ -372,17 +375,12 @@ bool Tests::sgmSchedulerTest()
   sgms.setSolverQuiet(true);
   sgms.schedule();
 
-  cout << "subgraph II is " << sgms.getII() << endl;
-  cout << "subgraph latency is " << sgms.getScheduleLength() << endl;
+  if(sgms.getII()!=3){
+    cout << "Tests.sgmSchedulerTest: wrong II determined: " << sgms.getII() << "(II=3 expected) " << endl;
+    return false;
+  }
 
-  HatScheT::MoovacScheduler ms(g,rm,{"CPLEX", "Gurobi"});
-  ms.setSolverQuiet(true);
-  ms.schedule();
-
-  cout << "moovac II is " << ms.getII() << endl;
-  cout << "moovac latency is " << ms.getScheduleLength() << endl;
-
-  return false;
+  return true;
 }
 
 bool Tests::occurrenceSetCombinationTest()

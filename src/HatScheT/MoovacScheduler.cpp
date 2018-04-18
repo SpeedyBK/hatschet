@@ -116,7 +116,7 @@ void MoovacScheduler::fillSolutionStructure()
     ScaLP::Variable svTemp = this->t_vector[index];
 
     int startTime = this->r.values[svTemp];
-    this->startTimes.insert(make_pair(v, startTime));cout << "adding " << v->getName() << " at " << startTime << endl;
+    this->startTimes.insert(make_pair(v, startTime));
   }
 }
 
@@ -162,8 +162,8 @@ void MoovacScheduler::setSourceVerticesToZero()
 
     unsigned int index =this->t_vectorIndices.at(v);
     ScaLP::Variable  temp = this->t_vector[index];
-
-    if(this->g.isSourceVertex(v)) this->solver->addConstraint(temp  == 0);
+    //source vertix of unlimited(!) resource
+    if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) this->solver->addConstraint(temp  == 0);
   }
 }
 

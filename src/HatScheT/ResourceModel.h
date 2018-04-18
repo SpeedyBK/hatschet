@@ -288,7 +288,7 @@ public:
    * \param r
    * \return
    */
-  set<const Vertex*> getVerticesOfResource(Resource* r) const;
+  set<const Vertex*> getVerticesOfResource(const Resource *r) const;
 private:
   /*!
    * \brief registrations
