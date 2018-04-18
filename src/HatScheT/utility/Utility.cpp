@@ -1,5 +1,9 @@
 #include "HatScheT/utility/Utility.h"
+#include "ScaLP/Solver.h"
 
+#include <limits>
+#include <cmath>
+#include <map>
 
 namespace HatScheT {
 
@@ -40,8 +44,8 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
-  int resMII = Utility::calcResMII(rm,g);
-  int recMII = Utility::calcRecMII(g);
+  int resMII = Utility::calcResMII(rm, g);
+  int recMII = Utility::calcRecMII(rm, g);
 
   if(resMII>recMII) return resMII;
 
@@ -74,16 +78,35 @@ int Utility::calcMaxII(SchedulerBase *sb)
   return sb->getScheduleLength();
 }
 
-int Utility::calcRecMII(Graph *g)
+int Utility::calcRecMII(ResourceModel *rm, Graph *g)
 {
-  int recMII=1;
+  ScaLP::Solver solver({"Gurobi"}); // TODO: use some global wishlist
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){
-    Edge* e = *it;
-    if(e->getDistance() > recMII) recMII = e->getDistance();
+  // construct decision variables
+  auto II = ScaLP::newIntegerVariable("II", 0, std::numeric_limits<int>::max());
+  std::map<Vertex *, ScaLP::Variable> t;
+  for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
+    auto v = *it;
+    t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
   }
 
-  return recMII;
+  // construct constraints
+  for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
+    auto e = *it;
+    auto i = &e->getVertexSrc();
+    auto j = &e->getVertexDst();
+
+    solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance()*II)) <= 0);
+  }
+
+  // construct objective
+  solver.setObjective(ScaLP::minimize(II));
+
+  auto status = solver.solve();
+  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE)
+    throw new Exception("RecMII computation failed!");
+
+  return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
 int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)

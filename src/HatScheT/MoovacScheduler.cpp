@@ -10,6 +10,8 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
+  if (minII > maxII)
+    throw new Exception("Inconsistent II bounds! minII=" + to_string(minII) + " maxII=" + to_string(maxII));
   this->SLMax = 0;
 }
 

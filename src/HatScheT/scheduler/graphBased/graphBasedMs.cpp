@@ -34,7 +34,7 @@ void GraphBasedMs::schedule()
     asap->schedule();
 
     // calculate minII from Graph
-    int minII = Utility::calcRecMII(&g);
+    int minII = Utility::calcRecMII(&resourceModel, &g);
     cout << "calcRecMinII: " << minII << endl;
 
     // Get Asap schedule length
