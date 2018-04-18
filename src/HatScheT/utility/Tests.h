@@ -32,32 +32,32 @@ public:
    */
   static bool asapTest();
   /*!
-   * \brief asapHCTest
+   * \brief asapHCTest  test asap hc scheduler
    * \return
    */
   static bool asapHCTest();
   /*!
-   * \brief alapHCTest
+   * \brief alapHCTest test alap hc scheduler
    * \return
    */
   static bool alapHCTest();
   /*!
-   * \brief occurrenceTest
+   * \brief occurrenceTest test all functions of occurrences
    * \return
    */
   static bool occurrenceTest();
   /*!
-   * \brief occurrenceSetTest
+   * \brief occurrenceSetTest test all functions of occurrenceSets
    * \return
    */
   static bool occurrenceSetTest();
   /*!
-   * \brief occurrenceSetCombinationTest
+   * \brief occurrenceSetCombinationTest test all functions of occurrenceSetCombinations
    * \return
    */
   static bool occurrenceSetCombinationTest();
   /*!
-   * \brief sgmSchedulerTest
+   * \brief sgmSchedulerTest test the subgraph modulo scheduler with a small example
    * \return
    */
   static bool sgmSchedulerTest();
