@@ -28,9 +28,9 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
     auto i = &e->getVertexSrc();
     auto j = &e->getVertexDst();
 
-    ok = S[i] + rm.getVertexLatency(i) /* + e->getDelay() */ <= S[j] + e->getDistance() * II;
+    ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
     if (! ok) {
-      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " > " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " > " << S[j] << " + " << e->getDistance() << "*" << II << endl;
       return false;
     }
   }

@@ -178,7 +178,7 @@ void MoovacScheduler::setGeneralConstraints()
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) - e->getDelay() >= 0);
   }
 }
 

@@ -20,14 +20,14 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
   this->nodeTagFound = false;
   this->edgeTagFound = false;
   this->nameTagFound = false;
-  this->latencyTagFound = false;
+  this->edgeDelayTagFound = false;
   this->dataTagFound = false;
   this->resourceTagFound = false;
 
   this->currVertexId = -1;
   this->dstId = -1;
   this->srcId = -1;
-  this->edgeLatency = -1;
+  this->edgeDelay = -1;
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -54,7 +54,10 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
     Vertex& source = this->g->getVertexById(this->srcId);
     Vertex& target = this->g->getVertexById(this->dstId);
 
-    this->g->createEdge(source, target, this->edgeLatency);
+    auto &edge = this->g->createEdge(source, target, this->edgeDistance);
+    edge.setDelay(this->edgeDelay); // for now, expect it to be present
+
+    std::cerr << edge << std::endl;
 
     this->edgeTagFound = false;
   }
@@ -65,7 +68,8 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
 
     if(this->nameTagFound == true) this->nameTagFound = false;
     if(this->resourceTagFound == true) this->resourceTagFound = false;
-    if(this->latencyTagFound == true) this->latencyTagFound = false;
+    if(this->edgeDelayTagFound == true) this->edgeDelayTagFound = false;
+    if(this->edgeDistanceTagFound == true) this->edgeDistanceTagFound = false;
   }
 }
 
@@ -93,9 +97,13 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
 
     if(this->edgeTagFound == true)
     {
-      if(this->latencyTagFound)
+      if(this->edgeDelayTagFound)
       {
-         this->edgeLatency = atoi(XMLString::transcode(chars));
+         this->edgeDelay = atoi(XMLString::transcode(chars));
+      }
+      if(this->edgeDistanceTagFound)
+      {
+        this->edgeDistance = atoi(XMLString::transcode(chars));
       }
     }
   }
@@ -147,9 +155,13 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
 
     if(this->edgeTagFound)
     {
-      if(key == "latency")
+      if(key == "delay" || key == "latency")
       {
-        this->latencyTagFound = true;
+        this->edgeDelayTagFound = true;
+      }
+      if(key == "distance" || key == "backward")
+      {
+        this->edgeDistanceTagFound = true;
       }
     }
   }
