@@ -55,7 +55,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
   {
     Vertex& source = this->g->getVertexById(this->srcId);
     Vertex& target = this->g->getVertexById(this->dstId);
-cout << "distance passed to constr " << this->edgeDistance << endl;
+
     auto &edge = this->g->createEdge(source, target, this->edgeDistance);
     edge.setDelay(this->edgeDelay); // for now, expect it to be present
 
@@ -104,7 +104,6 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
       if(this->edgeDistanceTagFound)
       {
         this->edgeDistance = atoi(XMLString::transcode(chars));
-        cout << "distance set to " << this->edgeDistance << endl;
       }
     }
   }
