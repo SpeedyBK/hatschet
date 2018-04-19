@@ -1,5 +1,9 @@
 #include "HatScheT/utility/Utility.h"
+#include "ScaLP/Solver.h"
 
+#include <limits>
+#include <cmath>
+#include <map>
 
 namespace HatScheT {
 
@@ -40,8 +44,13 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
+<<<<<<< HEAD
   int resMII = Utility::calcResMII(rm,g);
   int recMII = Utility::calcRecMII(rm,g);
+=======
+  int resMII = Utility::calcResMII(rm, g);
+  int recMII = Utility::calcRecMII(rm, g);
+>>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
 
   if(resMII>recMII) return resMII;
 
@@ -50,7 +59,7 @@ int Utility::calcMinII(ResourceModel *rm, Graph *g)
 
 int Utility::calcResMII(ResourceModel *rm, Graph *g)
 {
-  int resMII = 0;
+  int resMII = 1;
 
   for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
     Resource* r = *it;
@@ -74,17 +83,46 @@ int Utility::calcMaxII(SchedulerBase *sb)
   return sb->getScheduleLength();
 }
 
+<<<<<<< HEAD
 int Utility::calcRecMII(ResourceModel *rm,Graph *g)
+=======
+int Utility::calcRecMII(ResourceModel *rm, Graph *g)
+>>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
 {
-  int recMII=1;
+  ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
+  // construct decision variables
+  auto II = ScaLP::newIntegerVariable("II", 0, std::numeric_limits<int>::max());
+  std::map<Vertex *, ScaLP::Variable> t;
+  for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
+    auto v = *it;
+    t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
+  }
+
+<<<<<<< HEAD
   for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){         
     Edge* e = *it;
     Vertex* vSrc = &e->getVertexSrc();
     if((e->getDistance()+rm->getVertexLatency(vSrc)) > recMII) recMII = e->getDistance()+rm->getVertexLatency(vSrc);
+=======
+  // construct constraints
+  for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
+    auto e = *it;
+    auto i = &e->getVertexSrc();
+    auto j = &e->getVertexDst();
+
+    solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance()*II)) <= 0);
+>>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
   }
 
-  return recMII;
+  // construct objective
+  solver.setObjective(ScaLP::minimize(II));
+
+  auto status = solver.solve();
+  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE)
+    throw new Exception("RecMII computation failed!");
+
+  return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
 int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)

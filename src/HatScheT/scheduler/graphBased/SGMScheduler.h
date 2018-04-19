@@ -23,14 +23,15 @@ public:
    * \param resourceModel
    */
   SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist, OccurrenceSetCombination* occSC);
-
-
 protected:
   /*!
    * \brief setGeneralConstraints read the paper for further information
    */
   virtual void setGeneralConstraints();
 private:
+  /*!
+   * \brief occSC store the subgraph combination informations
+   */
   OccurrenceSetCombination* occSC;
 
 };

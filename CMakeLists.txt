@@ -88,6 +88,7 @@ src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
+src/HatScheT/Verifier.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)

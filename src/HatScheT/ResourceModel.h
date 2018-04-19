@@ -16,6 +16,9 @@
 
 namespace HatScheT
 {
+
+const int UNLIMITED = -1;
+
 /*!
  * \brief The Resource class define a limited or unlimited resource, e.g. singlePrecAdd or doublePrecMult
  * use -1 as limit for an unlimited resource

@@ -86,9 +86,13 @@ private:
    */
   bool nameTagFound;
   /*!
-   * \brief latencyTagFound
+   * \brief edgeDelayTagFound
    */
-  bool latencyTagFound;
+  bool edgeDelayTagFound;
+  /*!
+   * \brief edgeDistanceTagFound
+   */
+  bool edgeDistanceTagFound;
   /*!
    * \brief dataTagFound
    */
@@ -103,7 +107,8 @@ private:
   int currVertexId;
   int dstId;
   int srcId;
-  int edgeLatency;
+  int edgeDelay;
+  int edgeDistance;
   string currVertexResName;
   };
 }

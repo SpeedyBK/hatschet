@@ -7,9 +7,14 @@ namespace HatScheT
 
 MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);
+  this->minII = this->computeMinII(&g,&resourceModel);cout << "minII" << this->minII << endl;
   HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
+  this->maxII = Utility::calcMaxII(&asap);cout << "maxII" << this->maxII << endl;
+  if (minII > maxII){
+    maxII = minII;
+    //cout << "MoovacScheduler.MoovacScheduler: ERROR " << "Inconsistent II bounds! minII=" << to_string(minII) << " maxII=" <<to_string(maxII) << endl;
+    //throw new Exception("Inconsistent II bounds! minII=" + to_string(minII) + " maxII=" + to_string(maxII));
+  }
   this->SLMax = 0;
 }
 
@@ -178,7 +183,7 @@ void MoovacScheduler::setGeneralConstraints()
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) - e->getDelay() >= 0);
   }
 }
 
