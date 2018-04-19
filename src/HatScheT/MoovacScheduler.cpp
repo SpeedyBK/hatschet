@@ -7,11 +7,14 @@ namespace HatScheT
 
 MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);
+  this->minII = this->computeMinII(&g,&resourceModel);cout << "minII" << this->minII << endl;
   HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
-  if (minII > maxII)
-    throw new Exception("Inconsistent II bounds! minII=" + to_string(minII) + " maxII=" + to_string(maxII));
+  this->maxII = Utility::calcMaxII(&asap);cout << "maxII" << this->maxII << endl;
+  if (minII > maxII){
+    maxII = minII;
+    //cout << "MoovacScheduler.MoovacScheduler: ERROR " << "Inconsistent II bounds! minII=" << to_string(minII) << " maxII=" <<to_string(maxII) << endl;
+    //throw new Exception("Inconsistent II bounds! minII=" + to_string(minII) + " maxII=" + to_string(maxII));
+  }
   this->SLMax = 0;
 }
 
