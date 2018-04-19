@@ -32,7 +32,7 @@ public:
   const string getVertexSrcName() const {return this->Vsrc.getName();}
   const string getVertexDstName() const {return this->Vdst.getName();}
 
-  const int getDelay() const { return delay; };
+  const int getDelay() const { return this->delay; }
   void setDelay(int delay) { this->delay = delay; }
 
   const int getDistance() const { return distance; }

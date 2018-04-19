@@ -54,7 +54,7 @@ int Utility::calcMinII(ResourceModel *rm, Graph *g)
 
 int Utility::calcResMII(ResourceModel *rm, Graph *g)
 {
-  int resMII = 0;
+  int resMII = 1;
 
   for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
     Resource* r = *it;
@@ -80,7 +80,7 @@ int Utility::calcMaxII(SchedulerBase *sb)
 
 int Utility::calcRecMII(ResourceModel *rm, Graph *g)
 {
-  ScaLP::Solver solver({"Gurobi"}); // TODO: use some global wishlist
+  ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
   // construct decision variables
   auto II = ScaLP::newIntegerVariable("II", 0, std::numeric_limits<int>::max());

@@ -88,6 +88,9 @@ bool Tests::asapHCTest()
 
   if(sum==29) return true;
   cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
+  cout << rm << endl;
+  cout << g << endl;
+
   return false;
 }
 

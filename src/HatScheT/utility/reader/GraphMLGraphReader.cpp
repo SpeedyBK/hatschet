@@ -23,11 +23,13 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
   this->edgeDelayTagFound = false;
   this->dataTagFound = false;
   this->resourceTagFound = false;
+  this->edgeDistanceTagFound = false;
 
   this->currVertexId = -1;
   this->dstId = -1;
   this->srcId = -1;
-  this->edgeDelay = -1;
+  this->edgeDelay = 0;
+  this->edgeDistance = 0;
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -53,11 +55,9 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
   {
     Vertex& source = this->g->getVertexById(this->srcId);
     Vertex& target = this->g->getVertexById(this->dstId);
-
+cout << "distance passed to constr " << this->edgeDistance << endl;
     auto &edge = this->g->createEdge(source, target, this->edgeDistance);
     edge.setDelay(this->edgeDelay); // for now, expect it to be present
-
-    std::cerr << edge << std::endl;
 
     this->edgeTagFound = false;
   }
@@ -104,6 +104,7 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
       if(this->edgeDistanceTagFound)
       {
         this->edgeDistance = atoi(XMLString::transcode(chars));
+        cout << "distance set to " << this->edgeDistance << endl;
       }
     }
   }
@@ -159,7 +160,7 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
       {
         this->edgeDelayTagFound = true;
       }
-      if(key == "distance" || key == "backward")
+      if(key == "distance" /*|| key == "backward"*/ /*??!! das geht so nicht (patrick)*/)
       {
         this->edgeDistanceTagFound = true;
       }
