@@ -44,13 +44,8 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
-<<<<<<< HEAD
   int resMII = Utility::calcResMII(rm,g);
   int recMII = Utility::calcRecMII(rm,g);
-=======
-  int resMII = Utility::calcResMII(rm, g);
-  int recMII = Utility::calcRecMII(rm, g);
->>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
 
   if(resMII>recMII) return resMII;
 
@@ -83,11 +78,8 @@ int Utility::calcMaxII(SchedulerBase *sb)
   return sb->getScheduleLength();
 }
 
-<<<<<<< HEAD
-int Utility::calcRecMII(ResourceModel *rm,Graph *g)
-=======
+
 int Utility::calcRecMII(ResourceModel *rm, Graph *g)
->>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
 {
   ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
@@ -99,12 +91,6 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
     t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
   }
 
-<<<<<<< HEAD
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){         
-    Edge* e = *it;
-    Vertex* vSrc = &e->getVertexSrc();
-    if((e->getDistance()+rm->getVertexLatency(vSrc)) > recMII) recMII = e->getDistance()+rm->getVertexLatency(vSrc);
-=======
   // construct constraints
   for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
     auto e = *it;
@@ -112,7 +98,6 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
     auto j = &e->getVertexDst();
 
     solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance()*II)) <= 0);
->>>>>>> 5645e279967fd8a43960ab7ed06be6e9e4824f00
   }
 
   // construct objective
