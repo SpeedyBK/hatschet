@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><ModelInformation Version="1.0">
+  <Resources>
+    <resource blockingTime="1" latency="1" limit="1" nDSP="0" nLUT="0" nMEM="0" name="special_loop" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="plus_expr_FU_64_64_64" physicalDelay="1.591"/>
+    <resource blockingTime="1" latency="1" limit="-1" nDSP="0" nLUT="0" nMEM="0" name="special_1_cycle" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="0" nMEM="0" name="special_virtual" physicalDelay="0.0"/>
+    <resource blockingTime="1" latency="2" limit="2" nDSP="0" nLUT="0" nMEM="1" name="mem_read" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="1" nMEM="0" name="eq_expr_FU_1_1_1" physicalDelay="0.436"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="bit_and_expr_FU_32_32_32" physicalDelay="0.552"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="lshift_expr_FU_64_64_64" physicalDelay="1.784"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="1" nMEM="0" name="lt_expr_FU_1_1_1" physicalDelay="0.436"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="bit_ior_expr_FU_64_64_64" physicalDelay="0.758"/>
+    <resource blockingTime="1" latency="32" limit="4" nDSP="0" nLUT="1119" nMEM="0" name="trunc_div_expr_FU_32_32_32_31" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="1" nMEM="0" name="gt_expr_FU_1_1_1" physicalDelay="0.436"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="MUX_N_to_1_64_64_64_2" physicalDelay="0.691"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="minus_expr_FU_32_32_32" physicalDelay="1.186"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="plus_expr_FU_32_32_32" physicalDelay="1.186"/>
+    <resource blockingTime="1" latency="1" limit="1" nDSP="0" nLUT="0" nMEM="1" name="mem_write" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="lshift_expr_FU_32_32_32" physicalDelay="1.428"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="bit_and_expr_FU_64_64_64" physicalDelay="0.758"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="MUX_N_to_1_32_32_32_2" physicalDelay="0.693"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="lshift_expr_FU_64_64_64" physicalDelay="1.784"/>
+    <resource blockingTime="1" latency="5" limit="-1" nDSP="10" nLUT="29" nMEM="0" name="mult_expr_FU_64_64_64_4" physicalDelay="0.0"/>
+    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="minus_expr_FU_64_64_64" physicalDelay="1.591"/>
+  </Resources>
+</ModelInformation>
