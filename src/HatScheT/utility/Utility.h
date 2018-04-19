@@ -60,7 +60,7 @@ public:
   * \param g
   * \return
   */
- static int calcRecMII(Graph *g);
+ static int calcRecMII(ResourceModel *rm, Graph *g);
  /*!
   * \brief calcMaxII
   * \param sb

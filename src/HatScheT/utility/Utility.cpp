@@ -41,7 +41,7 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);
-  int recMII = Utility::calcRecMII(g);
+  int recMII = Utility::calcRecMII(rm,g);
 
   if(resMII>recMII) return resMII;
 
@@ -74,13 +74,14 @@ int Utility::calcMaxII(SchedulerBase *sb)
   return sb->getScheduleLength();
 }
 
-int Utility::calcRecMII(Graph *g)
+int Utility::calcRecMII(ResourceModel *rm,Graph *g)
 {
   int recMII=1;
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){         
     Edge* e = *it;
-    if(e->getDistance() > recMII) recMII = e->getDistance();
+    Vertex* vSrc = &e->getVertexSrc();
+    if((e->getDistance()+rm->getVertexLatency(vSrc)) > recMII) recMII = e->getDistance()+rm->getVertexLatency(vSrc);
   }
 
   return recMII;

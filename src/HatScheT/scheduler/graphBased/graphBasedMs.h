@@ -50,6 +50,8 @@ private:
    */
   void getSampleTimesWithHeuristic(Graph* g, vector<Vertex*> vVec,vector<int> &sampleTimes);
 
+  void getSampleTimesWithHeuristic4All(vector<Graph*> g, vector<vector<Vertex *> > vVec, vector<int> &sampleTimes);
+
   /*!
    * \brief removeUsedVertices
    * \param g
@@ -73,5 +75,34 @@ bool isVertexInVector(vector<Vertex*> vVec, Vertex* v);
  */
 template<typename T> bool isMemberInVector(vector<T> vVec, T v);
 
+/*!
+ * \brief createConflictMatrix
+ * \param conflMatrix
+ * \param sampleVec
+ * \param n
+ * \return
+ */
+vector<vector<int>> createConflictMatrix(vector<vector<int>> conflMatrix,vector<int> sampleVec,int n);
+
+/*!
+ * \brief createConflictGraph
+ * \param conflGraph
+ * \param conflVertices
+ * \param conflMatrix
+ * \param currConstraint
+ * \param n
+ * \param minII
+ */
+void createConflictGraph(Graph &conflGraph, vector<Vertex*> &conflVertices, vector<vector<int>> conflMatrix, int currConstraint, int n, int minII);
+
+/*!
+ * \brief getAllVertexConnections
+ * \param g
+ * \param vVec
+ * \return
+ */
+vector<int> getAllVertexConnections(Graph* g, vector<Vertex *> vVec);
+
+int getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix, vector<int> sampleTimes);
 };
 }
