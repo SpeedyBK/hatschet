@@ -68,6 +68,14 @@ public:
    * \brief printStartTimes
    */
   void printStartTimes();
+  /*!
+   * \brief getII this function has to be implemented for every derived scheduler
+   * \return
+   */
+  virtual int getII() {
+    cout << "getII: Base class called. This should never happen!" <<endl;
+    throw new Exception("Graph::getEdge: Edge not found!");
+  }
 protected:
   /*!
    * \brief resourceModel
@@ -85,5 +93,9 @@ protected:
    * \brief A reference to the data dependency graph
    */
   Graph& g;
+  /*!
+   * \brief II the initiation interval of a schedule
+   */
+  unsigned int II;
 };
 }

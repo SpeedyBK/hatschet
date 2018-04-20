@@ -21,8 +21,15 @@ public:
    * \param resourceModel
    */
   ULScheduler(Graph& g,ResourceModel &resourceModel);
-
+  /*!
+   * \brief schedule
+   */
   virtual void schedule();
+  /*!
+   * \brief getII
+   * \return
+   */
+  virtual int getII() { return this->getScheduleLength();}
 
 protected:
 private:

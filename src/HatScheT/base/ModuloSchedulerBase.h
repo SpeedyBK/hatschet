@@ -21,11 +21,6 @@ class ModuloSchedulerBase
 {
 public:
   /*!
-   * \brief getII
-   * \return
-   */
-  int getII() { return II; }
-  /*!
    * \brief getMinII
    * \return
    */
@@ -43,11 +38,6 @@ protected:
    */
   int computeMinII(Graph* g, ResourceModel* rm);
   /*!
-   * \brief computeMaxSL compute an upper bound for the sample latency
-   * \return
-   */
-  int computeMaxSL();
-  /*!
    * \brief minII lower bound for II
    */
   unsigned int minII;
@@ -55,10 +45,7 @@ protected:
    * \brief maxII upper bound for II
    */
   unsigned int maxII;
-  /*!
-   * \brief IIthe initian interval for a modulo schedule
-   */
-  unsigned int II;
+
 
 };
 

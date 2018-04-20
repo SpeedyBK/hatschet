@@ -29,6 +29,11 @@ public:
    */
   virtual void schedule();
   /*!
+   * \brief getII
+   * \return
+   */
+  virtual int getII() { return this->II;}
+  /*!
    * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
    * \return
    */
