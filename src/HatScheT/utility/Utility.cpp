@@ -162,6 +162,29 @@ bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
   return true;
 }
 
+bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
+{
+  vector<Vertex*> vVec = occ->getVertices();
+
+  for(auto it:vVec){
+    Vertex* vIter = it;
+    if(vIter==v) return true;
+  }
+  return false;
+}
+
+bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v)
+{
+  set<Occurrence*> occSet = occS->getOccurrences();
+
+  for(auto it:occSet){
+    Occurrence* occIter = it;
+
+    if(Utility::vertexInOccurrence(occIter,v)) return true;
+  }
+  return false;
+}
+
 bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2)
 {
   set<Occurrence*> occs1Set = occs1->getOccurrences();

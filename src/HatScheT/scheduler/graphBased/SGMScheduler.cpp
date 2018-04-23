@@ -66,8 +66,7 @@ void SGMScheduler::setGeneralConstraints()
     }
   }
 
-  //ToDo add binding
-  //no other to the same unit
+  //add constraints for subgraph binding
   for(int i=0;i<vertsContainer.size()-1;i++){
     for(int j=0;j<vertsContainer[i].size();j++){
       Vertex* v1= vertsContainer[i][j];
@@ -78,15 +77,18 @@ void SGMScheduler::setGeneralConstraints()
       //same position on subgraph means the operator has to be bound to the same unit
       this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);
 
-      //no other operation of this resource is allowed to be bound to the same unit
-      /*const Vertex* vconst = vertsContainer[i][j];
-      const Resource* r = this->resourceModel.getResource(vconst);
-      set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
+      //no other operation of this resource is allowed to be bound to the same units that are used for binding of this occurrenceSet
+      if(i==0){
+        const Vertex* vconst = vertsContainer[i][j];
+        const Resource* r = this->resourceModel.getResource(vconst);
+        set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
 
-      for(auto it:vSet){
-        const Vertex* vIter = it;
+        for(auto it:vSet){
+          const Vertex* vIter = it;
 
-      }*/
+
+        }
+      }
     }
   }
 

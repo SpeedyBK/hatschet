@@ -104,5 +104,19 @@ public:
   * \return
   */
  static bool occurenceSetsAreConflictFree(OccurrenceSet* occs1, OccurrenceSet* occs2);
+ /*!
+  * \brief vertexInOccurrence
+  * \param occ
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrence(Occurrence* occ, Vertex* v);
+ /*!
+  * \brief vertexInOccurrenceSet
+  * \param occS
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrenceSet(OccurrenceSet* occS, Vertex* v);
 };
 }
