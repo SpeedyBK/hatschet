@@ -215,7 +215,7 @@ int main(int argc, char *args[])
   std::cout << "threads=" << threads << std::endl;
 
   if(lennart==true){
-      HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(g,rm);
+      HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(g,rm,69);
       gbms->schedule();
   }
 

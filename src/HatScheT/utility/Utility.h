@@ -96,6 +96,8 @@ public:
   * \param occ2
   * \return
   */
+
+ static bool existEdgeBetweenVertices(Graph* g, Vertex *Vsrc, Vertex *Vdst);
  static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
  /*!
   * \brief occurenceSetsAreConflictFree

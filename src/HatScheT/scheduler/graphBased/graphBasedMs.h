@@ -20,7 +20,7 @@ public:
    * \param g
    * \param resourceModel
    */
-  GraphBasedMs(Graph& g,ResourceModel &resourceModel);
+  GraphBasedMs(Graph& g, ResourceModel &resourceModel, int moduloSlots);
 
   /*!
    * \brief schedule determine a II using the graph based modulo scheduler
@@ -35,6 +35,7 @@ public:
 
 protected:
 private:
+  int moduloSlots;
     //implent methods
   /*!
    * \brief getVertexWithLeastNoOfConnections
@@ -114,6 +115,6 @@ void createConflictGraph(Graph &conflGraph, vector<Vertex*> &conflVertices, vect
  */
 vector<int> getAllVertexConnections(Graph* g, vector<Vertex *> vVec);
 
-int getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix, vector<int> sampleTimes);
+int getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix, vector<Graph *> allGraphs, vector<vector<Vertex *> > vVec);
 };
 }

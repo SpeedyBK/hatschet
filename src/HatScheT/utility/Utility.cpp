@@ -148,6 +148,24 @@ bool Utility::edgeIsInGraph(Graph *g, Edge *e)
   return false;
 }
 
+bool Utility::existEdgeBetweenVertices(Graph* g, Vertex* Vsrc, Vertex* Vdst)
+{
+    for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
+        Edge* iterE = *it;
+        Vertex* iterSrc = &iterE->getVertexSrc();
+        Vertex* iterDst = &iterE->getVertexDst();
+
+        if ((iterSrc==Vsrc) && (iterDst==Vdst)){
+            return true;
+        }
+        if ((iterSrc==Vdst) && (iterDst==Vsrc)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
 {
   vector<Vertex*> occ1Set = occ1->getVertices();
