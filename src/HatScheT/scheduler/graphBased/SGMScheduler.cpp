@@ -15,27 +15,16 @@ SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<str
   this->occSC = occSC;
 }
 
-void SGMScheduler::setGeneralConstraints()
+void SGMScheduler::setSubgraphConstraints()
 {
-  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
-  {
-    Edge* e = *it;
-    Vertex* src = &(e->getVertexSrc());
-    unsigned int srcTVecIndex = this->t_vectorIndices[src];
-    Vertex* dst = &(e->getVertexDst());
-    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
-
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
-  }
-
   //manage subgraph connections in the ilp formulation
   set<OccurrenceSet*> occSets = this->occSC->getOccurrenceSets();
-for(auto it:occSets){
-  //fetch corresponding vertices and edges
-  vector<vector<Vertex*> > vertsContainer;
-  vector<vector<Edge*> > edgesContainer;
 
-  //for(auto it=occSets.begin(); it!=occSets.end();++it){
+  //iterate of occ Sets
+  for(auto it:occSets){
+    //fetch corresponding vertices and edges
+    vector<vector<Vertex*> > vertsContainer;
+    vector<vector<Edge*> > edgesContainer;
     OccurrenceSet* occS = it;
     set<Occurrence*> occurrences = occS->getOccurrences();
 
@@ -45,7 +34,6 @@ for(auto it:occSets){
       vertsContainer.push_back(occ->getVertices());
       edgesContainer.push_back(occ->getEdges());
     }
-  //}
 
   //add constraints (lifetimes on corressponding edges have to be the same)
   for(int i=0; i<edgesContainer.size()-1;i++){
@@ -77,7 +65,7 @@ for(auto it:occSets){
       int rvecIndex2 = this->r_vectorIndices.at(v2);
 
       //same position on subgraph means the operator has to be bound to the same unit
-      this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);   
+      this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);
     }
   }
 
@@ -110,18 +98,34 @@ for(auto it:occSets){
         }
 
         if(rvecIndex3!=-1){
-          ScaLP::Variable boolVar = ScaLP::newBinaryVariable("subgrBin_" + to_string(binCounter));
-          binCounter++;
+            ScaLP::Variable boolVar = ScaLP::newBinaryVariable("subgrBin_" + to_string(binCounter));
+            binCounter++;
 
-          //unequal constraint
-          this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar >= 1);
-          this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar <= 5000 - 1);
+            //unequal constraint using bigM currently
+            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar >= 1);
+            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar <= 5000 - 1);
+          }
         }
       }
     }
   }
 }
 
+
+void SGMScheduler::setGeneralConstraints()
+{
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* src = &(e->getVertexSrc());
+    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    Vertex* dst = &(e->getVertexDst());
+    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
+
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+  }
+
+  this->setSubgraphConstraints();
 }
 
 }
