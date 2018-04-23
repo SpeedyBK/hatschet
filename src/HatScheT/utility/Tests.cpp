@@ -376,11 +376,7 @@ bool Tests::sgmSchedulerTest()
 
   HatScheT::SGMScheduler sgms(g,rm,{"CPLEX", "Gurobi"},&occsC);
   sgms.setSolverQuiet(true);
-  sgms.setWriteLPFile(true);
   sgms.schedule();
-
-  HatScheT::DotWriter dw("sgmschedtest.dot", &g, &rm);
-  dw.write();
 
   if(sgms.getII()!=3){
     cout << "Tests.sgmSchedulerTest: wrong II determined: " << sgms.getII() << "(II=3 expected) " << endl;
