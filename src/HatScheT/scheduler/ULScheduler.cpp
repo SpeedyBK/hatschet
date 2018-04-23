@@ -21,6 +21,35 @@ void ULScheduler::schedule()
   auto alap = l.getStartTimes();
   std::map<Vertex*,int> *sort_criterion=nullptr;
 
+  // create the sort_criterion for the vertices.
+  switch(this->sort_by){
+  //other cases not implemented yet
+  case MOBILITY:
+        sort_criterion = this->mobility(&asap,&alap);
+        break;
+  }
+
+  std::list<Vertex*> nodes;
+  std::list<Vertex*> scheduled;
+
+  //init the vertices
+  for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
+    nodes.push_front(*it);
+  }
+
+  while(!nodes.empty()){ // nodes left?
+    // sort-object for the set to sort while inserting.
+    struct sort_struct{
+      std::map<Vertex*,int> *criterion;
+      bool operator()(Vertex *a,Vertex *b){
+        return criterion->at(a) < criterion->at(b);
+      }
+    } sort_obj;
+    sort_obj.criterion=sort_criterion;
+
+    // nodes that are ready for scheduling.
+    std::set<Vertex*,sort_struct> ready(sort_obj);
+  }
 }
 
 std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap)
