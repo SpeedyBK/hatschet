@@ -26,6 +26,12 @@ public:
    * \brief schedule determine a II using the graph based modulo scheduler
    */
   virtual void schedule();
+  //plz think about a method to implement this function, maybe throw error?
+  /*!
+   * \brief getII
+   * \return
+   */
+  //virtual int getII() { }
 
 protected:
 private:

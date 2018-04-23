@@ -9,10 +9,4 @@ namespace HatScheT
     return Utility::calcMinII(rm,g);
   }
 	
-  int ModuloSchedulerBase::computeMaxSL()
-	{
-    //ToDo: implement
-    return -1;
-  }
-	
 }

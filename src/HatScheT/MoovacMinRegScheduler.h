@@ -16,7 +16,11 @@ class MoovacMinRegScheduler : public MoovacScheduler
 {
 public:
     MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-
+    /*!
+     * \brief getII
+     * \return
+     */
+    virtual int getII() { return this->II;}
 protected:
     /*!
      * \brief setGeneralConstraints read the paper for further information

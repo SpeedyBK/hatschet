@@ -47,7 +47,6 @@ int Utility::calcMinII(ResourceModel *rm, Graph *g)
   int resMII = Utility::calcResMII(rm,g);
   int recMII = Utility::calcRecMII(rm,g);
 
-
   if(resMII>recMII) return resMII;
 
   return recMII;
@@ -79,7 +78,8 @@ int Utility::calcMaxII(SchedulerBase *sb)
   return sb->getScheduleLength();
 }
 
-int Utility::calcRecMII(ResourceModel *rm,Graph *g)
+
+int Utility::calcRecMII(ResourceModel *rm, Graph *g)
 {
   ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
@@ -90,7 +90,6 @@ int Utility::calcRecMII(ResourceModel *rm,Graph *g)
     auto v = *it;
     t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
   }
-
 
   // construct constraints
   for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
