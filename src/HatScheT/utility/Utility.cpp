@@ -12,6 +12,21 @@ bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
   return true;
 }
 
+int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
+{
+  int no=0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* dstV = &e->getVertexDst();
+
+    if(dstV==v && e->getDistance()==0) no++;
+  }
+
+  return no;
+}
+
 int Utility::getNoOfInputs(Graph *g, const Vertex *v)
 {
   int no=0;

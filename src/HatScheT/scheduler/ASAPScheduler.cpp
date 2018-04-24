@@ -21,7 +21,7 @@ void ASAPScheduler::schedule()
     Vertex* v = *it;
     this->startTimes.emplace(v,-1);
 
-    int inputCount = Utility::getNoOfInputs(&this->g,v);
+    int inputCount = Utility::getNoOfInputsWithoutRegs(&this->g,v);
     input_counts.emplace(v,inputCount);
 
     // put nodes without inport to the stack, start ASAP schedule with them
@@ -81,7 +81,6 @@ void ASAPScheduler::schedule()
         this->startTimes[subV] = std::max(this->startTimes[subV], 0);
         input_counts[subV]--;
         if(input_counts[subV]==0){
-          stack.push(subV);
         }
         continue;
       }
