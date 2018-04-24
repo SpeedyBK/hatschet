@@ -1,8 +1,13 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
-#include <HatScheT/SchedulerBase.h>
-#include <HatScheT/ILPSchedulerBase.h>
-#include <HatScheT/ModuloSchedulerBase.h>
+#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -17,12 +22,17 @@ namespace HatScheT
 class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {
 public:
-  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int maxII);
+  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   /*!
    * \brief schedule the schedule method of moocav will try to find the smallest possible II respecting the minII/maxII bounds iteratively.
    * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.
    */
   virtual void schedule();
+  /*!
+   * \brief getII
+   * \return
+   */
+  virtual int getII() { return this->II;}
   /*!
    * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
    * \return
@@ -73,7 +83,7 @@ protected:
   /*!
    * \brief setTVectorVariables fill the container for ILP variables of vertex starting times
    */
-  void setTVectorVariables();
+  void setVectorVariables();
   /*!
    * \brief fillRegVector not in moovac
    */

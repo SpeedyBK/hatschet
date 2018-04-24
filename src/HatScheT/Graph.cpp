@@ -58,9 +58,24 @@ bool Graph::isEmpty()
   return false;
 }
 
-set<const Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+set<Vertex *> Graph::getProceedingVertices(const Vertex *v) const
 {
-  set<const Vertex*> vset;
+  set<Vertex*> vset;
+
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* dstV = &e->getVertexDst();
+
+    if(dstV == v) vset.insert(&e->getVertexSrc());
+  }
+
+  return vset;
+}
+
+set<Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+{
+  set<Vertex*> vset;
 
   for(auto it:this->edges)
   {

@@ -1,4 +1,8 @@
-
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 #ifdef USE_XERCESC
 #include "Reader.h"
@@ -82,9 +86,13 @@ private:
    */
   bool nameTagFound;
   /*!
-   * \brief latencyTagFound
+   * \brief edgeDelayTagFound
    */
-  bool latencyTagFound;
+  bool edgeDelayTagFound;
+  /*!
+   * \brief edgeDistanceTagFound
+   */
+  bool edgeDistanceTagFound;
   /*!
    * \brief dataTagFound
    */
@@ -99,7 +107,8 @@ private:
   int currVertexId;
   int dstId;
   int srcId;
-  int edgeLatency;
+  int edgeDelay;
+  int edgeDistance;
   string currVertexResName;
   };
 }

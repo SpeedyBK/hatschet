@@ -1,13 +1,16 @@
 #include <HatScheT/MoovacMinRegScheduler.h>
+#include <HatScheT/utility/Utility.h>
+#include <HatScheT/scheduler/ASAPScheduler.h>
 
 namespace HatScheT
 {
 
-MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, unsigned int maxII)
-    : MoovacScheduler(g, resourceModel, solverWishlist, maxII)
+MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
+    : MoovacScheduler(g, resourceModel, solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = maxII;
+  HatScheT::ASAPScheduler asap(g,resourceModel);
+  this->maxII = Utility::calcMaxII(&asap);
   this->SLMax = 0;
 }
 
@@ -44,24 +47,8 @@ void MoovacMinRegScheduler::fillRegVector()
   }
 }
 
-/*int MoovacMinRegScheduler::getNoOfImplementedRegisters()
-{
-  if (this->scheduleFound==false) return -1;
-
-  ScaLP::Result r = this->solver->getResult();
-  int noOfRegs = 0;
-
-  for(ScaLP::Variable &reg:regVector)
-  {
-    noOfRegs+=r.values[reg];
-  }
-
-  return noOfRegs;
-}*/
-
 void MoovacMinRegScheduler::setObjective()
 {
-  vector<ScaLP::Variable> implRegVars;
   vector<vector<ScaLP::Variable> > minMaxRegVariablesContainer;
 
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
@@ -78,7 +65,7 @@ void MoovacMinRegScheduler::setObjective()
       for(auto it2:verticesOfR)
       {
         const Vertex* v = it2;
-        set<const Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+        set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
         if(followingVertices.size()==0) continue;
 
         minMaxRegVariablesVector.push_back(ScaLP::newIntegerVariable("D_" + v->getName(),0,10000));

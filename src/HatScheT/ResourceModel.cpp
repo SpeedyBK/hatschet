@@ -180,7 +180,7 @@ bool ResourceModel::isEmpty()
   return false;
 }
 
-set<const Vertex*> ResourceModel::getVerticesOfResource(Resource *r) const
+set<const Vertex*> ResourceModel::getVerticesOfResource(const Resource *r) const
 {
   set<const Vertex*> vertices;
 

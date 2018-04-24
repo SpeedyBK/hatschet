@@ -1,11 +1,30 @@
 #include "HatScheT/utility/Utility.h"
+#include "ScaLP/Solver.h"
 
+#include <limits>
+#include <cmath>
+#include <map>
 
 namespace HatScheT {
 
 bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
 {
   return true;
+}
+
+int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
+{
+  int no=0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* dstV = &e->getVertexDst();
+
+    if(dstV==v && e->getDistance()==0) no++;
+  }
+
+  return no;
 }
 
 int Utility::getNoOfInputs(Graph *g, const Vertex *v)
@@ -23,10 +42,25 @@ int Utility::getNoOfInputs(Graph *g, const Vertex *v)
   return no;
 }
 
+int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
+{
+  int outputs = 0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
+  {
+    Edge* e = *it;
+    Vertex* vSrc = &e->getVertexSrc();
+
+    if(vSrc==v) outputs++;
+  }
+
+  return outputs;
+}
+
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);
-  int recMII = Utility::calcRecMII(g);
+  int recMII = Utility::calcRecMII(rm,g);
 
   if(resMII>recMII) return resMII;
 
@@ -35,7 +69,7 @@ int Utility::calcMinII(ResourceModel *rm, Graph *g)
 
 int Utility::calcResMII(ResourceModel *rm, Graph *g)
 {
-  int resMII = 0;
+  int resMII = 1;
 
   for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
     Resource* r = *it;
@@ -53,16 +87,161 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
   return resMII;
 }
 
-int Utility::calcRecMII(Graph *g)
+int Utility::calcMaxII(SchedulerBase *sb)
 {
-  int recMII=0;
+  sb->schedule();;
+  return sb->getScheduleLength();
+}
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); it++){
-    Edge* e = *it;
-    if(e->getDistance() > recMII) recMII = e->getDistance();
+
+int Utility::calcRecMII(ResourceModel *rm, Graph *g)
+{
+  ScaLP::Solver solver({"CPLEX", "Gurobi"});
+
+  // construct decision variables
+  auto II = ScaLP::newIntegerVariable("II", 0, std::numeric_limits<int>::max());
+  std::map<Vertex *, ScaLP::Variable> t;
+  for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
+    auto v = *it;
+    t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
   }
 
-  return recMII;
+  // construct constraints
+  for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
+    auto e = *it;
+    auto i = &e->getVertexSrc();
+    auto j = &e->getVertexDst();
+
+    solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance()*II)) <= 0);
+  }
+
+  // construct objective
+  solver.setObjective(ScaLP::minimize(II));
+
+  auto status = solver.solve();
+  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE)
+    throw new Exception("RecMII computation failed!");
+
+  return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+}
+
+int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
+{
+  int sum = 0;
+
+  for(auto it=startTimes.begin();it!=startTimes.end();++it){
+    sum+=it->second;
+  }
+
+  return sum;
+}
+
+bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel* rm, const Resource *r, Vertex *checkV, int timeStep)
+{
+  //unlimited
+  if(r->getLimit()==-1) return true;
+
+  int instancesUsed = 0;
+
+  for(auto it=startTimes.begin(); it!=startTimes.end(); ++it){
+    if(it->second == timeStep){
+      Vertex* v = it->first;
+      if(checkV != v && rm->getResource(v) == r) instancesUsed++;
+    }
+  }
+
+  if(instancesUsed < r->getLimit()) return true;
+  return false;
+}
+
+bool Utility::edgeIsInGraph(Graph *g, Edge *e)
+{
+  for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
+    Edge* iterE = *it;
+    if(iterE==e) return true;
+  }
+  return false;
+}
+
+bool Utility::existEdgeBetweenVertices(Graph* g, Vertex* Vsrc, Vertex* Vdst)
+{
+    for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
+        Edge* iterE = *it;
+        Vertex* iterSrc = &iterE->getVertexSrc();
+        Vertex* iterDst = &iterE->getVertexDst();
+
+        if ((iterSrc==Vsrc) && (iterDst==Vdst)){
+            return true;
+        }
+        if ((iterSrc==Vdst) && (iterDst==Vsrc)){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
+{
+  vector<Vertex*> occ1Set = occ1->getVertices();
+
+  for(auto it:occ1Set){
+    Vertex* v = it;
+
+    if(occ2->vertexIsNew(v)==false){
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
+{
+  vector<Vertex*> vVec = occ->getVertices();
+
+  for(auto it:vVec){
+    Vertex* vIter = it;
+    if(vIter==v) return true;
+  }
+  return false;
+}
+
+bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
+{
+  for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
+    Edge* e = *it;
+    if(e->getDistance()==0 && &e->getVertexDst()==v) return false;
+  }
+  return true;
+}
+
+bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v)
+{
+  set<Occurrence*> occSet = occS->getOccurrences();
+
+  for(auto it:occSet){
+    Occurrence* occIter = it;
+
+    if(Utility::vertexInOccurrence(occIter,v)) return true;
+  }
+  return false;
+}
+
+bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2)
+{
+  set<Occurrence*> occs1Set = occs1->getOccurrences();
+  set<Occurrence*> occs2Set = occs2->getOccurrences();
+
+  for(auto it:occs1Set){
+    Occurrence* occ = it;
+    for(auto it2:occs2Set){
+      Occurrence* occ2 = it2;
+
+      if(Utility::occurrencesAreConflictFree(occ,occ2)==false) return false;
+    }
+  }
+
+  return true;
 }
 
 }

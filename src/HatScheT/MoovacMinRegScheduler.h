@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
 #include <HatScheT/MoovacScheduler.h>
@@ -10,12 +15,12 @@ namespace HatScheT
 class MoovacMinRegScheduler : public MoovacScheduler
 {
 public:
-    MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int maxII);
+    MoovacMinRegScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
     /*!
-     * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
+     * \brief getII
      * \return
      */
-    //virtual int getNoOfImplementedRegisters();
+    virtual int getII() { return this->II;}
 protected:
     /*!
      * \brief setGeneralConstraints read the paper for further information

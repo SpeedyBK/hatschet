@@ -2,13 +2,18 @@
 #include <string.h>
 
 #include <HatScheT/Exception.h>
-#include <HatScheT/ASAPScheduler.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
+#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/Verifier.h"
+
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -50,6 +55,7 @@ int main(int argc, char *args[])
   std::string ilpSolver="";
   int threads=0;
   int timeout=-1; //default -1 means no timeout
+  bool lennart=false;
   HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
@@ -68,6 +74,11 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--solver=",value))
     {
       ilpSolver = std::string(value);
+    }
+    else if(getCmdParameter(args[i],"--lennart=",value))
+    {
+      if(std::string(value)=="1")
+      lennart=true;
     }
     else if(getCmdParameter(args[i],"--resource=",value))
     {
@@ -126,6 +137,55 @@ int main(int argc, char *args[])
         dw.write();
       }    
     }
+    else if(getCmdParameter(args[i],"--asap=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting ASAP schedule" << endl;
+        HatScheT::ASAPScheduler asap(g,rm);
+        asap.schedule();
+        cout << "Printing ASAP schedule" << endl;
+        for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
+          cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
+        }
+        cout << "Finished ASAP schedule" << endl;
+      }
+    }
+    else if(getCmdParameter(args[i],"--alap=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting ALAP schedule" << endl;
+        HatScheT::ALAPScheduler alap(g,rm);
+        alap.schedule();
+        cout << "Printing ALAP schedule" << endl;
+        for(auto it=alap.getStartTimes().begin(); it!=alap.getStartTimes().end(); ++it){
+          cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
+        }
+        cout << "Finished ALAP schedule" << endl;
+      }
+    }
+    else if(getCmdParameter(args[i],"--moovac=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting Moovac schedule" << endl;
+        std::list<std::string> wish = {"Gurobi"};
+        HatScheT::MoovacScheduler mv(g, rm, wish);
+        mv.schedule();
+
+        if (mv.getScheduleFound()) {
+          cout << "Printing Moovac schedule" << endl;
+          for (auto it = mv.getStartTimes().begin(); it != mv.getStartTimes().end(); ++it) {
+            cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second
+                 << endl;
+          }
+          cout << "Finished Moovac schedule" << endl;
+          if (HatScheT::verifyModuloSchedule(g, rm, mv.getStartTimes(), mv.getII()))
+            cout << ">>> Moovac schedule verified <<<" << endl;
+        }
+      }
+    }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
@@ -134,6 +194,13 @@ int main(int argc, char *args[])
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
       if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
+      if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
+      if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
+      if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
+      if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
+      if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
+      if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
+      if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
     }
     else
     {
@@ -148,15 +215,9 @@ int main(int argc, char *args[])
   std::cout << "timeout=" << timeout << std::endl;
   std::cout << "threads=" << threads << std::endl;
 
-  try
-  {
-    HatScheT::Graph g;
-    HatScheT::ResourceModel rm;
-    HatScheT::ASAPScheduler sched(g,rm);
-  }
-  catch(HatScheT::Exception &e)
-  {
-    std::cerr << "Error: " << e << std::endl;
+  if(lennart==true){
+      HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(g,rm,69);
+      gbms->schedule();
   }
 
   return 0;

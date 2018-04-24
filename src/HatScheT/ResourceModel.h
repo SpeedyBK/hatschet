@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
 #include <HatScheT/Graph.h>
@@ -11,6 +16,9 @@
 
 namespace HatScheT
 {
+
+const int UNLIMITED = -1;
+
 /*!
  * \brief The Resource class define a limited or unlimited resource, e.g. singlePrecAdd or doublePrecMult
  * use -1 as limit for an unlimited resource
@@ -287,7 +295,7 @@ public:
    * \param r
    * \return
    */
-  set<const Vertex*> getVerticesOfResource(Resource* r) const;
+  set<const Vertex*> getVerticesOfResource(const Resource *r) const;
 private:
   /*!
    * \brief registrations

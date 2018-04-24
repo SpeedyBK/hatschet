@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 
 #include "Vertex.h"
@@ -61,6 +66,14 @@ public:
     return this->vertices.size();
   }
   /*!
+   * \brief getNumberOfEdges
+   * \return
+   */
+  unsigned int getNumberOfEdges()
+  {
+    return this->edges.size();
+  }
+  /*!
    * \brief isEmpty test whether this graph has vertices
    * \return
    */
@@ -89,7 +102,13 @@ public:
    * \param v
    * \return
    */
-  set<const Vertex*> getSubsequentVertices(const Vertex* v) const;
+  set<Vertex*> getSubsequentVertices(const Vertex* v) const;
+  /*!
+   * \brief getProceedingVertices get the proceeding vertices of v
+   * \param v
+   * \return
+   */
+  set<Vertex*> getProceedingVertices(const Vertex* v) const;
   /*!
    * \brief setName
    * \param s

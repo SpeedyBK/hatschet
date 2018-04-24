@@ -66,22 +66,30 @@ src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp 
 src/HatScheT/Exception.cpp
-src/HatScheT/ASAPScheduler.cpp 
-src/HatScheT/SchedulerBase.cpp 
+src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/MoovacScheduler.cpp
 src/HatScheT/MoovacMinRegScheduler.cpp
-src/HatScheT/IterativeSchedulerBase.cpp
-src/HatScheT/ILPSchedulerBase.cpp
+src/HatScheT/base/IterativeSchedulerBase.cpp
+src/HatScheT/base/ILPSchedulerBase.cpp
+src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
-src/HatScheT/ModuloSchedulerBase.cpp
 src/HatScheT/ModuloSDCScheduler.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
+src/HatScheT/utility/subgraphs/Occurrence.cpp
+src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
+src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
+src/HatScheT/scheduler/ASAPScheduler.cpp
+src/HatScheT/scheduler/ALAPScheduler.cpp
+src/HatScheT/scheduler/ULScheduler.cpp
+src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
+src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
+src/HatScheT/Verifier.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)
@@ -113,3 +121,10 @@ add_test("XercesC_Read" "./hatschet" "--test=READ")
 add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")
 add_test("ScaLP_ModuloSDC" "./hatschet" "--test=MODULOSDC")
 add_test("API" "./hatschet" "--test=API")
+add_test("ASAP" "./hatschet" "--test=ASAP")
+add_test("ASAPHC" "./hatschet" "--test=ASAPHC")
+add_test("ALAPHC" "./hatschet" "--test=ALAPHC")
+add_test("Occurrence" "./hatschet" "--test=OCC")
+add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
+add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
+add_test("SGMScheduler" "./hatschet" "--test=SGMS")

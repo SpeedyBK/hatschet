@@ -1,3 +1,8 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 #include <string>
 
@@ -26,6 +31,40 @@ public:
    * \return
    */
   static bool apiTest();
-
+  /*!
+   * \brief asapTest test asap scheduler
+   * \return
+   */
+  static bool asapTest();
+  /*!
+   * \brief asapHCTest  test asap hc scheduler
+   * \return
+   */
+  static bool asapHCTest();
+  /*!
+   * \brief alapHCTest test alap hc scheduler
+   * \return
+   */
+  static bool alapHCTest();
+  /*!
+   * \brief occurrenceTest test all functions of occurrences
+   * \return
+   */
+  static bool occurrenceTest();
+  /*!
+   * \brief occurrenceSetTest test all functions of occurrenceSets
+   * \return
+   */
+  static bool occurrenceSetTest();
+  /*!
+   * \brief occurrenceSetCombinationTest test all functions of occurrenceSetCombinations
+   * \return
+   */
+  static bool occurrenceSetCombinationTest();
+  /*!
+   * \brief sgmSchedulerTest test the subgraph modulo scheduler with a small example
+   * \return
+   */
+  static bool sgmSchedulerTest();
 };
 }

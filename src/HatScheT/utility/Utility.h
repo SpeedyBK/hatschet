@@ -1,7 +1,14 @@
+/*
+  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
+  Author: Patrick Sittel (sittel@uni-kassel.de)
+  All rights reserved.
+*/
 #pragma once
 #include <string>
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
+#include "HatScheT/base/SchedulerBase.h"
+#include "HatScheT/utility/subgraphs/OccurrenceSet.h"
 
 namespace HatScheT
 {
@@ -26,6 +33,20 @@ public:
   */
  static int getNoOfInputs(Graph* g, const Vertex* v);
  /*!
+  * \brief getNoOfInputsWithoutRegs
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfInputsWithoutRegs(Graph* g, const Vertex* v);
+ /*!
+  * \brief getNoOfOutputs determine the number of outputs a vertex v has in graph g
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfOutputs(Graph* g, const Vertex* v);
+ /*!
   * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
   * minII min(ResMII,RecMII)
   * \param rm
@@ -46,7 +67,72 @@ public:
   * \param g
   * \return
   */
- static int calcRecMII(Graph *g);
+ static int calcRecMII(ResourceModel *rm, Graph *g);
+ /*!
+  * \brief calcMaxII
+  * \param sb
+  * \return
+  */
+ static int calcMaxII(SchedulerBase* sb);
+ /*!
+  * \brief sumOfStarttimes
+  * \param startTimes
+  * \return
+  */
+ static int sumOfStarttimes(std::map<Vertex*,int>& startTimes);
+ /*!
+  * \brief resourceAvailable
+  * \param startTimes map of starttimes
+  * \param ResourceModel the used resource model
+  * \param r the resource that is looked for
+  * \param checkV avoid self counting
+  * \param timeStep the time step that is checked
+  * \return
+  */
+ static  bool resourceAvailable(std::map<Vertex*,int>& startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV, int timeStep);
+ /*!
+  * \brief edgeIsInGraph
+  * \param g
+  * \param e
+  * \return
+  */
+ static bool edgeIsInGraph(Graph* g, Edge* e);
+ /*!
+  * \brief occurrencesAreConflictFree
+  * \param occ1
+  * \param occ2
+  * \return
+  */
 
+ static bool existEdgeBetweenVertices(Graph* g, Vertex *Vsrc, Vertex *Vdst);
+ static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
+ /*!
+  * \brief occurenceSetsAreConflictFree
+  * \param occs1
+  * \param occs2
+  * \return
+  */
+ static bool occurenceSetsAreConflictFree(OccurrenceSet* occs1, OccurrenceSet* occs2);
+ /*!
+  * \brief vertexInOccurrence
+  * \param occ
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrence(Occurrence* occ, Vertex* v);
+ /*!
+  * \brief vertexInOccurrenceSet
+  * \param occS
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrenceSet(OccurrenceSet* occS, Vertex* v);
+ /*!
+  * \brief allInputsAreRegisters
+  * \param g
+  * \param v
+  * \return
+  */
+ static bool allInputsAreRegisters(Graph* g, Vertex *v);
 };
 }
