@@ -181,6 +181,10 @@ public:
    */
   ResourceModel();
   /*!
+   * \brief ResourceModel
+   */
+  ~ResourceModel();
+  /*!
    * \brief operator <<
    * \param os
    * \param rm

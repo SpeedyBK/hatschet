@@ -74,6 +74,7 @@ src/HatScheT/IterativeSchedulerBase.cpp
 src/HatScheT/ILPSchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/ModuloSchedulerBase.cpp
+src/HatScheT/ModuloSDCScheduler.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
@@ -110,4 +111,5 @@ enable_testing()
 
 add_test("XercesC_Read" "./hatschet" "--test=READ")
 add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")
+add_test("ScaLP_ModuloSDC" "./hatschet" "--test=MODULOSDC")
 add_test("API" "./hatschet" "--test=API")

@@ -15,6 +15,8 @@ Graph::~Graph()
 {
   for(Vertex *v : vertices)
     delete v;
+  for(Edge *e : edges)
+    delete e;
 }
 
 Vertex& Graph::createVertex()

@@ -2,6 +2,7 @@
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
 #include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 
@@ -68,6 +69,58 @@ bool Tests::readTest()
     return false;
   }
 
+  return true;
+}
+
+bool Tests::moduloSDCTest()
+{
+  try
+  {
+    HatScheT::ResourceModel rm;
+    
+    auto &load = rm.makeResource("load", 1, 2, 0);
+    auto &add = rm.makeResource("add", -1, 0, 0);
+    auto &store = rm.makeResource("store", 1, 1, 0);
+
+    HatScheT::Graph g;
+    
+    Vertex& a = g.createVertex(1);
+    Vertex& b = g.createVertex(2);
+    Vertex& c = g.createVertex(3);
+    Vertex& d = g.createVertex(4);
+
+    a.setName("a");
+    b.setName("b");
+    c.setName("c");
+    d.setName("d");
+
+    g.createEdge(a, c ,0);
+    g.createEdge(b, c ,0);
+    g.createEdge(c, d ,0);
+    g.createEdge(d, a ,1);
+    
+    rm.registerVertex(&a, &load);
+    rm.registerVertex(&b, &load);
+    rm.registerVertex(&c, &add);
+    rm.registerVertex(&d, &store);
+
+    HatScheT::ModuloSDCScheduler m{g,rm,{"SCIP"},5};
+    m.setSolverQuiet(true);
+
+    m.schedule();
+
+    auto sch = m.getStartTimes();
+
+    for(auto&p:sch)
+    {
+      std::cout << p.first->getName() << " = " << p.second << std::endl;
+    }
+  }
+  catch(HatScheT::Exception* e)
+  {
+    std::cout << *e << std::endl;
+    return false;
+  }
   return true;
 }
 
