@@ -191,6 +191,15 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
   return false;
 }
 
+bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
+{
+  for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
+    Edge* e = *it;
+    if(e->getDistance()==0 && &e->getVertexDst()==v) return false;
+  }
+  return true;
+}
+
 bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v)
 {
   set<Occurrence*> occSet = occS->getOccurrences();

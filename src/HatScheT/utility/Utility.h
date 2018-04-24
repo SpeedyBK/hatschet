@@ -120,5 +120,12 @@ public:
   * \return
   */
  static bool vertexInOccurrenceSet(OccurrenceSet* occS, Vertex* v);
+ /*!
+  * \brief allInputsAreRegisters
+  * \param g
+  * \param v
+  * \return
+  */
+ static bool allInputsAreRegisters(Graph* g, Vertex *v);
 };
 }

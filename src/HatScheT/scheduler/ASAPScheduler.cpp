@@ -39,6 +39,31 @@ void ASAPScheduler::schedule()
     }
   }
 
+  if(stack.size()==0){
+    for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
+      Vertex* v = *it;
+
+      // put nodes with only register input edges to init stack
+      if(Utility::allInputsAreRegisters(&this->g,v)==true)
+      {
+        //check for limited resources with no inputs
+        int time = 0;
+        const Resource* r = this->resourceModel.getResource(v);
+        while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time) == false) {
+          time++;
+        }
+
+        this->startTimes[v] = time;
+        stack.push(v);cout << "pushed " << v->getName() << endl;
+      }
+    }
+  }
+
+  if(stack.size()==0){
+    cout << "ASAPScheduler.schedule: Error stack not initialized! No schedule found!" << endl;
+    throw new Exception("ASAPScheduler.schedule: Error stack not initialized! No schedule found!");
+  }
+
   //schedule
   while(stack.empty()==false){
     Vertex* v = stack.top();
