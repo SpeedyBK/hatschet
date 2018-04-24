@@ -5,7 +5,7 @@ namespace HatScheT
 {
 
   int ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm)
-	{
+    {
     return Utility::calcMinII(rm,g);
   }
 	

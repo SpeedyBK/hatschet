@@ -107,6 +107,8 @@ int main(int argc, char *args[])
         {
           HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
           g = readerGraph.readGraph(str.c_str());
+          std::string graphName = str.substr (0,str.length()-8);
+          g.setName(graphName);
           cout << g << endl;
           cout << rm << endl;
         }

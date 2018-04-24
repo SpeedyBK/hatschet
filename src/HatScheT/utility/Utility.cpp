@@ -104,8 +104,10 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
   solver.setObjective(ScaLP::minimize(II));
 
   auto status = solver.solve();
-  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE)
+  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
+    cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
     throw new Exception("RecMII computation failed!");
+  }
 
   return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
