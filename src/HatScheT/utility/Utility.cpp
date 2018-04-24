@@ -12,6 +12,21 @@ bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
   return true;
 }
 
+int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
+{
+  int no=0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* dstV = &e->getVertexDst();
+
+    if(dstV==v && e->getDistance()==0) no++;
+  }
+
+  return no;
+}
+
 int Utility::getNoOfInputs(Graph *g, const Vertex *v)
 {
   int no=0;
@@ -180,6 +195,38 @@ bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
     }
   }
   return true;
+}
+
+bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
+{
+  vector<Vertex*> vVec = occ->getVertices();
+
+  for(auto it:vVec){
+    Vertex* vIter = it;
+    if(vIter==v) return true;
+  }
+  return false;
+}
+
+bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
+{
+  for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
+    Edge* e = *it;
+    if(e->getDistance()==0 && &e->getVertexDst()==v) return false;
+  }
+  return true;
+}
+
+bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v)
+{
+  set<Occurrence*> occSet = occS->getOccurrences();
+
+  for(auto it:occSet){
+    Occurrence* occIter = it;
+
+    if(Utility::vertexInOccurrence(occIter,v)) return true;
+  }
+  return false;
 }
 
 bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2)

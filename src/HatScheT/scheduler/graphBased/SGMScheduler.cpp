@@ -1,6 +1,7 @@
 #include <HatScheT/scheduler/graphBased/SGMScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <algorithm>
 
 namespace HatScheT
 {
@@ -14,28 +15,17 @@ SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<str
   this->occSC = occSC;
 }
 
-void SGMScheduler::setGeneralConstraints()
+void SGMScheduler::setSubgraphConstraints()
 {
-  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
-  {
-    Edge* e = *it;
-    Vertex* src = &(e->getVertexSrc());
-    unsigned int srcTVecIndex = this->t_vectorIndices[src];
-    Vertex* dst = &(e->getVertexDst());
-    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
-
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
-  }
-
   //manage subgraph connections in the ilp formulation
   set<OccurrenceSet*> occSets = this->occSC->getOccurrenceSets();
 
-  //fetch corresponding vertices and edges
-  vector<vector<Vertex*> > vertsContainer;
-  vector<vector<Edge*> > edgesContainer;
-
-  for(auto it=occSets.begin(); it!=occSets.end();++it){
-    OccurrenceSet* occS = *it;
+  //iterate of occ Sets
+  for(auto it:occSets){
+    //fetch corresponding vertices and edges
+    vector<vector<Vertex*> > vertsContainer;
+    vector<vector<Edge*> > edgesContainer;
+    OccurrenceSet* occS = it;
     set<Occurrence*> occurrences = occS->getOccurrences();
 
     for(auto it2=occurrences.begin();it2!=occurrences.end();++it2){
@@ -44,7 +34,6 @@ void SGMScheduler::setGeneralConstraints()
       vertsContainer.push_back(occ->getVertices());
       edgesContainer.push_back(occ->getEdges());
     }
-  }
 
   //add constraints (lifetimes on corressponding edges have to be the same)
   for(int i=0; i<edgesContainer.size()-1;i++){
@@ -66,8 +55,8 @@ void SGMScheduler::setGeneralConstraints()
     }
   }
 
-  //ToDo add binding
-  //no other to the same unit
+  int binCounter = 0;
+  //add constraints for subgraph binding
   for(int i=0;i<vertsContainer.size()-1;i++){
     for(int j=0;j<vertsContainer[i].size();j++){
       Vertex* v1= vertsContainer[i][j];
@@ -77,19 +66,66 @@ void SGMScheduler::setGeneralConstraints()
 
       //same position on subgraph means the operator has to be bound to the same unit
       this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);
-
-      //no other operation of this resource is allowed to be bound to the same unit
-      /*const Vertex* vconst = vertsContainer[i][j];
-      const Resource* r = this->resourceModel.getResource(vconst);
-      set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
-
-      for(auto it:vSet){
-        const Vertex* vIter = it;
-
-      }*/
     }
   }
 
+  for(int i=0;i<vertsContainer.size();i++){
+    for(int j=0;j<vertsContainer[i].size();j++){
+      const Vertex* vconst = vertsContainer[i][j];
+      int rvecIndex1 = this->r_vectorIndices.at(vconst);
+      //no other operation of this resource is allowed to be bound to the same units that are used for binding of this occurrenceSet
+      const Resource* r = this->resourceModel.getResource(vconst);
+      set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
+
+      //other vertices that are not in the occurrenceSet are not allowed to be bound on the respective units
+      for(auto it:vSet){
+        const Vertex* vIter = it;
+        int rvecIndex3 = -1;
+        bool found = false;
+
+        for(int k=0;k<vertsContainer.size();k++){
+            if (std::find(vertsContainer[k].begin(), vertsContainer[k].end(), vIter) != vertsContainer[k].end()){
+                found = true;
+            }
+        }
+
+        if(found == false){
+          for(auto it2:this->r_vectorIndices){
+            if(it2.first==vIter){
+              rvecIndex3=it2.second;
+            }
+          }
+        }
+
+        if(rvecIndex3!=-1){
+            ScaLP::Variable boolVar = ScaLP::newBinaryVariable("subgrBin_" + to_string(binCounter));
+            binCounter++;
+
+            //unequal constraint using bigM currently
+            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar >= 1);
+            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar <= 5000 - 1);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+void SGMScheduler::setGeneralConstraints()
+{
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* src = &(e->getVertexSrc());
+    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    Vertex* dst = &(e->getVertexDst());
+    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
+
+    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+  }
+
+  this->setSubgraphConstraints();
 }
 
 }

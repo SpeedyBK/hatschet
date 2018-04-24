@@ -38,6 +38,10 @@ private:
    * \brief occSC store the subgraph combination informations
    */
   OccurrenceSetCombination* occSC;
+  /*!
+   * \brief setSubgraphConstraints forcevalid bindings and lifetimes
+   */
+  void setSubgraphConstraints();
 
 };
 }

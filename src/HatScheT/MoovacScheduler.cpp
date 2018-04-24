@@ -7,14 +7,10 @@ namespace HatScheT
 
 MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);cout << "minII" << this->minII << endl;
+  this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);cout << "maxII" << this->maxII << endl;
-  if (minII > maxII){
-    maxII = minII;
-    //cout << "MoovacScheduler.MoovacScheduler: ERROR " << "Inconsistent II bounds! minII=" << to_string(minII) << " maxII=" <<to_string(maxII) << endl;
-    //throw new Exception("Inconsistent II bounds! minII=" + to_string(minII) + " maxII=" + to_string(maxII));
-  }
+  this->maxII = Utility::calcMaxII(&asap);
+  if (minII > maxII) maxII = minII;
   this->SLMax = 0;
 }
 
@@ -379,8 +375,6 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
         int tIndex = this->t_vectorIndices.at(v1);
         //18
-        //this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
-        //this->r_vectorIndices.insert(make_pair(v1, this->r_vector.size() -1));
         int rvecIndex = this->r_vectorIndices.at(v1);
         //19
         m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));

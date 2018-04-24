@@ -5,7 +5,8 @@
 */
 #pragma once
 
-#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ALAPScheduler.h>
 
 namespace HatScheT
 {
@@ -22,6 +23,13 @@ public:
    */
   ULScheduler(Graph& g,ResourceModel &resourceModel);
   /*!
+   * \brief The sort_criterion enum chose which criterion should be chosen during list scheduling
+   */
+  enum sort_criterion
+      { /*URGENCY   urgency not implemented yet
+      ,*/ MOBILITY
+      } sort_by;
+  /*!
    * \brief schedule
    */
   virtual void schedule();
@@ -29,10 +37,26 @@ public:
    * \brief getII
    * \return
    */
-  virtual int getII() { return this->getScheduleLength();}
+  virtual int getII(){return this->getScheduleLength();}
+  /*!
+   * \brief setCriterion
+   * \param sc
+   */
+  void setCriterion(sort_criterion &sc){this->sort_by=sc;}
+  sort_criterion getCriterion(){return this->sort_by;}
 
 protected:
 private:
+  std::map<Vertex*,int> *mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap);
+  /*!
+   * \brief zipWith zip both maps with the given function both maps need to have the same keys.
+   * Used to combine the results of the ASAP- and ALAP-Schedulers.
+   * \param f
+   * \param m1
+   * \param m2
+   * \return
+   */
+  std::map<Vertex*,int> *zipWith(std::function<int(int,int)> f, std::map<Vertex*,int> m1, std::map<Vertex*,int> m2);
 
 };
 }

@@ -33,6 +33,13 @@ public:
   */
  static int getNoOfInputs(Graph* g, const Vertex* v);
  /*!
+  * \brief getNoOfInputsWithoutRegs
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfInputsWithoutRegs(Graph* g, const Vertex* v);
+ /*!
   * \brief getNoOfOutputs determine the number of outputs a vertex v has in graph g
   * \param g
   * \param v
@@ -106,5 +113,26 @@ public:
   * \return
   */
  static bool occurenceSetsAreConflictFree(OccurrenceSet* occs1, OccurrenceSet* occs2);
+ /*!
+  * \brief vertexInOccurrence
+  * \param occ
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrence(Occurrence* occ, Vertex* v);
+ /*!
+  * \brief vertexInOccurrenceSet
+  * \param occS
+  * \param v
+  * \return
+  */
+ static bool vertexInOccurrenceSet(OccurrenceSet* occS, Vertex* v);
+ /*!
+  * \brief allInputsAreRegisters
+  * \param g
+  * \param v
+  * \return
+  */
+ static bool allInputsAreRegisters(Graph* g, Vertex *v);
 };
 }
