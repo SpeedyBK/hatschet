@@ -76,6 +76,16 @@ public:
     cout << "getII: Base class called. This should never happen!" <<endl;
     throw new Exception("Graph::getEdge: Edge not found!");
   }
+  /*!
+   *
+   * @return the used graph description of the scheduling problem
+   */
+  Graph* getGraph(){return &this->g;}
+  /*!
+   *
+   * @return the used resource Model
+   */
+  ResourceModel* getResourceModel(){return &this->resourceModel;}
 protected:
   /*!
    * \brief resourceModel
