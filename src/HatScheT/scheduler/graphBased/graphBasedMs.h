@@ -55,21 +55,19 @@ private:
   int getNoOfConnections(Graph* g, Vertex* v, vector<Vertex*> vVec);
 
   /*!
-   * \brief getSampleTimesWithHeuristic
+   * \brief getSampleTimesWithHeuristic4All
    * \param g
    * \param vVec
    * \param sampleTimes
    */
-  void getSampleTimesWithHeuristic(Graph* g, vector<Vertex*> vVec,vector<int> &sampleTimes);
-
   void getSampleTimesWithHeuristic4All(vector<Graph*> g, vector<vector<Vertex *> > vVec, vector<int> &sampleTimes);
 
   /*!
-   * \brief removeUsedVertices
-   * \param g
-   * \param v
-   * \param vVec
-   */
+ * \brief removeUsedVertices
+ * \param g
+ * \param v
+ * \param vVec
+ */
 void removeUsedVertices(Graph* g, Vertex* v, vector<Vertex *> &vVec);
 
 /*!
@@ -115,6 +113,13 @@ void createConflictGraph(Graph &conflGraph, vector<Vertex*> &conflVertices, vect
  */
 vector<int> getAllVertexConnections(Graph* g, vector<Vertex *> vVec);
 
+/*!
+ * \brief getVectorMatrixColumnWithMinSum
+ * \param matrix
+ * \param allGraphs
+ * \param vVec
+ * \return
+ */
 int getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix, vector<Graph *> allGraphs, vector<vector<Vertex *> > vVec);
 };
 }
