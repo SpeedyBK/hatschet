@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <ctime>
 #include <chrono>
+#include <cmath>
 
 using Clock = std::chrono::high_resolution_clock;
 
