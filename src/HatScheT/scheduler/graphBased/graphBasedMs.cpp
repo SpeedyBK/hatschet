@@ -2,9 +2,17 @@
 #include <vector>
 #include <HatScheT/Vertex.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <algorithm>
 #include <HatScheT/MoovacScheduler.h>
+#include <fstream>
+#include <boost/algorithm/string/split.hpp>
+#include <cstdio>
+#include <ctime>
+#include <chrono>
+
+using Clock = std::chrono::high_resolution_clock;
 
 namespace HatScheT
 {
@@ -29,46 +37,62 @@ GraphBasedMs::GraphBasedMs(Graph &g, ResourceModel &resourceModel, int moduloSlo
 // BackedgeExample
 // ./hatschet --lennart=1 --resource=../hatschet/graphMLFiles/example/BackedgeExampleRM.xml --graph=../hatschet/graphMLFiles/example/BackedgeExample.graphml
 
+//aes2/graph1
+// ./hatschet --lennart=1 --resource=../hatschet/graphMLFiles/MachSuite/aes2/graph1_RM.xml --graph=../hatschet/graphMLFiles/MachSuite/aes2/graph1.graphml
+
 //create .dot graph by adding --dot to the end
 
 void GraphBasedMs::schedule()
 {
     //..insert lennarts project work
-// cout << "Hello: Here is Lennarts scheduler!" << endl;
-// cout << "The inserted graph has " << g.getNumberOfVertices() << " vertices!" << endl;
-    MoovacScheduler ms(g,resourceModel,{"CPLEX"});
-    ms.schedule();
+    auto start = Clock::now();
 
-    cout << endl << "Moovac II is " << ms.getII() << endl;
+    bool doMoovac = false;
+    int moovacII = 1;
+
+
+    if (doMoovac){
+        MoovacScheduler ms(g,resourceModel,{"CPLEX"});
+        ms.setSolverTimeout(180);
+        ms.schedule();
+
+        moovacII = ms.getII();
+//        cout << endl << "Moovac II is: " << ms.getII() << endl;
+//        cout << "Moovac schedule length is: " << ms.getScheduleLength() << endl << endl;
+    }
+
+    auto stop = Clock::now();
+
+    int durationMoovac = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+
+
+
+    start= Clock::now();
 
     // Create new ASAPScheduler pointer and schedule current graph
     ASAPScheduler* asap = new ASAPScheduler(g,resourceModel);
 
     asap->schedule();
 
-    asap->printStartTimes();
-
-    int minII = Utility::calcMinII(&resourceModel,&g);
-    cout << "calcMinII: " << minII << endl;
-
     // calculate minII from Graph
-//    int minII = Utility::calcRecMII(&resourceModel,&g);
-//    cout << "calcRecMinII: " << minII << endl;
+    int minII = Utility::calcRecMII(&resourceModel,&g);
+    cout << "calcRecMinII: " << minII << endl;
 
     // Get Asap schedule length
     this->moduloSlots = asap->getScheduleLength();
-    //int n = asap->getScheduleLength();
     int n = this->moduloSlots;
+
+    cout << "asap schedule length: " << asap->getScheduleLength() << endl;
+
+    if (n <= 1){
+        cout << "GraphBasedMs.schedule(): ERROR Asap scheduler fucked up" << endl;
+        throw new Exception("GraphBasedMs.schedule(): ERROR Asap scheduler fucked up");
+    }
+
 
     vector<string> constrRessources;
 
     // get number and names of constrained ressources
-
-//    for (int i = 1; i!=g.getNumberOfVertices()+1;++i){
-//    Vertex& anotherVertexPointer = g.getVertexById(i);
-//    const Resource* r= this->resourceModel.getResource(&anotherVertexPointer);
-
-
     for (auto it = g.verticesBegin(); it!= g.verticesEnd(); ++it){
         Vertex* anotherVertexPointer = *it;
         // cout << "Start time of " << anotherVertexPointer.getName() << " : " << asap->getStartTime(anotherVertexPointer) << endl;
@@ -85,21 +109,24 @@ void GraphBasedMs::schedule()
     vector<vector<Vertex*>> constrRessourceVertices(constrRessources.size());
 
     for (int i = 0; i!= constrRessources.size();++i){
-        for (int j=0;j!=g.getNumberOfVertices();++j){
+        for (auto it = g.verticesBegin(); it!= g.verticesEnd(); ++it){
 
-            Vertex& tempVertexPointer = g.getVertexById(j+1);
-            const Resource* tempR= this->resourceModel.getResource(&tempVertexPointer);
+//            Vertex& tempVertexPointer = g.getVertexById(j+1);
+            Vertex* tempVertexPointer = *it;
+            const Resource* tempR= this->resourceModel.getResource(tempVertexPointer);
 
             if (constrRessources[i] == tempR->getName()){
-                constrRessourceVertices[i].push_back(&tempVertexPointer);
+                constrRessourceVertices[i].push_back(tempVertexPointer);
             }
         }
     }
 
+    int boundary=5;
+    if (n < 10) boundary = floor(n/2);
+
+//    for (int modulo = n-boundary;modulo!=n+boundary+1;++modulo)
 
     // create result matrix with number of constrained ressources as rows and variable length columns
-//    vector<vector<int>> sampleResults(constrRessources.size());
-
     vector<Graph*> allGraphs;
 
 
@@ -134,7 +161,13 @@ void GraphBasedMs::schedule()
             sampleVec[asap->getStartTime(*tempVertex)] += 1;
         }
 
-        cout << endl << "Resource: " << constrRessources[constrIt] << endl << endl;
+//        cout << "currConstraint: " << currConstraint << endl;
+//        cout << "n: " << n << endl;
+//        cout << "minII: " << minII << endl << endl;
+
+
+
+//        cout << endl << "Resource: " << constrRessources[constrIt] << endl << endl;
         conflMatrix = this->createConflictMatrix(conflMatrix,sampleVec,n);
 
 
@@ -168,12 +201,6 @@ void GraphBasedMs::schedule()
         // create result vector for recursive function call
         vector<int> sampleTimes;
 
-        // create sum of all connections to check if any conflicts exist
-//        int ConnSum = 0;
-
-//        for (int i = 0; i!= NoOfConnCheck.size(); ++i){
-//            ConnSum = ConnSum + NoOfConnCheck[i];
-//        }
 
         if (NoOfConnCheck != 0){
             // call recursive heuristic function
@@ -192,50 +219,6 @@ void GraphBasedMs::schedule()
         // sort resulting sampleTimes
         std::sort(sampleTimes.begin(),sampleTimes.end());
 
-        // print result
-//        for (int i = 0; i != sampleTimes.size(); ++i){
-//            cout << sampleTimes[i] << "\t";
-//        }
-
-        // write result for each resource to result matrix
-//        sampleResults[constrIt] = sampleTimes;
-
-//        cout << endl << endl << "End of scheduling for " << constrRessources[constrIt] <<endl<<endl<<endl;
-
-
-
-
-    // calculate intersecting sample times of each resource to check which times
-//    vector<int> result;
-
-//    if (constrRessources.size() != 1){
-//        vector<int> tempSampleTimes = sampleResults[0];
-
-//        for (int i = 1; i!=constrRessources.size();++i)
-//        {
-//            if (tempSampleTimes.size() != 0){
-//                for (int j = 0; j!=tempSampleTimes.size();++j)
-//                {
-//                    if (isMemberInVector<int>(sampleResults[i],tempSampleTimes[j]))
-//                    {
-//                        if (!isMemberInVector<int>(result,tempSampleTimes[j]))
-//                        {
-//                            result.push_back(tempSampleTimes[j]);
-//                        }
-//                    }
-//                }
-//                tempSampleTimes = result;
-//            }
-//            else {
-//                result.clear();
-//                result[0] = 0;
-//                break;
-//            }
-//        }
-//    }
-//    else {result = sampleResults[0];}
-
-//    cout << "Final result: " << endl;
 
     // check validity of the result
     bool resultIsTrue = true;
@@ -259,11 +242,59 @@ void GraphBasedMs::schedule()
 
     cout << "modulo " << n << endl;
 
-    cout << "Result is valid?: " << resultIsTrue << endl;
+    cout << endl << "Result is (minII) valid?: " << resultIsTrue << endl;
+
+    bool resultModIsTrue = true;
+    for (int it = 0;it!=constrRessources.size();++it){
+        const Resource* r= this->resourceModel.getResource(constrRessourceVertices[it][0]);
+
+        if ((sampleTimes.size()*(constrRessourceVertices[it].size()/r->getLimit())) > asap->getScheduleLength()){
+            resultModIsTrue = false;
+        }
+    }
+
+    cout << "Result is (mod) valid?: " << resultModIsTrue << endl;
     cout << endl << endl;
 
-}
+    bool isBetterThanAsap = false;
+//    if ((double)1/asap->getScheduleLength() > (double)sampleTimes.size()/modulo) isBetterThanAsap = true;
+    if ((double)1/asap->getScheduleLength() > (double)sampleTimes.size()/n) isBetterThanAsap = true;
 
+    stop = Clock::now();
+
+    int durationGraphBased = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+
+/////////////////////////////////////////////////////
+
+
+    vector<string> splitNames;
+
+    boost::split(splitNames, g.getName(), [](char del){return del == '/';});
+
+    std::ofstream resultfile;
+    resultfile.open("Results.txt",ios::app);
+    if (resultfile.is_open()){
+        resultfile << "Graph name: " << splitNames[splitNames.size()-2] << " -> " << splitNames.back() << endl;
+        resultfile << "Moovac throughput:\t\t 1/" << moovacII << endl;
+        resultfile << "GraphBasedMs throughput: " << sampleTimes.size() << "/" << this->moduloSlots << endl;
+        resultfile << "Moovac duration: \t\t " << durationMoovac << "ms" << endl;
+        resultfile << "GraphBasedMs duration: \t " << durationGraphBased << "ms" << endl;
+        resultfile << "Latency: \t\t" << asap->getScheduleLength() << endl;
+        resultfile << "Is result valid?:  \t" << resultModIsTrue << endl << endl;
+        resultfile.close();
+    }
+
+    resultfile.open("Results.csv",ios::app);
+    if (resultfile.is_open()){
+        resultfile << splitNames[splitNames.size()-2] << ";" << splitNames.back() << ";"; //Names
+        resultfile << "1/" << moovacII << ";"; //Moovac throughput
+        resultfile << sampleTimes.size() << "/" << this->moduloSlots << ";"; //GraphBased throughput
+        resultfile << durationMoovac << ";" << durationGraphBased << ";";
+        resultfile << asap->getScheduleLength() << ";"; //latency
+        resultfile << resultModIsTrue << endl; //validity
+        resultfile.close();
+    }
+}
 
 
 
@@ -286,7 +317,6 @@ Vertex* GraphBasedMs::getVertexWithLeastNoOfConnections(Graph *g, vector<Vertex*
                 int tempEdgeCount = this->getNoOfConnections(g,v,vVec);
 
                 // compare previous edgecount with current (temp)edgecount
-                // if ((tempEdgeCount<edgeCount) && (tempEdgeCount != g->getNumberOfEdges())){
                 if (tempEdgeCount<edgeCount){
                     edgeCount = tempEdgeCount;
                     returnVertex = v;
@@ -299,17 +329,12 @@ Vertex* GraphBasedMs::getVertexWithLeastNoOfConnections(Graph *g, vector<Vertex*
 
 
 
-
-
 int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 {
     int number=0;
     // iterate through all edges
     for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it){
         Edge* e = *it;
-
-//        cout << "vVec size: " << vVec.size() << " ; number of vertices: " << g->getNumberOfVertices() << endl;
-
 
         // used vertices can not exceed total number of vertices
         if ( vVec.size() < g->getNumberOfVertices()){
@@ -337,86 +362,41 @@ int GraphBasedMs::getNoOfConnections(Graph *g, Vertex *v, vector<Vertex*> vVec)
 
 
 
-
-
-
-void GraphBasedMs::getSampleTimesWithHeuristic(Graph *g, vector<Vertex*> vVec, vector<int> &sampleTimes){
-/*
-    if (vVec.size() < g->getNumberOfVertices()){
-
-        Vertex* tempVertex = GraphBasedMs::getVertexWithLeastNoOfConnections(g, vVec);
-
-        // add vertex with least number of connections to "used" vertices
-        if (vVec.size() == 0){
-            tempVertex = &g->getVertexById(0);
-        }
-
-        vVec.push_back(tempVertex);
-
-        GraphBasedMs::removeUsedVertices(g,tempVertex,vVec);
-
-        // get last vector size
-        int lastVecSize = sampleTimes.size();
-
-//        cout << "Current sample: " << tempVertex->getId() << endl;
-
-        // add sample time of vertex to sampling time vector
-        sampleTimes.push_back(tempVertex->getId());
-
-        // if there are any samples
-        if (sampleTimes.size() != 0){
-
-            // if nothing changed between last function call and current function call
-            if ((lastVecSize == sampleTimes.size()) || (sampleTimes.size() == g->getNumberOfVertices()) ){
-                return;
-            }
-            else GraphBasedMs::getSampleTimesWithHeuristic(g,vVec,sampleTimes);
-        }
-        else{ // if no suitable vertices are found, return 0
-            sampleTimes.push_back(0);
-            return;
-        }
-    }
-    */
-}
-
-
 void GraphBasedMs::getSampleTimesWithHeuristic4All(vector<Graph*> allGraphs, vector<vector<Vertex*>> vVec, vector<int> &sampleTimes){
 
+    // check if used vertices exceed total number of vertices
     for (int it = 0; it!= allGraphs.size(); ++it){
         if (vVec[it].size() >= allGraphs[it]->getNumberOfVertices()){
 //            cout << "vVec size: " << vVec[it].size() << "; allGraphs[it] vertices: " << allGraphs[it]->getNumberOfVertices() <<endl;
             return;
         }
     }
+//  cout << endl;
 
     vector<vector<int>> noOfConnections(allGraphs.size(),vector<int>());
 
-    cout << endl;
 
     for (int row = 0; row!= allGraphs.size();++row){
         Graph* tempGraph = allGraphs[row];
 
         noOfConnections[row] = this->getAllVertexConnections(tempGraph,vVec[row]);
 
-        for (int column = 0; column!= noOfConnections[row].size();++column){
-            cout << noOfConnections[row][column] << "\t";
-        }
-        cout << endl;
+//        for (int column = 0; column!= noOfConnections[row].size();++column){
+//            cout << noOfConnections[row][column] << "\t";
+//        }
+//        cout << endl;
     }
 
     int minColumn = this->getVectorMatrixColumnWithMinSum(noOfConnections,allGraphs,vVec);
 
-    if (minColumn<0) return;
+    unsigned int limit = 0;
+
+    if ((minColumn<0) || (minColumn == (limit -1))) return;
 
     // add vertex with least number of connections to "used" vertices
-    //        if (vVec.size() == 0){
-    //            tempVertex = &g->getVertexById(0);
-    //        }
-
-
     Vertex* tempVertex = NULL;
 
+    // remove used vertices for all graphs
     for (int it = 0; it!= allGraphs.size(); ++it){
         tempVertex = &allGraphs[it]->getVertexById(minColumn);
 
@@ -426,15 +406,13 @@ void GraphBasedMs::getSampleTimesWithHeuristic4All(vector<Graph*> allGraphs, vec
 //            cout << *vVec[it][i] << "\t";
 //        }
 
-        cout << endl;
+//        cout << endl;
 
         GraphBasedMs::removeUsedVertices(allGraphs[it],tempVertex,vVec[it]);
     }
 
     // get last vector size
     int lastVecSize = sampleTimes.size();
-
-    // cout << "Current sample: " << tempVertex->getId() << endl;
 
     // add sample time of vertex to sampling time vector
     sampleTimes.push_back(minColumn);
@@ -473,8 +451,8 @@ void GraphBasedMs::removeUsedVertices(Graph* g, Vertex* v, vector<Vertex*> &vVec
 
                 // if vertex is not found, add to vector
                 if (!GraphBasedMs::isVertexInVector(vVec,&e->getVertexDst())){
-                    vVec.push_back(&e->getVertexDst());
 //                    cout << "Removed destination vertex : " << e->getVertexDstName() << endl;
+                    vVec.push_back(&e->getVertexDst());
                     vecSize = vVec.size();
                 }
             }
@@ -482,8 +460,8 @@ void GraphBasedMs::removeUsedVertices(Graph* g, Vertex* v, vector<Vertex*> &vVec
 
                 // if vertex is not found, add to vector
                 if (!GraphBasedMs::isVertexInVector(vVec,&e->getVertexSrc())){
-                    vVec.push_back(&e->getVertexSrc());
 //                    cout << "Removed source vertex : " << e->getVertexSrcName() << endl;
+                    vVec.push_back(&e->getVertexSrc());
                     vecSize = vVec.size();
                 }
             }
@@ -533,17 +511,15 @@ vector<vector<int>> GraphBasedMs::createConflictMatrix(vector<vector<int>> confl
     }
 
     // print matrix row-wise
-    for (int j = 0; j<n; j++)
-    {
-        for (int i = 0; i<n; i++)
-        {
-//            cout << conflMatrix[j][i] << "\t";
-            cout << conflMatrix[j][i] << "  ";
-        }
-        cout << endl;
-    }
-
-    cout << endl << endl;
+//    for (int j = 0; j<n; j++)
+//    {
+//        for (int i = 0; i<n; i++)
+//        {
+//            cout << conflMatrix[j][i] << "  ";
+//        }
+//        cout << endl;
+//    }
+//    cout << endl << endl;
 
     return conflMatrix;
 }
@@ -555,71 +531,59 @@ void GraphBasedMs::createConflictGraph(Graph &conflGraph, vector<Vertex *> &conf
         conflVertices.push_back(&conflGraph.createVertex(i));
     }
 
-    for (int j = 0;j<n;j++)
-    {
-//        int firstOne = -1;
-        int maxConflicts = currConstraint -1;
-
-        for (int i = 0;i<n;i++){
-//            maxConflicts = currConstraint -1;
-
-            // search for first one in row and skip to next column
-            if (conflMatrix[j][i] == 1){
-                for (int k = i+1;k!=n;++k){
-
-                    // if one is found and no more conflicts are skipped
-                    if ((conflMatrix[j][k] == 1) && (maxConflicts == 0))
-                    {
-                        // cout << "is edge in graph?: " << Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[firstOne],conflVertices[i]) << endl;
-
-                        if (!Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[i],conflVertices[k])){
-                            // create edges between first found sample and all following samples
-                            conflGraph.createEdge(*conflVertices[i],*conflVertices[k]);
-                            cout << "Created edge between Sample " << i << " and Sample " << k <<endl;
-                        }
-                    } // if a one is found, but there are still ressources available, ignore and decrease parallel resource count
-                    else if ((conflMatrix[j][k] == 1) && (maxConflicts != 0)){--maxConflicts;}
+    for (int i=0;i!=n;++i){
+        for (int j=0;j!=n;++j){
+            for (int k = j+1;k!=n;++k){
+                if(conflMatrix[i][j]+conflMatrix[i][k]>currConstraint){
+                    if (!Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[j],conflVertices[k])){
+                        conflGraph.createEdge(*conflVertices[j],*conflVertices[k]);
+//                        cout << "Created edge between Sample " << j << " and Sample " << k <<endl;
+                    }
                 }
             }
         }
     }
 
-//    for (int j = 0;j<n;j++)
-//    {
-//        int firstOne = -1;
+//    for (int j = 0;j<n;j++){
 //        int maxConflicts = currConstraint -1;
 
 //        for (int i = 0;i<n;i++){
+
 //            // search for first one in row and skip to next column
-//            if ((conflMatrix[j][i] == 1) && (firstOne == -1)){firstOne = i; continue;}
+//            if (conflMatrix[j][i] == 1){
+//                for (int k = i+1;k!=n;++k){
 
-//            // if one is found and no more conflicts are skipped
-//            if ((conflMatrix[j][i] == 1) && (maxConflicts == 0))
-//            {
-// //                cout << "is edge in graph?: " << Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[firstOne],conflVertices[i]) << endl;
+//                    // if one is found and no more conflicts are skipped
+//                    if ((conflMatrix[j][k] == 1) && (maxConflicts == 0))
+//                    {
+//                        // cout << "is edge in graph?: " << Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[firstOne],conflVertices[i]) << endl;
 
-//                if (!Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[firstOne],conflVertices[i])){
-//                    // create edges between first found sample and all following samples
-//                    conflGraph.createEdge(*conflVertices[firstOne],*conflVertices[i]);
-//                    cout << "Created edge between Sample " << firstOne << " and Sample " << i <<endl;
+//                        if (!Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[i],conflVertices[k])){
+//                            // create edges between first found sample and all following samples
+//                            conflGraph.createEdge(*conflVertices[i],*conflVertices[k]);
+//                            cout << "Created edge between Sample " << i << " and Sample " << k <<endl;
+//                        }
+//                    } // if a one is found, but there are still ressources available, ignore and decrease parallel resource count
+//                    else if ((conflMatrix[j][k] == 1) && (maxConflicts != 0)){--maxConflicts;}
 //                }
-//            } // if a one is found, but there are still ressources available, ignore and decrease parallel resource count
-//            else if ((conflMatrix[j][i] == 1) && (maxConflicts != 0)){--maxConflicts;}
+//            }
 //        }
 //    }
 
-    // account for backedges through minimum initiation interval
+    // account for backedges and component latency through minimum initiation interval
     if (minII > 1)
         for (int j=0;j!=n;++j){
             for (int i = 0;i!=minII-1;++i){ // connect sample j with all samples in minII-1 reach
                 int offset = (j+1+i)%(n);
 
                     conflGraph.createEdge(*conflVertices[j],*conflVertices[offset]);
-                    cout << "Created minII edge between Sample " << j << " and Sample " << offset << endl;
+//                    cout << "Created minII edge between Sample " << j << " and Sample " << offset << endl;
             }
         }
-    cout << endl;
+//    cout << endl;
 }
+
+
 
 vector<int> GraphBasedMs::getAllVertexConnections(Graph *g, vector<Vertex*> vVec){
 
@@ -647,9 +611,10 @@ int GraphBasedMs::getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix,vec
     int minColumn = -1;
     --minCount;
 
+    //iterate over all columns
     for (int column = 0; column!=matrix[0].size();++column){
-        int tempMinCount = 0;
 
+        int tempMinCount = 0;
         bool isValid = true;
 
         for (int grIt = 0; grIt != allGraphs.size(); ++grIt){
@@ -669,8 +634,8 @@ int GraphBasedMs::getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix,vec
             }
         }
     }
-    cout << "minCount: " << minCount << endl;
-    cout << "minColumn: " << minColumn << endl;
+//    cout << "minCount: " << minCount << endl;
+//    cout << "minColumn: " << minColumn << endl;
 
 
     return minColumn;
