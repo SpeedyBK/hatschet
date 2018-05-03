@@ -38,6 +38,7 @@ namespace HatScheT
     std::vector<ScaLP::Constraint> baseConstraints;
     std::vector<ScaLP::Constraint> constraints;
     std::map<Vertex*,ScaLP::Variable> variables;
+    std::map<Vertex*,bool> neverScheduled;
     MRT mrt;
     bool sched(int II, int budget);
     void backtracking(Queue& schedQueue, std::map<Vertex*,int>& prevsched, HatScheT::Vertex* I, int asapI, int time, int II);

@@ -157,7 +157,8 @@ bool Tests::moduloSDCTest()
     
     auto &load = rm.makeResource("load", 1, 2, 0);
     auto &add = rm.makeResource("add", -1, 0, 0);
-    auto &store = rm.makeResource("store", 1, 1, 0);
+    //auto &store = rm.makeResource("store", 1, 2, 0);
+    auto &store = load;
 
     HatScheT::Graph g;
     
@@ -188,17 +189,21 @@ bool Tests::moduloSDCTest()
 
     auto sch = m.getStartTimes();
 
+    bool result = true;
     for(auto&p:sch)
     {
       std::cout << p.first->getName() << " = " << p.second << std::endl;
+      if(p.first==&a and p.second!=2) result=false;
+      if(p.first==&b and p.second!=0) result=false;
+      if(p.first==&d and p.second!=4) result=false;
     }
+    return result;
   }
   catch(HatScheT::Exception* e)
   {
     std::cout << *e << std::endl;
-    return false;
   }
-  return true;
+  return false;
 }
 
 bool Tests::apiTest()
