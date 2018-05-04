@@ -182,7 +182,7 @@ bool Tests::moduloSDCTest()
     rm.registerVertex(&c, &add);
     rm.registerVertex(&d, &store);
 
-    HatScheT::ModuloSDCScheduler m{g,rm,{"SCIP"},5};
+    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"},5};
     m.setSolverQuiet(true);
 
     m.schedule();
@@ -193,9 +193,10 @@ bool Tests::moduloSDCTest()
     for(auto&p:sch)
     {
       std::cout << p.first->getName() << " = " << p.second << std::endl;
-      if(p.first==&a and p.second!=2) result=false;
+      //if(p.first==&a and p.second!=2) result=false; 2 or 1??
+      if(p.first==&a and p.second!=1) result=false;
       if(p.first==&b and p.second!=0) result=false;
-      if(p.first==&d and p.second!=4) result=false;
+      if(p.first==&d and p.second!=3) result=false;
     }
     return result;
   }
