@@ -15,9 +15,9 @@ namespace HatScheT {
 
 bool Tests::moovacTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/MoovacExampleRM.xml";
   string graphStr = "graphMLFiles/example/MoovacExample.graphml";
@@ -48,9 +48,9 @@ bool Tests::moovacTest()
 
 bool Tests::asapTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/exampleResourceModel.xml";
   string graphStr = "graphMLFiles/example/example.graphml";
@@ -71,9 +71,9 @@ bool Tests::asapTest()
 
 bool Tests::asapHCTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
   string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
@@ -97,9 +97,9 @@ bool Tests::asapHCTest()
 
 bool Tests::alapHCTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
   string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
@@ -120,9 +120,9 @@ bool Tests::alapHCTest()
 
 bool Tests::readTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/exampleResourceModel.xml";
   string graphStr = "graphMLFiles/example/example.graphml";

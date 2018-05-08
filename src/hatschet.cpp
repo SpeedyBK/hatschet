@@ -56,9 +56,9 @@ int main(int argc, char *args[])
   int threads=0;
   int timeout=-1; //default -1 means no timeout
   bool lennart=false;
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   //parse command line
   for (int i = 1; i < argc; i++) {
