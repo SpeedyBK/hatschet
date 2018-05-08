@@ -155,8 +155,8 @@ bool Tests::moduloSDCTest()
   {
     HatScheT::ResourceModel rm;
     
-    auto &load = rm.makeResource("load", 1, 2, 0);
-    auto &add = rm.makeResource("add", -1, 0, 0);
+    auto &load = rm.makeResource("load", 1, 2);
+    auto &add = rm.makeResource("add", -1, 0);
     //auto &store = rm.makeResource("store", 1, 2, 0);
     auto &store = load;
 
