@@ -445,6 +445,8 @@ void MoovacScheduler::setModuloAndResourceConstraints()
               this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) + ak >= 1);
               //8
               this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) <= 0);
+              //9
+              this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
               //10
               this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
               //11
