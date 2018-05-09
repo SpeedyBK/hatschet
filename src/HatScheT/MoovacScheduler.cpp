@@ -67,7 +67,7 @@ void MoovacScheduler::constructProblem()
 void MoovacScheduler::setObjective()
 {
     ScaLP::Term sum;
-    for(ScaLP::Variable &v:t_vector){
+    for(ScaLP::Variable &v:this->t_vector){
       sum = sum + v;
     }
     this->solver->setObjective(ScaLP::minimize(sum));
@@ -83,13 +83,13 @@ void MoovacScheduler::schedule()
   {
     this->resetContainer();
     this->setUpSolverSettings();
+
     this->constructProblem();
 
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
     ScaLP::status stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
-
-    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
     if(this->scheduleFound == false){
 

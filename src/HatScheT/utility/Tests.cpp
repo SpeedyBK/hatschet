@@ -26,12 +26,19 @@ bool Tests::moovacTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
+  if(g.getNumberOfVertices()!=6){
+    cout << "graph not read correctly! expected 6 vertices but got " << g.getNumberOfVertices() << endl;
+    return false;
+  }
+
   int maxLatencyConstraint = 18;
   HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"});
   sched.setMaxLatencyConstraint(maxLatencyConstraint);
   sched.setSolverQuiet(false);
 
+  cout << "starting moovac scheduling" << endl;
   sched.schedule();
+  cout << "finished moovac scheduling" << endl;
 
   if(sched.getII() != 5){
     cout << "Wrong II determined: " << sched.getII() << " instead of 5!" << endl;
