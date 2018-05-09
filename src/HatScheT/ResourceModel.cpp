@@ -16,7 +16,7 @@ ResourceModel::ResourceModel()
 
 ResourceModel::~ResourceModel()
 {
-  for(auto r:resources) delete r;
+  //for(auto r:resources) delete r;
 
 }
 

@@ -12,16 +12,17 @@
 
 namespace HatScheT {
 
-GraphMLResourceReader::GraphMLResourceReader()
+GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
 {
-  this->rm = new ResourceModel();
+  this->rm = rm;
   this->reservationTableTagFound = false;
   this->blogTagFound = false;
 }
 
 GraphMLResourceReader::~GraphMLResourceReader()
 {
-  if(rm!=nullptr) delete rm;
+    //this->rm = nullptr;
+  //if(rm!=nullptr) delete rm;
 }
 
 void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
