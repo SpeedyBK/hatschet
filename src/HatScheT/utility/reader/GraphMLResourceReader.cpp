@@ -21,8 +21,7 @@ GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
 
 GraphMLResourceReader::~GraphMLResourceReader()
 {
-    //this->rm = nullptr;
-  //if(rm!=nullptr) delete rm;
+
 }
 
 void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
