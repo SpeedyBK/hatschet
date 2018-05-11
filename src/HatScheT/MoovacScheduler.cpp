@@ -1,6 +1,7 @@
 #include <HatScheT/MoovacScheduler.h>
 #include "utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/Verifier.h>
 
 namespace HatScheT
 {
@@ -92,17 +93,22 @@ void MoovacScheduler::schedule()
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
 
     if(this->scheduleFound == false){
-
       (this->II)++;
     }
-    else if(this->scheduleFound == true) break;
+    else if(this->scheduleFound == true){
+      break;
+    }
   }
 
   if(this->scheduleFound == true)
   {
     this->r = this->solver->getResult();
+    this->fillSolutionStructure();
 
-    this->fillSolutionStructure();   
+    if(verifyModuloSchedule(this->g,this->resourceModel,this->getStartTimes(),this->II)==false){
+      cout << "MoovacScheduler.schedule: Error Wrong schedule detected by MoovacSchedulerClass" << endl;
+      throw new Exception("MoovacScheduler::schedule: Error Wrong schedule detected by MoovacSchedulerClass");
+    }
   }
 
   else this->II = -1;
