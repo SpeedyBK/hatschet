@@ -102,6 +102,8 @@ void ASAPScheduler::schedule()
       }
     }
   }
+
+  this->II = this->getScheduleLength()+1;
 }
 
 }

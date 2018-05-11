@@ -1,7 +1,6 @@
 #include <HatScheT/MoovacScheduler.h>
 #include "utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
-#include <HatScheT/Verifier.h>
 
 namespace HatScheT
 {
@@ -104,11 +103,6 @@ void MoovacScheduler::schedule()
   {
     this->r = this->solver->getResult();
     this->fillSolutionStructure();
-
-    if(verifyModuloSchedule(this->g,this->resourceModel,this->getStartTimes(),this->II)==false){
-      cout << "MoovacScheduler.schedule: Error Wrong schedule detected by MoovacSchedulerClass" << endl;
-      throw new Exception("MoovacScheduler::schedule: Error Wrong schedule detected by MoovacSchedulerClass");
-    }
   }
 
   else this->II = -1;
