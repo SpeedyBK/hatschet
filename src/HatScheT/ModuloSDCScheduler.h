@@ -19,10 +19,11 @@ namespace HatScheT
     bool resourceConflict(HatScheT::Vertex* i,int time);
     bool update(HatScheT::Vertex* i, int time);
     bool remove(HatScheT::Vertex* i);
-    HatScheT::Vertex* getInstructionAt(unsigned int i);
+    HatScheT::Vertex* getInstructionAt(unsigned int i, unsigned int t=0);
 
     std::map<const HatScheT::Resource*,std::vector<std::vector<HatScheT::Vertex*>>> data;
     HatScheT::ResourceModel* rm;
+    int II=0;
   };
 
   class ModuloSDCScheduler :public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
