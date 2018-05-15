@@ -29,7 +29,7 @@ namespace HatScheT
   class ModuloSDCScheduler :public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
   {
     public:
-    ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int maxII);
+    ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
     virtual void schedule();
 
     virtual void constructProblem();
@@ -48,8 +48,8 @@ namespace HatScheT
     void createBaseConstraints(int II);
     bool solveBasicWithConstraint(ScaLP::Constraint&& c);
 
-    unsigned int minII;
-    unsigned int maxII;
+    //unsigned int minII;
+    //unsigned int maxII;
   };
 
 }

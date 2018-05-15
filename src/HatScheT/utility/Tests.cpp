@@ -191,7 +191,7 @@ bool Tests::moduloSDCTest()
     rm.registerVertex(&c, &add);
     rm.registerVertex(&d, &store);
 
-    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"},5};
+    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"}};
     m.setSolverQuiet(true);
 
     m.schedule();

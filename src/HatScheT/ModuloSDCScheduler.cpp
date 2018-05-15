@@ -1,4 +1,5 @@
-
+#include "utility/Utility.h"
+#include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/ModuloSDCScheduler.h>
 #include <HatScheT/Graph.h>
 
@@ -124,14 +125,15 @@ bool HatScheT::MRT::remove(HatScheT::Vertex* i)
   return true;;
 }
 
-HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, unsigned int maxII)
+HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
   : SchedulerBase(g,resourceModel)
   , ILPSchedulerBase(solverWishlist)
   , mrt({resourceModel,1})
-  , minII(1)
-  , maxII(maxII)
 {
-
+  this->minII = this->computeMinII(&g,&resourceModel);
+  HatScheT::ASAPScheduler asap(g,resourceModel);
+  this->maxII = Utility::calcMaxII(&asap);
+  if (minII > maxII) maxII = minII;
 }
 
 HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, unsigned int t)

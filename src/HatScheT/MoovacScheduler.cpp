@@ -439,12 +439,14 @@ void MoovacScheduler::setModuloAndResourceConstraints()
             if(k!=j)
             {
               pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-              ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
-              ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
+              //ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
+              //ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
               //7
-              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) + ak >= 1);
+              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+                  - (ak*eps_matrix[j][k]) + ak >= 1);
               //8
-              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) <= 0);
+              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+                  - (ak*eps_matrix[j][k]) <= 0);
               //9
               this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
               //10
