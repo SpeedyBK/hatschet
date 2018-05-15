@@ -1,9 +1,15 @@
 #include "HatScheT/utility/Utility.h"
 #include "ScaLP/Solver.h"
-
+#include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/Verifier.h"
 #include <limits>
 #include <cmath>
 #include <map>
+#include <ios>
+#include <fstream>
+#include <ctime>
+#include <cstddef>
 
 namespace HatScheT {
 
@@ -206,6 +212,46 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
     if(vIter==v) return true;
   }
   return false;
+}
+
+void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
+{
+  HatScheT::SchedulerBase* scheduler;
+  for(int i = 0; i <2;i++){
+    //select scheduler
+    if(i==0){
+      logFileName += "ASAP.txt";
+      scheduler = new HatScheT::ASAPScheduler(g,resourceModel);
+    }
+    if(i==1){
+      logFileName += "Moovac.txt";
+      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+    }
+
+    //measure time and schedule
+    clock_t begin = clock();
+    scheduler->schedule();
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    //verify schedule
+    bool verified = false;
+    bool schedFound = false;
+    if(scheduler->getII()!=-1) {
+      schedFound = true;
+      verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+    }
+
+    //find graph name
+    string str = g.getName();
+    std::size_t found = str.find_last_of("/\\");
+    str = str.substr(found+1);
+
+    //log data
+    std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
+    log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound << ";" << verified << endl;
+    log.close();
+  }
 }
 
 bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)

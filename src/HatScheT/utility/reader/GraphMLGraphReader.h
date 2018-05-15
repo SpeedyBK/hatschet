@@ -102,6 +102,10 @@ private:
    */
   bool resourceTagFound;
   /*!
+   * \brief deptypeTagFound
+   */
+  bool deptypeTagFound;
+  /*!
    * \brief currVertexId
    */
   int currVertexId;
@@ -110,6 +114,7 @@ private:
   int edgeDelay;
   int edgeDistance;
   string currVertexResName;
+  string deptype;
   };
 }
 

@@ -134,5 +134,12 @@ public:
   * \return
   */
  static bool allInputsAreRegisters(Graph* g, Vertex *v);
+ /*!
+  * \brief evaluateSchedulers experiment interface for hatschet paper
+  * \param g
+  * \param resourceModel
+  * \param solverWishlist
+  */
+ static void evaluateSchedulers(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }

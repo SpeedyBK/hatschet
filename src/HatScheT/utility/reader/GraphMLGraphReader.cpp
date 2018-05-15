@@ -24,12 +24,14 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
   this->dataTagFound = false;
   this->resourceTagFound = false;
   this->edgeDistanceTagFound = false;
+  this->deptypeTagFound = false;
 
   this->currVertexId = -1;
   this->dstId = -1;
   this->srcId = -1;
   this->edgeDelay = 0;
   this->edgeDistance = 0;
+  this->deptype = "";
 }
 
 GraphMLGraphReader::~GraphMLGraphReader()
@@ -58,6 +60,9 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
 
     auto &edge = this->g->createEdge(source, target, this->edgeDistance);
     edge.setDelay(this->edgeDelay); // for now, expect it to be present
+    if(this->deptype=="Precedence"){
+      edge.setDependencyType(Edge::DependencyType::Precedence);
+    }
 
     this->edgeTagFound = false;
   }
@@ -70,6 +75,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
     if(this->resourceTagFound == true) this->resourceTagFound = false;
     if(this->edgeDelayTagFound == true) this->edgeDelayTagFound = false;
     if(this->edgeDistanceTagFound == true) this->edgeDistanceTagFound = false;
+    if(this->deptypeTagFound == true) this->deptypeTagFound = false;
   }
 }
 
@@ -97,13 +103,17 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
 
     if(this->edgeTagFound == true)
     {
-      if(this->edgeDelayTagFound)
+      if(this->edgeDelayTagFound == true)
       {
          this->edgeDelay = atoi(XMLString::transcode(chars));
       }
-      if(this->edgeDistanceTagFound)
+      if(this->edgeDistanceTagFound == true)
       {
         this->edgeDistance = atoi(XMLString::transcode(chars));
+      }
+      if(this->deptypeTagFound == true)
+      {
+        this->deptype = XMLString::transcode(chars);
       }
     }
   }
@@ -162,6 +172,10 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
       if(key == "distance" /*|| key == "backward"*/ /*??!! das geht so nicht (patrick)*/)
       {
         this->edgeDistanceTagFound = true;
+      }
+      if(key == "deptype")
+      {
+        this->deptypeTagFound = true;
       }
     }
   }

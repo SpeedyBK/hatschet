@@ -558,17 +558,17 @@ void HatScheT::ModuloSDCScheduler::schedule()
 {
   this->timeoutCounter = 0;
   this->totalTime = 0;
-  //this->II = this->minII;
   this->variables.clear();
   createVariables(variables,g);
 
-  for(unsigned int ii=1/*minII*/;ii<=maxII;++ii)
+  for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {
     baseConstraints.clear();
     createBaseConstraints(ii);
     if(sched(ii,6))
     {
       std::cout << "FOUND for II=" << ii << std::endl;
+      this->II = ii;
       break; // found
     }
   }

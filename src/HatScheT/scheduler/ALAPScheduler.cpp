@@ -62,7 +62,7 @@ void ALAPScheduler::schedule()
       }
 
       //set start time
-      int time = std::min(this->startTimes[v] - r->getLatency(), this->startTimes[procV]);
+      int time = std::min(this->startTimes[v] - r->getLatency() - e->getDelay(), this->startTimes[procV]);
       const Resource* rSub = this->resourceModel.getResource(procV);
 
       while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,v,time)  == false) {

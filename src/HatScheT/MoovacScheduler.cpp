@@ -79,6 +79,8 @@ void MoovacScheduler::schedule()
   this->totalTime = 0;
   this->II = this->minII;
 
+  cout << "minII" << this->minII << endl;
+  cout << "maxII" << this->maxII << endl;
   while(this->II <= this->maxII)
   {
     this->resetContainer();
@@ -90,6 +92,10 @@ void MoovacScheduler::schedule()
     ScaLP::status stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
+    if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
+    if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
+    if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
 
     if(this->scheduleFound == false){
       (this->II)++;

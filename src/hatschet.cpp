@@ -13,6 +13,7 @@
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/Verifier.h"
+#include "HatScheT/utility/Utility.h"
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -188,6 +189,14 @@ int main(int argc, char *args[])
         }
       }
     }
+    else if(getCmdParameter(args[i],"--evalPaper=",value))
+        {
+          if(rm.isEmpty() == false && g.isEmpty() == false)
+          {
+            string str = std::string(value);
+            HatScheT::Utility::evaluateSchedulers(g,rm, {"CPLEX"}, str);
+          }
+        }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {

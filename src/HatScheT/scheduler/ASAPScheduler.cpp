@@ -86,7 +86,8 @@ void ASAPScheduler::schedule()
       }
 
       //set start time
-      int time = std::max(this->startTimes[v] + r->getLatency(), this->startTimes[subV]);
+      //there might be a delay that is not a distance
+      int time = std::max(this->startTimes[v] + r->getLatency() + e->getDelay(), this->startTimes[subV]);
       const Resource* rSub = this->resourceModel.getResource(subV);
 
       while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,v,time) == false) {
