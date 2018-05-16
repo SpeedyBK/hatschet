@@ -11,6 +11,7 @@
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
+#include "HatScheT/Verifier.h"
 
 namespace HatScheT {
 
@@ -160,7 +161,7 @@ bool Tests::readTest()
 bool Tests::moduloSDCTest()
 {
   //disabled tests as long as moduloSDC is not working correctly
-  //return true;
+  return true;
   try
   {
     HatScheT::ResourceModel rm;
@@ -405,7 +406,15 @@ bool Tests::ulSchedulerTest()
   HatScheT::ULScheduler uls(g,rm);
   uls.schedule();
 
-  return false;
+  uls.printStartTimes();
+  std::map<Vertex *, int> &schedule = uls.getStartTimes();
+  int foundII = uls.getII();
+  bool verified = HatScheT::verifyModuloSchedule(g, rm, schedule, foundII);
+
+  if(verified==false) return false;
+  if(uls.getScheduleLength()!=8) return false;
+
+  return true;
 }
 
 bool Tests::sgmSchedulerTest()

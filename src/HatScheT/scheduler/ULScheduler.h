@@ -70,6 +70,12 @@ private:
    * \return
    */
   bool inputs_not_in(Vertex* v, list<Vertex*> vList);
+  /*!
+   * \brief vertexRdyForScheduling
+   * \param v
+   * \return
+   */
+  bool vertexRdyForScheduling(Vertex* v, int timeSlot);
 
 };
 }

@@ -12,7 +12,7 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : g(g), res
 int SchedulerBase::getScheduleLength()
 {
   int maxTime=-1;
-  for(std::pair<Vertex*,int> vtPair : startTimes)
+  for(std::pair<Vertex*,int> vtPair : this->startTimes)
   {
     Vertex* v = vtPair.first;
 
@@ -23,7 +23,7 @@ int SchedulerBase::getScheduleLength()
 
 std::map<Vertex*,int>&  SchedulerBase::getStartTimes()
 {
-  if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->II)==false){
+  if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->getII())==false){
     cout << "SchedulerBase.getStartTimes: Error Invalid schedule detected by SchedulerClass" << endl;
     throw new Exception("SchedulerBase::getStartTimes: Error Invalid schedule detected by SchedulerClass");
   }

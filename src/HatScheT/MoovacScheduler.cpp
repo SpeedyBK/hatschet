@@ -92,11 +92,16 @@ void MoovacScheduler::schedule()
     cout << "Try solving for II " << this->II << endl;
     ScaLP::status stat = this->solver->solve();
 
-    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
     if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
     if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
     if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
     if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
+    if(stat == ScaLP::status::INVALID) cout << "INVALID at II " << this->II << endl;
+    if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
+    if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
+    if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
+    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
 
     if(this->scheduleFound == false){
       (this->II)++;

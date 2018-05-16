@@ -1,4 +1,5 @@
 #include <HatScheT/scheduler/ULScheduler.h>
+#include <HatScheT/utility/Utility.h>
 #include <stack>
 #include <map>
 
@@ -22,13 +23,26 @@ bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
   return true;
 }
 
+bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
+{
+  set<Vertex*> inputs = this->g.getProceedingVertices(v);
+
+  for(auto it:inputs){
+    if(this->startTimes[it]==-1) return false;
+    if(this->startTimes[it]+this->resourceModel.getVertexLatency(it)>timeSlot) return false;
+  }
+  return true;
+}
+
 void ULScheduler::schedule()
 {
+  bool sched_operation;
+  int c=0; //the number of clock cycles
   ASAPScheduler s= ASAPScheduler(this->g,this->resourceModel);
   s.schedule();
   ALAPScheduler l = ALAPScheduler(this->g,this->resourceModel);
   l.schedule();
-
+  cout << "asap and alap scheduled" << endl;
   auto asap = s.getStartTimes();
   auto alap = l.getStartTimes();
   std::map<Vertex*,int> *sort_criterion=nullptr;
@@ -46,7 +60,9 @@ void ULScheduler::schedule()
 
   //init the vertices
   for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
-    nodes.push_front(*it);
+    Vertex* v = *it;
+    this->startTimes.emplace(v,-1);
+    nodes.push_front(v);
   }
 
   while(!nodes.empty()){ // nodes left?
@@ -67,7 +83,33 @@ void ULScheduler::schedule()
         ready.insert(n);
       }
     }
+    // is anything sheduled in this iteration?
+    // nothing jet.
+    sched_operation=false;
+    //schedule nodes if possible
+    for(Vertex* node:ready){
+      //check whether vertex is rdy for scheduling
+      if(this->vertexRdyForScheduling(node,c)==true){
+        //check whether hardware for node is available in this timestep
+        const Resource* r = this->resourceModel.getResource(node);
+        if(Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,node,c) == true){
+          this->startTimes[node]=c;
+          sched_operation=true;
+          scheduled.push_front(node);
+        }
+      }
+    }
+    // removes the scheduled nodes from the leftover.
+    for(Vertex *node:scheduled){
+      nodes.remove(node);
+    }
+
+    if(sched_operation==false){
+      scheduled.clear();
+      c++;
+    }
   }
+
 }
 
 std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap)
