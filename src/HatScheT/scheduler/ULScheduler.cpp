@@ -10,6 +10,18 @@ ULScheduler::ULScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase
   this->sort_by=MOBILITY;
 }
 
+bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
+{
+  set<Vertex*> inputs = this->g.getProceedingVertices(v);
+
+  for(auto it:inputs){
+    for(auto it2:vList){
+      if(it==it2) return false;
+    }
+  }
+  return true;
+}
+
 void ULScheduler::schedule()
 {
   ASAPScheduler s= ASAPScheduler(this->g,this->resourceModel);
@@ -49,6 +61,12 @@ void ULScheduler::schedule()
 
     // nodes that are ready for scheduling.
     std::set<Vertex*,sort_struct> ready(sort_obj);
+
+    for(Vertex *n:nodes){
+      if(this->inputs_not_in(n,nodes)==true){
+        ready.insert(n);
+      }
+    }
   }
 }
 

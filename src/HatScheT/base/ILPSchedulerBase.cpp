@@ -10,7 +10,7 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->timeoutCounter = 0;
   this->solverQuiet = true;
   this->optimalResult = false;
-  this->solverTimeout = 60;
+  this->solverTimeout = 300;
   this->solvingTime = 0;
   this->totalTime = 0;
   this->scheduleFound = false;

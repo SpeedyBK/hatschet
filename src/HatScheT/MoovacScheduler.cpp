@@ -79,8 +79,8 @@ void MoovacScheduler::schedule()
   this->totalTime = 0;
   this->II = this->minII;
 
-  cout << "minII" << this->minII << endl;
-  cout << "maxII" << this->maxII << endl;
+  cout << "minII " << this->minII << endl;
+  cout << "maxII " << this->maxII << endl;
   while(this->II <= this->maxII)
   {
     this->resetContainer();
@@ -89,6 +89,7 @@ void MoovacScheduler::schedule()
     this->constructProblem();
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
+    cout << "Try solving for II " << this->II << endl;
     ScaLP::status stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
@@ -185,7 +186,7 @@ void MoovacScheduler::setGeneralConstraints()
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) - e->getDelay() >= 0);
+    this->solver->addConstraint(t_vector[srcTVecIndex] - t_vector[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
   }
 }
 

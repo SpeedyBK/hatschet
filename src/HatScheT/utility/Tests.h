@@ -66,5 +66,10 @@ public:
    * \return
    */
   static bool sgmSchedulerTest();
+  /*!
+   * \brief ulSchedulerTest
+   * \return
+   */
+  static bool ulSchedulerTest();
 };
 }

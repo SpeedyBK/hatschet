@@ -47,6 +47,12 @@ public:
 
 protected:
 private:
+  /*!
+   * \brief mobility
+   * \param asap
+   * \param alap
+   * \return
+   */
   std::map<Vertex*,int> *mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap);
   /*!
    * \brief zipWith zip both maps with the given function both maps need to have the same keys.
@@ -57,6 +63,13 @@ private:
    * \return
    */
   std::map<Vertex*,int> *zipWith(std::function<int(int,int)> f, std::map<Vertex*,int> m1, std::map<Vertex*,int> m2);
+  /*!
+   * \brief inputs_not_in
+   * \param v
+   * \param vList
+   * \return
+   */
+  bool inputs_not_in(Vertex* v, list<Vertex*> vList);
 
 };
 }

@@ -10,6 +10,7 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
 
 namespace HatScheT {
 
@@ -386,6 +387,25 @@ bool Tests::occurrenceTest()
   }
 
   return true;
+}
+
+bool Tests::ulSchedulerTest()
+{
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
+
+  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
+  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  rm = readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  g = readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::ULScheduler uls(g,rm);
+  uls.schedule();
+
+  return false;
 }
 
 bool Tests::sgmSchedulerTest()
