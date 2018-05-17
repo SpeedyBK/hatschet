@@ -19,7 +19,6 @@ bool HatScheT::verifyResourceConstrainedSchedule(HatScheT::Graph &g, HatScheT::R
 bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
                                     std::map<Vertex *, int> &schedule, int II)
 {
-  cout << "Start verify modulo schedule for II " << II << endl;
   auto &S = schedule; // alias
   bool ok;
 

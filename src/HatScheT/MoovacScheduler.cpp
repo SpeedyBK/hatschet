@@ -79,8 +79,6 @@ void MoovacScheduler::schedule()
   this->totalTime = 0;
   this->II = this->minII;
 
-  cout << "minII " << this->minII << endl;
-  cout << "maxII " << this->maxII << endl;
   while(this->II <= this->maxII)
   {
     this->resetContainer();
@@ -89,7 +87,7 @@ void MoovacScheduler::schedule()
     this->constructProblem();
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
-    cout << "Try solving for II " << this->II << endl;
+
     ScaLP::status stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;

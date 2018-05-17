@@ -16,6 +16,9 @@ bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
   set<Vertex*> inputs = this->g.getPreceedingVertices(v);
 
   for(auto it:inputs){
+    //register inputs are considered to be input for the graph
+    Edge& e = this->g.getEdge(it,v);
+    if(e.getDistance()>0) continue;
     for(auto it2:vList){
       if(it==it2) return false;
     }
@@ -47,25 +50,22 @@ void ULScheduler::schedule()
   s.schedule();
   ALAPScheduler l = ALAPScheduler(this->g,this->resourceModel);
   l.schedule();
-  cout << "asap and alap scheduled" << endl;
-  auto asap = s.getStartTimes();cout << "got asap start times: " << s.getScheduleLength() << endl;
-  auto alap = l.getStartTimes();cout << "got alap start times: " << l.getScheduleLength()  << endl;
+
+  auto asap = s.getStartTimes();
+  auto alap = l.getStartTimes();
   std::map<Vertex*,int> *sort_criterion=nullptr;
-  s.printStartTimes();
-return;
 
   // create the sort_criterion for the vertices.
-  //switch(this->sort_by){
+  switch(this->sort_by){
   //other cases not implemented yet
-  //case MOBILITY:
+  case MOBILITY:
         sort_criterion = this->mobility(&asap,&alap);
-        //break;
-  //}
+        break;
+  }
 
   std::list<Vertex*> nodes;
   std::list<Vertex*> scheduled;
 
-   cout << "ULScheduler Start vertex init" << endl;
   //init the vertices
   for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
     Vertex* v = *it;
@@ -73,10 +73,13 @@ return;
     nodes.push_front(v);
   }
 
-  cout << "ULScheduler Start scheduling" << endl;
+  if(nodes.empty()==true){
+    cout << "ULScheduler.ULScheduler: Error stack not initialized! No schedule found!" << endl;
+    throw new Exception("ULScheduler.ULScheduler: Error stack not initialized! No schedule found!");
+  }
+
   while(!nodes.empty()){ // nodes left?
     // sort-object for the set to sort while inserting.
-    cout << "Scheduling in time step " << c << endl;
     struct sort_struct{
       std::map<Vertex*,int> *criterion;
       bool operator()(Vertex *a,Vertex *b){
@@ -106,7 +109,6 @@ return;
           this->startTimes[node]=c;
           sched_operation=true;
           scheduled.push_front(node);
-          cout << "scheduled " << node->getName() << " at " << c << endl;
         }
       }
     }
@@ -130,7 +132,7 @@ std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::m
 }
 
 std::map<Vertex*,int> *ULScheduler::zipWith(std::function<int(int,int)> f, std::map<Vertex*,int> m1, std::map<Vertex*,int> m2)
-{cout << "start zip with " << endl;
+{
   std::map<Vertex*,int> *r = new std::map<Vertex*,int>;
   auto i1 = m1.begin();
   auto i2 = m2.begin();
@@ -143,7 +145,7 @@ std::map<Vertex*,int> *ULScheduler::zipWith(std::function<int(int,int)> f, std::
     i1++;
     i2++;
   }
-cout << "finished zipWith" << endl;
+
   return r;
 }
 
