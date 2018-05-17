@@ -23,7 +23,7 @@ int SchedulerBase::getScheduleLength()
 
 std::map<Vertex*,int>&  SchedulerBase::getStartTimes()
 {
-  if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->getII())==false){
+  if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->II)==false){
     this->printStartTimes();
     cout << "SchedulerBase.getStartTimes: Error Invalid schedule detected by SchedulerClass" << endl;
     throw new Exception("SchedulerBase::getStartTimes: Error Invalid schedule detected by SchedulerClass");

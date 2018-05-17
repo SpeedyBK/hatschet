@@ -123,6 +123,8 @@ void ULScheduler::schedule()
     }
   }
 
+  //set II
+  this->II = this->getScheduleLength()+1;
 }
 
 std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap)

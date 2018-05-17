@@ -31,7 +31,7 @@ namespace HatScheT
     public:
     ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
     virtual void schedule();
-
+    virtual int getII(){return this->II;}
     virtual void constructProblem();
     virtual void setObjective();
 

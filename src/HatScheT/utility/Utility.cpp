@@ -1,6 +1,7 @@
 #include "HatScheT/utility/Utility.h"
 #include "ScaLP/Solver.h"
 #include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/Verifier.h"
@@ -234,7 +235,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 {
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
-  for(int i = 0; i < 3;i++){
+  for(int i = 0; i < 4;i++){
     //select scheduler
     if(i==0){
       logFileName += "ASAP.txt";
@@ -245,6 +246,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
+      logFileName += "ModuloSDC.txt";
+      scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
+    }
+    if(i==3){
       logFileName += "Moovac.txt";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
     }

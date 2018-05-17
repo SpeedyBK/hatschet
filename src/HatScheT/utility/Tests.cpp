@@ -161,7 +161,7 @@ bool Tests::readTest()
 bool Tests::moduloSDCTest()
 {
   //disabled tests as long as moduloSDC is not working correctly
-  return true;
+  //return true;
   try
   {
     HatScheT::ResourceModel rm;
@@ -209,6 +209,9 @@ bool Tests::moduloSDCTest()
       if(p.first==&b and p.second!=0) result=false;
       if(p.first==&d and p.second!=3) result=false;
     }
+
+    if(verifyModuloSchedule(g,rm,sch,m.getII())==false) return false;
+
     return result;
   }
   catch(HatScheT::Exception* e)
