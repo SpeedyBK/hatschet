@@ -52,11 +52,6 @@ void ALAPScheduler::schedule()
       //algorithmic delays are considered as inputs to the circuit
       Edge* e = &this->g.getEdge(procV,v);
       if(e->getDistance() > 0){
-        /*this->startTimes[procV] = std::min(this->startTimes[procV], 0);
-        ouput_counts[procV]--;
-        if(ouput_counts[procV]==0){
-          stack.push(procV);
-        }*/
         continue;
       }
 

@@ -48,10 +48,10 @@ void ULScheduler::schedule()
   ALAPScheduler l = ALAPScheduler(this->g,this->resourceModel);
   l.schedule();
   cout << "asap and alap scheduled" << endl;
-  auto asap = s.getStartTimes();cout << "got asap start times" << endl;
-  auto alap = l.getStartTimes();cout << "got alap start times" << endl;
+  auto asap = s.getStartTimes();cout << "got asap start times: " << s.getScheduleLength() << endl;
+  auto alap = l.getStartTimes();cout << "got alap start times: " << l.getScheduleLength()  << endl;
   std::map<Vertex*,int> *sort_criterion=nullptr;
-  l.printStartTimes();
+  s.printStartTimes();
 return;
 
   // create the sort_criterion for the vertices.

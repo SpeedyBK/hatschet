@@ -78,10 +78,10 @@ void ASAPScheduler::schedule()
       //algorithmic delays are considered as inputs to the circuit
       Edge* e = &this->g.getEdge(v,subV);
       if(e->getDistance() > 0){
-        this->startTimes[subV] = std::max(this->startTimes[subV], 0);
+        /*this->startTimes[subV] = std::max(this->startTimes[subV], 0);
         input_counts[subV]--;
         if(input_counts[subV]==0){
-        }
+        }*/
         continue;
       }
 
@@ -90,8 +90,8 @@ void ASAPScheduler::schedule()
       int time = std::max(this->startTimes[v] + r->getLatency() + e->getDelay(), this->startTimes[subV]);
       const Resource* rSub = this->resourceModel.getResource(subV);
 
-      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,v,time) == false) {
-        time++;
+      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,subV,time) == false) {
+        ++time;
       }
 
       this->startTimes[subV] = time;
