@@ -47,6 +47,13 @@ public:
   */
  static int getNoOfOutputs(Graph* g, const Vertex* v);
  /*!
+  * \brief getNoOfOutputsWithoutDistance
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfOutputsWithoutDistance(Graph* g, const Vertex* v);
+ /*!
   * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
   * minII min(ResMII,RecMII)
   * \param rm

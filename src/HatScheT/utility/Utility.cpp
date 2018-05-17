@@ -2,6 +2,7 @@
 #include "ScaLP/Solver.h"
 #include "HatScheT/MoovacScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/Verifier.h"
 #include <limits>
 #include <cmath>
@@ -46,6 +47,21 @@ int Utility::getNoOfInputs(Graph *g, const Vertex *v)
   }
 
   return no;
+}
+
+int Utility::getNoOfOutputsWithoutDistance(Graph *g, const Vertex *v)
+{
+  int outputs = 0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
+  {
+    Edge* e = *it;
+    Vertex* vSrc = &e->getVertexSrc();
+
+    if(vSrc==v && e->getDistance()==0) outputs++;
+  }
+
+  return outputs;
 }
 
 int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
@@ -216,14 +232,19 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
 
 void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
 {
+  string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
-  for(int i = 0; i <2;i++){
+  for(int i = 0; i < 3;i++){
     //select scheduler
     if(i==0){
       logFileName += "ASAP.txt";
       scheduler = new HatScheT::ASAPScheduler(g,resourceModel);
     }
     if(i==1){
+      logFileName += "ULScheduler.txt";
+      scheduler = new HatScheT::ULScheduler(g, resourceModel);
+    }
+    if(i==2){
       logFileName += "Moovac.txt";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
     }
@@ -251,6 +272,8 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
     log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound << ";" << verified << endl;
     log.close();
+    //restore logfilename
+    logFileName = logNameInsert;
   }
 }
 

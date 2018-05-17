@@ -58,7 +58,7 @@ bool Graph::isEmpty()
   return false;
 }
 
-set<Vertex *> Graph::getProceedingVertices(const Vertex *v) const
+set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
 {
   set<Vertex*> vset;
 
