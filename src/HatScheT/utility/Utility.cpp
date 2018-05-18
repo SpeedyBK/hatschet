@@ -20,6 +20,17 @@ bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
   return true;
 }
 
+int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
+{
+  int count = 0;
+  for(auto it=g->verticesBegin(); it!= g->verticesBegin(); ++it){
+      Vertex* v = *it;
+      const Resource* r = rm->getResource(v);
+      if(r->getLimit()>0) count++;
+  }
+  return count;
+}
+
 int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
 {
   int no=0;

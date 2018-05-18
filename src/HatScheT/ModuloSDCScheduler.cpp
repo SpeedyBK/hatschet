@@ -345,7 +345,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
   setObjective();
   std::unique_ptr<std::map<Vertex*,int>> asap = solveLP(*(this->solver),this->g,this->variables,this->constraints,this->baseConstraints);
-cout << "asap solved" << endl;
+
   if(not asap)
   {
     std::cerr << "Can't find ASAP-Schedule (current II is too small (?))" << std::endl;
@@ -355,15 +355,8 @@ cout << "asap solved" << endl;
 
   std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
   for(auto&p:*asap)
-  { prevSched.insert(p);
-    //if(p.first->getName()=="b") priority.emplace(p.first,3);
-    //if(p.first->getName()=="a") priority.emplace(p.first,2);
-    //if(p.first->getName()=="d") priority.emplace(p.first,1);
-    //if(p.first->getName()=="c") priority.emplace(p.first,0);
-  }
-  cout << "Priortiy" << endl;
-  for(auto it:priority){
-    cout << it.first->getName() <<  " - " << it.second << endl;
+  {
+    prevSched.insert(p);
   }
 
   Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority[a]<priority[b];});
@@ -441,16 +434,16 @@ cout << "asap solved" << endl;
 
         //this->setObjective();
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);/* prevSched= ?*/
-  cout << "solved with backtrack" << endl;
+
         if(a!=nullptr) prevSched = std::move(*(a.release()));
-        else if (a==nullptr){ cout << "ERROR NULLTPR RETURNED FROM BACKTRACKING" << endl;
+        else if (a==nullptr){
           return false;
         }
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
-    printMRT(mrt);
+
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
 
@@ -472,7 +465,6 @@ cout << "asap solved" << endl;
   }
   else
   {
-    //startTimes=prevSched;
     std::cout << "No success" << std::endl;
     return false;
   }
@@ -485,7 +477,6 @@ static void removeAllConstraintsOf(std::vector<ScaLP::Constraint>& cons, ScaLP::
     return c.term.sum.find(v)!=c.term.sum.end();
   };
   cons.erase(std::remove_if(cons.begin(),cons.end(),fun),cons.end());
-
 }
 
 void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vertex*,int>& prevSched, HatScheT::Vertex* I, int asapTime, int time, int II)
@@ -606,15 +597,12 @@ void HatScheT::ModuloSDCScheduler::schedule()
     createBaseConstraints(ii);
     this->II = ii;
 
-    if(sched(ii,this->maxII*10))
+    if(sched(ii,6*(Utility::getNoOfResConstrVertices(&this->resourceModel,&this->g))))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     
       break; // found
     }
   }
-
-
-
 }
 
 void HatScheT::ModuloSDCScheduler::setObjective()

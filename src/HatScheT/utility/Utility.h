@@ -19,6 +19,13 @@ class Utility
 {
 public:
   /*!
+   * \brief getNoOfResConstrVertices
+   * \param rm
+   * \param g
+   * \return
+   */
+  static int getNoOfResConstrVertices(ResourceModel* rm, Graph *g);
+  /*!
   * \brief examplUtilityFunction
   * \param rm
   * \param g
