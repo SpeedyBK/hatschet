@@ -569,6 +569,9 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     std::cout << "Dependency conflict." << std::endl;
     for(auto& p:prevSched)
     {
+      const Resource* rp = this->resourceModel.getResource(p.first);
+      //continue for unlimited resource
+      if(rp->getLimit()<=0) continue;
       removeAllConstraintsOf(constraints,getVariable(variables,p.first));
       mrt.remove(p.first);
       schedQueue.emplace(p.first);
