@@ -235,7 +235,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 {
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
-  for(int i = 0; i < 4;i++){
+  for(int i = 0; i < 3;i++){
     //select scheduler
     if(i==0){
       logFileName += "ASAP.txt";

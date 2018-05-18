@@ -69,7 +69,7 @@ bool HatScheT::MRT::resourceConflict(HatScheT::Vertex* v,int time)
         {
           std::cout << "AAAAAA:" << std::to_string(i) << "  " << time << "   " << r->getLatency() << std::endl;
           //if(i<time-r->getLatency())
-          if(i==time && count >= r->getLimit())
+          if(i==time && count<=r->getLimit())
           {
             std::cout << "EEE: " << (*o)->getName() << " conflicts with " << v->getName() << std::endl;
             b=false;
@@ -116,6 +116,9 @@ bool HatScheT::MRT::update(HatScheT::Vertex* i, int time)
 bool HatScheT::MRT::remove(HatScheT::Vertex* i)
 {
   auto r = rm->getResource(i);
+  //dont try to remove vertices from a unlimited resource as it will corrupt the MRT
+  if(r->getLimit()<=0) return true;
+
   for(auto& v:data[r])
   {
     for(auto&a:v)
@@ -171,10 +174,10 @@ void HatScheT::ModuloSDCScheduler::constructProblem()
   if(this->threads>0) this->solver->threads = this->threads;
   this->solver->quiet=this->solverQuiet;
   this->solver->timeout=this->solverTimeout;
-  /*this->baseConstraints.clear();
+  this->baseConstraints.clear();
   createBaseConstraints(this->II);
   for(auto c:this->baseConstraints) *this->solver << c;
-  cout << "Used base constraints for II " << this->II << endl;*/
+  cout << "Used base constraints for II " << this->II << endl;
 
   for(auto c:this->baseConstraints) cout << c << endl;
   cout << "Used constraints for II " << this->II << endl;
@@ -242,9 +245,9 @@ void HatScheT::ModuloSDCScheduler::createBaseConstraints(int II)
     ScaLP::Variable va = getVariable(variables,a);
     ScaLP::Variable vb = getVariable(variables,b);
     auto vaLatency = this->resourceModel.getResource(a)->getLatency();
-    std::cout << "II: " << II << std::endl;
-    std::cout << "distance: " <<  (*it)->getDistance() << std::endl;
-    cout << a->getName() << " to " << b->getName() << " Di = " << to_string(vaLatency+e.getDelay()) << endl;
+    //std::cout << "II: " << II << std::endl;
+    //std::cout << "distance: " <<  (*it)->getDistance() << std::endl;
+    //cout << a->getName() << " to " << b->getName() << " Di = " << to_string(vaLatency+e.getDelay()) << endl;
     this->baseConstraints.emplace_back(va + vaLatency + e.getDelay() - vb <= II * (*it)->getDistance() );
   }
   
@@ -267,6 +270,7 @@ static std::unique_ptr<std::map<HatScheT::Vertex*,int>> solveLP(ScaLP::Solver& s
       auto it2 = result.values.find(getVariable(variables,*it));
       if(it2!=result.values.end())
       {
+        cout << (*it)->getName() << " : " << it2->second << endl;
         m->emplace(*it,static_cast<int>(it2->second));
       }
     }
@@ -341,6 +345,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
   setObjective();
   std::unique_ptr<std::map<Vertex*,int>> asap = solveLP(*(this->solver),this->g,this->variables,this->constraints,this->baseConstraints);
+cout << "asap solved" << endl;
   if(not asap)
   {
     std::cerr << "Can't find ASAP-Schedule (current II is too small (?))" << std::endl;
@@ -348,14 +353,19 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
   std::map<Vertex*,int> prevSched;
 
-  std::map<Vertex*,unsigned int> priority; //= createPerturbation(this->g);
+  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
   for(auto&p:*asap)
-  {
-    if(p.first->getName()=="b") priority.emplace(p.first,3);
-    if(p.first->getName()=="a") priority.emplace(p.first,2);
-    if(p.first->getName()=="d") priority.emplace(p.first,1);
-    if(p.first->getName()=="c") priority.emplace(p.first,0);
+  { prevSched.insert(p);
+    //if(p.first->getName()=="b") priority.emplace(p.first,3);
+    //if(p.first->getName()=="a") priority.emplace(p.first,2);
+    //if(p.first->getName()=="d") priority.emplace(p.first,1);
+    //if(p.first->getName()=="c") priority.emplace(p.first,0);
   }
+  cout << "Priortiy" << endl;
+  for(auto it:priority){
+    cout << it.first->getName() <<  " - " << it.second << endl;
+  }
+
   Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority[a]<priority[b];});
 
   for(std::list<Resource*>::iterator it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it)
@@ -373,6 +383,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     schedQueue.pop();
 
     std::cout << "Current Instruction: " << i->getName() << std::endl;
+    cout << "budget b : " << b << endl;
 
     int asapI=0;
     {
@@ -389,9 +400,9 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
       std::cout << "use asap-time: " << time << std::endl;
     }
     else
-    {
-      std::cout << "use scheduled-time: " << time << std::endl;
+    {     
       time = it->second;
+      std::cout << "use scheduled-time: " << time << std::endl;
     }
     ScaLP::Variable t_i = getVariable(variables,i);
 
@@ -412,6 +423,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
       this->setObjective();
 
       auto res = solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
+      cout << "solved without backtrack" << endl;
       if(res!=nullptr)
       {
         std::cout << "Put back " << i->getName() << std::endl;
@@ -429,6 +441,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
         //this->setObjective();
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);/* prevSched= ?*/
+  cout << "solved with backtrack" << endl;
         if(a!=nullptr) prevSched = std::move(*(a.release()));
         else if (a==nullptr){ cout << "ERROR NULLTPR RETURNED FROM BACKTRACKING" << endl;
           return false;
@@ -437,6 +450,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
+    printMRT(mrt);
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
 
@@ -458,6 +472,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
   else
   {
+    //startTimes=prevSched;
     std::cout << "No success" << std::endl;
     return false;
   }
@@ -507,7 +522,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     {
       std::cout << "Check slot " << std::to_string(i) << std::endl;
       // get a instruction that overlaps with I
-      Vertex* evictInst = mrt.getInstructionAt((evictTime%II)-1,i);
+      Vertex* evictInst = mrt.getInstructionAt((evictTime%II)/*-1*/,i);
       if(evictInst!=nullptr)
       {
         evictInsts.insert(evictInst);
@@ -520,6 +535,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
         std::cout << "Resource conflict in backtracking for: " << evictInst->getName() << std::endl;
         removeAllConstraintsOf(constraints,getVariable(variables,evictInst));
         mrt.remove(evictInst);
+        schedQueue.emplace(evictInst);
       }
     }
     else
@@ -555,7 +571,8 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     {
       removeAllConstraintsOf(constraints,getVariable(variables,p.first));
       mrt.remove(p.first);
-      schedQueue.push(p.first);
+      schedQueue.emplace(p.first);
+      cout << "put back " << p.first->getName() << endl;
     }
   }
   else
@@ -566,6 +583,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
   std::cout << "add constraint: " << I->getName() << " == " << std::to_string(evictTime)  << std::endl;
   constraints.push_back(getVariable(variables,I)==evictTime);
   mrt.update(I,evictTime);
+
   prevSched[I]=evictTime;
 
   std::cout << "end backtracking" << std::endl;
@@ -585,7 +603,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     createBaseConstraints(ii);
     this->II = ii;
 
-    if(sched(ii,6))
+    if(sched(ii,this->maxII*10))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     
       break; // found
