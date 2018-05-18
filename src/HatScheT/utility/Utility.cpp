@@ -23,11 +23,12 @@ bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
 int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
 {
   int count = 0;
-  for(auto it=g->verticesBegin(); it!= g->verticesBegin(); ++it){
+  for(auto it=g->verticesBegin(); it!= g->verticesEnd(); ++it){
       Vertex* v = *it;
       const Resource* r = rm->getResource(v);
       if(r->getLimit()>0) count++;
   }
+  cout << "ResConstrVertices " << count << endl;
   return count;
 }
 
