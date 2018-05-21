@@ -28,7 +28,6 @@ int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
       const Resource* r = rm->getResource(v);
       if(r->getLimit()>0) count++;
   }
-  cout << "ResConstrVertices " << count << endl;
   return count;
 }
 

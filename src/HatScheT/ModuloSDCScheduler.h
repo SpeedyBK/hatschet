@@ -19,7 +19,8 @@ namespace HatScheT
     bool resourceConflict(HatScheT::Vertex* i,int time);
     bool update(HatScheT::Vertex* i, int time);
     bool remove(HatScheT::Vertex* i);
-    HatScheT::Vertex* getInstructionAt(unsigned int i, unsigned int t=0);
+    HatScheT::Vertex* getInstructionAt(unsigned int i, const Resource *r);
+    bool vertexIsIn(Vertex* v);
 
     std::map<const HatScheT::Resource*,std::vector<std::vector<HatScheT::Vertex*>>> data;
     HatScheT::ResourceModel* rm;

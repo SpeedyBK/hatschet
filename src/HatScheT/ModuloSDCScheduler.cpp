@@ -56,7 +56,11 @@ bool HatScheT::MRT::resourceConflict(HatScheT::Vertex* v,int time)
   if(r->getLimit()>=0)
   {
     int count=0;
-    for(auto&p:data[r][time]) if(p!=nullptr) ++count;
+    for(auto&p:data[r][time]){
+      if(p!=nullptr) ++count;
+      //cant add the vertix to the same slot twice
+      if(p==v) return true;
+    }
     std::cout << "Resource count at time " << time << ": " << count << std::endl;
     bool b = std::any_of(data[r][time].begin(), data[r][time].end(), [](HatScheT::Vertex* a){return a==nullptr;});
     for(unsigned int i=0;i<=time;++i)
@@ -67,11 +71,11 @@ bool HatScheT::MRT::resourceConflict(HatScheT::Vertex* v,int time)
         auto o = vs.find(p);
         if(o!=vs.end())
         {
-          std::cout << "AAAAAA:" << std::to_string(i) << "  " << time << "   " << r->getLatency() << std::endl;
+          //std::cout << "AAAAAA:" << std::to_string(i) << "  " << time << "   " << r->getLatency() << std::endl;
           //if(i<time-r->getLatency())
-          if(i==time && count<=r->getLimit())
+          if(i==time && count>=r->getLimit())
           {
-            std::cout << "EEE: " << (*o)->getName() << " conflicts with " << v->getName() << std::endl;
+            std::cout << "EEE: " << (*o)->getName() << " conflicts with " << v->getName() << " at " << time%II <<  std::endl;
             b=false;
             break;
           }
@@ -97,9 +101,22 @@ bool HatScheT::MRT::update(HatScheT::Vertex* i, int time)
 {
   time%=II;
   std::cout << "Update MRT: Add " << i->getName() << " to slot " << time << std::endl;
+  //dont try to manipulate vertices from a unlimited resource as it will corrupt the MRT
   auto r = rm->getResource(i);
+  if(r->getLimit()<=0) return true;
   auto& v = data.at(r).at(time);
   auto it = std::find(v.begin(),v.end(),nullptr);
+
+  for(auto it:v){
+    //for(auto it2:it->second){
+    if(i==it){
+      std::cout << "tried to insert a vertex twice into mrt (this should never happen!): " << i->getName() << std::endl;
+      //throw new Exception("tried to insert a vertex twice into mrt (this should never happen!)");
+      return false;
+    }
+ // }
+  }
+
   if(it!=v.end())
   {
     *it=i;
@@ -141,18 +158,34 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   if (minII > maxII) maxII = minII;
 }
 
-HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, unsigned int t)
+bool HatScheT::MRT::vertexIsIn(Vertex *v)
+{
+  for(auto it:data)
+  {
+    for(auto it2:it.second)
+    {
+      for(auto it3:it2)
+      {
+        if(it3==v) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource* r)
 {
   std::cout << "getInstruction at " << std::to_string(i) << ": ";// << std::endl;
   for(auto&p:data)
   {
-    if(p.second.size()>=i and p.second[i].size()>=0)
+    if(p.second.size()>=i && p.second[i].size()>=0 && p.first==r)
     {
       for(auto&o:p.second[i])
       {
-        if(o!=nullptr and this->rm->getResource(o)->getLatency()>=t)
+        if(o!=nullptr)
         {
-          std::cout << o->getName() << std::endl;
+          std::cout << "returning instruction " << o->getName() << std::endl;
           return o;
         }
       }
@@ -176,12 +209,8 @@ void HatScheT::ModuloSDCScheduler::constructProblem()
   this->solver->timeout=this->solverTimeout;
   this->baseConstraints.clear();
   createBaseConstraints(this->II);
-  for(auto c:this->baseConstraints) *this->solver << c;
-  cout << "Used base constraints for II " << this->II << endl;
 
-  for(auto c:this->baseConstraints) cout << c << endl;
-  cout << "Used constraints for II " << this->II << endl;
-  for(auto c:this->constraints) cout << c << endl;
+  for(auto c:this->baseConstraints) *this->solver << c;
   for(auto c:this->constraints) *this->solver << c;
 
   setObjective();
@@ -220,13 +249,30 @@ bool HatScheT::ModuloSDCScheduler::dependencyConflict(std::map<Vertex*,int>& pre
     {
       Vertex* s = &(*it)->getVertexSrc();
       auto r = this->resourceModel.getResource(s);
-      if(prevSched[s]+r->getLatency()+e->getDelay()>=time)
+      if(prevSched[s]+r->getLatency()+e->getDelay()>time+this->II*e->getDistance())
       {
         std::cout << "Dependency conflict between " << s->getName() << " and " << d->getName() << std::endl;
         return true;
       }
     }
   }
+
+  for(auto it=this->g.edgesBegin(); it!=this->g.edgesEnd(); ++it)
+  {
+    Edge* e = *it;
+    Vertex* d = &e->getVertexSrc();
+    if(I == d)
+    {
+      Vertex* s = &(*it)->getVertexDst();
+      auto r = this->resourceModel.getResource(d);
+      if(time+r->getLatency()+e->getDelay()>prevSched[s]+this->II*e->getDistance())
+      {
+        std::cout << "Dependency conflict between " << s->getName() << " and " << d->getName() << std::endl;
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -270,7 +316,7 @@ static std::unique_ptr<std::map<HatScheT::Vertex*,int>> solveLP(ScaLP::Solver& s
       auto it2 = result.values.find(getVariable(variables,*it));
       if(it2!=result.values.end())
       {
-        cout << (*it)->getName() << " : " << it2->second << endl;
+       // cout << (*it)->getName() << " : " << it2->second << endl;
         m->emplace(*it,static_cast<int>(it2->second));
       }
     }
@@ -359,6 +405,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     prevSched.insert(p);
   }
 
+
   Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority[a]<priority[b];});
 
   for(std::list<Resource*>::iterator it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it)
@@ -371,9 +418,13 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   int b = budget;
   for(; not schedQueue.empty() and b>=0; --b)
   {
-    std::cout << "#### Begin of Iteration " << (budget-b+1) << std::endl;
+    std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
     auto i = schedQueue.top();
     schedQueue.pop();
+
+    //DIRTY HACK
+    //there is a bug that will put vertices that are already in the mrt back to schedule queue
+    if(mrt.vertexIsIn(i)==true) continue;
 
     std::cout << "Current Instruction: " << i->getName() << std::endl;
     cout << "budget b : " << b << endl;
@@ -400,11 +451,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     ScaLP::Variable t_i = getVariable(variables,i);
 
     printMRT(mrt);
-    if(not mrt.resourceConflict(i,time))
-    {
+    if(mrt.resourceConflict(i,time)==false && mrt.update(i,time)==true)
+    {    
       std::cout << "Add " << t_i << " == " << time << std::endl;
       constraints.push_back(t_i == time);
-      mrt.update(i,time);
       prevSched[i]=time;
     }
     else
@@ -412,18 +462,15 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
       std::cout << "Add " << t_i << " >= " << (time+1) << std::endl;
       constraints.push_back(t_i >= time+1);
       this->constructProblem();
-
       this->setObjective();
 
       auto res = solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
-      cout << "solved without backtrack" << endl;
+
       if(res!=nullptr)
       {
         std::cout << "Put back " << i->getName() << std::endl;
         schedQueue.push(i);
-        //prevSched[i]=time+1;
         prevSched = std::move(*(res.release()));
-
       }
       else
       {
@@ -436,9 +483,6 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);/* prevSched= ?*/
 
         if(a!=nullptr) prevSched = std::move(*(a.release()));
-        else if (a==nullptr){
-          return false;
-        }
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
@@ -448,7 +492,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
 
   std::cout << "Result for II " << this->II << std::endl;
-  if(verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==false) cout << "ERROR wrong prevSched stored as solution" << endl;
+
   for(auto&p:prevSched)
   {
     std::cout << p.first->getName() << " = " << p.second << std::endl;
@@ -461,6 +505,8 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   {
     startTimes=prevSched;
     std::cout << "success" << std::endl;
+    if(verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==false)
+      cout << "ERROR (not detected) wrong prevSched stored as solution" << endl;
     return true;
   }
   else
@@ -507,13 +553,14 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
   std::cout << "BACKTRACKING" << std::endl;
   if(mrt.resourceConflict(I,evictTime))
   {
+    cout << "resource conflict detected of " << I->getName() << " at " << evictTime << endl;
     // all Instructions that overlap with I
     std::set<Vertex*> evictInsts;
-    for(unsigned int i=0;evictTime%II>=i;++i)
+    //for(unsigned int i=0;evictTime%II>=i;++i)
     {
-      std::cout << "Check slot " << std::to_string(i) << std::endl;
+      //std::cout << "Check slot " << std::to_string(i) << std::endl;
       // get a instruction that overlaps with I
-      Vertex* evictInst = mrt.getInstructionAt((evictTime%II)/*-1*/,i);
+      Vertex* evictInst = mrt.getInstructionAt((evictTime%II)/*-1*/,this->resourceModel.getResource(I));
       if(evictInst!=nullptr)
       {
         evictInsts.insert(evictInst);
@@ -524,9 +571,11 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
       for(Vertex*evictInst:evictInsts)
       {
         std::cout << "Resource conflict in backtracking for: " << evictInst->getName() << std::endl;
+        cout << "Removing all constraints of " << evictInst->getName() << endl;
         removeAllConstraintsOf(constraints,getVariable(variables,evictInst));
         mrt.remove(evictInst);
         schedQueue.emplace(evictInst);
+        cout << evictInst->getName() << " put back to sched queue" << endl;
       }
     }
     else
@@ -574,11 +623,17 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     std::cout << "No dependency conflict" << std::endl;
   }
 
-  std::cout << "add constraint: " << I->getName() << " == " << std::to_string(evictTime)  << std::endl;
-  constraints.push_back(getVariable(variables,I)==evictTime);
-  mrt.update(I,evictTime);
 
-  prevSched[I]=evictTime;
+  if(mrt.update(I,evictTime)==true){
+    std::cout << "add constraint: " << I->getName() << " == " << std::to_string(evictTime)  << std::endl;
+    constraints.push_back(getVariable(variables,I)==evictTime);
+    prevSched[I]=evictTime;
+  }
+
+  else{
+    schedQueue.emplace(I);
+    cout << "put back at end of backtracking: " << I->getName() << endl;
+  }
 
   std::cout << "end backtracking" << std::endl;
 }
@@ -593,11 +648,11 @@ void HatScheT::ModuloSDCScheduler::schedule()
   for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {
     this->solver->reset();
-    baseConstraints.clear();
     createBaseConstraints(ii);
     this->II = ii;
 
-    if(sched(ii,6*(Utility::getNoOfResConstrVertices(&this->resourceModel,&this->g))))
+    //if(sched(ii,6*(Utility::getNoOfResConstrVertices(&this->resourceModel,&this->g))))
+    if(sched(ii,6*this->g.getNumberOfVertices()))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     
       break; // found
