@@ -197,6 +197,14 @@ int main(int argc, char *args[])
             HatScheT::Utility::evaluateSchedulers(g,rm, {"CPLEX"}, str);
           }
         }
+    else if(getCmdParameter(args[i],"--adaptivePaper=",value))
+        {
+          if(rm.isEmpty() == false && g.isEmpty() == false)
+          {
+            string str = std::string(value);
+            HatScheT::Utility::adaptiveScheduling(g,rm, {"CPLEX"}, str);
+          }
+        }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {

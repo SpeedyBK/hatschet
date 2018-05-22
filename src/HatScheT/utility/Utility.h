@@ -155,5 +155,14 @@ public:
   * \param solverWishlist
   */
  static void evaluateSchedulers(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
+ /*!
+  * \brief adaptiveScheduling start a scheduling experiment for adaptive scheduling
+  * ToDo pass parameters instead of calculating them
+  * \param g
+  * \param resourceModel
+  * \param solverWishlist
+  * \param logFileName
+  */
+ static void adaptiveScheduling(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }
