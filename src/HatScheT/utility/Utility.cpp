@@ -12,6 +12,7 @@
 #include <fstream>
 #include <ctime>
 #include <cstddef>
+#include <iomanip>
 
 namespace HatScheT {
 
@@ -301,6 +302,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 {
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
+
   for(int i = 0; i < 5;i++){
     //reset logfilename
     logFileName = logNameInsert;
@@ -321,6 +323,8 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     if(i==3){
       logFileName += "Moovac1Min.txt";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(60);
     }
     if(i==4){
       logFileName += "Moovac5Min.txt";
@@ -343,6 +347,15 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
     }
 
+    //do normalization
+    HatScheT::ASAPScheduler* helper = new HatScheT::ASAPScheduler(g,resourceModel);
+    int minII = Utility::calcMinII(&resourceModel,&g);
+    int maxII = Utility::calcMaxII(helper);
+    delete helper;
+    int numerator = maxII - scheduler->getII();
+    int denominator = maxII - minII;
+    float normalizedII = (float)numerator/(float)denominator ;
+
     //find graph name
     string str = g.getName();
     std::size_t found = str.find_last_of("/\\");
@@ -350,7 +363,8 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 
     //log data
     std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-    log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound << ";" << verified << endl;
+    log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";"
+        << schedFound << ";" << verified << ";" << minII << ";" << maxII << ";" << setprecision(2) << fixed << normalizedII << endl;
     log.close();
   }
 }

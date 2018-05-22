@@ -10,7 +10,7 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
-  if (minII > maxII) maxII = minII;
+  if (minII >= maxII) maxII = minII+1;
   this->SLMax = 0;
 }
 

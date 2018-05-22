@@ -155,7 +155,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
-  if (minII > maxII) maxII = minII;
+  if (minII >= maxII) maxII = minII+1;
 }
 
 bool HatScheT::MRT::vertexIsIn(Vertex *v)
