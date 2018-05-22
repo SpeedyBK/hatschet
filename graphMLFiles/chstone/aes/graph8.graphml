@@ -704,8 +704,8 @@
       <data key="name">node_8301</data>
       <data key="uses_resource">special_virtual</data>
     </node>
-    <node id="8574">
-      <data key="name">node_8574</data>
+    <node id="8314">
+      <data key="name">node_8314</data>
       <data key="uses_resource">special_1_cycle</data>
     </node>
     <edge id="1023_3588" source="1023" target="3588">
@@ -1968,7 +1968,7 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="8574_3831" source="8574" target="3831">
+    <edge id="8314_3831" source="8314" target="3831">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
@@ -2123,7 +2123,7 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="3669_8574" source="3669" target="8574">
+    <edge id="3669_8314" source="3669" target="8314">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>

@@ -208,8 +208,8 @@
       <data key="name">node_3598</data>
       <data key="uses_resource">special_virtual</data>
     </node>
-    <node id="4036">
-      <data key="name">node_4036</data>
+    <node id="3633">
+      <data key="name">node_3633</data>
       <data key="uses_resource">special_1_cycle</data>
     </node>
     <edge id="1002_1061" source="1002" target="1061">
@@ -442,7 +442,7 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="4036_1065" source="4036" target="1065">
+    <edge id="3633_1065" source="3633" target="1065">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
@@ -597,7 +597,7 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="1057_4036" source="1057" target="4036">
+    <edge id="1057_3633" source="1057" target="3633">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>

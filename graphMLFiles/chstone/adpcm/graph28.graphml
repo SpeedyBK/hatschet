@@ -80,34 +80,6 @@
       <data key="name">node_4848</data>
       <data key="uses_resource">special_virtual</data>
     </node>
-    <node id="4909">
-      <data key="name">node_4909</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4911">
-      <data key="name">node_4911</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4910">
-      <data key="name">node_4910</data>
-      <data key="uses_resource">lshift_expr_FU_64_64_64</data>
-    </node>
-    <node id="4913">
-      <data key="name">node_4913</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4912">
-      <data key="name">node_4912</data>
-      <data key="uses_resource">mem_write</data>
-    </node>
-    <node id="4914">
-      <data key="name">node_4914</data>
-      <data key="uses_resource">plus_expr_FU_64_64_64</data>
-    </node>
-    <node id="4915">
-      <data key="name">node_4915</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
     <edge id="4388_4384" source="4388" target="4384">
       <data key="delay">0</data>
       <data key="distance">0</data>
@@ -134,11 +106,6 @@
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="4388_4403" source="4388" target="4403">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="4388_4915" source="4388" target="4915">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
@@ -233,7 +200,7 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="4909_4402" source="4909" target="4402">
+    <edge id="4403_4402" source="4403" target="4402">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
@@ -248,62 +215,12 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="4912_4405" source="4912" target="4405">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
     <edge id="4404_4405" source="4404" target="4405">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="4388_4848" source="4388" target="4848">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4403_4909" source="4403" target="4909">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4910_4911" source="4910" target="4911">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4403_4910" source="4403" target="4910">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4395_4913" source="4395" target="4913">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4913_4912" source="4913" target="4912">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="4911_4912" source="4911" target="4912">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4914_4912" source="4914" target="4912">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4400_4914" source="4400" target="4914">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4915_4914" source="4915" target="4914">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
