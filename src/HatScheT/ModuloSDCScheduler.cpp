@@ -415,12 +415,13 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
 
   int b = budget;
-  double elapsed_secs;
+  double elapsed_secs = 0.0;
 
   clock_t begin = clock();
   for(; not schedQueue.empty() and b>=0 and (int)elapsed_secs<=this->solverTimeout; --b)
   {
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
+    std::cout << "Elapsed time for this II is " << elapsed_secs << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
     auto i = schedQueue.top();
     schedQueue.pop();
 
@@ -491,7 +492,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     }
 
     clock_t measure = clock();
-    elapsed_secs = double(begin - measure) / CLOCKS_PER_SEC;
+    elapsed_secs = double(measure - begin) / CLOCKS_PER_SEC;
 
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
