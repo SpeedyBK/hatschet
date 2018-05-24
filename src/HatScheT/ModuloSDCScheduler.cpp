@@ -651,7 +651,6 @@ void HatScheT::ModuloSDCScheduler::schedule()
     createBaseConstraints(ii);
     this->II = ii;
 
-    //if(sched(ii,6*(Utility::getNoOfResConstrVertices(&this->resourceModel,&this->g))))
     if(sched(ii,6*this->g.getNumberOfVertices()))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     

@@ -11,20 +11,24 @@
 namespace HatScheT
 {
   using Queue = std::priority_queue<Vertex*,std::vector<Vertex*>,std::function<bool(Vertex*,Vertex*)>>;
+  /*!
+   * \brief The MRT class
+   */
   class MRT
   {
     public:
-    MRT(HatScheT::ResourceModel& r, int II);
+      MRT(HatScheT::ResourceModel& r, int II);
 
-    bool resourceConflict(HatScheT::Vertex* i,int time);
-    bool update(HatScheT::Vertex* i, int time);
-    bool remove(HatScheT::Vertex* i);
-    HatScheT::Vertex* getInstructionAt(unsigned int i, const Resource *r);
-    bool vertexIsIn(Vertex* v);
+      bool resourceConflict(HatScheT::Vertex* i,int time);
+      bool update(HatScheT::Vertex* i, int time);
+      bool remove(HatScheT::Vertex* i);
+      HatScheT::Vertex* getInstructionAt(unsigned int i, const Resource *r);
+      bool vertexIsIn(Vertex* v);
 
-    std::map<const HatScheT::Resource*,std::vector<std::vector<HatScheT::Vertex*>>> data;
-    HatScheT::ResourceModel* rm;
-    int II=0;
+      std::map<const HatScheT::Resource*,std::vector<std::vector<HatScheT::Vertex*>>> data;
+      HatScheT::ResourceModel* rm;
+
+      int II=0;
   };
 
   class ModuloSDCScheduler :public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
@@ -48,9 +52,6 @@ namespace HatScheT
     bool dependencyConflict(std::map<Vertex*,int>& prevsched, HatScheT::Vertex* I, int time);
     void createBaseConstraints(int II);
     bool solveBasicWithConstraint(ScaLP::Constraint&& c);
-
-    //unsigned int minII;
-    //unsigned int maxII;
   };
 
 }

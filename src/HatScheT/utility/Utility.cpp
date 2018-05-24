@@ -283,13 +283,10 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
 
   //find set name
   string setstr = g.getName();
-  cout << "setstr is " << setstr << endl;
   std::size_t found1 = setstr.find_last_of("/\\");
   setstr = setstr.substr(0,found1);
-  cout << "setstr is " << setstr << endl;
   std::size_t found2 = setstr.find_last_of("/\\");
   setstr = setstr.substr(found2+1);
-  cout << "setstr is " << setstr << endl;
 
   //log data
   std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
@@ -317,8 +314,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC.txt";
+      logFileName += "ModuloSDC30sec.txt";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
+      ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(30);
     }
     if(i==3){
       logFileName += "Moovac1Min.txt";
@@ -348,23 +347,27 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     }
 
     //do normalization
-    HatScheT::ASAPScheduler* helper = new HatScheT::ASAPScheduler(g,resourceModel);
     int minII = Utility::calcMinII(&resourceModel,&g);
-    int maxII = Utility::calcMaxII(helper);
-    delete helper;
-    int numerator = maxII - scheduler->getII();
-    int denominator = maxII - minII;
-    float normalizedII = (float)numerator/(float)denominator ;
+    int foundII = scheduler->getII();
+    int denominator = 1+ foundII - minII;
+    float normalizedII = (float)1/denominator;
 
     //find graph name
     string str = g.getName();
     std::size_t found = str.find_last_of("/\\");
     str = str.substr(found+1);
 
+    //find set name
+    string setstr = g.getName();
+    std::size_t found1 = setstr.find_last_of("/\\");
+    setstr = setstr.substr(0,found1);
+    std::size_t found2 = setstr.find_last_of("/\\");
+    setstr = setstr.substr(found2+1);
+
     //log data
     std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-    log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";"
-        << schedFound << ";" << verified << ";" << minII << ";" << maxII << ";" << setprecision(2) << fixed << normalizedII << endl;
+    log << setstr << ";" << str << ";" << minII << ";" << foundII << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";"
+    << setprecision(3) << fixed << normalizedII << ";" << g.getNumberOfVertices() << ";" << g.getNumberOfEdges() << endl;
     log.close();
   }
 }
