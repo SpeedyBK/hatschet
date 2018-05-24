@@ -235,8 +235,11 @@ int main(int argc, char *args[])
   std::cout << "timeout=" << timeout << std::endl;
   std::cout << "threads=" << threads << std::endl;
 
-  if(lennart==true){
-      HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(g,rm,69);
+  if(lennart==true)
+  {
+    HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
+    cout << asap->getScheduleLength() << endl;
+    HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
       gbms->schedule();
   }
 
