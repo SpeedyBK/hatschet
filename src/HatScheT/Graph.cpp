@@ -15,6 +15,8 @@ Graph::~Graph()
 {
   for(Vertex *v : vertices)
     delete v;
+  for(Edge *e : edges)
+    delete e;
 }
 
 Vertex& Graph::createVertex()
@@ -56,7 +58,7 @@ bool Graph::isEmpty()
   return false;
 }
 
-set<Vertex *> Graph::getProceedingVertices(const Vertex *v) const
+set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
 {
   set<Vertex*> vset;
 

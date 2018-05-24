@@ -19,6 +19,13 @@ class Utility
 {
 public:
   /*!
+   * \brief getNoOfResConstrVertices
+   * \param rm
+   * \param g
+   * \return
+   */
+  static int getNoOfResConstrVertices(ResourceModel* rm, Graph *g);
+  /*!
   * \brief examplUtilityFunction
   * \param rm
   * \param g
@@ -46,6 +53,13 @@ public:
   * \return
   */
  static int getNoOfOutputs(Graph* g, const Vertex* v);
+ /*!
+  * \brief getNoOfOutputsWithoutDistance
+  * \param g
+  * \param v
+  * \return
+  */
+ static int getNoOfOutputsWithoutDistance(Graph* g, const Vertex* v);
  /*!
   * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
   * minII min(ResMII,RecMII)
@@ -134,5 +148,21 @@ public:
   * \return
   */
  static bool allInputsAreRegisters(Graph* g, Vertex *v);
+ /*!
+  * \brief evaluateSchedulers experiment interface for hatschet paper
+  * \param g
+  * \param resourceModel
+  * \param solverWishlist
+  */
+ static void evaluateSchedulers(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
+ /*!
+  * \brief adaptiveScheduling start a scheduling experiment for adaptive scheduling
+  * ToDo pass parameters instead of calculating them
+  * \param g
+  * \param resourceModel
+  * \param solverWishlist
+  * \param logFileName
+  */
+ static void adaptiveScheduling(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }

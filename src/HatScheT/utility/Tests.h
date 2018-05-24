@@ -17,10 +17,15 @@ public:
    */
   static bool readTest();
   /*!
-   * \brief moovacTest test whether moovac scheduling is runninv as expected
+   * \brief moovacTest test whether moovac scheduling is running as expected
    * \return
    */
   static bool moovacTest();
+  /*!
+   * \brief moduloSDCTest test whether modulo SDC scheduling is running as expected
+   * \return
+   */
+  static bool moduloSDCTest();
   /*!
    * \brief apiTest tests API functionality
    * \return
@@ -61,5 +66,10 @@ public:
    * \return
    */
   static bool sgmSchedulerTest();
+  /*!
+   * \brief ulSchedulerTest
+   * \return
+   */
+  static bool ulSchedulerTest();
 };
 }

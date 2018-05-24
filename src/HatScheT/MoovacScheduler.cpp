@@ -10,7 +10,7 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
-  if (minII > maxII) maxII = minII;
+  if (minII >= maxII) maxII = minII+1;
   this->SLMax = 0;
 }
 
@@ -67,7 +67,7 @@ void MoovacScheduler::constructProblem()
 void MoovacScheduler::setObjective()
 {
     ScaLP::Term sum;
-    for(ScaLP::Variable &v:t_vector){
+    for(ScaLP::Variable &v:this->t_vector){
       sum = sum + v;
     }
     this->solver->setObjective(ScaLP::minimize(sum));
@@ -83,26 +83,36 @@ void MoovacScheduler::schedule()
   {
     this->resetContainer();
     this->setUpSolverSettings();
+
     this->constructProblem();
-
-    ScaLP::status stat = this->solver->solve();
-
-    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE) this->scheduleFound = true;
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
-    if(this->scheduleFound == false){
+    ScaLP::status stat = this->solver->solve();
 
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
+    if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
+    if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
+    if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
+    if(stat == ScaLP::status::INVALID) cout << "INVALID at II " << this->II << endl;
+    if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
+    if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
+    if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
+    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
+
+    if(this->scheduleFound == false){
       (this->II)++;
     }
-    else if(this->scheduleFound == true) break;
+    else if(this->scheduleFound == true){
+      break;
+    }
   }
 
   if(this->scheduleFound == true)
   {
     this->r = this->solver->getResult();
-
-    this->fillSolutionStructure();   
+    this->fillSolutionStructure();
   }
 
   else this->II = -1;
@@ -179,7 +189,7 @@ void MoovacScheduler::setGeneralConstraints()
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->t_vectorIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) - e->getDelay() >= 0);
+    this->solver->addConstraint(t_vector[srcTVecIndex] - t_vector[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
   }
 }
 
@@ -439,12 +449,16 @@ void MoovacScheduler::setModuloAndResourceConstraints()
             if(k!=j)
             {
               pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-              ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
-              ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
+              //ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
+              //ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
               //7
-              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) + ak >= 1);
+              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+                  - (ak*eps_matrix[j][k]) + ak >= 1);
               //8
-              this->solver->addConstraint(vj - vk - (ak*eps_matrix[j][k]) <= 0);
+              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+                  - (ak*eps_matrix[j][k]) <= 0);
+              //9
+              this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
               //10
               this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
               //11

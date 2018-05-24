@@ -1,4 +1,5 @@
 #include <HatScheT/scheduler/ULScheduler.h>
+#include <HatScheT/utility/Utility.h>
 #include <stack>
 #include <map>
 
@@ -10,8 +11,41 @@ ULScheduler::ULScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase
   this->sort_by=MOBILITY;
 }
 
+bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
+{
+  set<Vertex*> inputs = this->g.getPreceedingVertices(v);
+
+  for(auto it:inputs){
+    //register inputs are considered to be input for the graph
+    Edge& e = this->g.getEdge(it,v);
+    if(e.getDistance()>0) continue;
+    for(auto it2:vList){
+      if(it==it2) return false;
+    }
+  }
+  return true;
+}
+
+bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
+{
+  set<Vertex*> inputs = this->g.getPreceedingVertices(v);
+
+  for(auto it:inputs){
+    //skip inputs over edges with distance as they represent next samples
+    Edge& e= this->g.getEdge(it,v);
+    if(e.getDistance()>0) continue;
+    //input not scheduled yet
+    if(this->startTimes[it]==-1) return false;
+    //this input demands later execution time
+    if(this->startTimes[it]+this->resourceModel.getVertexLatency(it)+e.getDelay()>timeSlot) return false;
+  }
+  return true;
+}
+
 void ULScheduler::schedule()
 {
+  bool sched_operation;
+  int c=0; //the number of clock cycles
   ASAPScheduler s= ASAPScheduler(this->g,this->resourceModel);
   s.schedule();
   ALAPScheduler l = ALAPScheduler(this->g,this->resourceModel);
@@ -34,7 +68,14 @@ void ULScheduler::schedule()
 
   //init the vertices
   for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
-    nodes.push_front(*it);
+    Vertex* v = *it;
+    this->startTimes.emplace(v,-1);
+    nodes.push_front(v);
+  }
+
+  if(nodes.empty()==true){
+    cout << "ULScheduler.ULScheduler: Error stack not initialized! No schedule found!" << endl;
+    throw new Exception("ULScheduler.ULScheduler: Error stack not initialized! No schedule found!");
   }
 
   while(!nodes.empty()){ // nodes left?
@@ -49,7 +90,41 @@ void ULScheduler::schedule()
 
     // nodes that are ready for scheduling.
     std::set<Vertex*,sort_struct> ready(sort_obj);
+
+    for(Vertex *n:nodes){
+      if(this->inputs_not_in(n,nodes)==true){
+        ready.insert(n);
+      }
+    }
+    // is anything sheduled in this iteration?
+    // nothing jet.
+    sched_operation=false;
+    //schedule nodes if possible
+    for(Vertex* node:ready){
+      //check whether vertex is rdy for scheduling
+      if(this->vertexRdyForScheduling(node,c)==true){
+        //check whether hardware for node is available in this timestep
+        const Resource* r = this->resourceModel.getResource(node);
+        if(Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,node,c) == true){
+          this->startTimes[node]=c;
+          sched_operation=true;
+          scheduled.push_front(node);
+        }
+      }
+    }
+    // removes the scheduled nodes from the leftover.
+    for(Vertex *node:scheduled){
+      nodes.remove(node);
+    }
+
+    if(sched_operation==false){
+      scheduled.clear();
+      c++;
+    }
   }
+
+  //set II
+  this->II = this->getScheduleLength()+1;
 }
 
 std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap)

@@ -196,34 +196,6 @@
       <data key="name">node_6255</data>
       <data key="uses_resource">special_virtual</data>
     </node>
-    <node id="6736">
-      <data key="name">node_6736</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="6738">
-      <data key="name">node_6738</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="6737">
-      <data key="name">node_6737</data>
-      <data key="uses_resource">lshift_expr_FU_64_64_64</data>
-    </node>
-    <node id="6740">
-      <data key="name">node_6740</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="6739">
-      <data key="name">node_6739</data>
-      <data key="uses_resource">mem_write</data>
-    </node>
-    <node id="6741">
-      <data key="name">node_6741</data>
-      <data key="uses_resource">plus_expr_FU_64_64_64</data>
-    </node>
-    <node id="6742">
-      <data key="name">node_6742</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
     <edge id="1086_3870" source="1086" target="3870">
       <data key="delay">0</data>
       <data key="distance">0</data>
@@ -289,11 +261,6 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="1086_6742" source="1086" target="6742">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
     <edge id="3858_1087" source="3858" target="1087">
       <data key="delay">0</data>
       <data key="distance">0</data>
@@ -315,11 +282,6 @@
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="3894_1087" source="3894" target="1087">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="6739_1087" source="6739" target="1087">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
@@ -375,11 +337,6 @@
       <data key="deptype">Data</data>
     </edge>
     <edge id="3894_3853" source="3894" target="3853">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="6739_3853" source="6739" target="3853">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
@@ -554,7 +511,7 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="6736_3894" source="6736" target="3894">
+    <edge id="3857_3894" source="3857" target="3894">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
@@ -619,51 +576,6 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="3857_6736" source="3857" target="6736">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="6737_6738" source="6737" target="6738">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="3857_6737" source="3857" target="6737">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="3848_6740" source="3848" target="6740">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="6741_6739" source="6741" target="6739">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="6740_6739" source="6740" target="6739">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="6738_6739" source="6738" target="6739">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="3897_6741" source="3897" target="6741">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="6742_6741" source="6742" target="6741">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
     <edge id="3861_1086" source="3861" target="1086">
       <data key="delay">0</data>
       <data key="distance">1</data>
@@ -685,11 +597,6 @@
       <data key="deptype">Data</data>
     </edge>
     <edge id="3853_3894" source="3853" target="3894">
-      <data key="delay">0</data>
-      <data key="distance">1</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="3853_6739" source="3853" target="6739">
       <data key="delay">0</data>
       <data key="distance">1</data>
       <data key="deptype">Precedence</data>

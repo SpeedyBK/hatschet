@@ -33,7 +33,7 @@ public:
    * \brief Returns the start times of all nodes
    * \return The start times of all nodes
    */
-  std::map<Vertex*,int>& getStartTimes(){ return startTimes; }
+  std::map<Vertex*,int>& getStartTimes();
 
   /*!
    * \brief Gets the start time of vertex v
@@ -76,6 +76,16 @@ public:
     cout << "getII: Base class called. This should never happen!" <<endl;
     throw new Exception("Graph::getEdge: Edge not found!");
   }
+  /*!
+   *
+   * @return the used graph description of the scheduling problem
+   */
+  Graph* getGraph(){return &this->g;}
+  /*!
+   *
+   * @return the used resource Model
+   */
+  ResourceModel* getResourceModel(){return &this->resourceModel;}
 protected:
   /*!
    * \brief resourceModel

@@ -1141,15 +1141,15 @@
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="1361_1292" source="1361" target="1292">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
     <edge id="1293_1292" source="1293" target="1292">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
+    </edge>
+    <edge id="1361_1292" source="1361" target="1292">
+      <data key="delay">0</data>
+      <data key="distance">0</data>
+      <data key="deptype">Data</data>
     </edge>
     <edge id="1351_1294" source="1351" target="1294">
       <data key="delay">0</data>

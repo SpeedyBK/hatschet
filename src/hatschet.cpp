@@ -13,6 +13,7 @@
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/Verifier.h"
+#include "HatScheT/utility/Utility.h"
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -56,9 +57,9 @@ int main(int argc, char *args[])
   int threads=0;
   int timeout=-1; //default -1 means no timeout
   bool lennart=false;
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   //parse command line
   for (int i = 1; i < argc; i++) {
@@ -188,16 +189,34 @@ int main(int argc, char *args[])
         }
       }
     }
+    else if(getCmdParameter(args[i],"--evalPaper=",value))
+        {
+          if(rm.isEmpty() == false && g.isEmpty() == false)
+          {
+            string str = std::string(value);
+            HatScheT::Utility::evaluateSchedulers(g,rm, {"CPLEX"}, str);
+          }
+        }
+    else if(getCmdParameter(args[i],"--adaptivePaper=",value))
+        {
+          if(rm.isEmpty() == false && g.isEmpty() == false)
+          {
+            string str = std::string(value);
+            HatScheT::Utility::adaptiveScheduling(g,rm, {"CPLEX"}, str);
+          }
+        }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
       string str = std::string(value);
       if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
+      if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
       if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
       if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
       if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
+      if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
       if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
       if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
       if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);

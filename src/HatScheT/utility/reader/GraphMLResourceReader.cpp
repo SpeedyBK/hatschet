@@ -12,9 +12,9 @@
 
 namespace HatScheT {
 
-GraphMLResourceReader::GraphMLResourceReader()
+GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
 {
-  this->rm = new ResourceModel();
+  this->rm = rm;
   this->reservationTableTagFound = false;
   this->blogTagFound = false;
 }

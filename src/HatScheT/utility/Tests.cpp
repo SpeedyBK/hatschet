@@ -2,6 +2,7 @@
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
 #include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
@@ -9,14 +10,16 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
+#include "HatScheT/Verifier.h"
 
 namespace HatScheT {
 
 bool Tests::moovacTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/MoovacExampleRM.xml";
   string graphStr = "graphMLFiles/example/MoovacExample.graphml";
@@ -25,12 +28,19 @@ bool Tests::moovacTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
+  if(g.getNumberOfVertices()!=6){
+    cout << "graph not read correctly! expected 6 vertices but got " << g.getNumberOfVertices() << endl;
+    return false;
+  }
+
   int maxLatencyConstraint = 18;
   HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"});
   sched.setMaxLatencyConstraint(maxLatencyConstraint);
   sched.setSolverQuiet(false);
 
+  cout << "starting moovac scheduling" << endl;
   sched.schedule();
+  cout << "finished moovac scheduling" << endl;
 
   if(sched.getII() != 5){
     cout << "Wrong II determined: " << sched.getII() << " instead of 5!" << endl;
@@ -47,9 +57,9 @@ bool Tests::moovacTest()
 
 bool Tests::asapTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/exampleResourceModel.xml";
   string graphStr = "graphMLFiles/example/example.graphml";
@@ -70,9 +80,9 @@ bool Tests::asapTest()
 
 bool Tests::asapHCTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
   string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
@@ -96,9 +106,9 @@ bool Tests::asapHCTest()
 
 bool Tests::alapHCTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
   string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
@@ -119,9 +129,9 @@ bool Tests::alapHCTest()
 
 bool Tests::readTest()
 {
-  HatScheT::GraphMLResourceReader readerRes;
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
 
   string resStr = "graphMLFiles/example/exampleResourceModel.xml";
   string graphStr = "graphMLFiles/example/example.graphml";
@@ -146,6 +156,69 @@ bool Tests::readTest()
   }
 
   return true;
+}
+
+bool Tests::moduloSDCTest()
+{
+  //disabled tests as long as moduloSDC is not working correctly
+  //return true;
+  try
+  {
+    HatScheT::ResourceModel rm;
+    
+    auto &load = rm.makeResource("load", 1, 2);
+    auto &add = rm.makeResource("add", -1, 0);
+    //auto &store = rm.makeResource("store", 1, 2, 0);
+    auto &store = load;
+
+    HatScheT::Graph g;
+    
+    Vertex& a = g.createVertex(1);
+    Vertex& b = g.createVertex(2);
+    Vertex& c = g.createVertex(3);
+    Vertex& d = g.createVertex(4);
+
+    a.setName("a");
+    b.setName("b");
+    c.setName("c");
+    d.setName("d");
+
+    g.createEdge(a, c ,0);
+    g.createEdge(b, c ,0);
+    g.createEdge(c, d ,0);
+    g.createEdge(d, a ,1);
+    
+    rm.registerVertex(&a, &load);
+    rm.registerVertex(&b, &load);
+    rm.registerVertex(&c, &add);
+    rm.registerVertex(&d, &store);
+
+    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+    m.setSolverQuiet(true);
+
+    m.schedule();
+
+    auto sch = m.getStartTimes();
+
+    bool result = true;
+    for(auto&p:sch)
+    {
+      std::cout << p.first->getName() << " = " << p.second << std::endl;
+      //if(p.first==&a and p.second!=2) result=false; 2 or 1??
+      if(p.first==&a and p.second!=1) result=false;
+      if(p.first==&b and p.second!=0) result=false;
+      if(p.first==&d and p.second!=3) result=false;
+    }
+
+    if(verifyModuloSchedule(g,rm,sch,m.getII())==false) return false;
+
+    return result;
+  }
+  catch(HatScheT::Exception* e)
+  {
+    std::cout << *e << std::endl;
+  }
+  return false;
 }
 
 bool Tests::apiTest()
@@ -316,6 +389,33 @@ bool Tests::occurrenceTest()
     cout << "Tests.occurrenceTest: adding an unconncted edge tfrom another graph was possible but shouldnt be!" << endl;
     return false;
   }
+
+  return true;
+}
+
+bool Tests::ulSchedulerTest()
+{
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
+
+  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
+  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  rm = readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  g = readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::ULScheduler uls(g,rm);
+  uls.schedule();
+
+  uls.printStartTimes();
+  std::map<Vertex *, int> &schedule = uls.getStartTimes();
+  int foundII = uls.getII();
+  bool verified = HatScheT::verifyModuloSchedule(g, rm, schedule, foundII);
+
+  if(verified==false) return false;
+  if(uls.getScheduleLength()!=8) return false;
 
   return true;
 }

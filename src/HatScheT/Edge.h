@@ -41,6 +41,10 @@ public:
   const int getID() const {return this->id;}
   void setID(int id){this->id = id;}
 
+  void setDependencyType(DependencyType dt){this->dependencyType= dt;}
+  DependencyType getDependencyType() const {return this->dependencyType;}
+
+  bool isDataEdge();
 protected:
   int id;
   DependencyType dependencyType;

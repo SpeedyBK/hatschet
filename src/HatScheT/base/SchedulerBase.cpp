@@ -1,22 +1,35 @@
 #include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/Verifier.h>
 
 namespace HatScheT
 {
 
 SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : g(g), resourceModel(resourceModel){
   this->maxLatencyConStraint = -1;
+  this->II = 1;
 }
 
 int SchedulerBase::getScheduleLength()
 {
   int maxTime=-1;
-  for(std::pair<Vertex*,int> vtPair : startTimes)
+  for(std::pair<Vertex*,int> vtPair : this->startTimes)
   {
     Vertex* v = vtPair.first;
 
     if((vtPair.second+resourceModel.getVertexLatency(v)) > maxTime) maxTime = (vtPair.second+resourceModel.getVertexLatency(v));
   }
   return maxTime;
+}
+
+std::map<Vertex*,int>&  SchedulerBase::getStartTimes()
+{
+  if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->II)==false){
+    this->printStartTimes();
+    cout << "SchedulerBase.getStartTimes: Error Invalid schedule detected by SchedulerClass" << endl;
+    throw new Exception("SchedulerBase::getStartTimes: Error Invalid schedule detected by SchedulerClass");
+  }
+
+  return this->startTimes;
 }
 
 int SchedulerBase::getStartTime(Vertex &v)

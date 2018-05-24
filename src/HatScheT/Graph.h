@@ -108,7 +108,7 @@ public:
    * \param v
    * \return
    */
-  set<Vertex*> getProceedingVertices(const Vertex* v) const;
+  set<Vertex*> getPreceedingVertices(const Vertex* v) const;
   /*!
    * \brief setName
    * \param s

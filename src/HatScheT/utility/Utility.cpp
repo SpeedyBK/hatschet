@@ -1,15 +1,35 @@
 #include "HatScheT/utility/Utility.h"
 #include "ScaLP/Solver.h"
-
+#include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
+#include "HatScheT/Verifier.h"
 #include <limits>
 #include <cmath>
 #include <map>
+#include <ios>
+#include <fstream>
+#include <ctime>
+#include <cstddef>
+#include <iomanip>
 
 namespace HatScheT {
 
 bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
 {
   return true;
+}
+
+int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
+{
+  int count = 0;
+  for(auto it=g->verticesBegin(); it!= g->verticesEnd(); ++it){
+      Vertex* v = *it;
+      const Resource* r = rm->getResource(v);
+      if(r->getLimit()>0) count++;
+  }
+  return count;
 }
 
 int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
@@ -40,6 +60,21 @@ int Utility::getNoOfInputs(Graph *g, const Vertex *v)
   }
 
   return no;
+}
+
+int Utility::getNoOfOutputsWithoutDistance(Graph *g, const Vertex *v)
+{
+  int outputs = 0;
+
+  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
+  {
+    Edge* e = *it;
+    Vertex* vSrc = &e->getVertexSrc();
+
+    if(vSrc==v && e->getDistance()==0) outputs++;
+  }
+
+  return outputs;
 }
 
 int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
@@ -206,6 +241,132 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
     if(vIter==v) return true;
   }
   return false;
+}
+
+void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, string logFileName)
+{
+  int noOfVertices = g.getNumberOfVertices();
+  HatScheT::SchedulerBase* scheduler;
+  string schedulerUsed = "";
+
+  if(noOfVertices < 100){
+    scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+    schedulerUsed = "Moovac";
+  }
+  else if(100 <= noOfVertices && noOfVertices <= 150){
+    scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
+    schedulerUsed = "ModuloSDC";
+  }
+  else if(noOfVertices > 150){
+    scheduler = new HatScheT::ULScheduler(g, resourceModel);
+    schedulerUsed = "ULScheduler";
+  }
+
+  //measure time and schedule
+  clock_t begin = clock();
+  scheduler->schedule();
+  clock_t end = clock();
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+  //verify schedule
+  bool verified = false;
+  bool schedFound = false;
+  if(scheduler->getII()!=-1) {
+    schedFound = true;
+    verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+  }
+
+  //find graph name
+  string graphstr = g.getName();
+  std::size_t found = graphstr.find_last_of("/\\");
+  graphstr = graphstr.substr(found+1);
+
+  //find set name
+  string setstr = g.getName();
+  cout << "setstr is " << setstr << endl;
+  std::size_t found1 = setstr.find_last_of("/\\");
+  setstr = setstr.substr(0,found1);
+  cout << "setstr is " << setstr << endl;
+  std::size_t found2 = setstr.find_last_of("/\\");
+  setstr = setstr.substr(found2+1);
+  cout << "setstr is " << setstr << endl;
+
+  //log data
+  std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
+  log << setstr << ";"  << graphstr << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound
+      << ";" << verified << ";" << schedulerUsed << ";" << noOfVertices << ";" << endl;
+  log.close();
+}
+
+void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
+{
+  string logNameInsert = logFileName;
+  HatScheT::SchedulerBase* scheduler;
+
+  for(int i = 0; i < 5;i++){
+    //reset logfilename
+    logFileName = logNameInsert;
+
+    //select scheduler
+    if(i==0){
+      logFileName += "ASAP.txt";
+      scheduler = new HatScheT::ASAPScheduler(g,resourceModel);
+    }
+    if(i==1){
+      logFileName += "ULScheduler.txt";
+      scheduler = new HatScheT::ULScheduler(g, resourceModel);
+    }
+    if(i==2){
+      logFileName += "ModuloSDC.txt";
+      scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
+    }
+    if(i==3){
+      logFileName += "Moovac1Min.txt";
+      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(60);
+    }
+    if(i==4){
+      logFileName += "Moovac5Min.txt";
+      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(300);
+    }
+
+    //measure time and schedule
+    clock_t begin = clock();
+    scheduler->schedule();
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    //verify schedule
+    bool verified = false;
+    bool schedFound = false;
+    if(scheduler->getII()!=-1) {
+      schedFound = true;
+      verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+    }
+
+    //do normalization
+    HatScheT::ASAPScheduler* helper = new HatScheT::ASAPScheduler(g,resourceModel);
+    int minII = Utility::calcMinII(&resourceModel,&g);
+    int maxII = Utility::calcMaxII(helper);
+    delete helper;
+    int numerator = maxII - scheduler->getII();
+    int denominator = maxII - minII;
+    float normalizedII = (float)numerator/(float)denominator ;
+
+    //find graph name
+    string str = g.getName();
+    std::size_t found = str.find_last_of("/\\");
+    str = str.substr(found+1);
+
+    //log data
+    std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
+    log << str << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";"
+        << schedFound << ";" << verified << ";" << minII << ";" << maxII << ";" << setprecision(2) << fixed << normalizedII << endl;
+    log.close();
+  }
 }
 
 bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)

@@ -71,8 +71,9 @@ src/HatScheT/MoovacScheduler.cpp
 src/HatScheT/MoovacMinRegScheduler.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/base/ILPSchedulerBase.cpp
-src/HatScheT/ResourceModel.cpp
 src/HatScheT/base/ModuloSchedulerBase.cpp
+src/HatScheT/ResourceModel.cpp
+src/HatScheT/ModuloSDCScheduler.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
@@ -118,10 +119,12 @@ enable_testing()
 
 add_test("XercesC_Read" "./hatschet" "--test=READ")
 add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")
+add_test("ScaLP_ModuloSDC" "./hatschet" "--test=MODULOSDC")
 add_test("API" "./hatschet" "--test=API")
 add_test("ASAP" "./hatschet" "--test=ASAP")
 add_test("ASAPHC" "./hatschet" "--test=ASAPHC")
 add_test("ALAPHC" "./hatschet" "--test=ALAPHC")
+add_test("ULScheduler" "./hatschet" "--test=ULScheduler")
 add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")

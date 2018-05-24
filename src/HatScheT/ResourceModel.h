@@ -189,6 +189,10 @@ public:
    */
   ResourceModel();
   /*!
+   * \brief ResourceModel
+   */
+  ~ResourceModel();
+  /*!
    * \brief operator <<
    * \param os
    * \param rm
@@ -203,7 +207,7 @@ public:
    * \param blockingTime
    * \return
    */
-  Resource &makeResource(std::string name, int limit, int latency, int blockingTime);
+  Resource &makeResource(std::string name, int limit, int latency, int blockingTime=0);
   /*!
    * \brief makeReservationTable generate a more complex operation
    * \param name
