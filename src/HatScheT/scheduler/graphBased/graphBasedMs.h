@@ -20,13 +20,14 @@ public:
    * \param g
    * \param resourceModel
    */
-  GraphBasedMs(Graph& g, ResourceModel &resourceModel, int moduloSlots);
+  GraphBasedMs(SchedulerBase* sched, Graph& g, ResourceModel &resourceModel, float moduloLowerBound, float moduloUpperBound);
 
   /*!
    * \brief schedule determine a II using the graph based modulo scheduler
    */
   virtual void schedule();
   //plz think about a method to implement this function, maybe throw error?
+  //iz complex
   /*!
    * \brief getII
    * \return
@@ -35,7 +36,9 @@ public:
 
 protected:
 private:
-  int moduloSlots;
+  float moduloLowerBound;
+  float moduloUpperBound;
+  SchedulerBase* scheduler;
     //implent methods
   /*!
    * \brief getVertexWithLeastNoOfConnections
@@ -92,7 +95,7 @@ template<typename T> bool isMemberInVector(vector<T> vVec, T v);
  * \param n
  * \return
  */
-vector<vector<int>> createConflictMatrix(vector<vector<int>> conflMatrix,vector<int> sampleVec,int n);
+vector<vector<int>> createConflictMatrix(vector<vector<int>> conflMatrix, vector<int> sampleVec, int modulo);
 
 /*!
  * \brief createConflictGraph
@@ -103,7 +106,7 @@ vector<vector<int>> createConflictMatrix(vector<vector<int>> conflMatrix,vector<
  * \param n
  * \param minII
  */
-void createConflictGraph(Graph &conflGraph, vector<Vertex*> &conflVertices, vector<vector<int>> conflMatrix, int currConstraint, int n, int minII);
+void createConflictGraph(Graph &conflGraph, vector<Vertex*> &conflVertices, vector<vector<int>> conflMatrix, int currConstraint, int minII);
 
 /*!
  * \brief getAllVertexConnections
