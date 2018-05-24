@@ -3,7 +3,7 @@
 #include <HatScheT/ModuloSDCScheduler.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/Verifier.h>
-
+#include <ctime>
 #include <memory>
 #include <map>
 #include <vector>
@@ -405,7 +405,6 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     prevSched.insert(p);
   }
 
-
   Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority[a]<priority[b];});
 
   for(std::list<Resource*>::iterator it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it)
@@ -416,7 +415,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
 
   int b = budget;
-  for(; not schedQueue.empty() and b>=0; --b)
+  double elapsed_secs;
+
+  clock_t begin = clock();
+  for(; not schedQueue.empty() and b>=0 and (int)elapsed_secs<=this->solverTimeout; --b)
   {
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
     auto i = schedQueue.top();
@@ -487,6 +489,9 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
+
+    clock_t measure = clock();
+    elapsed_secs = double(begin - measure) / CLOCKS_PER_SEC;
 
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }

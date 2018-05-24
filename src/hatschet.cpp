@@ -12,6 +12,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 
@@ -173,7 +174,7 @@ int main(int argc, char *args[])
       if(rm.isEmpty() == false && g.isEmpty() == false)
       {
         cout << "Starting Moovac schedule" << endl;
-        std::list<std::string> wish = {"Gurobi"};
+        std::list<std::string> wish = {"CPLEX"};
         HatScheT::MoovacScheduler mv(g, rm, wish);
         mv.schedule();
 
@@ -187,6 +188,19 @@ int main(int argc, char *args[])
           if (HatScheT::verifyModuloSchedule(g, rm, mv.getStartTimes(), mv.getII()))
             cout << ">>> Moovac schedule verified <<<" << endl;
         }
+      }
+    }
+    else if(getCmdParameter(args[i],"--modulosdc=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        int timeout = stoi(value);
+        cout << "Starting ModuloSDC scheduling with timeout: " << timeout << "(sec)" << endl;
+        std::list<std::string> wish = {"CPLEX"};
+        HatScheT::ModuloSDCScheduler msdc(g, rm, wish);
+        msdc.setSolverTimeout(timeout);
+        msdc.schedule();
+
       }
     }
     else if(getCmdParameter(args[i],"--evalPaper=",value))

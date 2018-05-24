@@ -314,10 +314,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC30sec.txt";
+      logFileName += "ModuloSDC60sec.txt";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(30);
+      schedulerPtr->setSolverTimeout(60);
     }
     if(i==3){
       logFileName += "Moovac1Min.txt";
