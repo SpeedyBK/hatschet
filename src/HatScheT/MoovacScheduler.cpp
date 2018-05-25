@@ -66,11 +66,19 @@ void MoovacScheduler::constructProblem()
 
 void MoovacScheduler::setObjective()
 {
-    ScaLP::Term sum;
+  //supersink latency objective
+  ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,this->SLMax);
+  for(ScaLP::Variable &v:this->t_vector){
+    this->solver->addConstraint(supersink - v >= 0);
+  }
+  this->solver->setObjective(ScaLP::minimize(supersink));
+
+  //original moovac objective
+    /*ScaLP::Term sum;
     for(ScaLP::Variable &v:this->t_vector){
       sum = sum + v;
     }
-    this->solver->setObjective(ScaLP::minimize(sum));
+    this->solver->setObjective(ScaLP::minimize(sum));*/
 }
 
 void MoovacScheduler::schedule()
@@ -83,7 +91,6 @@ void MoovacScheduler::schedule()
   {
     this->resetContainer();
     this->setUpSolverSettings();
-
     this->constructProblem();
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
@@ -91,7 +98,7 @@ void MoovacScheduler::schedule()
     ScaLP::status stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
-    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
+    /*if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
     if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
     if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
     if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
@@ -99,7 +106,7 @@ void MoovacScheduler::schedule()
     if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
     if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
     if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
+    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;*/
 
     if(this->scheduleFound == false){
       (this->II)++;
@@ -139,10 +146,9 @@ void MoovacScheduler::setVectorVariables()
     int id = v->getId();
 
     //17
-     t_vector.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
+    this->t_vector.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
     //store tIndex
     this->t_vectorIndices.insert(make_pair(v,t_vector.size()-1));
-
     //16
     this->solver->addConstraint(t_vector.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
   }
@@ -174,7 +180,7 @@ void MoovacScheduler::setSourceVerticesToZero()
     unsigned int index =this->t_vectorIndices.at(v);
     ScaLP::Variable  temp = this->t_vector[index];
     //source vertix of unlimited(!) resource
-    if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) this->solver->addConstraint(temp  == 0);
+    if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) this->solver->addConstraint(temp == 0);
   }
 }
 
