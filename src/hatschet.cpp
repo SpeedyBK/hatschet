@@ -179,6 +179,7 @@ int main(int argc, char *args[])
         HatScheT::MoovacScheduler ms(g, rm, wish);
         ms.setSolverTimeout(timeout);
         ms.setThreads(threads);
+        ms.setSolverQuiet(false);
         ms.schedule();
 
         if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){

@@ -85,7 +85,7 @@ protected:
    */
   void setVectorVariables();
   /*!
-   * \brief fillRegVector not in moovac
+   * \brief fillRegVector not used in moovac
    */
   virtual void fillRegVector(){ }
   /*!
@@ -132,10 +132,6 @@ protected:
    * \brief reg_vectorIndices
    */
   map<const Edge*, unsigned int> reg_vectorIndices;
-  /*!
-   * \brief sampleLatency
-   */
-  unsigned int sampleLatency;
   /*!
    * \brief r
    */

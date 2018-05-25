@@ -30,6 +30,7 @@ std::string ILPSchedulerBase::getSolverName()
 
 void ILPSchedulerBase::setSolverTimeout(long timeoutInSeconds)
 {
+  this->solverTimeout = timeoutInSeconds;
   solver->timeout = timeoutInSeconds;
 }
 
