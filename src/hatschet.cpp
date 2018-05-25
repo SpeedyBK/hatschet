@@ -173,21 +173,18 @@ int main(int argc, char *args[])
     {
       if(rm.isEmpty() == false && g.isEmpty() == false)
       {
-        cout << "Starting Moovac schedule" << endl;
+        int timeout = stoi(value);
+        cout << "Starting MoovacScheduler scheduling with timeout: " << timeout << "(sec)" << endl;
         std::list<std::string> wish = {"CPLEX"};
-        HatScheT::MoovacScheduler mv(g, rm, wish);
-        mv.schedule();
+        HatScheT::MoovacScheduler ms(g, rm, wish);
+        ms.setSolverTimeout(timeout);
+        ms.schedule();
 
-        if (mv.getScheduleFound()) {
-          cout << "Printing Moovac schedule" << endl;
-          for (auto it = mv.getStartTimes().begin(); it != mv.getStartTimes().end(); ++it) {
-            cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second
-                 << endl;
-          }
-          cout << "Finished Moovac schedule" << endl;
-          if (HatScheT::verifyModuloSchedule(g, rm, mv.getStartTimes(), mv.getII()))
-            cout << ">>> Moovac schedule verified <<<" << endl;
+        if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){
+          cout << ">>> MoovacScheduler schedule verified <<<" << endl;
+          cout << "Found II " << ms.getII() << " with sampleLatency " << ms.getScheduleLength() << endl;
         }
+        else cout << ">>> MoovacScheduler schedule NOT verified <<<" << endl;
       }
     }
     else if(getCmdParameter(args[i],"--modulosdc=",value))
@@ -201,6 +198,11 @@ int main(int argc, char *args[])
         msdc.setSolverTimeout(timeout);
         msdc.schedule();
 
+        if (HatScheT::verifyModuloSchedule(g, rm, msdc.getStartTimes(), msdc.getII())){
+          cout << ">>> ModuloSDC schedule verified <<<" << endl;
+          cout << "Found II " << msdc.getII() << " with sampleLatency " << msdc.getScheduleLength() << endl;
+        }
+        else cout << ">>> ModuloSDC schedule NOT verified <<<" << endl;
       }
     }
     else if(getCmdParameter(args[i],"--evalPaper=",value))
