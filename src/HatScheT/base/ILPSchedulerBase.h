@@ -68,7 +68,10 @@ public:
    * \brief setThreads
    * \param i
    */
-  void setThreads(unsigned int i){this->threads=i;}
+  void setThreads(unsigned int i){
+    this->threads=i;
+    this->solver->threads=i;
+  }
   unsigned int getThreads(){return this->threads;}
 protected:
   /*!

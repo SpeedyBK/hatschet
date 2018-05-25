@@ -174,10 +174,11 @@ int main(int argc, char *args[])
       if(rm.isEmpty() == false && g.isEmpty() == false)
       {
         int timeout = stoi(value);
-        cout << "Starting MoovacScheduler scheduling with timeout: " << timeout << "(sec)" << endl;
+        cout << "Starting MoovacScheduler scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads << endl;
         std::list<std::string> wish = {"CPLEX"};
         HatScheT::MoovacScheduler ms(g, rm, wish);
         ms.setSolverTimeout(timeout);
+        ms.setThreads(threads);
         ms.schedule();
 
         if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){
@@ -192,10 +193,11 @@ int main(int argc, char *args[])
       if(rm.isEmpty() == false && g.isEmpty() == false)
       {
         int timeout = stoi(value);
-        cout << "Starting ModuloSDC scheduling with timeout: " << timeout << "(sec)" << endl;
+        cout << "Starting ModuloSDC scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads  << endl;
         std::list<std::string> wish = {"CPLEX"};
         HatScheT::ModuloSDCScheduler msdc(g, rm, wish);
         msdc.setSolverTimeout(timeout);
+        msdc.setThreads(threads);
         msdc.schedule();
 
         if (HatScheT::verifyModuloSchedule(g, rm, msdc.getStartTimes(), msdc.getII())){

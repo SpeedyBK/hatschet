@@ -7,6 +7,7 @@ namespace HatScheT
 ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solver(new ScaLP::Solver(solverWishlist))
 {
   this->threads = 1;
+  this->solver->threads = 1;
   this->timeoutCounter = 0;
   this->solverQuiet = true;
   this->optimalResult = false;
