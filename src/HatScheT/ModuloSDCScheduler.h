@@ -39,6 +39,9 @@ namespace HatScheT
     virtual int getII(){return this->II;}
     virtual void constructProblem();
     virtual void setObjective();
+    void setVerbose(bool b){
+      this->verbose=b;
+    }
 
     private:
     std::vector<ScaLP::Constraint> baseConstraints;
@@ -52,6 +55,7 @@ namespace HatScheT
     bool dependencyConflict(std::map<Vertex*,int>& prevsched, HatScheT::Vertex* I, int time);
     void createBaseConstraints(int II);
     bool solveBasicWithConstraint(ScaLP::Constraint&& c);
+    bool verbose;
   };
 
 }
