@@ -30,7 +30,8 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
     ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
     if (! ok) {
-      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+      cout << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;    
       return false;
     }
   }
@@ -51,9 +52,11 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
       ok = res->getLimit() == UNLIMITED || vs.size() <= res->getLimit();
       if (! ok) {
-        cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
-        for (auto v : vs)
-          cerr << *v << " (t=" << S[v] << ")" << endl;
+        cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
+        cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;      
+        for (auto v : vs){
+          cout << " (t=" << S[v] << ")" << endl;
+          cerr << *v << " (t=" << S[v] << ")" << endl;}
         return false;
       }
     }

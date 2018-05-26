@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <ctime>
 
 HatScheT::MRT::MRT(HatScheT::ResourceModel& r, int ii)
 : rm(&r), II(ii)
@@ -267,16 +268,17 @@ void HatScheT::ModuloSDCScheduler::createBaseConstraints(int II)
 {
   for(std::set<Edge*>::iterator it = this->g.edgesBegin() ; it!=this->g.edgesEnd();++it)
   {
-    Vertex* a = &(*it)->getVertexSrc();
-    Vertex* b = &(*it)->getVertexDst();
-    Edge& e = this->g.getEdge(a,b);
+    Edge* e = (*it);
+    Vertex* a = &e->getVertexSrc();
+    Vertex* b = &e->getVertexDst();
+
     ScaLP::Variable va = getVariable(variables,a);
     ScaLP::Variable vb = getVariable(variables,b);
     auto vaLatency = this->resourceModel.getResource(a)->getLatency();
     //std::cout << "II: " << II << std::endl;
     //std::cout << "distance: " <<  (*it)->getDistance() << std::endl;
     //cout << a->getName() << " to " << b->getName() << " Di = " << to_string(vaLatency+e.getDelay()) << endl;
-    this->baseConstraints.emplace_back(va + vaLatency + e.getDelay() - vb <= II * (*it)->getDistance() );
+    this->baseConstraints.emplace_back(va + vaLatency + e->getDelay() - vb <= II * e->getDistance() );
   }
   
 }
@@ -287,7 +289,7 @@ static std::unique_ptr<std::map<HatScheT::Vertex*,int>> solveLP(ScaLP::Solver& s
   for(auto& c:cons) s << c;
   s.writeLP("eee.lp");
   auto rrr = s.solve();
-  std::cout << rrr << std::endl;
+
   if(feasible(rrr/*s.solve()*/))
   {
     std::unique_ptr<std::map<HatScheT::Vertex*,int>> m(new std::map<HatScheT::Vertex*,int>());
@@ -397,13 +399,14 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
 
   int b = budget;
-  double elapsed_secs = 0.0;
 
-  clock_t begin = clock();
-  for(; not schedQueue.empty() and b>=0 and (int)elapsed_secs<=this->solverTimeout; --b)
+  clock_t endwait;
+  endwait = clock() + this->solver->timeout * CLOCKS_PER_SEC ;
+
+  for(; not schedQueue.empty() and b>=0 and clock() < endwait; --b)
   {
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
-    std::cout << "Elapsed time for this II is " << elapsed_secs << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
+    //std::cout << "Elapsed time for this II is " << start << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
     auto i = schedQueue.top();
     schedQueue.pop();
 
@@ -472,10 +475,6 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
-
-    clock_t measure = clock();
-    elapsed_secs = double(measure - begin) / CLOCKS_PER_SEC;
-
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
 
