@@ -4,9 +4,8 @@
 namespace HatScheT
 {
 
-SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : g(g), resourceModel(resourceModel){
-  this->maxLatencyConStraint = -1;
-  this->II = 1;
+SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceModel(resourceModel), g(g)
+{
 }
 
 int SchedulerBase::getScheduleLength()

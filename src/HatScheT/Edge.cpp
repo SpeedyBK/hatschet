@@ -3,10 +3,8 @@
 namespace HatScheT
 {
 
-Edge::Edge(Vertex &src, Vertex &dst, int distance, DependencyType dependencyType) : Vsrc(src), Vdst(dst), distance(distance), dependencyType(dependencyType)
+Edge::Edge(Vertex &src, Vertex &dst, int distance, DependencyType dependencyType) : dependencyType(dependencyType), distance(distance), Vsrc(src), Vdst(dst)
 {
-  id = -1;
-  delay = 0;
 }
 
 ostream& operator<<(ostream& os, const Edge& e)

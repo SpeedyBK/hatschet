@@ -94,7 +94,7 @@ protected:
   /*!
    * \brief maxLatencyConStraint default is -1 (unlimited)
    */
-  int maxLatencyConStraint;
+  int maxLatencyConStraint = -1;
   /*!
    * \brief Container for the start times
    */
@@ -106,6 +106,6 @@ protected:
   /*!
    * \brief II the initiation interval of a schedule
    */
-  unsigned int II;
+  unsigned int II = 1;
 };
 }

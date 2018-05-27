@@ -49,7 +49,7 @@ namespace HatScheT
     std::map<Vertex*,ScaLP::Variable> variables;
     std::map<Vertex*,bool> neverScheduled;
     MRT mrt;
-    bool sched(int II, int budget);
+    bool sched(int II, int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority);
     void backtracking(Queue& schedQueue, std::map<Vertex*,int>& prevsched, HatScheT::Vertex* I, int asapI, int time, int II);
     bool resourceConflict(HatScheT::Vertex* I, int time);
     bool dependencyConflict(std::map<Vertex*,int>& prevsched, HatScheT::Vertex* I, int time);

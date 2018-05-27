@@ -4,7 +4,6 @@
 #include <HatScheT/Graph.h>
 #include <HatScheT/Verifier.h>
 #include <ctime>
-#include <memory>
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -61,7 +60,7 @@ bool HatScheT::MRT::resourceConflict(HatScheT::Vertex* v,int time)
     }
 
     bool b = std::any_of(data[r][time].begin(), data[r][time].end(), [](HatScheT::Vertex* a){return a==nullptr;});
-    for(unsigned int i=0;i<=time;++i)
+    for(int i=0;i<=time;++i)
     {
       for(Vertex*p:data[r][i])
       {
@@ -97,12 +96,12 @@ bool HatScheT::MRT::update(HatScheT::Vertex* i, int time)
     if(i==it){    
       return false;
     }
-
   }
 
   if(it!=v.end())
   {
-    *it=i;     
+    *it=i;
+    return true;
   }
   else
   {
@@ -142,11 +141,11 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
 
 bool HatScheT::MRT::vertexIsIn(Vertex *v)
 {
-  for(auto it:data)
+  for(auto& it:data)
   {
-    for(auto it2:it.second)
+    for(auto& it2:it.second)
     {
-      for(auto it3:it2)
+      for(auto& it3:it2)
       {
         if(it3==v) return true;
       }
@@ -161,7 +160,7 @@ HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource
   std::cout << "getInstruction at " << std::to_string(i) << ": ";// << std::endl;
   for(auto&p:data)
   {
-    if(p.second.size()>=i && p.second[i].size()>=0 && p.first==r)
+    if(p.second.size()>=i && p.first==r)
     {
       for(auto&o:p.second[i])
       {
@@ -189,8 +188,8 @@ void HatScheT::ModuloSDCScheduler::constructProblem()
   if(this->threads>0) this->solver->threads = this->threads;
   this->solver->quiet=this->solverQuiet;
   this->solver->timeout=this->solverTimeout;
-  this->baseConstraints.clear();
-  createBaseConstraints(this->II);
+  //this->baseConstraints.clear();
+  //createBaseConstraints(this->II);
 
   for(auto c:this->baseConstraints) *this->solver << c;
   for(auto c:this->constraints) *this->solver << c;
@@ -281,16 +280,16 @@ void HatScheT::ModuloSDCScheduler::createBaseConstraints(int II)
   
 }
 
-static std::unique_ptr<std::map<HatScheT::Vertex*,int>> solveLP(ScaLP::Solver& s, HatScheT::Graph& g, std::map<HatScheT::Vertex*,ScaLP::Variable>& variables, std::vector<ScaLP::Constraint>& cons, std::vector<ScaLP::Constraint>& bcons)
+static std::map<HatScheT::Vertex*,int> solveLP(ScaLP::Solver& s, HatScheT::Graph& g, std::map<HatScheT::Vertex*,ScaLP::Variable>& variables, std::vector<ScaLP::Constraint>& cons, std::vector<ScaLP::Constraint>& bcons)
 {
   for(auto& c:bcons) s << c;
   for(auto& c:cons) s << c;
   s.writeLP("eee.lp");
   auto rrr = s.solve();
   std::cout << rrr << std::endl;
+  std::map<HatScheT::Vertex*,int> m;
   if(feasible(rrr/*s.solve()*/))
   {
-    std::unique_ptr<std::map<HatScheT::Vertex*,int>> m(new std::map<HatScheT::Vertex*,int>());
     auto result = s.getResult();
 
     for(auto it = g.verticesBegin(); it!=g.verticesEnd();++it)
@@ -299,25 +298,11 @@ static std::unique_ptr<std::map<HatScheT::Vertex*,int>> solveLP(ScaLP::Solver& s
       if(it2!=result.values.end())
       {
        // cout << (*it)->getName() << " : " << it2->second << endl;
-        m->emplace(*it,static_cast<int>(it2->second));
+        m.emplace(*it,static_cast<int>(it2->second));
       }
     }
-    return m;
   }
-  else
-  {
-    // TODO: Error, should not happen.
-    return nullptr;
-  }
-}
-
-static bool solveFeasible(ScaLP::Solver& s)
-{
-  auto r = s.solve();
-  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-  std::cout << s.getResult() << std::endl;
-  std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-  return feasible(r);
+  return m;
 }
 
 static void createVariables(std::map<HatScheT::Vertex*,ScaLP::Variable>& variables,HatScheT::Graph& g)
@@ -329,19 +314,19 @@ static void createVariables(std::map<HatScheT::Vertex*,ScaLP::Variable>& variabl
   }
 }
 
-void addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,unsigned int>& res, HatScheT::Vertex* v, HatScheT::Vertex* c)
+static unsigned int addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,unsigned int>& res, HatScheT::Vertex* v, HatScheT::Vertex* c)
 {
+  unsigned int count=0;
   for(auto e = g.edgesBegin(); e!=g.edgesEnd();++e)
   {
     auto edgeSrc = &(*e)->getVertexSrc();
     auto edgeDst = &(*e)->getVertexDst();
     if(c == edgeSrc and v!=edgeDst and (*e)->getDistance()==0)
     { // successor without loop
-      res[v]+=1;
-      addLayerRec(g,res,v,edgeDst);
+      count+=1+addLayerRec(g,res,v,edgeDst);
     }
   }
-
+  return count;
 }
 
 static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Graph& g)
@@ -349,11 +334,7 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
   std::map<HatScheT::Vertex*,unsigned int> res;
   for(auto v = g.verticesBegin(); v!=g.verticesEnd();++v)
   {
-    res.emplace(*v,0);
-  }
-  for(auto v = g.verticesBegin(); v!=g.verticesEnd();++v)
-  {
-    addLayerRec(g,res,*v,*v); // TODO: FIXME: wrong
+    res.emplace(*v,addLayerRec(g,res,*v,*v)); // TODO: FIXME: wrong?
   }
 
   for(auto&p:res)
@@ -364,30 +345,24 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
   return res;
 }
 
-bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
+bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority)
 {
-  this->mrt = MRT(this->resourceModel,II);
-  this->solver->reset();
-  this->constraints.clear();
-  this->neverScheduled.clear();
-
   setObjective();
-  std::unique_ptr<std::map<Vertex*,int>> asap = solveLP(*(this->solver),this->g,this->variables,this->constraints,this->baseConstraints);
+  const std::map<Vertex*,int> asap = solveLP(*(this->solver),this->g,this->variables,this->constraints,this->baseConstraints);
 
-  if(not asap)
+  if(asap.empty())
   {
     std::cerr << "Can't find ASAP-Schedule (current II is too small (?))" << std::endl;
     return false;
   }
-  std::map<Vertex*,int> prevSched;
 
-  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
-  for(auto&p:*asap)
+  std::map<Vertex*,int> prevSched;
+  for(auto&p:asap)
   {
     prevSched.insert(p);
   }
 
-  Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority[a]<priority[b];});
+  Queue schedQueue([&priority](Vertex* a,Vertex* b){return priority.at(a)<priority.at(b);});
 
   for(std::list<Resource*>::iterator it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it)
   {
@@ -396,11 +371,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
     for(const HatScheT::Vertex* v:vs) schedQueue.push(const_cast<Vertex*>(v));
   }
 
-  int b = budget;
   double elapsed_secs = 0.0;
 
   clock_t begin = clock();
-  for(; not schedQueue.empty() and b>=0 and (int)elapsed_secs<=this->solverTimeout; --b)
+  for(int b=budget; not schedQueue.empty() and b>=0 and (int)elapsed_secs<=this->solverTimeout; --b)
   {
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
     std::cout << "Elapsed time for this II is " << elapsed_secs << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
@@ -416,8 +390,8 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
     int asapI=0;
     {
-      auto it = asap->find(i);
-      if(it!=asap->end()) asapI = it->second;
+      auto it = asap.find(i);
+      if(it!=asap.end()) asapI = it->second;
       else asapI = 0;
     }
 
@@ -451,11 +425,11 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
 
       auto res = solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
-      if(res!=nullptr)
+      if(not res.empty())
       {
         if(this->verbose==true) std::cout << "Put back " << i->getName() << std::endl;
         schedQueue.push(i);
-        prevSched = std::move(*(res.release()));
+        prevSched.swap(res);
       }
       else
       {
@@ -465,9 +439,9 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
         this->constructProblem();
 
         //this->setObjective();
-        auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);/* prevSched= ?*/
+        auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
-        if(a!=nullptr) prevSched = std::move(*(a.release()));
+        if(not a.empty()) prevSched.swap(a);
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
@@ -632,16 +606,23 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
+  unsigned int budget = 6*this->g.getNumberOfVertices();
+
+  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
 
   for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {
+    // cleanup and preparations
     this->solver->reset();
     this->solver->timeout = this->solverTimeout;
     createBaseConstraints(ii);
+    this->mrt = MRT(this->resourceModel,ii);
     this->II = ii;
-    cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
+    this->constraints.clear();
+    this->neverScheduled.clear();
 
-    if(sched(ii,6*this->g.getNumberOfVertices()))
+    cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
+    if(sched(ii,budget,priority))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     
       break; // found
