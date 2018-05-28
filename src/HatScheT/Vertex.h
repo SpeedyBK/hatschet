@@ -22,13 +22,13 @@ public:
    * \brief getId
    * \return
    */
-  const int getId() const { return id; }
+  int getId() const { return id; }
   /*!
    * \brief setName optional
    * \param s
    */
   void setName(string s){this->name = s;}
-  const string getName() const {return this->name;}
+  const string& getName() const {return this->name;}
   /*!
    * \brief < operator used for map container
    */

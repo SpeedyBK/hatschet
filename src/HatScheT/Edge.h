@@ -32,13 +32,13 @@ public:
   const string getVertexSrcName() const {return this->Vsrc.getName();}
   const string getVertexDstName() const {return this->Vdst.getName();}
 
-  const int getDelay() const { return this->delay; }
+  int getDelay() const { return this->delay; }
   void setDelay(int delay) { this->delay = delay; }
 
-  const int getDistance() const { return distance; }
+  int getDistance() const { return distance; }
   void setDistance(int distance){ this->distance = distance; }
 
-  const int getID() const {return this->id;}
+  int getID() const {return this->id;}
   void setID(int id){this->id = id;}
 
   void setDependencyType(DependencyType dt){this->dependencyType= dt;}
@@ -46,14 +46,14 @@ public:
 
   bool isDataEdge();
 protected:
-  int id;
+  int id = -1;
   DependencyType dependencyType;
 
   /**
    * @brief delay defines the integer edge delay, i.e. an additional delay between src and dst vertices.
    * The delay is intended to be inferred internally by HatScheT, and thus is not a constructor argument.
    */
-  int delay;
+  int delay = 0;
 
   /**
    * @brief distance defines the integer distance in the schedule. Used to model algorithmic/functional delays (like appear in digital filters)

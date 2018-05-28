@@ -586,17 +586,17 @@ vector<vector<int>> GraphBasedMs::createConflictMatrix(vector<vector<int>> confl
 
 void GraphBasedMs::createConflictGraph(Graph &conflGraph, vector<Vertex *> &conflVertices,vector<vector<int>> conflMatrix, int currConstraint, int minII){
     // create a vertice for each sample
-    for (int i = 0; i<conflMatrix[0].size();i++)
+    for (unsigned int i = 0; i<conflMatrix[0].size();i++)
     {
         conflVertices.push_back(&conflGraph.createVertex(i));
     }
 
     // iterate over rows
-    for (int i=0;i!=conflMatrix.size();++i){
+    for (unsigned int i=0;i!=conflMatrix.size();++i){
         // iterate over columns
-        for (int j=0;j!=conflMatrix[0].size();++j){
+        for (unsigned int j=0;j!=conflMatrix[0].size();++j){
             // iterate over columns for every j
-            for (int k = j+1;k!=conflMatrix[0].size();++k){
+            for (unsigned int k = j+1;k!=conflMatrix[0].size();++k){
                 // if usages at both times exceed ressource limit, create conflict
                 if(conflMatrix[i][j]+conflMatrix[i][k]>currConstraint){
                     if (!Utility::existEdgeBetweenVertices(&conflGraph,conflVertices[j],conflVertices[k])){
@@ -636,8 +636,8 @@ void GraphBasedMs::createConflictGraph(Graph &conflGraph, vector<Vertex *> &conf
 
     // account for backedges and component latency through minimum initiation interval
     if (minII > 1)
-        for (int j=0;j!=conflMatrix[0].size();++j){
-            for (int i = 0;i!=minII-1;++i){ // connect sample j with all samples in minII-1 reach
+        for (unsigned int j=0;j!=conflMatrix[0].size();++j){
+            for (unsigned int i = 0;i!=minII-1;++i){ // connect sample j with all samples in minII-1 reach
                 int offset = (j+1+i)%(conflMatrix[0].size());
 
                 conflGraph.createEdge(*conflVertices[j],*conflVertices[offset]);
@@ -676,7 +676,7 @@ int GraphBasedMs::getVectorMatrixColumnWithMinSum(vector<vector<int>> matrix,vec
     --minCount;
 
     //iterate over all columns
-    for (int column = 0; column!=matrix[0].size();++column){
+    for (unsigned int column = 0; column!=matrix[0].size();++column){
 
         int tempMinCount = 0;
         bool isValid = true;

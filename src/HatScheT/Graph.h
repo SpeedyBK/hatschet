@@ -114,7 +114,7 @@ public:
    * \param s
    */
   void setName(string s){this->name = s;}
-  const string getName() const {return this->name;}
+  const string& getName() const {return this->name;}
   /*!
    * \brief verticesBegin iterate over vertices
    * \return

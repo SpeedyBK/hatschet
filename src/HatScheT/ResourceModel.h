@@ -62,7 +62,7 @@ public:
    * \brief getName
    * \return
    */
-  std::string getName() const {
+  const std::string& getName() const {
     return this->name;}
 protected:
   /*!
@@ -111,7 +111,7 @@ public:
    * \brief getStartTime
    * \return
    */
-  const int getStartTime() const {return this->startTime;}
+  int getStartTime() const {return this->startTime;}
 private:
   /*!
    * \brief resource
@@ -265,12 +265,12 @@ public:
    * \brief getNoOfResource
    * \return
    */
-  const int getNoOfResources() const {return this->resources.size();}
+  int getNoOfResources() const {return this->resources.size();}
   /*!
    * \brief getNoOfReservationTables
    * \return
    */
-  const int getNoOfReservationTables() const {return this->tables.size();}
+  int getNoOfReservationTables() const {return this->tables.size();}
   /*!
    * \brief getVertexLatency determine the latency of a registered vertex
    * \param v
