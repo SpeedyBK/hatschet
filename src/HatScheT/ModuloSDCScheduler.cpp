@@ -335,15 +335,15 @@ void addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,unsigned int>& r
 {
   for(auto e = g.edgesBegin(); e!=g.edgesEnd();++e)
   {
+    if((*e)->getDistance()==0) continue;
     auto edgeSrc = &(*e)->getVertexSrc();
     auto edgeDst = &(*e)->getVertexDst();
-    if(c == edgeSrc and v!=edgeDst and (*e)->getDistance()==0)
+    if(c == edgeSrc and v!=edgeDst)
     { // successor without loop
       res[v]+=1;
       addLayerRec(g,res,v,edgeDst);
     }
   }
-
 }
 
 static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Graph& g)
@@ -366,7 +366,7 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
   return res;
 }
 
-bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
+bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, std::map<Vertex *, unsigned int> priority)
 {
   this->mrt = MRT(this->resourceModel,II);
   this->solver->reset();
@@ -383,7 +383,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   }
   std::map<Vertex*,int> prevSched;
 
-  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
+  //std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
   for(auto&p:*asap)
   {
     prevSched.insert(p);
@@ -403,10 +403,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
   clock_t endwait;
   endwait = clock() + this->solver->timeout * CLOCKS_PER_SEC ;
 
-  for(; not schedQueue.empty() and b>=0 and clock() < endwait; --b)
+  for(; not schedQueue.empty() and b>=0 and ((clock()- endwait)/100000<0 ); --b)
   {
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
-    //std::cout << "Elapsed time for this II is " << start << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
+    std::cout << "Elapsed time left is " << (clock()- endwait)/100000 << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
     auto i = schedQueue.top();
     schedQueue.pop();
 
@@ -474,6 +474,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget)
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
+    }
+
+    if(this->resourceModel.getResource(i)->getLimit()>-1){
+      if(this->mrt.vertexIsIn(i)==false) schedQueue.push(i);
     }
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
@@ -632,6 +636,8 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->variables.clear();
   createVariables(variables,g);
 
+  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
+
   for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {
     this->solver->reset();
@@ -640,7 +646,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->II = ii;
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
 
-    if(sched(ii,6*this->g.getNumberOfVertices()))
+    if(sched(ii,6*this->g.getNumberOfVertices(),priority))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     
       break; // found
