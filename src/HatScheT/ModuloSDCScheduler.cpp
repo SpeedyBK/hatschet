@@ -22,7 +22,7 @@ HatScheT::MRT::MRT(HatScheT::ResourceModel& r, int ii)
       data.at(*it)[i]=std::vector<HatScheT::Vertex*>((*it)->getLimit());
     }
   }
-};
+}
 
 static void printMRT(const HatScheT::MRT& mrt)
 {
@@ -207,7 +207,7 @@ static bool feasible(ScaLP::status stat)
 
 bool HatScheT::ModuloSDCScheduler::solveBasicWithConstraint(ScaLP::Constraint&& c)
 {
-  this->solver->reset();
+  /*this->solver->reset();
 
   if(this->threads>0) this->solver->threads = this->threads;
   this->solver->quiet=this->solverQuiet;
@@ -215,7 +215,7 @@ bool HatScheT::ModuloSDCScheduler::solveBasicWithConstraint(ScaLP::Constraint&& 
 
   for(auto c:this->baseConstraints) *this->solver << c;
   *this->solver << c;
-
+*/
   setObjective();
 
   return feasible(this->solver->solve());
@@ -331,6 +331,20 @@ static unsigned int addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,u
     }
   }
   return count;
+}
+
+static std::map<HatScheT::Vertex*,unsigned int> createASAPPerturbation(HatScheT::Graph& g, HatScheT::ResourceModel& rm)
+{
+  std::map<HatScheT::Vertex*,unsigned int> res;
+  HatScheT::ASAPScheduler asap(g,rm);
+  asap.schedule();
+
+  for(auto v = g.verticesBegin(); v!=g.verticesEnd();++v){
+    HatScheT::Vertex* ver = *v;
+    int prio = std::abs(asap.getScheduleLength() - asap.getStartTime(*ver));
+    res.emplace(*v,prio);
+  }
+  return res;
 }
 
 static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Graph& g)
@@ -500,7 +514,6 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
   int evictTime=0;
   for(minTime = asapTime;minTime<=time;++minTime)
   {
-    //this->constructProblem();
     if(solveBasicWithConstraint(getVariable(variables,I)==minTime)) break;
   }
 
@@ -518,7 +531,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     evictTime = it->second+1;
   }
 
-  if(this->verbose==true) std::cout << "BACKTRACKING" << std::endl;
+  if(this->verbose==true) std::cout << "BACKTRACKING at evict time " << evictTime << std::endl;
   if(mrt.resourceConflict(I,evictTime))
   {
     if(this->verbose==true) cout << "resource conflict detected of " << I->getName() << " at " << evictTime << endl;
@@ -596,6 +609,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     if(this->verbose==true) std::cout << "add constraint: " << I->getName() << " == " << std::to_string(evictTime)  << std::endl;
     constraints.push_back(getVariable(variables,I)==evictTime);
     prevSched[I]=evictTime;
+    this->neverScheduled[I]=false;
   }
 
   else{
@@ -613,8 +627,13 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->variables.clear();
   createVariables(variables,g);
   unsigned int budget = 6*this->g.getNumberOfVertices();
-
-  std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
+  cout << "ModuloSDCScheduler::schedule: createPerturbation Start!" << endl;
+  clock_t begin = clock();
+  //std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
+  std::map<Vertex*,unsigned int> priority= createASAPPerturbation(this->g,this->resourceModel);
+  clock_t end = clock();
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
 
   for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {

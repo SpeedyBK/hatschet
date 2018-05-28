@@ -168,8 +168,6 @@ bool Tests::moduloSDCTest()
     
     auto &load = rm.makeResource("load", 1, 2);
     auto &add = rm.makeResource("add", -1, 0);
-    //auto &store = rm.makeResource("store", 1, 2, 0);
-    auto &store = load;
 
     HatScheT::Graph g;
     
@@ -191,11 +189,11 @@ bool Tests::moduloSDCTest()
     rm.registerVertex(&a, &load);
     rm.registerVertex(&b, &load);
     rm.registerVertex(&c, &add);
-    rm.registerVertex(&d, &store);
+    rm.registerVertex(&d, &load);
 
     HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"}};
     m.setSolverQuiet(true);
-
+    m.setVerbose(true);
     m.schedule();
 
     auto sch = m.getStartTimes();
@@ -204,10 +202,6 @@ bool Tests::moduloSDCTest()
     for(auto&p:sch)
     {
       std::cout << p.first->getName() << " = " << p.second << std::endl;
-      //if(p.first==&a and p.second!=2) result=false; 2 or 1??
-      if(p.first==&a and p.second!=1) result=false;
-      if(p.first==&b and p.second!=0) result=false;
-      if(p.first==&d and p.second!=3) result=false;
     }
 
     if(verifyModuloSchedule(g,rm,sch,m.getII())==false) return false;
