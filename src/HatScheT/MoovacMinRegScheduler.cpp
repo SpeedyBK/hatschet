@@ -28,7 +28,7 @@ void MoovacMinRegScheduler::setGeneralConstraints()
     unsigned regVecIndex = this->reg_vectorIndices[e];
 
     this->solver->addConstraint((this->II)*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex]
-                    - this->resourceModel.getVertexLatency(src) - this->regVector[regVecIndex] == 0);
+                    - this->resourceModel.getVertexLatency(src) - this->regVector[regVecIndex] - e->getDelay() == 0);
   }
 }
 

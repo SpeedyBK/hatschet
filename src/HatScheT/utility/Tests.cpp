@@ -205,7 +205,7 @@ bool Tests::moduloSDCTest()
     }
 
     if(verifyModuloSchedule(g,rm,sch,m.getII())==false) return false;
-
+    if(m.getII()!=4) return false;
     return result;
   }
   catch(HatScheT::Exception* e)

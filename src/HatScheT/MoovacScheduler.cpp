@@ -223,6 +223,10 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
   if (this->scheduleFound==false || this->startTimes.size()==0) throw new Exception("MoovacScheduler.getBindings: schedule was found!");
   std::map<const Vertex*,int> bindings;
 
+  for(auto it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it){
+
+  }
+
   for(auto it:this->startTimes){
     const Vertex* v = it.first;
     ScaLP::Variable bv = this->r_vector[this->r_vectorIndices[v]];

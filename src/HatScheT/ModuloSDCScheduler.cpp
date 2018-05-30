@@ -8,6 +8,8 @@
 #include <vector>
 #include <algorithm>
 #include <ctime>
+#include <numeric>
+#include <chrono>
 
 HatScheT::MRT::MRT(HatScheT::ResourceModel& r, int ii)
 : rm(&r), II(ii)
@@ -133,7 +135,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   , ILPSchedulerBase(solverWishlist)
   , mrt({resourceModel,1})
 {
-  this->verbose = false;
+  this->verbose = true;
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
@@ -189,8 +191,6 @@ void HatScheT::ModuloSDCScheduler::constructProblem()
   if(this->threads>0) this->solver->threads = this->threads;
   this->solver->quiet=this->solverQuiet;
   this->solver->timeout=this->solverTimeout;
-  //this->baseConstraints.clear();
-  //createBaseConstraints(this->II);
 
   for(auto c:this->baseConstraints) *this->solver << c;
   for(auto c:this->constraints) *this->solver << c;
@@ -274,12 +274,8 @@ void HatScheT::ModuloSDCScheduler::createBaseConstraints(int II)
     ScaLP::Variable va = getVariable(variables,a);
     ScaLP::Variable vb = getVariable(variables,b);
     auto vaLatency = this->resourceModel.getResource(a)->getLatency();
-    //std::cout << "II: " << II << std::endl;
-    //std::cout << "distance: " <<  (*it)->getDistance() << std::endl;
-    //cout << a->getName() << " to " << b->getName() << " Di = " << to_string(vaLatency+e.getDelay()) << endl;
     this->baseConstraints.emplace_back(va + vaLatency + e->getDelay() - vb <= II * e->getDistance() );
   }
-  
 }
 
 static std::map<HatScheT::Vertex*,int> solveLP(ScaLP::Solver& s, HatScheT::Graph& g, std::map<HatScheT::Vertex*,ScaLP::Variable>& variables, std::vector<ScaLP::Constraint>& cons, std::vector<ScaLP::Constraint>& bcons)
@@ -366,17 +362,16 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
 bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority)
 {
   setObjective();
+
   const std::map<Vertex*,int> asap = solveLP(*(this->solver),this->g,this->variables,this->constraints,this->baseConstraints);
 
-  if(asap.empty())
-  {
+  if(asap.empty()){
     std::cerr << "Can't find ASAP-Schedule (current II is too small (?))" << std::endl;
     return false;
   }
 
   std::map<Vertex*,int> prevSched;
-  for(auto&p:asap)
-  {
+  for(auto&p:asap){
     prevSched.insert(p);
   }
 
@@ -384,22 +379,36 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
 
   for(std::list<Resource*>::iterator it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it)
   {
-    if((*it)->getLimit()<=0) continue;
+    //handle vertices without resource constraints
     auto vs = this->resourceModel.getVerticesOfResource(*it);
-    for(const HatScheT::Vertex* v:vs) schedQueue.push(const_cast<Vertex*>(v));
+    if((*it)->getLimit()<=0) continue;
+
+    //handle vertices with resource constraints
+    for(const HatScheT::Vertex* v:vs){
+      this->neverScheduled.emplace(const_cast<Vertex*>(v),true);
+      schedQueue.push(const_cast<Vertex*>(v));
+    }
   }
 
   int b = budget;
 
-  clock_t endwait;
-  endwait = clock() + this->solver->timeout * CLOCKS_PER_SEC ;
+  std::chrono::time_point<std::chrono::system_clock> time_Start = std::chrono::system_clock::now();
 
-  for(; not schedQueue.empty() and b>=0 and ((clock()- endwait)/100000<0 ); --b)
+  for(; not schedQueue.empty() and b>=0; --b)
   {
-    std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << std::endl;
-    std::cout << "Elapsed time left is " << (clock()- endwait)/100000 << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
+    std::chrono::time_point<std::chrono::system_clock> time_It = std::chrono::system_clock::now();
+    std::time_t time_var_it = std::chrono::system_clock::to_time_t(time_It);
+    auto diff = std::chrono::duration_cast<std::chrono::seconds>(time_It-time_Start);
+    auto secondsRun = diff.count();
+    if(secondsRun>this->solver->timeout){
+      cout << "Timeout for II " << this->II << endl;
+      cout << "#operations left on schedQueue: " << schedQueue.size() << endl;
+      return false;
+    }
     auto i = schedQueue.top();
     schedQueue.pop();
+    std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
+    std::cout << "Elapsed time left is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
 
     //DIRTY HACK
     //there is a bug that will put vertices that are already in the mrt back to schedule queue
@@ -432,13 +441,13 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     if(this->verbose==true) printMRT(mrt);
     if(mrt.resourceConflict(i,time)==false && mrt.update(i,time)==true)
     {    
-      if(this->verbose==true) std::cout << "Add " << t_i << " == " << time << std::endl;
+      if(this->verbose==true) std::cout << "Add (no resource conflict) " << t_i << " == " << time << std::endl;
       constraints.push_back(t_i == time);
       prevSched[i]=time;
     }
     else
     {
-      if(this->verbose==true) std::cout << "Add " << t_i << " >= " << (time+1) << std::endl;
+      if(this->verbose==true) std::cout << "Add (conflict detected) " << t_i << " >= " << (time+1) << std::endl;
       constraints.push_back(t_i >= time+1);
       this->constructProblem();
       this->setObjective();
@@ -483,8 +492,9 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
   std::cout << "Final ";
   printMRT(mrt);
 
-  if(schedQueue.empty())
+  if(schedQueue.empty() && verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==true)
   {
+    this->solver->writeLP("finallp" + to_string(this->II));
     startTimes=prevSched;
     std::cout << "success" << std::endl;
     if(verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==false)
@@ -639,12 +649,12 @@ void HatScheT::ModuloSDCScheduler::schedule()
   {
     // cleanup and preparations
     this->solver->reset();
+    this->constraints.clear();
+    this->neverScheduled.clear();
     this->solver->timeout = this->solverTimeout;
     createBaseConstraints(ii);
     this->mrt = MRT(this->resourceModel,ii);
-    this->II = ii;
-    this->constraints.clear();
-    this->neverScheduled.clear();
+    this->II = ii;    
 
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
     if(sched(ii,budget,priority))

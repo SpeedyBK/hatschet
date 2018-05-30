@@ -164,5 +164,13 @@ public:
   * \param logFileName
   */
  static void adaptiveScheduling(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
+ /*!
+  * \brief compareRegisterUsage this function is used to evaluate the experiments published at fpl
+  * \param g
+  * \param resourceModel
+  * \param solverWishlist
+  * \param logFileName
+  */
+ static void compareRegisterUsage(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }

@@ -1,6 +1,6 @@
 #include "HatScheT/utility/Utility.h"
 #include "ScaLP/Solver.h"
-#include "HatScheT/MoovacScheduler.h"
+#include "HatScheT/MoovacMinRegScheduler.h"
 #include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
@@ -241,6 +241,73 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
     if(vIter==v) return true;
   }
   return false;
+}
+
+void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, string logFileName)
+{
+  HatScheT::SchedulerBase* scheduler;
+  int moovacII=0;
+  int minRegII=0;
+  int moovacRegs=0;
+  int minRegRegs=0;
+  int moovacSL=0;
+  int minRegSL=0;
+  bool moovacVerified=false;
+  bool minRegVerified=false;
+
+  for(int i = 0; i < 2;i++){
+    //select scheduler
+    if(i==0){
+      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
+      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(300);
+    }
+    if(i==1){
+      scheduler = new HatScheT::MoovacMinRegScheduler(g, resourceModel, solverWishlist);
+      MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(300);
+    }
+
+    //do the scheduling
+    scheduler->schedule();
+
+    if(i==0){
+        MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
+        moovacVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+        moovacII = scheduler->getII();
+        moovacRegs = schedulerPtr->getNoOfImplementedRegisters();
+        moovacSL = schedulerPtr->getScheduleLength();
+    }
+    if(i==1){
+        MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
+        minRegVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+        minRegII = scheduler->getII();
+        minRegRegs = schedulerPtr->getNoOfImplementedRegisters();
+        minRegSL = schedulerPtr->getScheduleLength();
+    }
+    }
+
+    //find graph name
+    string graphstr = g.getName();
+    std::size_t found = graphstr.find_last_of("/\\");
+    graphstr = graphstr.substr(found+1);
+
+    //find set name
+    string setstr = g.getName();
+    std::size_t found1 = setstr.find_last_of("/\\");
+    setstr = setstr.substr(0,found1);
+    std::size_t found2 = setstr.find_last_of("/\\");
+    setstr = setstr.substr(found2+1);
+
+    //
+    double regSavedPer = (double)(moovacRegs-minRegRegs)/(double)moovacRegs;
+    double slDiffPer = (double)(moovacSL-minRegSL)/(double)moovacSL;
+
+    //log data
+    std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
+    log << setstr << ";"  << graphstr << ";" << moovacII-minRegII << ";" << moovacRegs << ";" << minRegRegs << ";"
+        << setprecision(2) << fixed << regSavedPer << ";" << setprecision(2) << fixed << slDiffPer << ";" << moovacSL << ";" << minRegSL  << endl;
+    log.close();
 }
 
 void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, string logFileName)
