@@ -149,10 +149,19 @@ public:
   */
  static bool allInputsAreRegisters(Graph* g, Vertex *v);
  /*!
-  * \brief printBinding print the binding of a schedule to console
+  * \brief printBinding
   * \param binding
+  * \param rm
   */
  static void printBinding(map<const Vertex *, int> &binding, ResourceModel &rm);
+ /*!
+  * \brief calcUsedOperationsOfBinding
+  * \param binding
+  * \param rm
+  * \param r
+  * \return
+  */
+ static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
  /*!
   * \brief evaluateSchedulers experiment interface for hatschet paper
   * \param g

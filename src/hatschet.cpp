@@ -185,6 +185,12 @@ int main(int argc, char *args[])
         if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){
           cout << ">>> MoovacScheduler schedule verified <<<" << endl;
           cout << "Found II " << ms.getII() << " with sampleLatency " << ms.getScheduleLength() << endl;
+          /*std::map<const HatScheT::Vertex *, int>  bind = ms.getBindings();
+          HatScheT::Utility::printBinding(bind,rm);
+          for(auto it=rm.resourcesBegin();it!=rm.resourcesEnd();++it){
+            const HatScheT::Resource* r = *it;
+            cout << "Bound to Resource " << r->getName() << " are " << HatScheT::Utility::calcUsedOperationsOfBinding(bind,rm,const_cast<HatScheT::Resource*>(r)) << " units" << endl;
+          }*/
         }
         else cout << ">>> MoovacScheduler schedule NOT verified <<<" << endl;
       }

@@ -439,6 +439,35 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
   }
 }
 
+int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel& rm, Resource *r)
+{
+  int opsUsed=0;
+  //unlimited resources used in paralell
+  if(r->getLimit()<=0){
+    return rm.getNoOfVerticesRegisteredToResource(r);
+  }
+
+  vector<bool> usedOp;
+  usedOp.resize(r->getLimit());
+  for(int i=0;i<usedOp.size();i++){
+    usedOp[i]=false;
+  }
+
+  for(auto it:binding){
+    const Vertex* v = it.first;
+    if(rm.getResource(v)==r){
+      int bind = binding[v];
+      usedOp[bind]=true;
+    }
+  }
+
+  for(int i=0;i<usedOp.size();i++){
+    if(usedOp[i]==true) opsUsed++;
+  }
+
+  return opsUsed;
+}
+
 void Utility::printBinding(map<const Vertex *, int> &binding, ResourceModel& rm)
 {
   cout << "-------Print Binding Start-------" << endl;
