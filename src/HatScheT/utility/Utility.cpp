@@ -254,6 +254,8 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
   int minRegSL=0;
   bool moovacVerified=false;
   bool minRegVerified=false;
+  std::map<const Vertex *, int>  moovacBinding;
+  std::map<const Vertex *, int>  minRegBinding;
 
   for(int i = 0; i < 2;i++){
     //select scheduler
@@ -277,6 +279,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
         moovacII = scheduler->getII();
         moovacRegs = schedulerPtr->getNoOfImplementedRegisters();
         moovacSL = schedulerPtr->getScheduleLength();
+        moovacBinding = schedulerPtr->getBindings();
     }
     if(i==1){
         MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
@@ -284,6 +287,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
         minRegII = scheduler->getII();
         minRegRegs = schedulerPtr->getNoOfImplementedRegisters();
         minRegSL = schedulerPtr->getScheduleLength();
+        minRegBinding = schedulerPtr->getBindings();
     }
     }
 
@@ -303,10 +307,20 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
     double regSavedPer = (double)(moovacRegs-minRegRegs)/(double)moovacRegs;
     double slDiffPer = (double)(moovacSL-minRegSL)/(double)moovacSL;
 
-    //log data
+    //log general data
     std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
     log << setstr << ";"  << graphstr << ";" << moovacII-minRegII << ";" << moovacRegs << ";" << minRegRegs << ";"
-        << setprecision(2) << fixed << regSavedPer << ";" << setprecision(2) << fixed << slDiffPer << ";" << moovacSL << ";" << minRegSL  << endl;
+        << setprecision(2) << fixed << regSavedPer << ";" << setprecision(2) << fixed << slDiffPer << ";" << moovacSL << ";" << minRegSL  << ";";
+    //log binding data
+    for(auto it=resourceModel.resourcesBegin();it!=resourceModel.resourcesEnd();++it){
+      const Resource* r = *it;
+      if(r->getLimit()<=0) continue;
+
+      int moovacCount = Utility::calcUsedOperationsOfBinding(moovacBinding,resourceModel,const_cast<Resource*>(r));
+      int minRegCount = Utility::calcUsedOperationsOfBinding(minRegBinding,resourceModel,const_cast<Resource*>(r));
+      log << r->getName() << ";" << to_string(moovacCount-minRegCount) << ";";
+    }
+    log << endl;
     log.close();
 }
 

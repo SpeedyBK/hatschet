@@ -223,13 +223,12 @@ bool HatScheT::ModuloSDCScheduler::solveBasicWithConstraint(ScaLP::Constraint&& 
 
 bool HatScheT::ModuloSDCScheduler::dependencyConflict(std::map<Vertex*,int>& prevSched, Vertex* I, int time)
 {
-  for(auto it=this->g.edgesBegin(); it!=this->g.edgesEnd(); ++it)
+  for(Edge*e:this->g.Edges())
   {
-    Edge* e = *it;
-    Vertex* d = &(*it)->getVertexDst();
+    Vertex* d = &e->getVertexDst();
     if(I == d)
     {
-      Vertex* s = &(*it)->getVertexSrc();
+      Vertex* s = &e->getVertexSrc();
       auto r = this->resourceModel.getResource(s);
       if(prevSched[s]+r->getLatency()+e->getDelay()>time+this->II*e->getDistance())
       {
@@ -239,13 +238,12 @@ bool HatScheT::ModuloSDCScheduler::dependencyConflict(std::map<Vertex*,int>& pre
     }
   }
 
-  for(auto it=this->g.edgesBegin(); it!=this->g.edgesEnd(); ++it)
+  for(Edge*e:this->g.Edges())
   {
-    Edge* e = *it;
     Vertex* d = &e->getVertexSrc();
     if(I == d)
     {
-      Vertex* s = &(*it)->getVertexDst();
+      Vertex* s = &e->getVertexDst();
       auto r = this->resourceModel.getResource(d);
       if(time+r->getLatency()+e->getDelay()>prevSched[s]+this->II*e->getDistance())
       {
@@ -265,9 +263,8 @@ static ScaLP::Variable getVariable(std::map<HatScheT::Vertex*,ScaLP::Variable>& 
 
 void HatScheT::ModuloSDCScheduler::createBaseConstraints(int II)
 {
-  for(std::set<Edge*>::iterator it = this->g.edgesBegin() ; it!=this->g.edgesEnd();++it)
+  for(Edge*e:this->g.Edges())
   {
-    Edge* e = (*it);
     Vertex* a = &e->getVertexSrc();
     Vertex* b = &e->getVertexDst();
 
@@ -291,13 +288,13 @@ static std::map<HatScheT::Vertex*,int> solveLP(ScaLP::Solver& s, HatScheT::Graph
   {
     auto result = s.getResult();
 
-    for(auto it = g.verticesBegin(); it!=g.verticesEnd();++it)
+    for(HatScheT::Vertex*v:g.Vertices())
     {
-      auto it2 = result.values.find(getVariable(variables,*it));
+      auto it2 = result.values.find(getVariable(variables,v));
       if(it2!=result.values.end())
       {
        // cout << (*it)->getName() << " : " << it2->second << endl;
-        m.emplace(*it,static_cast<int>(it2->second));
+        m.emplace(v,static_cast<int>(it2->second));
       }
     }
   }
@@ -306,21 +303,22 @@ static std::map<HatScheT::Vertex*,int> solveLP(ScaLP::Solver& s, HatScheT::Graph
 
 static void createVariables(std::map<HatScheT::Vertex*,ScaLP::Variable>& variables,HatScheT::Graph& g)
 {
-  for(auto it = g.verticesBegin(); it!=g.verticesEnd();++it)
+  for(HatScheT::Vertex*v:g.Vertices())
   { // TODO: remove upper bound
-    ScaLP::Variable t_i = ScaLP::newIntegerVariable((*it)->getName(),0,10000);
-    variables.emplace(*it,t_i);
+    ScaLP::Variable t_i = ScaLP::newIntegerVariable(v->getName(),0,10000);
+    variables.emplace(v,t_i);
   }
 }
 
 static unsigned int addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,unsigned int>& res, HatScheT::Vertex* v, HatScheT::Vertex* c)
 {
   unsigned int count=0;
-  for(auto e = g.edgesBegin(); e!=g.edgesEnd();++e)
+  for(HatScheT::Edge*e:g.Edges())
   {
-    if((*e)->getDistance()!=0) continue;
-    auto edgeSrc = &(*e)->getVertexSrc();
-    auto edgeDst = &(*e)->getVertexDst();
+    if(e->getDistance()!=0) continue;
+    auto edgeSrc = &e->getVertexSrc();
+    auto edgeDst = &e->getVertexDst();
+
     if(c == edgeSrc and v!=edgeDst)
     { // successor without loop
       count+=1+addLayerRec(g,res,v,edgeDst);
@@ -335,10 +333,10 @@ static std::map<HatScheT::Vertex*,unsigned int> createASAPPerturbation(HatScheT:
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  for(auto v = g.verticesBegin(); v!=g.verticesEnd();++v){
-    HatScheT::Vertex* ver = *v;
-    int prio = std::abs(asap.getScheduleLength() - asap.getStartTime(*ver));
-    res.emplace(*v,prio);
+  for(HatScheT::Vertex*v:g.Vertices())
+  {
+    int prio = std::abs(asap.getScheduleLength() - asap.getStartTime(*v));
+    res.emplace(v,prio);
   }
   return res;
 }
@@ -346,9 +344,9 @@ static std::map<HatScheT::Vertex*,unsigned int> createASAPPerturbation(HatScheT:
 static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Graph& g)
 {
   std::map<HatScheT::Vertex*,unsigned int> res;
-  for(auto v = g.verticesBegin(); v!=g.verticesEnd();++v)
+  for(HatScheT::Vertex*v:g.Vertices())
   {
-    res.emplace(*v,addLayerRec(g,res,*v,*v)); // TODO: FIXME: wrong?
+    res.emplace(v,addLayerRec(g,res,v,v)); // TODO: FIXME: wrong?
   }
 
   for(auto&p:res)

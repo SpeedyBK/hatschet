@@ -147,6 +147,44 @@ public:
   {
       return edges.end();
   }
+
+  // The following classes and functions are experimental and for testing this concept.
+  class Edges
+  {
+    public:
+    Edges(const std::set<Edge*>::iterator& begin, const std::set<Edge*>::iterator& end)
+      : b(begin), e(end)
+    {
+    }
+    std::set<Edge*>::iterator begin() { return b; }
+    std::set<Edge*>::iterator end() { return e; }
+    std::set<Edge*>::iterator b;
+    std::set<Edge*>::iterator e;
+  };
+
+  Edges Edges()
+  {
+    return {edges.begin(),edges.end()};
+  }
+
+  class Vertices
+  {
+    public:
+    Vertices(const std::set<Vertex*>::iterator& begin, const std::set<Vertex*>::iterator& end)
+      : b(begin), e(end)
+    {
+    }
+    std::set<Vertex*>::iterator begin() { return b; }
+    std::set<Vertex*>::iterator end() { return e; }
+    std::set<Vertex*>::iterator b;
+    std::set<Vertex*>::iterator e;
+  };
+
+  Vertices Vertices()
+  {
+    return {vertices.begin(),vertices.end()};
+  }
+
 protected:
   /*!
    * The container for vertices
