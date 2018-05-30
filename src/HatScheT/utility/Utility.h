@@ -149,6 +149,11 @@ public:
   */
  static bool allInputsAreRegisters(Graph* g, Vertex *v);
  /*!
+  * \brief printBinding print the binding of a schedule to console
+  * \param binding
+  */
+ static void printBinding(map<const Vertex *, int> &binding, ResourceModel &rm);
+ /*!
   * \brief evaluateSchedulers experiment interface for hatschet paper
   * \param g
   * \param resourceModel

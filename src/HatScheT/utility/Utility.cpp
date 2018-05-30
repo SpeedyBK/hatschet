@@ -439,6 +439,17 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
   }
 }
 
+void Utility::printBinding(map<const Vertex *, int> &binding, ResourceModel& rm)
+{
+  cout << "-------Print Binding Start-------" << endl;
+  for(auto it:binding){
+    const Vertex* v = it.first;
+    const Resource* r = rm.getResource(v);
+    cout << "Vertex " << v->getName() << " bound to unit " << it.second << " of Resource " << r->getName() <<" with limit " << r->getLimit() << endl;
+  }
+  cout << "-------Print Binding Finished-------" << endl;
+}
+
 bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
 {
   for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
