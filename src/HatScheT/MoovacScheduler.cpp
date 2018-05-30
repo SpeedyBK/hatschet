@@ -224,15 +224,34 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
   std::map<const Vertex*,int> bindings;
 
   for(auto it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it){
+    const Resource* r = *it;
+    set<const Vertex*> vs = this->resourceModel.getVerticesOfResource(r);
 
+    //unlimited resource, all in parallel
+    if(r->getLimit()<0){
+      int binding=0;
+      for(auto v:vs){
+        bindings.emplace(v,binding);
+        binding++;
+      }
+
+    }
+    //limited resource
+    else{
+      for(auto v:vs){
+        ScaLP::Variable bv = this->r_vector[this->r_vectorIndices[v]];
+        ScaLP::Result r = this->solver->getResult();
+        bindings.insert(make_pair(v,r.values[bv]));
+      }
+    }
   }
 
-  for(auto it:this->startTimes){
+  /*for(auto it:this->startTimes){
     const Vertex* v = it.first;
     ScaLP::Variable bv = this->r_vector[this->r_vectorIndices[v]];
     ScaLP::Result r = this->solver->getResult();
     bindings.insert(make_pair(v,r.values[bv]));
-  }
+  }*/
 
   return bindings;
 }
