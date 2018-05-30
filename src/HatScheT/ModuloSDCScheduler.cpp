@@ -318,7 +318,7 @@ static unsigned int addLayerRec(HatScheT::Graph& g, std::map<HatScheT::Vertex*,u
   unsigned int count=0;
   for(auto e = g.edgesBegin(); e!=g.edgesEnd();++e)
   {
-    if((*e)->getDistance()==0) continue;
+    if((*e)->getDistance()!=0) continue;
     auto edgeSrc = &(*e)->getVertexSrc();
     auto edgeDst = &(*e)->getVertexDst();
     if(c == edgeSrc and v!=edgeDst)
@@ -439,18 +439,20 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     ScaLP::Variable t_i = getVariable(variables,i);
 
     if(this->verbose==true) printMRT(mrt);
-    if(mrt.resourceConflict(i,time)==false && mrt.update(i,time)==true)
-    {    
-      if(this->verbose==true) std::cout << "Add (no resource conflict) " << t_i << " == " << time << std::endl;
-      constraints.push_back(t_i == time);
-      prevSched[i]=time;
+    if(mrt.resourceConflict(i,time)==false)
+    {
+      if(mrt.update(i,time)==true){
+        if(this->verbose==true) std::cout << "Add (no resource conflict) " << t_i << " == " << time << std::endl;
+        constraints.push_back(t_i == time);
+        prevSched[i]=time;
+        this->neverScheduled[i]=false;
+      }
     }
     else
     {
       if(this->verbose==true) std::cout << "Add (conflict detected) " << t_i << " >= " << (time+1) << std::endl;
       constraints.push_back(t_i >= time+1);
       this->constructProblem();
-      this->setObjective();
 
       auto res = solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
@@ -467,7 +469,6 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
         backtracking(schedQueue, prevSched,i,asapI,time,II);
         this->constructProblem();
 
-        //this->setObjective();
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
         if(not a.empty()) prevSched.swap(a);
@@ -477,6 +478,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     }
 
     if(this->resourceModel.getResource(i)->getLimit()>-1){
+      cout << "Warning " << i->getName() << " is resource constrainted but neither in mrt nor in schedQueue! This should never happen!" << endl;
       if(this->mrt.vertexIsIn(i)==false) schedQueue.push(i);
     }
     std::cout << "#### End of Iteration\n\n" << std::endl;
@@ -640,7 +642,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
   cout << "ModuloSDCScheduler::schedule: createPerturbation Start!" << endl;
   clock_t begin = clock();
   //std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
-  std::map<Vertex*,unsigned int> priority= createASAPPerturbation(this->g,this->resourceModel);
+  std::map<Vertex*,unsigned int> priority = createASAPPerturbation(this->g,this->resourceModel);
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
   cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
