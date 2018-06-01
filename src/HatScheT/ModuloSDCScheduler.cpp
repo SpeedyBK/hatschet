@@ -117,17 +117,24 @@ bool HatScheT::MRT::remove(HatScheT::Vertex* i)
 {
   auto r = rm->getResource(i);
   //dont try to remove vertices from a unlimited resource as it will corrupt the MRT
-  if(r->getLimit()<=0) return true;
+  if(r->getLimit()<=0) {
+    cout << "Warning: tried to remove a vertex of unlimited resource from MRT : " << i->getName() << "! This should never happen!" << endl;
+    return true;
+  }
 
   for(auto& v:data[r])
   {
     for(auto&a:v)
     {
-      if(a==i) a=nullptr;
+      if(a==i){
+        a=nullptr;
+        cout << "Removed vertex " << i->getName() << " from MRT!" << endl;
+        return true;
+      }
     }
   }
 
-  return true;
+  return false;
 }
 
 HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
@@ -135,7 +142,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   , ILPSchedulerBase(solverWishlist)
   , mrt({resourceModel,1})
 {
-  this->verbose = true;
+  this->verbose = false;
   this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
@@ -150,7 +157,12 @@ bool HatScheT::MRT::vertexIsIn(Vertex *v)
     {
       for(auto& it3:it2)
       {
-        if(it3==v) return true;
+        if(it3==nullptr) continue;
+        if(it3==v) {
+          cout << "Found " << v->getName() << " in current MRT!" << endl;
+          printMRT(*this);
+          return true;
+        }
       }
     }
   }
@@ -406,11 +418,18 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     auto i = schedQueue.top();
     schedQueue.pop();
     std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
-    std::cout << "Elapsed time left is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
+    std::cout << "Elapsed run time is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
 
+    if(this->resourceModel.getResource(i)->getLimit()==-1){
+      cout << "Warning: unconstrained vertex found on schedQueue " << i->getName() << endl;
+      continue;
+    }
     //DIRTY HACK
     //there is a bug that will put vertices that are already in the mrt back to schedule queue
-    if(mrt.vertexIsIn(i)==true) continue;
+    if(mrt.vertexIsIn(i)==true) {
+      cout << "Warning : Already scheduled vertex found on Queue: " << i->getName() <<" ! This should never happen!" << endl;
+      //continue;
+    }
 
     if(this->verbose==true) std::cout << "Current Instruction: " << i->getName() << std::endl;
     if(this->verbose==true) cout << "budget b : " << b << endl;
@@ -419,7 +438,10 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     {
       auto it = asap.find(i);
       if(it!=asap.end()) asapI = it->second;
-      else asapI = 0;
+      else{
+        cout << "Warning: No asap time for " << i->getName() << " was found! This should never happen!" << endl;
+        asapI = 0;
+      }
     }
 
     int time = 0;
@@ -427,12 +449,12 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     if(it==prevSched.end())
     {
       time = asapI;
-      if(this->verbose==true) std::cout << "use asap-time: " << time << std::endl;
+      /*if(this->verbose==true)*/ std::cout << "use asap-time: " << time << " for " << i->getName() << std::endl;
     }
     else
     {     
       time = it->second;
-      if(this->verbose==true) std::cout << "use scheduled-time: " << time << std::endl;
+      /*if(this->verbose==true)*/ std::cout << "use scheduled-time: " << time << " for " << i->getName() << std::endl;
     }
     ScaLP::Variable t_i = getVariable(variables,i);
 
@@ -449,36 +471,37 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
     else
     {
       if(this->verbose==true) std::cout << "Add (conflict detected) " << t_i << " >= " << (time+1) << std::endl;
-      constraints.push_back(t_i >= time+1);
+      this->constraints.push_back(t_i >= time+1);
       this->constructProblem();
 
       auto res = solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
       if(not res.empty())
       {
-        if(this->verbose==true) std::cout << "Put back " << i->getName() << std::endl;
+        /*if(this->verbose==true)*/ std::cout << "Put back " << i->getName() << std::endl;
         schedQueue.push(i);
         prevSched.swap(res);
       }
       else
       {
-        if(this->verbose==true) std::cout << "backtrack because of " << i->getName() << std::endl;
-        constraints.pop_back(); // remove >= Constraint
+        /*if(this->verbose==true)*/ std::cout << "backtrack because of " << i->getName() << std::endl;
+        this->constraints.pop_back(); // remove >= Constraint
         backtracking(schedQueue, prevSched,i,asapI,time,II);
         this->constructProblem();
 
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
         if(not a.empty()) prevSched.swap(a);
+        else cout << "Warning: No Solution for SDC after backtracking was found! This should never happen!" << endl;
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
 
-    if(this->resourceModel.getResource(i)->getLimit()>-1){
+    /*if(this->resourceModel.getResource(i)->getLimit()>-1){
       cout << "Warning " << i->getName() << " is resource constrainted but neither in mrt nor in schedQueue! This should never happen!" << endl;
       if(this->mrt.vertexIsIn(i)==false) schedQueue.push(i);
-    }
+    }*/
     std::cout << "#### End of Iteration\n\n" << std::endl;
   }
 
@@ -532,12 +555,12 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
   auto it = prevSched.find(I);
   if(neverScheduled[I] or minTime >= it->second)
   {
-    if(this->verbose==true) std::cout << "use minTime " << minTime<< std::endl;
+    if(this->verbose==true) std::cout << "use minTime for evict " << minTime<< std::endl;
     evictTime = minTime;
   }
   else
   {
-    if(this->verbose==true) std::cout << "use prevSched: " << (it->second+1) << std::endl;
+    if(this->verbose==true) std::cout << "use prevSched+1 for ecivt : " << (it->second+1) << std::endl;
     evictTime = it->second+1;
   }
 
@@ -559,14 +582,17 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
     }
     if(not evictInsts.empty())
     {
-      for(Vertex*evictInst:evictInsts)
+      //for(Vertex*evictInst:evictInsts)
       {
+        Vertex*evictInst = *evictInsts.begin();
         if(this->verbose==true) std::cout << "Resource conflict in backtracking for: " << evictInst->getName() << std::endl;
-        if(this->verbose==true) cout << "Removing all constraints of " << evictInst->getName() << endl;
+        /*if(this->verbose==true)*/ cout << "Removing all constraints of " << evictInst->getName() << endl;
         removeAllConstraintsOf(constraints,getVariable(variables,evictInst));
-        mrt.remove(evictInst);
+        if(mrt.remove(evictInst)==true){
         schedQueue.emplace(evictInst);
-        if(this->verbose==true) cout << evictInst->getName() << " put back to sched queue" << endl;
+        /*if(this->verbose==true)*/ cout << evictInst->getName() << " put back to sched queue" << endl;
+        }
+
       }
     }
     else
@@ -604,9 +630,16 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
       //continue for unlimited resource
       if(rp->getLimit()<=0) continue;
       removeAllConstraintsOf(constraints,getVariable(variables,p.first));
-      mrt.remove(p.first);
+      cout << "Removing from mrt : " << p.first->getName() << endl;
+
+      if(mrt.remove(p.first)==true){
       schedQueue.emplace(p.first);
-      if(this->verbose==true) cout << "put back " << p.first->getName() << endl;
+      if(mrt.vertexIsIn(p.first)==true){
+       cout << "Warning: vertex should have been removed but is still in mrt " << p.first->getName() << endl;
+       printMRT(mrt);
+      }
+      /*if(this->verbose==true)*/ cout << "put back " << p.first->getName() << endl;
+      }
     }
   }
   else
@@ -623,8 +656,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
   }
 
   else{
-    schedQueue.emplace(I);
-    cout << "put back at end of backtracking: " << I->getName() << endl;
+    cout << "Warning: could not add to mrt at end of backtracking: " << I->getName() << "! This should never happen!" << endl;
   }
 
   std::cout << "end backtracking" << std::endl;
