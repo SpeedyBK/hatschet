@@ -219,7 +219,7 @@ static bool feasible(ScaLP::status stat)
 
 bool HatScheT::ModuloSDCScheduler::solveBasicWithConstraint(ScaLP::Constraint&& c)
 {
-  /*this->solver->reset();
+  this->solver->reset();
 
   if(this->threads>0) this->solver->threads = this->threads;
   this->solver->quiet=this->solverQuiet;
@@ -227,7 +227,7 @@ bool HatScheT::ModuloSDCScheduler::solveBasicWithConstraint(ScaLP::Constraint&& 
 
   for(auto c:this->baseConstraints) *this->solver << c;
   *this->solver << c;
-*/
+
   setObjective();
 
   return feasible(this->solver->solve());
@@ -682,6 +682,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     // cleanup and preparations
     this->solver->reset();
     this->constraints.clear();
+    this->baseConstraints.clear();
     this->neverScheduled.clear();
     this->solver->timeout = this->solverTimeout;
     createBaseConstraints(ii);
