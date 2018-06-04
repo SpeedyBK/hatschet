@@ -478,13 +478,13 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
 
       if(not res.empty())
       {
-        /*if(this->verbose==true)*/ std::cout << "Put back " << i->getName() << std::endl;
+        if(this->verbose==true) std::cout << "Put back " << i->getName() << std::endl;
         schedQueue.push(i);
         prevSched.swap(res);
       }
       else
       {
-        /*if(this->verbose==true)*/ std::cout << "backtrack because of " << i->getName() << std::endl;
+        if(this->verbose==true) std::cout << "backtrack because of " << i->getName() << std::endl;
         this->constraints.pop_back(); // remove >= Constraint
         backtracking(schedQueue, prevSched,i,asapI,time,II);
         this->constructProblem();
@@ -498,35 +498,30 @@ bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatS
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
     }
 
-    /*if(this->resourceModel.getResource(i)->getLimit()>-1){
-      cout << "Warning " << i->getName() << " is resource constrainted but neither in mrt nor in schedQueue! This should never happen!" << endl;
-      if(this->mrt.vertexIsIn(i)==false) schedQueue.push(i);
-    }*/
-    std::cout << "#### End of Iteration\n\n" << std::endl;
+    if(this->verbose==true) std::cout << "#### End of Iteration\n\n" << std::endl;
   }
 
-  std::cout << "Result for II " << this->II << std::endl;
+  if(this->verbose==true) std::cout << "Result for II " << this->II << std::endl;
 
   for(auto&p:prevSched)
   {
     if(this->verbose==true) std::cout << p.first->getName() << " = " << p.second << std::endl;
   }
 
-  std::cout << "Final ";
-  printMRT(mrt);
+  if(this->verbose==true) std::cout << "Final ";
+  if(this->verbose==true) printMRT(mrt);
 
   if(schedQueue.empty() && verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==true)
   {
-    this->solver->writeLP("finallp" + to_string(this->II));
     startTimes=prevSched;
-    std::cout << "success" << std::endl;
+    if(this->verbose==true) std::cout << "success" << std::endl;
     if(verifyModuloSchedule(this->g,this->resourceModel,prevSched,this->II)==false)
       cout << "ERROR (not detected) wrong prevSched stored as solution" << endl;
     return true;
   }
   else
   {
-    std::cout << "No success" << std::endl;
+    if(this->verbose==true) std::cout << "No success" << std::endl;
     return false;
   }
 }
@@ -669,13 +664,12 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->variables.clear();
   createVariables(variables,g);
   unsigned int budget = 6*this->g.getNumberOfVertices();
-  cout << "ModuloSDCScheduler::schedule: createPerturbation Start!" << endl;
+  if(this->verbose==true) cout << "ModuloSDCScheduler::schedule: createPerturbation Start!" << endl;
   clock_t begin = clock();
-  //std::map<Vertex*,unsigned int> priority= createPerturbation(this->g);
   std::map<Vertex*,unsigned int> priority = createASAPPerturbation(this->g,this->resourceModel);
   clock_t end = clock();
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-  cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
+  if(this->verbose==true) cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
 
   for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
   {
@@ -689,7 +683,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->mrt = MRT(this->resourceModel,ii);
     this->II = ii;    
 
-    cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
+    if(this->verbose==true) cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
     if(sched(ii,budget,priority))
     {
       std::cout << "FOUND for II=" << ii << std::endl;     

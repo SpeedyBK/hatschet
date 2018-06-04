@@ -381,7 +381,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
 
-  for(int i = 0; i < 5;i++){
+  for(int i = 0; i < 6;i++){
     //reset logfilename
     logFileName = logNameInsert;
 
@@ -395,18 +395,24 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC60sec.txt";
+      logFileName += "ModuloSDC1min.txt";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(60);
     }
     if(i==3){
+      logFileName += "ModuloSDC5min.txt";
+      scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
+      ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
+      schedulerPtr->setSolverTimeout(300);
+    }
+    if(i==4){
       logFileName += "Moovac1Min.txt";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(60);
     }
-    if(i==4){
+    if(i==5){
       logFileName += "Moovac5Min.txt";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
