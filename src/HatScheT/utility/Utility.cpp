@@ -255,7 +255,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
   bool moovacVerified=false;
   bool minRegVerified=false;
   std::map<const Vertex *, int>  moovacBinding;
-  std::map<const Vertex *, int>  minRegBinding;
+  std::map<const Vertex *, int>  minRegBinding; 
 
   for(int i = 0; i < 2;i++){
     //select scheduler
@@ -268,6 +268,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
       scheduler = new HatScheT::MoovacMinRegScheduler(g, resourceModel, solverWishlist);
       MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(300);
+      schedulerPtr->setMaxLatencyConstraint(moovacSL);
     }
 
     //do the scheduling
