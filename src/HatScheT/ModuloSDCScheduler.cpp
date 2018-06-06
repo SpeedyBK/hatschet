@@ -366,7 +366,7 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
   return res;
 }
 
-bool HatScheT::ModuloSDCScheduler::sched(int II, int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority,  const std::map<HatScheT::Vertex*,int>& asap)
+bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority,  const std::map<HatScheT::Vertex*,int>& asap)
 {
   std::map<Vertex*,int> prevSched;
   for(auto&p:asap){
@@ -622,7 +622,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
 
   std::map<Vertex*,unsigned int> priority;
 
-  for(unsigned int ii=this->minII;ii<=this->maxII;++ii)
+  for(this->II=this->minII;this->II<=this->maxII;++this->II)
   {
     // cleanup and preparations
     this->solver->reset();
@@ -630,9 +630,8 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->baseConstraints.clear();
     this->neverScheduled.clear();
     this->solver->timeout = this->solverTimeout;
-    createBaseConstraints(ii);
-    this->mrt = MRT(this->resourceModel,ii);
-    this->II = ii;    
+    createBaseConstraints(this->II);
+    this->mrt = MRT(this->resourceModel,this->II);
 
     // create asap-times
     setObjective();
@@ -662,9 +661,9 @@ void HatScheT::ModuloSDCScheduler::schedule()
     cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
 
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
-    if(sched(ii,budget,priority,asap))
+    if(sched(budget,priority,asap))
     {
-      std::cout << "FOUND for II=" << ii << std::endl;     
+      std::cout << "FOUND for II=" << this->II << std::endl;
       break; // found
     }
   }

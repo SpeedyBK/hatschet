@@ -146,13 +146,12 @@ namespace HatScheT
     MRT mrt;
     /*!
      * \brief sched the main method for each run (II)
-     * \param II
      * \param budget time budget for each run (according to the original paper)
      * \param priority
      * \param asap
      * \return
      */
-    bool sched(int II, int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority,  const std::map<HatScheT::Vertex*,int>& asap);
+    bool sched(int budget, const std::map<HatScheT::Vertex*,unsigned int>& priority,  const std::map<HatScheT::Vertex*,int>& asap);
     /*!
      * \brief backtracking the backtracking method according to the original paper
      * \param schedQueue
