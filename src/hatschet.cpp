@@ -12,6 +12,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/ModuloSDCScheduler.h"
 #include "HatScheT/Verifier.h"
 #include "HatScheT/utility/Utility.h"
@@ -152,6 +153,7 @@ int main(int argc, char *args[])
         for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
           cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
+        cout << "ASAP latency = " << asap.getScheduleLength() << endl;
         cout << "Finished ASAP schedule" << endl;
       }
     }
@@ -166,9 +168,25 @@ int main(int argc, char *args[])
         for(auto it=alap.getStartTimes().begin(); it!=alap.getStartTimes().end(); ++it){
           cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
+        cout << "ALAP latency = " << alap.getScheduleLength() << endl;
         cout << "Finished ALAP schedule" << endl;
       }
     }
+    else if(getCmdParameter(args[i],"--ul=",value))
+        {
+          if(rm.isEmpty() == false && g.isEmpty() == false)
+          {
+            cout << "Starting UL schedule" << endl;
+            HatScheT::ULScheduler ul(g,rm);
+            ul.schedule();
+            cout << "Printing UL schedule" << endl;
+            for(auto it=ul.getStartTimes().begin(); it!=ul.getStartTimes().end(); ++it){
+              cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
+            }
+            cout << "ULSchedule latency = " << ul.getScheduleLength() << endl;
+            cout << "Finished UL schedule" << endl;
+          }
+        }
     else if(getCmdParameter(args[i],"--moovac=",value))
     {
       if(rm.isEmpty() == false && g.isEmpty() == false)
