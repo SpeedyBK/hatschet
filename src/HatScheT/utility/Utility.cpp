@@ -379,6 +379,11 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
 
 void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
 {
+  //change float output from dot to komma
+  /*std::cout.imbue(
+        std::locale(
+            std::cout.getloc(), new std::numpunct_byname<char>("de_DE.utf8")));*/
+
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
 
@@ -388,33 +393,33 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 
     //select scheduler
     if(i==0){
-      logFileName += "ASAP.txt";
+      logFileName += "ASAP.csv";
       scheduler = new HatScheT::ASAPScheduler(g,resourceModel);
     }
     if(i==1){
-      logFileName += "ULScheduler.txt";
+      logFileName += "ULScheduler.csv";
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC1min.txt";
+      logFileName += "ModuloSDC1min.csv";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(60);
     }
     if(i==3){
-      logFileName += "ModuloSDC5min.txt";
+      logFileName += "ModuloSDC5min.csv";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(300);
     }
     if(i==4){
-      logFileName += "Moovac1Min.txt";
+      logFileName += "Moovac1Min.csv";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(60);
     }
     if(i==5){
-      logFileName += "Moovac5Min.txt";
+      logFileName += "Moovac5Min.csv";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
       schedulerPtr->setSolverTimeout(300);
@@ -437,8 +442,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     //do normalization
     int minII = Utility::calcMinII(&resourceModel,&g);
     int foundII = scheduler->getII();
-    int denominator = 1+ foundII - minII;
-    float normalizedII = (float)1/denominator;
+    float quality = (float)minII/(float)foundII;
 
     //find graph name
     string str = g.getName();
@@ -454,9 +458,25 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 
     //log data
     std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-    log << setstr << ";" << str << ";" << minII << ";" << foundII << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";"
-    << setprecision(3) << fixed << normalizedII << ";" << g.getNumberOfVertices() << ";" << g.getNumberOfEdges() << endl;
+    std::ofstream logVerticesTime("vertTime"+logFileName, std::ios_base::app | std::ios_base::out);
+    std::ofstream logTimeQuality("timeQual"+logFileName, std::ios_base::app | std::ios_base::out);
+
+    if(verified==true){
+    log << setstr << ";" << str << ";" << minII  << ";" << foundII << ";" << setprecision(4) << fixed << to_string(elapsed_secs)
+        << ";" << scheduler->getScheduleLength() << ";"
+    << setprecision(4) << fixed << quality << ";" << g.getNumberOfVertices() << ";" << g.getNumberOfEdges() << endl;
+    //log vertices against time
+    logVerticesTime << g.getNumberOfVertices() << "  " << setprecision(4) << fixed << to_string(elapsed_secs) << endl;
+    //log time against quality
+    logTimeQuality  << setprecision(4) << fixed << to_string(elapsed_secs) << "  " << setprecision(4) << fixed << quality << endl;
+    }
+    else{
+      log << setstr << ";" << str << ";-1" << endl;
+    }
+
+    logVerticesTime.close();
     log.close();
+    logTimeQuality.close();
   }
 }
 

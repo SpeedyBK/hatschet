@@ -19,6 +19,14 @@ bool HatScheT::verifyResourceConstrainedSchedule(HatScheT::Graph &g, HatScheT::R
 bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
                                     std::map<Vertex *, int> &schedule, int II)
 {
+  if(II<=0){
+    cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl;
+    return false;
+  }
+  if(schedule.empty()==true){
+    cout << "HatScheT.verifyModuloSchedule Error empty schedule provided to verifier!"  << endl;
+    return false;
+  }
   auto &S = schedule; // alias
   bool ok;
 

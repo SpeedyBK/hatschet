@@ -55,7 +55,7 @@ void print_short_help()
 int main(int argc, char *args[])
 {
   std::string ilpSolver="";
-  int threads=0;
+  int threads=1;
   int timeout=-1; //default -1 means no timeout
   bool lennart=false;
   HatScheT::ResourceModel rm;
@@ -179,7 +179,7 @@ int main(int argc, char *args[])
         HatScheT::MoovacScheduler ms(g, rm, wish);
         ms.setSolverTimeout(timeout);
         ms.setThreads(threads);
-        ms.setSolverQuiet(false);
+        ms.setSolverQuiet(true);
         ms.schedule();
 
         if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){

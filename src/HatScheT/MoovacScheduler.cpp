@@ -87,6 +87,8 @@ void MoovacScheduler::schedule()
   this->totalTime = 0;
   this->II = this->minII;
 
+  cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
+
   while(this->II <= this->maxII)
   {
     cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
@@ -123,7 +125,10 @@ void MoovacScheduler::schedule()
     this->fillSolutionStructure();
   }
 
-  else this->II = -1;
+  else{
+    cout << "Passed maxII booundary! No modulo schedule identified by Moovac!" << endl;
+    this->II = -1;
+  }
 }
 
 void MoovacScheduler::fillSolutionStructure()
