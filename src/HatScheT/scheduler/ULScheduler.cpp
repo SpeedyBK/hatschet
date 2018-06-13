@@ -28,6 +28,7 @@ bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
 
 bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
 {
+  if(Utility::isInput(&this->g,v)==true) return true;
   set<Vertex*> inputs = this->g.getPreceedingVertices(v);
 
   for(auto it:inputs){
@@ -36,8 +37,11 @@ bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
     if(e.getDistance()>0) continue;
     //input not scheduled yet
     if(this->startTimes[it]==-1) return false;
+
     //this input demands later execution time
-    if(this->startTimes[it]+this->resourceModel.getVertexLatency(it)+e.getDelay()>timeSlot) return false;
+    if(this->startTimes[it]+this->resourceModel.getVertexLatency(it)+e.getDelay()>timeSlot){
+      return false;
+    }
   }
   return true;
 }
@@ -83,7 +87,7 @@ void ULScheduler::schedule()
     struct sort_struct{
       std::map<Vertex*,int> *criterion;
       bool operator()(Vertex *a,Vertex *b){
-        return criterion->at(a) < criterion->at(b);
+        return criterion->at(a) <= criterion->at(b);
       }
     } sort_obj;
     sort_obj.criterion=sort_criterion;

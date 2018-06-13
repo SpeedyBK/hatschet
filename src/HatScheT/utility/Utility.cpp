@@ -200,6 +200,18 @@ bool Utility::edgeIsInGraph(Graph *g, Edge *e)
   return false;
 }
 
+bool Utility::isInput(Graph *g, Vertex *v)
+{
+  for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
+      Edge* e = *it;
+      Vertex* vDst = &e->getVertexDst();
+
+      if(v==vDst && e->getDistance()==0) return false;
+  }
+
+  return true;
+}
+
 bool Utility::existEdgeBetweenVertices(Graph* g, Vertex* Vsrc, Vertex* Vdst)
 {
     for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
@@ -379,11 +391,6 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
 
 void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
 {
-  //change float output from dot to komma
-  /*std::cout.imbue(
-        std::locale(
-            std::cout.getloc(), new std::numpunct_byname<char>("de_DE.utf8")));*/
-
   string logNameInsert = logFileName;
   HatScheT::SchedulerBase* scheduler;
 
@@ -401,10 +408,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC1min.csv";
+      logFileName += "ModuloSDC10min.csv";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(60);
+      schedulerPtr->setSolverTimeout(600);
     }
     if(i==3){
       logFileName += "ModuloSDC5min.csv";
@@ -413,10 +420,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       schedulerPtr->setSolverTimeout(300);
     }
     if(i==4){
-      logFileName += "Moovac1Min.csv";
+      logFileName += "Moovac10Min.csv";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(60);
+      schedulerPtr->setSolverTimeout(600);
     }
     if(i==5){
       logFileName += "Moovac5Min.csv";
@@ -433,9 +440,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
 
     //verify schedule
     bool verified = false;
-    bool schedFound = false;
     if(scheduler->getII()!=-1) {
-      schedFound = true;
       verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
     }
 

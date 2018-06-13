@@ -112,6 +112,13 @@ public:
   */
  static bool edgeIsInGraph(Graph* g, Edge* e);
  /*!
+  * \brief isInput returns true if this vertex is no inputs or only inputs of edges with a distance
+  * \param g
+  * \param v
+  * \return
+  */
+ static bool isInput(Graph* g, Vertex* v);
+ /*!
   * \brief occurrencesAreConflictFree
   * \param occ1
   * \param occ2
