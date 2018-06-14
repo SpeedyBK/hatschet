@@ -408,10 +408,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       scheduler = new HatScheT::ULScheduler(g, resourceModel);
     }
     if(i==2){
-      logFileName += "ModuloSDC10min.csv";
+      logFileName += "ModuloSDC1min.csv";
       scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
       ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(600);
+      schedulerPtr->setSolverTimeout(60);
     }
     if(i==3){
       logFileName += "ModuloSDC5min.csv";
@@ -420,10 +420,10 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
       schedulerPtr->setSolverTimeout(300);
     }
     if(i==4){
-      logFileName += "Moovac10Min.csv";
+      logFileName += "Moovac1Min.csv";
       scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
       MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(600);
+      schedulerPtr->setSolverTimeout(60);
     }
     if(i==5){
       logFileName += "Moovac5Min.csv";
@@ -482,6 +482,9 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     logVerticesTime.close();
     log.close();
     logTimeQuality.close();
+
+    delete scheduler;
+    scheduler=nullptr;
   }
 }
 

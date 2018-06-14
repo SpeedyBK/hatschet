@@ -191,11 +191,10 @@ int main(int argc, char *args[])
     {
       if(rm.isEmpty() == false && g.isEmpty() == false)
       {
-        int timeout = stoi(value);
         cout << "Starting MoovacScheduler scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads << endl;
         std::list<std::string> wish = {"CPLEX"};
         HatScheT::MoovacScheduler ms(g, rm, wish);
-        ms.setSolverTimeout(timeout);
+        if(timeout>0) ms.setSolverTimeout(timeout);
         ms.setThreads(threads);
         ms.setSolverQuiet(true);
         ms.schedule();
@@ -203,12 +202,6 @@ int main(int argc, char *args[])
         if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){
           cout << ">>> MoovacScheduler schedule verified <<<" << endl;
           cout << "Found II " << ms.getII() << " with sampleLatency " << ms.getScheduleLength() << endl;
-          /*std::map<const HatScheT::Vertex *, int>  bind = ms.getBindings();
-          HatScheT::Utility::printBinding(bind,rm);
-          for(auto it=rm.resourcesBegin();it!=rm.resourcesEnd();++it){
-            const HatScheT::Resource* r = *it;
-            cout << "Bound to Resource " << r->getName() << " are " << HatScheT::Utility::calcUsedOperationsOfBinding(bind,rm,const_cast<HatScheT::Resource*>(r)) << " units" << endl;
-          }*/
         }
         else cout << ">>> MoovacScheduler schedule NOT verified <<<" << endl;
       }
