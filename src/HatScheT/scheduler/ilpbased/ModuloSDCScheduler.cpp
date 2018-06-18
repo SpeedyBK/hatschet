@@ -1,6 +1,6 @@
-#include "utility/Utility.h"
+#include "HatScheT/utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
-#include <HatScheT/ModuloSDCScheduler.h>
+#include <HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/Verifier.h>
 #include <ctime>

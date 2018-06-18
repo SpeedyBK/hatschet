@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <HatScheT/MoovacScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 
 namespace HatScheT
 {

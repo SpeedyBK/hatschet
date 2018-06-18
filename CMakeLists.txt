@@ -67,14 +67,14 @@ src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp 
 src/HatScheT/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
-src/HatScheT/MoovacScheduler.cpp
-src/HatScheT/MoovacMinRegScheduler.cpp
+src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
+src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/base/ILPSchedulerBase.cpp
 src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
-src/HatScheT/ModuloSDCScheduler.cpp
+src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp

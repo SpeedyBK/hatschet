@@ -5,7 +5,7 @@
 */
 #pragma once
 
-#include <HatScheT/MoovacScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include <vector>
 #include <HatScheT/utility/subgraphs/OccurrenceSetCombination.h>
 

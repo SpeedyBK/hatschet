@@ -5,7 +5,7 @@
 #include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <algorithm>
-#include <HatScheT/MoovacScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include <fstream>
 #include <boost/algorithm/string/split.hpp>
 #include <cstdio>

@@ -6,14 +6,14 @@
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
-#include <HatScheT/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
-#include "HatScheT/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 

@@ -1,4 +1,4 @@
-#include <HatScheT/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 

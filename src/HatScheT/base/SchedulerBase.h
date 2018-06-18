@@ -13,8 +13,6 @@
 
 namespace HatScheT
 {
-
-
 /*!
  * \brief ILPSchedulerBase is the abstract base class of all schedulers.
  *
