@@ -12,7 +12,7 @@
 #include <set>
 #include <list>
 #include <functional>
-#include <HatScheT/Exception.h>
+#include <HatScheT/utility/Exception.h>
 
 namespace HatScheT
 {

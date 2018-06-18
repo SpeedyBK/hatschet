@@ -65,7 +65,7 @@ add_library(hatschet
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp 
-src/HatScheT/Exception.cpp
+src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
@@ -90,7 +90,7 @@ src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
-src/HatScheT/Verifier.cpp
+src/HatScheT/utility/Verifier.cpp
 )
 
 add_executable(hatschet-bin src/hatschet.cpp)

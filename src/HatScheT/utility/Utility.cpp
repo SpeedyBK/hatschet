@@ -4,7 +4,7 @@
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
-#include "HatScheT/Verifier.h"
+#include "HatScheT/utility/Verifier.h"
 #include <limits>
 #include <cmath>
 #include <map>

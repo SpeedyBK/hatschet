@@ -5,9 +5,9 @@
 */
 #pragma once
 
-#include "../../Graph.h"
-#include "../../ResourceModel.h"
-#include "../../Exception.h"
+#include "HatScheT/Graph.h"
+#include "HatScheT/ResourceModel.h"
+#include "HatScheT//utility/Exception.h"
 
 #ifdef USE_XERCESC
 #include "xercesc/sax2/DefaultHandler.hpp"

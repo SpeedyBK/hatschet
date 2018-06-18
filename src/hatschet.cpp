@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string.h>
 
-#include <HatScheT/Exception.h>
+#include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
@@ -14,7 +14,7 @@
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
-#include "HatScheT/Verifier.h"
+#include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 
 /**

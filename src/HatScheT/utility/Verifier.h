@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Graph.h"
-#include "ResourceModel.h"
+#include "HatScheT/Graph.h"
+#include "HatScheT/ResourceModel.h"
 
 #include <map>
 

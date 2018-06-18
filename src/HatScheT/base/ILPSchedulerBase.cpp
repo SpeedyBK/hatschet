@@ -1,5 +1,5 @@
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/Exception.h>
+#include <HatScheT/utility/Exception.h>
 
 namespace HatScheT
 {

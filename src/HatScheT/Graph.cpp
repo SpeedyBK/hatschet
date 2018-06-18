@@ -1,5 +1,5 @@
 #include <HatScheT/Graph.h>
-#include <HatScheT/Exception.h>
+#include <HatScheT/utility/Exception.h>
 #include <string>
 
 namespace HatScheT {

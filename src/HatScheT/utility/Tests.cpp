@@ -11,7 +11,7 @@
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
-#include "HatScheT/Verifier.h"
+#include "HatScheT/utility/Verifier.h"
 
 namespace HatScheT {
 

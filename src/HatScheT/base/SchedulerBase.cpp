@@ -1,5 +1,5 @@
 #include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/Verifier.h>
+#include <HatScheT/utility/Verifier.h>
 
 namespace HatScheT
 {

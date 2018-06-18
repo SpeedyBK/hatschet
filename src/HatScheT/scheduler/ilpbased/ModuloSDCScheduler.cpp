@@ -2,7 +2,7 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h>
 #include <HatScheT/Graph.h>
-#include <HatScheT/Verifier.h>
+#include <HatScheT/utility/Verifier.h>
 #include <ctime>
 #include <map>
 #include <vector>
