@@ -55,8 +55,8 @@ void ULScheduler::schedule()
   ALAPScheduler l = ALAPScheduler(this->g,this->resourceModel);
   l.schedule();
 
-  auto asap = s.getStartTimes();
-  auto alap = l.getStartTimes();
+  auto asap = s.getSchedule();
+  auto alap = l.getSchedule();
   std::map<Vertex*,int> *sort_criterion=nullptr;
 
   // create the sort_criterion for the vertices.

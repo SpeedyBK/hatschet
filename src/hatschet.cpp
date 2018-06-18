@@ -150,7 +150,7 @@ int main(int argc, char *args[])
         HatScheT::ASAPScheduler asap(g,rm);
         asap.schedule();
         cout << "Printing ASAP schedule" << endl;
-        for(auto it=asap.getStartTimes().begin(); it!=asap.getStartTimes().end(); ++it){
+        for(auto it=asap.getSchedule().begin(); it!=asap.getSchedule().end(); ++it){
           cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
         cout << "ASAP latency = " << asap.getScheduleLength() << endl;
@@ -165,7 +165,7 @@ int main(int argc, char *args[])
         HatScheT::ALAPScheduler alap(g,rm);
         alap.schedule();
         cout << "Printing ALAP schedule" << endl;
-        for(auto it=alap.getStartTimes().begin(); it!=alap.getStartTimes().end(); ++it){
+        for(auto it=alap.getSchedule().begin(); it!=alap.getSchedule().end(); ++it){
           cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
         }
         cout << "ALAP latency = " << alap.getScheduleLength() << endl;
@@ -180,7 +180,7 @@ int main(int argc, char *args[])
             HatScheT::ULScheduler ul(g,rm);
             ul.schedule();
             cout << "Printing UL schedule" << endl;
-            for(auto it=ul.getStartTimes().begin(); it!=ul.getStartTimes().end(); ++it){
+            for(auto it=ul.getSchedule().begin(); it!=ul.getSchedule().end(); ++it){
               cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ") " << " at " << it->second << endl;
             }
             cout << "ULSchedule latency = " << ul.getScheduleLength() << endl;
@@ -199,7 +199,7 @@ int main(int argc, char *args[])
         ms.setSolverQuiet(true);
         ms.schedule();
 
-        if (HatScheT::verifyModuloSchedule(g, rm, ms.getStartTimes(), ms.getII())){
+        if (HatScheT::verifyModuloSchedule(g, rm, ms.getSchedule(), ms.getII())){
           cout << ">>> MoovacScheduler schedule verified <<<" << endl;
           cout << "Found II " << ms.getII() << " with sampleLatency " << ms.getScheduleLength() << endl;
         }
@@ -209,16 +209,15 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--modulosdc=",value))
     {
       if(rm.isEmpty() == false && g.isEmpty() == false)
-      {
-        int timeout = stoi(value);
+      {     
         cout << "Starting ModuloSDC scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads  << endl;
         std::list<std::string> wish = {"CPLEX"};
         HatScheT::ModuloSDCScheduler msdc(g, rm, wish);
-        msdc.setSolverTimeout(timeout);
+        if(timeout>0) msdc.setSolverTimeout(timeout);
         msdc.setThreads(threads);
         msdc.schedule();
 
-        if (HatScheT::verifyModuloSchedule(g, rm, msdc.getStartTimes(), msdc.getII())){
+        if (HatScheT::verifyModuloSchedule(g, rm, msdc.getSchedule(), msdc.getII())){
           cout << ">>> ModuloSDC schedule verified <<<" << endl;
           cout << "Found II " << msdc.getII() << " with sampleLatency " << msdc.getScheduleLength() << endl;
         }

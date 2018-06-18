@@ -20,7 +20,7 @@ int SchedulerBase::getScheduleLength()
   return maxTime;
 }
 
-std::map<Vertex*,int>&  SchedulerBase::getStartTimes()
+std::map<Vertex*,int>&  SchedulerBase::getSchedule()
 {
   if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->II)==false){
     this->printStartTimes();

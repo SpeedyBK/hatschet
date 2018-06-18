@@ -71,7 +71,7 @@ bool Tests::asapTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int sum = Utility::sumOfStarttimes(asap.getStartTimes());
+  int sum = Utility::sumOfStarttimes(asap.getSchedule());
 
   if(sum==51) return true;
   cout << "Tests::asapTest: Sum of start times expected to be 51, but is " << sum << endl;
@@ -94,7 +94,7 @@ bool Tests::asapHCTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int sum = Utility::sumOfStarttimes(asap.getStartTimes());
+  int sum = Utility::sumOfStarttimes(asap.getSchedule());
 
   if(sum==29) return true;
   cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
@@ -120,7 +120,7 @@ bool Tests::alapHCTest()
   HatScheT::ALAPScheduler alap(g,rm);
   alap.schedule();
 
-  int sum = Utility::sumOfStarttimes(alap.getStartTimes());
+  int sum = Utility::sumOfStarttimes(alap.getSchedule());
 
   if(sum==44) return true;
   cout << "Tests::alapHCTest: Sum of start times expected to be 44, but is " << sum << endl;
@@ -196,7 +196,7 @@ bool Tests::moduloSDCTest()
     m.setVerbose(true);
     m.schedule();
 
-    auto sch = m.getStartTimes();
+    auto sch = m.getSchedule();
 
     bool result = true;
     for(auto&p:sch)
@@ -404,7 +404,7 @@ bool Tests::ulSchedulerTest()
   uls.schedule();
 
   uls.printStartTimes();
-  std::map<Vertex *, int> &schedule = uls.getStartTimes();
+  std::map<Vertex *, int> &schedule = uls.getSchedule();
   int foundII = uls.getII();
   bool verified = HatScheT::verifyModuloSchedule(g, rm, schedule, foundII);
 

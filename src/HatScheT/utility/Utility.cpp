@@ -288,7 +288,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
 
     if(i==0){
         MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-        moovacVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+        moovacVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
         moovacII = scheduler->getII();
         moovacRegs = schedulerPtr->getNoOfImplementedRegisters();
         moovacSL = schedulerPtr->getScheduleLength();
@@ -296,7 +296,7 @@ void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::
     }
     if(i==1){
         MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
-        minRegVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+        minRegVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
         minRegII = scheduler->getII();
         minRegRegs = schedulerPtr->getNoOfImplementedRegisters();
         minRegSL = schedulerPtr->getScheduleLength();
@@ -343,17 +343,21 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
   HatScheT::SchedulerBase* scheduler;
   string schedulerUsed = "";
 
-  if(noOfVertices < 100){
+  if(noOfVertices < 75){
     scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
     schedulerUsed = "Moovac";
   }
-  else if(100 <= noOfVertices && noOfVertices <= 150){
+  else if(75 <= noOfVertices && noOfVertices < 130){
     scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
     schedulerUsed = "ModuloSDC";
   }
-  else if(noOfVertices > 150){
+  else if(130 <= noOfVertices && noOfVertices < 1000){
     scheduler = new HatScheT::ULScheduler(g, resourceModel);
     schedulerUsed = "ULScheduler";
+  }
+  else if(1000 <= noOfVertices){
+    scheduler = new HatScheT::ASAPScheduler(g, resourceModel);
+    schedulerUsed = "ASAPScheduler";
   }
 
   //measure time and schedule
@@ -367,8 +371,13 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
   bool schedFound = false;
   if(scheduler->getII()!=-1) {
     schedFound = true;
-    verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+    verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
   }
+
+  //do normalization
+  int minII = Utility::calcMinII(&resourceModel,&g);
+  int foundII = scheduler->getII();
+  float quality = (float)minII/(float)foundII;
 
   //find graph name
   string graphstr = g.getName();
@@ -384,8 +393,8 @@ void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::li
 
   //log data
   std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-  log << setstr << ";"  << graphstr << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound
-      << ";" << verified << ";" << schedulerUsed << ";" << noOfVertices << ";" << endl;
+  log << setstr << ";"  << graphstr << ";" << minII  << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound
+      << ";" << verified << ";" << schedulerUsed << ";" << noOfVertices << ";" << setprecision(4) << fixed << quality << endl;
   log.close();
 }
 
@@ -441,7 +450,7 @@ void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::li
     //verify schedule
     bool verified = false;
     if(scheduler->getII()!=-1) {
-      verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getStartTimes(), scheduler->getII());
+      verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
     }
 
     //do normalization

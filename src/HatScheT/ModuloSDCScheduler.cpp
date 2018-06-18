@@ -128,7 +128,7 @@ bool HatScheT::MRT::remove(HatScheT::Vertex* i)
     {
       if(a==i){
         a=nullptr;
-        cout << "Removed vertex " << i->getName() << " from MRT!" << endl;
+        //cout << "Removed vertex " << i->getName() << " from MRT!" << endl;
         return true;
       }
     }
@@ -172,7 +172,7 @@ bool HatScheT::MRT::vertexIsIn(Vertex *v)
 
 HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource* r)
 {
-  std::cout << "getInstruction at " << std::to_string(i) << ": ";// << std::endl;
+  //std::cout << "getInstruction at " << std::to_string(i) << ": ";// << std::endl;
   for(auto&p:data)
   {
     if(p.second.size()>=i && p.first==r)
@@ -181,7 +181,7 @@ HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource
       {
         if(o!=nullptr)
         {
-          std::cout << "returning instruction " << o->getName() << std::endl;
+         // std::cout << "returning instruction " << o->getName() << std::endl;
           return o;
         }
       }
@@ -191,7 +191,7 @@ HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource
       continue;
     }
   }
-  std::cout << "NO INSTRUCTION" << std::endl;
+  //std::cout << "NO INSTRUCTION" << std::endl;
 
   return nullptr;
 }
@@ -405,8 +405,8 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
     }
     auto i = schedQueue.top();
     schedQueue.pop();
-    std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
-    std::cout << "Elapsed run time is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
+    if(this->verbose==true) std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
+    if(this->verbose==true) std::cout << "Elapsed run time is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
 
     if(this->resourceModel.getResource(i)->getLimit()==-1){
       cout << "Warning: unconstrained vertex found on schedQueue " << i->getName() << endl;

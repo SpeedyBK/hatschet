@@ -33,7 +33,7 @@ public:
    * \brief Returns the start times of all nodes
    * \return The start times of all nodes
    */
-  std::map<Vertex*,int>& getStartTimes();
+  std::map<Vertex*,int>& getSchedule();
 
   /*!
    * \brief Gets the start time of vertex v
