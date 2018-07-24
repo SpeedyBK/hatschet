@@ -17,13 +17,13 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
 void MoovacScheduler::resetContainer()
 {
   this->solver->reset();
-  this->m_container.clear();
-  this->regVector.clear();
-  this->t_vectorIndices.clear();
-  this->reg_vectorIndices.clear();
-  this->t_vector.clear();
-  this->r_vectorIndices.clear();
-  this->r_vector.resize(0);
+  this->mi.clear();
+  this->registers.clear();
+  this->tIndices.clear();
+  this->registerIndices.clear();
+  this->ti.clear();
+  this->rIndices.clear();
+  this->ri.resize(0);
 }
 
 void MoovacScheduler::setUpSolverSettings()
@@ -68,14 +68,14 @@ void MoovacScheduler::setObjective()
 {
   //supersink latency objective
   ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,this->SLMax);
-  for(ScaLP::Variable &v:this->t_vector){
+  for(ScaLP::Variable &v:this->ti){
     this->solver->addConstraint(supersink - v >= 0);
   }
   this->solver->setObjective(ScaLP::minimize(supersink));
 
   //original moovac objective
     /*ScaLP::Term sum;
-    for(ScaLP::Variable &v:this->t_vector){
+    for(ScaLP::Variable &v:this->ti){
       sum = sum + v;
     }
     this->solver->setObjective(ScaLP::minimize(sum));*/
@@ -136,8 +136,8 @@ void MoovacScheduler::fillSolutionStructure()
   for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
   {
     Vertex* v = *it;
-    unsigned int index =this->t_vectorIndices.at(v);
-    ScaLP::Variable svTemp = this->t_vector[index];
+    unsigned int index =this->tIndices.at(v);
+    ScaLP::Variable svTemp = this->ti[index];
 
     int startTime = this->r.values[svTemp];
     this->startTimes.insert(make_pair(v, startTime));
@@ -152,11 +152,11 @@ void MoovacScheduler::setVectorVariables()
     int id = v->getId();
 
     //17
-    this->t_vector.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
+    this->ti.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
     //store tIndex
-    this->t_vectorIndices.insert(make_pair(v,t_vector.size()-1));
+    this->tIndices.insert(make_pair(v,ti.size()-1));
     //16
-    this->solver->addConstraint(t_vector.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
+    this->solver->addConstraint(ti.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
   }
 
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
@@ -171,8 +171,8 @@ void MoovacScheduler::setVectorVariables()
     {
       const Vertex* v1 = (*it2);
       //18
-      this->r_vector.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
-      this->r_vectorIndices.insert(make_pair(v1, this->r_vector.size() -1));
+      this->ri.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
+      this->rIndices.insert(make_pair(v1, this->ri.size() -1));
     }
   }
 }
@@ -183,8 +183,8 @@ void MoovacScheduler::setSourceVerticesToZero()
   {
     Vertex* v = *it;
 
-    unsigned int index =this->t_vectorIndices.at(v);
-    ScaLP::Variable  temp = this->t_vector[index];
+    unsigned int index =this->tIndices.at(v);
+    ScaLP::Variable  temp = this->ti[index];
     //source vertix of unlimited(!) resource
     if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) this->solver->addConstraint(temp == 0);
   }
@@ -197,11 +197,11 @@ void MoovacScheduler::setGeneralConstraints()
   {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
-    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    unsigned int srcTVecIndex = this->tIndices[src];
     Vertex* dst = &(e->getVertexDst());
-    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
+    unsigned int dstTVecIndex = this->tIndices[dst];
 
-    this->solver->addConstraint(t_vector[srcTVecIndex] - t_vector[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
+    this->solver->addConstraint(ti[srcTVecIndex] - ti[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
   }
 }
 
@@ -245,7 +245,7 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
     //limited resource
     else{
       for(auto v:vs){
-        ScaLP::Variable bv = this->r_vector[this->r_vectorIndices[v]];
+        ScaLP::Variable bv = this->ri[this->rIndices[v]];
         ScaLP::Result r = this->solver->getResult();
         bindings.insert(make_pair(v,r.values[bv]));
       }
@@ -278,10 +278,10 @@ int MoovacScheduler::getNoOfMuxInputs()
         for(auto it3:verticesOfR)
         {
           const Vertex* candidateV = it3;
-          int candidateVRIndex = this->r_vectorIndices[candidateV];
+          int candidateVRIndex = this->rIndices[candidateV];
           ScaLP::Result r = this->solver->getResult();
 
-          if(r.values[this->r_vector[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
+          if(r.values[this->ri[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
         }
 
         const Vertex* v = *verticesOfSameResourceBinding.begin();
@@ -316,17 +316,17 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         int maxLifetime = 0;
 
         const Vertex* v = it2;
-        int vTIndex = this->t_vectorIndices[v];
+        int vTIndex = this->tIndices[v];
         set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
 
         for(auto it3:followingVertices)
         {
           const Vertex* followV = it3;
           Edge* e = &this->g.getEdge(v,followV);
-          int followVTIndex = this->t_vectorIndices[followV];
+          int followVTIndex = this->tIndices[followV];
           ScaLP::Result r = this->solver->getResult();
 
-          int currLifetime = r.values[this->t_vector[followVTIndex]] - r.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
+          int currLifetime = r.values[this->ti[followVTIndex]] - r.values[this->ti[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
           if(currLifetime > maxLifetime) maxLifetime = currLifetime;
         }
 
@@ -348,10 +348,10 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         for(auto it3:verticesOfR)
         {
           const Vertex* candidateV = it3;
-          int candidateVRIndex = this->r_vectorIndices[candidateV];
+          int candidateVRIndex = this->rIndices[candidateV];
           ScaLP::Result r = this->solver->getResult();
 
-          if(r.values[this->r_vector[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
+          if(r.values[this->ri[candidateVRIndex]]==i) verticesOfSameResourceBinding.insert(candidateV);
         }
 
         int maxLifetime = 0;
@@ -359,17 +359,17 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         for(auto it3:verticesOfSameResourceBinding)
         {
           const Vertex* v = it3;
-          int vTIndex = this->t_vectorIndices[v];
+          int vTIndex = this->tIndices[v];
           set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
 
           for(auto it4:followingVertices)
           {
             const Vertex* followV = it4;
             Edge* e = &this->g.getEdge(v,followV);
-            int followVTIndex = this->t_vectorIndices[followV];
+            int followVTIndex = this->tIndices[followV];
             ScaLP::Result res = this->solver->getResult();
 
-            int currLifetime = res.values[this->t_vector[followVTIndex]] - res.values[this->t_vector[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
+            int currLifetime = res.values[this->ti[followVTIndex]] - res.values[this->ti[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
 
             if(currLifetime > maxLifetime) maxLifetime = currLifetime;
           }
@@ -386,7 +386,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
 void MoovacScheduler::setModuloAndResourceConstraints()
 {
-    this->m_container.resize(0);
+    this->mi.resize(0);
 
     for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
     {
@@ -412,18 +412,18 @@ void MoovacScheduler::setModuloAndResourceConstraints()
       {        
         const Vertex* v1 = (*it2);
 
-        int tIndex = this->t_vectorIndices.at(v1);
+        int tIndex = this->tIndices.at(v1);
         //18
-        int rvecIndex = this->r_vectorIndices.at(v1);
+        int rvecIndex = this->rIndices.at(v1);
         //19
         m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
         //20
         y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
 
         //13
-        this->solver->addConstraint(this->t_vector[tIndex] - y_vector.back()*this->II - m_vector.back() == 0);
+        this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*this->II - m_vector.back() == 0);
         //14
-        this->solver->addConstraint(this->r_vector[rvecIndex] <= ak - 1);
+        this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
         //15
         this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
@@ -456,10 +456,10 @@ void MoovacScheduler::setModuloAndResourceConstraints()
         corrVerticesMatrix.push_back(corrVerticesVec);
       }
 
-      this->m_container.push_back(m_vector);
-      this->y_container.push_back(y_vector);
-      this->eps_container.push_back(eps_matrix);
-      this->mu_container.push_back(mu_matrix);
+      this->mi.push_back(m_vector);
+      this->yi.push_back(y_vector);
+      this->epsij.push_back(eps_matrix);
+      this->muij.push_back(mu_matrix);
 
       if(eps_matrix.size() > 1)
       {
@@ -481,10 +481,10 @@ void MoovacScheduler::setModuloAndResourceConstraints()
               //ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
               //ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
               //7
-              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+              this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                   - (ak*eps_matrix[j][k]) + ak >= 1);
               //8
-              this->solver->addConstraint(this->r_vector[this->r_vectorIndices[vPair.first]] - this->r_vector[this->r_vectorIndices[vPair.second]]
+              this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                   - (ak*eps_matrix[j][k]) <= 0);
               //9
               this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);

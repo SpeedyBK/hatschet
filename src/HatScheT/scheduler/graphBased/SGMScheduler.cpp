@@ -40,18 +40,18 @@ void SGMScheduler::setSubgraphConstraints()
     for(int j=0;j<edgesContainer[i].size();j++){
       Edge* e1 = edgesContainer[i][j];
       Vertex* src1 = &(e1->getVertexSrc());
-      unsigned int srcTVecIndex1 = this->t_vectorIndices[src1];
+      unsigned int srcTVecIndex1 = this->tIndices[src1];
       Vertex* dst1 = &(e1->getVertexDst());
-      unsigned int dstTVecIndex1 = this->t_vectorIndices[dst1];
+      unsigned int dstTVecIndex1 = this->tIndices[dst1];
 
       Edge* e2 = edgesContainer[i+1][j];
       Vertex* src2 = &(e2->getVertexSrc());
-      unsigned int srcTVecIndex2 = this->t_vectorIndices[src2];
+      unsigned int srcTVecIndex2 = this->tIndices[src2];
       Vertex* dst2 = &(e2->getVertexDst());
-      unsigned int dstTVecIndex2 = this->t_vectorIndices[dst2];
+      unsigned int dstTVecIndex2 = this->tIndices[dst2];
 
-      this->solver->addConstraint(this->II*(e1->getDistance()) - t_vector[srcTVecIndex1] + t_vector[dstTVecIndex1] - this->resourceModel.getVertexLatency(src1)
-                                 - this->II*(e2->getDistance()) + t_vector[srcTVecIndex2] - t_vector[dstTVecIndex2] + this->resourceModel.getVertexLatency(src2) == 0);
+      this->solver->addConstraint(this->II*(e1->getDistance()) - ti[srcTVecIndex1] + ti[dstTVecIndex1] - this->resourceModel.getVertexLatency(src1)
+                                 - this->II*(e2->getDistance()) + ti[srcTVecIndex2] - ti[dstTVecIndex2] + this->resourceModel.getVertexLatency(src2) == 0);
     }
   }
 
@@ -60,19 +60,19 @@ void SGMScheduler::setSubgraphConstraints()
   for(int i=0;i<vertsContainer.size()-1;i++){
     for(int j=0;j<vertsContainer[i].size();j++){
       Vertex* v1= vertsContainer[i][j];
-      int rvecIndex1 = this->r_vectorIndices.at(v1);
+      int rvecIndex1 = this->rIndices.at(v1);
       Vertex* v2= vertsContainer[i+1][j];
-      int rvecIndex2 = this->r_vectorIndices.at(v2);
+      int rvecIndex2 = this->rIndices.at(v2);
 
       //same position on subgraph means the operator has to be bound to the same unit
-      this->solver->addConstraint(this->r_vector[rvecIndex1] - this->r_vector[rvecIndex2] == 0);
+      this->solver->addConstraint(this->ri[rvecIndex1] - this->ri[rvecIndex2] == 0);
     }
   }
 
   for(int i=0;i<vertsContainer.size();i++){
     for(int j=0;j<vertsContainer[i].size();j++){
       const Vertex* vconst = vertsContainer[i][j];
-      int rvecIndex1 = this->r_vectorIndices.at(vconst);
+      int rvecIndex1 = this->rIndices.at(vconst);
       //no other operation of this resource is allowed to be bound to the same units that are used for binding of this occurrenceSet
       const Resource* r = this->resourceModel.getResource(vconst);
       set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
@@ -90,7 +90,7 @@ void SGMScheduler::setSubgraphConstraints()
         }
 
         if(found == false){
-          for(auto it2:this->r_vectorIndices){
+          for(auto it2:this->rIndices){
             if(it2.first==vIter){
               rvecIndex3=it2.second;
             }
@@ -102,8 +102,8 @@ void SGMScheduler::setSubgraphConstraints()
             binCounter++;
 
             //unequal constraint using bigM currently
-            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar >= 1);
-            this->solver->addConstraint(this->r_vector[rvecIndex1]-this->r_vector[rvecIndex3] + 5000*boolVar <= 5000 - 1);
+            this->solver->addConstraint(this->ri[rvecIndex1]-this->ri[rvecIndex3] + 5000*boolVar >= 1);
+            this->solver->addConstraint(this->ri[rvecIndex1]-this->ri[rvecIndex3] + 5000*boolVar <= 5000 - 1);
           }
         }
       }
@@ -118,11 +118,11 @@ void SGMScheduler::setGeneralConstraints()
   {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
-    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    unsigned int srcTVecIndex = this->tIndices[src];
     Vertex* dst = &(e->getVertexDst());
-    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
+    unsigned int dstTVecIndex = this->tIndices[dst];
 
-    this->solver->addConstraint(this->II*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
+    this->solver->addConstraint(this->II*(e->getDistance()) - ti[srcTVecIndex] + ti[dstTVecIndex] - this->resourceModel.getVertexLatency(src) >= 0);
   }
 
   this->setSubgraphConstraints();

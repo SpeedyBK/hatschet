@@ -97,49 +97,49 @@ protected:
    */
   void fillSolutionStructure();
   /*!
-   * \brief m_container
+   * \brief mi contains all mi for i in L. (20) in paper
    */
-  vector< vector<ScaLP::Variable> > m_container;
+  vector< vector<ScaLP::Variable> > mi;
   /*!
    * \brief regVector
    */
-  vector<ScaLP::Variable> regVector;
+  vector<ScaLP::Variable> registers;
   /*!
-   * \brief r_vector from moovac paper
+   * \brief ri contains all ri for i in L. (18) in paper
    */
-  vector<ScaLP::Variable> r_vector;
+  vector<ScaLP::Variable> ri;
   /*!
-   * \brief y_container
+   * \brief yi contains all yr for i in L. (19) in paper
    */
-  vector<vector<ScaLP::Variable> > y_container;
+  vector<vector<ScaLP::Variable> > yi;
   /*!
-   * \brief eps_container
+   * \brief eps_container (21) in paper
    */
-  vector<vector<vector<ScaLP::Variable> > > eps_container;
+  vector<vector<vector<ScaLP::Variable> > > epsij;
   /*!
-   * \brief mu_container
+   * \brief mu_container (22) in paper
    */
-  vector<vector<vector<ScaLP::Variable> > > mu_container;
+  vector<vector<vector<ScaLP::Variable> > > muij;
   /*!
-   * \brief t_vectorIndices
+   * \brief tIndices
    */
-  map<const Vertex*, unsigned int> t_vectorIndices;
+  map<const Vertex*, unsigned int> tIndices;
   /*!
-   * \brief r_vectorIndices
+   * \brief rIndices
    */
-  map<const Vertex*, unsigned int> r_vectorIndices;
+  map<const Vertex*, unsigned int> rIndices;
   /*!
-   * \brief reg_vectorIndices
+   * \brief registerIndices
    */
-  map<const Edge*, unsigned int> reg_vectorIndices;
+  map<const Edge*, unsigned int> registerIndices;
   /*!
    * \brief r
    */
   ScaLP::Result r;
   /*!
-   * \brief t_vector
+   * \brief ti contains the time variables of all operations in O
    */
-  vector<ScaLP::Variable> t_vector;
+  vector<ScaLP::Variable> ti;
   /*!
    * \brief minII
    */

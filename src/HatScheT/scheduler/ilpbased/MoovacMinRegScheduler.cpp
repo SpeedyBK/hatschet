@@ -21,14 +21,14 @@ void MoovacMinRegScheduler::setGeneralConstraints()
   {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
-    unsigned int srcTVecIndex = this->t_vectorIndices[src];
+    unsigned int srcTVecIndex = this->tIndices[src];
     Vertex* dst = &(e->getVertexDst());
-    unsigned int dstTVecIndex = this->t_vectorIndices[dst];
+    unsigned int dstTVecIndex = this->tIndices[dst];
 
-    unsigned regVecIndex = this->reg_vectorIndices[e];
+    unsigned regVecIndex = this->registerIndices[e];
 
-    this->solver->addConstraint((this->II)*(e->getDistance()) - t_vector[srcTVecIndex] + t_vector[dstTVecIndex]
-                    - this->resourceModel.getVertexLatency(src) - this->regVector[regVecIndex] - e->getDelay() == 0);
+    this->solver->addConstraint((this->II)*(e->getDistance()) - ti[srcTVecIndex] + ti[dstTVecIndex]
+                    - this->resourceModel.getVertexLatency(src) - this->registers[regVecIndex] - e->getDelay() == 0);
   }
 }
 
@@ -42,8 +42,8 @@ void MoovacMinRegScheduler::fillRegVector()
     Vertex& dstV = e->getVertexDst();
 
     //infinity is limited might cause overflow during solving process
-    this->regVector.push_back(ScaLP::newIntegerVariable("n_" + std::to_string(srcV.getId()) + "_" + std::to_string(dstV.getId()) +"_e" + to_string(e->getID()),0,1000));
-    this->reg_vectorIndices.insert(make_pair(e, this->regVector.size() - 1));
+    this->registers.push_back(ScaLP::newIntegerVariable("n_" + std::to_string(srcV.getId()) + "_" + std::to_string(dstV.getId()) +"_e" + to_string(e->getID()),0,1000));
+    this->registerIndices.insert(make_pair(e, this->registers.size() - 1));
   }
 }
 
@@ -74,9 +74,9 @@ void MoovacMinRegScheduler::setObjective()
         {
           const Vertex* followV = it3;
           Edge* e = &this->g.getEdge(v,followV);
-          int eRegContainerIndex = this->reg_vectorIndices[e];
+          int eRegContainerIndex = this->registerIndices[e];
 
-          this->solver->addConstraint(minMaxRegVariablesVector.back() - this->regVector[eRegContainerIndex] >= 0);
+          this->solver->addConstraint(minMaxRegVariablesVector.back() - this->registers[eRegContainerIndex] >= 0);
         }
       }
 
@@ -96,10 +96,10 @@ void MoovacMinRegScheduler::setObjective()
       //iterate over all edges where source vertex is of resource r
       for(unsigned int i = 0; i < outgoingEdgesOfRes.size(); i++){
         Edge* e = outgoingEdgesOfRes[i];
-        int eRegContainerIndex = this->reg_vectorIndices[e];
+        int eRegContainerIndex = this->registerIndices[e];
         Vertex* vSrc = &e->getVertexSrc();
         Vertex* vDst = &e->getVertexDst();
-        int vSrcRVectorIndex = this->r_vectorIndices[vSrc];
+        int vSrcRVectorIndex = this->rIndices[vSrc];
 
         vector<ScaLP::Variable> allocBinVars;
 
@@ -122,10 +122,10 @@ void MoovacMinRegScheduler::setObjective()
             binWeightedSum = binWeightedSum + weight * r_bin;
             weight++;
         }
-        this->solver->addConstraint(this->r_vector[vSrcRVectorIndex] - binWeightedSum == 0);
+        this->solver->addConstraint(this->ri[vSrcRVectorIndex] - binWeightedSum == 0);
 
         for(unsigned int j = 0; j < (unsigned int)ak; j++){
-          this->solver->addConstraint(minMaxRegVariablesVector[j] - this->regVector[eRegContainerIndex] + (1- allocBinVars[j]) * 10000 >= 0);
+          this->solver->addConstraint(minMaxRegVariablesVector[j] - this->registers[eRegContainerIndex] + (1- allocBinVars[j]) * 10000 >= 0);
         }
       }
 
