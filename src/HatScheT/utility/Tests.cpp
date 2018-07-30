@@ -145,11 +145,6 @@ bool Tests::readTest()
     return false;
   }
 
-  if(rm.getNoOfReservationTables() != 2){
-    cout << "Incorrect no of reservation tables read: " << rm.getNoOfReservationTables() << " instead of 2!" << endl;
-    return false;
-  }
-
   if(g.getNumberOfVertices() != 6){
     cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 6!" << endl;
     return false;

@@ -94,7 +94,9 @@ public:
    * \param resource provide the occupied resource
    * \param startTime provide the start time
    */
-  ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {}
+  ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {
+    throw new Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
+  }
   /*!
    * \brief operator <<
    * \param os
@@ -134,7 +136,9 @@ public:
    * \brief ReservationTable latency and limit are calculated based on the used reservation block resources
    * \param name provide a name
    */
-  ReservationTable(std::string name) : Resource(name, -1, -1, -1) {}
+  ReservationTable(std::string name) : Resource(name, -1, -1, -1) {
+    throw new Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
+  }
   /*!
    * \brief operator <<
    * \param os

@@ -135,11 +135,12 @@ int ReservationTable::getLatency() const
 
 ReservationBlock &ReservationTable::makeReservationBlock(Resource *r, int startTime)
 {
-  ReservationBlock* rb = new ReservationBlock(r,startTime);
+  //currently disabled/not supported
+  throw new Exception("ReservationTable.makeReservationBlock: ERROR makeReservationBlock currently disabled/not supported!");
 
+  /*ReservationBlock* rb = new ReservationBlock(r,startTime);
   this->blocks.push_back(rb);
-
-  return *rb;
+  return *rb;*/
 }
 
 Resource &ResourceModel::makeResource(string name, int limit, int latency, int blockingTime)
@@ -152,15 +153,21 @@ Resource &ResourceModel::makeResource(string name, int limit, int latency, int b
 
 ReservationTable &ResourceModel::makeReservationTable(string name)
 {
-  ReservationTable* rt = new ReservationTable(name);
+  //currently disabled/not supported
+  throw new Exception("ResourceModel.makeReservationTable: ERROR makeReservationTable currently disabled/not supported!");
+
+  /*ReservationTable* rt = new ReservationTable(name);
   this->tables.push_back(rt);
 
-  return *rt;
+  return *rt;*/
 }
 
 ReservationBlock& ResourceModel::makeReservationBlock(ReservationTable *rt, Resource *r, int startTime)
 {
-  return rt->makeReservationBlock(r,startTime);
+  //currently disabled/not supported
+  throw new Exception("ResourceModel.makeReservationBlock: ERROR makeReservationBlock currently disabled/not supported!");
+
+  //return rt->makeReservationBlock(r,startTime);
 }
 
 Resource *ResourceModel::getResource(string name) const
