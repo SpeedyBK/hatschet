@@ -58,7 +58,7 @@ int main(int argc, char *args[])
   std::string ilpSolver="";
   int threads=1;
   int timeout=-1; //default -1 means no timeout
-  bool lennart=false;
+
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
@@ -77,11 +77,6 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--solver=",value))
     {
       ilpSolver = std::string(value);
-    }
-    else if(getCmdParameter(args[i],"--lennart=",value))
-    {
-      if(std::string(value)=="1")
-      lennart=true;
     }
     else if(getCmdParameter(args[i],"--resource=",value))
     {
@@ -248,6 +243,16 @@ int main(int argc, char *args[])
             HatScheT::Utility::adaptiveScheduling(g,rm, {"CPLEX"}, str);
           }
         }
+    else if(getCmdParameter(args[i],"--asapRationalII=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
+        cout << asap->getScheduleLength() << endl;
+        HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
+        gbms->schedule();
+      }
+    }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
@@ -277,14 +282,6 @@ int main(int argc, char *args[])
   std::cout << "settings:" << std::endl;
   std::cout << "timeout=" << timeout << std::endl;
   std::cout << "threads=" << threads << std::endl;
-
-  if(lennart==true)
-  {
-    HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
-    cout << asap->getScheduleLength() << endl;
-    HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
-      gbms->schedule();
-  }
 
   return 0;
 }
