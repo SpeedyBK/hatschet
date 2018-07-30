@@ -156,6 +156,11 @@ public:
   */
  static bool allInputsAreRegisters(Graph* g, Vertex *v);
  /*!
+  * print a schedule to console
+  * @param schedule
+  */
+ static void printSchedule(map<Vertex *, int> &schedule);
+ /*!
   * \brief printBinding
   * \param binding
   * \param rm

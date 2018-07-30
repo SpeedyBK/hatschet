@@ -537,6 +537,16 @@ void Utility::printBinding(map<const Vertex *, int> &binding, ResourceModel& rm)
   cout << "-------Print Binding Finished-------" << endl;
 }
 
+void Utility::printSchedule(map<Vertex *, int> &schedule)
+{
+  cout << "Utility::printSchedule: Start" << endl;
+  for(auto it:schedule){
+    Vertex* v = it.first;
+    cout << "Scheduled " << v->getName() << " at " << it.second << endl;
+  }
+  cout << "Utility::printSchedule: Finished" << endl;
+}
+
 bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
 {
   for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
