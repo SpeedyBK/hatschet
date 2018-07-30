@@ -16,8 +16,8 @@ ResourceModel::ResourceModel()
 
 ResourceModel::~ResourceModel()
 {
-  //for(auto r:resources) delete r;
-
+  this->registrations.clear();
+  for(auto r:resources) delete r;
 }
 
 ostream& operator<<(ostream& os, const ReservationBlock& rb)
@@ -147,7 +147,6 @@ Resource &ResourceModel::makeResource(string name, int limit, int latency, int b
 {
   Resource* r = new Resource(name, limit, latency, blockingTime);
   this->resources.push_back(r);
-
   return *r;
 }
 
