@@ -35,6 +35,10 @@ public:
    */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {}
   /*!
+   * copy constructor is forbidden for this class
+   */
+  Resource(const Resource&) = delete;
+  /*!
    * \brief isReservationTable
    * \return
    */
@@ -97,6 +101,10 @@ public:
   ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {
     throw new Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
   }
+    /*!
+   * copy constructor is forbidden for this class
+   */
+    ReservationBlock(const ReservationBlock&) = delete;
   /*!
    * \brief operator <<
    * \param os
@@ -139,6 +147,10 @@ public:
   ReservationTable(std::string name) : Resource(name, -1, -1, -1) {
     throw new Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
   }
+  /*!
+ * copy constructor is forbidden for this class
+ */
+  ReservationTable(const ReservationTable&) = delete;
   /*!
    * \brief operator <<
    * \param os
@@ -196,6 +208,10 @@ public:
    * \brief ResourceModel
    */
   ~ResourceModel();
+  /*!
+   * copy constructor is forbidden for this class
+   */
+  ResourceModel(const ResourceModel&) = delete;
   /*!
    * \brief operator <<
    * \param os

@@ -19,6 +19,10 @@ class Vertex
 public:
   Vertex(int id);
   /*!
+   * copy constructor is forbidden for this class
+   */
+  Vertex(const Vertex&) = delete;
+  /*!
    * \brief getId
    * \return
    */

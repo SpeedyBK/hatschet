@@ -28,12 +28,15 @@ public:
   Graph();
   ~Graph();
   /*!
+   * copy constructor is forbidden for this class
+   */
+   Graph(const Graph&) = delete;
+  /*!
    * Creates a vertex, assigns a non-existing id and inserts it in the graph
-   *
+   *G
    * \return The vertex
    */
   Vertex& createVertex();
-
   /*!
    * Creates a vertex, inserts it in the graph
    *

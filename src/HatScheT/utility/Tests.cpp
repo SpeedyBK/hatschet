@@ -155,8 +155,6 @@ bool Tests::readTest()
 
 bool Tests::moduloSDCTest()
 {
-  //disabled tests as long as moduloSDC is not working correctly
-  //return true;
   try
   {
     HatScheT::ResourceModel rm;

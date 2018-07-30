@@ -25,6 +25,10 @@ public:
    * @param dependencyType Enum to distinguish dependencies and data edges
    */
   Edge(Vertex &src, Vertex &dst, int distance=0, DependencyType dependencyType=Data);
+  /*!
+   * copy constructor is forbidden for this class
+   */
+   Edge(const Edge&) = delete;
 
   Vertex& getVertexSrc(){ return Vsrc; }
   Vertex& getVertexDst(){ return Vdst; }
