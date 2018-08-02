@@ -7,6 +7,7 @@
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/rationalIIScheduler.h>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
@@ -218,6 +219,26 @@ int main(int argc, char *args[])
         }
         else cout << ">>> ModuloSDC schedule NOT verified <<<" << endl;
       }
+    }
+    else if(getCmdParameter(args[i],"--rationalII=",value))
+    {
+      if(rm.isEmpty() == false && g.isEmpty() == false)
+      {
+        cout << "Starting rational II modulo scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads  << endl;
+        std::list<std::string> wish = {"CPLEX"};
+        HatScheT::RationalIIScheduler rII(g, rm, wish);
+        if(timeout>0) rII.setSolverTimeout(timeout);
+        rII.setThreads(threads);
+        rII.schedule();
+
+        if (HatScheT::verifyModuloSchedule(g, rm, rII.getSchedule(), rII.getII())){
+          cout << ">>> rational II modulo schedule verified <<<" << endl;
+          cout << "Found II " << rII.getII() << " with sampleLatency " << rII.getScheduleLength() << endl;
+        }
+        else cout << ">>> rational II modulo schedule NOT verified <<<" << endl;
+      }
+
+      else cout << "No resource model or graph provided! This should not happen for hatschet scheduling!" << endl;
     }
     else if(getCmdParameter(args[i],"--evalPaper=",value))
         {
