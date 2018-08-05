@@ -7,7 +7,7 @@
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
-#include <HatScheT/scheduler/ilpbased/rationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"

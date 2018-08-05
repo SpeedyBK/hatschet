@@ -8,10 +8,10 @@ namespace HatScheT
     : MoovacScheduler(g, resourceModel, solverWishlist)
     {
       throw new Exception("rationalIIScheduler::rationalIIScheduler: This constructor is currently under construction and disabled!");
-  this->minII = this->computeMinII(&g,&resourceModel);
+  /*this->minII = this->computeMinII(&g,&resourceModel);
   HatScheT::ASAPScheduler asap(g,resourceModel);
   this->maxII = Utility::calcMaxII(&asap);
-  this->SLMax = 0;
+  this->SLMax = 0;*/
 }
 
 }
