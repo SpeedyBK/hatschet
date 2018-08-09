@@ -76,8 +76,6 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
 
 ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 {
-  cout << "GraphMLResourceReader.readResourceModel: Start parsing from path: " << path << endl;
-
   try {
     XMLPlatformUtils::Initialize();
   }
@@ -127,8 +125,6 @@ ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
   }
 
   delete parser;
-
-  cout << "GraphMLResourceReader.readResourceModel:  Finished parsing from path: " << path << endl;
 
   return *(this->rm);
 }

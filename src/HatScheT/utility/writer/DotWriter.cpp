@@ -47,7 +47,7 @@ void DotWriter::write()
   }
 
   FILE* graphfilepointer = NULL;
-  graphfilepointer = fopen((this->path+".dot").c_str(),"w");
+  graphfilepointer = fopen((this->path).c_str(),"w");
 
   time_t mytime;
   time(&mytime);

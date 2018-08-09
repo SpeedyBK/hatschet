@@ -184,8 +184,6 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
 
 Graph& GraphMLGraphReader::readGraph(const char *path)
 {
-  cout << "graphMLReader.parseGraph: Start parsing from path: " << path << endl;
-
   try {
     XMLPlatformUtils::Initialize();
   }
@@ -235,8 +233,6 @@ Graph& GraphMLGraphReader::readGraph(const char *path)
   }
 
   delete parser;
-
-  cout << "graphMLReader.parseGraph: Finished parsing from path: " << path << endl;
 
   return *(this->g);
 }

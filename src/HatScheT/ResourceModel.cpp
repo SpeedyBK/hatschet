@@ -48,7 +48,7 @@ ostream& operator<<(ostream& os, const ReservationTable& rt)
 ostream& operator<<(ostream& os, const ResourceModel& rm)
 {
   os << "------------------------------------------------------------------------------------" << endl;
-  os << "-------------------------------Printing resource model------------------------------" << endl;
+  os << "------------------------------- Resource Model -------------------------------------" << endl;
   os << "------------------------------------------------------------------------------------" << endl;
 
   for(auto it:rm.resources)

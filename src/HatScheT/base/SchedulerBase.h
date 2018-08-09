@@ -23,6 +23,9 @@ class SchedulerBase
 public:
 
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
+
+  virtual ~SchedulerBase();
+
   /*!
    * \brief schedule main method for all schedulers, not implemented in base class
    */

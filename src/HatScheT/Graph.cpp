@@ -110,7 +110,9 @@ Vertex& Graph::getVertexById(int id) const
 
 ostream& operator<<(ostream& os, const Graph& g)
 {
-  os << "Printing Graph Info:" << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
+  os << "---------------------------------- Graph Model -------------------------------------" << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
 
   for(auto a:g.vertices)
   {
