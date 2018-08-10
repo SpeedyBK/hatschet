@@ -146,30 +146,6 @@ int main(int argc, char *args[])
       }
 
     }
-    else if(getCmdParameter(args[i],"--evalPaper=",value))
-        {
-          if(rm.isEmpty() == false && g.isEmpty() == false)
-          {
-            string str = std::string(value);
-            HatScheT::Utility::evaluateSchedulers(g,rm, {"CPLEX"}, str);
-          }
-        }
-    else if(getCmdParameter(args[i],"--fpl=",value))
-            {
-              if(rm.isEmpty() == false && g.isEmpty() == false)
-              {
-                string str = std::string(value);
-                HatScheT::Utility::compareRegisterUsage(g,rm, {"CPLEX"}, str);
-              }
-            }
-    else if(getCmdParameter(args[i],"--adaptivePaper=",value))
-        {
-          if(rm.isEmpty() == false && g.isEmpty() == false)
-          {
-            string str = std::string(value);
-            HatScheT::Utility::adaptiveScheduling(g,rm, {"CPLEX"}, str);
-          }
-        }
     else if(getCmdParameter(args[i],"--asapRationalII=",value))
     {
       if(rm.isEmpty() == false && g.isEmpty() == false)

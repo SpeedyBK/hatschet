@@ -174,29 +174,5 @@ public:
   * \return
   */
  static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
- /*!
-  * \brief evaluateSchedulers experiment interface for hatschet paper
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  */
- static void evaluateSchedulers(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
- /*!
-  * \brief adaptiveScheduling start a scheduling experiment for adaptive scheduling
-  * ToDo pass parameters instead of calculating them
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  * \param logFileName
-  */
- static void adaptiveScheduling(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
- /*!
-  * \brief compareRegisterUsage this function is used to evaluate the experiments published at fpl
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  * \param logFileName
-  */
- static void compareRegisterUsage(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }
