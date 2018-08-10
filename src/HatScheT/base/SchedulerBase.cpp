@@ -99,7 +99,7 @@ void SchedulerBase::writeScheduleChart(string filename)
   ofstream outputFile(filename);
   if(outputFile.is_open())
   {
-    //open template file
+  //open template file
     std::ifstream templateFile(templatePath);
     if(templateFile.is_open())
     {
@@ -117,10 +117,11 @@ void SchedulerBase::writeScheduleChart(string filename)
       }
       templateFile.close();
     }
-    else throw new Exception("Error: Template file for schedule chart " + templatePath + " does not exist.");
-    outputFile.close();
+    else throw new HatScheT::Exception("Template file for schedule chart " + templatePath + " does not exist.");
   }
-  else throw new Exception("Error: Could not open file " + filename + " for writing.");
+  else throw new HatScheT::Exception("Could not open file " + filename + " for writing.");
+
+  outputFile.close();
 }
 
 std::map<const Vertex *, int> SchedulerBase::getBindings()

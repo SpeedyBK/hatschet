@@ -366,9 +366,9 @@ int main(int argc, char *args[])
 
 
   }
-  catch(HatScheT::Exception &e)
+  catch(HatScheT::Exception* e)
   {
-    std::cerr << "Error: " << e << std::endl;
+    std::cerr << "Error: " << e->msg << std::endl;
   }
 
 
