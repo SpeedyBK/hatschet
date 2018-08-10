@@ -5,21 +5,22 @@ project (hatschet)
 #Find ScaLP
 ####################
 FIND_LIBRARY(SCALP_LIB
-  NAMES libScaLP libScaLP.so libScaLP.dylib
-	HINTS "${SCALP_PREFIX_PATH}/lib"
-	DOC "Directory of the ScaLP library"
+    NAMES libScaLP libScaLP.so libScaLP.dylib
+    HINTS "${SCALP_PREFIX_PATH}/lib"
+    DOC "Directory of the ScaLP library"
 )
 
 FIND_PATH(SCALP_H
-          ScaLP/Solver.h
-	  HINTS "${SCALP_PREFIX_PATH}/include"
-	  DOC "Path to main ScaLP header file Solver.h"
+    ScaLP/Solver.h
+    HINTS "${SCALP_PREFIX_PATH}/include"
+    DOC "Path to main ScaLP header file Solver.h"
 )
 
 IF (SCALP_H AND SCALP_LIB)
+    add_definitions(-DUSE_SCALP)
     MESSAGE(STATUS "Found ScaLP: ${SCALP_H},${SCALP_LIB}")
 ELSE (SCALP_H AND SCALP_LIB)
-    MESSAGE(FATAL_ERROR "Could not find ScaLP (${SCALP_H},${SCALP_LIB}). Please specify path by setting SCALP_PREFIX_PATH (-DSCALP_PREFIX_PATH=<path to scalp install dir>)")
+    MESSAGE(STATUS "Could not find ScaLP (${SCALP_H},${SCALP_LIB}). Please specify path by setting SCALP_PREFIX_PATH (-DSCALP_PREFIX_PATH=<path to scalp install dir>)")
 ENDIF (SCALP_H AND SCALP_LIB)
 
 ####################
@@ -61,21 +62,16 @@ ELSE (XERCESC_H AND XERCESC_LIB)
     MESSAGE(STATUS "Did not found XercesC: GraphML parser will not be available")
 ENDIF (XERCESC_H AND XERCESC_LIB)
 
-add_library(hatschet
+set(FILES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
-src/HatScheT/Graph.cpp 
+src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
-src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
-src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
-src/HatScheT/base/ILPSchedulerBase.cpp
 src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
-src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
-src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
@@ -94,17 +90,28 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 )
 
-add_executable(hatschet-bin src/hatschet.cpp)
+IF (SCALP_H AND SCALP_LIB)
+list(APPEND FILES
+src/HatScheT/base/ILPSchedulerBase.cpp
+src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
+src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
+src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
+src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+)
+ENDIF (SCALP_H AND SCALP_LIB)
 
+add_library(hatschet ${FILES})
+
+add_executable(hatschet-bin src/hatschet.cpp)
 set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-include_directories(${SCALP_H} ${XERCESC_H} src/)
-
 target_link_libraries(hatschet-bin hatschet)
 target_link_libraries(hatschet-bin ${SCALP_LIB})
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
+
+include_directories(${SCALP_H} ${XERCESC_H} src/)
 
 
 ####################

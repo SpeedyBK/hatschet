@@ -133,10 +133,16 @@ int main(int argc, char *args[])
       }
       else if(valueLC == "moovac")
       {
+        #ifndef USE_SCALP
+        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        #endif
         schedulerString = MOOVAC;
       }
       else if(valueLC == "modulosdc")
       {
+        #ifndef USE_SCALP
+        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        #endif
         schedulerString = MODULOSDC;
       }
       else if(valueLC == "rationalii")
