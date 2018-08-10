@@ -103,6 +103,10 @@ int main(int argc, char *args[])
     {
       resourceModelFile = std::string(value);
     }
+    else if(getCmdParameter(args[i],"--graph=",value))
+    {
+      graphMLFile = std::string(value);
+    }
     else if(getCmdParameter(args[i],"--dot=",value))
     {
       dotFile = value;
