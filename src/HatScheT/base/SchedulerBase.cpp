@@ -1,6 +1,11 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/utility/Verifier.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+
 namespace HatScheT
 {
 
@@ -47,10 +52,75 @@ int SchedulerBase::getStartTime(Vertex &v)
 
 void SchedulerBase::printStartTimes()
 {
-  for(auto it:this->startTimes){
+  for(auto it:this->startTimes)
+  {
     Vertex* v = it.first;
     cout << v->getName() << " (" << resourceModel.getResource(v)->getName() << ") at " << it.second << endl;
   }
+}
+
+void SchedulerBase::writeScheduleChart(string filename)
+{
+  std::string line;
+  string templatePath = "templates/schedule_template.htm";
+
+  stringstream htmlTableRows;
+
+  int scheduleLength=getScheduleLength();
+
+  htmlTableRows << "	<tr><td class=\"first\"></td>";
+  for(int i=0; i < scheduleLength; i++)
+  {
+    htmlTableRows << "<td>" << i << "</td>";
+  }
+  htmlTableRows << "</tr>" << endl;
+
+  for(auto it:startTimes)
+  {
+    Vertex* v = it.first;
+    int scheduleTime = it.second;
+
+    int maxLatency=resourceModel.getResource(v)->getLatency();
+
+    htmlTableRows << "	<tr><td class=\"first\">" << v->getName() << " (" << resourceModel.getResource(v)->getName() << ")</td>";
+    for(int i=0; i < scheduleLength; i++)
+    {
+      htmlTableRows << "<td";
+      if(i == scheduleTime) htmlTableRows << " class=\"start\"";
+      else if((i > scheduleTime) && (i < scheduleTime+maxLatency)) htmlTableRows << " class=\"active\"";
+      htmlTableRows << "></td>";
+    }
+    htmlTableRows << "</tr>" << endl;
+  }
+
+  string graphName=getGraph()->getName();
+
+  cout << "writing schedule chart to " << filename << endl;
+  ofstream outputFile(filename);
+  if(outputFile.is_open())
+  {
+    //open template file
+    std::ifstream templateFile(templatePath);
+    if(templateFile.is_open())
+    {
+      while(getline(templateFile,line))
+      {
+        if(line.find("{GRAPH}") != std::string::npos)
+        {
+          line.replace(line.find("{GRAPH}"), sizeof("{GRAPH}")-1, graphName);
+        }
+        if(line.find("{SCHEDULEROWS}") != std::string::npos)
+        {
+          line.replace(line.find("{SCHEDULEROWS}"), sizeof("{SCHEDULEROWS}")-1, htmlTableRows.str());
+        }
+        outputFile << line << '\n';
+      }
+      templateFile.close();
+    }
+    else throw new Exception("Error: Template file for schedule chart " + templatePath + " does not exist.");
+    outputFile.close();
+  }
+  else throw new Exception("Error: Could not open file " + filename + " for writing.");
 }
 
 std::map<const Vertex *, int> SchedulerBase::getBindings()

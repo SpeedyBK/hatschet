@@ -52,8 +52,8 @@ public:
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
    */
-  void setMaxLatencyConstraint(int l){this->maxLatencyConStraint =l;}
-  int getMaxLatencyConstraint(){return this->maxLatencyConStraint;}
+  void setMaxLatencyConstraint(int l){this->maxLatencyConstrain =l;}
+  int getMaxLatencyConstraint(){return this->maxLatencyConstrain;}
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
@@ -69,6 +69,11 @@ public:
    * \brief printStartTimes
    */
   void printStartTimes();
+  /*!
+   * \brief Generates an HTML file which contains the schedule chart
+	 * \param filename is the file name where to store the chart
+   */
+  void writeScheduleChart(string filename);
   /*!
    * \brief getII this function has to be implemented for every derived scheduler
    * \return
@@ -95,7 +100,7 @@ protected:
   /*!
    * \brief maxLatencyConStraint default is -1 (unlimited)
    */
-  int maxLatencyConStraint = -1;
+  int maxLatencyConstrain = -1;
   /*!
    * \brief Container for the start times
    */

@@ -58,6 +58,7 @@ void print_short_help()
   std::cout << "--resource=[string]                                     Path to XML resource constrain file" << std::endl;
 //    std::cout << "--graph=[string]                        Path to graphML Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]                                          Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
+  std::cout << "--html=[string]                                         Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
 
 }
@@ -73,6 +74,8 @@ int main(int argc, char *args[])
   std::string graphMLFile="";
   std::string resourceModelFile="";
   std::string dotFile="";
+  std::string htmlFile="";
+
 
   if(argc <= 1)
   {
@@ -110,6 +113,10 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--dot=",value))
     {
       dotFile = value;
+    }
+    else if(getCmdParameter(args[i],"--html=",value))
+    {
+      htmlFile = value;
     }
     else if(getCmdParameter(args[i],"--scheduler=",value))
     {
@@ -342,6 +349,11 @@ int main(int argc, char *args[])
       std::cout << "------------------------------------------------------------------------------------" << endl;
       std::cout << "latency = " << scheduler->getScheduleLength() << endl;
       scheduler->printStartTimes();
+
+      if(htmlFile != "")
+      {
+        scheduler->writeScheduleChart(htmlFile);
+      }
 
       delete scheduler;
     }
