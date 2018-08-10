@@ -49,7 +49,7 @@ void SchedulerBase::printStartTimes()
 {
   for(auto it:this->startTimes){
     Vertex* v = it.first;
-    cout << v->getName() << " at " << it.second << endl;
+    cout << v->getName() << " (" << resourceModel.getResource(v)->getName() << ") at " << it.second << endl;
   }
 }
 

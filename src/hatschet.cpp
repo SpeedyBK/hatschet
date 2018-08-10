@@ -341,11 +341,7 @@ int main(int argc, char *args[])
       std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
       std::cout << "------------------------------------------------------------------------------------" << endl;
       std::cout << "latency = " << scheduler->getScheduleLength() << endl;
-
-      for(auto it=scheduler->getSchedule().begin(); it != scheduler->getSchedule().end(); ++it)
-      {
-        cout << it->first->getName() << " (" << rm.getResource(it->first)->getName() << ")" << " at " << it->second << endl;
-      }
+      scheduler->printStartTimes();
 
       delete scheduler;
     }
