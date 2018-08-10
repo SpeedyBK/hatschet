@@ -67,7 +67,7 @@ int main(int argc, char *args[])
   int threads=1;
   int timeout=-1; //default -1 means no timeout
 
-  enum Scheduler {ASAP, ALAP, UL, MOOVAC, MODULOSDC, RATIONALII, NONE};
+  enum Scheduler {ASAP, ALAP, UL, MOOVAC, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
   Scheduler schedulerString = NONE;
 
   std::string graphMLFile="";
@@ -139,22 +139,16 @@ int main(int argc, char *args[])
       {
         schedulerString = RATIONALII;
       }
+      else if(valueLC == "asapRationalII")
+      {
+        schedulerString = ASAPRATIONALII;
+      }
       else
       {
         cout << "Error: scheduler " << value << " unknown!" << endl;
         exit(0);
       }
 
-    }
-    else if(getCmdParameter(args[i],"--asapRationalII=",value))
-    {
-      if(rm.isEmpty() == false && g.isEmpty() == false)
-      {
-        HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
-        cout << asap->getScheduleLength() << endl;
-        HatScheT::GraphBasedMs* gbms = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
-        gbms->schedule();
-      }
     }
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
@@ -213,6 +207,9 @@ int main(int argc, char *args[])
       break;
     case RATIONALII:
       cout << "RATIONALII";
+      break;
+    case ASAPRATIONALII:
+      cout << "ASAPRATIONALII";
       break;
     case NONE:
       cout << "NONE";
@@ -298,11 +295,18 @@ int main(int argc, char *args[])
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
           break;
         case RATIONALII:
-          isModuloScheduler=true;
+          //not sure if you can verify this schedulers via the currently implemented function
+          //isModuloScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
-          if(timeout>0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
-          ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
+          if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           break;
+        case ASAPRATIONALII:{
+          //not sure if you can verify this schedulers via the currently implemented function
+          //isModuloScheduler=true;
+          HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
+          scheduler = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
+          break;}
         case NONE:
           cout << "Error, please select a scheduler using --scheduler=..." << endl;
           exit(-1);
