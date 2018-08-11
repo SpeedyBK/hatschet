@@ -1,22 +1,27 @@
 #include <iostream>
 #include <string.h>
-
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
-#include <HatScheT/utility/reader/GraphMLGraphReader.h>
-#include <HatScheT/utility/reader/GraphMLResourceReader.h>
 #include <HatScheT/utility/writer/DotWriter.h>
-#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
-#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
-#include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
-#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
+
+#ifdef USE_XERCESC
+#include <HatScheT/utility/reader/GraphMLGraphReader.h>
+#include <HatScheT/utility/reader/GraphMLResourceReader.h>
+#endif
+
+#ifdef USE_SCALP
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
+#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/utility/Tests.h"
+#endif
 
 /**
  * Returns the value as string of a command line argument in syntax --key=value
@@ -64,6 +69,10 @@ void print_short_help()
 }
 int main(int argc, char *args[])
 {
+#ifndef USE_XERCESC
+  cout << "Error: XercesC not active! Without parsing this interface is disabled! Install XeresC for using the HatScheT binary" << endl;
+  exit();
+#else
   std::string ilpSolver="";
   int threads=1;
   int timeout=-1; //default -1 means no timeout
@@ -85,6 +94,7 @@ int main(int argc, char *args[])
 
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
+
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
   //parse command line
@@ -100,6 +110,9 @@ int main(int argc, char *args[])
     }   
     else if(getCmdParameter(args[i],"--solver=",value))
     {
+      #ifndef USE_SCALP
+      throw new Exception("HatScheT: ScaLP not active! Solver cant be chosen: " + std::string(value));
+      #endif
       ilpSolver = std::string(value);
     }
     else if(getCmdParameter(args[i],"--resource=",value))
@@ -154,6 +167,9 @@ int main(int argc, char *args[])
       }
       else if(valueLC == "rationalii")
       {
+        #ifndef USE_SCALP
+        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        #endif
         schedulerString = RATIONALII;
       }
       else if(valueLC == "asapRationalII")
@@ -170,6 +186,7 @@ int main(int argc, char *args[])
     //HatScheT Auto Test Function
     else if(getCmdParameter(args[i],"--test=",value))
     {
+      #ifdef USE_SCALP
       string str = std::string(value);
       if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
@@ -183,6 +200,9 @@ int main(int argc, char *args[])
       if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
       if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
       if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
+      #else
+      throw new Exception("HatScheT: ScaLP not active! Test function disabled!");
+      #endif
     }
     else if((args[i][0] != '-') && getCmdParameter(args[i],"",value))
     {
@@ -263,7 +283,6 @@ int main(int argc, char *args[])
       exit(0);
     }
 
-
     if(dotFile != "")
     {
       cout << "Writing to dotfile " << dotFile << endl;
@@ -299,24 +318,30 @@ int main(int argc, char *args[])
           scheduler = new HatScheT::ULScheduler(g,rm);
           break;
         case MOOVAC:
+          #ifdef USE_SCALP
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::MoovacScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(true);
+          #endif
           break;
         case MODULOSDC:
+          #ifdef USE_SCALP
           isModuloScheduler=true;
           scheduler = new HatScheT::ModuloSDCScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
+          #endif
           break;
         case RATIONALII:
+          #ifdef USE_SCALP
           //not sure if you can verify this schedulers via the currently implemented function
           //isModuloScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
+          #endif
           break;
         case ASAPRATIONALII:{
           //not sure if you can verify this schedulers via the currently implemented function
@@ -349,7 +374,6 @@ int main(int argc, char *args[])
         }
       }
 
-
       std::cout << "------------------------------------------------------------------------------------" << endl;
       std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
       std::cout << "------------------------------------------------------------------------------------" << endl;
@@ -371,6 +395,6 @@ int main(int argc, char *args[])
     std::cerr << "Error: " << e->msg << std::endl;
   }
 
-
   return 0;
+#endif
 }
