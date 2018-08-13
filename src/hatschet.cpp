@@ -71,7 +71,7 @@ int main(int argc, char *args[])
 {
 #ifndef USE_XERCESC
   cout << "Error: XercesC not active! Without parsing this interface is disabled! Install XeresC for using the HatScheT binary" << endl;
-  exit();
+  exit(0);
 #else
   std::string ilpSolver="";
   int threads=1;
@@ -111,7 +111,7 @@ int main(int argc, char *args[])
     else if(getCmdParameter(args[i],"--solver=",value))
     {
       #ifndef USE_SCALP
-      throw new Exception("HatScheT: ScaLP not active! Solver cant be chosen: " + std::string(value));
+      throw new HatScheT::Exception("HatScheT: ScaLP not active! Solver cant be chosen: " + std::string(value));
       #endif
       ilpSolver = std::string(value);
     }
@@ -154,21 +154,21 @@ int main(int argc, char *args[])
       else if(valueLC == "moovac")
       {
         #ifndef USE_SCALP
-        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
         #endif
         schedulerString = MOOVAC;
       }
       else if(valueLC == "modulosdc")
       {
         #ifndef USE_SCALP
-        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
         #endif
         schedulerString = MODULOSDC;
       }
       else if(valueLC == "rationalii")
       {
         #ifndef USE_SCALP
-        throw new Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
         #endif
         schedulerString = RATIONALII;
       }
