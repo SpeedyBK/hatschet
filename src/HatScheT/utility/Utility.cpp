@@ -1,7 +1,4 @@
 #include "HatScheT/utility/Utility.h"
-#include "ScaLP/Solver.h"
-#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
@@ -13,6 +10,10 @@
 #include <ctime>
 #include <cstddef>
 #include <iomanip>
+
+#ifdef USE_SCALP
+#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
+#endif
 
 namespace HatScheT {
 
@@ -92,6 +93,7 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
   return outputs;
 }
 
+#ifdef USE_SCALP
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);
@@ -162,6 +164,7 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
   return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
+#endif
 int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
 {
   int sum = 0;

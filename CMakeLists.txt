@@ -69,7 +69,6 @@ src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
-src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
@@ -80,23 +79,24 @@ src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
-src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
-src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
-src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 )
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND FILES
 src/HatScheT/base/ILPSchedulerBase.cpp
+src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
+src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
+src/HatScheT/utility/Tests.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
 
@@ -108,10 +108,20 @@ set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 target_link_libraries(hatschet-bin hatschet)
+IF (SCALP_H AND SCALP_LIB)
 target_link_libraries(hatschet-bin ${SCALP_LIB})
+ENDIF (SCALP_H AND SCALP_LIB)
+IF (XERCESC_H AND XERCESC_LIB)
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
+ENDIF (XERCESC_H AND XERCESC_LIB)
 
-include_directories(${SCALP_H} ${XERCESC_H} src/)
+include_directories(src/)
+IF (SCALP_H AND SCALP_LIB)
+include_directories(${SCALP_H})
+ENDIF (SCALP_H AND SCALP_LIB)
+IF (XERCESC_H AND XERCESC_LIB)
+include_directories(${XERCESC_H})
+ENDIF (XERCESC_H AND XERCESC_LIB)
 
 
 ####################
