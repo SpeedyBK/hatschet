@@ -201,7 +201,7 @@ int main(int argc, char *args[])
       if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
       if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
       #else
-      throw new Exception("HatScheT: ScaLP not active! Test function disabled!");
+      throw new HatScheT::Exception("HatScheT: ScaLP not active! Test function disabled!");
       #endif
     }
     else if((args[i][0] != '-') && getCmdParameter(args[i],"",value))
