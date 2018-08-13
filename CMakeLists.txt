@@ -80,7 +80,6 @@ src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
-src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
@@ -97,6 +96,7 @@ src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/utility/Tests.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
 
