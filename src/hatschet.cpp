@@ -3,7 +3,6 @@
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/writer/DotWriter.h>
-#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
@@ -20,6 +19,7 @@
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/utility/Tests.h"
 #endif
 
