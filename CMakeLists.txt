@@ -83,8 +83,6 @@ src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
-src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
-src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 )
 
@@ -96,6 +94,8 @@ src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
+src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
