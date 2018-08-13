@@ -108,10 +108,20 @@ set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 target_link_libraries(hatschet-bin hatschet)
+IF (SCALP_H AND SCALP_LIB)
 target_link_libraries(hatschet-bin ${SCALP_LIB})
+ENDIF (SCALP_H AND SCALP_LIB)
+IF (XERCESC_H AND XERCESC_LIB)
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
+ENDIF (XERCESC_H AND XERCESC_LIB)
 
-include_directories(${SCALP_H} ${XERCESC_H} src/)
+include_directories(src/)
+IF (SCALP_H AND SCALP_LIB)
+include_directories(${SCALP_H})
+ENDIF (SCALP_H AND SCALP_LIB)
+IF (XERCESC_H AND XERCESC_LIB)
+include_directories(${XERCESC_H})
+ENDIF (XERCESC_H AND XERCESC_LIB)
 
 
 ####################
