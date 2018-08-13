@@ -344,10 +344,12 @@ int main(int argc, char *args[])
           #endif
           break;
         case ASAPRATIONALII:{
+          #ifdef USE_SCALP
           //not sure if you can verify this schedulers via the currently implemented function
           //isModuloScheduler=true;
           HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
           scheduler = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
+          #endif
           break;}
         case NONE:
           cout << "Error, please select a scheduler using --scheduler=..." << endl;
