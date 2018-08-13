@@ -1,5 +1,4 @@
 #include "HatScheT/utility/Utility.h"
-#include "ScaLP/Solver.h"
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
