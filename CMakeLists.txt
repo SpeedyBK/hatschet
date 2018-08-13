@@ -69,7 +69,6 @@ src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
-src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
@@ -92,6 +91,7 @@ src/HatScheT/utility/Verifier.cpp
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND FILES
 src/HatScheT/base/ILPSchedulerBase.cpp
+src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
