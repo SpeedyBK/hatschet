@@ -1,5 +1,6 @@
 #include <iostream>
-#include <string.h>
+#include <string>
+#include <algorithm>
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/writer/DotWriter.h>
