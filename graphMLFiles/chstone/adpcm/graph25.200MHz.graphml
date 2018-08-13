@@ -80,34 +80,6 @@
       <data key="name">node_4845</data>
       <data key="uses_resource">special_virtual</data>
     </node>
-    <node id="4888">
-      <data key="name">node_4888</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4890">
-      <data key="name">node_4890</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4889">
-      <data key="name">node_4889</data>
-      <data key="uses_resource">lshift_expr_FU_64_64_64</data>
-    </node>
-    <node id="4892">
-      <data key="name">node_4892</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
-    <node id="4891">
-      <data key="name">node_4891</data>
-      <data key="uses_resource">mem_write</data>
-    </node>
-    <node id="4893">
-      <data key="name">node_4893</data>
-      <data key="uses_resource">plus_expr_FU_64_64_64</data>
-    </node>
-    <node id="4894">
-      <data key="name">node_4894</data>
-      <data key="uses_resource">special_virtual</data>
-    </node>
     <edge id="4300_4297" source="4300" target="4297">
       <data key="delay">0</data>
       <data key="distance">0</data>
@@ -134,11 +106,6 @@
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="4300_4315" source="4300" target="4315">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="4300_4894" source="4300" target="4894">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
@@ -228,12 +195,12 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="4312_4314" source="4312" target="4314">
+    <edge id="4315_4314" source="4315" target="4314">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
     </edge>
-    <edge id="4888_4314" source="4888" target="4314">
+    <edge id="4312_4314" source="4312" target="4314">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
@@ -248,62 +215,12 @@
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="4891_4317" source="4891" target="4317">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
     <edge id="4316_4317" source="4316" target="4317">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="4300_4845" source="4300" target="4845">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4315_4888" source="4315" target="4888">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4889_4890" source="4889" target="4890">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4315_4889" source="4315" target="4889">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4307_4892" source="4307" target="4892">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4892_4891" source="4892" target="4891">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="4890_4891" source="4890" target="4891">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4893_4891" source="4893" target="4891">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4894_4893" source="4894" target="4893">
-      <data key="delay">0</data>
-      <data key="distance">0</data>
-      <data key="deptype">Data</data>
-    </edge>
-    <edge id="4312_4893" source="4312" target="4893">
       <data key="delay">0</data>
       <data key="distance">0</data>
       <data key="deptype">Data</data>
