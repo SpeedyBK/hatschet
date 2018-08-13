@@ -61,7 +61,7 @@ void print_short_help()
   std::cout << "--timeout=[int]                                         ILP solver Timeout in seconds (default: -1, no timeout)" << std::endl;
   std::cout << "--threads=[int]                                         Number of threads for the ILP solver (default: 1)" << std::endl;
   std::cout << "--resource=[string]                                     Path to XML resource constrain file" << std::endl;
-//    std::cout << "--graph=[string]                        Path to graphML Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
+  std::cout << "--graph=[string]                        Path to graphML Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]                                          Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--html=[string]                                         Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
@@ -70,7 +70,7 @@ void print_short_help()
 int main(int argc, char *args[])
 {
 #ifndef USE_XERCESC
-  cout << "Error: XercesC not active! Without parsing this interface is disabled! Install XeresC for using the HatScheT binary" << endl;
+  cout << "Error: XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary" << endl;
   exit(0);
 #else
   std::string ilpSolver="";
