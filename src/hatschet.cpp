@@ -77,7 +77,7 @@ int main(int argc, char *args[])
   int threads=1;
   int timeout=-1; //default -1 means no timeout
 
-  enum Scheduler {ASAP, ALAP, UL, MOOVAC, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
+  enum Scheduler {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
   Scheduler schedulerString = NONE;
 
   std::string graphMLFile="";
@@ -157,6 +157,13 @@ int main(int argc, char *args[])
         throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
         #endif
         schedulerString = MOOVAC;
+      }
+      else if(valueLC == "moovacminreg")
+      {
+        #ifndef USE_SCALP
+        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        #endif
+        schedulerString = MOOVACMINREG;
       }
       else if(valueLC == "modulosdc")
       {
@@ -238,6 +245,9 @@ int main(int argc, char *args[])
       break;
     case MOOVAC:
       cout << "MOOVAC";
+      break;
+    case MOOVACMINREG:
+      cout << "MOOVACMINREG";
       break;
     case MODULOSDC:
       cout << "MODULOSDC";
@@ -324,6 +334,15 @@ int main(int argc, char *args[])
           if(timeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::MoovacScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(true);
+          #endif
+          break;
+        case MOOVACMINREG:
+          #ifdef USE_SCALP
+          isModuloScheduler=true;
+          scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
+          if(timeout > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
+          ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(true);
           #endif
           break;
         case MODULOSDC:
