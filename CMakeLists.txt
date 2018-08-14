@@ -148,3 +148,12 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
+
+####################
+# example project
+####################
+IF (SCALP_H AND SCALP_LIB)
+add_executable(example-bin example/example.cpp)
+target_link_libraries(example-bin hatschet)
+target_link_libraries(example-bin ${SCALP_LIB})
+ENDIF (SCALP_H AND SCALP_LIB)
