@@ -83,9 +83,10 @@ void MoovacScheduler::setObjective()
 
 void MoovacScheduler::schedule()
 {
-  this->timeoutCounter = 0;
   this->totalTime = 0;
   this->II = this->minII;
+
+  bool timeoutOccured=false;
 
   cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
 
@@ -98,18 +99,12 @@ void MoovacScheduler::schedule()
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
-    ScaLP::status stat = this->solver->solve();
+    stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
-    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
-    if(stat == ScaLP::status::INVALID) cout << "INVALID at II " << this->II << endl;
-    if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
-    if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
+    if(stat == ScaLP::status::OPTIMAL && !timeoutOccured) this->optimalResult = true;
+
 
     if(this->scheduleFound == false){
       (this->II)++;

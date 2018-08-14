@@ -614,7 +614,6 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
 
 void HatScheT::ModuloSDCScheduler::schedule()
 {
-  this->timeoutCounter = 0;
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
@@ -663,6 +662,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
     if(sched(budget,priority,asap))
     {
+      scheduleFound=true;
       std::cout << "FOUND for II=" << this->II << std::endl;
       break; // found
     }

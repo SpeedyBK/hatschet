@@ -73,6 +73,8 @@ public:
     this->solver->threads=i;
   }
   unsigned int getThreads(){return this->threads;}
+
+  ScaLP::status stat;
 protected:
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
@@ -99,13 +101,9 @@ protected:
    */
   bool solverQuiet;
   /*!
-   * \brief solverTimeout default is 1 hour
+   * \brief solverTimeout in seconds, default is 3600sec=1 hour
    */
   long solverTimeout;
-  /*!
-   * \brief timeoutCounter
-   */
-  unsigned int timeoutCounter;
   /*!
    * \brief solvingTime
    */

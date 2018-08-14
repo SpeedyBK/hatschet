@@ -8,7 +8,6 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
 {
   this->threads = 1;
   this->solver->threads = 1;
-  this->timeoutCounter = 0;
   this->solverQuiet = true;
   this->optimalResult = false;
   this->solverTimeout = 300;

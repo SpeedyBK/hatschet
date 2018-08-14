@@ -58,7 +58,7 @@ void MoovacMinRegScheduler::setObjective()
 
     vector<ScaLP::Variable> minMaxRegVariablesVector;
 
-    //unlimited resource are assummed to be implemented in paralell
+    //unlimited resource are assummed to be implemented in parallel
     if(r->getLimit() == -1)
     {
       //iterate of every implementation unit of resource r
