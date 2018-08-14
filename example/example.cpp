@@ -6,6 +6,7 @@
 #include "HatScheT/Edge.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
+#include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 
 using namespace HatScheT;
@@ -119,11 +120,14 @@ int main() {
   if (mv->getScheduleFound()) {
     std::cout << "Found a schedule for II=" << mv->getII() << " and with length=" << mv->getScheduleLength() << ":"
               << std::endl;
-    for (int t = 0; t < mv->getScheduleLength(); ++t) {
-      std::cout << "--- time step " << t << " ---" << std::endl;
-      for (auto *v : G.Vertices())
-        if (mv->getStartTime(*v) == t)
-          std::cout << "(" << v->getId() << ")" << std::endl;
+    // Always a good a idea to verify the schedule before proceeding with it...
+    if (verifyModuloSchedule(G, RM, mv->getSchedule(), mv->getII())) {
+      for (int t = 0; t < mv->getScheduleLength(); ++t) {
+        std::cout << "--- time step " << t << " ---" << std::endl;
+        for (auto *v : G.Vertices())
+          if (mv->getStartTime(*v) == t)
+            std::cout << "(" << v->getId() << ")" << std::endl;
+      }
     }
   } else {
     std::cout << "No schedule found!" << std::endl;
