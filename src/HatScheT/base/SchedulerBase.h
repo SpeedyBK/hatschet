@@ -90,13 +90,11 @@ public:
    */
   void writeScheduleChart(string filename);
   /*!
-   * \brief getII this function has to be implemented for every derived scheduler
-   * \return
+   * \brief getII getter for the II. The II has to be set by each scheduler when schedule is done (also non modulo schedulers!)
+   * \return initiation interval (II)
    */
-  virtual int getII() {
-    cout << "getII: Base class called. This should never happen!" <<endl;
-    throw new Exception("Graph::getEdge: Edge not found!");
-  }
+  virtual int getII() { return this->II;}
+
   /*!
    *
    * @return the used graph description of the scheduling problem

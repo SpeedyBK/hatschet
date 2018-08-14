@@ -116,11 +116,7 @@ namespace HatScheT
      * \brief schedule main method that runs the algorithm and determines a schedule
      */
     virtual void schedule();
-    /*!
-     * \brief getII
-     * \return
-     */
-    virtual int getII(){return this->II;}
+
     /*!
      * \brief setVerbose manage a level of verbosity (default off)
      * \param b

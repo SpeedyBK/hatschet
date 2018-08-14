@@ -96,7 +96,7 @@ void ALAPScheduler::schedule()
   for(const auto &p:this->startTimes) offset = std::min(offset,p.second);
   for(auto &p:this->startTimes) p.second -=offset;
 
-  this->II = this->getScheduleLength()+1;
+  this->II = this->getScheduleLength();
 }
 
 }

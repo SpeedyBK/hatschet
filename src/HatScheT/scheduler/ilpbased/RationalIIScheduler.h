@@ -39,11 +39,8 @@ public:
      * @param solverWishlist
      */
     RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-    /*!
-     * To Be Updated: II has to be rational or a vector for this scheduler to work
-     * @return
-     */
-    virtual int getII() { return this->II;}
+
+
 protected:
 
 

@@ -38,11 +38,7 @@ public:
    * \param resourceModel
    */
   SGMScheduler(Graph& g,ResourceModel &resourceModel, std::list<std::string> solverWishlist, OccurrenceSetCombination* occSC);
-  /*!
-   * \brief getII
-   * \return
-   */
-  virtual int getII() { return this->II;}
+
 protected:
   /*!
    * \brief setGeneralConstraints read the paper for further information

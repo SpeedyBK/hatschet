@@ -48,11 +48,7 @@ public:
    * \brief schedule
    */
   virtual void schedule();
-  /*!
-   * \brief getII
-   * \return
-   */
-  virtual int getII(){return this->getScheduleLength();}
+
   /*!
    * \brief setCriterion
    * \param sc

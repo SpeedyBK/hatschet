@@ -120,7 +120,7 @@ void ASAPScheduler::schedule()
     }
   }
 
-  this->II = this->getScheduleLength()+1;
+  this->II = this->getScheduleLength();
 }
 
 }
