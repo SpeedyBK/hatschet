@@ -126,7 +126,7 @@ ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 
   delete parser;
   XMLPlatformUtils::Terminate();
-  
+
   return *(this->rm);
 }
 
