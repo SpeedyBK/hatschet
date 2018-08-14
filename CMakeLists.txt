@@ -87,7 +87,6 @@ src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
-src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
@@ -107,7 +106,6 @@ src/HatScheT/utility/Verifier.cpp
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
-src/HatScheT/base/IterativeSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/RationalIISchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
