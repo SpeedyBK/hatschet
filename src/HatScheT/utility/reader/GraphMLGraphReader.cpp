@@ -36,7 +36,6 @@ GraphMLGraphReader::GraphMLGraphReader(ResourceModel *rm, Graph* g)
 
 GraphMLGraphReader::~GraphMLGraphReader()
 {
-
 }
 
 void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
@@ -169,7 +168,7 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
       {
         this->edgeDelayTagFound = true;
       }
-      if(key == "distance" /*|| key == "backward"*/ /*??!! das geht so nicht (patrick)*/)
+      if(key == "distance")
       {
         this->edgeDistanceTagFound = true;
       }
@@ -233,6 +232,7 @@ Graph& GraphMLGraphReader::readGraph(const char *path)
   }
 
   delete parser;
+  XMLPlatformUtils::Terminate();
 
   return *(this->g);
 }
