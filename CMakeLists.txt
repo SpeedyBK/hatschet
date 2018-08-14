@@ -62,7 +62,7 @@ ELSE (XERCESC_H AND XERCESC_LIB)
     MESSAGE(STATUS "Did not found XercesC: GraphML parser will not be available")
 ENDIF (XERCESC_H AND XERCESC_LIB)
 
-set(FILES
+set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
@@ -86,8 +86,43 @@ src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 )
 
+set(HatScheT_HEADERS
+src/HatScheT/base/ILPSchedulerBase.h
+src/HatScheT/base/IterativeSchedulerBase.h
+src/HatScheT/base/ModuloSchedulerBase.h
+src/HatScheT/base/RationalIISchedulerBase.h
+src/HatScheT/base/SchedulerBase.h
+src/HatScheT/Edge.h
+src/HatScheT/Graph.h
+src/HatScheT/ResourceModel.h
+src/HatScheT/scheduler/ALAPScheduler.h
+src/HatScheT/scheduler/ASAPScheduler.h
+src/HatScheT/scheduler/graphBased/graphBasedMs.h
+src/HatScheT/scheduler/graphBased/SGMScheduler.h
+src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
+src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
+src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
+src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
+src/HatScheT/scheduler/ULScheduler.h
+src/HatScheT/utility/Exception.h
+src/HatScheT/utility/reader/GraphMLGraphReader.h
+src/HatScheT/utility/reader/GraphMLResourceReader.h
+src/HatScheT/utility/reader/Reader.h
+src/HatScheT/utility/subgraphs/Occurrence.h
+src/HatScheT/utility/subgraphs/OccurrenceSet.h
+src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
+src/HatScheT/utility/Tests.h
+src/HatScheT/utility/Utility.h
+src/HatScheT/utility/Verifier.h
+src/HatScheT/utility/writer/DotWriter.h
+src/HatScheT/utility/writer/Writer.h
+src/HatScheT/Vertex.h
+)
+
+
+
 IF (SCALP_H AND SCALP_LIB)
-list(APPEND FILES
+list(APPEND HatScheT_SOURCES
 src/HatScheT/base/ILPSchedulerBase.cpp
 src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
@@ -100,7 +135,7 @@ src/HatScheT/utility/Tests.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
 
-add_library(hatschet ${FILES})
+add_library(hatschet ${HatScheT_SOURCES})
 
 add_executable(hatschet-bin src/hatschet.cpp)
 set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
@@ -157,3 +192,11 @@ add_executable(example-bin example/example.cpp)
 target_link_libraries(example-bin hatschet)
 target_link_libraries(example-bin ${SCALP_LIB})
 ENDIF (SCALP_H AND SCALP_LIB)
+
+####################
+# Installation
+####################
+
+install (TARGETS hatschet-bin DESTINATION bin)
+install (TARGETS hatschet DESTINATION lib)
+install (FILES ${HatScheT_HEADERS} DESTINATION include/HatScheT)
