@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include "HatScheT/utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
@@ -83,9 +103,10 @@ void MoovacScheduler::setObjective()
 
 void MoovacScheduler::schedule()
 {
-  this->timeoutCounter = 0;
   this->totalTime = 0;
   this->II = this->minII;
+
+  bool timeoutOccured=false;
 
   cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
 
@@ -98,23 +119,17 @@ void MoovacScheduler::schedule()
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
-    ScaLP::status stat = this->solver->solve();
+    stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
-    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
-    if(stat == ScaLP::status::INVALID) cout << "INVALID at II " << this->II << endl;
-    if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
-    if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
+    if(stat == ScaLP::status::OPTIMAL && !timeoutOccured) this->optimalResult = true;
 
-    if(this->scheduleFound == false){
+
+    if(scheduleFound == false){
       (this->II)++;
     }
-    else if(this->scheduleFound == true){
+    else {
       break;
     }
   }
@@ -126,7 +141,7 @@ void MoovacScheduler::schedule()
   }
 
   else{
-    cout << "Passed maxII booundary! No modulo schedule identified by Moovac!" << endl;
+    cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
     this->II = -1;
   }
 }

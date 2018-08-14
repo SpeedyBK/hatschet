@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
@@ -94,12 +114,13 @@ bool Tests::asapHCTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int sum = Utility::sumOfStarttimes(asap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, asap.getSchedule(), asap.getII())) return true;
 
-  if(sum==29) return true;
-  cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
-  cout << rm << endl;
+  cout << "Tests::asapHCTest: Test Failed! Schedule is: " << endl;
   cout << g << endl;
+  cout << rm << endl;
+  asap.printStartTimes();
+  cout << "Tests::asapHCTest: asap HC failed verification!" << endl;
 
   return false;
 }
@@ -120,10 +141,13 @@ bool Tests::alapHCTest()
   HatScheT::ALAPScheduler alap(g,rm);
   alap.schedule();
 
-  int sum = Utility::sumOfStarttimes(alap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, alap.getSchedule(), alap.getII())) return true;
 
-  if(sum==44) return true;
-  cout << "Tests::alapHCTest: Sum of start times expected to be 44, but is " << sum << endl;
+  cout << "Tests::alapHCTest: Test Failed! Schedule is: " << endl;
+  cout << g << endl;
+  cout << rm << endl;
+  alap.printStartTimes();
+  cout << "Tests::alapHCTest: alap HC failed verification!" << endl;
   return false;
 }
 

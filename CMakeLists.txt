@@ -1,3 +1,22 @@
+# This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+# Author: Martin Kumm, Patrick Sittel, Julian Oppermann ({kumm, sittel}@uni-kassel.de, oppermann@esa.tu-darmstadt.de)
+#
+# Copyright (C) 2018
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 cmake_minimum_required (VERSION 2.8)
 project (hatschet)
 
@@ -68,7 +87,6 @@ src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
-src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
@@ -88,7 +106,6 @@ src/HatScheT/utility/Verifier.cpp
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
-src/HatScheT/base/IterativeSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/RationalIISchedulerBase.h
 src/HatScheT/base/SchedulerBase.h

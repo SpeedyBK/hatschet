@@ -1,8 +1,23 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 
 #include <HatScheT/Graph.h>
@@ -75,13 +90,11 @@ public:
    */
   void writeScheduleChart(string filename);
   /*!
-   * \brief getII this function has to be implemented for every derived scheduler
-   * \return
+   * \brief getII getter for the II. The II has to be set by each scheduler when schedule is done (also non modulo schedulers!)
+   * \return initiation interval (II)
    */
-  virtual int getII() {
-    cout << "getII: Base class called. This should never happen!" <<endl;
-    throw new Exception("Graph::getEdge: Edge not found!");
-  }
+  virtual int getII() { return this->II;}
+
   /*!
    *
    * @return the used graph description of the scheduling problem

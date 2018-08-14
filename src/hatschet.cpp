@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -49,22 +69,22 @@ void print_short_help()
   std::cout << "usage: hatschet [OPTIONS] <path to graphML file>" << std::endl;
   std::cout << std::endl;
   std::cout << "General Options:" << std::endl;
-  std::cout << "Option                                                  Meaning" << std::endl;
+  std::cout << "Option                                                  | Meaning" << std::endl;
   std::cout << "---------------------------------------------------------------------------------------------------------------------------------------------------------------" << std::endl;
-  std::cout << "--scheduler=[ASAP|ALAP|UL|MOOVAC|MODULOSDC|RATIONALII]  Scheduling algorithm, select one of the following:" << std::endl;
-  std::cout << "                                                          ASAP: As-soon-as-possible scheduling" << std::endl;
-  std::cout << "                                                          ALAP: As-last-as-possible scheduling" << std::endl;
-  std::cout << "                                                          UL: Universal list scheduling" << std::endl;
-  std::cout << "                                                          MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
-  std::cout << "                                                          MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
-  std::cout << "                                                          RATIONALII: Experimental rational II scheduler" << std::endl;
-  std::cout << "--solver=[Gurobi|CPLEX|SCIP|LPSolve]                    ILP solver (if available in ScaLP library), also a comma separated wish list of solvers can be provided" << std::endl;
-  std::cout << "--timeout=[int]                                         ILP solver Timeout in seconds (default: -1, no timeout)" << std::endl;
-  std::cout << "--threads=[int]                                         Number of threads for the ILP solver (default: 1)" << std::endl;
-  std::cout << "--resource=[string]                                     Path to XML resource constrain file" << std::endl;
-  std::cout << "--graph=[string]                        Path to graphML Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
-  std::cout << "--dot=[string]                                          Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
-  std::cout << "--html=[string]                                         Optional path to html file for a schedule chart" << std::endl;
+  std::cout << "--scheduler=[ASAP|ALAP|UL|MOOVAC|MODULOSDC|RATIONALII]  | Scheduling algorithm, select one of the following:" << std::endl;
+  std::cout << "                                                        |   ASAP: As-soon-as-possible scheduling" << std::endl;
+  std::cout << "                                                        |   ALAP: As-last-as-possible scheduling" << std::endl;
+  std::cout << "                                                        |   UL: Universal list scheduling" << std::endl;
+  std::cout << "                                                        |   MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
+  std::cout << "                                                        |   MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
+  std::cout << "                                                        |   RATIONALII: Experimental rational II scheduler" << std::endl;
+  std::cout << "--solver=[Gurobi|CPLEX|SCIP|LPSolve]                    | ILP solver (if available in ScaLP library), also a comma separated wish list of solvers can be provided" << std::endl;
+  std::cout << "--timeout=[int]                                         | ILP solver Timeout in seconds (default: -1, no timeout)" << std::endl;
+  std::cout << "--threads=[int]                                         | Number of threads for the ILP solver (default: 1)" << std::endl;
+  std::cout << "--resource=[string]                                     | Path to XML resource constrain file" << std::endl;
+  std::cout << "--graph=[string]                        Path to graphML | Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
+  std::cout << "--dot=[string]                                          | Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
+  std::cout << "--html=[string]                                         | Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
 
 }
