@@ -126,10 +126,10 @@ void MoovacScheduler::schedule()
     if(stat == ScaLP::status::OPTIMAL && !timeoutOccured) this->optimalResult = true;
 
 
-    if(this->scheduleFound == false){
+    if(scheduleFound == false){
       (this->II)++;
     }
-    else if(this->scheduleFound == true){
+    else {
       break;
     }
   }
@@ -141,7 +141,7 @@ void MoovacScheduler::schedule()
   }
 
   else{
-    cout << "Passed maxII booundary! No modulo schedule identified by Moovac!" << endl;
+    cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
     this->II = -1;
   }
 }

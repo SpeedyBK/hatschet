@@ -43,11 +43,7 @@ public:
    * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.
    */
   virtual void schedule();
-  /*!
-   * \brief getII
-   * \return
-   */
-  virtual int getII() { return this->II;}
+
   /*!
    * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
    * \return

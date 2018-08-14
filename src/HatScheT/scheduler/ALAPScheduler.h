@@ -40,11 +40,7 @@ public:
    * \brief schedule generate an ALAP (HC) schedule
    */
   virtual void schedule();
-  /*!
-   * \brief getII
-   * \return
-   */
-  virtual int getII() { return this->getScheduleLength();}
+
 protected:
 private:
 
