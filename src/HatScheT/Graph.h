@@ -17,10 +17,17 @@ typedef std::map<unsigned,Vertex*> vertex_t;
 typedef std::map<unsigned,Edge*> edge_t;
 
 /*!
- * \brief The Graph class represents all the data dependencies using a graph of vertices (@see Vertex) and edges (@see Edge).
+ * \brief The Graph class represents all the data dependencies using a graph of vertices and edges.
  *
  * The Graph class is a very simple and lightweight implementation of a graph. Each vertex and edge is assigned to a unique int value.
  * Although the id's are assigned in a sequence, there is no guarantee that all id's exist.
+ *
+ * Note that neither the Graph nor the vertices contain latency information - therefore a Graph must always be accompanied
+ * by a ResourceModel when scheduling it.
+ *
+ * \sa Vertex
+ *     Edge
+ *     ResourceModel
  */
 class Graph
 {

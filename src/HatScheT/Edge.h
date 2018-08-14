@@ -11,7 +11,24 @@ namespace HatScheT
 {
 
 /*!
- * \brief Implementation of a simple edge used in a graph (@see Graph)
+ * \brief Implementation of a edge used in a Graph
+ *
+ * An edge expresses a precedence relation between the operations represented by the source and destination vertices.
+ * Each edge carries two attributes:
+ *
+ * The **delay** is interpreted as an additional number of time steps that need to pass before `dst` can start after `src` finishes.
+ * While the main use for this facility is to support (or more precisely, limit) operator chaining, it could be used to model
+ * special propagation delays as well.
+ *
+ * The **distance** is only relevant for modulo scheduling problems. A non-zero distance indicates that a dependence
+ * does not hold for the current iteration (or input sample), but `distance`-many iterations later.
+ *
+ * In the most generic case, an edge represents the following linear constraint between the start times \f$t_{src}\f$ and \f$t_{dst}\f$:
+ *
+ * \f$ t_{src} + ResModel.getVertexLatency(src) + delay <= t_{dst} + distance \cdot II \f$
+ *
+ * \sa Graph
+ *     ResourceModel
  */
 class Edge
 {

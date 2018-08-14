@@ -88,7 +88,7 @@ protected:
 };
 
 /*!
- * \brief The ReservationBlock class descripes one of possible many resource occupied by a reservation table at a specific start time
+ * \brief The ReservationBlock class describes one of possible many resource occupied by a reservation table at a specific start time
  */
 class ReservationBlock
 {
@@ -134,7 +134,7 @@ private:
 };
 
 /*!
- * \brief The ReservationTable class descripe a complex operation that is composite of many resources/operations
+ * \brief The ReservationTable class describe a complex operation that is composite of many resources/operations
  * one of each operations is called a reservation block
  */
 class ReservationTable : public Resource
@@ -159,7 +159,7 @@ public:
    */
   friend ostream& operator<<(ostream& os, const ReservationTable& rt);
   /*!
-   * \brief makeReservationBlock factory to generate and add a reservation block to this reservation tbale
+   * \brief makeReservationBlock factory to generate and add a reservation block to this reservation table
    * \param r
    * \param startTime
    * \return
@@ -195,7 +195,13 @@ private:
 };
 
 /*!
- * \brief The ResourceModel class use this class to manage the resources of your implementation to schedule your data flow graph
+ * \brief The ResourceModel manages the resource types known to the schedulers, and the association of vertices to a particular resource type.
+ *
+ * The schedulers implemented in HatScheT currently support only simple resource models where each operation requires exactly one fully-pipelined resource in its start time step.
+ * In the future, support for blocking resource usage, as well as complex reservation tables, will be added.
+ * 
+ * \sa Resource
+ *     ReservationTable
  */
 class ResourceModel
 {
