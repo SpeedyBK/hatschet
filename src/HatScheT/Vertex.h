@@ -31,15 +31,16 @@ public:
    */
   Vertex(const Vertex&) = delete;
   /*!
-   * \brief getId
-   * \return
+   * \return the vertex ID
    */
   int getId() const { return id; }
   /*!
-   * \brief setName optional
-   * \param s
+   * \param s the new name
    */
   void setName(string s){this->name = s;}
+  /*!
+   * @return the (optional) vertex name
+   */
   const string& getName() const {return this->name;}
   /*!
    * \brief < operator used for map container
@@ -51,11 +52,11 @@ public:
 
 protected:
   /*!
-   * \brief name optional
+   * \brief an optional vertex name
    */
   string name;
   /*!
-   * \brief id mandatory
+   * \brief the mandatory numerical vertex ID
    */
   const int id;
 };

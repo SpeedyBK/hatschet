@@ -44,7 +44,7 @@ void ALAPScheduler::schedule()
     Vertex* v = stack.top();
     stack.pop();
 
-    set<Vertex*> procVertices = this->g.getPreceedingVertices(v);
+    set<Vertex*> procVertices = this->g.getPredecessors(v);
 
     for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
       Vertex* procV = *it;

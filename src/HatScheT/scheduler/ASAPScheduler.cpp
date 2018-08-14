@@ -70,7 +70,7 @@ void ASAPScheduler::schedule()
     const Resource* r = this->resourceModel.getResource(v);
     stack.pop();
 
-    set<Vertex*> subVertices = this->g.getSubsequentVertices(v);
+    set<Vertex*> subVertices = this->g.getSuccessors(v);
 
     for(auto it=subVertices.begin(); it!=subVertices.end(); ++it){
       Vertex* subV = *it;

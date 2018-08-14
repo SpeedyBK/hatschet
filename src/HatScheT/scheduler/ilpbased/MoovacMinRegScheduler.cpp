@@ -65,7 +65,7 @@ void MoovacMinRegScheduler::setObjective()
       for(auto it2:verticesOfR)
       {
         const Vertex* v = it2;
-        set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+        set<Vertex*> followingVertices = this->g.getSuccessors(v);
         if(followingVertices.size()==0) continue;
 
         minMaxRegVariablesVector.push_back(ScaLP::newIntegerVariable("D_" + v->getName(),0,10000));

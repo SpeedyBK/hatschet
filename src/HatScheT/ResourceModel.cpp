@@ -161,14 +161,6 @@ ReservationTable &ResourceModel::makeReservationTable(string name)
   return *rt;*/
 }
 
-ReservationBlock& ResourceModel::makeReservationBlock(ReservationTable *rt, Resource *r, int startTime)
-{
-  //currently disabled/not supported
-  throw new Exception("ResourceModel.makeReservationBlock: ERROR makeReservationBlock currently disabled/not supported!");
-
-  //return rt->makeReservationBlock(r,startTime);
-}
-
 Resource *ResourceModel::getResource(string name) const
 {
   for(auto it:this->resources)
@@ -199,7 +191,7 @@ set<const Vertex*> ResourceModel::getVerticesOfResource(const Resource *r) const
   return vertices;
 }
 
-int ResourceModel::getNoOfVerticesRegisteredToResource(Resource *r) const
+int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
 {
   int count = 0;
 

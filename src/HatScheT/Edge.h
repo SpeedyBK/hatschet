@@ -47,41 +47,73 @@ public:
    */
    Edge(const Edge&) = delete;
 
-  Vertex& getVertexSrc(){ return Vsrc; }
-  Vertex& getVertexDst(){ return Vdst; }
+  Vertex& getVertexSrc(){ return Vsrc; } /*!< \return the source vertex */
+  Vertex& getVertexDst(){ return Vdst; } /*!< \return the destination vertex */
 
-  const string getVertexSrcName() const {return this->Vsrc.getName();}
-  const string getVertexDstName() const {return this->Vdst.getName();}
+  const string getVertexSrcName() const {return this->Vsrc.getName();} /*!< \return the source vertex's name */
+  const string getVertexDstName() const {return this->Vdst.getName();} /*!< \return the destination vertex's name */
 
-  int getDelay() const { return this->delay; }
+  /*! \return the edge delay */
+  int getDelay() const { return this->delay; } /*!< \return the edge delay */
+  /*! \brief sets the edge delay
+   * @param delay the new delay
+   */
   void setDelay(int delay) { this->delay = delay; }
 
+  /*! \return the edge distance */
   int getDistance() const { return distance; }
+  /*! \brief sets the edge distance
+   * @param distance the new distance
+   */
   void setDistance(int distance){ this->distance = distance; }
 
+  /*! \return the edge ID */
   int getID() const {return this->id;}
+  /*! \brief sets the edge ID
+   * @param id the new ID
+   */
   void setID(int id){this->id = id;}
 
-  void setDependencyType(DependencyType dt){this->dependencyType= dt;}
+  /*!
+   * \brief sets the dependency type for this edge
+   * @param dt the new dependency type
+   */
+  void setDependencyType(DependencyType dt){this->dependencyType = dt;}
+  /*! \return the dependency type */
   DependencyType getDependencyType() const {return this->dependencyType;}
 
+  /*!
+   * @return whether this edge has the `Data` dependency type
+   */
   bool isDataEdge();
 protected:
+  /*! \brief the edge ID */
   int id = -1;
+  /*! \brief the edge's dependency type (i.e. whether the edge represents data flow, or only models a precedence relation) */
   DependencyType dependencyType;
 
   /**
-   * @brief delay defines the integer edge delay, i.e. an additional delay between src and dst vertices.
+   * @brief defines the integer edge delay, i.e. an additional delay between src and dst vertices.
+   *
    * The delay is intended to be inferred internally by HatScheT, and thus is not a constructor argument.
    */
   int delay = 0;
 
   /**
-   * @brief distance defines the integer distance in the schedule. Used to model algorithmic/functional delays (like appear in digital filters)
+   * @brief defines the integer distance in the schedule.
+   *
+   * Used to model algorithmic/functional delays (like appear in digital filters), or to indicate a dependence has to hold after a certain number of iterations (in a C-based HLS context).
    */
   int distance;
 
+  /*!
+   * \brief the source vertex
+   */
   Vertex &Vsrc;
+
+  /*!
+   * \brief the destination vertex
+   */
   Vertex &Vdst;
 
 };

@@ -13,7 +13,7 @@ ULScheduler::ULScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase
 
 bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
 {
-  set<Vertex*> inputs = this->g.getPreceedingVertices(v);
+  set<Vertex*> inputs = this->g.getPredecessors(v);
 
   for(auto it:inputs){
     //register inputs are considered to be input for the graph
@@ -29,7 +29,7 @@ bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
 bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
 {
   if(Utility::isInput(&this->g,v)==true) return true;
-  set<Vertex*> inputs = this->g.getPreceedingVertices(v);
+  set<Vertex*> inputs = this->g.getPredecessors(v);
 
   for(auto it:inputs){
     //skip inputs over edges with distance as they represent next samples

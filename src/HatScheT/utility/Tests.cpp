@@ -140,8 +140,8 @@ bool Tests::readTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  if(rm.getNoOfResources() != 3){
-    cout << "Incorrect no of resource read: " << rm.getNoOfResources() << " instead of 3!" << endl;
+  if(rm.getNumResources() != 3){
+    cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
     return false;
   }
 

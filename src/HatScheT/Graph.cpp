@@ -58,7 +58,7 @@ bool Graph::isEmpty()
   return false;
 }
 
-set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
+set<Vertex *> Graph::getPredecessors(const Vertex *v) const
 {
   set<Vertex*> vset;
 
@@ -73,7 +73,7 @@ set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
   return vset;
 }
 
-set<Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+set<Vertex *> Graph::getSuccessors(const Vertex *v) const
 {
   set<Vertex*> vset;
 

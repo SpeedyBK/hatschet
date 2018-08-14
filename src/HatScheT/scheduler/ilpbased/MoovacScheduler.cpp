@@ -162,7 +162,7 @@ void MoovacScheduler::setVectorVariables()
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
   {
     Resource* r = *it;
-    if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
+    if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
 
     int ak = r->getLimit();
     if(ak==-1) continue;
@@ -317,7 +317,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
         const Vertex* v = it2;
         int vTIndex = this->tIndices[v];
-        set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+        set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
         for(auto it3:followingVertices)
         {
@@ -360,7 +360,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         {
           const Vertex* v = it3;
           int vTIndex = this->tIndices[v];
-          set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+          set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
           for(auto it4:followingVertices)
           {
@@ -391,7 +391,7 @@ void MoovacScheduler::setModuloAndResourceConstraints()
     for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
     {
       Resource* r = *it;
-      if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
+      if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
 
       int ak = r->getLimit();
       if(ak==-1) continue;

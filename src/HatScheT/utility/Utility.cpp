@@ -112,7 +112,7 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
     Resource* r = *it;
     //skip unlimited resources
     if(r->getLimit()==-1)continue;
-    int opsUsingR = rm->getNoOfVerticesRegisteredToResource(r);
+    int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
     int avSlots = r->getLimit();
 
     if(avSlots<=0) throw new Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
@@ -264,7 +264,7 @@ int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, Reso
   int opsUsed=0;
   //unlimited resources used in paralell
   if(r->getLimit()<=0){
-    return rm.getNoOfVerticesRegisteredToResource(r);
+    return rm.getNumVerticesRegisteredToResource(r);
   }
 
   vector<bool> usedOp;
