@@ -12,7 +12,15 @@ namespace HatScheT
 {
 
 /*!
- * \brief Implementation of a simple vertex used in a graph (@see Graph)
+ * \brief Implementation of a vertex used in a Graph
+ *
+ * Vertices represent the entities (such as operation, instructions, ...) to be scheduled, but do not store their
+ * latencies/delay. Instead, a vertex must be registered to use a certain Resource, which then provides the latency
+ * value.
+ *
+ * \sa Graph
+ *     Resource
+ *     ResourceModel
  */
 class Vertex
 {
