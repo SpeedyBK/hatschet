@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ModelInformation Version="1.0">
+    <Resources>
+        <resource blockingTime="1" latency="2" limit="1" name="mem"/>
+        <resource blockingTime="0" latency="1" limit="-1" name="adder"/>
+    </Resources>
+</ModelInformation>
