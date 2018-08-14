@@ -114,12 +114,13 @@ bool Tests::asapHCTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int sum = Utility::sumOfStarttimes(asap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, asap.getSchedule(), asap.getII())) return true;
 
-  if(sum==29) return true;
-  cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
-  cout << rm << endl;
+  cout << "Tests::asapHCTest: Test Failed! Schedule is: " << endl;
   cout << g << endl;
+  cout << rm << endl;
+  asap.printStartTimes();
+  cout << "Tests::asapHCTest: asap HC failed verification!" << endl;
 
   return false;
 }
@@ -140,10 +141,13 @@ bool Tests::alapHCTest()
   HatScheT::ALAPScheduler alap(g,rm);
   alap.schedule();
 
-  int sum = Utility::sumOfStarttimes(alap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, alap.getSchedule(), alap.getII())) return true;
 
-  if(sum==44) return true;
-  cout << "Tests::alapHCTest: Sum of start times expected to be 44, but is " << sum << endl;
+  cout << "Tests::alapHCTest: Test Failed! Schedule is: " << endl;
+  cout << g << endl;
+  cout << rm << endl;
+  alap.printStartTimes();
+  cout << "Tests::alapHCTest: alap HC failed verification!" << endl;
   return false;
 }
 
