@@ -47,11 +47,6 @@ public:
    */
   static bool apiTest();
   /*!
-   * \brief asapTest test asap scheduler
-   * \return
-   */
-  static bool asapTest();
-  /*!
    * \brief asapHCTest  test asap hc scheduler
    * \return
    */

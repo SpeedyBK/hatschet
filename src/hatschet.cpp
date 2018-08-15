@@ -220,7 +220,6 @@ int main(int argc, char *args[])
       if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
       if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
       if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
-      if(str=="ASAP" && HatScheT::Tests::asapTest()==false) exit(-1);
       if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
       if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
       if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
