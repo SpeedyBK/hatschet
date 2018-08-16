@@ -135,7 +135,7 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
     int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
     int avSlots = r->getLimit();
 
-    if(avSlots<=0) throw new Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
+    if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
     int tempMax = opsUsingR/avSlots + (opsUsingR % avSlots != 0);
 
     if(tempMax>resMII) resMII=tempMax;
@@ -178,7 +178,7 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
   auto status = solver.solve();
   if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
     cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
-    throw new Exception("RecMII computation failed!");
+    throw HatScheT::Exception("RecMII computation failed!");
   }
 
   return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.

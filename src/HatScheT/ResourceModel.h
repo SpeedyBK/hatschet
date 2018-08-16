@@ -104,7 +104,7 @@ public:
    * \param startTime the start time
    */
   ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {
-    throw new Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
+    throw HatScheT::Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
   }
   /*!
    * copy constructor is forbidden for this class
@@ -153,7 +153,7 @@ public:
    * \param name the table's name
    */
   ReservationTable(std::string name) : Resource(name, -1, -1, -1) {
-    throw new Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
+    throw HatScheT::Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
   }
   /*!
  * copy constructor is forbidden for this class
@@ -189,7 +189,7 @@ public:
    * \brief not applicable
    * \return Nothing
    */
-  virtual int getBlockingTime() const {throw new Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
+  virtual int getBlockingTime() const {throw HatScheT::Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
 private:
   /*!
    * \brief all created reservation blocks

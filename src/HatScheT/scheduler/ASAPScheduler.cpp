@@ -81,7 +81,7 @@ void ASAPScheduler::schedule()
 
   if(stack.size()==0){
     cout << "ASAPScheduler.schedule: Error stack not initialized! No schedule found!" << endl;
-    throw new Exception("ASAPScheduler.schedule: Error stack not initialized! No schedule found!");
+    throw HatScheT::Exception("ASAPScheduler.schedule: Error stack not initialized! No schedule found!");
   }
 
   //schedule

@@ -43,12 +43,12 @@ namespace HatScheT {
 
         if ((moduloLowerBound <= 0) || (moduloLowerBound > 2))
         {
-            throw new HatScheT::Exception("GraphBasedMs.schedule(): Invalid modulo lower bound!");
+            throw HatScheT::Exception("GraphBasedMs.schedule(): Invalid modulo lower bound!");
         }
 
         if ((moduloUpperBound <= 0) || (moduloUpperBound > 2))
         {
-            throw new HatScheT::Exception("GraphBasedMs.schedule(): Invalid modulo upper bound!");
+            throw HatScheT::Exception("GraphBasedMs.schedule(): Invalid modulo upper bound!");
         }
     }
 
@@ -124,7 +124,7 @@ void GraphBasedMs::schedule()
     if (n <= 1)
     {
         cout << "GraphBasedMs.schedule(): ERROR scheduler fucked up" << endl;
-        throw new HatScheT::Exception("GraphBasedMs.schedule(): ERROR scheduler fucked up");
+        throw HatScheT::Exception("GraphBasedMs.schedule(): ERROR scheduler fucked up");
     }
 
 

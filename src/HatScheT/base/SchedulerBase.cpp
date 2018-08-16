@@ -138,9 +138,9 @@ void SchedulerBase::writeScheduleChart(string filename)
       }
       templateFile.close();
     }
-    else throw new HatScheT::Exception("Template file for schedule chart " + templatePath + " does not exist.");
+    else throw HatScheT::Exception("Template file for schedule chart " + templatePath + " does not exist.");
   }
-  else throw new HatScheT::Exception("Could not open file " + filename + " for writing.");
+  else throw HatScheT::Exception("Could not open file " + filename + " for writing.");
 
   outputFile.close();
 }
@@ -153,7 +153,7 @@ std::map<const Vertex *, int> SchedulerBase::getBindings()
   for(auto it:this->startTimes){
     Vertex* v = it.first;
     const Resource* r = this->resourceModel.getResource(v);
-    if(r->getLimit() == -1) throw new Exception("SchedulerBase.getBindings: resource not unlimited " + r->getName() + "! SchedulerBase does not support this behavior! Use a ResourceConstraint Scheduler!");
+    if(r->getLimit() == -1) throw HatScheT::Exception("SchedulerBase.getBindings: resource not unlimited " + r->getName() + "! SchedulerBase does not support this behavior! Use a ResourceConstraint Scheduler!");
 
     if(naiveBindingCounter.find(r) == naiveBindingCounter.end()) naiveBindingCounter.insert(make_pair(r,0));
     //make naive binding
@@ -167,7 +167,7 @@ std::map<const Vertex *, int> SchedulerBase::getBindings()
 
 std::map<Edge*,int> SchedulerBase::getLifeTimes()
 {
-  if(this->startTimes.size()==0) throw new Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+  if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
   std::map<Edge*,int> lifetimes;
 
@@ -177,7 +177,7 @@ std::map<Edge*,int> SchedulerBase::getLifeTimes()
     Vertex* vDst = &e->getVertexDst();
     int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->getScheduleLength();
 
-    if(lifetime < 0) throw new Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+    if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));
   }
   return lifetimes;

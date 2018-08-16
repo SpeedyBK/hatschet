@@ -69,7 +69,7 @@ void MoovacScheduler::constructProblem()
   }
   else
   {
-     throw new Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstrain));
+     throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstrain));
   }
 
   this->setVectorVariables();
@@ -222,7 +222,7 @@ void MoovacScheduler::setGeneralConstraints()
 
 std::map<Edge*,int> MoovacScheduler::getLifeTimes()
 {
-  if(this->startTimes.size()==0) throw new Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+  if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
   std::map<Edge*,int> lifetimes;
 
@@ -232,7 +232,7 @@ std::map<Edge*,int> MoovacScheduler::getLifeTimes()
     Vertex* vDst = &e->getVertexDst();
     int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->II;
 
-    if(lifetime < 0) throw new Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+    if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));
   }
   return lifetimes;
@@ -240,7 +240,7 @@ std::map<Edge*,int> MoovacScheduler::getLifeTimes()
 
 std::map<const Vertex *, int> MoovacScheduler::getBindings()
 {
-  if (this->scheduleFound==false || this->startTimes.size()==0) throw new Exception("MoovacScheduler.getBindings: schedule was found!");
+  if (this->scheduleFound==false || this->startTimes.size()==0) throw HatScheT::Exception("MoovacScheduler.getBindings: schedule was found!");
   std::map<const Vertex*,int> bindings;
 
   //iterate over resources
