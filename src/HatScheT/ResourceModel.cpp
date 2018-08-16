@@ -113,7 +113,7 @@ void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
 const Resource *ResourceModel::getResource(const Vertex *v) const
 {
   const auto it = this->registrations.find(v);
-  if(it == this->registrations.end()) throw new Exception("ResourceModel.getResource: vertex not registered " + v->getName());
+  if(it == this->registrations.end()) throw HatScheT::Exception("ResourceModel.getResource: vertex not registered " + v->getName());
   else return it->second;
 }
 
@@ -157,7 +157,7 @@ int ReservationTable::getLatency() const
 ReservationBlock &ReservationTable::makeReservationBlock(Resource *r, int startTime)
 {
   //currently disabled/not supported
-  throw new Exception("ReservationTable.makeReservationBlock: ERROR makeReservationBlock currently disabled/not supported!");
+  throw HatScheT::Exception("ReservationTable.makeReservationBlock: ERROR makeReservationBlock currently disabled/not supported!");
 
   /*ReservationBlock* rb = new ReservationBlock(r,startTime);
   this->blocks.push_back(rb);
@@ -174,7 +174,7 @@ Resource &ResourceModel::makeResource(string name, int limit, int latency, int b
 ReservationTable &ResourceModel::makeReservationTable(string name)
 {
   //currently disabled/not supported
-  throw new Exception("ResourceModel.makeReservationTable: ERROR makeReservationTable currently disabled/not supported!");
+  throw HatScheT::Exception("ResourceModel.makeReservationTable: ERROR makeReservationTable currently disabled/not supported!");
 
   /*ReservationTable* rt = new ReservationTable(name);
   this->tables.push_back(rt);
@@ -190,7 +190,7 @@ Resource *ResourceModel::getResource(string name) const
 
     if(r->getName() == name) return r;
   }
-  throw new Exception("MoovacScheduler.constructProblem: Could not find resource with name " + name);
+  throw HatScheT::Exception("MoovacScheduler.constructProblem: Could not find resource with name " + name);
 }
 
 bool ResourceModel::isEmpty()
@@ -255,7 +255,7 @@ int ResourceModel::getVertexLatency(const Vertex *v) const
     }
   }
 
-  throw new Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
+  throw HatScheT::Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
 }
 
 int ResourceModel::getVertexLatency(Vertex *v) const
@@ -271,7 +271,7 @@ int ResourceModel::getVertexLatency(Vertex *v) const
     }
   }
 
-  throw new Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
+  throw HatScheT::Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
 }
 
 }

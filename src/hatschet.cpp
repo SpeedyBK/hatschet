@@ -79,11 +79,11 @@ void print_short_help()
   std::cout << "                                                        |   MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
   std::cout << "                                                        |   MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                                                        |   RATIONALII: Experimental rational II scheduler" << std::endl;
-  std::cout << "--solver=[Gurobi|CPLEX|SCIP|LPSolve]                    | ILP solver (if available in ScaLP library), also a comma separated wish list of solvers can be provided" << std::endl;
+  std::cout << "--solver=[Gurobi|CPLEX|SCIP|LPSolve]                    | ILP solver (as available in ScaLP library), also a comma separated wish list of solvers can be provided" << std::endl;
   std::cout << "--timeout=[int]                                         | ILP solver Timeout in seconds (default: -1, no timeout)" << std::endl;
   std::cout << "--threads=[int]                                         | Number of threads for the ILP solver (default: 1)" << std::endl;
   std::cout << "--resource=[string]                                     | Path to XML resource constrain file" << std::endl;
-  std::cout << "--graph=[string]                        Path to graphML | Graph File you want to read. (Make sure XercesC is enabled)" << std::endl;
+  std::cout << "--graph=[string]                                        | graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]                                          | Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--html=[string]                                         | Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
@@ -92,15 +92,15 @@ void print_short_help()
 int main(int argc, char *args[])
 {
 #ifndef USE_XERCESC
-  cout << "Error: XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary" << endl;
-  exit(0);
+  throw HatScheT::Exception("XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary");
 #else
   std::string ilpSolver="";
   int threads=1;
   int timeout=-1; //default -1 means no timeout
 
-  enum Scheduler {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
-  Scheduler schedulerString = NONE;
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
+  SchedulersSelection schedulerSelection = NONE;
+  string schedulerSelectionStr;
 
   std::string graphMLFile="";
   std::string resourceModelFile="";
@@ -114,190 +114,171 @@ int main(int argc, char *args[])
       exit(0);
   }
 
-  HatScheT::ResourceModel rm;
-  HatScheT::Graph g;
+  try
+  {
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
 
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+    HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  //parse command line
-  for (int i = 1; i < argc; i++) {
-    char* value;
-    if(getCmdParameter(args[i],"--timeout=",value))
-    {
-      timeout = atol(value);
-    }
-    else if(getCmdParameter(args[i],"--threads=",value))
-    {        
-      threads = atol(value);
-    }   
-    else if(getCmdParameter(args[i],"--solver=",value))
-    {
-      #ifndef USE_SCALP
-      throw new HatScheT::Exception("HatScheT: ScaLP not active! Solver cant be chosen: " + std::string(value));
-      #endif
-      ilpSolver = std::string(value);
-    }
-    else if(getCmdParameter(args[i],"--resource=",value))
-    {
-      resourceModelFile = std::string(value);
-    }
-    else if(getCmdParameter(args[i],"--graph=",value))
-    {
-      graphMLFile = std::string(value);
-    }
-    else if(getCmdParameter(args[i],"--dot=",value))
-    {
-      dotFile = value;
-    }
-    else if(getCmdParameter(args[i],"--html=",value))
-    {
-      htmlFile = value;
-    }
-    else if(getCmdParameter(args[i],"--scheduler=",value))
-    {
-      std::string valueStr = std::string(value);//std::tolower(std::string(value));
-      std::string valueLC; //lower case string
-
-      valueLC.resize(valueStr.size());
-      std::transform(valueStr.begin(),valueStr.end(),valueLC.begin(),::tolower);
-
-      if(valueLC == "asap")
+    //parse command line
+    for (int i = 1; i < argc; i++) {
+      char* value;
+      if(getCmdParameter(args[i],"--timeout=",value))
       {
-        schedulerString = ASAP;
+        timeout = atol(value);
       }
-      else if(valueLC == "alap")
+      else if(getCmdParameter(args[i],"--threads=",value))
       {
-        schedulerString = ALAP;
+        threads = atol(value);
       }
-      else if(valueLC == "ul")
-      {
-        schedulerString = UL;
-      }
-      else if(valueLC == "moovac")
+      else if(getCmdParameter(args[i],"--solver=",value))
       {
         #ifndef USE_SCALP
-        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        throw HatScheT::Exception("ScaLP not active! Solver cant be chosen: " + std::string(value));
         #endif
-        schedulerString = MOOVAC;
+        ilpSolver = std::string(value);
       }
-      else if(valueLC == "moovacminreg")
+      else if(getCmdParameter(args[i],"--resource=",value))
       {
-        #ifndef USE_SCALP
-        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
+        resourceModelFile = std::string(value);
+      }
+      else if(getCmdParameter(args[i],"--graph=",value))
+      {
+        graphMLFile = std::string(value);
+      }
+      else if(getCmdParameter(args[i],"--dot=",value))
+      {
+        dotFile = value;
+      }
+      else if(getCmdParameter(args[i],"--html=",value))
+      {
+        htmlFile = value;
+      }
+      else if(getCmdParameter(args[i],"--scheduler=",value))
+      {
+        std::string valueStr = std::string(value);//std::tolower(std::string(value));
+
+        schedulerSelectionStr.resize(valueStr.size());
+        std::transform(valueStr.begin(),valueStr.end(),schedulerSelectionStr.begin(),::tolower);
+
+        if(schedulerSelectionStr == "asap")
+        {
+          schedulerSelection = ASAP;
+        }
+        else if(schedulerSelectionStr == "alap")
+        {
+          schedulerSelection = ALAP;
+        }
+        else if(schedulerSelectionStr == "ul")
+        {
+          schedulerSelection = UL;
+        }
+        else if(schedulerSelectionStr == "moovac")
+        {
+          schedulerSelection = MOOVAC;
+        }
+        else if(schedulerSelectionStr == "moovacminreg")
+        {
+          schedulerSelection = MOOVACMINREG;
+        }
+        else if(schedulerSelectionStr == "modulosdc")
+        {
+          schedulerSelection = MODULOSDC;
+        }
+        else if(schedulerSelectionStr == "rationalii")
+        {
+          schedulerSelection = RATIONALII;
+        }
+        else if(schedulerSelectionStr == "asapRationalII")
+        {
+          schedulerSelection = ASAPRATIONALII;
+        }
+        else
+        {
+          throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
+        }
+
+      }
+      //HatScheT Auto Test Function
+      else if(getCmdParameter(args[i],"--test=",value))
+      {
+        #ifdef USE_SCALP
+        string str = std::string(value);
+        if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
+        if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
+        if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+        if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
+        if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
+        if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
+        if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
+        if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
+        if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
+        if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
+        if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
+        #else
+        throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
-        schedulerString = MOOVACMINREG;
+
+        exit(0);
       }
-      else if(valueLC == "modulosdc")
+      else if((args[i][0] != '-') && getCmdParameter(args[i],"",value))
       {
-        #ifndef USE_SCALP
-        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
-        #endif
-        schedulerString = MODULOSDC;
-      }
-      else if(valueLC == "rationalii")
-      {
-        #ifndef USE_SCALP
-        throw new HatScheT::Exception("HatScheT: ScaLP not active! This scheduler is not available:" + valueLC);
-        #endif
-        schedulerString = RATIONALII;
-      }
-      else if(valueLC == "asapRationalII")
-      {
-        schedulerString = ASAPRATIONALII;
+        string str = std::string(value);
+
+        graphMLFile = std::string(value);
+
       }
       else
       {
-        cout << "Error: scheduler " << value << " unknown!" << endl;
-        exit(0);
+        std::cout << "Error: Illegal Option: " << args[i] << std::endl;
+        print_short_help();
+        exit(-1);
       }
 
     }
-    //HatScheT Auto Test Function
-    else if(getCmdParameter(args[i],"--test=",value))
+    //output major settings:
+    std::cout << "settings:" << std::endl;
+    std::cout << "graph model=" << graphMLFile << endl;
+    std::cout << "timeout=" << timeout << std::endl;
+    std::cout << "threads=" << threads << std::endl;
+    std::cout << "scheduler=";
+    switch(schedulerSelection)
     {
-      #ifdef USE_SCALP
-      string str = std::string(value);
-      if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
-      if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
-      if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
-      if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
-      if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
-      if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
-      if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
-      if(str=="OCC" && HatScheT::Tests::occurrenceTest()==false) exit(-1);
-      if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
-      if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
-      if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
-      #else
-      throw new HatScheT::Exception("HatScheT: ScaLP not active! Test function disabled!");
-      #endif
+      case ASAP:
+        cout << "ASAP";
+        break;
+      case ALAP:
+        cout << "ALAP";
+        break;
+      case UL:
+        cout << "UL";
+        break;
+      case MOOVAC:
+        cout << "MOOVAC";
+        break;
+      case MOOVACMINREG:
+        cout << "MOOVACMINREG";
+        break;
+      case MODULOSDC:
+        cout << "MODULOSDC";
+        break;
+      case RATIONALII:
+        cout << "RATIONALII";
+        break;
+      case ASAPRATIONALII:
+        cout << "ASAPRATIONALII";
+        break;
+      case NONE:
+        cout << "NONE";
+        break;
     }
-    else if((args[i][0] != '-') && getCmdParameter(args[i],"",value))
-    {
-      string str = std::string(value);
+    std::cout << std::endl;
 
-      graphMLFile = std::string(value);
-
-    }
-    else
-    {
-      std::cout << "Error: Illegal Option: " << args[i] << std::endl;
-      print_short_help();
-      exit(-1);
-    }
-
-  }
-  //output major settings:
-  std::cout << "settings:" << std::endl;
-  std::cout << "graph model=" << graphMLFile << endl;
-  std::cout << "timeout=" << timeout << std::endl;
-  std::cout << "threads=" << threads << std::endl;
-  std::cout << "scheduler=";
-  switch(schedulerString)
-  {
-    case ASAP:
-      cout << "ASAP";
-      break;
-    case ALAP:
-      cout << "ALAP";
-      break;
-    case UL:
-      cout << "UL";
-      break;
-    case MOOVAC:
-      cout << "MOOVAC";
-      break;
-    case MOOVACMINREG:
-      cout << "MOOVACMINREG";
-      break;
-    case MODULOSDC:
-      cout << "MODULOSDC";
-      break;
-    case RATIONALII:
-      cout << "RATIONALII";
-      break;
-    case ASAPRATIONALII:
-      cout << "ASAPRATIONALII";
-      break;
-    case NONE:
-      cout << "NONE";
-      break;
-  }
-  std::cout << std::endl;
-
-  //read resource model:
-  try
-  {
+    //read resource model:
     rm = readerRes.readResourceModel(resourceModelFile.c_str());
-  }
-  catch(HatScheT::Exception &e)
-  {
-    std::cerr << "Error: " << e << std::endl;
-  }
 
   //read graph:
-  try
-  {
     if(rm.isEmpty() == false)
     {
       HatScheT::GraphMLGraphReader graphReader(&rm, &g);
@@ -310,8 +291,7 @@ int main(int argc, char *args[])
     }
     else
     {
-      cout << "Error: Empty Resource Model Provided for graph parsing! Provide a valid resource model using --resource=" << endl;
-      exit(0);
+      throw HatScheT::Exception("Empty Resource Model Provided for graph parsing! Provide a valid resource model using --resource=");
     }
 
     if(dotFile != "")
@@ -337,7 +317,7 @@ int main(int argc, char *args[])
 
     if(rm.isEmpty() == false && g.isEmpty() == false)
     {
-      switch(schedulerString)
+      switch(schedulerSelection)
       {
         case ASAP:
           scheduler = new HatScheT::ASAPScheduler(g,rm);
@@ -348,55 +328,52 @@ int main(int argc, char *args[])
         case UL:
           scheduler = new HatScheT::ULScheduler(g,rm);
           break;
+#ifdef USE_SCALP
         case MOOVAC:
-          #ifdef USE_SCALP
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::MoovacScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(true);
-          #endif
           break;
         case MOOVACMINREG:
-          #ifdef USE_SCALP
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(true);
-          #endif
           break;
         case MODULOSDC:
-          #ifdef USE_SCALP
           isModuloScheduler=true;
           scheduler = new HatScheT::ModuloSDCScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
-          #endif
           break;
         case RATIONALII:
-          #ifdef USE_SCALP
-          //not sure if you can verify this schedulers via the currently implemented function
-          //isModuloScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
-          #endif
           break;
-        case ASAPRATIONALII:{
-          #ifdef USE_SCALP
-          //not sure if you can verify this schedulers via the currently implemented function
-          //isModuloScheduler=true;
+        case ASAPRATIONALII:
+        {
           HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
           scheduler = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
-          #endif
-          break;}
+          delete asap;
+          break;
+        }
+#else
+        case MOOVAC:
+        case MOOVACMINREG:
+        case MODULOSDC:
+        case RATIONALII:
+        case ASAPRATIONALII:
+          throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
+          break;
+#endif //USE_SCALP
         case NONE:
-          cout << "Error, please select a scheduler using --scheduler=..." << endl;
-          exit(-1);
+          throw HatScheT::Exception("No scheduler given, please select a scheduler using --scheduler=...");
         default:
-          cout << "Error, scheduler not available!" << endl;
-          exit(-1);
+          throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
 
       cout << "Performing schedule" << endl;
@@ -432,9 +409,10 @@ int main(int argc, char *args[])
 
 
   }
-  catch(HatScheT::Exception* e)
+  catch(HatScheT::Exception &e)
   {
-    std::cerr << "Error: " << e->msg << std::endl;
+    std::cerr << "Error: " << e.msg << std::endl;
+    exit(-1);
   }
 
   return 0;

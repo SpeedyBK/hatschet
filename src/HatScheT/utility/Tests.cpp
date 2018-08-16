@@ -202,9 +202,9 @@ bool Tests::moduloSDCTest()
     if(m.getII()!=4) return false;
     return result;
   }
-  catch(HatScheT::Exception* e)
+  catch(HatScheT::Exception &e)
   {
-    std::cout << *e << std::endl;
+    std::cout << e.msg << std::endl;
   }
   return false;
 }

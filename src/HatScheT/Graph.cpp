@@ -116,7 +116,7 @@ Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const
     if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
   }
 
-  throw new Exception("Graph::getEdge: Edge not found!");
+  throw HatScheT::Exception("Graph::getEdge: Edge not found!");
 }
 
 Vertex& Graph::getVertexById(int id) const
@@ -126,7 +126,7 @@ Vertex& Graph::getVertexById(int id) const
     Vertex* v = a;
     if(v->getId() == id) return *v;
   }
-  throw new Exception("Graph::getVertexById: Vertex not found!");
+  throw HatScheT::Exception("Graph::getVertexById: Vertex not found!");
 }
 
 ostream& operator<<(ostream& os, const Graph& g)

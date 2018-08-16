@@ -99,7 +99,7 @@ void ULScheduler::schedule()
 
   if(nodes.empty()==true){
     cout << "ULScheduler.ULScheduler: Error stack not initialized! No schedule found!" << endl;
-    throw new Exception("ULScheduler.ULScheduler: Error stack not initialized! No schedule found!");
+    throw HatScheT::Exception("ULScheduler.ULScheduler: Error stack not initialized! No schedule found!");
   }
 
   while(!nodes.empty()){ // nodes left?

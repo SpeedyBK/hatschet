@@ -96,6 +96,7 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
 
 ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 {
+  cout << "!path=" << path << endl;
   try {
     XMLPlatformUtils::Initialize();
   }
