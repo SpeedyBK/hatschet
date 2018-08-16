@@ -107,7 +107,6 @@ int main(int argc, char *args[])
   std::string dotFile="";
   std::string htmlFile="";
 
-
   if(argc <= 1)
   {
       print_short_help();
