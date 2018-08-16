@@ -1,0 +1,21 @@
+/*! \mainpage HatScheT Doxygen documentation (built nightly)
+ *
+ * Project admins: Please edit "doxygen-mainpage.txt"
+ * in HatScheT repo to change this content. Cf.\n
+ * http://www.stack.nl/~dimitri/doxygen/manual/faq.html\n
+ * http://www.stack.nl/~dimitri/doxygen/manual/commands.html\n
+ * for details.
+ *
+ * \section about_sec About HatScheT Documentation
+ *
+ * content goes here
+ *
+ * \section howto_sec How to properly document your code
+ *
+ * content goes here
+ *
+ * \section misc_sec Other stuff
+ *
+ * content goes here
+ *
+ */
