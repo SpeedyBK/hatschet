@@ -99,6 +99,9 @@ void RationalIIScheduler::setGeneralConstraints()
 
 void RationalIIScheduler::schedule()
 {
+  //experimental
+  this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+
   if(this->consideredTimeSteps <= 0) {
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps == 0! Scheduling not possible!");
   }
@@ -111,9 +114,6 @@ void RationalIIScheduler::schedule()
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle == 0! Scheduling not possible!");
   }
 
-  //experimental
-  this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
-
   this->fillTMaxtrix();
   this->fillIIVector();
 
@@ -121,6 +121,7 @@ void RationalIIScheduler::schedule()
   this->setObjective();
 
   stat = this->solver->solve();
+  cout << "Solution ScaLP status: " << stat << endl;
 }
 
 void RationalIIScheduler::setModuloConstraints()
