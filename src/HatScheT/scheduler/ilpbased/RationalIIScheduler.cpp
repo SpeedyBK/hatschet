@@ -25,7 +25,7 @@
 namespace HatScheT
 {
     RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-    : MoovacScheduler(g, resourceModel, solverWishlist)
+    : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
     {
       throw HatScheT::Exception("rationalIIScheduler::rationalIIScheduler: This constructor is currently under construction and disabled!");
   /*this->minII = this->computeMinII(&g,&resourceModel);
@@ -51,24 +51,34 @@ void RationalIIScheduler::setObjective()
 
 void RationalIIScheduler::constructProblem()
 {
+  //case unlimited
+  if(this->maxLatencyConstraint == -1){
+    this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
+  }
+  //correct limit
+  else if(this->maxLatencyConstraint > 0) {
+  }
+  else {
+    throw HatScheT::Exception("RationalIIScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
+  }
 
+  this->setGeneralConstraints();
+  this->setResourceConstraints();
+  this->setModuloConstraints();
 }
 
 void RationalIIScheduler::setGeneralConstraints()
 {
   //general constraints, data path dependencies
-  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
-  {
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
     unsigned int srcTVecIndex = this->tIndices[src];
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->tIndices[dst];
 
-    for(unsigned int j = 0; j < this->moduloClasses; j++)
-    {
-      for(unsigned int k = 0; k < II_vector.size()-1; k++)
-      {
+    for(unsigned int j = 0; j < this->moduloClasses; j++) {
+      for(unsigned int k = 0; k < II_vector.size()-1; k++) {
         this->solver->addConstraint(t_matrix[j][dstTVecIndex] - t_matrix[j][srcTVecIndex] + e->getDistance()*(II_vector[k+1]-II_vector[k]) - e->getDelay() >= 0);
       }
     }
@@ -78,16 +88,99 @@ void RationalIIScheduler::setGeneralConstraints()
   for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it){
     Vertex* v = *it;
 
-    if(this->g.isSinkVertex(v)==true)
-    {
-      this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] <= this->maxLatencyConstrain);
+    if(this->g.isSinkVertex(v)==true) {
+      this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <= this->maxLatencyConstraint);
     }
   }
 
   //distinguish IIs
-  for(unsigned int i = 0; i < II_vector.size()-1; i++)
-  {
+  for(unsigned int i = 0; i < II_vector.size()-1; i++) {
     this->solver->addConstraint(II_vector[i] - II_vector[i+1]  + 1 <= 0);
+  }
+}
+
+void RationalIIScheduler::schedule()
+{
+  this->fillTMaxtrix();
+  this->fillIIVector();
+
+  this->constructProblem();
+  this->setObjective();
+
+  stat = this->solver->solve();
+}
+
+void RationalIIScheduler::setModuloConstraints()
+{
+  for(unsigned int i = 0; i < t_matrix.size()-1; i++) {
+    for(unsigned int j = 0; j < t_matrix[i].size(); j++) {
+      this->solver->addConstraint(t_matrix[i+1][j] - t_matrix[i][j] - II_vector[i+1] +II_vector[i] == 0 );
+    }
+  }
+}
+
+void RationalIIScheduler::setResourceConstraints()
+{
+  for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+    Resource* r = *it;
+    set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);
+    vector<vector< vector<ScaLP::Variable> > > resourceVarContainer;
+
+    int ak = r->getLimit();
+
+    for (auto it = vSet.begin(); it != vSet.end(); ++it) {
+      const Vertex* v = *it;
+      unsigned int tIndex = this->tIndices[v];
+
+      //declare tia-matrix
+      vector< vector<ScaLP::Variable> > tia_matrix;
+
+      for(unsigned int j = 0; j < this->moduloClasses; j++) {
+        //declare tia-vector
+        vector<ScaLP::Variable> tia_vector;
+
+        ScaLP::Term weightedtSum;
+        ScaLP::Term tSum;
+
+        for(unsigned int k = 0; k < this->consideredTimeSteps+1; k++) {
+          tia_vector.push_back(ScaLP::newIntegerVariable("tia'" + std::to_string(j) + "_" + std::to_string(v->getId()) + "," + std::to_string(k) ,0,1));
+          weightedtSum = weightedtSum + k*tia_vector[k];
+          tSum = tSum + tia_vector[k];
+        }
+
+        //restrict the time step assigned to a t
+        this->solver->addConstraint(weightedtSum - t_matrix[j][tIndex] == 0);
+        //each t is performed exactly one time
+        this->solver->addConstraint(tSum == 1);
+
+        tia_matrix.push_back(tia_vector);
+      }
+
+      resourceVarContainer.push_back(tia_matrix);
+    }
+
+    //iterate overe time steps
+    //for(unsigned int j = 0; j < this->SLMaxlimit+1; j++)
+    for(unsigned int j = 0; j < this->consideredTimeSteps+1; j++) {
+      ScaLP::Term tiaSum;
+      bool b = 0;
+
+      //iterate over nodes of constraint resource (1.dim of container)
+      for(unsigned int k = 0; k < resourceVarContainer.size(); k++) {
+        //iterate over considered modulo classes (2.dim of container)
+        for(unsigned int l = 0; l < resourceVarContainer[k].size(); l++) {
+          for(unsigned int m = 0; m < this->consideredTimeSteps+1; m++) {
+            if(m % (this->consideredModuloCycle) == j) {
+              tiaSum = tiaSum + resourceVarContainer[k][l][m];
+              b =1;
+            }
+          }
+        }
+      }
+
+      //restrict resources used in every time step
+      if(b) this->solver->addConstraint(tiaSum - ak <= 0);
+    }
   }
 }
 
@@ -104,7 +197,7 @@ void RationalIIScheduler::fillTMaxtrix()
       Vertex* v = *it;
       int id = v->getId();
 
-      t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->maxLatencyConstrain*(i+1) + i*1));
+      t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->maxLatencyConstraint*(i+1) + i*1));
 
       if(i == 0) this->tIndices.insert(make_pair(v,t_vector.size()-1));
     }

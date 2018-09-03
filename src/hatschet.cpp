@@ -100,6 +100,7 @@ int main(int argc, char *args[])
   std::string ilpSolver="";
   int threads=1;
   int timeout=-1; //default -1 means no timeout
+  int maxLatency=-1;
 
   bool solverQuiet=true;
 
@@ -341,6 +342,7 @@ int main(int argc, char *args[])
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::MoovacScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
@@ -348,6 +350,7 @@ int main(int argc, char *args[])
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
@@ -355,12 +358,14 @@ int main(int argc, char *args[])
           isModuloScheduler=true;
           scheduler = new HatScheT::ModuloSDCScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
         case RATIONALII:
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;

@@ -60,16 +60,16 @@ void MoovacScheduler::setUpSolverSettings()
 void MoovacScheduler::constructProblem()
 {
   //case unlimited
-  if(this->maxLatencyConstrain == -1){
+  if(this->maxLatencyConstraint == -1){
     this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
   }
-  else if(this->maxLatencyConstrain > 0)
+  else if(this->maxLatencyConstraint > 0)
   {
-    this->SLMax = this->maxLatencyConstrain;
+    this->SLMax = this->maxLatencyConstraint;
   }
   else
   {
-     throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstrain));
+     throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
   }
 
   this->setVectorVariables();

@@ -37,11 +37,8 @@ namespace HatScheT
 class SchedulerBase
 {
 public:
-
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
-
   virtual ~SchedulerBase();
-
   /*!
    * \brief schedule main method for all schedulers, not implemented in base class
    */
@@ -51,14 +48,12 @@ public:
    * \return The start times of all nodes
    */
   std::map<Vertex*,int>& getSchedule();
-
   /*!
    * \brief Gets the start time of vertex v
    * \param v The vertex for which the start time is requested
    * \return The start time of v or -1 if vertex does not exist
    */
   int getStartTime(Vertex &v);
-
   /*!
    * \brief Returns the length of the schedule (i.e., the maximum start time)
    * \return The length of the schedule (i.e., the maximum start time)
@@ -68,8 +63,8 @@ public:
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
    */
-  void setMaxLatencyConstraint(int l){this->maxLatencyConstrain =l;}
-  int getMaxLatencyConstraint(){return this->maxLatencyConstrain;}
+  void setMaxLatencyConstraint(int l){this->maxLatencyConstraint =l;}
+  int getMaxLatencyConstraint(){return this->maxLatencyConstraint;}
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
@@ -95,7 +90,6 @@ public:
    * \return initiation interval (II)
    */
   virtual int getII() { return this->II;}
-
   /*!
    *
    * @return the used graph description of the scheduling problem
@@ -114,7 +108,7 @@ protected:
   /*!
    * \brief maxLatencyConStraint default is -1 (unlimited)
    */
-  int maxLatencyConstrain = -1;
+  int maxLatencyConstraint = -1;
   /*!
    * \brief Container for the start times
    */
