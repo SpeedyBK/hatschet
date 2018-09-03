@@ -24,14 +24,12 @@
 
 namespace HatScheT
 {
-    RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-    : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
-    {
-      throw HatScheT::Exception("rationalIIScheduler::rationalIIScheduler: This constructor is currently under construction and disabled!");
-  /*this->minII = this->computeMinII(&g,&resourceModel);
-  HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
-  this->SLMax = 0;*/
+RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
+: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+{
+  this->consideredTimeSteps = 0;
+  this->moduloClasses = 0;
+  this->consideredModuloCycle = 0;
 }
 
 void RationalIIScheduler::fillIIVector()
@@ -101,6 +99,21 @@ void RationalIIScheduler::setGeneralConstraints()
 
 void RationalIIScheduler::schedule()
 {
+  if(this->consideredTimeSteps <= 0) {
+    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps == 0! Scheduling not possible!");
+  }
+
+  if(this->moduloClasses <= 0) {
+    throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses == 0! Scheduling not possible!");
+  }
+
+  if(this->consideredModuloCycle <= 0) {
+    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle == 0! Scheduling not possible!");
+  }
+
+  //experimental
+  this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+
   this->fillTMaxtrix();
   this->fillIIVector();
 

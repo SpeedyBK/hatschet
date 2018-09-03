@@ -102,6 +102,11 @@ int main(int argc, char *args[])
   int timeout=-1; //default -1 means no timeout
   int maxLatency=-1;
 
+  //variables for Rational II scheduling
+  //experimental
+  int moduloClasses=2; //default
+  int moduloCycles=2; //defaul
+
   bool solverQuiet=true;
 
   enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
@@ -159,6 +164,18 @@ int main(int argc, char *args[])
       else if(getCmdParameter(args[i],"--dot=",value))
       {
         dotFile = value;
+      }
+      else if(getCmdParameter(args[i],"--moduloclasses=",value))
+      {
+        moduloClasses = atol(value);
+      }
+      else if(getCmdParameter(args[i],"--modulocycles=",value))
+      {
+        moduloCycles = atol(value);
+      }
+      else if(getCmdParameter(args[i],"--maxlatency=",value))
+      {
+        maxLatency = atol(value);
       }
       else if(getCmdParameter(args[i],"--html=",value))
       {
@@ -366,6 +383,8 @@ int main(int argc, char *args[])
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setModuloClasses(moduloClasses);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setModuloCycles(moduloCycles);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;

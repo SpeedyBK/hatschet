@@ -40,7 +40,8 @@ public:
    */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   virtual void schedule();
-
+  void setModuloCycles(int m) {this->consideredModuloCycle=m;}
+  void setModuloClasses(int m ){this->moduloClasses=m;}
 private:
   void setResourceConstraints();
   void setGeneralConstraints();
