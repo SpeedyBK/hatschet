@@ -73,6 +73,19 @@ bool Graph::isSourceVertex(Vertex *v)
   return true;
 }
 
+bool Graph::isSinkVertex(Vertex *v)
+{
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* srcV = &e->getVertexSrc();
+
+    if(srcV == v) return false;
+  }
+
+  return true;
+}
+
 bool Graph::isEmpty()
 {
   if(this->vertices.size() == 0) return true;

@@ -41,8 +41,22 @@ public:
     RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 
 
-protected:
+private:
+    void setGeneralConstraints();
+    virtual void constructProblem();
+    virtual void setObjective();
+    void fillTMaxtrix();
+    void fillIIVector();
+    //--------
 
+    unsigned int moduloClasses;
+    unsigned int consideredTimeSteps;
+    unsigned int consideredModuloCycle;
+    vector<int> foundIIs;
+    ScaLP::Result r;
+    vector<vector<ScaLP::Variable> > t_matrix;
+    vector<ScaLP::Variable> II_vector;
+    map<Vertex*,int> tIndices;
 
 };
 }

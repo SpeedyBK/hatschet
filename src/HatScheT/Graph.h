@@ -108,6 +108,12 @@ public:
    */
   bool isSourceVertex(Vertex* v);
   /*!
+   * \brief determines whether the given vertex is a sink concerning the graph, i.e. has no outgoing edges
+   * \param v the vertex to inspect
+   * \return true if v has no outgoing edges, false otherwise
+   */
+  bool isSinkVertex(Vertex* v);
+  /*!
    * \brief looks up the vertex with the given ID
    * \param id the ID to find
    * \return the vertex matching the given ID
