@@ -32,7 +32,7 @@
 #include <iomanip>
 
 #ifdef USE_SCALP
-#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
+#include "HatScheT/base/ILPSchedulerBase.h"
 #endif
 
 namespace HatScheT {

@@ -20,39 +20,36 @@
 
 #pragma once
 
-#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
+#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <vector>
 
 namespace HatScheT
 {
 /*!
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
- * THIS CLASSES CONSTRUCTOR IS CURRENTLY DISABLED
+ * THIS CLASSES IS UNDER DEVELOPMENT
  */
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {
 public:
-  /*!
-   * provide a graph, resource and solver wishlist since this scheduler is ilp-based and uses ScaLP for
-   * generating ILP and solving
-   * @param g
-   * @param resourceModel
-   * @param solverWishlist
-   */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   virtual void schedule();
   void setModuloCycles(int m) {this->consideredModuloCycle=m;}
   void setModuloClasses(int m ){this->moduloClasses=m;}
   void printScheduleToConsole();
 private:
+  double throughput;
+  virtual void constructProblem();
+  virtual void setObjective();
+  //--------
   void setResourceConstraints();
   void setGeneralConstraints();
   void setModuloConstraints();
-  virtual void constructProblem();
-  virtual void setObjective();
   void fillTMaxtrix();
   void fillIIVector();
   //--------
-
   unsigned int moduloClasses;
   unsigned int consideredTimeSteps;
   unsigned int consideredModuloCycle;
@@ -61,6 +58,5 @@ private:
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
   map<const Vertex*,int> tIndices;
-
 };
 }

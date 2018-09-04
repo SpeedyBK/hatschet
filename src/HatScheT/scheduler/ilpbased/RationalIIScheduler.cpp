@@ -134,9 +134,9 @@ void RationalIIScheduler::printScheduleToConsole()
   }
 
   std::setprecision(6);
-  cout << "----" << "Throughput: " << ((double)II_vector.size())/((double)this->consideredModuloCycle);
+  cout << "----" << "Throughput: " << ((double)II_vector.size())/((double)this->consideredModuloCycle) << endl;
 
-  cout << endl;
+  cout << "Printing absolut start times" << endl;
 
   for(unsigned int i = 0; i < t_matrix.size(); i++)
   {
@@ -150,6 +150,7 @@ void RationalIIScheduler::printScheduleToConsole()
   }
 
   cout << "-------" << endl;
+  cout << "Printing modulo " << this->consideredModuloCycle << " start times" << endl;
 
   for(unsigned int i = 0; i < t_matrix.size(); i++)
   {
@@ -167,8 +168,11 @@ void RationalIIScheduler::printScheduleToConsole()
 
 void RationalIIScheduler::schedule()
 {
+  this->scheduleFound = false;
+  this->solver->reset();
   //experimental
-  this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+  if(this->maxLatencyConstraint > this->consideredModuloCycle) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+  else this->consideredTimeSteps = 2*this->consideredModuloCycle + 2;
 
   if(this->consideredTimeSteps <= 0) {
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps == 0! Scheduling not possible!");
@@ -188,18 +192,18 @@ void RationalIIScheduler::schedule()
   this->constructProblem();
   this->setObjective();
 
-  this->solver->writeLP("example.lp");
-
   stat = this->solver->solve();
   cout << "Solution ScaLP status: " << stat << endl;
   if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
     r = this->solver->getResult();
-    this->printScheduleToConsole();
+    //this->printScheduleToConsole();
+    this->scheduleFound = true;
   }
 }
 
 void RationalIIScheduler::setModuloConstraints()
 {
+  //edges in different IIs have the same "length in time" respectively
   for(unsigned int i = 0; i < t_matrix.size()-1; i++) {
     for(unsigned int j = 0; j < t_matrix[i].size(); j++) {
       this->solver->addConstraint(t_matrix[i+1][j] - t_matrix[i][j] - II_vector[i+1] +II_vector[i] == 0 );
@@ -285,7 +289,7 @@ void RationalIIScheduler::fillTMaxtrix()
       Vertex* v = *it;
       int id = v->getId();
 
-      t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->maxLatencyConstraint*(i+1) + i*1));
+      t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->consideredTimeSteps*(i+1) + i*1));
 
       /*if(i == 0)*/ this->tIndices.insert(make_pair(v,t_vector.size()-1));
     }
