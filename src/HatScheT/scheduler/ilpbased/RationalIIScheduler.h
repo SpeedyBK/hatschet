@@ -42,6 +42,7 @@ public:
   virtual void schedule();
   void setModuloCycles(int m) {this->consideredModuloCycle=m;}
   void setModuloClasses(int m ){this->moduloClasses=m;}
+  void printScheduleToConsole();
 private:
   void setResourceConstraints();
   void setGeneralConstraints();
