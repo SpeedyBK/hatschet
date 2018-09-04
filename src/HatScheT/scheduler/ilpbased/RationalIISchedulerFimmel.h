@@ -5,7 +5,10 @@
 */
 #pragma once
 
-#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
+#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <vector>
 
 namespace HatScheT
 {
@@ -13,11 +16,11 @@ namespace HatScheT
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
  * THIS CLASSES CONSTRUCTOR IS CURRENTLY DISABLED
  */
-class RationalIISchedulerFimmel : public MoovacScheduler
+class RationalIISchedulerFimmel :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {
 public:
     /*!
-     * 
+     *
      * @param g
      * @param resourceModel
      * @param solverWishlist
@@ -28,8 +31,14 @@ public:
      * @return
      */
     virtual int getII() { return this->II;}
+    /*!
+     *
+     */
+    virtual void schedule();
 protected:
-
-
+    virtual void constructProblem(){};
+    virtual void setObjective(){};
+private:
+    void generateTestSetup();
 };
 }

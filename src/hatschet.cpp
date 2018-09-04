@@ -8,6 +8,7 @@
 #include <HatScheT/utility/writer/DotWriter.h>
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
@@ -201,6 +202,20 @@ int main(int argc, char *args[])
         }
         else cout << ">>> MoovacScheduler schedule NOT verified <<<" << endl;
       }
+    }
+    else if(getCmdParameter(args[i],"--fimmel=",value))
+    {
+        if(rm.isEmpty() == false && g.isEmpty() == false)
+        {
+            cout << "Starting Fimmel scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads << endl;
+            std::list<std::string> wish = {"CPLEX"};
+            HatScheT::RationalIISchedulerFimmel fs(g, rm, wish);
+            if(timeout>0) fs.setSolverTimeout(timeout);
+            fs.setThreads(threads);
+            fs.setSolverQuiet(true);
+            fs.schedule();
+        }
+        else cout << "fimmel scheduling failed: graph or resource model empty!" << endl;
     }
     else if(getCmdParameter(args[i],"--modulosdc=",value))
     {

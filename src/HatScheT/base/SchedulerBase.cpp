@@ -6,6 +6,7 @@ namespace HatScheT
 
 SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceModel(resourceModel), g(g)
 {
+
 }
 
 int SchedulerBase::getScheduleLength()
