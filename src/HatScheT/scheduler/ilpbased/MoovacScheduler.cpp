@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include "HatScheT/utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
@@ -40,16 +60,16 @@ void MoovacScheduler::setUpSolverSettings()
 void MoovacScheduler::constructProblem()
 {
   //case unlimited
-  if(this->maxLatencyConStraint == -1){
+  if(this->maxLatencyConstraint == -1){
     this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
   }
-  else if(this->maxLatencyConStraint > 0)
+  else if(this->maxLatencyConstraint > 0)
   {
-    this->SLMax = this->maxLatencyConStraint;
+    this->SLMax = this->maxLatencyConstraint;
   }
   else
   {
-     throw new Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConStraint));
+     throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
   }
 
   this->setVectorVariables();
@@ -83,9 +103,10 @@ void MoovacScheduler::setObjective()
 
 void MoovacScheduler::schedule()
 {
-  this->timeoutCounter = 0;
   this->totalTime = 0;
   this->II = this->minII;
+
+  bool timeoutOccured=false;
 
   cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
 
@@ -98,23 +119,17 @@ void MoovacScheduler::schedule()
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
-    ScaLP::status stat = this->solver->solve();
+    stat = this->solver->solve();
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
-    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) cout << "TIMEOUT_INFEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE_OR_UNBOUND) cout << "INFEASIBLE_OR_UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::ERROR) cout << "ERROR at II " << this->II << endl;
-    if(stat == ScaLP::status::INFEASIBLE) cout << "Infeasible at II " << this->II << endl;
-    if(stat == ScaLP::status::INVALID) cout << "INVALID at II " << this->II << endl;
-    if(stat == ScaLP::status::NOT_SOLVED) cout << "NOT_SOLVED at II " << this->II << endl;
-    if(stat == ScaLP::status::TIMEOUT_FEASIBLE) cout << "TIMEOUT_FEASIBLE at II " << this->II << endl;
-    if(stat == ScaLP::status::UNBOUND) cout << "UNBOUND at II " << this->II << endl;
-    if(stat == ScaLP::status::UNKNOWN) cout << "UNKNOWN at II " << this->II << endl;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
+    if(stat == ScaLP::status::OPTIMAL && !timeoutOccured) this->optimalResult = true;
 
-    if(this->scheduleFound == false){
+
+    if(scheduleFound == false){
       (this->II)++;
     }
-    else if(this->scheduleFound == true){
+    else {
       break;
     }
   }
@@ -126,7 +141,7 @@ void MoovacScheduler::schedule()
   }
 
   else{
-    cout << "Passed maxII booundary! No modulo schedule identified by Moovac!" << endl;
+    cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
     this->II = -1;
   }
 }
@@ -162,7 +177,7 @@ void MoovacScheduler::setVectorVariables()
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
   {
     Resource* r = *it;
-    if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
+    if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
 
     int ak = r->getLimit();
     if(ak==-1) continue;
@@ -207,7 +222,7 @@ void MoovacScheduler::setGeneralConstraints()
 
 std::map<Edge*,int> MoovacScheduler::getLifeTimes()
 {
-  if(this->startTimes.size()==0) throw new Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+  if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
   std::map<Edge*,int> lifetimes;
 
@@ -217,7 +232,7 @@ std::map<Edge*,int> MoovacScheduler::getLifeTimes()
     Vertex* vDst = &e->getVertexDst();
     int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->II;
 
-    if(lifetime < 0) throw new Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+    if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));
   }
   return lifetimes;
@@ -225,7 +240,7 @@ std::map<Edge*,int> MoovacScheduler::getLifeTimes()
 
 std::map<const Vertex *, int> MoovacScheduler::getBindings()
 {
-  if (this->scheduleFound==false || this->startTimes.size()==0) throw new Exception("MoovacScheduler.getBindings: schedule was found!");
+  if (this->scheduleFound==false || this->startTimes.size()==0) throw HatScheT::Exception("MoovacScheduler.getBindings: schedule was found!");
   std::map<const Vertex*,int> bindings;
 
   //iterate over resources
@@ -317,7 +332,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
         const Vertex* v = it2;
         int vTIndex = this->tIndices[v];
-        set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+        set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
         for(auto it3:followingVertices)
         {
@@ -360,7 +375,7 @@ int MoovacScheduler::getNoOfImplementedRegisters()
         {
           const Vertex* v = it3;
           int vTIndex = this->tIndices[v];
-          set<Vertex*> followingVertices = this->g.getSubsequentVertices(v);
+          set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
           for(auto it4:followingVertices)
           {
@@ -391,7 +406,7 @@ void MoovacScheduler::setModuloAndResourceConstraints()
     for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
     {
       Resource* r = *it;
-      if(this->resourceModel.getNoOfVerticesRegisteredToResource(r)==0) continue;
+      if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
 
       int ak = r->getLimit();
       if(ak==-1) continue;

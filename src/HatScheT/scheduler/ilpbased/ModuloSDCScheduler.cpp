@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Thomas Schönwälder, Patrick Sittel (thomas.schoenwaelder@student.uni-kassel.de, sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "HatScheT/utility/Utility.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h>
@@ -614,7 +634,6 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
 
 void HatScheT::ModuloSDCScheduler::schedule()
 {
-  this->timeoutCounter = 0;
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
@@ -663,6 +682,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
     if(sched(budget,priority,asap))
     {
+      scheduleFound=true;
       std::cout << "FOUND for II=" << this->II << std::endl;
       break; // found
     }

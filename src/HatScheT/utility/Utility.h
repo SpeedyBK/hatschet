@@ -1,8 +1,23 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Patrick Sittel (sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 #include <string>
 #include "HatScheT/Graph.h"
@@ -60,6 +75,7 @@ public:
   * \return
   */
  static int getNoOfOutputsWithoutDistance(Graph* g, const Vertex* v);
+#ifdef USE_SCALP
  /*!
   * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
   * minII min(ResMII,RecMII)
@@ -88,6 +104,7 @@ public:
   * \return
   */
  static int calcMaxII(SchedulerBase* sb);
+#endif
  /*!
   * \brief sumOfStarttimes
   * \param startTimes
@@ -174,29 +191,5 @@ public:
   * \return
   */
  static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
- /*!
-  * \brief evaluateSchedulers experiment interface for hatschet paper
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  */
- static void evaluateSchedulers(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
- /*!
-  * \brief adaptiveScheduling start a scheduling experiment for adaptive scheduling
-  * ToDo pass parameters instead of calculating them
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  * \param logFileName
-  */
- static void adaptiveScheduling(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
- /*!
-  * \brief compareRegisterUsage this function is used to evaluate the experiments published at fpl
-  * \param g
-  * \param resourceModel
-  * \param solverWishlist
-  * \param logFileName
-  */
- static void compareRegisterUsage(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, string logFileName);
 };
 }

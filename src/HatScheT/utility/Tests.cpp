@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
@@ -21,8 +41,8 @@ bool Tests::moovacTest()
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  string resStr = "graphMLFiles/example/MoovacExampleRM.xml";
-  string graphStr = "graphMLFiles/example/MoovacExample.graphml";
+  string resStr = "cTest/MoovacExampleRM.xml";
+  string graphStr = "cTest/MoovacExample.graphml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -55,37 +75,14 @@ bool Tests::moovacTest()
   return true;
 }
 
-bool Tests::asapTest()
-{
-  HatScheT::ResourceModel rm;
-  HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
-
-  string resStr = "graphMLFiles/example/exampleResourceModel.xml";
-  string graphStr = "graphMLFiles/example/example.graphml";
-  rm = readerRes.readResourceModel(resStr.c_str());
-
-  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
-
-  HatScheT::ASAPScheduler asap(g,rm);
-  asap.schedule();
-
-  int sum = Utility::sumOfStarttimes(asap.getSchedule());
-
-  if(sum==51) return true;
-  cout << "Tests::asapTest: Sum of start times expected to be 51, but is " << sum << endl;
-  return false;
-}
-
 bool Tests::asapHCTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
-  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  string resStr = "cTest/ASAPHCExampleRM.xml";
+  string graphStr = "cTest/ASAPHCExample.graphml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -94,12 +91,13 @@ bool Tests::asapHCTest()
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
 
-  int sum = Utility::sumOfStarttimes(asap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, asap.getSchedule(), asap.getII())) return true;
 
-  if(sum==29) return true;
-  cout << "Tests::asapHCTest: Sum of start times expected to be 29, but is " << sum << endl;
-  cout << rm << endl;
+  cout << "Tests::asapHCTest: Test Failed! Schedule is: " << endl;
   cout << g << endl;
+  cout << rm << endl;
+  asap.printStartTimes();
+  cout << "Tests::asapHCTest: asap HC failed verification!" << endl;
 
   return false;
 }
@@ -110,8 +108,8 @@ bool Tests::alapHCTest()
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
-  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  string resStr = "cTest/ASAPHCExampleRM.xml";
+  string graphStr = "cTest/ASAPHCExample.graphml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -120,10 +118,13 @@ bool Tests::alapHCTest()
   HatScheT::ALAPScheduler alap(g,rm);
   alap.schedule();
 
-  int sum = Utility::sumOfStarttimes(alap.getSchedule());
+  if(HatScheT::verifyModuloSchedule(g, rm, alap.getSchedule(), alap.getII())) return true;
 
-  if(sum==44) return true;
-  cout << "Tests::alapHCTest: Sum of start times expected to be 44, but is " << sum << endl;
+  cout << "Tests::alapHCTest: Test Failed! Schedule is: " << endl;
+  cout << g << endl;
+  cout << rm << endl;
+  alap.printStartTimes();
+  cout << "Tests::alapHCTest: alap HC failed verification!" << endl;
   return false;
 }
 
@@ -133,20 +134,20 @@ bool Tests::readTest()
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  string resStr = "graphMLFiles/example/exampleResourceModel.xml";
-  string graphStr = "graphMLFiles/example/example.graphml";
+  string resStr = "cTest/ASAPHCExampleRM.xml";
+  string graphStr = "cTest/ASAPHCExample.graphml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  if(rm.getNoOfResources() != 3){
-    cout << "Incorrect no of resource read: " << rm.getNoOfResources() << " instead of 3!" << endl;
+  if(rm.getNumResources() != 3){
+    cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
     return false;
   }
 
-  if(g.getNumberOfVertices() != 6){
-    cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 6!" << endl;
+  if(g.getNumberOfVertices() != 11){
+    cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 11!" << endl;
     return false;
   }
 
@@ -201,9 +202,9 @@ bool Tests::moduloSDCTest()
     if(m.getII()!=4) return false;
     return result;
   }
-  catch(HatScheT::Exception* e)
+  catch(HatScheT::Exception &e)
   {
-    std::cout << *e << std::endl;
+    std::cout << e.msg << std::endl;
   }
   return false;
 }
@@ -386,8 +387,8 @@ bool Tests::ulSchedulerTest()
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
 
-  string resStr = "graphMLFiles/example/ASAPHCExampleRM.xml";
-  string graphStr = "graphMLFiles/example/ASAPHCExample.graphml";
+  string resStr = "cTest/ASAPHCExampleRM.xml";
+  string graphStr = "cTest/ASAPHCExample.graphml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);

@@ -1,8 +1,24 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 
 #include <HatScheT/Graph.h>
@@ -21,8 +37,8 @@ namespace HatScheT
 class SchedulerBase
 {
 public:
-
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
+  virtual ~SchedulerBase();
   /*!
    * \brief schedule main method for all schedulers, not implemented in base class
    */
@@ -32,14 +48,12 @@ public:
    * \return The start times of all nodes
    */
   std::map<Vertex*,int>& getSchedule();
-
   /*!
    * \brief Gets the start time of vertex v
    * \param v The vertex for which the start time is requested
    * \return The start time of v or -1 if vertex does not exist
    */
   int getStartTime(Vertex &v);
-
   /*!
    * \brief Returns the length of the schedule (i.e., the maximum start time)
    * \return The length of the schedule (i.e., the maximum start time)
@@ -49,8 +63,8 @@ public:
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
    */
-  void setMaxLatencyConstraint(int l){this->maxLatencyConStraint =l;}
-  int getMaxLatencyConstraint(){return this->maxLatencyConStraint;}
+  void setMaxLatencyConstraint(int l){this->maxLatencyConstraint =l;}
+  int getMaxLatencyConstraint(){return this->maxLatencyConstraint;}
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
@@ -67,13 +81,15 @@ public:
    */
   void printStartTimes();
   /*!
-   * \brief getII this function has to be implemented for every derived scheduler
-   * \return
+   * \brief Generates an HTML file which contains the schedule chart
+	 * \param filename is the file name where to store the chart
    */
-  virtual int getII() {
-    cout << "getII: Base class called. This should never happen!" <<endl;
-    throw new Exception("Graph::getEdge: Edge not found!");
-  }
+  void writeScheduleChart(string filename);
+  /*!
+   * \brief getII getter for the II. The II has to be set by each scheduler when schedule is done (also non modulo schedulers!)
+   * \return initiation interval (II)
+   */
+  virtual int getII() { return this->II;}
   /*!
    *
    * @return the used graph description of the scheduling problem
@@ -92,7 +108,7 @@ protected:
   /*!
    * \brief maxLatencyConStraint default is -1 (unlimited)
    */
-  int maxLatencyConStraint = -1;
+  int maxLatencyConstraint = -1;
   /*!
    * \brief Container for the start times
    */

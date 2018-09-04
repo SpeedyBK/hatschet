@@ -1,8 +1,24 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 
 #include "Vertex.h"
@@ -17,10 +33,17 @@ typedef std::map<unsigned,Vertex*> vertex_t;
 typedef std::map<unsigned,Edge*> edge_t;
 
 /*!
- * \brief The Graph class represents all the data dependencies using a graph of vertices (@see Vertex) and edges (@see Edge).
+ * \brief The Graph class represents all the data dependencies using a graph of vertices and edges.
  *
  * The Graph class is a very simple and lightweight implementation of a graph. Each vertex and edge is assigned to a unique int value.
  * Although the id's are assigned in a sequence, there is no guarantee that all id's exist.
+ *
+ * Note that neither the Graph nor the vertices contain latency information - therefore a Graph must always be accompanied
+ * by a ResourceModel when scheduling it.
+ *
+ * \sa Vertex
+ *     Edge
+ *     ResourceModel
  */
 class Graph
 {
@@ -61,90 +84,92 @@ public:
    */
   friend ostream& operator<<(ostream& os, const Graph& g);
   /*!
-   * \brief getNumberOfVertices
-   * \return
+   * \return the number of vertices in this graph
    */
   unsigned int getNumberOfVertices()
   {
     return this->vertices.size();
   }
   /*!
-   * \brief getNumberOfEdges
-   * \return
+   * \return the number of edges in this graph
    */
   unsigned int getNumberOfEdges()
   {
     return this->edges.size();
   }
   /*!
-   * \brief isEmpty test whether this graph has vertices
-   * \return
+   * \return whether this graph has vertices
    */
   bool isEmpty();
   /*!
-   * \brief isSourceVertex
-   * \param v
-   * \return
+   * \brief determines whether the given vertex is a source concerning the graph, i.e. has no incoming edges
+   * \param v the vertex to inspect
+   * \return true if v has no incoming edges, false otherwise
    */
   bool isSourceVertex(Vertex* v);
   /*!
-   * \brief getVertexById
-   * \param id
-   * \return
+   * \brief determines whether the given vertex is a sink concerning the graph, i.e. has no outgoing edges
+   * \param v the vertex to inspect
+   * \return true if v has no outgoing edges, false otherwise
+   */
+  bool isSinkVertex(Vertex* v);
+  /*!
+   * \brief looks up the vertex with the given ID
+   * \param id the ID to find
+   * \return the vertex matching the given ID
+   * \throws Exception if no vertex in the graph has the given ID
    */
   Vertex& getVertexById(int id) const;
   /*!
-   * \brief getEdge
-   * \param srcV
-   * \param dstV
-   * \return
+   * \brief looks up the edge between the given vertices
+   * \param srcV the source vertex
+   * \param dstV the destination vertex
+   * \return the edge from `srcV` to `dstV`
+   * \throws Exception if no matching edge was found
    */
   Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
   /*!
-   * \brief getSubsequentVertices get the subsequent vertices of v
-   * \param v
-   * \return
+   * \brief determines `v`'s successor vertices, i.e. the destination vertices of `v`'s outgoing edges
+   * \param v the reference vertex
+   * \return a set containing `v`'s successors
    */
-  set<Vertex*> getSubsequentVertices(const Vertex* v) const;
+  set<Vertex*> getSuccessors(const Vertex *v) const;
   /*!
-   * \brief getProceedingVertices get the proceeding vertices of v
-   * \param v
-   * \return
+   * \brief determines `v`'s predecessor vertices, i.e. the source vertices of `v`'s incoming edges
+   * \param v the reference vertex
+   * \return a set containing `v`'s predecessors
    */
-  set<Vertex*> getPreceedingVertices(const Vertex* v) const;
+  set<Vertex*> getPredecessors(const Vertex *v) const;
   /*!
-   * \brief setName
-   * \param s
+   * \brief sets the graph name
+   * \param s the new name
    */
   void setName(string s){this->name = s;}
+  /*! \return the graph name */
   const string& getName() const {return this->name;}
   /*!
-   * \brief verticesBegin iterate over vertices
-   * \return
+   * \return iterator to beginning of vertices
    */
   const std::set<Vertex*>::iterator verticesBegin()
   {
       return vertices.begin();
   }
   /*!
-   * \brief verticesEnd iterate over vertices
-   * \return
+   * \return iterator to end of vertices
    */
   const std::set<Vertex*>::iterator verticesEnd()
   {
       return vertices.end();
   }
   /*!
-   * \brief edgesBegin iterate over edges
-   * \return
+   * \return iterator to beginning of vertices
    */
   const std::set<Edge*>::iterator edgesBegin()
   {
       return edges.begin();
   }
   /*!
-   * \brief edgesEnd iterate over edges
-   * \return
+   * \return iterator to end of vertices
    */
   const std::set<Edge*>::iterator edgesEnd()
   {
@@ -190,26 +215,26 @@ public:
 
 protected:
   /*!
-   * The container for vertices
+   * \brief The container for vertices
    */
   std::set<Vertex*> vertices;
 
   /*!
-   * The container for edges
+   * \brief The container for edges
    */
   std::set<Edge*> edges;
 
   /*!
-   * This int is used to track the next valid vertex id
+   * \brief This int is used to track the next valid vertex ID
    */
   int maxVertexId;
 
   /*!
-   * This int is used to track the next valid edge id
+   * \brief This int is used to track the next valid edge ID
    */
   int maxEdgeId;
   /*!
-   * \brief name
+   * \brief The graph's name
    */
   string name;
 };

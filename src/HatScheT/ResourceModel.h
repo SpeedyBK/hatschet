@@ -1,8 +1,24 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Patrick Sittel (sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 
 #include <HatScheT/Graph.h>
@@ -20,18 +36,17 @@ namespace HatScheT
 const int UNLIMITED = -1;
 
 /*!
- * \brief The Resource class define a limited or unlimited resource, e.g. singlePrecAdd or doublePrecMult
- * use -1 as limit for an unlimited resource
+ * \brief Instances of this class represent a simple resource
  */
 class Resource
 {
 public:
   /*!
-   * \brief Resource
-   * \param name
-   * \param limit use -1 as limit for an unlimited resource
-   * \param latency the number of clock cycles the resource need to perform the operation on one data sample
-   * \param blockingTime the number of clock cycles the resource is blocked until the next data sample can be inserted
+   * \brief Constructor
+   * \param name the resource's name
+   * \param limit the number of available instances. Use HatScheT::UNLIMITED (= -1) to denote an unlimited resource
+   * \param latency the number of time steps the resource needs to complete its function
+   * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
    */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {}
   /*!
@@ -39,69 +54,59 @@ public:
    */
   Resource(const Resource&) = delete;
   /*!
-   * \brief isReservationTable
-   * \return
+   * \return whether this is a (complex) reservation table
    */
-  virtual bool isReservationTable(){
-    return false;}
+  virtual bool isReservationTable(){return false;}
   /*!
-   * \brief getLimit
-   * \return
+   * \return the limit
    */
-  virtual int getLimit() const {
-    return this->limit;}
+  virtual int getLimit() const {return this->limit;}
   /*!
-   * \brief getLatency
-   * \return
+   * \return the latency
    */
-  virtual int getLatency() const {
-    return this->latency;}
+  virtual int getLatency() const {return this->latency;}
   /*!
-   * \brief getBlockingTime
-   * \return
+   * \return the blocking time
    */
-  virtual int getBlockingTime() const {
-    return this->blockingTime;}
+  virtual int getBlockingTime() const {return this->blockingTime;}
   /*!
-   * \brief getName
-   * \return
+   * \return the name
    */
-  const std::string& getName() const {
-    return this->name;}
+  const std::string& getName() const {return this->name;}
 protected:
   /*!
-   * \brief name
+   * \brief the resource's name
    */
   const std::string name;
   /*!
-   * \brief limit
+   * \brief the number of available instances. Use HatScheT::UNLIMITED (= -1) to denote an unlimited resource
    */
   const int limit;
   /*!
-   * \brief latency
+   * \brief the number of time steps the resource needs to complete its function
    */
   const int latency;
   /*!
-   * \brief blockingTime
+   * \brief the number of time steps a resource instance is blocked by an individual operation
    */
   const int blockingTime;
 };
 
 /*!
- * \brief The ReservationBlock class descripes one of possible many resource occupied by a reservation table at a specific start time
+ * \brief The ReservationBlock class describes one of possible many resource occupied by a reservation table at a specific start time
  */
 class ReservationBlock
 {
 public:
   /*!
    * \brief ReservationBlock
-   * \param resource provide the occupied resource
-   * \param startTime provide the start time
+   * \param resource the occupied resource
+   * \param startTime the start time
    */
   ReservationBlock(const Resource* resource, int startTime) : resource(resource), startTime(startTime) {
-    throw new Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
+    throw HatScheT::Exception("ReservationBlock.ReservationBlock: ERROR from constructor! Currently disabled/not supported!");
   }
-    /*!
+  /*!
    * copy constructor is forbidden for this class
    */
     ReservationBlock(const ReservationBlock&) = delete;
@@ -113,39 +118,42 @@ public:
    */
   friend ostream& operator<<(ostream& os, const ReservationBlock& rb);
   /*!
-   * \brief getResource
-   * \return
+   * \return the resource
    */
   const Resource* getResource() const {return this->resource;}
   /*!
-   * \brief getStartTime
-   * \return
+   * \return this block's start time
    */
   int getStartTime() const {return this->startTime;}
 private:
   /*!
-   * \brief resource
+   * \brief the resource
    */
   const Resource* resource;
   /*!
-   * \brief startTime
+   * \brief the start time (relative to time 0 of the surrounding reservation table, and the vertex's start time)
    */
   const int startTime;
 };
 
 /*!
- * \brief The ReservationTable class descripe a complex operation that is composite of many resources/operations
- * one of each operations is called a reservation block
+ * \brief The ReservationTable class describes a complex resource comprised of several reservation blocks.
+ *
+ * Reservation tables are currently unsupported by HatScheT's schedulers.
+ *
+ * \sa ReservationBlock
  */
 class ReservationTable : public Resource
 {
 public:
   /*!
-   * \brief ReservationTable latency and limit are calculated based on the used reservation block resources
-   * \param name provide a name
+   * \brief Constructor.
+   *
+   * Latency and limit are calculated based on the used reservation block resources.
+   * \param name the table's name
    */
   ReservationTable(std::string name) : Resource(name, -1, -1, -1) {
-    throw new Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
+    throw HatScheT::Exception("ReservationTable.ReservationTable: ERROR from constructor! Currently disabled/not supported!");
   }
   /*!
  * copy constructor is forbidden for this class
@@ -159,53 +167,58 @@ public:
    */
   friend ostream& operator<<(ostream& os, const ReservationTable& rt);
   /*!
-   * \brief makeReservationBlock factory to generate and add a reservation block to this reservation tbale
-   * \param r
-   * \param startTime
-   * \return
+   * \brief factory to create and add a reservation block to this reservation table
+   * \param r the block's resource
+   * \param startTime the block's start time
+   * \return the new reservation block
    */
   ReservationBlock &makeReservationBlock(Resource* r, int startTime);
   /*!
-   * \brief isReservationTable
-   * \return
+   * \return true
    */
-  virtual bool isReservationTable(){
-    return true;}
+  virtual bool isReservationTable(){return true;}
   /*!
-   * \brief getLimit limit is lowest limit of all resources used
-   * \return
+   * \return lowest limit of all resources used
    */
   virtual int getLimit() const;
   /*!
-   * \brief getLatency latency is the last finished block
-   * \return
+   * \return the end time step of the latest finishing reservation block
    */
   virtual int getLatency() const;
   /*!
-   * \brief getBlockingTime
-   * \return
+   * \brief not applicable
+   * \return Nothing
    */
-  virtual int getBlockingTime() const {
-    throw new Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
+  virtual int getBlockingTime() const {throw HatScheT::Exception("ReservationTable.getBlockingTime: blockingTime not supported for RT!" );}
 private:
   /*!
-   * \brief blocks
+   * \brief all created reservation blocks
    */
   std::list<ReservationBlock*> blocks;
 };
 
 /*!
- * \brief The ResourceModel class use this class to manage the resources of your implementation to schedule your data flow graph
+ * \brief The ResourceModel manages the resource types known to the schedulers, and the association of vertices to a particular resource type.
+ *
+ * Use the `makeResource` method to create new resources, and `registerVertex` to associate a vertex with a resource.
+ *
+ * The schedulers implemented in HatScheT currently support only simple resource models where each operation requires exactly one fully-pipelined resource in its start time step.
+ * In the future, support for blocking resource usage, as well as complex reservation tables, will be added.
+ * 
+ * \sa Resource
+ *     ReservationTable
  */
 class ResourceModel
 {
 public:
   /*!
-   * \brief ResourceModel
+   * \brief Constructor.
    */
   ResourceModel();
   /*!
-   * \brief ResourceModel
+   * \brief Destructor.
+   *
+   * Frees all resources and reservation tables.
    */
   ~ResourceModel();
   /*!
@@ -220,113 +233,111 @@ public:
    */
   friend ostream& operator<<(ostream& os, const ResourceModel& rm);
   /*!
-   * \brief makeResource generate a resource in your resource model
-   * \param name
-   * \param limit
-   * \param latency
-   * \param blockingTime
-   * \return
+   * \brief creates a new (simple) resource
+   * \param name the resource's name
+   * \param limit the number of available instances
+   * \param latency the number of time steps the resource needs to complete its function
+   * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
+   * \return the new resource
+   * \sa Resource
    */
   Resource &makeResource(std::string name, int limit, int latency, int blockingTime=0);
   /*!
-   * \brief makeReservationTable generate a more complex operation
-   * \param name
-   * \return
+   * \brief creates a complex, reservation table-based resource
+   *
+   * Currently not supported!
+   *
+   * \param name the reservation table's name
+   * \return nothing
    */
   ReservationTable& makeReservationTable(string name);
   /*!
-   * \brief makeReservationBlock generate a reservation block of resource r in reservation table rt at start time
-   * \param rt
-   * \param r
-   * \param startTime
-   * \return
-   */
-  ReservationBlock& makeReservationBlock(ReservationTable* rt, Resource* r, int startTime);
-  /*!
-   * \brief registerVertex register a vertex to resource
-   * \param v
-   * \param r
+   * \brief associates a vertex with a resource
+   * \param v the vertex
+   * \param r the resource (or reservation table)
    */
   void registerVertex(const Vertex* v, const Resource* r);
   /*!
-   * \brief getResource
-   * \param v
-   * \return
+   * \param v the vertex
+   * \return the resource associated with the given vertex
    */
   const Resource *getResource(const Vertex* v) const;
   /*!
-   * \brief getResource
-   * \param name
-   * \return
+   * \param name the resource name to look up
+   * \return the resource with the given name
+   * \throws Exception if no matching resource was foudnd
    */
   Resource *getResource(std::string name) const;
   /*!
-   * \brief isEmpty
-   * \return
+   * \return whether this resource model is empty, i.e. has no resources
    */
   bool isEmpty();
   /*!
-   * \brief resourcesBegin iterate over resources
-   * \return
+   * \return iterator to beginning of resources
    */
   const std::list<Resource*>::iterator resourcesBegin()
   {
       return resources.begin();
   }
   /*!
-   * \brief resourcesEnd iterate over resources
-   * \return
+   * \return iterator to end of resources
    */
   const std::list<Resource*>::iterator resourcesEnd()
   {
       return resources.end();
   }
   /*!
-   * \brief getNoOfResource
-   * \return
+   * \return number of resources
    */
-  int getNoOfResources() const {return this->resources.size();}
+  int getNumResources() const {return this->resources.size();}
   /*!
-   * \brief getNoOfReservationTables
-   * \return
+   * \return number of reservation tables
    */
-  int getNoOfReservationTables() const {return this->tables.size();}
+  int getNumReservationTables() const {return this->tables.size();}
   /*!
-   * \brief getVertexLatency determine the latency of a registered vertex
-   * \param v
-   * \return
+   * \brief Convenience method to get the given vertex's latency
+   * \param v the vertex
+   * \return `v`'s latency
+   * \throws Exception if vertex is not registered
    */
   int getVertexLatency(Vertex* v) const;
+  /*!
+   * \brief Convenience method to get the given vertex's latency
+   * \param v the vertex
+   * \return `v`'s latency
+   * \throws Exception if vertex is not registered
+   */
   int getVertexLatency(const Vertex* v) const;
   /*!
-   * \brief getMaxLatency determine the maximal latency of all registered latencies
+   * \brief determines the maximum latency of all registered latencies
+   *
    * TODO: HANDLE LATENCY/DELAY OF EDGES
-   * \return
+   * \return the maximum latency
    */
   int getMaxLatency() const;
   /*!
-   * \brief getNoOfVerticesRegisteredToResource
-   * \param r
-   * \return
+   * \brief determines how many vertices are registered to the given resource
+   * \param r the resource
+   * \return the number of vertices associated with `r`
    */
-  int getNoOfVerticesRegisteredToResource(Resource* r) const;
+  int getNumVerticesRegisteredToResource(Resource *r) const;
   /*!
-   * \brief getVerticesOfResources
-   * \param r
-   * \return
+   * \brief collects all vertices that use the given resource
+   * \param r the resource
+   * \return a set of vertices associated with `r`
    */
   set<const Vertex*> getVerticesOfResource(const Resource *r) const;
 private:
   /*!
-   * \brief registrations
+   * \brief the mapping between vertices and resources
    */
   map<const Vertex*, const Resource*> registrations;
   /*!
-   * \brief resources
+   * \brief all created resources
    */
   std::list<Resource*> resources;
   /*!
-   * \brief tables
+   * \brief all created tables
    */
   std::list<ReservationTable*> tables;
 };

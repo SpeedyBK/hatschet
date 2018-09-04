@@ -1,3 +1,23 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <stack>
@@ -44,7 +64,7 @@ void ALAPScheduler::schedule()
     Vertex* v = stack.top();
     stack.pop();
 
-    set<Vertex*> procVertices = this->g.getPreceedingVertices(v);
+    set<Vertex*> procVertices = this->g.getPredecessors(v);
 
     for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
       Vertex* procV = *it;
@@ -76,7 +96,7 @@ void ALAPScheduler::schedule()
   for(const auto &p:this->startTimes) offset = std::min(offset,p.second);
   for(auto &p:this->startTimes) p.second -=offset;
 
-  this->II = this->getScheduleLength()+1;
+  this->II = this->getScheduleLength();
 }
 
 }

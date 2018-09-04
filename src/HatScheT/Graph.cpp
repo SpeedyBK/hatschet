@@ -1,3 +1,24 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/Exception.h>
 #include <string>
@@ -52,13 +73,26 @@ bool Graph::isSourceVertex(Vertex *v)
   return true;
 }
 
+bool Graph::isSinkVertex(Vertex *v)
+{
+  for(auto it:this->edges)
+  {
+    Edge* e = it;
+    Vertex* srcV = &e->getVertexSrc();
+
+    if(srcV == v) return false;
+  }
+
+  return true;
+}
+
 bool Graph::isEmpty()
 {
   if(this->vertices.size() == 0) return true;
   return false;
 }
 
-set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
+set<Vertex *> Graph::getPredecessors(const Vertex *v) const
 {
   set<Vertex*> vset;
 
@@ -73,7 +107,7 @@ set<Vertex *> Graph::getPreceedingVertices(const Vertex *v) const
   return vset;
 }
 
-set<Vertex *> Graph::getSubsequentVertices(const Vertex *v) const
+set<Vertex *> Graph::getSuccessors(const Vertex *v) const
 {
   set<Vertex*> vset;
 
@@ -95,7 +129,7 @@ Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const
     if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
   }
 
-  throw new Exception("Graph::getEdge: Edge not found!");
+  throw HatScheT::Exception("Graph::getEdge: Edge not found!");
 }
 
 Vertex& Graph::getVertexById(int id) const
@@ -105,12 +139,14 @@ Vertex& Graph::getVertexById(int id) const
     Vertex* v = a;
     if(v->getId() == id) return *v;
   }
-  throw new Exception("Graph::getVertexById: Vertex not found!");
+  throw HatScheT::Exception("Graph::getVertexById: Vertex not found!");
 }
 
 ostream& operator<<(ostream& os, const Graph& g)
 {
-  os << "Printing Graph Info:" << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
+  os << "---------------------------------- Graph Model -------------------------------------" << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
 
   for(auto a:g.vertices)
   {

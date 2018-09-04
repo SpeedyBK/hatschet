@@ -1,7 +1,22 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
 
@@ -73,6 +88,8 @@ public:
     this->solver->threads=i;
   }
   unsigned int getThreads(){return this->threads;}
+
+  ScaLP::status stat;
 protected:
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
@@ -99,13 +116,9 @@ protected:
    */
   bool solverQuiet;
   /*!
-   * \brief solverTimeout default is 1 hour
+   * \brief solverTimeout in seconds, default is 3600sec=1 hour
    */
   long solverTimeout;
-  /*!
-   * \brief timeoutCounter
-   */
-  unsigned int timeoutCounter;
   /*!
    * \brief solvingTime
    */

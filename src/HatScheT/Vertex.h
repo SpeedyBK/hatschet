@@ -1,8 +1,24 @@
 /*
-  This file is part of the HatScheT project, developed at University of Kassel, TU Darmstadt
-  Author: Martin Kumm, Patrick Sittel (kumm, sittel@uni-kassel.de)
-  All rights reserved.
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
 #pragma once
 #include <iostream>
 #include <string>
@@ -12,7 +28,15 @@ namespace HatScheT
 {
 
 /*!
- * \brief Implementation of a simple vertex used in a graph (@see Graph)
+ * \brief Implementation of a vertex used in a Graph
+ *
+ * Vertices represent the entities (such as operation, instructions, ...) to be scheduled, but do not store their
+ * latencies/delay. Instead, a vertex must be registered to use a certain Resource, which then provides the latency
+ * value.
+ *
+ * \sa Graph
+ *     Resource
+ *     ResourceModel
  */
 class Vertex
 {
@@ -23,15 +47,16 @@ public:
    */
   Vertex(const Vertex&) = delete;
   /*!
-   * \brief getId
-   * \return
+   * \return the vertex ID
    */
   int getId() const { return id; }
   /*!
-   * \brief setName optional
-   * \param s
+   * \param s the new name
    */
   void setName(string s){this->name = s;}
+  /*!
+   * @return the (optional) vertex name
+   */
   const string& getName() const {return this->name;}
   /*!
    * \brief < operator used for map container
@@ -43,11 +68,11 @@ public:
 
 protected:
   /*!
-   * \brief name optional
+   * \brief an optional vertex name
    */
   string name;
   /*!
-   * \brief id mandatory
+   * \brief the mandatory numerical vertex ID
    */
   const int id;
 };

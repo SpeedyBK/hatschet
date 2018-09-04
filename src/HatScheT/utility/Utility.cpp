@@ -1,7 +1,24 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "HatScheT/utility/Utility.h"
-#include "ScaLP/Solver.h"
-#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
@@ -13,6 +30,10 @@
 #include <ctime>
 #include <cstddef>
 #include <iomanip>
+
+#ifdef USE_SCALP
+#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
+#endif
 
 namespace HatScheT {
 
@@ -92,6 +113,7 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
   return outputs;
 }
 
+#ifdef USE_SCALP
 int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);
@@ -110,10 +132,10 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
     Resource* r = *it;
     //skip unlimited resources
     if(r->getLimit()==-1)continue;
-    int opsUsingR = rm->getNoOfVerticesRegisteredToResource(r);
+    int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
     int avSlots = r->getLimit();
 
-    if(avSlots<=0) throw new Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
+    if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
     int tempMax = opsUsingR/avSlots + (opsUsingR % avSlots != 0);
 
     if(tempMax>resMII) resMII=tempMax;
@@ -156,12 +178,13 @@ int Utility::calcRecMII(ResourceModel *rm, Graph *g)
   auto status = solver.solve();
   if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
     cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
-    throw new Exception("RecMII computation failed!");
+    throw HatScheT::Exception("RecMII computation failed!");
   }
 
   return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
+#endif
 int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
 {
   int sum = 0;
@@ -255,254 +278,13 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
   return false;
 }
 
-void Utility::compareRegisterUsage(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, string logFileName)
-{
-  HatScheT::SchedulerBase* scheduler;
-  int moovacII=0;
-  int minRegII=0;
-  int moovacRegs=0;
-  int minRegRegs=0;
-  int moovacSL=0;
-  int minRegSL=0;
-  bool moovacVerified=false;
-  bool minRegVerified=false;
-  std::map<const Vertex *, int>  moovacBinding;
-  std::map<const Vertex *, int>  minRegBinding; 
-
-  for(int i = 0; i < 2;i++){
-    //select scheduler
-    if(i==0){
-      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
-      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(300);
-    }
-    if(i==1){
-      scheduler = new HatScheT::MoovacMinRegScheduler(g, resourceModel, solverWishlist);
-      MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(300);
-      schedulerPtr->setMaxLatencyConstraint(moovacSL);
-    }
-
-    //do the scheduling
-    scheduler->schedule();
-
-    if(i==0){
-        MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-        moovacVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
-        moovacII = scheduler->getII();
-        moovacRegs = schedulerPtr->getNoOfImplementedRegisters();
-        moovacSL = schedulerPtr->getScheduleLength();
-        moovacBinding = schedulerPtr->getBindings();
-    }
-    if(i==1){
-        MoovacMinRegScheduler* schedulerPtr= dynamic_cast<MoovacMinRegScheduler*>(scheduler);
-        minRegVerified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
-        minRegII = scheduler->getII();
-        minRegRegs = schedulerPtr->getNoOfImplementedRegisters();
-        minRegSL = schedulerPtr->getScheduleLength();
-        minRegBinding = schedulerPtr->getBindings();
-    }
-    }
-
-    //find graph name
-    string graphstr = g.getName();
-    std::size_t found = graphstr.find_last_of("/\\");
-    graphstr = graphstr.substr(found+1);
-
-    //find set name
-    string setstr = g.getName();
-    std::size_t found1 = setstr.find_last_of("/\\");
-    setstr = setstr.substr(0,found1);
-    std::size_t found2 = setstr.find_last_of("/\\");
-    setstr = setstr.substr(found2+1);
-
-    //
-    double regSavedPer = (double)(moovacRegs-minRegRegs)/(double)moovacRegs;
-    double slDiffPer = (double)(moovacSL-minRegSL)/(double)moovacSL;
-
-    //log general data
-    std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-    log << setstr << ";"  << graphstr << ";" << moovacII-minRegII << ";" << moovacRegs << ";" << minRegRegs << ";"
-        << setprecision(2) << fixed << regSavedPer << ";" << setprecision(2) << fixed << slDiffPer << ";" << moovacSL << ";" << minRegSL  << ";";
-    //log binding data
-    for(auto it=resourceModel.resourcesBegin();it!=resourceModel.resourcesEnd();++it){
-      const Resource* r = *it;
-      if(r->getLimit()<=0) continue;
-
-      int moovacCount = Utility::calcUsedOperationsOfBinding(moovacBinding,resourceModel,const_cast<Resource*>(r));
-      int minRegCount = Utility::calcUsedOperationsOfBinding(minRegBinding,resourceModel,const_cast<Resource*>(r));
-      log << r->getName() << ";" << to_string(moovacCount-minRegCount) << ";";
-    }
-    log << endl;
-    log.close();
-}
-
-void Utility::adaptiveScheduling(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, string logFileName)
-{
-  int noOfVertices = g.getNumberOfVertices();
-  HatScheT::SchedulerBase* scheduler;
-  string schedulerUsed = "";
-
-  if(noOfVertices < 75){
-    scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
-    schedulerUsed = "Moovac";
-  }
-  else if(75 <= noOfVertices && noOfVertices < 130){
-    scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
-    schedulerUsed = "ModuloSDC";
-  }
-  else if(130 <= noOfVertices && noOfVertices < 1000){
-    scheduler = new HatScheT::ULScheduler(g, resourceModel);
-    schedulerUsed = "ULScheduler";
-  }
-  else if(1000 <= noOfVertices){
-    scheduler = new HatScheT::ASAPScheduler(g, resourceModel);
-    schedulerUsed = "ASAPScheduler";
-  }
-
-  //measure time and schedule
-  clock_t begin = clock();
-  scheduler->schedule();
-  clock_t end = clock();
-  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-  //verify schedule
-  bool verified = false;
-  bool schedFound = false;
-  if(scheduler->getII()!=-1) {
-    schedFound = true;
-    verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
-  }
-
-  //do normalization
-  int minII = Utility::calcMinII(&resourceModel,&g);
-  int foundII = scheduler->getII();
-  float quality = (float)minII/(float)foundII;
-
-  //find graph name
-  string graphstr = g.getName();
-  std::size_t found = graphstr.find_last_of("/\\");
-  graphstr = graphstr.substr(found+1);
-
-  //find set name
-  string setstr = g.getName();
-  std::size_t found1 = setstr.find_last_of("/\\");
-  setstr = setstr.substr(0,found1);
-  std::size_t found2 = setstr.find_last_of("/\\");
-  setstr = setstr.substr(found2+1);
-
-  //log data
-  std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-  log << setstr << ";"  << graphstr << ";" << minII  << ";" << scheduler->getII() << ";" << to_string(elapsed_secs) << ";" << scheduler->getScheduleLength() << ";" << schedFound
-      << ";" << verified << ";" << schedulerUsed << ";" << noOfVertices << ";" << setprecision(4) << fixed << quality << endl;
-  log.close();
-}
-
-void Utility::evaluateSchedulers(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, std::string logFileName)
-{
-  string logNameInsert = logFileName;
-  HatScheT::SchedulerBase* scheduler;
-
-  for(int i = 0; i < 6;i++){
-    //reset logfilename
-    logFileName = logNameInsert;
-
-    //select scheduler
-    if(i==0){
-      logFileName += "ASAP.csv";
-      scheduler = new HatScheT::ASAPScheduler(g,resourceModel);
-    }
-    if(i==1){
-      logFileName += "ULScheduler.csv";
-      scheduler = new HatScheT::ULScheduler(g, resourceModel);
-    }
-    if(i==2){
-      logFileName += "ModuloSDC1min.csv";
-      scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
-      ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(60);
-    }
-    if(i==3){
-      logFileName += "ModuloSDC5min.csv";
-      scheduler = new HatScheT::ModuloSDCScheduler(g, resourceModel, solverWishlist);
-      ModuloSDCScheduler* schedulerPtr= dynamic_cast<ModuloSDCScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(300);
-    }
-    if(i==4){
-      logFileName += "Moovac1Min.csv";
-      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
-      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(60);
-    }
-    if(i==5){
-      logFileName += "Moovac5Min.csv";
-      scheduler = new HatScheT::MoovacScheduler(g, resourceModel, solverWishlist);
-      MoovacScheduler* schedulerPtr= dynamic_cast<MoovacScheduler*>(scheduler);
-      schedulerPtr->setSolverTimeout(300);
-    }
-
-    //measure time and schedule
-    clock_t begin = clock();
-    scheduler->schedule();
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-
-    //verify schedule
-    bool verified = false;
-    if(scheduler->getII()!=-1) {
-      verified = HatScheT::verifyModuloSchedule(g, resourceModel, scheduler->getSchedule(), scheduler->getII());
-    }
-
-    //do normalization
-    int minII = Utility::calcMinII(&resourceModel,&g);
-    int foundII = scheduler->getII();
-    float quality = (float)minII/(float)foundII;
-
-    //find graph name
-    string str = g.getName();
-    std::size_t found = str.find_last_of("/\\");
-    str = str.substr(found+1);
-
-    //find set name
-    string setstr = g.getName();
-    std::size_t found1 = setstr.find_last_of("/\\");
-    setstr = setstr.substr(0,found1);
-    std::size_t found2 = setstr.find_last_of("/\\");
-    setstr = setstr.substr(found2+1);
-
-    //log data
-    std::ofstream log(logFileName, std::ios_base::app | std::ios_base::out);
-    std::ofstream logVerticesTime("vertTime"+logFileName, std::ios_base::app | std::ios_base::out);
-    std::ofstream logTimeQuality("timeQual"+logFileName, std::ios_base::app | std::ios_base::out);
-
-    if(verified==true){
-    log << setstr << ";" << str << ";" << minII  << ";" << foundII << ";" << setprecision(4) << fixed << to_string(elapsed_secs)
-        << ";" << scheduler->getScheduleLength() << ";"
-    << setprecision(4) << fixed << quality << ";" << g.getNumberOfVertices() << ";" << g.getNumberOfEdges() << endl;
-    //log vertices against time
-    logVerticesTime << g.getNumberOfVertices() << "  " << setprecision(4) << fixed << to_string(elapsed_secs) << endl;
-    //log time against quality
-    logTimeQuality  << setprecision(4) << fixed << to_string(elapsed_secs) << "  " << setprecision(4) << fixed << quality << endl;
-    }
-    else{
-      log << setstr << ";" << str << ";-1" << endl;
-    }
-
-    logVerticesTime.close();
-    log.close();
-    logTimeQuality.close();
-
-    delete scheduler;
-    scheduler=nullptr;
-  }
-}
 
 int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel& rm, Resource *r)
 {
   int opsUsed=0;
   //unlimited resources used in paralell
   if(r->getLimit()<=0){
-    return rm.getNoOfVerticesRegisteredToResource(r);
+    return rm.getNumVerticesRegisteredToResource(r);
   }
 
   vector<bool> usedOp;
