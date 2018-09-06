@@ -39,7 +39,11 @@ public:
   void setModuloCycles(int m) {this->consideredModuloCycle=m;}
   void setModuloClasses(int m ){this->moduloClasses=m;}
   void printScheduleToConsole();
+
+  void setUniformSchedule(bool b){this->uniformSchedule=b;}
+  bool getUnifromSchedule(){return this->uniformSchedule;}
 private:
+  bool uniformSchedule;
   double throughput;
   virtual void constructProblem();
   virtual void setObjective();

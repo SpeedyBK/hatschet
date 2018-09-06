@@ -31,6 +31,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->consideredTimeSteps = 0;
   this->moduloClasses = 0;
   this->consideredModuloCycle = 0;
+  this->uniformSchedule = false;
 }
 
 void RationalIIScheduler::fillIIVector()
@@ -90,7 +91,16 @@ void RationalIIScheduler::setGeneralConstraints()
     Vertex* v = *it;
 
     if(this->g.isSinkVertex(v)==true) {
-      this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <= this->maxLatencyConstraint);
+      if(this->uniformSchedule==true) {
+        this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <=
+                                    this->maxLatencyConstraint);
+      }
+      else{
+        for(int i = 0; i < t_matrix.size(); i++){
+          this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) - II_vector[i] <=
+                                      this->maxLatencyConstraint);
+        }
+      }
     }
   }
 
@@ -203,10 +213,12 @@ void RationalIIScheduler::schedule()
 
 void RationalIIScheduler::setModuloConstraints()
 {
-  //edges in different IIs have the same "length in time" respectively
-  for(unsigned int i = 0; i < t_matrix.size()-1; i++) {
-    for(unsigned int j = 0; j < t_matrix[i].size(); j++) {
-      this->solver->addConstraint(t_matrix[i+1][j] - t_matrix[i][j] - II_vector[i+1] +II_vector[i] == 0 );
+  if(this->uniformSchedule==true) {
+    //edges in different IIs have the same "length in time" respectively
+    for (unsigned int i = 0; i < t_matrix.size() - 1; i++) {
+      for (unsigned int j = 0; j < t_matrix[i].size(); j++) {
+        this->solver->addConstraint(t_matrix[i + 1][j] - t_matrix[i][j] - II_vector[i + 1] + II_vector[i] == 0);
+      }
     }
   }
 }
@@ -252,7 +264,6 @@ void RationalIIScheduler::setResourceConstraints()
     }
 
     //iterate overe time steps
-    //for(unsigned int j = 0; j < this->SLMaxlimit+1; j++)
     for(unsigned int j = 0; j < this->consideredTimeSteps+1; j++) {
       ScaLP::Term tiaSum;
       bool b = 0;
@@ -297,6 +308,5 @@ void RationalIIScheduler::fillTMaxtrix()
     t_matrix.push_back(t_vector);
   }
 }
-
 
 }
