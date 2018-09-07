@@ -57,6 +57,7 @@ public:
    * \brief sets the timeout of the solver
    * \param timeoutInSeconds the timeout in seconds
    */
+  long getSolverTimeout(){return this->solverTimeout;}
   void setSolverTimeout(long timeoutInSeconds);
 
   /*!

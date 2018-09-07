@@ -40,7 +40,7 @@ void RationalIIScheduler::fillIIVector()
 
   for(unsigned int i = 0; i < this->moduloClasses; i++) {
     if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),0,0));
-    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),i,this->consideredModuloCycle));
+    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),i,this->consideredModuloCycle-1));
   }
 }
 
@@ -79,9 +79,15 @@ void RationalIIScheduler::setGeneralConstraints()
 
 
     for(unsigned int j = 0; j < this->moduloClasses; j++) {
-      for(unsigned int k = 0; k < II_vector.size()-1; k++) {
-        this->solver->addConstraint(t_matrix[j][dstTVecIndex] - t_matrix[j][srcTVecIndex] + e->getDistance()*(II_vector[k+1]-II_vector[k])
-        - e->getDelay() - this->resourceModel.getVertexLatency(src) >= 0);
+      if(j==0) {
+        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
+                                    e->getDistance() * (this->consideredModuloCycle - II_vector.back())
+                                    + e->getDelay() <= 0);
+      }
+      else {
+        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
+                                    e->getDistance() * (II_vector[j] - II_vector[j-1])
+                                    + e->getDelay() <= 0);
       }
     }
   }
@@ -90,16 +96,14 @@ void RationalIIScheduler::setGeneralConstraints()
   for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it){
     Vertex* v = *it;
 
-    if(this->g.isSinkVertex(v)==true) {
-      if(this->uniformSchedule==true) {
-        this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <=
+    if(this->uniformSchedule==true) {
+      this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <=
+                                  this->maxLatencyConstraint);
+    }
+    else{
+      for(int i = 0; i < t_matrix.size(); i++){
+        this->solver->addConstraint(t_matrix[i][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) - II_vector[i] <=
                                     this->maxLatencyConstraint);
-      }
-      else{
-        for(int i = 0; i < t_matrix.size(); i++){
-          this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) - II_vector[i] <=
-                                      this->maxLatencyConstraint);
-        }
       }
     }
   }
@@ -202,6 +206,9 @@ void RationalIIScheduler::schedule()
   this->constructProblem();
   this->setObjective();
 
+  cout << "Start Rational II scheduler: " << this->moduloClasses << " / " << this->consideredModuloCycle << endl;
+  if(this->consideredModuloCycle==6 && this->moduloClasses==3) this->solver->writeLP("3_6.lp");
+
   stat = this->solver->solve();
   cout << "Solution ScaLP status: " << stat << endl;
   if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
@@ -231,6 +238,7 @@ void RationalIIScheduler::setResourceConstraints()
     vector<vector< vector<ScaLP::Variable> > > resourceVarContainer;
 
     int ak = r->getLimit();
+    if (ak==-1) continue;
 
     for (auto it = vSet.begin(); it != vSet.end(); ++it) {
       const Vertex* v = *it;
@@ -300,9 +308,10 @@ void RationalIIScheduler::fillTMaxtrix()
       Vertex* v = *it;
       int id = v->getId();
 
-      t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->consideredTimeSteps*(i+1) + i*1));
+      if(i==0) t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->maxLatencyConstraint -  this->resourceModel.getVertexLatency(v)));
+      else t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->consideredTimeSteps*(i+1) + i*1));
 
-      /*if(i == 0)*/ this->tIndices.insert(make_pair(v,t_vector.size()-1));
+      this->tIndices.insert(make_pair(v,t_vector.size()-1));
     }
 
     t_matrix.push_back(t_vector);
