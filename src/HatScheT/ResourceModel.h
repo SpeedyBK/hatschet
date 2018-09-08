@@ -61,6 +61,7 @@ public:
    * \return the limit
    */
   virtual int getLimit() const {return this->limit;}
+  void setLimit(int l){this->limit=l;}
   /*!
    * \return the latency
    */
@@ -81,7 +82,7 @@ protected:
   /*!
    * \brief the number of available instances. Use HatScheT::UNLIMITED (= -1) to denote an unlimited resource
    */
-  const int limit;
+  int limit;
   /*!
    * \brief the number of time steps the resource needs to complete its function
    */
