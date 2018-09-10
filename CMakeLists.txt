@@ -102,7 +102,7 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-)
+        src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h

@@ -32,8 +32,6 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->maxII = Utility::calcMaxII(&asap);
   if (minII >= maxII) maxII = minII+1;
   this->SLMax = 0;
-
-  cout << "constr minII:" << this->minII << endl;
 }
 
 void MoovacScheduler::resetContainer()
@@ -104,6 +102,9 @@ void MoovacScheduler::schedule()
   bool timeoutOccured=false;
 
   cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
+  if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
+  else cout << "Unlimited MaxLatency" << endl;
+  cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
 
   while(this->II <= this->maxII)
   {

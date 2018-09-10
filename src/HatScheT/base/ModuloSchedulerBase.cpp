@@ -29,5 +29,4 @@ namespace HatScheT
     {
     return Utility::calcMinII(rm,g);
   }
-	
 }
