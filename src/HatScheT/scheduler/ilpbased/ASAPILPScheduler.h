@@ -18,9 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 
 namespace HatScheT
 {
@@ -41,12 +39,13 @@ protected:
     virtual void setObjective();
     void setVectorVariables();
     void fillSolutionStructure();
+    void setResourceConstraints();
 
     vector<ScaLP::Variable> ti;
-    vector<ScaLP::Variable> ri;
     map<const Vertex*, unsigned int> tIndices;
-    map<const Vertex*, unsigned int> rIndices;
     ScaLP::Result r;
+
+    map<const Vertex*, vector<ScaLP::Variable> > binVarMap;
 };
 
 }
