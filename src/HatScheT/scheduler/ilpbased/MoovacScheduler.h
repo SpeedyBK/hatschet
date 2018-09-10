@@ -152,14 +152,6 @@ protected:
    */
   vector<ScaLP::Variable> ti;
   /*!
-   * \brief minII
-   */
-  unsigned int minII;
-  /*!
-   * \brief maxII
-   */
-  unsigned int maxII;
-  /*!
    * \brief SLMax
    */
   unsigned int SLMax;

@@ -32,6 +32,8 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->maxII = Utility::calcMaxII(&asap);
   if (minII >= maxII) maxII = minII+1;
   this->SLMax = 0;
+
+  cout << "constr minII:" << this->minII << endl;
 }
 
 void MoovacScheduler::resetContainer()
@@ -92,13 +94,6 @@ void MoovacScheduler::setObjective()
     this->solver->addConstraint(supersink - v >= 0);
   }
   this->solver->setObjective(ScaLP::minimize(supersink));
-
-  //original moovac objective
-    /*ScaLP::Term sum;
-    for(ScaLP::Variable &v:this->ti){
-      sum = sum + v;
-    }
-    this->solver->setObjective(ScaLP::minimize(sum));*/
 }
 
 void MoovacScheduler::schedule()
@@ -493,8 +488,6 @@ void MoovacScheduler::setModuloAndResourceConstraints()
             if(k!=j)
             {
               pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-              //ScaLP::Variable vj =  this->r_vector[this->r_vectorIndices[vPair.first]];
-              //ScaLP::Variable vk =  this->r_vector[this->r_vectorIndices[vPair.second]];
               //7
               this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                   - (ak*eps_matrix[j][k]) + ak >= 1);

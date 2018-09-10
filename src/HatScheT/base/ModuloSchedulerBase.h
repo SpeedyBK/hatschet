@@ -56,11 +56,11 @@ protected:
   /*!
    * \brief minII lower bound for II
    */
-  unsigned int minII;
+  int minII=-1;
   /*!
    * \brief maxII upper bound for II
    */
-  unsigned int maxII;
+  int maxII=-1;
 
 
 };
