@@ -118,8 +118,7 @@ int Utility::calcMinII(ResourceModel *rm, Graph *g)
 {
   int resMII = Utility::calcResMII(rm,g);
   int recMII = Utility::calcRecMII(rm,g);
-cout << "resMII " << resMII << endl;
-  cout << "recMII " << recMII << endl;
+
   if(resMII>recMII) return resMII;
 
   return recMII;
