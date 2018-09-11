@@ -213,7 +213,7 @@ void RationalIIScheduler::schedule()
   cout << "Solution ScaLP status: " << stat << endl;
   if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
     r = this->solver->getResult();
-    //this->printScheduleToConsole();
+    this->printScheduleToConsole();
     this->scheduleFound = true;
     this->fillSolutionStructure();
   }
@@ -255,7 +255,7 @@ void RationalIIScheduler::fillSolutionStructure() {
   for(int i = 0; i < this->II_vector.size()-1; i++){
     ScaLP::Variable svTemp1 = this->II_vector[i];
     ScaLP::Variable svTemp2 = this->II_vector[i+1];
-    int IITimeDiff = this->r.values[svTemp1] - this->r.values[svTemp2];
+    int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
     this->IIs.push_back(IITimeDiff);
   }
 }

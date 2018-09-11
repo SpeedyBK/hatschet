@@ -105,8 +105,8 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
     cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!"  << endl;
     return false;
   }
-  if(schedule.size()!=IIs.size()){
-    cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of different size provided!"  << endl;
+  if(schedule.size()!=IIs.size()+1){
+    cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"  << endl;
     return false;
   }
   for(int i=0; i < IIs.size();i++){
@@ -129,7 +129,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
 
       //determine II based on the edges distance, if distance==0 omit II for this check
       if(e->getDistance() > 0){
-
+        continue;
       }
 
       ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
