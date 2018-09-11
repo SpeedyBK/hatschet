@@ -102,7 +102,7 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-        src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h)
+)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -116,6 +116,7 @@ src/HatScheT/scheduler/ALAPScheduler.h
 src/HatScheT/scheduler/ASAPScheduler.h
 src/HatScheT/scheduler/graphBased/graphBasedMs.h
 src/HatScheT/scheduler/graphBased/SGMScheduler.h
+src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
@@ -142,6 +143,7 @@ IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
 src/HatScheT/base/ILPSchedulerBase.cpp
 src/HatScheT/base/ModuloSchedulerBase.cpp
+src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
