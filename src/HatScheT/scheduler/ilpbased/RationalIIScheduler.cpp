@@ -247,7 +247,6 @@ void RationalIIScheduler::fillSolutionStructure() {
       int startTime = this->r.values[svTemp];
       tempMap.insert(make_pair(v, startTime));
     }
-
     this->startTimeVector.push_back(tempMap);
   }
 
@@ -260,6 +259,19 @@ void RationalIIScheduler::fillSolutionStructure() {
 
     if(i==II_vector.size()-1) this->IIs.push_back(this->consideredModuloCycle - this->r.values[svTemp2]);
   }
+}
+
+int RationalIIScheduler::getScheduleLength() {
+  int maxTime=-1;
+  for(int i = 0; i < this->t_matrix.size(); i++) {
+    for (std::pair<Vertex *, int> vtPair : this->startTimeVector[i]) {
+      Vertex *v = vtPair.first;
+
+      if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
+        maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
+    }
+  }
+  return maxTime;
 }
 
 void RationalIIScheduler::setResourceConstraints() {

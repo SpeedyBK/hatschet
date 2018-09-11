@@ -58,7 +58,7 @@ public:
    * \brief Returns the length of the schedule (i.e., the maximum start time)
    * \return The length of the schedule (i.e., the maximum start time)
    */
-  int getScheduleLength();
+  virtual int getScheduleLength();
   /*!
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l

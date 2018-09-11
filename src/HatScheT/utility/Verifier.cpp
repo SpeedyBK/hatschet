@@ -95,7 +95,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
 
 bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> IIs) {
+                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> IIs, int scheduleLength) {
 
   if(IIs.size()==0){
     cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!"  << endl;
@@ -109,7 +109,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
     cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"  << endl;
     return false;
   }
-  cout << "Start verify < ";
+  cout << "Start verify rational II schedule: < ";
   for(int i=0; i < IIs.size();i++){
     cout << IIs[i] << " ";
     if(IIs[i]<=0){
@@ -130,7 +130,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
       auto i = &e->getVertexSrc();
       auto j = &e->getVertexDst();
 
-      //TODO: determine II based on the edges distance and rational II insertions, if distance==0 omit II for this check
+      //determine II based on the edges distance and rational II insertions, if distance==0 omit II for this check
       if(e->getDistance() > 0){
         int stepsBack = e->getDistance();
         int currIIPosition = iloop;
@@ -155,6 +155,36 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
   }
 
   /* 2) TODO modulo resource constraints are obeyed */
+
+  for(auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it){
+    Resource* r = *it;
+    //unlimited
+    if(r->getLimit()==-1) continue;
+
+    //iterate over every timestep
+    for(int timeStep=0; timeStep <= scheduleLength; timeStep++ ){
+      int instancesUsed = 0;
+      //iterate over schedules
+      for(int iloop=0; iloop < schedule.size(); iloop++) {
+        auto &S = schedule[iloop]; // alias
+
+        //iterate over vertices
+        for(auto it2 = g.verticesBegin(); it2 != g.verticesEnd(); ++it2){
+          Vertex* v = *it2;
+          //vertex of other resource
+          if(rm.getResource(v)!=r) continue;
+          //other timestep assigned
+          if(S[v] != timeStep) continue;
+          else instancesUsed++;
+        }
+      }
+
+      if(instancesUsed > r->getLimit()){
+        cout << "Resource Constraint violated for " << r->getName() << " in timestep " << timeStep << ": used " << instancesUsed << " of " << r->getLimit() << endl;
+        return false;
+      }
+    }
+  }
 
   /* 3) TODO: cycle-time constraints are obeyed */
 

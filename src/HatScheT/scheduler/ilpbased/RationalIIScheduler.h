@@ -36,9 +36,11 @@ class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, publi
 public:
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   virtual void schedule();
+  virtual int getScheduleLength();
   void setModuloCycles(int m) {this->consideredModuloCycle=m;}
   void setModuloClasses(int m ){this->moduloClasses=m;}
   void printScheduleToConsole();
+
 
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
   vector<int>& getIIs(){return this->IIs;}
