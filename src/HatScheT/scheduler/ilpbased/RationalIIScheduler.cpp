@@ -215,11 +215,11 @@ void RationalIIScheduler::schedule()
     r = this->solver->getResult();
     //this->printScheduleToConsole();
     this->scheduleFound = true;
+    this->fillSolutionStructure();
   }
 }
 
-void RationalIIScheduler::setModuloConstraints()
-{
+void RationalIIScheduler::setModuloConstraints() {
   if(this->uniformSchedule==true) {
     //edges in different IIs have the same "length in time" respectively
     for (unsigned int i = 0; i < t_matrix.size() - 1; i++) {
@@ -230,8 +230,37 @@ void RationalIIScheduler::setModuloConstraints()
   }
 }
 
-void RationalIIScheduler::setResourceConstraints()
-{
+void RationalIIScheduler::fillSolutionStructure() {
+  //reset possible old values
+  this->startTimeVector.resize(0);
+  this->IIs.resize(0);
+
+  //store start times of the scheduled samples
+  for(int i = 0; i < this->t_matrix.size(); i++) {
+    std::map<Vertex*,int> tempMap;
+
+    for (std::set<Vertex *>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
+      Vertex* v = *it;
+      unsigned int index =this->tIndices.at(v);
+      ScaLP::Variable svTemp = this->t_matrix[i][index];
+
+      int startTime = this->r.values[svTemp];
+      tempMap.insert(make_pair(v, startTime));
+    }
+
+    this->startTimeVector.push_back(tempMap);
+  }
+
+  //store differences (in clock cycles) between the scheduled samples
+  for(int i = 0; i < this->II_vector.size()-1; i++){
+    ScaLP::Variable svTemp1 = this->II_vector[i];
+    ScaLP::Variable svTemp2 = this->II_vector[i+1];
+    int IITimeDiff = this->r.values[svTemp1] - this->r.values[svTemp2];
+    this->IIs.push_back(IITimeDiff);
+  }
+}
+
+void RationalIIScheduler::setResourceConstraints() {
   for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
     set<const Vertex*> vSet = this->resourceModel.getVerticesOfResource(r);

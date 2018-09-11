@@ -97,9 +97,53 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
                                               vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> IIs) {
 
+  if(IIs.size()==0){
+    cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!"  << endl;
+    return false;
+  }
+  if(schedule.size()==0){
+    cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!"  << endl;
+    return false;
+  }
+  if(schedule.size()!=IIs.size()){
+    cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of different size provided!"  << endl;
+    return false;
+  }
+  for(int i=0; i < IIs.size();i++){
+    if(IIs[i]<=0){
+      cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong II provided: " << IIs[i] << endl;
+      return false;
+    }
+  }
+
   /* 1) precedence edges are obeyed */
+  for(int i=0; i < schedule.size(); i++){
+    auto &S = schedule[i]; // alias
+    bool ok;
+
+    for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
+      int II = 0;
+      auto e = *it;
+      auto i = &e->getVertexSrc();
+      auto j = &e->getVertexDst();
+
+      //determine II based on the edges distance, if distance==0 omit II for this check
+      if(e->getDistance() > 0){
+
+      }
+
+      ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
+      if (! ok) {
+        cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+        cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+        return false;
+      }
+    }
+  }
 
   /* 2) modulo resource constraints are obeyed */
 
   /* 3) TODO: cycle-time constraints are obeyed */
+
+  return true;
 }

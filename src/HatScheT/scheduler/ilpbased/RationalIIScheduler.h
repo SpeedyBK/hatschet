@@ -40,6 +40,9 @@ public:
   void setModuloClasses(int m ){this->moduloClasses=m;}
   void printScheduleToConsole();
 
+  vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
+  vector<int>& getIIs(){return this->IIs;}
+
   void setUniformSchedule(bool b){this->uniformSchedule=b;}
   bool getUnifromSchedule(){return this->uniformSchedule;}
 private:
@@ -53,6 +56,7 @@ private:
   void setModuloConstraints();
   void fillTMaxtrix();
   void fillIIVector();
+  void fillSolutionStructure();
   //--------
   unsigned int moduloClasses;
   unsigned int consideredTimeSteps;
@@ -61,6 +65,9 @@ private:
   ScaLP::Result r;
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
+  vector<int > IIs;
   map<const Vertex*,int> tIndices;
+
+  vector<std::map<Vertex*,int> > startTimeVector;
 };
 }
