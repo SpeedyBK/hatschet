@@ -65,4 +65,6 @@ bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Ver
  */
 bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
 
+bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int> > &schedule, vector<int> IIs);
+
 }

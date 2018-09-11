@@ -27,9 +27,6 @@
 using namespace HatScheT;
 using namespace std;
 
-using VertexIter = set<Vertex *>::const_iterator;
-using EdgeIter   = set<Edge *>::const_iterator;
-
 bool HatScheT::verifyResourceConstrainedSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
                                                  map<HatScheT::Vertex *, int> &schedule, int SL)
 {
@@ -51,7 +48,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
   bool ok;
 
   /* 1) precedence edges are obeyed */
-  for (EdgeIter it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
+  for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
     auto e = *it;
     auto i = &e->getVertexSrc();
     auto j = &e->getVertexDst();
@@ -66,7 +63,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
   /* 2) modulo resource constraints are obeyed */
   vector<map<const Resource *, vector<Vertex *>>> congruenceClassesByRes(II);
-  for (VertexIter it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
+  for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
     auto v = *it;
     congruenceClassesByRes[ /* modulo slot: */ S[v] % II         ]
                           [ /* resource:    */ rm.getResource(v) ]
@@ -94,4 +91,15 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
   /* 3) TODO: cycle-time constraints are obeyed */
 
   return true;
+}
+
+
+bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
+                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> IIs) {
+
+  /* 1) precedence edges are obeyed */
+
+  /* 2) modulo resource constraints are obeyed */
+
+  /* 3) TODO: cycle-time constraints are obeyed */
 }
