@@ -105,20 +105,23 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
     cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!"  << endl;
     return false;
   }
-  if(schedule.size()!=IIs.size()+1){
+  if(schedule.size()!=IIs.size()){
     cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"  << endl;
     return false;
   }
+  cout << "Start verify < ";
   for(int i=0; i < IIs.size();i++){
+    cout << IIs[i] << " ";
     if(IIs[i]<=0){
       cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong II provided: " << IIs[i] << endl;
       return false;
     }
   }
+  cout << "> schedule" << endl;
 
   /* 1) precedence edges are obeyed */
-  for(int i=0; i < schedule.size(); i++){
-    auto &S = schedule[i]; // alias
+  for(int iloop=0; iloop < schedule.size(); iloop++){
+    auto &S = schedule[iloop]; // alias
     bool ok;
 
     for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
@@ -127,9 +130,19 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
       auto i = &e->getVertexSrc();
       auto j = &e->getVertexDst();
 
-      //determine II based on the edges distance, if distance==0 omit II for this check
+      //TODO: determine II based on the edges distance and rational II insertions, if distance==0 omit II for this check
       if(e->getDistance() > 0){
-        continue;
+        int stepsBack = e->getDistance();
+        int currIIPosition = iloop;
+
+        while(stepsBack!=0){
+          if(currIIPosition == 0) II += IIs.back();
+          else if(currIIPosition > 0) II += IIs[iloop-1];
+
+          stepsBack--;
+        }
+
+        cout << "Distance: " << e->getDistance() << " results in effective II of " << II << " cycles" << endl;
       }
 
       ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
@@ -141,7 +154,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
     }
   }
 
-  /* 2) modulo resource constraints are obeyed */
+  /* 2) TODO modulo resource constraints are obeyed */
 
   /* 3) TODO: cycle-time constraints are obeyed */
 

@@ -252,11 +252,13 @@ void RationalIIScheduler::fillSolutionStructure() {
   }
 
   //store differences (in clock cycles) between the scheduled samples
-  for(int i = 0; i < this->II_vector.size()-1; i++){
-    ScaLP::Variable svTemp1 = this->II_vector[i];
-    ScaLP::Variable svTemp2 = this->II_vector[i+1];
+  for(int i = 1; i < this->II_vector.size(); i++){
+    ScaLP::Variable svTemp1 = this->II_vector[i - 1];
+    ScaLP::Variable svTemp2 = this->II_vector[i];
     int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
     this->IIs.push_back(IITimeDiff);
+
+    if(i==II_vector.size()-1) this->IIs.push_back(this->consideredModuloCycle - this->r.values[svTemp2]);
   }
 }
 
