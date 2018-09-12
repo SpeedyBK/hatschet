@@ -431,7 +431,7 @@ int main(int argc, char *args[])
       std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
       std::cout << "------------------------------------------------------------------------------------" << endl;
       std::cout << "latency = " << scheduler->getScheduleLength() << endl;
-      scheduler->printStartTimes();
+      HatScheT::Utility::printSchedule(scheduler->getSchedule());
 
       if(htmlFile != "")
       {

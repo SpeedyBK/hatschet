@@ -21,6 +21,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/utility/Verifier.h>
+#include <HatScheT/utility/Utility.h>
 
 #include <iostream>
 #include <fstream>
@@ -54,7 +55,8 @@ int SchedulerBase::getScheduleLength()
 std::map<Vertex*,int>&  SchedulerBase::getSchedule()
 {
   if(verifyModuloSchedule(this->g,this->resourceModel,this->startTimes,this->II)==false){
-    this->printStartTimes();
+
+    HatScheT::Utility::printSchedule(this->startTimes);
     cout << "SchedulerBase.getStartTimes: Invalid schedule detected by SchedulerClass" << endl;
     exit(-1);
   }
@@ -71,14 +73,14 @@ int SchedulerBase::getStartTime(Vertex &v)
     return -1;
 }
 
-void SchedulerBase::printStartTimes()
+/*void SchedulerBase::printStartTimes()
 {
   for(auto it:this->startTimes)
   {
     Vertex* v = it.first;
     cout << v->getName() << " (" << resourceModel.getResource(v)->getName() << ") at " << it.second << endl;
   }
-}
+}*/
 
 void SchedulerBase::writeScheduleChart(string filename)
 {

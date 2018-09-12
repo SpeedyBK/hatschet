@@ -79,7 +79,7 @@ public:
   /*!
    * \brief printStartTimes
    */
-  void printStartTimes();
+  //void printStartTimes();
   /*!
    * \brief Generates an HTML file which contains the schedule chart
 	 * \param filename is the file name where to store the chart

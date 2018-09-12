@@ -96,7 +96,7 @@ bool Tests::asapHCTest()
   cout << "Tests::asapHCTest: Test Failed! Schedule is: " << endl;
   cout << g << endl;
   cout << rm << endl;
-  asap.printStartTimes();
+  HatScheT::Utility::printSchedule(asap.getSchedule());
   cout << "Tests::asapHCTest: asap HC failed verification!" << endl;
 
   return false;
@@ -123,7 +123,7 @@ bool Tests::alapHCTest()
   cout << "Tests::alapHCTest: Test Failed! Schedule is: " << endl;
   cout << g << endl;
   cout << rm << endl;
-  alap.printStartTimes();
+  HatScheT::Utility::printSchedule(alap.getSchedule());
   cout << "Tests::alapHCTest: alap HC failed verification!" << endl;
   return false;
 }
@@ -397,7 +397,7 @@ bool Tests::ulSchedulerTest()
   HatScheT::ULScheduler uls(g,rm);
   uls.schedule();
 
-  uls.printStartTimes();
+  HatScheT::Utility::printSchedule(uls.getSchedule());
   std::map<Vertex *, int> &schedule = uls.getSchedule();
   int foundII = uls.getII();
   bool verified = HatScheT::verifyModuloSchedule(g, rm, schedule, foundII);

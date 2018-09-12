@@ -40,11 +40,6 @@
 
 namespace HatScheT {
 
-bool Utility::examplUtilityFunction(ResourceModel *rm, Graph *g)
-{
-  return true;
-}
-
 int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
 {
   int count = 0;
