@@ -22,7 +22,7 @@
 
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
-
+#include <vector>
 #include <map>
 
 /*!
@@ -64,7 +64,20 @@ bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Ver
  * @return true iff the schedule is valid
  */
 bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
-
+/*!
+ * Verifies the given rational II modolo schedule
+ *
+ * Verifies all precedence (induced by the graph) calculating the effective II of every sample and start time
+ * The resource constraints of all samples (with the possibility of a non uniform schedule for each sample)
+ * are verified.
+ *
+ * @param g the problem instance's dependence graph
+ * @param rm the problem instance's resource model
+ * @param schedule the determined schedule for each sample
+ * @param IIs the determined initiation intervals as vector of differences of II
+ * @param scheduleLength the max Latency of the determined rational II modulo schedule
+ * @return true iff the schedule is valid
+ */
 bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int> > &schedule, vector<int> IIs, int scheduleLength);
 
 }
