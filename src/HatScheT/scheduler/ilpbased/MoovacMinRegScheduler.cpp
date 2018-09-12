@@ -29,8 +29,7 @@ MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceMo
     : MoovacScheduler(g, resourceModel, solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
-  HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
+  this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
 }
 

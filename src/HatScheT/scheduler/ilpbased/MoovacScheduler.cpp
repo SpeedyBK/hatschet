@@ -28,8 +28,7 @@ namespace HatScheT
 MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->minII = this->computeMinII(&g,&resourceModel);
-  HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
+  this->maxII = Utility::calcMaxII(&g, &resourceModel);
   if (minII >= maxII) maxII = minII+1;
   this->SLMax = 0;
 }

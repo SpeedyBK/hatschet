@@ -114,17 +114,17 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 }
 
 #ifdef USE_SCALP
-int Utility::calcMinII(ResourceModel *rm, Graph *g)
+int Utility::calcMinII(Graph *g, ResourceModel *rm)
 {
-  int resMII = Utility::calcResMII(rm,g);
-  int recMII = Utility::calcRecMII(rm,g);
+  int resMII = Utility::calcResMII(g, rm);
+  int recMII = Utility::calcRecMII(g, rm);
 
   if(resMII>recMII) return resMII;
 
   return recMII;
 }
 
-int Utility::calcResMII(ResourceModel *rm, Graph *g)
+int Utility::calcResMII(Graph *g, ResourceModel *rm)
 {
   int resMII = 1;
 
@@ -144,14 +144,25 @@ int Utility::calcResMII(ResourceModel *rm, Graph *g)
   return resMII;
 }
 
-int Utility::calcMaxII(SchedulerBase *sb)
+int Utility::calcMaxII(Graph *g, ResourceModel *rm)
 {
-  sb->schedule();;
-  return sb->getScheduleLength();
+  //determine minimum possible latency
+  HatScheT::ASAPScheduler asap(*g,*rm);
+  asap.schedule();
+  int criticalPath = asap.getScheduleLength();
+
+  //get optimal critical path using asap ilp scheduler
+  HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+  asapilp->setMaxLatencyConstraint(criticalPath);
+  asapilp->schedule();
+  criticalPath = asapilp->getScheduleLength();
+
+  delete asapilp;
+
+  return criticalPath;
 }
 
-
-int Utility::calcRecMII(ResourceModel *rm, Graph *g)
+int Utility::calcRecMII(Graph *g, ResourceModel *rm)
 {
   ScaLP::Solver solver({"CPLEX", "Gurobi"});
 

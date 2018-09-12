@@ -108,7 +108,7 @@ void GraphBasedMs::schedule()
     int durationMoovac = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 
     // calculate minII from Graph
-    int minII = Utility::calcRecMII(&resourceModel,&g);
+    int minII = Utility::calcRecMII(&g, &resourceModel);
 //    cout << "calcRecMinII: " << minII << endl;
 
     // Get schedule length

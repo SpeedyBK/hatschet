@@ -164,8 +164,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
 {
   this->verbose = false;
   this->minII = this->computeMinII(&g,&resourceModel);
-  HatScheT::ASAPScheduler asap(g,resourceModel);
-  this->maxII = Utility::calcMaxII(&asap);
+  this->maxII = Utility::calcMaxII(&g, &resourceModel);
   if (minII >= maxII) maxII = minII+1;
 }
 

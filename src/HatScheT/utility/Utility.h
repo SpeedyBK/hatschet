@@ -24,6 +24,8 @@
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ilpbased/ASAPILPScheduler.h"
 
 namespace HatScheT
 {
@@ -83,27 +85,28 @@ public:
   * \param g
   * \return
   */
- static int calcMinII(ResourceModel* rm, Graph *g);
+ static int calcMinII(Graph *g, ResourceModel* rm);
  /*!
   * \brief calcResMII
   * \param rm
   * \param g
   * \return
   */
- static int calcResMII(ResourceModel* rm, Graph *g);
+ static int calcResMII(Graph *g, ResourceModel* rm);
  /*!
   * \brief calcRecMII maximum distance of all edges
   * \param rm
   * \param g
   * \return
   */
- static int calcRecMII(ResourceModel *rm, Graph *g);
+ static int calcRecMII(Graph *g, ResourceModel *rm);
  /*!
   * \brief calcMaxII
-  * \param sb
+  * \param rm
+  * \param g
   * \return
   */
- static int calcMaxII(SchedulerBase* sb);
+ static int calcMaxII(Graph *g, ResourceModel *rm);
 #endif
  /*!
   * \brief sumOfStarttimes
