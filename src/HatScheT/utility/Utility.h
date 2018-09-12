@@ -24,8 +24,6 @@
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
-#include "HatScheT/scheduler/ASAPScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ASAPILPScheduler.h"
 
 namespace HatScheT
 {

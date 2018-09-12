@@ -31,8 +31,11 @@
 #include <cstddef>
 #include <iomanip>
 
+#include "HatScheT/scheduler/ASAPScheduler.h"
+
 #ifdef USE_SCALP
 #include "HatScheT/base/ILPSchedulerBase.h"
+#include "HatScheT/scheduler/ilpbased/ASAPILPScheduler.h"
 #endif
 
 namespace HatScheT {

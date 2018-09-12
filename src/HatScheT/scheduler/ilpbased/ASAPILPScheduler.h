@@ -18,7 +18,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
+#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
+#include <vector>
 
 namespace HatScheT
 {
