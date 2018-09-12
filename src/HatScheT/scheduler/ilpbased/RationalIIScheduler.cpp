@@ -206,16 +206,17 @@ void RationalIIScheduler::schedule()
   this->constructProblem();
   this->setObjective();
 
-  cout << "Start Rational II scheduler: " << this->moduloClasses << " / " << this->consideredModuloCycle << endl;
-  if(this->consideredModuloCycle==6 && this->moduloClasses==3) this->solver->writeLP("3_6.lp");
-
   stat = this->solver->solve();
-  cout << "Solution ScaLP status: " << stat << endl;
+
   if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
     r = this->solver->getResult();
     this->printScheduleToConsole();
     this->scheduleFound = true;
     this->fillSolutionStructure();
+  }
+
+  else{
+    this->scheduleFound = false;
   }
 }
 

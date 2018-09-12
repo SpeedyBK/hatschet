@@ -45,8 +45,8 @@ public:
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
   vector<int>& getIIs(){return this->IIs;}
 
-  void setUniformSchedule(bool b){this->uniformSchedule=b;}
-  bool getUnifromSchedule(){return this->uniformSchedule;}
+  void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
+  bool getUniformScheduleFlag(){return this->uniformSchedule;}
 private:
   bool uniformSchedule;
   double throughput;
