@@ -65,4 +65,21 @@ bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Ver
  */
 bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
 
+/*!
+ * \brief Verifies the given modulo schedule
+ *
+ * Verifies whether all precedence (induced by the graph) and resource
+ * constraints (induced by the resource model and the II) are obeyed
+ * in the given modulo schedule. This function accepts a Rational II and timings.
+ *
+ * TODO: also check cycle-time constraints (-> chaining)
+ *
+ * @param g the problem instance's dependence graph
+ * @param rm the problem instance's resource model
+ * @param schedule schedule the computed schedule
+ * @param II the determined initiation interval
+ * @return true iff the schedule is valid
+ */
+bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *, double> &schedule, double II);
+
 }
