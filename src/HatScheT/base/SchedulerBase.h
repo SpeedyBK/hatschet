@@ -89,7 +89,7 @@ public:
    * \brief getII getter for the II. The II has to be set by each scheduler when schedule is done (also non modulo schedulers!)
    * \return initiation interval (II)
    */
-  virtual int getII() { return this->II;}
+  virtual double getII() { return this->II;}
   /*!
    *
    * @return the used graph description of the scheduling problem
@@ -120,6 +120,6 @@ protected:
   /*!
    * \brief II the initiation interval of a schedule
    */
-  unsigned int II = 1;
+  double II = 1.0f;
 };
 }
