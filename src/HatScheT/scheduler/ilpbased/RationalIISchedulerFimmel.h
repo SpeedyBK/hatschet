@@ -30,7 +30,7 @@ public:
      * To Be Updated: II has to be rational or a vector for this scheduler to work
      * @return
      */
-    virtual int getII() { return this->II;}
+    virtual double getII() { return this->II;}
     /*!
      *
      */
