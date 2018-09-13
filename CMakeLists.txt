@@ -89,6 +89,9 @@ src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/base/RationalIISchedulerBase.cpp
 src/HatScheT/ResourceModel.cpp
+src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
+src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/GraphMLResourceReader.cpp
@@ -121,6 +124,7 @@ src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
+        src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h

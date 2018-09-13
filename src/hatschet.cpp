@@ -25,6 +25,12 @@
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/writer/DotWriter.h>
+#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
+#include "HatScheT/utility/Tests.h"
+#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
@@ -79,6 +85,7 @@ void print_short_help()
   std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
+  std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constrain file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
@@ -109,7 +116,7 @@ int main(int argc, char *args[])
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -216,6 +223,10 @@ int main(int argc, char *args[])
         {
           schedulerSelection = RATIONALII;
         }
+        else if(schedulerSelectionStr == "rationaliifimmel")
+        {
+            schedulerSelection = RATIONALIIFIMMEL;
+        }
         else if(schedulerSelectionStr == "asapRationalII")
         {
           schedulerSelection = ASAPRATIONALII;
@@ -292,6 +303,9 @@ int main(int argc, char *args[])
       case RATIONALII:
         cout << "RATIONALII";
         break;
+        case RATIONALIIFIMMEL:
+            cout << "RATIONALIIFIMMEL";
+            break;
       case ASAPRATIONALII:
         cout << "ASAPRATIONALII";
         break;
@@ -327,12 +341,30 @@ int main(int argc, char *args[])
       dw.setDisplayNames(true);
       dw.write();
     }
+//<<<<<<< HEAD
+//    else if(getCmdParameter(args[i],"--fimmel=",value))
+//    {
+//        if(rm.isEmpty() == false && g.isEmpty() == false)
+//        {
+//            cout << "Starting Fimmel scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads << endl;
+//            std::list<std::string> wish = {"CPLEX"};
+//            HatScheT::RationalIISchedulerFimmel fs(g, rm, wish);
+//            if(timeout>0) fs.setSolverTimeout(timeout);
+//            fs.setThreads(threads);
+//            fs.setSolverQuiet(true);
+//            fs.schedule();
+//        }
+//        else cout << "fimmel scheduling failed: graph or resource model empty!" << endl;
+//    }
+//    else if(getCmdParameter(args[i],"--modulosdc=",value))
+//=======
 
     HatScheT::SchedulerBase *scheduler;
 
     bool isModuloScheduler=false;
     std::list<std::string> solverWishList;
     if(ilpSolver.empty())
+//>>>>>>> f1308435a5ddf4c4ed8ac7f428c0b7fe5104f628
     {
       solverWishList = {"Gurobi","CPLEX","SCIP","LPSolve"};
     }
@@ -388,6 +420,15 @@ int main(int argc, char *args[])
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
+          case RATIONALIIFIMMEL:
+              scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
+              if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
+              if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+             // ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloClasses(moduloClasses);
+              //((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloCycles(moduloCycles);
+              ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);
+              ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
+              break;
         case ASAPRATIONALII:
         {
           HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
@@ -400,6 +441,7 @@ int main(int argc, char *args[])
         case MOOVACMINREG:
         case MODULOSDC:
         case RATIONALII:
+            case RATIONALIIFIMMEL
         case ASAPRATIONALII:
           throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
           break;

@@ -1,0 +1,9 @@
+src/HatScheT
+src/HatScheT/base
+src/HatScheT/scheduler
+src/HatScheT/scheduler/graphBased
+src/HatScheT/scheduler/ilpbased
+src/HatScheT/utility
+src/HatScheT/utility/reader
+src/HatScheT/utility/subgraphs
+src/HatScheT/utility/writer

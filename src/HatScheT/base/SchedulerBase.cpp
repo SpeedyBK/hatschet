@@ -33,6 +33,7 @@ namespace HatScheT
 
 SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceModel(resourceModel), g(g)
 {
+
 }
 
 SchedulerBase::~SchedulerBase()
