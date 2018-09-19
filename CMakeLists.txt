@@ -87,7 +87,7 @@ src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
-src/HatScheT/base/RationalIISchedulerBase.cpp
+src/HatScheT/layers/RationalIISchedulerLayer.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
@@ -110,8 +110,8 @@ src/HatScheT/utility/Verifier.cpp
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
-src/HatScheT/base/RationalIISchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
+src/HatScheT/layers/RationalIISchedulerLayer.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
 src/HatScheT/ResourceModel.h
@@ -124,7 +124,7 @@ src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
-        src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
+src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
@@ -140,8 +140,6 @@ src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/Writer.h
 src/HatScheT/Vertex.h
 )
-
-
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES

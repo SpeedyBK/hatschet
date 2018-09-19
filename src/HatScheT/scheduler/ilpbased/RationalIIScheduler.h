@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <vector>
 
 namespace HatScheT
@@ -31,25 +32,22 @@ namespace HatScheT
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
  * THIS CLASSES IS UNDER DEVELOPMENT
  */
-class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer
 {
 public:
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   virtual void schedule();
   virtual int getScheduleLength();
-  void setModuloCycles(int m) {this->consideredModuloCycle=m;}
-  void setModuloClasses(int m ){this->moduloClasses=m;}
+  void setModulo(int m) {this->modulo=m;}
+  void setSamples(int s){this->samples=s;}
   void printScheduleToConsole();
 
-
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
-  vector<int>& getIIs(){return this->IIs;}
 
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
+  
 private:
-  bool uniformSchedule;
-  double throughput;
   virtual void constructProblem();
   virtual void setObjective();
   //--------
@@ -60,16 +58,11 @@ private:
   void fillIIVector();
   void fillSolutionStructure();
   //--------
-  unsigned int moduloClasses;
+  bool uniformSchedule;
   unsigned int consideredTimeSteps;
-  unsigned int consideredModuloCycle;
-  vector<int> foundIIs;
-  ScaLP::Result r;
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
-  vector<int > IIs;
   map<const Vertex*,int> tIndices;
-
   vector<std::map<Vertex*,int> > startTimeVector;
 };
 }

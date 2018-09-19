@@ -18,16 +18,16 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <HatScheT/base/RationalIISchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/Utility.h>
 
 namespace HatScheT
 {
 
-RationalIISchedulerBase::RationalIISchedulerBase()
+RationalIISchedulerLayer::RationalIISchedulerLayer()
 {
   this->modulo = -1;
-  this->rationalII = 0.0;
+  this->samples = -1;
 }
 	
 }

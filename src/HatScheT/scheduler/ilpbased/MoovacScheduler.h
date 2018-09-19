@@ -144,10 +144,6 @@ protected:
    */
   map<const Edge*, unsigned int> registerIndices;
   /*!
-   * \brief r
-   */
-  ScaLP::Result r;
-  /*!
    * \brief ti contains the time variables of all operations in O
    */
   vector<ScaLP::Variable> ti;

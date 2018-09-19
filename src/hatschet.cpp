@@ -111,8 +111,8 @@ int main(int argc, char *args[])
 
   //variables for Rational II scheduling
   //experimental
-  int moduloClasses=2; //default
-  int moduloCycles=2; //defaul
+  int samples=2; //default
+  int modulo=2; //defaul
 
   bool solverQuiet=true;
 
@@ -172,13 +172,13 @@ int main(int argc, char *args[])
       {
         dotFile = value;
       }
-      else if(getCmdParameter(args[i],"--moduloclasses=",value))
+      else if(getCmdParameter(args[i],"--samples=",value))
       {
-        moduloClasses = atol(value);
+        samples = atol(value);
       }
-      else if(getCmdParameter(args[i],"--modulocycles=",value))
+      else if(getCmdParameter(args[i],"--modulo=",value))
       {
-        moduloCycles = atol(value);
+        modulo = atol(value);
       }
       else if(getCmdParameter(args[i],"--maxlatency=",value))
       {
@@ -341,23 +341,6 @@ int main(int argc, char *args[])
       dw.setDisplayNames(true);
       dw.write();
     }
-//<<<<<<< HEAD
-//    else if(getCmdParameter(args[i],"--fimmel=",value))
-//    {
-//        if(rm.isEmpty() == false && g.isEmpty() == false)
-//        {
-//            cout << "Starting Fimmel scheduling with timeout: " << timeout << "(sec)" << " using threads " << threads << endl;
-//            std::list<std::string> wish = {"CPLEX"};
-//            HatScheT::RationalIISchedulerFimmel fs(g, rm, wish);
-//            if(timeout>0) fs.setSolverTimeout(timeout);
-//            fs.setThreads(threads);
-//            fs.setSolverQuiet(true);
-//            fs.schedule();
-//        }
-//        else cout << "fimmel scheduling failed: graph or resource model empty!" << endl;
-//    }
-//    else if(getCmdParameter(args[i],"--modulosdc=",value))
-//=======
 
     HatScheT::SchedulerBase *scheduler;
 
@@ -415,8 +398,8 @@ int main(int argc, char *args[])
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setModuloClasses(moduloClasses);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setModuloCycles(moduloCycles);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;

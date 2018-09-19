@@ -20,21 +20,17 @@
 #pragma once
 
 #include <vector>
+#include "HatScheT/base/ModuloSchedulerBase.h"
 
 namespace HatScheT
 {
 /*!
- * \brief The RationalIISchedulerBase class providing information that is needed implement rational II modulo schedules
+ * \brief The RationalIISchedulerLayer class providing information that is needed implement rational II modulo schedules
  */
-class RationalIISchedulerBase
+class RationalIISchedulerLayer : public ModuloSchedulerBase
 {
 public:
-  RationalIISchedulerBase();
-  /*!
-   * \brief getRationalII the rationalII is number of inserted samples over the used modulo class
-   * \return
-   */
-  float getRationalII(){return this->rationalII;}
+  RationalIISchedulerLayer();
   /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
@@ -45,11 +41,12 @@ public:
    * \return
    */
   int getModulo(){return this->modulo;}
-protected:
   /*!
-   * \brief rationalII
+   * \brief getSamples get the number of samples that can inserted every 'this->modulo' clock cycles
+   * @return
    */
-  float rationalII;
+  int getSamples(){return this->samples;}
+protected:
   /*!
    * \brief initInvervals
    */
@@ -58,6 +55,11 @@ protected:
    * \brief modulo
    */
   int modulo;
+  /*!
+   * \brief samples
+   */
+  int samples;
+
 
 };
 
