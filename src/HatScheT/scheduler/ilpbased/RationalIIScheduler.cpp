@@ -29,8 +29,6 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->consideredTimeSteps = 0;
-  this->moduloClasses = 0;
-  this->consideredModuloCycle = 0;
   this->uniformSchedule = false;
 }
 
@@ -38,9 +36,9 @@ void RationalIIScheduler::fillIIVector()
 {
   this->II_vector.clear();
 
-  for(unsigned int i = 0; i < this->moduloClasses; i++) {
+  for(unsigned int i = 0; i < this->samples; i++) {
     if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),0,0));
-    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),i,this->consideredModuloCycle-1));
+    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),i,this->modulo-1));
   }
 }
 
@@ -78,10 +76,10 @@ void RationalIIScheduler::setGeneralConstraints()
     unsigned int dstTVecIndex = this->tIndices[dst];
 
 
-    for(unsigned int j = 0; j < this->moduloClasses; j++) {
+    for(unsigned int j = 0; j < this->samples; j++) {
       if(j==0) {
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
-                                    e->getDistance() * (this->consideredModuloCycle - II_vector.back())
+                                    e->getDistance() * (this->modulo - II_vector.back())
                                     + e->getDelay() <= 0);
       }
       else {
@@ -116,13 +114,13 @@ void RationalIIScheduler::setGeneralConstraints()
 
 void RationalIIScheduler::printScheduleToConsole()
 {
-  cout << "----" << "modClasses: " << this->moduloClasses << " modCycle: "
-       << this->consideredModuloCycle << " maxLat: " << this->maxLatencyConstraint <<  " timeSteps: " << this->consideredTimeSteps << endl;
+  cout << "----" << "Samples: " << this->samples << " mod: "
+       << this->modulo << " maxLat: " << this->maxLatencyConstraint <<  " timeSteps: " << this->consideredTimeSteps << endl;
 
   cout << "----" << "Found IIs: ";
   for(unsigned int i = 0; i < II_vector.size(); i++)
   {
-    this->foundIIs.push_back((unsigned int)(lround(r.values[II_vector[i]])));
+    this->initInvervals.push_back((unsigned int)(lround(r.values[II_vector[i]])));
     cout << (unsigned int)(lround(r.values[II_vector[i]])) << "(" << II_vector[i] << ")  ";
   }
   cout << endl;
@@ -135,7 +133,7 @@ void RationalIIScheduler::printScheduleToConsole()
     latVector.push_back(lat);
     cout << lat << "  ";
   }
-  lat = this->consideredModuloCycle - (unsigned int)(lround(r.values[II_vector[II_vector.size()-1]]));
+  lat = this->modulo - (unsigned int)(lround(r.values[II_vector[II_vector.size()-1]]));
   latVector.push_back(lat);
   cout << lat << "  ";
 
@@ -148,7 +146,7 @@ void RationalIIScheduler::printScheduleToConsole()
   }
 
   std::setprecision(6);
-  cout << "----" << "Throughput: " << ((double)II_vector.size())/((double)this->consideredModuloCycle) << endl;
+  cout << "----" << "Throughput: " << ((double)II_vector.size())/((double)this->modulo) << endl;
 
   cout << "Printing absolut start times" << endl;
 
@@ -164,14 +162,14 @@ void RationalIIScheduler::printScheduleToConsole()
   }
 
   cout << "-------" << endl;
-  cout << "Printing modulo " << this->consideredModuloCycle << " start times" << endl;
+  cout << "Printing modulo " << this->modulo << " start times" << endl;
 
   for(unsigned int i = 0; i < t_matrix.size(); i++)
   {
     for(unsigned int j = 0; j < t_matrix[i].size(); j++)
     {
       if(j !=0) cout << ",";
-      cout << "(" << t_matrix[i][j] << "," << (unsigned int)(lround(r.values[t_matrix[i][j]])) % (this->consideredModuloCycle) << ")";
+      cout << "(" << t_matrix[i][j] << "," << (unsigned int)(lround(r.values[t_matrix[i][j]])) % (this->modulo) << ")";
     }
 
     cout << endl << "-" << endl;
@@ -185,18 +183,18 @@ void RationalIIScheduler::schedule()
   this->scheduleFound = false;
   this->solver->reset();
   //experimental
-  if(this->maxLatencyConstraint > this->consideredModuloCycle) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
-  else this->consideredTimeSteps = 2*this->consideredModuloCycle + 2;
+  if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+  else this->consideredTimeSteps = 2*this->modulo + 2;
 
   if(this->consideredTimeSteps <= 0) {
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps == 0! Scheduling not possible!");
   }
 
-  if(this->moduloClasses <= 0) {
+  if(this->samples <= 0) {
     throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses == 0! Scheduling not possible!");
   }
 
-  if(this->consideredModuloCycle <= 0) {
+  if(this->modulo <= 0) {
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle == 0! Scheduling not possible!");
   }
 
@@ -236,7 +234,7 @@ void RationalIIScheduler::setModuloConstraints() {
 void RationalIIScheduler::fillSolutionStructure() {
   //reset possible old values
   this->startTimeVector.resize(0);
-  this->IIs.resize(0);
+  this->initInvervals.resize(0);
 
   //store start times of the scheduled samples
   for(int i = 0; i < this->t_matrix.size(); i++) {
@@ -258,9 +256,9 @@ void RationalIIScheduler::fillSolutionStructure() {
     ScaLP::Variable svTemp1 = this->II_vector[i - 1];
     ScaLP::Variable svTemp2 = this->II_vector[i];
     int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
-    this->IIs.push_back(IITimeDiff);
+    this->initInvervals.push_back(IITimeDiff);
 
-    if(i==II_vector.size()-1) this->IIs.push_back(this->consideredModuloCycle - this->r.values[svTemp2]);
+    if(i==II_vector.size()-1) this->initInvervals.push_back(this->modulo - this->r.values[svTemp2]);
   }
 }
 
@@ -293,7 +291,7 @@ void RationalIIScheduler::setResourceConstraints() {
       //declare tia-matrix
       vector< vector<ScaLP::Variable> > tia_matrix;
 
-      for(unsigned int j = 0; j < this->moduloClasses; j++) {
+      for(unsigned int j = 0; j < this->samples; j++) {
         //declare tia-vector
         vector<ScaLP::Variable> tia_vector;
 
@@ -327,7 +325,7 @@ void RationalIIScheduler::setResourceConstraints() {
         //iterate over considered modulo classes (2.dim of container)
         for(unsigned int l = 0; l < resourceVarContainer[k].size(); l++) {
           for(unsigned int m = 0; m < this->consideredTimeSteps+1; m++) {
-            if(m % (this->consideredModuloCycle) == j) {
+            if(m % (this->modulo) == j) {
               tiaSum = tiaSum + resourceVarContainer[k][l][m];
               b =1;
             }
@@ -346,7 +344,7 @@ void RationalIIScheduler::fillTMaxtrix()
   this->t_matrix.clear();
 
   //i modulo classes considered
-  for(unsigned int i = 0; i < this->moduloClasses; i++) {
+  for(unsigned int i = 0; i < this->samples; i++) {
     vector<ScaLP::Variable> t_vector;
 
     //j vertices

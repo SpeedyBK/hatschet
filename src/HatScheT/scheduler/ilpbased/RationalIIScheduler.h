@@ -38,13 +38,11 @@ public:
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   virtual void schedule();
   virtual int getScheduleLength();
-  void setModuloCycles(int m) {this->consideredModuloCycle=m;}
-  void setModuloClasses(int m ){this->moduloClasses=m;}
+  void setModulo(int m) {this->modulo=m;}
+  void setSamples(int s){this->samples=s;}
   void printScheduleToConsole();
 
-
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
-  vector<int>& getIIs(){return this->IIs;}
 
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
@@ -60,16 +58,10 @@ private:
   void fillIIVector();
   void fillSolutionStructure();
   //--------
-  //TODO: use rational II scheduler layer attributes for this
-  unsigned int moduloClasses;
-  unsigned int consideredModuloCycle;
-  //---------------
   unsigned int consideredTimeSteps;
-  vector<int> foundIIs;
 
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
-  vector<int > IIs;
   map<const Vertex*,int> tIndices;
 
   vector<std::map<Vertex*,int> > startTimeVector;
