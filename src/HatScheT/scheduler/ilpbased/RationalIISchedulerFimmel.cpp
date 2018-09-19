@@ -1,6 +1,6 @@
 #include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
 //#include <HatScheT/scheduler/ASAPScheduler.h>
-//#include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Utility.h>
 #include <iostream>
 #include <ScaLP/Solver.h>
 #include <HatScheT/utility/Verifier.h>
@@ -165,7 +165,7 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
 
 
 
-        /*
+
         HatScheT::Graph* testGraph = new  HatScheT::Graph();
         Vertex* S[11];
         for (int i = 1; i <= 10; i++) {
@@ -189,6 +189,7 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
         testGraph->createEdge(*S[4], *S[9], 0);
         testGraph->createEdge(*S[9], *S[10], 0);
         testGraph->createEdge(*S[10], *S[9], 1);
+
         g = *testGraph;
 
         HatScheT::ResourceModel *testResource = new HatScheT::ResourceModel();
@@ -197,8 +198,8 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
             testResource->registerVertex(S[i], rm);
         }
         resourceModel = *testResource;
-        */
 
+        /*
         HatScheT::Graph* testGraph = new  HatScheT::Graph();
         Vertex* S[6];
         for (int i = 1; i <= 5; i++) {
@@ -208,6 +209,7 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
             S[i] = v;
 
         }
+
         testGraph->createEdge(*S[1], *S[5], 0);
         testGraph->createEdge(*S[2], *S[5], 0);
         //testGraph->createEdge(*S[3], *S[5], 0);
@@ -226,6 +228,7 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
         //testResource->registerVertex(S[4], b);
         testResource->registerVertex(S[5], c);
         resourceModel = *testResource;
+        */
 
         this->minII = this->computeMinII(&g,&resourceModel);
         cout << "minII: " << this->minII << endl;
@@ -234,20 +237,26 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
     }
 
 void RationalIISchedulerFimmel::schedule() {
-    //this->generateTestSetup();
+    this->generateTestSetup();
 
 
     this->minII = this->computeMinII(&g,&resourceModel);
     cout << "minII: " << this->minII << endl;
 
-    ScaLP::Solver s{"CPLEX", "Gurobi", "SCIP"};
+    auto s = solver;
 
     ScaLP::Variable Lambda = ScaLP::newRealVariable("Lambda", 1, ScaLP::INF());
 
-    s.setObjective(ScaLP::minimize(Lambda));
+    s->setObjective(ScaLP::minimize(Lambda));
 
-    int p_max = 3;
-    int Lambda_max = 100;
+    /*
+    this->minII = this->computeMinII(&g,&resourceModel);
+    this->maxII = Utility::calcMaxII(&g, &resourceModel);
+    if (minII >= maxII) maxII = minII+1;
+    */
+
+    int p_max = 5;
+    int Lambda_max = 10000;
 
     map<Vertex*, ScaLP::Variable > C;
     //map<Vertex*, ScaLP::Variable > C_;
@@ -260,7 +269,7 @@ void RationalIISchedulerFimmel::schedule() {
     //map<tuple<Vertex*,Vertex*>, int> Schlange;
 
 
-    //cout << "a" << endl;
+    cout << "a" << endl;
 
 
     //6.1
@@ -275,7 +284,7 @@ void RationalIISchedulerFimmel::schedule() {
 
         C[v] = curr_C;
         c[v] = curr_c;
-        s << (curr_C_ + curr_c - curr_C == 0);
+        s->addConstraint(curr_C_ + curr_c - curr_C == 0);
 
 
         ScaLP::Term term = 0;
@@ -283,12 +292,12 @@ void RationalIISchedulerFimmel::schedule() {
         /// C_ == k*Lambda
         for (int k = 0; k <=p_max; k++) {
             ScaLP::Variable curr_beta = ScaLP::newBinaryVariable("beta[" + to_string(id) + "][" + to_string(k) + "]", 0, 1);
-            s << (k*Lambda - (1 - curr_beta)*k*Lambda_max - curr_C_ <= 0);
-            s << (k*Lambda + (1-curr_beta)*(p_max-k)*Lambda_max - curr_C_ >= 0);
+            s->addConstraint(k*Lambda - (1 - curr_beta)*k*Lambda_max - curr_C_ <= 0);
+            s->addConstraint(k*Lambda + (1-curr_beta)*(p_max-k)*Lambda_max - curr_C_ >= 0);
             term = term + curr_beta;
             //ScaLP::Variable curr_beta
         }
-        s << (term == 1);
+        s->addConstraint(term == 1);
 
 
 
@@ -304,7 +313,7 @@ void RationalIISchedulerFimmel::schedule() {
             kappa[make_tuple(r, v, i)] = curr_kappa;
 
         }
-        if (r->getLimit() != -1)  s << (term == 1);
+        if (r->getLimit() != -1)  s->addConstraint(term == 1);
 
         /*
         if (r->getLimit() != -1) {
@@ -329,6 +338,8 @@ void RationalIISchedulerFimmel::schedule() {
 
     }
 
+    cout << "b" << endl;
+
     //6.3
     for(auto it=this->g.edgesBegin();it!=this->g.edgesEnd();++it){
         Edge* e= *it;
@@ -347,27 +358,49 @@ void RationalIISchedulerFimmel::schedule() {
                     term = term + kappa[make_tuple(r, source, i)] * (this->resourceModel.getVertexLatency(source)+e->getDelay());
                 }
             //}
-            s << (term - (Lambda * distance + C[dest] - C[source]) <= 0);
+            s->addConstraint(term - (Lambda * distance + C[dest] - C[source]) <= 0);
         } else {
             int dis = this->resourceModel.getVertexLatency(source)+e->getDelay();
-            s << (Lambda*distance +  C[dest] - C[source]  >= dis);
+            s->addConstraint(Lambda*distance +  C[dest] - C[source]  >= dis);
             //cout << "§§§§" << C[dest] << C[source] << this->resourceModel.getVertexLatency(source) << e->getDelay() << endl;
 
         }
     }
+
+    cout << "c" << endl;
 
     //6.4
     for(auto it=this->g.verticesBegin();it!=this->g.verticesEnd();++it) {
         Vertex *v = *it;
         for (auto it2 = this->g.verticesBegin(); it2 != this->g.verticesEnd(); ++it2) {
             Vertex *w = *it2;
-            if (w != v) {
+            auto res = this->resourceModel.getResource(v);
+            if (w != v && res == this->resourceModel.getResource(w) && res->getLimit() > 0) {
                 ScaLP::Variable curr_Schlange = ScaLP::newBinaryVariable("Schlange[" + to_string(v->getId()) + "][" + to_string(w->getId()) + "]", 0, 1);
+                for (int i = 1; i <= res->getLimit(); i++) {
+                    int curr_OuS = 1;       //TODO: Dont hardcode this!!!
+                    //int curr_OuS_ = 1;
+
+                    int lat = resourceModel.getVertexLatency(w);
+                    if (lat == 0 ) curr_OuS = 0;
+
+                    s->addConstraint(curr_OuS - (curr_Schlange + 2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*2*Lambda_max - (c[v] - c[w] ) <= 0);
+                    s->addConstraint(curr_OuS - (2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*curr_OuS - (Lambda + c[w] - c[v]) <= 0);
+                    s->addConstraint(curr_OuS - (2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*curr_OuS - (Lambda + c[v] - c[w]) <= 0);
+                    s->addConstraint(curr_OuS - (1 - curr_Schlange + 2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*2*Lambda_max - (c[w] - c[v]) <= 0);
+                }
+
+
+
+
+
+                /* Original, in case the possibility of multiple ressources for one Vertex gets added
                 for(auto it3=this->resourceModel.resourcesBegin();it3!=this->resourceModel.resourcesEnd();++it3){
                     Resource* r= *it3;
                     set<const Vertex*> calculates = resourceModel.getVerticesOfResource(r);
                     if (calculates.find(v) != calculates.end() && calculates.find(w) != calculates.end() ) {
                         for (int i = 1; i <= r->getLimit(); i++) {
+                            cout << i << endl;
                             int curr_OuS = 1;       //TODO: Dont hardcode this!!!
                             //int curr_OuS_ = 1;
 
@@ -381,6 +414,7 @@ void RationalIISchedulerFimmel::schedule() {
                         }
                     }
                 }
+                 */
             }
         }
     }
@@ -417,13 +451,13 @@ void RationalIISchedulerFimmel::schedule() {
     */
     //cout << s.showLP() << endl;
     cout << "##############" << endl;
-    cout << "Solver start" << endl;
+    cout << "Solver start, timeout = " << this->solverTimeout << endl;
 
-
-
-    s.writeLP("example.lp");
-    ScaLP::status r = s.solve();
-    ScaLP::Result res = s.getResult();
+    //s.timeout = this->solverTimeout;
+    s->writeLP("example.lp");
+    //s.threads = 1;
+    ScaLP::status r = s->solve();
+    ScaLP::Result res = s->getResult();
 
     cout << "Solver finished" << endl;
     cout << "Found II = " << res.values[Lambda] << endl;
@@ -431,20 +465,28 @@ void RationalIISchedulerFimmel::schedule() {
 
     cout << res << endl;
     cout << r << endl;
+
     map<ScaLP::Variable, double> variableMap = res.values;
     double lambdaValue = variableMap[Lambda];
     map<Vertex*, double> vertexValues;
+    cout << "Start times: " << endl;
     for(auto it=this->g.verticesBegin();it!=this->g.verticesEnd();++it) {
         Vertex *v = *it;
         vertexValues[v] = variableMap[C[v]];
         this->startTimes.insert(make_pair(v, variableMap[C[v]]));
+
+        cout << "C["<< v->getName() << "] = " << vertexValues[v] << endl;
     }
+    this->II = lambdaValue;
+
     bool ok = verifyModuleScheduleRational(g,resourceModel,vertexValues,lambdaValue);
     if (ok) {
         cout << "Schedule is correct" << endl;
     } else {
         cout << "Schedule is faulty" << endl;
+        //this->II = 0;
     }
+    this->stat = r;
     //delete[] C;
 }
 

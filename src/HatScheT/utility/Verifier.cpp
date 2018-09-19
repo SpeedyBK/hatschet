@@ -243,11 +243,14 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
             }
         }
     }
+    //cout << "§§§" << endl;
     /* 2) modulo resource constraints are obeyed */
     map<pair<const Resource *,int>, vector<Vertex *>> ressourceSlotByCycle;
     for (int i = 0; i <= max_it; i++) {
         for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
             auto v = *it;
+            //cout.precision(17);
+            //cout << v->getName() << " " <<  i << " " << i*II << " " << S[v] << " " << safeRoundDown(S[v] + i*II) << endl;
             ressourceSlotByCycle[make_pair(rm.getResource(v), safeRoundDown(S[v] + i*II) )].push_back(v);
         }
     }
