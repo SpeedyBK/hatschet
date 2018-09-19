@@ -46,8 +46,8 @@ public:
 
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
+  
 private:
-  bool uniformSchedule;
   virtual void constructProblem();
   virtual void setObjective();
   //--------
@@ -58,12 +58,11 @@ private:
   void fillIIVector();
   void fillSolutionStructure();
   //--------
+  bool uniformSchedule;
   unsigned int consideredTimeSteps;
-
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
   map<const Vertex*,int> tIndices;
-
   vector<std::map<Vertex*,int> > startTimeVector;
 };
 }

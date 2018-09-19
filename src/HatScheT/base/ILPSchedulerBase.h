@@ -89,9 +89,16 @@ public:
     this->solver->threads=i;
   }
   unsigned int getThreads(){return this->threads;}
-
-  ScaLP::status stat;
+  /*!
+   * access ilp solver status (OPTIMAL, TIMEOUT, ...) see ScaLP paper for more information
+   * @return
+   */
+  ScaLP::status getScaLPStatus(){return this->stat;}
 protected:
+  /*!
+   * store the status of ilp-based scheduling
+   */
+  ScaLP::status stat;
   /*!
    * \brief This pure virtual function has to be implemented in the derived classes to construct the problem
    */
@@ -104,7 +111,9 @@ protected:
    * A pointer to the ScaLP solver
    */
   ScaLP::Solver *solver;
-
+  /*!
+   * store the results of ilb-based scheduling
+   */
   ScaLP::Result r;
   /*!
    * \brief optimalResult
