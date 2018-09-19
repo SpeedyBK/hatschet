@@ -204,6 +204,8 @@ void RationalIIScheduler::schedule()
   this->fillIIVector();
 
   this->constructProblem();
+
+  //currently empty
   this->setObjective();
 
   stat = this->solver->solve();

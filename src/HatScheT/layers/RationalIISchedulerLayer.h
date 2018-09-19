@@ -20,16 +20,17 @@
 #pragma once
 
 #include <vector>
+#include "HatScheT/base/ModuloSchedulerBase.h"
 
 namespace HatScheT
 {
 /*!
- * \brief The RationalIISchedulerBase class providing information that is needed implement rational II modulo schedules
+ * \brief The RationalIISchedulerLayer class providing information that is needed implement rational II modulo schedules
  */
-class RationalIISchedulerBase
+class RationalIISchedulerLayer : public ModuloSchedulerBase
 {
 public:
-  RationalIISchedulerBase();
+  RationalIISchedulerLayer();
   /*!
    * \brief getRationalII the rationalII is number of inserted samples over the used modulo class
    * \return
