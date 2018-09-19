@@ -59,6 +59,7 @@ private:
   void fillIIVector();
   void fillSolutionStructure();
   //--------
+  //TODO: use rational II scheduler layer attributes for this
   unsigned int moduloClasses;
   unsigned int consideredTimeSteps;
   unsigned int consideredModuloCycle;

@@ -32,11 +32,6 @@ class RationalIISchedulerLayer : public ModuloSchedulerBase
 public:
   RationalIISchedulerLayer();
   /*!
-   * \brief getRationalII the rationalII is number of inserted samples over the used modulo class
-   * \return
-   */
-  float getRationalII(){return this->rationalII;}
-  /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
    */
@@ -46,11 +41,12 @@ public:
    * \return
    */
   int getModulo(){return this->modulo;}
-protected:
   /*!
-   * \brief rationalII
+   * \brief getSamples get the number of samples that can inserted every 'this->modulo' clock cycles
+   * @return
    */
-  float rationalII;
+  int getSamples(){return this->samples;}
+protected:
   /*!
    * \brief initInvervals
    */
@@ -59,6 +55,11 @@ protected:
    * \brief modulo
    */
   int modulo;
+  /*!
+   * \brief samples
+   */
+  int samples;
+
 
 };
 

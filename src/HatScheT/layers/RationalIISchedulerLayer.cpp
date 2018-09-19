@@ -27,7 +27,7 @@ namespace HatScheT
 RationalIISchedulerLayer::RationalIISchedulerLayer()
 {
   this->modulo = -1;
-  this->rationalII = 0.0;
+  this->samples = -1;
 }
 	
 }
