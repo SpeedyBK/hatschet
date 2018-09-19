@@ -104,6 +104,8 @@ protected:
    * A pointer to the ScaLP solver
    */
   ScaLP::Solver *solver;
+
+  ScaLP::Result r;
   /*!
    * \brief optimalResult
    */

@@ -45,7 +45,6 @@ protected:
 
     vector<ScaLP::Variable> ti;
     map<const Vertex*, unsigned int> tIndices;
-    ScaLP::Result r;
 
     map<const Vertex*, vector<ScaLP::Variable> > binVarMap;
 };

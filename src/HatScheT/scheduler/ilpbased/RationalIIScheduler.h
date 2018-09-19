@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <vector>
 
 namespace HatScheT
@@ -31,7 +32,7 @@ namespace HatScheT
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
  * THIS CLASSES IS UNDER DEVELOPMENT
  */
-class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer
 {
 public:
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
@@ -61,10 +62,11 @@ private:
   //--------
   //TODO: use rational II scheduler layer attributes for this
   unsigned int moduloClasses;
-  unsigned int consideredTimeSteps;
   unsigned int consideredModuloCycle;
+  //---------------
+  unsigned int consideredTimeSteps;
   vector<int> foundIIs;
-  ScaLP::Result r;
+
   vector<vector<ScaLP::Variable> > t_matrix;
   vector<ScaLP::Variable> II_vector;
   vector<int > IIs;
