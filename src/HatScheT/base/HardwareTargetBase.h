@@ -1,0 +1,102 @@
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Patrick Sittel (sittel@uni-kassel.de)
+
+    Copyright (C) 2018
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+#pragma once
+
+#include <string>
+
+using namespace std;
+
+namespace HatScheT {
+/*!
+ * This class is a placeholder for future attributes and functionality of hardware targets
+ */
+class HardwareTargetBase {
+public:
+  /*!
+   * constructor
+   * @param name
+   */
+  HardwareTargetBase(std::string name);
+  /*!
+   *
+   * @return
+   */
+  std::string getName(){return this->name;}
+protected:
+  /*!
+   *
+   */
+  std::string name;
+};
+
+/*!
+ * The FPGA class, is a hardware target
+ */
+class FPGA : public HardwareTargetBase {
+public:
+  /*!
+   * constructor
+   * @param name FPGA name
+   * @param LUTs total LUTs on the FPGA
+   * @param Slices total slices on the FPGA
+   * @param DSPs total DSPs on the FPGA
+   * @param BRAMs total BRAMs on the FPGA
+   */
+  FPGA(std::string name, int LUTs, int Slices, int DSPs, int BRAMs);
+  /*!
+   * get total No of LUTs on the FPGA
+   * @return
+   */
+  int getLUTs(){return this->LUTs;}
+  /*!
+   * get total No of Slices on the FPGA
+   * @return
+   */
+  int getSlices(){return this->Slices;}
+  /*!
+   * get total No of DSPs on the FPGA
+   * @return
+   */
+  int getDSPs(){return this->DSPs;}
+  /*!
+   * get total No of BRAMs on the FPGA
+   */
+  int getBRAMs(){return this->BRAMs;}
+private:
+  /*!
+   * total No of LUTs on the FPGA
+   */
+  int LUTs;
+  /*!
+   * total No of Slices on the FPGA
+   */
+  int Slices;
+  /*!
+   * total No of DSPs on the FPGA
+   */
+  int DSPs;
+  /*!
+   * total No of BRAMs on the FPGA
+   */
+  int BRAMs;
+};
+
+}
+
