@@ -65,20 +65,24 @@ public:
    * @return
    */
   int getLUTs(){return this->LUTs;}
+  void setLUTs(int l){this->LUTs = l;}
   /*!
    * get total No of Slices on the FPGA
    * @return
    */
   int getSlices(){return this->Slices;}
+  void setSlices(int s){this->Slices = s;}
   /*!
    * get total No of DSPs on the FPGA
    * @return
    */
   int getDSPs(){return this->DSPs;}
+  void setDSPs(int d){this->DSPs = d;}
   /*!
    * get total No of BRAMs on the FPGA
    */
   int getBRAMs(){return this->BRAMs;}
+  void setBRAMs(int b){this->BRAMs = b;}
 private:
   /*!
    * total No of LUTs on the FPGA

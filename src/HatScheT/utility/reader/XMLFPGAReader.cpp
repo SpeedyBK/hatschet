@@ -22,9 +22,9 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader()
+XMLFPGAReader::XMLFPGAReader(FPGA* fpga)
 {
-
+  this->fpga = fpga;
 }
 
 }

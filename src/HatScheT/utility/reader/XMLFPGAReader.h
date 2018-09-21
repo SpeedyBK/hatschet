@@ -31,7 +31,7 @@ namespace HatScheT
  */
 class XMLFPGAReader : public Reader, DefaultHandler {
 public:
-    XMLFPGAReader();
+    XMLFPGAReader(FPGA* fpga);
     ~XMLFPGAReader();
     /*!
      * main method to read and return FPGA class from a xml file
@@ -57,6 +57,7 @@ public:
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
 private:
+    FPGA* fpga;
 };
 
 }
