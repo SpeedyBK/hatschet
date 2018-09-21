@@ -53,6 +53,14 @@ public:
   virtual ResourceModel& readResourceModel(const char* path){
     string p(path);
     throw Exception("GraphMLGraphReader.readResourcemodel: Dont use this class to read resource: " + p);}
+  /*!
+  *
+  * @param path
+  * @return
+  */
+  virtual FPGA& readFPGA(const char* path){
+    string p(path);
+    throw Exception("GraphMLResourceReader.readFPGA: Dont use this class to read FPGA hardware target: " + p);}
 private:
   ResourceModel* rm;
   /*!

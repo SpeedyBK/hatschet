@@ -105,7 +105,7 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-        src/HatScheT/base/HardwareTargetBase.cpp src/HatScheT/base/HardwareTargetBase.h)
+        src/HatScheT/base/HardwareTargetBase.cpp src/HatScheT/base/HardwareTargetBase.h src/HatScheT/utility/reader/XMLFPGAReader.cpp src/HatScheT/utility/reader/XMLFPGAReader.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
