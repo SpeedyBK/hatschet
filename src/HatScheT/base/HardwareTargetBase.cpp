@@ -22,16 +22,17 @@
 
 namespace HatScheT
 {
-  HardwareTargetBase::HardwareTargetBase(std::string name)
+  HardwareTargetBase::HardwareTargetBase()
   {
-    this->name = name;
+    this->name = "";
   }
 
-  FPGA::FPGA(std::string name, int LUTs, int Slices, int DSPs, int BRAMs) : HardwareTargetBase(name)
+  FPGA::FPGA()
   {
-    this->LUTs = LUTs;
-    this->Slices = Slices;
-    this->DSPs = DSPs;
-    this->BRAMs = BRAMs;
+    this->family = "";
+    this->LUTs = -1;
+    this->Slices = -1;
+    this->DSPs = -1;
+    this->BRAMs = -1;
   }
 }

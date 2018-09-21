@@ -33,12 +33,13 @@ public:
    * constructor
    * @param name
    */
-  HardwareTargetBase(std::string name);
+  HardwareTargetBase();
   /*!
    *
    * @return
    */
   std::string getName(){return this->name;}
+  void setName(string n){this->name = n;}
 protected:
   /*!
    *
@@ -53,13 +54,8 @@ class FPGA : public HardwareTargetBase {
 public:
   /*!
    * constructor
-   * @param name FPGA name
-   * @param LUTs total LUTs on the FPGA
-   * @param Slices total slices on the FPGA
-   * @param DSPs total DSPs on the FPGA
-   * @param BRAMs total BRAMs on the FPGA
    */
-  FPGA(std::string name, int LUTs, int Slices, int DSPs, int BRAMs);
+  FPGA();
   /*!
    * get total No of LUTs on the FPGA
    * @return
@@ -83,6 +79,12 @@ public:
    */
   int getBRAMs(){return this->BRAMs;}
   void setBRAMs(int b){this->BRAMs = b;}
+  /*!
+   * get the fpga family
+   * @return
+   */
+  string getFamily(){return this->family;}
+  void setFamily(string f){this->family = f;}
 private:
   /*!
    * total No of LUTs on the FPGA
@@ -100,6 +102,10 @@ private:
    * total No of BRAMs on the FPGA
    */
   int BRAMs;
+  /*!
+   * the fpga family
+   */
+  string family;
 };
 
 }

@@ -32,7 +32,7 @@ namespace HatScheT
 class XMLFPGAReader : public Reader, DefaultHandler {
 public:
     XMLFPGAReader(FPGA* fpga);
-    ~XMLFPGAReader();
+    ~XMLFPGAReader(){};
     /*!
      * main method to read and return FPGA class from a xml file
      * @param path
