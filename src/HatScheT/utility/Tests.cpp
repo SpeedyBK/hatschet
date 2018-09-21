@@ -21,6 +21,7 @@
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
+#include "HatScheT/utility/reader/XMLFPGAReader.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
@@ -133,13 +134,18 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::FPGA fpga;
+  HatScheT::XMLFPGAReader fpgaReader(&fpga);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
+  string fpgaStr = "cTest/virtex6.xml";
   rm = readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
+
+  fpga = fpgaReader.readFPGA(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
@@ -149,6 +155,18 @@ bool Tests::readTest()
   if(g.getNumberOfVertices() != 11){
     cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 11!" << endl;
     return false;
+  }
+
+  if(fpga.getFamily() != "virtex6"){
+    cout << "Incorrect FPGA family found: " << fpga.getFamily() << " instead of virtex6" << endl;
+  }
+
+  if(fpga.getName() != "XC6VLX75T"){
+    cout << "Incorrect FPGA name found: " << fpga.getName() << " instead of XC6VLX75T" << endl;
+  }
+
+  if(fpga.getSlices() != 11640){
+    cout << "Incorrect FPGA Slices found: " << fpga.getSlices() << " instead of 11640" << endl;
   }
 
   return true;
