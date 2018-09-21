@@ -58,6 +58,35 @@ public:
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
 private:
     FPGA* fpga;
+    /*!
+       * \brief startElement
+       * \param uri
+       * \param localname
+       * \param qname
+       * \param atts
+       */
+    void startElement(
+            const   XMLCh* const    uri,
+            const   XMLCh* const    localname,
+            const   XMLCh* const    qname,
+            const   Attributes    &atts
+    );
+    /*!
+       * \brief endElement
+       * \param uri
+       * \param localname
+       * \param qname
+       */
+    void endElement( const XMLCh* const uri,
+                     const XMLCh* const localname,
+                     const XMLCh* const qname );
+    /*!
+     * \brief characters
+     * \param chars
+     * \param length
+     */
+    void characters    (   const XMLCh *const      chars,
+                           const XMLSize_t     length);
 };
 
 }

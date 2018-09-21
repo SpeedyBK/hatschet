@@ -50,7 +50,7 @@ public:
   /*!
    *
    * @param path
-   * @return 
+   * @return
    */
   virtual FPGA& readFPGA(const char* path){
     string p(path);
