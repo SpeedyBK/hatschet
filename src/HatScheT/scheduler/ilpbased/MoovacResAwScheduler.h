@@ -19,6 +19,7 @@
 */
 #pragma once
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
+#include <HatScheT/base/HardwareTargetBase.h>
 
 namespace HatScheT {
 /*!
@@ -29,8 +30,16 @@ namespace HatScheT {
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
-    MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, FPGA& fpga);
+
+    virtual void schedule();
+
 private:
+    virtual void constructProblem();
+    virtual void setObjective();
+    virtual void setGeneralConstraints();
+
+    FPGA& fpga;
 };
 
 }

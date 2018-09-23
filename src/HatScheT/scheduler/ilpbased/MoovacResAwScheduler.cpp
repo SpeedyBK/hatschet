@@ -24,11 +24,30 @@
 namespace HatScheT
 {
 
-MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-        : MoovacScheduler(g, resourceModel, solverWishlist) {
+MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, FPGA& fpga)
+        : MoovacScheduler(g, resourceModel, solverWishlist), fpga(fpga) {
   this->minII = this->computeMinII(&g,&resourceModel);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
 }
 
+void MoovacResAwScheduler::schedule()
+{
+
+}
+
+void MoovacResAwScheduler::constructProblem()
+{
+
+}
+
+void MoovacResAwScheduler::setObjective()
+{
+
+}
+
+void MoovacResAwScheduler::setGeneralConstraints()
+{
+
+}
 }
