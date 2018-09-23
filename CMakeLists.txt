@@ -107,6 +107,7 @@ src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 src/HatScheT/base/HardwareTargetBase.cpp
 src/HatScheT/utility/reader/XMLFPGAReader.cpp
+src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 )
 
 set(HatScheT_HEADERS
@@ -125,6 +126,7 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.h
 src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
+src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h

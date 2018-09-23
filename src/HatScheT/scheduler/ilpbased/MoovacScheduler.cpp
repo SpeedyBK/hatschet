@@ -20,7 +20,6 @@
 
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include "HatScheT/utility/Utility.h"
-#include <HatScheT/scheduler/ASAPScheduler.h>
 
 namespace HatScheT
 {
