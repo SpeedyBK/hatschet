@@ -61,12 +61,10 @@ void MoovacScheduler::constructProblem()
   if(this->maxLatencyConstraint == -1){
     this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
   }
-  else if(this->maxLatencyConstraint > 0)
-  {
+  else if(this->maxLatencyConstraint > 0) {
     this->SLMax = this->maxLatencyConstraint;
   }
-  else
-  {
+  else {
      throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
   }
 
@@ -104,8 +102,7 @@ void MoovacScheduler::schedule()
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
 
-  while(this->II <= this->maxII)
-  {
+  while(this->II <= this->maxII) {
     cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
     this->resetContainer();
     this->setUpSolverSettings();
@@ -138,8 +135,7 @@ void MoovacScheduler::schedule()
 
 void MoovacScheduler::fillSolutionStructure()
 {
-  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
-  {
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
     Vertex* v = *it;
     unsigned int index =this->tIndices.at(v);
     ScaLP::Variable svTemp = this->ti[index];
@@ -151,8 +147,7 @@ void MoovacScheduler::fillSolutionStructure()
 
 void MoovacScheduler::setVectorVariables()
 {
-  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
-  {
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
     Vertex* v = *it;
     int id = v->getId();
 
@@ -164,16 +159,14 @@ void MoovacScheduler::setVectorVariables()
     this->solver->addConstraint(ti.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
   }
 
-  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
-  {
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
     if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
 
     int ak = r->getLimit();
     if(ak==-1) continue;
     set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
-    for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++)
-    {
+    for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
       const Vertex* v1 = (*it2);
       //18
       this->ri.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
@@ -184,8 +177,7 @@ void MoovacScheduler::setVectorVariables()
 
 void MoovacScheduler::setSourceVerticesToZero()
 {
-  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it)
-  {
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
     Vertex* v = *it;
 
     unsigned int index =this->tIndices.at(v);
@@ -198,8 +190,7 @@ void MoovacScheduler::setSourceVerticesToZero()
 void MoovacScheduler::setGeneralConstraints()
 {
   //5
-  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it)
-  {
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
     unsigned int srcTVecIndex = this->tIndices[src];
@@ -266,8 +257,7 @@ int MoovacScheduler::getNoOfMuxInputs()
 
   int noOfMuxInputs = 0;
 
-  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
-  {
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
     //unlimited in paralell without mux
     if(r->getLimit()==-1) continue;
@@ -276,12 +266,10 @@ int MoovacScheduler::getNoOfMuxInputs()
       int bindings = r->getLimit();
 
       //iterate over possible bindings
-      for(int i = 0; i < bindings; i++)
-      {
+      for(int i = 0; i < bindings; i++) {
         set<const Vertex*> verticesOfSameResourceBinding;
 
-        for(auto it3:verticesOfR)
-        {
+        for(auto it3:verticesOfR) {
           const Vertex* candidateV = it3;
           int candidateVRIndex = this->rIndices[candidateV];
           ScaLP::Result r = this->solver->getResult();
@@ -307,25 +295,21 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
   int noOfRegs = 0;
 
-  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
-  {
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
     set<const Vertex*> verticesOfR = this->resourceModel.getVerticesOfResource(r);
 
     //unlimited resource are assummed to be implemented in paralell
-    if(r->getLimit() == -1)
-    {
+    if(r->getLimit() == -1) {
       //iterate of every implementation unit of resource r
-      for(auto it2:verticesOfR)
-      {
+      for(auto it2:verticesOfR) {
         int maxLifetime = 0;
 
         const Vertex* v = it2;
         int vTIndex = this->tIndices[v];
         set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
-        for(auto it3:followingVertices)
-        {
+        for(auto it3:followingVertices) {
           const Vertex* followV = it3;
           Edge* e = &this->g.getEdge(v,followV);
           int followVTIndex = this->tIndices[followV];
@@ -341,17 +325,14 @@ int MoovacScheduler::getNoOfImplementedRegisters()
     }
 
     //limited resource
-    else
-    {
+    else {
       int bindings = r->getLimit();
 
       //iterate over possible bindings
-      for(int i = 0; i < bindings; i++)
-      {
+      for(int i = 0; i < bindings; i++) {
         set<const Vertex*> verticesOfSameResourceBinding;
 
-        for(auto it3:verticesOfR)
-        {
+        for(auto it3:verticesOfR) {
           const Vertex* candidateV = it3;
           int candidateVRIndex = this->rIndices[candidateV];
           ScaLP::Result r = this->solver->getResult();
@@ -361,14 +342,12 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
         int maxLifetime = 0;
 
-        for(auto it3:verticesOfSameResourceBinding)
-        {
+        for(auto it3:verticesOfSameResourceBinding) {
           const Vertex* v = it3;
           int vTIndex = this->tIndices[v];
           set<Vertex*> followingVertices = this->g.getSuccessors(v);
 
-          for(auto it4:followingVertices)
-          {
+          for(auto it4:followingVertices) {
             const Vertex* followV = it4;
             Edge* e = &this->g.getEdge(v,followV);
             int followVTIndex = this->tIndices[followV];
@@ -391,114 +370,104 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
 void MoovacScheduler::setModuloAndResourceConstraints()
 {
-    this->mi.resize(0);
+  this->mi.resize(0);
 
-    for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it)
-    {
-      Resource* r = *it;
-      if(this->resourceModel.getNumVerticesRegisteredToResource(r)==0) continue;
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+    Resource* r = *it;
 
-      int ak = r->getLimit();
-      if(ak==-1) continue;
-      set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
+    int ak = r->getLimit();
+    if(ak==-1) continue;
+    set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
+    if(verOfRes.size()==0) continue;
 
-      //declare y-vector
-      vector<ScaLP::Variable> y_vector;
-      //declare m-vector
-      vector<ScaLP::Variable> m_vector;
-      //declare eps-matrix
-      vector<vector<ScaLP::Variable> > eps_matrix;
-      //declare mu-matrix
-      vector<vector<ScaLP::Variable> > mu_matrix;
-      //store corresponding pointer
-      vector<vector<pair<const Vertex*, const Vertex*> > > corrVerticesMatrix;
+    //declare y-vector
+    vector<ScaLP::Variable> y_vector;
+    //declare m-vector
+    vector<ScaLP::Variable> m_vector;
+    //declare eps-matrix
+    vector<vector<ScaLP::Variable> > eps_matrix;
+    //declare mu-matrix
+    vector<vector<ScaLP::Variable> > mu_matrix;
+    //store corresponding pointer
+    vector<vector<pair<const Vertex*, const Vertex*> > > corrVerticesMatrix;
 
-      for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++)
-      {        
-        const Vertex* v1 = (*it2);
+    for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
+      const Vertex* v1 = (*it2);
 
-        int tIndex = this->tIndices.at(v1);
-        //18
-        int rvecIndex = this->rIndices.at(v1);
-        //19
-        m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
-        //20
-        y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
+      int tIndex = this->tIndices.at(v1);
+      //18
+      int rvecIndex = this->rIndices.at(v1);
+      //19
+      m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
+      //20
+      y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
 
-        //13
-        this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*this->II - m_vector.back() == 0);
-        //14
-        this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
-        //15
-        this->solver->addConstraint(m_vector.back() <= this->II - 1);
+      //13
+      this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
+      //14
+      this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
+      //15
+      this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
-        //declare eps-vector
-        vector<ScaLP::Variable> eps_vector;
-        //declare mu-vector
-        vector<ScaLP::Variable> mu_vector;
-        vector<pair<const Vertex*, const Vertex*> > corrVerticesVec;
+      //declare eps-vector
+      vector<ScaLP::Variable> eps_vector;
+      //declare mu-vector
+      vector<ScaLP::Variable> mu_vector;
+      vector<pair<const Vertex*, const Vertex*> > corrVerticesVec;
 
-        for(set<const Vertex*>::iterator it3 = verOfRes.begin(); it3 != verOfRes.end(); it3++)
-        {
-          const Vertex* v2 = (*it3);
-          corrVerticesVec.push_back(make_pair(v1,v2));
+      for(set<const Vertex*>::iterator it3 = verOfRes.begin(); it3 != verOfRes.end(); it3++) {
+        const Vertex* v2 = (*it3);
+        corrVerticesVec.push_back(make_pair(v1,v2));
 
-          if(v1 != v2)
-          {
-            eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
-            mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
-          }
-
-          else if(v1==v2)
-          {
-            eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
-            mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
-          }
+        if(v1 != v2) {
+          eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
+          mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
         }
 
-        eps_matrix.push_back(eps_vector);
-        mu_matrix.push_back(mu_vector);
-        corrVerticesMatrix.push_back(corrVerticesVec);
+        else if(v1==v2) {
+          eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+          mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+        }
       }
 
-      this->mi.push_back(m_vector);
-      this->yi.push_back(y_vector);
-      this->epsij.push_back(eps_matrix);
-      this->muij.push_back(mu_matrix);
+      eps_matrix.push_back(eps_vector);
+      mu_matrix.push_back(mu_vector);
+      corrVerticesMatrix.push_back(corrVerticesVec);
+    }
 
-      if(eps_matrix.size() > 1)
-      {
-        for(unsigned int j = 0; j < eps_matrix.size(); j++)
-        {
-          for(unsigned int k = 0; k < eps_matrix.size(); k++)
-          {
-            if(k!=j && j<k)
-            {
-              //6
-              this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
-              //12
-              this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
-            }
+    this->mi.push_back(m_vector);
+    this->yi.push_back(y_vector);
+    this->epsij.push_back(eps_matrix);
+    this->muij.push_back(mu_matrix);
 
-            if(k!=j)
-            {
-              pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-              //7
-              this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                  - (ak*eps_matrix[j][k]) + ak >= 1);
-              //8
-              this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                  - (ak*eps_matrix[j][k]) <= 0);
-              //9
-              this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
-              //10
-              this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
-              //11
-              this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
-            }
+    if(eps_matrix.size() > 1) {
+      for(unsigned int j = 0; j < eps_matrix.size(); j++) {
+        for(unsigned int k = 0; k < eps_matrix.size(); k++) {
+          if(k!=j && j<k) {
+            //6
+            this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
+            //12
+            this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
+          }
+
+          if(k!=j) {
+            pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
+            //7
+            this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
+                - (ak*eps_matrix[j][k]) + ak >= 1);
+            //8
+            this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
+                - (ak*eps_matrix[j][k]) <= 0);
+            //9
+            this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
+            //10
+            this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
+            //11
+            this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
           }
         }
       }
+    }
   }
 }
 
