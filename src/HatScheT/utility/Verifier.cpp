@@ -322,6 +322,8 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
 }
 
 
+
+
 ///return numerator and denominator of a rational number stored in double
 ///If the number is not rational, or a specific budget is hit, it returns the pair <0,0>
 ///As no rational number has a 0 as a denominator, this can be used to test the result
@@ -345,7 +347,7 @@ pair<int,int> splitRational(double x) {
         B1 = B0 + k*B1;
         B0 = temp;
         x = ((double)1/x) - k;
-        if (abs(x)<=1.0E-7) {
+        if (abs(x)<=1.0E-3) {
             return make_pair(A1,B1);
         };
     }
@@ -358,10 +360,10 @@ pair<int,int> splitRational(double x) {
 int safeRoundDown(double x) {
     if (x>=0) {
         double error = x - (int) x;
-        if (error < 0.999999999999) return (int) x;
+        if (error < 0.999) return (int) x;
         return (int) ceil(x);
     }
     double error = (int) x -x;
-    if (error < 0.000000000001) return (int) x;
+    if (error < 0.001) return (int) x;
     return (int) floor(x);
 }

@@ -1,9 +1,11 @@
 #include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
-//#include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ULScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <iostream>
 #include <ScaLP/Solver.h>
 #include <HatScheT/utility/Verifier.h>
+#include <cmath>
 
 namespace HatScheT
 {
@@ -236,12 +238,44 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
         cout << "Finished Generating Test Graph" << endl;
     }
 
-void RationalIISchedulerFimmel::schedule() {
-    this->generateTestSetup();
+    void RationalIISchedulerFimmel::generateTestSetup2() {
 
+        HatScheT::Graph* testGraph = new HatScheT::Graph();
+        Vertex* S[4];
+        for (int i = 1; i <= 3; i++) {
+            Vertex* v = &testGraph->createVertex(i);
+            v->setName("S" + to_string(i));
+            S[i] = v;
+        }
+        testGraph->createEdge(*S[1], *S[2], 0);
+        testGraph->createEdge(*S[2], *S[3], 0);
+        testGraph->createEdge(*S[3], *S[1], 1);
+        g = *testGraph;
+
+        HatScheT::ResourceModel *testResource = new HatScheT::ResourceModel();
+        Resource* a = &testResource->makeResource("A", 1, 0,0);
+        Resource* b = &testResource->makeResource("B", 2, 1,0);
+        testResource->registerVertex(S[1], a);
+        testResource->registerVertex(S[2], a);
+        testResource->registerVertex(S[3], b);
+        resourceModel = *testResource;
+
+    }
+
+void RationalIISchedulerFimmel::schedule() {
+    //this->generateTestSetup();
+    //this->generateTestSetup2();
 
     this->minII = this->computeMinII(&g,&resourceModel);
     cout << "minII: " << this->minII << endl;
+
+
+    HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,resourceModel);
+    asap->schedule();
+
+    this->maxII = asap->getII();
+    delete asap;
+    cout << "maxII: " << this->maxII << endl;
 
     auto s = solver;
 
@@ -255,8 +289,11 @@ void RationalIISchedulerFimmel::schedule() {
     if (minII >= maxII) maxII = minII+1;
     */
 
-    int p_max = 5;
-    int Lambda_max = 10000;
+
+
+    int p_max = ceil((double) (2*maxII)/minII);
+
+    int Lambda_max = maxII;
 
     map<Vertex*, ScaLP::Variable > C;
     //map<Vertex*, ScaLP::Variable > C_;
@@ -304,6 +341,7 @@ void RationalIISchedulerFimmel::schedule() {
 
         //6.2
         const Resource* r= this->resourceModel.getResource(v);
+        cout << "$" << v->getName() << " " << r->getName() << " " << r->getLimit() << " " << r->getLatency() << endl;
         term = 0;
         for (int i = 1; i <= r->getLimit(); i++) {
             ScaLP::Variable curr_kappa = ScaLP::newBinaryVariable(
@@ -382,7 +420,7 @@ void RationalIISchedulerFimmel::schedule() {
                     //int curr_OuS_ = 1;
 
                     int lat = resourceModel.getVertexLatency(w);
-                    if (lat == 0 ) curr_OuS = 0;
+                    if (lat == 0 ) curr_OuS = 1;
 
                     s->addConstraint(curr_OuS - (curr_Schlange + 2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*2*Lambda_max - (c[v] - c[w] ) <= 0);
                     s->addConstraint(curr_OuS - (2 - kappa[make_tuple(res,v,i)] - kappa[make_tuple(res,w,i)])*curr_OuS - (Lambda + c[w] - c[v]) <= 0);
@@ -459,6 +497,7 @@ void RationalIISchedulerFimmel::schedule() {
     ScaLP::status r = s->solve();
     ScaLP::Result res = s->getResult();
 
+    cout.precision(17);
     cout << "Solver finished" << endl;
     cout << "Found II = " << res.values[Lambda] << endl;
     cout << "##############" << endl;
@@ -474,7 +513,7 @@ void RationalIISchedulerFimmel::schedule() {
         Vertex *v = *it;
         vertexValues[v] = variableMap[C[v]];
         this->startTimes.insert(make_pair(v, variableMap[C[v]]));
-
+        cout.precision(16);
         cout << "C["<< v->getName() << "] = " << vertexValues[v] << endl;
     }
     this->II = lambdaValue;
@@ -484,7 +523,8 @@ void RationalIISchedulerFimmel::schedule() {
         cout << "Schedule is correct" << endl;
     } else {
         cout << "Schedule is faulty" << endl;
-        //this->II = 0;
+        this->II = -1;
+        this->startTimes.clear();
     }
     this->stat = r;
     //delete[] C;

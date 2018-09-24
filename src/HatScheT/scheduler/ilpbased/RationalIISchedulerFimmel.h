@@ -40,5 +40,6 @@ protected:
     virtual void setObjective(){};
 private:
     void generateTestSetup();
+    void generateTestSetup2();
 };
 }
