@@ -149,6 +149,8 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm)
   asap.schedule();
   int criticalPath = asap.getScheduleLength();
 
+  if(g->getNumberOfVertices() > 200) return criticalPath;
+
   //get optimal critical path using asap ilp scheduler
   HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
   asapilp->setMaxLatencyConstraint(criticalPath);
