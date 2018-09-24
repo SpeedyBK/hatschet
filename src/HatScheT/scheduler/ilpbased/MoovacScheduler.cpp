@@ -20,7 +20,6 @@
 
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include "HatScheT/utility/Utility.h"
-#include <HatScheT/scheduler/ASAPScheduler.h>
 
 namespace HatScheT
 {
@@ -118,23 +117,19 @@ void MoovacScheduler::schedule()
 
     if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
     if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
-    if(stat == ScaLP::status::OPTIMAL && !timeoutOccured) this->optimalResult = true;
+    if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) this->optimalResult = true;
 
-
-    if(scheduleFound == false){
-      (this->II)++;
-    }
-    else {
-      break;
-    }
+    if(scheduleFound == false) (this->II)++;
+    else break;
   }
 
-  if(this->scheduleFound == true)
-  {
+  if(this->scheduleFound == true) {
     this->r = this->solver->getResult();
     this->fillSolutionStructure();
-  }
 
+    if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
+    else cout << "Found feasible solution for II: " << this->II << endl;
+  }
   else{
     cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
     this->II = -1;

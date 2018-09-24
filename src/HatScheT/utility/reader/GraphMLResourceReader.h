@@ -48,6 +48,14 @@ public:
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
   /*!
+   *
+   * @param path
+   * @return
+   */
+  virtual FPGA& readFPGA(const char* path){
+    string p(path);
+    throw Exception("GraphMLResourceReader.readFPGA: Dont use this class to read FPGA hardware target: " + p);}
+  /*!
    * \brief readResourceModel use this class to read resource models from a graphml representation
    * see the attached chstone benchmark for info about how you resource should be build in this case
    * this function will generate a new resourcemodel object instance

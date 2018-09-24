@@ -33,7 +33,10 @@ namespace HatScheT
 /*!
  * \brief ILPSchedulerBase is the abstract base class of all schedulers that use ILP solvers.
  *
- * It heavily relies on the ScaLP library, so a ScaLP::Solver instance is created in the constructor.
+ * It heavily relies on the ScaLP library, so a ScaLP::Solver instance is created in the constructor. (see www.uni-kassle.de/go/scalp)
+ *
+ * Further Information about ScaLP can be found at : Sittel, Schönwälder, Kumm, and Zipf: ScaLP: A Light-Weighted (MI)LP-Library, Presented at the 21th MBMV 2018.
+ *
  * Derived classes should implement constructProblem() (@see constructProblem()) in which the problem is constructed by defining the objective and constraints.
  */
 class ILPSchedulerBase

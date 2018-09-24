@@ -49,7 +49,7 @@ void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * co
   string name = XMLString::transcode(localname);
 
   if(name == "rt")
-  {   
+  {
     this->reservationTableTagFound = false;
   }
 

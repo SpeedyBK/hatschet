@@ -46,7 +46,7 @@ public:
 
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
-  
+
 private:
   virtual void constructProblem();
   virtual void setObjective();

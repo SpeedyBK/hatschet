@@ -40,6 +40,7 @@
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
+#include <HatScheT/utility/reader/XMLFPGAReader.h>
 #endif
 
 #ifdef USE_SCALP
@@ -87,6 +88,7 @@ void print_short_help()
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constrain file" << std::endl;
+  std::cout << "--fpga=[string]           Path to XML FPGA file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
@@ -122,6 +124,7 @@ int main(int argc, char *args[])
 
   std::string graphMLFile="";
   std::string resourceModelFile="";
+  std::string FPGAFile="";
   std::string dotFile="";
   std::string htmlFile="";
 
@@ -135,6 +138,7 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
+    HatScheT::FPGA fpga;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
 
@@ -167,6 +171,10 @@ int main(int argc, char *args[])
       else if(getCmdParameter(args[i],"--graph=",value))
       {
         graphMLFile = std::string(value);
+      }
+      else if(getCmdParameter(args[i],"--fpga=",value))
+      {
+        FPGAFile = std::string(value);
       }
       else if(getCmdParameter(args[i],"--dot=",value))
       {
@@ -277,6 +285,8 @@ int main(int argc, char *args[])
     //output major settings:
     std::cout << "settings:" << std::endl;
     std::cout << "graph model=" << graphMLFile << endl;
+    std::cout << "resource model=" << resourceModelFile << endl;
+    std::cout << "fpga=" << FPGAFile << endl;
     std::cout << "timeout=" << timeout << std::endl;
     std::cout << "threads=" << threads << std::endl;
     std::cout << "scheduler=";
@@ -315,6 +325,14 @@ int main(int argc, char *args[])
     }
     std::cout << std::endl;
 
+    //read fpga if provided
+    if(FPGAFile!=""){
+      HatScheT::XMLFPGAReader fpgaReader(&fpga);
+      fpga = fpgaReader.readFPGA(FPGAFile.c_str());
+
+      cout << "fpga: " << fpga.getFamily() << " - " << fpga.getName() << endl;
+    }
+
     //read resource model:
     rm = readerRes.readResourceModel(resourceModelFile.c_str());
 
@@ -347,7 +365,6 @@ int main(int argc, char *args[])
     bool isModuloScheduler=false;
     std::list<std::string> solverWishList;
     if(ilpSolver.empty())
-//>>>>>>> f1308435a5ddf4c4ed8ac7f428c0b7fe5104f628
     {
       solverWishList = {"Gurobi","CPLEX","SCIP","LPSolve"};
     }

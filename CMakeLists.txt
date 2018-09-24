@@ -105,6 +105,9 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
+src/HatScheT/base/HardwareTargetBase.cpp
+src/HatScheT/utility/reader/XMLFPGAReader.cpp
+src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 )
 
 set(HatScheT_HEADERS
@@ -112,6 +115,7 @@ src/HatScheT/base/ILPSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
+src/HatScheT/base/HardwareTargetBase.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
 src/HatScheT/ResourceModel.h
@@ -122,6 +126,7 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.h
 src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
+src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
@@ -129,6 +134,7 @@ src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/GraphMLResourceReader.h
+src/HatScheT/utility/reader/XMLFPGAReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/Occurrence.h
 src/HatScheT/utility/subgraphs/OccurrenceSet.h
@@ -192,9 +198,9 @@ configure_file("${PROJECT_SOURCE_DIR}/HaTScheTConfig.cmake.in" "${PROJECT_SOURCE
 
 enable_testing()
 
-add_test("XercesC_Read" "./hatschet" "--test=READ")
-add_test("XercesC_ScaLP_Moovac" "./hatschet" "--test=MOOVAC")
-add_test("ScaLP_ModuloSDC" "./hatschet" "--test=MODULOSDC")
+add_test("Read" "./hatschet" "--test=READ")
+add_test("Moovac" "./hatschet" "--test=MOOVAC")
+add_test("ModuloSDC" "./hatschet" "--test=MODULOSDC")
 add_test("API" "./hatschet" "--test=API")
 add_test("ASAPHC" "./hatschet" "--test=ASAPHC")
 add_test("ALAPHC" "./hatschet" "--test=ALAPHC")

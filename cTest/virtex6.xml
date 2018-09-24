@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?><ModelInformation Version="1.0">
+  <FPGA family="virtex6" name="XC6VLX75T" LUTs="46560" Slices="11640" DSPs="288" BRAMs="312">
+  </FPGA>
+</ModelInformation>

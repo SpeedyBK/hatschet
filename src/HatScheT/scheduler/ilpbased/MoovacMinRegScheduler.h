@@ -25,6 +25,8 @@ namespace HatScheT
 {
 /*!
  * \brief The MoovacMinRegScheduler class
+ * For the details of the Moovac minimum register scheduler, see Sittel, Kumm, Oppermann, Möller, Zipf, and Koch, ILP-based Modulo Scheduling and Binding for Register Minimization,,
+ * Presented at the Proceedings of the International Conference on Field Programmable Logic and Application (FPL) 2018
  */
 class MoovacMinRegScheduler : public MoovacScheduler
 {
