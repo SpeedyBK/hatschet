@@ -165,8 +165,20 @@ bool Tests::readTest()
     cout << "Incorrect FPGA name found: " << fpga.getName() << " instead of XC6VLX75T" << endl;
   }
 
+  if(fpga.getLUTs() != 46560){
+    cout << "Incorrect FPGA LUTs found: " << fpga.getSlices() << " instead of 46560" << endl;
+  }
+
   if(fpga.getSlices() != 11640){
     cout << "Incorrect FPGA Slices found: " << fpga.getSlices() << " instead of 11640" << endl;
+  }
+
+  if(fpga.getBRAMs() != 312){
+    cout << "Incorrect FPGA BRAMS found: " << fpga.getSlices() << " instead of 312" << endl;
+  }
+
+  if(fpga.getDSPs() != 288){
+    cout << "Incorrect FPGA DSPS found: " << fpga.getSlices() << " instead of 288" << endl;
   }
 
   return true;

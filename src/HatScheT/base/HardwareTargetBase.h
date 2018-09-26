@@ -35,16 +35,27 @@ public:
    */
   HardwareTargetBase();
   /*!
-   *
+   * get the hardware targets name
    * @return
    */
   std::string getName(){return this->name;}
   void setName(string n){this->name = n;}
+
+    /*!
+   * get the product family
+   * @return
+   */
+    string getFamily(){return this->family;}
+    void setFamily(string f){this->family = f;}
 protected:
   /*!
-   *
+   * the hardware targets name
    */
   std::string name;
+    /*!
+   * the product family
+   */
+    string family;
 };
 
 /*!
@@ -56,6 +67,7 @@ public:
    * constructor
    */
   FPGA();
+  ~FPGA(){};
   /*!
    * get total No of LUTs on the FPGA
    * @return
@@ -79,13 +91,8 @@ public:
    */
   int getBRAMs(){return this->BRAMs;}
   void setBRAMs(int b){this->BRAMs = b;}
-  /*!
-   * get the fpga family
-   * @return
-   */
-  string getFamily(){return this->family;}
-  void setFamily(string f){this->family = f;}
-private:
+
+protected:
   /*!
    * total No of LUTs on the FPGA
    */
@@ -102,10 +109,6 @@ private:
    * total No of BRAMs on the FPGA
    */
   int BRAMs;
-  /*!
-   * the fpga family
-   */
-  string family;
 };
 
 }
