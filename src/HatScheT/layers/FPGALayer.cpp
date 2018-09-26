@@ -19,6 +19,7 @@
 */
 
 #include "FPGALayer.h"
+#include "HatScheT/utility/Exception.h"
 
 namespace HatScheT {
 
@@ -28,10 +29,43 @@ FPGALayer::FPGALayer(FPGAVendor vendor) {
 
 XilinxFPGA::XilinxFPGA(FPGAVendor vendor) : FPGALayer(vendor) {
   this->family = "";
-  this->LUTs = -1;
-  this->Slices = -1;
-  this->DSPs = -1;
-  this->BRAMs = -1;
+  this->totalLUTs = -1;
+  this->totalSlices = -1;
+  this->totalDSPs = -1;
+  this->totalBRAMs = -1;
+}
+
+int XilinxFPGA::getLUTConstraint() {
+  if ( this->constraints.find("LUTs") == this->constraints.end() ) {
+    throw HatScheT::Exception("XilinxFPGA::getLUTConstraint: No LUT Constraints found! Plz use the setLUTConstraint method first!");
+  } else {
+    return this->constraints["LUTs"];
+  }
+}
+
+int XilinxFPGA::getSliceConstraint() {
+  if ( this->constraints.find("Slices") == this->constraints.end() ) {
+    throw HatScheT::Exception("XilinxFPGA::getSliceConstraint: No Slice Constraints found! Plz use the setSliceConstraint method first!");
+  } else {
+    return this->constraints["Slices"];
+  }
+}
+
+
+int XilinxFPGA::getDSPConstraint() {
+  if ( this->constraints.find("DSPs") == this->constraints.end() ) {
+    throw HatScheT::Exception("XilinxFPGA::getDSPConstraint: No DSP Constraints found! Plz use the setDSPConstraint method first!");
+  } else {
+    return this->constraints["DSPs"];
+  }
+}
+
+int XilinxFPGA::getBRAMConstraint() {
+  if ( this->constraints.find("BRAMs") == this->constraints.end() ) {
+    throw HatScheT::Exception("XilinxFPGA::getBRAMConstraint: No BRAM Constraints found! Plz use the setBRAMConstraint method first!");
+  } else {
+    return this->constraints["BRAMs"];
+  }
 }
 
 }

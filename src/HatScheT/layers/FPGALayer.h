@@ -61,46 +61,70 @@ public:
   XilinxFPGA(FPGAVendor vendor);
   ~XilinxFPGA(){};
   /*!
+   * manange LUT constraint of the xilinx FPGA
+   * @param l
+   */
+  void setLUTConstraint(int l){this->addConstraint("LUTs",l);}
+  int getLUTConstraint();
+  /*!
+   * manange Slice constraint of the xilinx FPGA
+   * @param s
+   */
+  void setSliceConstraint(int s){this->addConstraint("Slices",s);}
+  int getSliceConstraint();
+  /*!
+   * manange DSP constraint of the xilinx FPGA
+   * @param d
+   */
+  void setDSPConstraint(int d){this->addConstraint("DSPs",d);}
+  int getDSPConstraint();
+  /*!
+   * manange BRAM constraint of the xilinx FPGA
+   * @param b
+   */
+  void setBRAMConstraint(int b){this->addConstraint("BRAMSs",b);}
+  int getBRAMConstraint();
+  /*!
    * get total No of LUTs on the FPGA
    * @return
    */
-  int getLUTs(){return this->LUTs;}
-  void setLUTs(int l){this->LUTs = l;}
+  int getTotalLUTs(){return this->totalLUTs;}
+  void setTotalLUTs(int l){this->totalLUTs = l;}
   /*!
    * get total No of Slices on the FPGA
    * @return
    */
-  int getSlices(){return this->Slices;}
-  void setSlices(int s){this->Slices = s;}
+  int getTotalSlices(){return this->totalSlices;}
+  void setTotalSlices(int s){this->totalSlices = s;}
   /*!
    * get total No of DSPs on the FPGA
    * @return
    */
-  int getDSPs(){return this->DSPs;}
-  void setDSPs(int d){this->DSPs = d;}
+  int getTotalDSPs(){return this->totalDSPs;}
+  void setTotalDSPs(int d){this->totalDSPs = d;}
   /*!
    * get total No of BRAMs on the FPGA
    */
-  int getBRAMs(){return this->BRAMs;}
-  void setBRAMs(int b){this->BRAMs = b;}
+  int getTotalBRAMs(){return this->totalBRAMs;}
+  void setTotalBRAMs(int b){this->totalBRAMs = b;}
 
 protected:
   /*!
    * total No of LUTs on the FPGA
    */
-  int LUTs;
+  int totalLUTs;
   /*!
    * total No of Slices on the FPGA
    */
-  int Slices;
+  int totalSlices;
   /*!
    * total No of DSPs on the FPGA
    */
-  int DSPs;
+  int totalDSPs;
   /*!
    * total No of BRAMs on the FPGA
    */
-  int BRAMs;
+  int totalBRAMs;
 };
 
 }

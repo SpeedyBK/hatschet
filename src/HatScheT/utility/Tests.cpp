@@ -165,20 +165,20 @@ bool Tests::readTest()
     cout << "Incorrect FPGA name found: " << xilinxfpga.getName() << " instead of XC6VLX75T" << endl;
   }
 
-  if(xilinxfpga.getLUTs() != 46560){
-    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getSlices() << " instead of 46560" << endl;
+  if(xilinxfpga.getTotalLUTs() != 46560){
+    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getTotalSlices() << " instead of 46560" << endl;
   }
 
-  if(xilinxfpga.getSlices() != 11640){
-    cout << "Incorrect FPGA Slices found: " << xilinxfpga.getSlices() << " instead of 11640" << endl;
+  if(xilinxfpga.getTotalSlices() != 11640){
+    cout << "Incorrect FPGA Slices found: " << xilinxfpga.getTotalSlices() << " instead of 11640" << endl;
   }
 
-  if(xilinxfpga.getBRAMs() != 312){
-    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getSlices() << " instead of 312" << endl;
+  if(xilinxfpga.getTotalBRAMs() != 312){
+    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getTotalSlices() << " instead of 312" << endl;
   }
 
-  if(xilinxfpga.getDSPs() != 288){
-    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getSlices() << " instead of 288" << endl;
+  if(xilinxfpga.getTotalDSPs() != 288){
+    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getTotalSlices() << " instead of 288" << endl;
   }
 
   return true;

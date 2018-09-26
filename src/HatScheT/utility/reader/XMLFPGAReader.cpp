@@ -58,10 +58,10 @@ void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const lo
     this->xilinxfpga->setName(name);
     this->xilinxfpga->setFamily(family);
 
-    this->xilinxfpga->setLUTs(stoi(LUTs));
-    this->xilinxfpga->setSlices(stoi(Slices));
-    this->xilinxfpga->setDSPs(stoi(DSPs));
-    this->xilinxfpga->setBRAMs(stoi(BRAMs));
+    this->xilinxfpga->setTotalLUTs(stoi(LUTs));
+    this->xilinxfpga->setTotalSlices(stoi(Slices));
+    this->xilinxfpga->setTotalDSPs(stoi(DSPs));
+    this->xilinxfpga->setTotalBRAMs(stoi(BRAMs));
   }
 }
 
