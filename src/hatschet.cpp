@@ -138,7 +138,7 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::FPGA fpga;
+    HatScheT::XilinxFPGA fpga;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
 

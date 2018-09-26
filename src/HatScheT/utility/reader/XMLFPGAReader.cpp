@@ -30,7 +30,7 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(FPGA* fpga)
+XMLFPGAReader::XMLFPGAReader(XilinxFPGA* fpga)
 {
   this->fpga = fpga;
 }
@@ -67,7 +67,7 @@ void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const loca
 
 }
 
-FPGA& XMLFPGAReader::readFPGA(const char *path)
+XilinxFPGA& XMLFPGAReader::readFPGA(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();

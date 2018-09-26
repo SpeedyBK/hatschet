@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -40,14 +41,24 @@ public:
    */
   std::string getName(){return this->name;}
   void setName(string n){this->name = n;}
-
-    /*!
-   * get the product family
-   * @return
+  /*!
+ * get the product family
+ * @return
+ */
+  string getFamily(){return this->family;}
+  void setFamily(string f){this->family = f;}
+  /*!
+   * add a generic hardware constraint to this target
+   * e.g. "(c1,54),(cm^2, 47.34)"
+   * @param constraint
+   * @param limit
    */
-    string getFamily(){return this->family;}
-    void setFamily(string f){this->family = f;}
+  void addConstraint(string constraint, double limit);
 protected:
+  /*!
+   * this container manages the hardware constraints of the target
+   */
+  map<std::string, double> constraints;
   /*!
    * the hardware targets name
    */
@@ -55,19 +66,19 @@ protected:
     /*!
    * the product family
    */
-    string family;
+   string family;
 };
 
 /*!
- * The FPGA class, is a hardware target
+ * The XilinxFPGA class, is a hardware target
  */
-class FPGA : public HardwareTargetBase {
+class XilinxFPGA : public HardwareTargetBase {
 public:
   /*!
    * constructor
    */
-  FPGA();
-  ~FPGA(){};
+  XilinxFPGA();
+  ~XilinxFPGA(){};
   /*!
    * get total No of LUTs on the FPGA
    * @return

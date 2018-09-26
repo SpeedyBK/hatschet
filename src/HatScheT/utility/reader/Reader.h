@@ -61,7 +61,7 @@ public:
    * @param path
    * @return
    */
-  virtual FPGA& readFPGA(const char* path)=0;
+  virtual XilinxFPGA& readFPGA(const char* path)=0;
 protected:
 
 

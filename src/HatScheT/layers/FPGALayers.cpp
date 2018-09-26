@@ -18,21 +18,12 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "HardwareTargetBase.h"
+#include "FPGALayers.h"
 
-namespace HatScheT
-{
-  HardwareTargetBase::HardwareTargetBase()
-  {
-    this->name = "";
-  }
+namespace HatScheT {
 
-  XilinxFPGA::XilinxFPGA()
-  {
-    this->family = "";
-    this->LUTs = -1;
-    this->Slices = -1;
-    this->DSPs = -1;
-    this->BRAMs = -1;
-  }
+FPGALayers::FPGALayers(string vendor) {
+  this->vendor = vendor;
+}
+
 }

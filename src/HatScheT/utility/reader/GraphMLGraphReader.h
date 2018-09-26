@@ -58,7 +58,7 @@ public:
   * @param path
   * @return
   */
-  virtual FPGA& readFPGA(const char* path){
+  virtual XilinxFPGA& readFPGA(const char* path){
     string p(path);
     throw Exception("GraphMLResourceReader.readFPGA: Dont use this class to read FPGA hardware target: " + p);}
 private:
