@@ -134,8 +134,8 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
-  HatScheT::XilinxFPGA fpga;
-  HatScheT::XMLFPGAReader fpgaReader(&fpga);
+  HatScheT::XilinxFPGA xilinxfpga(FPGAVendor::XILINX);
+  HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -145,7 +145,7 @@ bool Tests::readTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  fpga = fpgaReader.readFPGA(fpgaStr.c_str());
+  xilinxfpga = fpgaReader.readFPGA(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
@@ -157,28 +157,28 @@ bool Tests::readTest()
     return false;
   }
 
-  if(fpga.getFamily() != "virtex6"){
-    cout << "Incorrect FPGA family found: " << fpga.getFamily() << " instead of virtex6" << endl;
+  if(xilinxfpga.getFamily() != "virtex6"){
+    cout << "Incorrect FPGA family found: " << xilinxfpga.getFamily() << " instead of virtex6" << endl;
   }
 
-  if(fpga.getName() != "XC6VLX75T"){
-    cout << "Incorrect FPGA name found: " << fpga.getName() << " instead of XC6VLX75T" << endl;
+  if(xilinxfpga.getName() != "XC6VLX75T"){
+    cout << "Incorrect FPGA name found: " << xilinxfpga.getName() << " instead of XC6VLX75T" << endl;
   }
 
-  if(fpga.getLUTs() != 46560){
-    cout << "Incorrect FPGA LUTs found: " << fpga.getSlices() << " instead of 46560" << endl;
+  if(xilinxfpga.getLUTs() != 46560){
+    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getSlices() << " instead of 46560" << endl;
   }
 
-  if(fpga.getSlices() != 11640){
-    cout << "Incorrect FPGA Slices found: " << fpga.getSlices() << " instead of 11640" << endl;
+  if(xilinxfpga.getSlices() != 11640){
+    cout << "Incorrect FPGA Slices found: " << xilinxfpga.getSlices() << " instead of 11640" << endl;
   }
 
-  if(fpga.getBRAMs() != 312){
-    cout << "Incorrect FPGA BRAMS found: " << fpga.getSlices() << " instead of 312" << endl;
+  if(xilinxfpga.getBRAMs() != 312){
+    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getSlices() << " instead of 312" << endl;
   }
 
-  if(fpga.getDSPs() != 288){
-    cout << "Incorrect FPGA DSPS found: " << fpga.getSlices() << " instead of 288" << endl;
+  if(xilinxfpga.getDSPs() != 288){
+    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getSlices() << " instead of 288" << endl;
   }
 
   return true;

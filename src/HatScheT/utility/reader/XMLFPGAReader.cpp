@@ -30,9 +30,12 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(XilinxFPGA* fpga)
+XMLFPGAReader::XMLFPGAReader(FPGALayer* fpga)
 {
-  this->fpga = fpga;
+  if(fpga->getVendor()==FPGAVendor::XILINX){
+    this->xilinxfpga = (XilinxFPGA*)fpga;
+  }
+  else throw HatScheT::Exception("XMLFPGAReader::XMLFPGAReader: Only xilinx FPGA supported for now! Plz provide a 'xilinx' FPGA!");
 }
 
 void XMLFPGAReader::characters(const XMLCh * const chars, const XMLSize_t length)
@@ -52,13 +55,13 @@ void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const lo
     string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
     string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
 
-    this->fpga->setName(name);
-    this->fpga->setFamily(family);
+    this->xilinxfpga->setName(name);
+    this->xilinxfpga->setFamily(family);
 
-    this->fpga->setLUTs(stoi(LUTs));
-    this->fpga->setSlices(stoi(Slices));
-    this->fpga->setDSPs(stoi(DSPs));
-    this->fpga->setBRAMs(stoi(BRAMs));
+    this->xilinxfpga->setLUTs(stoi(LUTs));
+    this->xilinxfpga->setSlices(stoi(Slices));
+    this->xilinxfpga->setDSPs(stoi(DSPs));
+    this->xilinxfpga->setBRAMs(stoi(BRAMs));
   }
 }
 
@@ -120,7 +123,7 @@ XilinxFPGA& XMLFPGAReader::readFPGA(const char *path)
   delete parser;
   XMLPlatformUtils::Terminate();
 
-  return *(this->fpga);
+  return *(this->xilinxfpga);
 }
 
 }

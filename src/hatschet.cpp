@@ -138,7 +138,7 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::XilinxFPGA fpga;
+    HatScheT::XilinxFPGA xilinxfpga(HatScheT::FPGAVendor::XILINX);
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
 
@@ -327,10 +327,10 @@ int main(int argc, char *args[])
 
     //read fpga if provided
     if(FPGAFile!=""){
-      HatScheT::XMLFPGAReader fpgaReader(&fpga);
-      fpga = fpgaReader.readFPGA(FPGAFile.c_str());
+      HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
+      xilinxfpga = fpgaReader.readFPGA(FPGAFile.c_str());
 
-      cout << "fpga: " << fpga.getFamily() << " - " << fpga.getName() << endl;
+      cout << xilinxfpga.getVendor() << " fpga: " << xilinxfpga.getFamily() << " - " << xilinxfpga.getName() << endl;
     }
 
     //read resource model:

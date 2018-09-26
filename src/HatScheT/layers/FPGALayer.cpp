@@ -18,21 +18,20 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "HatScheT/base/HardwareTargetBase.h"
+#include "FPGALayer.h"
 
 namespace HatScheT {
 
-class FPGALayers : public HardwareTargetBase {
+FPGALayer::FPGALayer(FPGAVendor vendor) {
+  this->vendor = vendor;
+}
 
-public:
-    FPGALayers(string vendor);
-    ~FPGALayers(){};
-
-protected:
-    string vendor;
-
-};
+XilinxFPGA::XilinxFPGA(FPGAVendor vendor) : FPGALayer(vendor) {
+  this->family = "";
+  this->LUTs = -1;
+  this->Slices = -1;
+  this->DSPs = -1;
+  this->BRAMs = -1;
+}
 
 }

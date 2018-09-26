@@ -18,8 +18,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
-#include <HatScheT/base/HardwareTargetBase.h>
+#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/layers/FPGALayer.h"
 
 namespace HatScheT {
 /*!
