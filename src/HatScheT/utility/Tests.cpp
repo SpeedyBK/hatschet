@@ -159,26 +159,74 @@ bool Tests::readTest()
 
   if(xilinxfpga.getFamily() != "virtex6"){
     cout << "Incorrect FPGA family found: " << xilinxfpga.getFamily() << " instead of virtex6" << endl;
+    return false;
   }
 
   if(xilinxfpga.getName() != "XC6VLX75T"){
     cout << "Incorrect FPGA name found: " << xilinxfpga.getName() << " instead of XC6VLX75T" << endl;
+    return false;
   }
 
   if(xilinxfpga.getTotalLUTs() != 46560){
-    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getTotalSlices() << " instead of 46560" << endl;
+    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getTotalLUTs() << " instead of 46560" << endl;
+    return false;
   }
 
   if(xilinxfpga.getTotalSlices() != 11640){
     cout << "Incorrect FPGA Slices found: " << xilinxfpga.getTotalSlices() << " instead of 11640" << endl;
+    return false;
   }
 
   if(xilinxfpga.getTotalBRAMs() != 312){
-    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getTotalSlices() << " instead of 312" << endl;
+    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getTotalBRAMs() << " instead of 312" << endl;
+    return false;
   }
 
   if(xilinxfpga.getTotalDSPs() != 288){
-    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getTotalSlices() << " instead of 288" << endl;
+    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getTotalDSPs() << " instead of 288" << endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool Tests::xilinxFPGAConstraintsTest()
+{
+  try
+  {
+    XilinxFPGA* fpga = new XilinxFPGA(FPGAVendor::XILINX);
+
+    fpga->setLUTConstraint(1250);
+    fpga->setSliceConstraint(575);
+    fpga->setDSPConstraint(24);
+    fpga->setBRAMConstraint(5);
+
+    if(fpga->getLUTConstraint() != 1250){
+      cout << "Incorrect FPGA LUT constraint found: " << fpga->getLUTConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getSliceConstraint() != 575){
+      cout << "Incorrect FPGA Slice constraint found: " << fpga->getSliceConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getDSPConstraint() != 24){
+      cout << "Incorrect FPGA DSP constraint found: " << fpga->getDSPConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getBRAMConstraint() != 5){
+      cout << "Incorrect FPGA BRAM constraint found: " << fpga->getBRAMConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    delete fpga;
+  }
+
+  catch(HatScheT::Exception &e)
+  {
+    std::cout << e.msg << std::endl;
   }
 
   return true;

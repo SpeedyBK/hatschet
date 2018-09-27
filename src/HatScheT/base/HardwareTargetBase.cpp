@@ -28,4 +28,9 @@ HardwareTargetBase::HardwareTargetBase()
   this->name = "";
 }
 
+void HardwareTargetBase::addConstraint(string constraint, double limit)
+{
+  this->constraints.insert(make_pair(constraint,limit));
+}
+
 }

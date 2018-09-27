@@ -52,7 +52,7 @@ int XilinxFPGA::getSliceConstraint() {
 }
 
 
-int XilinxFPGA::getDSPConstraint() {
+int FPGALayer::getDSPConstraint() {
   if ( this->constraints.find("DSPs") == this->constraints.end() ) {
     throw HatScheT::Exception("XilinxFPGA::getDSPConstraint: No DSP Constraints found! Plz use the setDSPConstraint method first!");
   } else {

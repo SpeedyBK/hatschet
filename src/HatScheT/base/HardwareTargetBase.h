@@ -54,6 +54,7 @@ public:
    * @param limit
    */
   void addConstraint(string constraint, double limit);
+  map<std::string, double>& getConstraints() {return this->constraints;}
 protected:
   /*!
    * this container manages the hardware constraints of the target

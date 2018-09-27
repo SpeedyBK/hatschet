@@ -31,23 +31,39 @@ enum FPGAVendor {XILINX};
 class FPGALayer : public HardwareTargetBase {
 
 public:
-    /*!
-     * constructor, a vendor for an fpga is required
-     * Dont use this class. Use the specific vendor classes, e.g. XilinxFPGA
-     * @param vendor
-     */
-    FPGALayer(FPGAVendor vendor);
-    ~FPGALayer(){};
-    /*!
-     * get the name of the vendor
-     * @return
-     */
-    FPGAVendor getVendor() const {return this->vendor;}
+  /*!
+   * constructor, a vendor for an fpga is required
+   * Dont use this class. Use the specific vendor classes, e.g. XilinxFPGA
+   * @param vendor
+   */
+  FPGALayer(FPGAVendor vendor);
+  ~FPGALayer(){};
+  /*!
+   * get the name of the vendor
+   * @return
+   */
+  FPGAVendor getVendor() const {return this->vendor;}
+  /*!
+  * manange DSP constraint of the FPGA
+  * @param d
+  */
+  void setDSPConstraint(int d){this->addConstraint("DSPs",d);}
+  int getDSPConstraint();
+  /*!
+  * get total No of DSPs on the FPGA
+  * @return
+  */
+  int getTotalDSPs(){return this->totalDSPs;}
+  void setTotalDSPs(int d){this->totalDSPs = d;}
 protected:
-    /*!
-     * each fpga has to have a vendor
-     */
-    FPGAVendor vendor;
+  /*!
+   * each fpga has to have a vendor
+   */
+  FPGAVendor vendor;
+  /*!
+  * total No of DSPs on the FPGA
+  */
+  int totalDSPs;
 };
 
 /*!
@@ -72,12 +88,7 @@ public:
    */
   void setSliceConstraint(int s){this->addConstraint("Slices",s);}
   int getSliceConstraint();
-  /*!
-   * manange DSP constraint of the xilinx FPGA
-   * @param d
-   */
-  void setDSPConstraint(int d){this->addConstraint("DSPs",d);}
-  int getDSPConstraint();
+
   /*!
    * manange BRAM constraint of the xilinx FPGA
    * @param b
@@ -97,12 +108,6 @@ public:
   int getTotalSlices(){return this->totalSlices;}
   void setTotalSlices(int s){this->totalSlices = s;}
   /*!
-   * get total No of DSPs on the FPGA
-   * @return
-   */
-  int getTotalDSPs(){return this->totalDSPs;}
-  void setTotalDSPs(int d){this->totalDSPs = d;}
-  /*!
    * get total No of BRAMs on the FPGA
    */
   int getTotalBRAMs(){return this->totalBRAMs;}
@@ -117,10 +122,6 @@ protected:
    * total No of Slices on the FPGA
    */
   int totalSlices;
-  /*!
-   * total No of DSPs on the FPGA
-   */
-  int totalDSPs;
   /*!
    * total No of BRAMs on the FPGA
    */

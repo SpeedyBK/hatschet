@@ -211,6 +211,7 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
+add_test("FPGAConstraints" "./hatschet" "--test=FPGACONSTRAINTS")
 
 ####################
 # example project
