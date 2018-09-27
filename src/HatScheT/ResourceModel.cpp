@@ -225,6 +225,11 @@ int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
   return count;
 }
 
+void Resource::addHardwareCost(string n, double c)
+{
+  this->hardwareCost.insert(make_pair(n,c));
+}
+
 int ResourceModel::getMaxLatency() const
 {
   int maxLat = 0;
