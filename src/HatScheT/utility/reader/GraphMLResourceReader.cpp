@@ -71,10 +71,17 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
     string latencystring = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
     string blockingtimestring = XMLString::transcode(attrs.getValue(XMLString::transcode("blockingTime")));
 
+    int LUTs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nLUT"))));
+    int DSPs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nDSP"))));
+    int MEMs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nMEM"))));
+
     int limit = -1;
     if(limitstring != "inf") limit = stoi(limitstring);
 
-    this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
+    auto r = &this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
+    r->addHardwareCost("LUTs",LUTs);
+    r->addHardwareCost("DSPs",DSPs);
+    r->addHardwareCost("BRAMs",MEMs);
   }
 
   if(tag == "rt")

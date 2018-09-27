@@ -80,6 +80,7 @@ public:
    */
   map<string,double>& getHardwareCosts(){return this->hardwareCost;}
   void addHardwareCost(string n, double c);
+  double getHardwareCost(string n);
 protected:
   /*!
    * \brief the resource's name

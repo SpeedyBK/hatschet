@@ -152,6 +152,31 @@ bool Tests::readTest()
     return false;
   }
 
+  for(auto it = rm.resourcesBegin(); it!= rm.resourcesEnd(); ++it){
+    Resource* r = *it;
+
+    if(r->getName()=="Adder"){
+      if(r->getHardwareCost("LUTs")!=275){
+        cout << "Incorrect LUTs found for Adder: " << r->getHardwareCost("LUTS") << " instead of 275" << endl;
+        return false;
+      }
+    }
+
+    if(r->getName()=="Multiplier"){
+      if(r->getHardwareCost("DSPs")!=1){
+        cout << "Incorrect LUTs found for Multiplier: " << r->getHardwareCost("DSPs") << " instead of 1" << endl;
+        return false;
+      }
+    }
+
+    if(r->getName()=="Gain"){
+      if(r->getHardwareCost("LUTs")!=64){
+        cout << "Incorrect LUTs found for Gain: " << r->getHardwareCost("LUTS") << " instead of 64" << endl;
+        return false;
+      }
+    }
+  }
+
   if(g.getNumberOfVertices() != 11){
     cout << "Incorrect no of vertices read: " << g.getNumberOfVertices() << " instead of 11!" << endl;
     return false;
