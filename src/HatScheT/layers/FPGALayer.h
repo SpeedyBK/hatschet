@@ -93,7 +93,7 @@ public:
    * manange BRAM constraint of the xilinx FPGA
    * @param b
    */
-  void setBRAMConstraint(int b){this->addConstraint("BRAMSs",b);}
+  void setBRAMConstraint(int b){this->addConstraint("BRAMs",b);}
   int getBRAMConstraint();
   /*!
    * get total No of LUTs on the FPGA

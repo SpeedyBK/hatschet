@@ -63,6 +63,17 @@ void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const lo
     this->xilinxfpga->setTotalDSPs(stoi(DSPs));
     this->xilinxfpga->setTotalBRAMs(stoi(BRAMs));
   }
+  if(tag=="Constraints"){
+    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
+    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
+    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
+    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
+
+    this->xilinxfpga->setLUTConstraint(stoi(LUTs));
+    this->xilinxfpga->setSliceConstraint(stoi(Slices));
+    this->xilinxfpga->setDSPConstraint(stoi(DSPs));
+    this->xilinxfpga->setBRAMConstraint(stoi(BRAMs));
+  }
 }
 
 void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
