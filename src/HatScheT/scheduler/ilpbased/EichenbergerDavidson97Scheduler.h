@@ -43,7 +43,17 @@ public:
   virtual void schedule();
 
 protected:
-  virtual void constructProblem();
+  virtual void setUpSolverSettings();
+
+  virtual void scheduleAttempt(int candII, bool &feasible, bool &proven);
+  virtual void constructDecisionVariables(int candII);
+  virtual void constructConstraints(int candII);
   virtual void setObjective();
+
+  virtual void constructProblem() {/* unused */}
+
+  // decision variables
+  std::vector<std::map<const Vertex*, ScaLP::Variable>> a;
+  std::map<const Vertex*, ScaLP::Variable> k, row, time;
 };
 }
