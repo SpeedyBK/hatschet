@@ -25,27 +25,63 @@
 namespace HatScheT
 {
 
-/*!
- * currently under development and an experimental version!
+/*!!
  * Scheduler for ilp based asap scheduling
+ * This formulation is time-index based and uses binary variables
+ * As a result, an upper bound for the schedule is needed
+ * use the setMaxLatencyConstraint method to do this before calling the schedule() method!!
  */
 class ASAPILPScheduler:  public SchedulerBase, public ILPSchedulerBase
 {
 public:
+    /*!
+     * constructor
+     * @param g graph to schedule
+     * @param resourceModel info and resource constraints
+     * @param solverWishlist scalp solver selection
+     */
     ASAPILPScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    /*!
+     * use this methode to solve the scheduling problem
+     */
     virtual void schedule();
 
 protected:
+    /*!
+     * \brief setGeneralConstraints e.g. depencies, recurrences, latencies
+     */
     virtual void setGeneralConstraints();
+    /*!
+    * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
+    */
     virtual void constructProblem();
+    /*!
+    *  \brief setObjective asap
+    */
     virtual void setObjective();
+    /*!
+     * \brief generate and store the needed ilp variables
+     */
     void setVectorVariables();
+    /*!
+     * \brief provide all the scheduling information to the interface iff a valid schedule was found
+     */
     void fillSolutionStructure();
+    /*!
+     * \brief generate ilp to respect resource constraints
+     */
     void setResourceConstraints();
-
+    /*!
+     * \brief container for time variables
+     */
     vector<ScaLP::Variable> ti;
+    /*!
+     * \brief container to store relations between vertices and variables
+     */
     map<const Vertex*, unsigned int> tIndices;
-
+    /*!
+     * \brief container to stare relations of binary variables
+     */
     map<const Vertex*, vector<ScaLP::Variable> > binVarMap;
 };
 

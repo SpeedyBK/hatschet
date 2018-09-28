@@ -28,15 +28,11 @@ ASAPILPScheduler::ASAPILPScheduler(Graph &g, ResourceModel &resourceModel, std::
 }
 
 void ASAPILPScheduler::schedule() {
-  cout << "Starting ASAPILPScheduler with maxLatency " << this->maxLatencyConstraint << endl;
-
   this->constructProblem();
 
   if(this->maxLatencyConstraint<=0) throw HatScheT::Exception("ASAPILP Scheduler::schedule: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
 
   stat = this->solver->solve();
-
-  cout << "ASAPILP status after solving " << stat << endl;
 
   if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
   if(stat == ScaLP::status::OPTIMAL) this->optimalResult = true;
@@ -49,7 +45,6 @@ void ASAPILPScheduler::schedule() {
   }
 
   else{
-    cout << "No ASAP schedule found!" << endl;
     this->II = -1;
   }
 }
