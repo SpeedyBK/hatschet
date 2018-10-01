@@ -37,6 +37,8 @@ GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
   this->rm = rm;
   this->reservationTableTagFound = false;
   this->blogTagFound = false;
+  this->resourceTagFound = false;
+  this->currentResourceParsing ="";
 }
 
 GraphMLResourceReader::~GraphMLResourceReader()
@@ -48,9 +50,12 @@ void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * co
 {
   string name = XMLString::transcode(localname);
 
-  if(name == "rt")
-  {
+  if(name == "rt") {
     this->reservationTableTagFound = false;
+  }
+
+  if(name == "resource") {
+    this->resourceTagFound = false;
   }
 
 }
@@ -64,40 +69,41 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
 {
   string tag = XMLString::transcode(localname);
 
-  if(tag == "resource")
-  {
+  if(tag == "resource") {
+    this->resourceTagFound = true;
+
     string namestring = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
     string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
     string latencystring = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
     string blockingtimestring = XMLString::transcode(attrs.getValue(XMLString::transcode("blockingTime")));
 
-    int LUTs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nLUT"))));
-    int DSPs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nDSP"))));
-    int MEMs = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("nMEM"))));
-
     int limit = -1;
     if(limitstring != "inf") limit = stoi(limitstring);
 
-    auto r = &this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
-    r->addHardwareCost("LUTs",LUTs);
-    r->addHardwareCost("DSPs",DSPs);
-    r->addHardwareCost("BRAMs",MEMs);
+    this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
+    this->currentResourceParsing = namestring;
   }
 
-  if(tag == "rt")
-  {
+  if(tag == "rt") {
     this->reservationTableTagFound = true;
 
     this->currRt = &(this->rm->makeReservationTable(XMLString::transcode(attrs.getValue(XMLString::transcode("name")))));
   }
 
-  if(tag == "block")
-  {
+  if(tag == "block") {
     string resourcenamestring = XMLString::transcode(attrs.getValue(XMLString::transcode("resourceName")));
     int startTime = stoi(XMLString::transcode(attrs.getValue(XMLString::transcode("startTime"))));
     Resource* r = this->rm->getResource(resourcenamestring);
 
     this->currRt->makeReservationBlock(r, startTime);
+  }
+
+  if(tag == "cost" && this->resourceTagFound == true) {
+    string namestring = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
+    string demandstring = XMLString::transcode(attrs.getValue(XMLString::transcode("demand")));
+
+    auto r = this->rm->getResource(this->currentResourceParsing);
+    r->addHardwareCost(namestring,stof(demandstring));
   }
 }
 
