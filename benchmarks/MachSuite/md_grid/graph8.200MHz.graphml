@@ -2045,12 +2045,12 @@
       <data key="distance">1</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="1279_1306" source="1279" target="1306">
+    <edge id="1287_1306" source="1287" target="1306">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="1287_1306" source="1287" target="1306">
+    <edge id="1279_1306" source="1279" target="1306">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>

@@ -1,17 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?><ModelInformation Version="1.0">
   <Resources>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="0" nMEM="0" name="special_virtual" physicalDelay="0.0"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="MUX_N_to_1_32_32_32_2" physicalDelay="0.693"/>
-    <resource blockingTime="1" latency="2" limit="2" nDSP="0" nLUT="0" nMEM="1" name="mem_read" physicalDelay="0.0"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="plus_expr_FU_64_64_64" physicalDelay="1.591"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="MUX_N_to_1_64_64_64_2" physicalDelay="0.691"/>
-    <resource blockingTime="1" latency="1" limit="-1" nDSP="0" nLUT="0" nMEM="0" name="special_1_cycle" physicalDelay="0.0"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="1" nMEM="0" name="eq_expr_FU_1_1_1" physicalDelay="0.436"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="lshift_expr_FU_64_64_64" physicalDelay="1.784"/>
-    <resource blockingTime="1" latency="5" limit="-1" nDSP="10" nLUT="29" nMEM="0" name="mult_expr_FU_64_64_64_4" physicalDelay="0.0"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="1" nMEM="0" name="gt_expr_FU_1_1_1" physicalDelay="0.436"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="64" nMEM="0" name="lshift_expr_FU_64_64_64" physicalDelay="1.784"/>
-    <resource blockingTime="0" latency="0" limit="-1" nDSP="0" nLUT="32" nMEM="0" name="plus_expr_FU_32_32_32" physicalDelay="1.186"/>
-    <resource blockingTime="1" latency="1" limit="1" nDSP="0" nLUT="0" nMEM="1" name="mem_write" physicalDelay="0.0"/>
+    <Resource blockingTime="0" latency="0" limit="-1" name="special_virtual" physicalDelay="0.0">
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="MUX_N_to_1_32_32_32_2" physicalDelay="0.693">
+      <Cost demand="32" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="2" limit="2" name="mem_read" physicalDelay="0.0">
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="1" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="plus_expr_FU_64_64_64" physicalDelay="1.591">
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="MUX_N_to_1_64_64_64_2" physicalDelay="0.691">
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="1" limit="-1" name="special_1_cycle" physicalDelay="0.0">
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="eq_expr_FU_1_1_1" physicalDelay="0.436">
+      <Cost demand="1" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="lshift_expr_FU_64_64_64" physicalDelay="1.784">
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="5" limit="-1" name="mult_expr_FU_64_64_64_4" physicalDelay="0.0">
+      <Cost demand="29" name="LUT"/>
+      <Cost demand="10" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="gt_expr_FU_1_1_1" physicalDelay="0.436">
+      <Cost demand="1" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="plus_expr_FU_32_32_32" physicalDelay="1.186">
+      <Cost demand="32" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="1" limit="1" name="mem_write" physicalDelay="0.0">
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="1" name="MEM"/>
+    </Resource>
   </Resources>
 </ModelInformation>

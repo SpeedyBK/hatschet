@@ -1031,22 +1031,22 @@
       <data key="distance">1</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="2199_2216" source="2199" target="2216">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="6048_2216" source="6048" target="2216">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
     <edge id="1035_2216" source="1035" target="2216">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
+    <edge id="2199_2216" source="2199" target="2216">
+      <data key="delay">1</data>
+      <data key="distance">0</data>
+      <data key="deptype">Precedence</data>
+    </edge>
     <edge id="2179_2216" source="2179" target="2216">
+      <data key="delay">1</data>
+      <data key="distance">0</data>
+      <data key="deptype">Precedence</data>
+    </edge>
+    <edge id="6048_2216" source="6048" target="2216">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
