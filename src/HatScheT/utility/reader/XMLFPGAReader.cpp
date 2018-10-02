@@ -30,9 +30,12 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(FPGA* fpga)
+XMLFPGAReader::XMLFPGAReader(FPGALayer* fpga)
 {
-  this->fpga = fpga;
+  if(fpga->getVendor()==FPGAVendor::XILINX){
+    this->xilinxfpga = (XilinxFPGA*)fpga;
+  }
+  else throw HatScheT::Exception("XMLFPGAReader::XMLFPGAReader: Only xilinx FPGA supported for now! Plz provide a 'xilinx' FPGA!");
 }
 
 void XMLFPGAReader::characters(const XMLCh * const chars, const XMLSize_t length)
@@ -52,13 +55,24 @@ void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const lo
     string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
     string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
 
-    this->fpga->setName(name);
-    this->fpga->setFamily(family);
+    this->xilinxfpga->setName(name);
+    this->xilinxfpga->setFamily(family);
 
-    this->fpga->setLUTs(stoi(LUTs));
-    this->fpga->setSlices(stoi(Slices));
-    this->fpga->setDSPs(stoi(DSPs));
-    this->fpga->setBRAMs(stoi(BRAMs));
+    this->xilinxfpga->setTotalLUTs(stoi(LUTs));
+    this->xilinxfpga->setTotalSlices(stoi(Slices));
+    this->xilinxfpga->setTotalDSPs(stoi(DSPs));
+    this->xilinxfpga->setTotalBRAMs(stoi(BRAMs));
+  }
+  if(tag=="Constraints"){
+    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
+    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
+    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
+    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
+
+    this->xilinxfpga->setLUTConstraint(stoi(LUTs));
+    this->xilinxfpga->setSliceConstraint(stoi(Slices));
+    this->xilinxfpga->setDSPConstraint(stoi(DSPs));
+    this->xilinxfpga->setBRAMConstraint(stoi(BRAMs));
   }
 }
 
@@ -67,7 +81,7 @@ void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const loca
 
 }
 
-FPGA& XMLFPGAReader::readFPGA(const char *path)
+XilinxFPGA& XMLFPGAReader::readFPGA(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
@@ -120,7 +134,7 @@ FPGA& XMLFPGAReader::readFPGA(const char *path)
   delete parser;
   XMLPlatformUtils::Terminate();
 
-  return *(this->fpga);
+  return *(this->xilinxfpga);
 }
 
 }

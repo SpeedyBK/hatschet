@@ -22,17 +22,15 @@
 
 namespace HatScheT
 {
-  HardwareTargetBase::HardwareTargetBase()
-  {
-    this->name = "";
-  }
 
-  FPGA::FPGA()
-  {
-    this->family = "";
-    this->LUTs = -1;
-    this->Slices = -1;
-    this->DSPs = -1;
-    this->BRAMs = -1;
-  }
+HardwareTargetBase::HardwareTargetBase()
+{
+  this->name = "";
+}
+
+void HardwareTargetBase::addConstraint(string constraint, double limit)
+{
+  this->constraints.insert(make_pair(constraint,limit));
+}
+
 }

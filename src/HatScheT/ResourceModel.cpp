@@ -225,6 +225,19 @@ int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
   return count;
 }
 
+double Resource::getHardwareCost(string n) {
+  if ( this->hardwareCost.find(n) == this->hardwareCost.end() ) {
+    throw HatScheT::Exception("Resource::getHardwareCost: No Cost of found: " + n + " for " + this->getName());
+  } else {
+    return this->hardwareCost[n];
+  }
+}
+
+void Resource::addHardwareCost(string n, double c)
+{
+  this->hardwareCost.insert(make_pair(n,c));
+}
+
 int ResourceModel::getMaxLatency() const
 {
   int maxLat = 0;

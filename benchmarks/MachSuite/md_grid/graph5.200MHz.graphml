@@ -1203,12 +1203,12 @@
       <data key="distance">1</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="1925_1942" source="1925" target="1942">
+    <edge id="1014_1942" source="1014" target="1942">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
-    <edge id="1014_1942" source="1014" target="1942">
+    <edge id="1925_1942" source="1925" target="1942">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>

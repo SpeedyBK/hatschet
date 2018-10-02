@@ -22,7 +22,7 @@
 
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
-#include "HatScheT/base/HardwareTargetBase.h"
+#include "HatScheT/layers/FPGALayer.h"
 #include "HatScheT//utility/Exception.h"
 
 #ifdef USE_XERCESC
@@ -61,7 +61,7 @@ public:
    * @param path
    * @return
    */
-  virtual FPGA& readFPGA(const char* path)=0;
+  virtual XilinxFPGA& readFPGA(const char* path)=0;
 protected:
 
 

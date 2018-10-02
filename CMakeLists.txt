@@ -108,7 +108,7 @@ src/HatScheT/utility/Verifier.cpp
 src/HatScheT/base/HardwareTargetBase.cpp
 src/HatScheT/utility/reader/XMLFPGAReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-)
+        src/HatScheT/layers/FPGALayer.cpp src/HatScheT/layers/FPGALayer.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -128,6 +128,7 @@ src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
+src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
@@ -154,6 +155,7 @@ src/HatScheT/base/ModuloSchedulerBase.cpp
 src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
+src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
@@ -209,6 +211,7 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
+add_test("FPGAConstraints" "./hatschet" "--test=FPGACONSTRAINTS")
 
 ####################
 # example project

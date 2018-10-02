@@ -46,6 +46,7 @@
 #ifdef USE_SCALP
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
@@ -84,6 +85,7 @@ void print_short_help()
   std::cout << "                            ALAP: As-last-as-possible scheduling" << std::endl;
   std::cout << "                            UL: Universal list scheduling" << std::endl;
   std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
+  std::cout << "                            ED97: ILP formulation by Eichenberger & Davidson" << std::endl;
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
@@ -118,7 +120,7 @@ int main(int argc, char *args[])
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -138,7 +140,7 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::FPGA fpga;
+    HatScheT::XilinxFPGA xilinxfpga(HatScheT::FPGAVendor::XILINX);
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
 
@@ -223,6 +225,10 @@ int main(int argc, char *args[])
         {
           schedulerSelection = MOOVACMINREG;
         }
+        else if(schedulerSelectionStr == "ed97")
+        {
+          schedulerSelection = ED97;
+        }
         else if(schedulerSelectionStr == "modulosdc")
         {
           schedulerSelection = MODULOSDC;
@@ -261,6 +267,7 @@ int main(int argc, char *args[])
         if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
         if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
         if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
+        if(str=="FPGACONSTRAINTS" && HatScheT::Tests::xilinxFPGAConstraintsTest()==false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
@@ -307,6 +314,9 @@ int main(int argc, char *args[])
       case MOOVACMINREG:
         cout << "MOOVACMINREG";
         break;
+      case ED97:
+        cout << "ED97";
+        break;
       case MODULOSDC:
         cout << "MODULOSDC";
         break;
@@ -327,10 +337,10 @@ int main(int argc, char *args[])
 
     //read fpga if provided
     if(FPGAFile!=""){
-      HatScheT::XMLFPGAReader fpgaReader(&fpga);
-      fpga = fpgaReader.readFPGA(FPGAFile.c_str());
+      HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
+      xilinxfpga = fpgaReader.readFPGA(FPGAFile.c_str());
 
-      cout << "fpga: " << fpga.getFamily() << " - " << fpga.getName() << endl;
+      cout << xilinxfpga.getVendor() << " fpga: " << xilinxfpga.getFamily() << " - " << xilinxfpga.getName() << endl;
     }
 
     //read resource model:
@@ -403,6 +413,16 @@ int main(int argc, char *args[])
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
+        case ED97: {
+          isModuloScheduler = true;
+          auto *ed97 = new HatScheT::EichenbergerDavidson97Scheduler(g, rm, solverWishList);
+          if (timeout > 0)    ed97->setSolverTimeout(timeout);
+          if (maxLatency > 0) ed97->setMaxLatencyConstraint(maxLatency);
+          ed97->setThreads(threads);
+          ed97->setSolverQuiet(solverQuiet);
+          scheduler = ed97;
+          break;
+        }
         case MODULOSDC:
           isModuloScheduler=true;
           scheduler = new HatScheT::ModuloSDCScheduler(g,rm,solverWishList);
@@ -439,9 +459,10 @@ int main(int argc, char *args[])
 #else
         case MOOVAC:
         case MOOVACMINREG:
+        case ED97:
         case MODULOSDC:
         case RATIONALII:
-            case RATIONALIIFIMMEL
+        case RATIONALIIFIMMEL:
         case ASAPRATIONALII:
           throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
           break;

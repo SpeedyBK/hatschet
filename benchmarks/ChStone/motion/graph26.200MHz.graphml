@@ -1031,17 +1031,17 @@
       <data key="distance">1</data>
       <data key="deptype">Precedence</data>
     </edge>
+    <edge id="1077_3588" source="1077" target="3588">
+      <data key="delay">1</data>
+      <data key="distance">0</data>
+      <data key="deptype">Precedence</data>
+    </edge>
     <edge id="3571_3588" source="3571" target="3588">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>
     </edge>
     <edge id="6111_3588" source="6111" target="3588">
-      <data key="delay">1</data>
-      <data key="distance">0</data>
-      <data key="deptype">Precedence</data>
-    </edge>
-    <edge id="1077_3588" source="1077" target="3588">
       <data key="delay">1</data>
       <data key="distance">0</data>
       <data key="deptype">Precedence</data>

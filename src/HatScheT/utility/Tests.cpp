@@ -134,8 +134,8 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
-  HatScheT::FPGA fpga;
-  HatScheT::XMLFPGAReader fpgaReader(&fpga);
+  HatScheT::XilinxFPGA xilinxfpga(FPGAVendor::XILINX);
+  HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -145,11 +145,36 @@ bool Tests::readTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  fpga = fpgaReader.readFPGA(fpgaStr.c_str());
+  xilinxfpga = fpgaReader.readFPGA(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
     return false;
+  }
+
+  for(auto it = rm.resourcesBegin(); it!= rm.resourcesEnd(); ++it){
+    Resource* r = *it;
+
+    if(r->getName()=="Adder"){
+      if(r->getHardwareCost("LUTs")!=275){
+        cout << "Incorrect LUT costs found for Adder: " << r->getHardwareCost("LUTS") << " instead of 275" << endl;
+        return false;
+      }
+    }
+
+    if(r->getName()=="Multiplier"){
+      if(r->getHardwareCost("DSPs")!=1){
+        cout << "Incorrect DSP costs found for Multiplier: " << r->getHardwareCost("DSPs") << " instead of 1" << endl;
+        return false;
+      }
+    }
+
+    if(r->getName()=="Gain"){
+      if(r->getHardwareCost("LUTs")!=64){
+        cout << "Incorrect LUT costs found for Gain: " << r->getHardwareCost("LUTS") << " instead of 64" << endl;
+        return false;
+      }
+    }
   }
 
   if(g.getNumberOfVertices() != 11){
@@ -157,16 +182,98 @@ bool Tests::readTest()
     return false;
   }
 
-  if(fpga.getFamily() != "virtex6"){
-    cout << "Incorrect FPGA family found: " << fpga.getFamily() << " instead of virtex6" << endl;
+  if(xilinxfpga.getFamily() != "virtex6"){
+    cout << "Incorrect FPGA family found: " << xilinxfpga.getFamily() << " instead of virtex6" << endl;
+    return false;
   }
 
-  if(fpga.getName() != "XC6VLX75T"){
-    cout << "Incorrect FPGA name found: " << fpga.getName() << " instead of XC6VLX75T" << endl;
+  if(xilinxfpga.getName() != "XC6VLX75T"){
+    cout << "Incorrect FPGA name found: " << xilinxfpga.getName() << " instead of XC6VLX75T" << endl;
+    return false;
   }
 
-  if(fpga.getSlices() != 11640){
-    cout << "Incorrect FPGA Slices found: " << fpga.getSlices() << " instead of 11640" << endl;
+  if(xilinxfpga.getTotalLUTs() != 46560){
+    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getTotalLUTs() << " instead of 46560" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getTotalSlices() != 11640){
+    cout << "Incorrect FPGA Slices found: " << xilinxfpga.getTotalSlices() << " instead of 11640" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getTotalBRAMs() != 312){
+    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getTotalBRAMs() << " instead of 312" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getTotalDSPs() != 288){
+    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getTotalDSPs() << " instead of 288" << endl;
+    return false;
+  }
+
+  //--- constraints
+
+  if(xilinxfpga.getLUTConstraint() != 2500){
+    cout << "Incorrect FPGA LUT Constraint found: " << xilinxfpga.getLUTConstraint() << " instead of 2500" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getSliceConstraint() != 1000){
+    cout << "Incorrect FPGA Slice constraint found: " << xilinxfpga.getSliceConstraint() << " instead of 1000" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getBRAMConstraint() != 4){
+    cout << "Incorrect FPGA BRAM Constraint found: " << xilinxfpga.getBRAMConstraint() << " instead of 4" << endl;
+    return false;
+  }
+
+  if(xilinxfpga.getDSPConstraint() != 15){
+    cout << "Incorrect FPGA DSP Constraint found: " << xilinxfpga.getDSPConstraint() << " instead of 15" << endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool Tests::xilinxFPGAConstraintsTest()
+{
+  try
+  {
+    XilinxFPGA* fpga = new XilinxFPGA(FPGAVendor::XILINX);
+
+    fpga->setLUTConstraint(1250);
+    fpga->setSliceConstraint(575);
+    fpga->setDSPConstraint(24);
+    fpga->setBRAMConstraint(5);
+
+    if(fpga->getLUTConstraint() != 1250){
+      cout << "Incorrect FPGA LUT constraint found: " << fpga->getLUTConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getSliceConstraint() != 575){
+      cout << "Incorrect FPGA Slice constraint found: " << fpga->getSliceConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getDSPConstraint() != 24){
+      cout << "Incorrect FPGA DSP constraint found: " << fpga->getDSPConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    if(fpga->getBRAMConstraint() != 5){
+      cout << "Incorrect FPGA BRAM constraint found: " << fpga->getBRAMConstraint() << " instead of 1250" << endl;
+      return false;
+    }
+
+    delete fpga;
+  }
+
+  catch(HatScheT::Exception &e)
+  {
+    std::cout << e.msg << std::endl;
   }
 
   return true;

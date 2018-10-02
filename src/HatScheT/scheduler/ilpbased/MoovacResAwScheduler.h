@@ -18,8 +18,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
-#include <HatScheT/base/HardwareTargetBase.h>
+#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/layers/FPGALayer.h"
 
 namespace HatScheT {
 /*!
@@ -30,7 +30,7 @@ namespace HatScheT {
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
-    MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, FPGA& fpga);
+    MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, XilinxFPGA& fpga);
 
     virtual void schedule();
 
@@ -39,7 +39,7 @@ private:
     virtual void setObjective();
     virtual void setGeneralConstraints();
 
-    FPGA& fpga;
+    XilinxFPGA& fpga;
 };
 
 }

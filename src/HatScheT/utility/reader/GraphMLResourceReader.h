@@ -52,7 +52,7 @@ public:
    * @param path
    * @return
    */
-  virtual FPGA& readFPGA(const char* path){
+  virtual XilinxFPGA& readFPGA(const char* path){
     string p(path);
     throw Exception("GraphMLResourceReader.readFPGA: Dont use this class to read FPGA hardware target: " + p);}
   /*!
@@ -98,6 +98,10 @@ private:
   void characters    (   const XMLCh *const      chars,
       const XMLSize_t     length);
   /*!
+   * \brief resourceTagFound
+   */
+   bool resourceTagFound;
+  /*!
    * \brief reservationTableTagFound
    */
   bool reservationTableTagFound;
@@ -109,6 +113,10 @@ private:
    * \brief currRt
    */
   ReservationTable* currRt;
+  /*!
+   * store the name of the current resource to add costs later
+   */
+  string currentResourceParsing;
   };
 }
 

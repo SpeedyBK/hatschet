@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -35,77 +36,38 @@ public:
    */
   HardwareTargetBase();
   /*!
-   *
+   * get the hardware targets name
    * @return
    */
   std::string getName(){return this->name;}
   void setName(string n){this->name = n;}
-protected:
   /*!
-   *
-   */
-  std::string name;
-};
-
-/*!
- * The FPGA class, is a hardware target
+ * get the product family
+ * @return
  */
-class FPGA : public HardwareTargetBase {
-public:
-  /*!
-   * constructor
-   */
-  FPGA();
-  /*!
-   * get total No of LUTs on the FPGA
-   * @return
-   */
-  int getLUTs(){return this->LUTs;}
-  void setLUTs(int l){this->LUTs = l;}
-  /*!
-   * get total No of Slices on the FPGA
-   * @return
-   */
-  int getSlices(){return this->Slices;}
-  void setSlices(int s){this->Slices = s;}
-  /*!
-   * get total No of DSPs on the FPGA
-   * @return
-   */
-  int getDSPs(){return this->DSPs;}
-  void setDSPs(int d){this->DSPs = d;}
-  /*!
-   * get total No of BRAMs on the FPGA
-   */
-  int getBRAMs(){return this->BRAMs;}
-  void setBRAMs(int b){this->BRAMs = b;}
-  /*!
-   * get the fpga family
-   * @return
-   */
   string getFamily(){return this->family;}
   void setFamily(string f){this->family = f;}
-private:
   /*!
-   * total No of LUTs on the FPGA
+   * add a generic hardware constraint to this target
+   * e.g. "(c1,54),(cm^2, 47.34)"
+   * @param constraint
+   * @param limit
    */
-  int LUTs;
+  void addConstraint(string constraint, double limit);
+  map<std::string, double>& getConstraints() {return this->constraints;}
+protected:
   /*!
-   * total No of Slices on the FPGA
+   * this container manages the hardware constraints of the target
    */
-  int Slices;
+  map<std::string, double> constraints;
   /*!
-   * total No of DSPs on the FPGA
+   * the hardware targets name
    */
-  int DSPs;
-  /*!
-   * total No of BRAMs on the FPGA
+  std::string name;
+    /*!
+   * the product family
    */
-  int BRAMs;
-  /*!
-   * the fpga family
-   */
-  string family;
+   string family;
 };
 
 }

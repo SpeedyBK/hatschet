@@ -74,6 +74,13 @@ public:
    * \return the name
    */
   const std::string& getName() const {return this->name;}
+  /*!
+   * \brief the hardware costs of this resource are modeled using this map, e.g. LUT -> 127, DSP -> 1
+   * @return
+   */
+  map<string,double>& getHardwareCosts(){return this->hardwareCost;}
+  void addHardwareCost(string n, double c);
+  double getHardwareCost(string n);
 protected:
   /*!
    * \brief the resource's name
@@ -91,6 +98,10 @@ protected:
    * \brief the number of time steps a resource instance is blocked by an individual operation
    */
   const int blockingTime;
+  /*!
+   * \brief the hardware costs of this resource are modeled using this map, e.g. LUT -> 127, DSP -> 1
+   */
+  map<string, double> hardwareCost;
 };
 
 /*!
