@@ -7,10 +7,10 @@
 -->
 <ModelInformation Version="1.0">
 	<Resources>
-		<resource blockingTime="1" latency="2" limit="2" name="Adder">
-		<cost name="DSPs" demand="2" />
-		<cost name="LUTs" demand="845" />
-		<cost name="BRAMs" demand="0" />
-	</resource>
+		<Resource blockingTime="1" latency="2" limit="2" name="Adder">
+		<Cost name="DSP" demand="2" />
+		<Cost name="LUT" demand="845" />
+		<Cost name="MEM" demand="0" />
+	</Resource>
   </Resources>
 </ModelInformation>

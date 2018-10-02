@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
 	<Resources>
-		<resource name="Adder" limit="2" latency="1" blockingTime="1">
-			<cost name="DSPs" demand="0" />
-			<cost name="LUTs" demand="275" />
-			<cost name="BRAMs" demand="0" />
-		</resource>
-		<resource name="Multiplier" limit="1" latency="1" blockingTime="1" >
-			<cost name="DSPs" demand="1" />
-			<cost name="LUTs" demand="0" />
-			<cost name="BRAMs" demand="0" />
-		</resource>
-		<resource name="Gain" limit="1" latency="1" blockingTime="1" >
-			<cost name="DSPs" demand="0" />
-			<cost name="LUTs" demand="64" />
-			<cost name="BRAMs" demand="0" />
-		</resource>
+		<Resource name="Adder" limit="2" latency="1" blockingTime="1">
+			<Cost name="DSP" demand="0" />
+			<Cost name="LUT" demand="275" />
+			<Cost name="MEM" demand="0" />
+		</Resource>
+		<Resource name="Multiplier" limit="1" latency="1" blockingTime="1" >
+			<Cost name="DSP" demand="1" />
+			<Cost name="LUT" demand="0" />
+			<Cost name="MEM" demand="0" />
+		</Resource>
+		<Resource name="Gain" limit="1" latency="1" blockingTime="1" >
+			<Cost name="DSP" demand="0" />
+			<Cost name="LUT" demand="64" />
+			<Cost name="MEM" demand="0" />
+		</Resource>
 	</Resources>
 </ModelInformation>
