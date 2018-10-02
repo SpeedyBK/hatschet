@@ -69,7 +69,7 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
 {
   string tag = XMLString::transcode(localname);
 
-  if(tag == "resource") {
+  if(tag == "Resource") {
     this->resourceTagFound = true;
 
     string namestring = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
@@ -98,7 +98,7 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
     this->currRt->makeReservationBlock(r, startTime);
   }
 
-  if(tag == "cost" && this->resourceTagFound == true) {
+  if(tag == "Cost" && this->resourceTagFound == true) {
     string namestring = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
     string demandstring = XMLString::transcode(attrs.getValue(XMLString::transcode("demand")));
 

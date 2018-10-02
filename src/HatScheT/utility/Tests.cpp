@@ -156,21 +156,21 @@ bool Tests::readTest()
     Resource* r = *it;
 
     if(r->getName()=="Adder"){
-      if(r->getHardwareCost("LUTs")!=275){
+      if(r->getHardwareCost("LUT")!=275){
         cout << "Incorrect LUT costs found for Adder: " << r->getHardwareCost("LUTS") << " instead of 275" << endl;
         return false;
       }
     }
 
     if(r->getName()=="Multiplier"){
-      if(r->getHardwareCost("DSPs")!=1){
+      if(r->getHardwareCost("DSP")!=1){
         cout << "Incorrect DSP costs found for Multiplier: " << r->getHardwareCost("DSPs") << " instead of 1" << endl;
         return false;
       }
     }
 
     if(r->getName()=="Gain"){
-      if(r->getHardwareCost("LUTs")!=64){
+      if(r->getHardwareCost("LUT")!=64){
         cout << "Incorrect LUT costs found for Gain: " << r->getHardwareCost("LUTS") << " instead of 64" << endl;
         return false;
       }
