@@ -19,6 +19,7 @@
 */
 
 #include "HardwareTargetBase.h"
+#include "HatScheT/utility/Exception.h"
 
 namespace HatScheT
 {
@@ -31,6 +32,22 @@ HardwareTargetBase::HardwareTargetBase()
 void HardwareTargetBase::addConstraint(string constraint, double limit)
 {
   this->constraints.insert(make_pair(constraint,limit));
+}
+
+bool HardwareTargetBase::constraintExists(string c)
+{
+  if ( this->constraints.find(c) == this->constraints.end() ) {
+    return false;
+  }
+  return true;
+}
+
+double HardwareTargetBase::getConstraint(string c)
+{
+  if(this->constraintExists(c) == false){
+    throw HatScheT::Exception("HardwareTargetBase::getConstraint: No " + c + " Constraints found! Plz use the setConstraint method first!");
+  }
+  return this->constraints[c];
 }
 
 }

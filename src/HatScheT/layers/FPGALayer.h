@@ -47,7 +47,7 @@ public:
   * manange DSP constraint of the FPGA
   * @param d
   */
-  void setDSPConstraint(int d){this->addConstraint("DSPs",d);}
+  void setDSPConstraint(int d){this->addConstraint("DSP",d);}
   int getDSPConstraint();
   /*!
   * get total No of DSPs on the FPGA
@@ -80,7 +80,7 @@ public:
    * manange LUT constraint of the xilinx FPGA
    * @param l
    */
-  void setLUTConstraint(int l){this->addConstraint("LUTs",l);}
+  void setLUTConstraint(int l){this->addConstraint("LUT",l);}
   int getLUTConstraint();
   /*!
    * manange Slice constraint of the xilinx FPGA
@@ -93,7 +93,7 @@ public:
    * manange BRAM constraint of the xilinx FPGA
    * @param b
    */
-  void setBRAMConstraint(int b){this->addConstraint("BRAMs",b);}
+  void setBRAMConstraint(int b){this->addConstraint("BRAM",b);}
   int getBRAMConstraint();
   /*!
    * get total No of LUTs on the FPGA

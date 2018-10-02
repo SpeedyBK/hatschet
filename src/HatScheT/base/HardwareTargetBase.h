@@ -55,6 +55,13 @@ public:
    */
   void addConstraint(string constraint, double limit);
   map<std::string, double>& getConstraints() {return this->constraints;}
+  double getConstraint(string c);
+  /*!
+   * check whether a constraint exists in the constraints map
+   * @param c
+   * @return
+   */
+  bool constraintExists(string c);
 protected:
   /*!
    * this container manages the hardware constraints of the target

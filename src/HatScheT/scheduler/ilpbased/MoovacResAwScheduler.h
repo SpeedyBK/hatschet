@@ -30,16 +30,23 @@ namespace HatScheT {
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
-    MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, XilinxFPGA& fpga);
+  MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, XilinxFPGA& fpga);
 
-    virtual void schedule();
+  virtual void schedule();
 
 private:
-    virtual void constructProblem();
-    virtual void setObjective();
-    virtual void setGeneralConstraints();
+  virtual void constructProblem();
+  virtual void setObjective();
+  virtual void setGeneralConstraints();
 
-    XilinxFPGA& fpga;
+  /*!
+   * This function is used to check whether the provided resource model is valid and all resources references can be found
+   * on the fpga and constraints are provided
+   * @return
+   */
+  bool resourceModelIsValid();
+
+  XilinxFPGA& fpga;
 };
 
 }
