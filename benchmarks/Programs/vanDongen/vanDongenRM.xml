@@ -11,6 +11,6 @@
 		<Cost name="DSP" demand="2" />
 		<Cost name="LUT" demand="845" />
 		<Cost name="MEM" demand="0" />
-	</Resource>
+		</Resource>
   </Resources>
 </ModelInformation>

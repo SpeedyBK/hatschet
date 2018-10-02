@@ -46,6 +46,7 @@
 #ifdef USE_SCALP
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -120,7 +121,7 @@ int main(int argc, char *args[])
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MOOVACRESAWARE, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -225,6 +226,10 @@ int main(int argc, char *args[])
         {
           schedulerSelection = MOOVACMINREG;
         }
+        else if(schedulerSelectionStr == "moovacresaware")
+        {
+          schedulerSelection = MOOVACRESAWARE;
+        }
         else if(schedulerSelectionStr == "ed97")
         {
           schedulerSelection = ED97;
@@ -313,6 +318,9 @@ int main(int argc, char *args[])
         break;
       case MOOVACMINREG:
         cout << "MOOVACMINREG";
+        break;
+      case MOOVACRESAWARE:
+        cout << "MOOVACRESAWARE";
         break;
       case ED97:
         cout << "ED97";
@@ -407,11 +415,19 @@ int main(int argc, char *args[])
           break;
         case MOOVACMINREG:
           isModuloScheduler=true;
-          scheduler = new HatScheT::MoovacScheduler(g,rm, solverWishList);
+          scheduler = new HatScheT::MoovacMinRegScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
-          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          if(maxLatency > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
+        case MOOVACRESAWARE:
+          isModuloScheduler=true;
+          scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, xilinxfpga);
+          if(timeout > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::MoovacResAwScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::MoovacResAwScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
         case ED97: {
           isModuloScheduler = true;
@@ -427,14 +443,14 @@ int main(int argc, char *args[])
           isModuloScheduler=true;
           scheduler = new HatScheT::ModuloSDCScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
-          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          if(maxLatency > 0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
         case RATIONALII:
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
-          if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
           ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
@@ -443,7 +459,7 @@ int main(int argc, char *args[])
           case RATIONALIIFIMMEL:
               scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
               if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
-              if(maxLatency > 0) ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+              if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
              // ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloClasses(moduloClasses);
               //((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloCycles(moduloCycles);
               ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);

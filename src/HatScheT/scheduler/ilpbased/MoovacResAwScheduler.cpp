@@ -33,7 +33,10 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
 
 void MoovacResAwScheduler::schedule()
 {
+  cout << "MoovacResAwScheduler.schedule: start" << endl;
 
+  cout << "MoovacResAwScheduler.schedule: finished" << endl;
+  cout << "II: " << this->getII() << endl;
 }
 
 void MoovacResAwScheduler::constructProblem()

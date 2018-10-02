@@ -120,6 +120,6 @@ protected:
   /*!
    * \brief II the initiation interval of a schedule
    */
-  double II = 1.0f;
+  double II = -1.0f;
 };
 }
