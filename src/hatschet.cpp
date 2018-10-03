@@ -40,7 +40,6 @@
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
-#include <HatScheT/utility/reader/XMLFPGAReader.h>
 #endif
 
 #ifdef USE_SCALP
@@ -49,6 +48,7 @@
 #include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/utility/reader/XMLFPGAReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/utility/Tests.h"
@@ -91,7 +91,6 @@ void print_short_help()
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constrain file" << std::endl;
-  std::cout << "--fpga=[string]           Path to XML FPGA file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
@@ -127,7 +126,7 @@ int main(int argc, char *args[])
 
   std::string graphMLFile="";
   std::string resourceModelFile="";
-  std::string FPGAFile="";
+  std::string targetFile="";
   std::string dotFile="";
   std::string htmlFile="";
 
@@ -141,9 +140,10 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::XilinxFPGA xilinxfpga(HatScheT::FPGAVendor::XILINX);
+    HatScheT::HardwareTargetBase hw;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
+    HatScheT::XMLFPGAReader readerTarget(&hw);
 
     //parse command line
     for (int i = 1; i < argc; i++) {
@@ -175,9 +175,9 @@ int main(int argc, char *args[])
       {
         graphMLFile = std::string(value);
       }
-      else if(getCmdParameter(args[i],"--fpga=",value))
+      else if(getCmdParameter(args[i],"--target=",value))
       {
-        FPGAFile = std::string(value);
+        targetFile = std::string(value);
       }
       else if(getCmdParameter(args[i],"--dot=",value))
       {
@@ -272,7 +272,6 @@ int main(int argc, char *args[])
         if(str=="OCCS" && HatScheT::Tests::occurrenceSetTest()==false) exit(-1);
         if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
         if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
-        if(str=="FPGACONSTRAINTS" && HatScheT::Tests::xilinxFPGAConstraintsTest()==false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
@@ -298,7 +297,7 @@ int main(int argc, char *args[])
     std::cout << "settings:" << std::endl;
     std::cout << "graph model=" << graphMLFile << endl;
     std::cout << "resource model=" << resourceModelFile << endl;
-    std::cout << "fpga=" << FPGAFile << endl;
+    std::cout << "target=" << targetFile << endl;
     std::cout << "timeout=" << timeout << std::endl;
     std::cout << "threads=" << threads << std::endl;
     std::cout << "scheduler=";
@@ -342,14 +341,6 @@ int main(int argc, char *args[])
         break;
     }
     std::cout << std::endl;
-
-    //read fpga if provided
-    if(FPGAFile!=""){
-      HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
-      xilinxfpga = fpgaReader.readFPGA(FPGAFile.c_str());
-
-      cout << xilinxfpga.getVendor() << " fpga: " << xilinxfpga.getFamily() << " - " << xilinxfpga.getName() << endl;
-    }
 
     //read resource model:
     rm = readerRes.readResourceModel(resourceModelFile.c_str());
@@ -423,7 +414,7 @@ int main(int argc, char *args[])
           break;
         case MOOVACRESAWARE:
           isModuloScheduler=true;
-          scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, xilinxfpga);
+          scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, hw);
           if(timeout > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::MoovacResAwScheduler*) scheduler)->setThreads(threads);

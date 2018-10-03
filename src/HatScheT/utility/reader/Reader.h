@@ -22,7 +22,7 @@
 
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
-#include "HatScheT/layers/FPGALayer.h"
+#include "HatScheT/base/HardwareTargetBase.h"
 #include "HatScheT//utility/Exception.h"
 
 #ifdef USE_XERCESC
@@ -56,12 +56,9 @@ public:
    * \return
    */
   virtual ResourceModel& readResourceModel(const char* path)=0;
-  /*!
-   * this function will generate a new FPGA object instance
-   * @param path
-   * @return
-   */
-  virtual XilinxFPGA& readFPGA(const char* path)=0;
+
+  virtual HardwareTargetBase& readHardwareTarget(const char* path)=0;
+
 protected:
 
 

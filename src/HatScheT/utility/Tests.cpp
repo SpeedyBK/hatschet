@@ -134,8 +134,8 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
-  HatScheT::XilinxFPGA xilinxfpga(FPGAVendor::XILINX);
-  HatScheT::XMLFPGAReader fpgaReader(&xilinxfpga);
+  HatScheT::HardwareTargetBase hw;
+  HatScheT::XMLFPGAReader fpgaReader(&hw);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -145,7 +145,7 @@ bool Tests::readTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  xilinxfpga = fpgaReader.readFPGA(fpgaStr.c_str());
+  hw = fpgaReader.readHardwareTarget(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
@@ -182,7 +182,7 @@ bool Tests::readTest()
     return false;
   }
 
-  if(xilinxfpga.getFamily() != "virtex6"){
+  /*if(xilinxfpga.getFamily() != "virtex6"){
     cout << "Incorrect FPGA family found: " << xilinxfpga.getFamily() << " instead of virtex6" << endl;
     return false;
   }
@@ -232,49 +232,7 @@ bool Tests::readTest()
   if(xilinxfpga.getDSPConstraint() != 15){
     cout << "Incorrect FPGA DSP Constraint found: " << xilinxfpga.getDSPConstraint() << " instead of 15" << endl;
     return false;
-  }
-
-  return true;
-}
-
-bool Tests::xilinxFPGAConstraintsTest()
-{
-  try
-  {
-    XilinxFPGA* fpga = new XilinxFPGA(FPGAVendor::XILINX);
-
-    fpga->setLUTConstraint(1250);
-    fpga->setSliceConstraint(575);
-    fpga->setDSPConstraint(24);
-    fpga->setBRAMConstraint(5);
-
-    if(fpga->getLUTConstraint() != 1250){
-      cout << "Incorrect FPGA LUT constraint found: " << fpga->getLUTConstraint() << " instead of 1250" << endl;
-      return false;
-    }
-
-    if(fpga->getSliceConstraint() != 575){
-      cout << "Incorrect FPGA Slice constraint found: " << fpga->getSliceConstraint() << " instead of 1250" << endl;
-      return false;
-    }
-
-    if(fpga->getDSPConstraint() != 24){
-      cout << "Incorrect FPGA DSP constraint found: " << fpga->getDSPConstraint() << " instead of 1250" << endl;
-      return false;
-    }
-
-    if(fpga->getBRAMConstraint() != 5){
-      cout << "Incorrect FPGA BRAM constraint found: " << fpga->getBRAMConstraint() << " instead of 1250" << endl;
-      return false;
-    }
-
-    delete fpga;
-  }
-
-  catch(HatScheT::Exception &e)
-  {
-    std::cout << e.msg << std::endl;
-  }
+  }*/
 
   return true;
 }

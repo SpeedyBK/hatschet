@@ -108,7 +108,7 @@ src/HatScheT/utility/Verifier.cpp
 src/HatScheT/base/HardwareTargetBase.cpp
 src/HatScheT/utility/reader/XMLFPGAReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-        src/HatScheT/layers/FPGALayer.cpp src/HatScheT/layers/FPGALayer.h)
+)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -211,7 +211,6 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
-add_test("FPGAConstraints" "./hatschet" "--test=FPGACONSTRAINTS")
 
 ####################
 # example project

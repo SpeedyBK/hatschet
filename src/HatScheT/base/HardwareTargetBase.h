@@ -47,6 +47,8 @@ public:
  */
   string getFamily(){return this->family;}
   void setFamily(string f){this->family = f;}
+
+  string getVendor(){return  this->vendor;}
   /*!
    * add a generic hardware constraint to this target
    * e.g. "(c1,54),(cm^2, 47.34)"
@@ -75,6 +77,10 @@ protected:
    * the product family
    */
    string family;
+   /*!
+    * the vendor of the hardware target
+    */
+   string vendor;
 };
 
 }

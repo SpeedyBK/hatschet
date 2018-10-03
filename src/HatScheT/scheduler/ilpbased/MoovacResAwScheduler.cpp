@@ -24,8 +24,8 @@
 namespace HatScheT
 {
 
-MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, XilinxFPGA& fpga)
-        : MoovacScheduler(g, resourceModel, solverWishlist), fpga(fpga) {
+MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, HardwareTargetBase& hw)
+        : MoovacScheduler(g, resourceModel, solverWishlist), hw(hw) {
   this->minII = this->computeMinII(&g,&resourceModel);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
@@ -58,13 +58,13 @@ void MoovacResAwScheduler::setGeneralConstraints()
 
 bool MoovacResAwScheduler::resourceModelIsValid()
 {
-  for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+  /*for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
     Resource* r  = *it;
     //skip unlimited resources
     if(r->getLimit() == -1) continue;
 
     if(this->fpga.constraintExists(r->getName()) == false) return false;
-  }
+  }*/
 
   return true;
 }
