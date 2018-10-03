@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ModelInformation Version="1.0">
-  <FPGA family="virtex6" name="XC6VLX75T" LUTs="46560" Slices="11640" DSPs="288" BRAMs="312">
-    <Constraints LUTs="2500" Slices="1000" DSPs="15" BRAMs="4">
-      </Constraints>
+  <FPGA vendor="xilinx" family="virtex6" name="XC6VLX75T">
+    <Element name="DSP" avail="288" />
+    <Element name="LUT" avail="46560" />
+    <Element name="MEM" avail="312" />
   </FPGA>
 </ModelInformation>

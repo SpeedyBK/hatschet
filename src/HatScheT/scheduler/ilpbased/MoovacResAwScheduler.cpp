@@ -24,8 +24,8 @@
 namespace HatScheT
 {
 
-MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, Target& hw)
-        : MoovacScheduler(g, resourceModel, solverWishlist), hw(hw) {
+MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, Target& target)
+        : MoovacScheduler(g, resourceModel, solverWishlist), target(target) {
   this->minII = this->computeMinII(&g,&resourceModel);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;

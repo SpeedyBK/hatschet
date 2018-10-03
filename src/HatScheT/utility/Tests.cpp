@@ -134,8 +134,8 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
-  HatScheT::Target hw;
-  HatScheT::XMLTargetReader fpgaReader(&hw);
+  HatScheT::Target target;
+  HatScheT::XMLTargetReader targetReader(&target);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -145,7 +145,7 @@ bool Tests::readTest()
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   g = readerGraph.readGraph(graphStr.c_str());
 
-  hw = fpgaReader.readHardwareTarget(fpgaStr.c_str());
+  target = targetReader.readHardwareTarget(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
@@ -182,21 +182,37 @@ bool Tests::readTest()
     return false;
   }
 
-  /*if(xilinxfpga.getFamily() != "virtex6"){
-    cout << "Incorrect FPGA family found: " << xilinxfpga.getFamily() << " instead of virtex6" << endl;
+  if(target.getFamily() != "virtex6"){
+    cout << "Incorrec family found: " << target.getFamily() << " instead of virtex6" << endl;
     return false;
   }
 
-  if(xilinxfpga.getName() != "XC6VLX75T"){
-    cout << "Incorrect FPGA name found: " << xilinxfpga.getName() << " instead of XC6VLX75T" << endl;
+  if(target.getName() != "XC6VLX75T"){
+    cout << "Incorrect name found: " << target.getName() << " instead of XC6VLX75T" << endl;
     return false;
   }
 
-  if(xilinxfpga.getTotalLUTs() != 46560){
-    cout << "Incorrect FPGA LUTs found: " << xilinxfpga.getTotalLUTs() << " instead of 46560" << endl;
+  if(target.getVendor() != "xilinx"){
+    cout << "Incorrect vendor found: " << target.getVendor() << " instead of xilinx" << endl;
     return false;
   }
 
+  if(target.getElement("LUT") != 46560){
+    cout << "Incorrect target LUTs found: " << target.getElement("LUT") << " instead of 46560" << endl;
+    return false;
+  }
+
+  if(target.getElement("DSP") != 288){
+    cout << "Incorrect target DSP found: " << target.getElement("DSP") << " instead of 288" << endl;
+    return false;
+  }
+
+  if(target.getElement("MEM") != 312){
+    cout << "Incorrect target MEMs found: " << target.getElement("MEM") << " instead of 312" << endl;
+    return false;
+  }
+
+/*
   if(xilinxfpga.getTotalSlices() != 11640){
     cout << "Incorrect FPGA Slices found: " << xilinxfpga.getTotalSlices() << " instead of 11640" << endl;
     return false;

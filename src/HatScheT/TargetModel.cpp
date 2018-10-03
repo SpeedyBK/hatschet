@@ -29,25 +29,25 @@ Target::Target()
   this->name = "";
 }
 
-void Target::addConstraint(string constraint, double limit)
+void Target::addElement(string element, double limit)
 {
-  this->constraints.insert(make_pair(constraint,limit));
+  this->elements.insert(make_pair(element,limit));
 }
 
-bool Target::constraintExists(string c)
+bool Target::elementExists(string e)
 {
-  if ( this->constraints.find(c) == this->constraints.end() ) {
+  if ( this->elements.find(e) == this->elements.end() ) {
     return false;
   }
   return true;
 }
 
-double Target::getConstraint(string c)
+double Target::getElement(string e)
 {
-  if(this->constraintExists(c) == false){
-    throw HatScheT::Exception("HardwareTargetBase::getConstraint: No " + c + " Constraints found! Plz use the setConstraint method first!");
+  if(this->elementExists(e) == false){
+    throw HatScheT::Exception("HardwareTargetBase::getElement: No " + e + " element found! Plz use the setElement method first!");
   }
-  return this->constraints[c];
+  return this->elements[e];
 }
 
 }

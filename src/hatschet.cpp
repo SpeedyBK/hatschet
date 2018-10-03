@@ -90,7 +90,8 @@ void print_short_help()
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
-  std::cout << "--resource=[string]       Path to XML resource constrain file" << std::endl;
+  std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
+  std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
@@ -140,10 +141,10 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::Target hw;
+    HatScheT::Target target;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
-    HatScheT::XMLTargetReader readerTarget(&hw);
+    HatScheT::XMLTargetReader readerTarget(&target);
 
     //parse command line
     for (int i = 1; i < argc; i++) {
@@ -344,8 +345,12 @@ int main(int argc, char *args[])
 
     //read resource model:
     rm = readerRes.readResourceModel(resourceModelFile.c_str());
+    //read target
+    if(targetFile != ""){
+      target = readerTarget.readHardwareTarget(targetFile.c_str());
+    }
 
-  //read graph:
+    //read graph:
     if(rm.isEmpty() == false)
     {
       HatScheT::GraphMLGraphReader graphReader(&rm, &g);
@@ -414,7 +419,7 @@ int main(int argc, char *args[])
           break;
         case MOOVACRESAWARE:
           isModuloScheduler=true;
-          scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, hw);
+          scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, target);
           if(timeout > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::MoovacResAwScheduler*) scheduler)->setThreads(threads);

@@ -47,29 +47,18 @@ void XMLTargetReader::startElement(const XMLCh * const uri, const XMLCh * const 
   if(tag=="FPGA"){
     string family = XMLString::transcode(attrs.getValue(XMLString::transcode("family")));
     string name = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
-    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
-    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
-    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
-    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
+    string vendor = XMLString::transcode(attrs.getValue(XMLString::transcode("vendor")));
 
     this->hardwareTarget->setName(name);
     this->hardwareTarget->setFamily(family);
-
-    //this->xilinxfpga->setTotalLUTs(stoi(LUTs));
-    //this->xilinxfpga->setTotalSlices(stoi(Slices));
-    //this->xilinxfpga->setTotalDSPs(stoi(DSPs));
-    //this->xilinxfpga->setTotalBRAMs(stoi(BRAMs));
+    this->hardwareTarget->setVendor(vendor);
   }
-  if(tag=="Constraints"){
-    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
-    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
-    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
-    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
 
-    //this->xilinxfpga->setLUTConstraint(stoi(LUTs));
-    //this->xilinxfpga->setSliceConstraint(stoi(Slices));
-    //this->xilinxfpga->setDSPConstraint(stoi(DSPs));
-    //this->xilinxfpga->setBRAMConstraint(stoi(BRAMs));
+  if(tag=="Element"){
+    string name = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
+    string avail = XMLString::transcode(attrs.getValue(XMLString::transcode("avail")));
+
+    this->hardwareTarget->addElement(name, stod(avail));
   }
 }
 
