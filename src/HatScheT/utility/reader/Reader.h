@@ -22,8 +22,8 @@
 
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
-#include "HatScheT/base/HardwareTargetBase.h"
-#include "HatScheT//utility/Exception.h"
+#include "HatScheT/TargetModel.h"
+#include "HatScheT/utility/Exception.h"
 
 #ifdef USE_XERCESC
 #include "xercesc/sax2/DefaultHandler.hpp"

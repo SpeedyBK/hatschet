@@ -85,6 +85,7 @@ set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
+src/HatScheT/TargetModel.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/layers/RationalIISchedulerLayer.cpp
@@ -105,7 +106,6 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-src/HatScheT/base/HardwareTargetBase.cpp
 src/HatScheT/utility/reader/XMLFPGAReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 )
@@ -115,7 +115,7 @@ src/HatScheT/base/ILPSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
-src/HatScheT/base/HardwareTargetBase.h
+src/HatScheT/TargetModel.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
 src/HatScheT/ResourceModel.h

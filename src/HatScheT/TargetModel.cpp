@@ -18,7 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "HardwareTargetBase.h"
+#include "TargetModel.h"
 #include "HatScheT/utility/Exception.h"
 
 namespace HatScheT

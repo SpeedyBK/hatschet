@@ -19,7 +19,7 @@
 */
 #pragma once
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
-#include "HatScheT/base/HardwareTargetBase.h"
+#include "HatScheT/TargetModel.h"
 
 namespace HatScheT {
 /*!
