@@ -134,7 +134,7 @@ bool Tests::readTest()
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
-  HatScheT::HardwareTargetBase hw;
+  HatScheT::Target hw;
   HatScheT::XMLFPGAReader fpgaReader(&hw);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";

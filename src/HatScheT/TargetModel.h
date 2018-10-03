@@ -28,13 +28,13 @@ namespace HatScheT {
 /*!
  * This class is a placeholder for future attributes and functionality of hardware targets
  */
-class HardwareTargetBase {
+class Target {
 public:
   /*!
    * constructor
    * @param name
    */
-  HardwareTargetBase();
+  Target();
   /*!
    * get the hardware targets name
    * @return

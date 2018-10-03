@@ -30,7 +30,7 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(HardwareTargetBase* hw)
+XMLFPGAReader::XMLFPGAReader(Target* hw)
 {
   this->hardwareTarget = hw;
 }
@@ -78,7 +78,7 @@ void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const loca
 
 }
 
-HardwareTargetBase& XMLFPGAReader::readHardwareTarget(const char *path)
+Target& XMLFPGAReader::readHardwareTarget(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();

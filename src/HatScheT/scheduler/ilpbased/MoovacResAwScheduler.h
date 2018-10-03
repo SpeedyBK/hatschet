@@ -30,7 +30,7 @@ namespace HatScheT {
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
-  MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, HardwareTargetBase& hw);
+  MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, Target& hw);
 
   virtual void schedule();
 
@@ -46,7 +46,7 @@ private:
    */
   bool resourceModelIsValid();
 
-    HardwareTargetBase& hw;
+    Target& hw;
 };
 
 }

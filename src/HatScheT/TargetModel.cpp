@@ -24,17 +24,17 @@
 namespace HatScheT
 {
 
-HardwareTargetBase::HardwareTargetBase()
+Target::Target()
 {
   this->name = "";
 }
 
-void HardwareTargetBase::addConstraint(string constraint, double limit)
+void Target::addConstraint(string constraint, double limit)
 {
   this->constraints.insert(make_pair(constraint,limit));
 }
 
-bool HardwareTargetBase::constraintExists(string c)
+bool Target::constraintExists(string c)
 {
   if ( this->constraints.find(c) == this->constraints.end() ) {
     return false;
@@ -42,7 +42,7 @@ bool HardwareTargetBase::constraintExists(string c)
   return true;
 }
 
-double HardwareTargetBase::getConstraint(string c)
+double Target::getConstraint(string c)
 {
   if(this->constraintExists(c) == false){
     throw HatScheT::Exception("HardwareTargetBase::getConstraint: No " + c + " Constraints found! Plz use the setConstraint method first!");

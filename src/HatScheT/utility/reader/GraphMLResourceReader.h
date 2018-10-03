@@ -52,7 +52,7 @@ public:
    * @param path
    * @return
    */
-    virtual HardwareTargetBase& readHardwareTarget(const char* path){
+    virtual Target& readHardwareTarget(const char* path){
       string p(path);
       throw Exception("GraphMLResourceReader.readHardwareTarget: Dont use this class to read hardware targets: " + p);}
   /*!

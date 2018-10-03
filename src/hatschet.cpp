@@ -140,7 +140,7 @@ int main(int argc, char *args[])
   {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
-    HatScheT::HardwareTargetBase hw;
+    HatScheT::Target hw;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
     HatScheT::XMLFPGAReader readerTarget(&hw);

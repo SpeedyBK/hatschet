@@ -57,7 +57,7 @@ public:
    */
   virtual ResourceModel& readResourceModel(const char* path)=0;
 
-  virtual HardwareTargetBase& readHardwareTarget(const char* path)=0;
+  virtual Target& readHardwareTarget(const char* path)=0;
 
 protected:
 
