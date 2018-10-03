@@ -106,7 +106,7 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-src/HatScheT/utility/reader/XMLFPGAReader.cpp
+src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 )
 
@@ -135,7 +135,7 @@ src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/GraphMLResourceReader.h
-src/HatScheT/utility/reader/XMLFPGAReader.h
+src/HatScheT/utility/reader/XMLTargetReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/Occurrence.h
 src/HatScheT/utility/subgraphs/OccurrenceSet.h

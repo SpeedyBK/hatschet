@@ -48,7 +48,7 @@
 #include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
-#include <HatScheT/utility/reader/XMLFPGAReader.h>
+#include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/utility/Tests.h"
@@ -143,7 +143,7 @@ int main(int argc, char *args[])
     HatScheT::Target hw;
 
     HatScheT::GraphMLResourceReader readerRes(&rm);
-    HatScheT::XMLFPGAReader readerTarget(&hw);
+    HatScheT::XMLTargetReader readerTarget(&hw);
 
     //parse command line
     for (int i = 1; i < argc; i++) {

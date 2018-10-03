@@ -29,10 +29,10 @@ namespace HatScheT
 /*!
  * The XMLFPGAReader class use this class to parse FPGA objects from XML representations
  */
-class XMLFPGAReader : public Reader, DefaultHandler {
+class XMLTargetReader : public Reader, DefaultHandler {
 public:
-    XMLFPGAReader(Target* hw);
-    ~XMLFPGAReader(){};
+    XMLTargetReader(Target* hw);
+    ~XMLTargetReader(){};
     /*!
      * main method to read and return FPGA class from a xml file
      * @param path

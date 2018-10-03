@@ -18,7 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #ifdef USE_XERCESC
-#include "XMLFPGAReader.h"
+#include "XMLTargetReader.h"
 #include "xercesc/sax2/SAX2XMLReader.hpp"
 #include "xercesc/sax2/XMLReaderFactory.hpp"
 #include "xercesc/util/XMLString.hpp"
@@ -30,17 +30,17 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(Target* hw)
+XMLTargetReader::XMLTargetReader(Target* hw)
 {
   this->hardwareTarget = hw;
 }
 
-void XMLFPGAReader::characters(const XMLCh * const chars, const XMLSize_t length)
+void XMLTargetReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
 
 }
 
-void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
+void XMLTargetReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
   string tag = XMLString::transcode(localname);
 
@@ -73,19 +73,19 @@ void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const lo
   }
 }
 
-void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
+void XMLTargetReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
 {
 
 }
 
-Target& XMLFPGAReader::readHardwareTarget(const char *path)
+Target& XMLTargetReader::readHardwareTarget(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
   }
   catch (const XMLException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA: " << message << endl;
+    cout << "XMLTargetReader.readFPGA: " << message << endl;
   }
 
   const char* xmlFile = path;
@@ -109,23 +109,23 @@ Target& XMLFPGAReader::readHardwareTarget(const char *path)
 
     else
     {
-      cout << "XMLFPGAReader.readFPGA:  File not found! (" << xmlFile << ")" << endl;
+      cout << "XMLTargetReader.readFPGA:  File not found! (" << xmlFile << ")" << endl;
     }
   }
   catch (const XMLException& toCatch) {
 
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA:  " << message << endl;
+    cout << "XMLTargetReader.readFPGA:  " << message << endl;
 
 
   }
   catch (const SAXParseException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA:  " << message << endl;
+    cout << "XMLTargetReader.readFPGA:  " << message << endl;
 
   }
   catch (...) {
-    cout << "XMLFPGAReader.readFPGA: Unexpected Error" << endl;
+    cout << "XMLTargetReader.readFPGA: Unexpected Error" << endl;
   }
 
   delete parser;

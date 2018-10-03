@@ -21,7 +21,7 @@
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
-#include "HatScheT/utility/reader/XMLFPGAReader.h"
+#include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
@@ -135,7 +135,7 @@ bool Tests::readTest()
   HatScheT::Graph g;
   HatScheT::GraphMLResourceReader readerRes(&rm);
   HatScheT::Target hw;
-  HatScheT::XMLFPGAReader fpgaReader(&hw);
+  HatScheT::XMLTargetReader fpgaReader(&hw);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
