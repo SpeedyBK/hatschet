@@ -212,44 +212,6 @@ bool Tests::readTest()
     return false;
   }
 
-/*
-  if(xilinxfpga.getTotalSlices() != 11640){
-    cout << "Incorrect FPGA Slices found: " << xilinxfpga.getTotalSlices() << " instead of 11640" << endl;
-    return false;
-  }
-
-  if(xilinxfpga.getTotalBRAMs() != 312){
-    cout << "Incorrect FPGA BRAMS found: " << xilinxfpga.getTotalBRAMs() << " instead of 312" << endl;
-    return false;
-  }
-
-  if(xilinxfpga.getTotalDSPs() != 288){
-    cout << "Incorrect FPGA DSPS found: " << xilinxfpga.getTotalDSPs() << " instead of 288" << endl;
-    return false;
-  }
-
-  //--- constraints
-
-  if(xilinxfpga.getLUTConstraint() != 2500){
-    cout << "Incorrect FPGA LUT Constraint found: " << xilinxfpga.getLUTConstraint() << " instead of 2500" << endl;
-    return false;
-  }
-
-  if(xilinxfpga.getSliceConstraint() != 1000){
-    cout << "Incorrect FPGA Slice constraint found: " << xilinxfpga.getSliceConstraint() << " instead of 1000" << endl;
-    return false;
-  }
-
-  if(xilinxfpga.getBRAMConstraint() != 4){
-    cout << "Incorrect FPGA BRAM Constraint found: " << xilinxfpga.getBRAMConstraint() << " instead of 4" << endl;
-    return false;
-  }
-
-  if(xilinxfpga.getDSPConstraint() != 15){
-    cout << "Incorrect FPGA DSP Constraint found: " << xilinxfpga.getDSPConstraint() << " instead of 15" << endl;
-    return false;
-  }*/
-
   return true;
 }
 
