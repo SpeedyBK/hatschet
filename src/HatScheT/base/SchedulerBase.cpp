@@ -59,7 +59,8 @@ std::map<Vertex*,int>&  SchedulerBase::getSchedule()
 
     HatScheT::Utility::printSchedule(this->startTimes);
     cout << "SchedulerBase.getStartTimes: Invalid schedule detected by SchedulerClass" << endl;
-    exit(-1);
+    //exit(-1); //Shouldnt ever terminate whole program!
+      throw HatScheT::Exception("SchedulerBase.getStartTimes: Invalid schedule detected by SchedulerClass");
   }
 
   return this->startTimes;

@@ -35,11 +35,16 @@ public:
      *
      */
     virtual void schedule();
+
+    void setPmax(int pmax){this->pmax = pmax;}
+    int getPmax() {return pmax;}
 protected:
     virtual void constructProblem(){};
     virtual void setObjective(){};
 private:
     void generateTestSetup();
     void generateTestSetup2();
+
+    int pmax = -1;
 };
 }
