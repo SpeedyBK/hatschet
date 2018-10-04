@@ -18,19 +18,36 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "HardwareTargetBase.h"
+#include "TargetModel.h"
+#include "HatScheT/utility/Exception.h"
 
 namespace HatScheT
 {
 
-HardwareTargetBase::HardwareTargetBase()
+Target::Target()
 {
   this->name = "";
 }
 
-void HardwareTargetBase::addConstraint(string constraint, double limit)
+void Target::addElement(string element, double limit)
 {
-  this->constraints.insert(make_pair(constraint,limit));
+  this->elements.insert(make_pair(element,limit));
+}
+
+bool Target::elementExists(string e)
+{
+  if ( this->elements.find(e) == this->elements.end() ) {
+    return false;
+  }
+  return true;
+}
+
+double Target::getElement(string e)
+{
+  if(this->elementExists(e) == false){
+    throw HatScheT::Exception("HardwareTargetBase::getElement: No " + e + " element found! Plz use the setElement method first!");
+  }
+  return this->elements[e];
 }
 
 }

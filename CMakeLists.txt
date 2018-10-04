@@ -85,6 +85,7 @@ set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
 src/HatScheT/Graph.cpp
+src/HatScheT/TargetModel.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/layers/RationalIISchedulerLayer.cpp
@@ -105,17 +106,16 @@ src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
-src/HatScheT/base/HardwareTargetBase.cpp
-src/HatScheT/utility/reader/XMLFPGAReader.cpp
+src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-        src/HatScheT/layers/FPGALayer.cpp src/HatScheT/layers/FPGALayer.h)
+)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
-src/HatScheT/base/HardwareTargetBase.h
+src/HatScheT/TargetModel.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
 src/HatScheT/ResourceModel.h
@@ -135,7 +135,7 @@ src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/GraphMLResourceReader.h
-src/HatScheT/utility/reader/XMLFPGAReader.h
+src/HatScheT/utility/reader/XMLTargetReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/Occurrence.h
 src/HatScheT/utility/subgraphs/OccurrenceSet.h
@@ -211,7 +211,6 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
-add_test("FPGAConstraints" "./hatschet" "--test=FPGACONSTRAINTS")
 
 ####################
 # example project

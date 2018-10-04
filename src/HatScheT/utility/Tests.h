@@ -82,10 +82,5 @@ public:
    * \return
    */
   static bool ulSchedulerTest();
-  /*!
-   *
-   * @return
-   */
-  static bool xilinxFPGAConstraintsTest();
 };
 }

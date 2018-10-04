@@ -47,14 +47,14 @@ public:
   virtual Graph& readGraph(const char* path){
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
-  /*!
-   *
+    /*!
+   * dont use the function in this class
    * @param path
    * @return
    */
-  virtual XilinxFPGA& readFPGA(const char* path){
-    string p(path);
-    throw Exception("GraphMLResourceReader.readFPGA: Dont use this class to read FPGA hardware target: " + p);}
+    virtual Target& readHardwareTarget(const char* path){
+      string p(path);
+      throw Exception("GraphMLResourceReader.readHardwareTarget: Dont use this class to read hardware targets: " + p);}
   /*!
    * \brief readResourceModel use this class to read resource models from a graphml representation
    * see the attached chstone benchmark for info about how you resource should be build in this case

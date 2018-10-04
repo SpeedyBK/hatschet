@@ -18,7 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #ifdef USE_XERCESC
-#include "XMLFPGAReader.h"
+#include "XMLTargetReader.h"
 #include "xercesc/sax2/SAX2XMLReader.hpp"
 #include "xercesc/sax2/XMLReaderFactory.hpp"
 #include "xercesc/util/XMLString.hpp"
@@ -30,65 +30,51 @@
 
 namespace HatScheT {
 
-XMLFPGAReader::XMLFPGAReader(FPGALayer* fpga)
+XMLTargetReader::XMLTargetReader(Target* hw)
 {
-  if(fpga->getVendor()==FPGAVendor::XILINX){
-    this->xilinxfpga = (XilinxFPGA*)fpga;
-  }
-  else throw HatScheT::Exception("XMLFPGAReader::XMLFPGAReader: Only xilinx FPGA supported for now! Plz provide a 'xilinx' FPGA!");
+  this->hardwareTarget = hw;
 }
 
-void XMLFPGAReader::characters(const XMLCh * const chars, const XMLSize_t length)
+void XMLTargetReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
 
 }
 
-void XMLFPGAReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
+void XMLTargetReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
   string tag = XMLString::transcode(localname);
 
   if(tag=="FPGA"){
     string family = XMLString::transcode(attrs.getValue(XMLString::transcode("family")));
     string name = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
-    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
-    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
-    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
-    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
+    string vendor = XMLString::transcode(attrs.getValue(XMLString::transcode("vendor")));
 
-    this->xilinxfpga->setName(name);
-    this->xilinxfpga->setFamily(family);
-
-    this->xilinxfpga->setTotalLUTs(stoi(LUTs));
-    this->xilinxfpga->setTotalSlices(stoi(Slices));
-    this->xilinxfpga->setTotalDSPs(stoi(DSPs));
-    this->xilinxfpga->setTotalBRAMs(stoi(BRAMs));
+    this->hardwareTarget->setName(name);
+    this->hardwareTarget->setFamily(family);
+    this->hardwareTarget->setVendor(vendor);
   }
-  if(tag=="Constraints"){
-    string LUTs = XMLString::transcode(attrs.getValue(XMLString::transcode("LUTs")));
-    string Slices = XMLString::transcode(attrs.getValue(XMLString::transcode("Slices")));
-    string DSPs = XMLString::transcode(attrs.getValue(XMLString::transcode("DSPs")));
-    string BRAMs = XMLString::transcode(attrs.getValue(XMLString::transcode("BRAMs")));
 
-    this->xilinxfpga->setLUTConstraint(stoi(LUTs));
-    this->xilinxfpga->setSliceConstraint(stoi(Slices));
-    this->xilinxfpga->setDSPConstraint(stoi(DSPs));
-    this->xilinxfpga->setBRAMConstraint(stoi(BRAMs));
+  if(tag=="Element"){
+    string name = XMLString::transcode(attrs.getValue(XMLString::transcode("name")));
+    string avail = XMLString::transcode(attrs.getValue(XMLString::transcode("avail")));
+
+    this->hardwareTarget->addElement(name, stod(avail));
   }
 }
 
-void XMLFPGAReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
+void XMLTargetReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
 {
 
 }
 
-XilinxFPGA& XMLFPGAReader::readFPGA(const char *path)
+Target& XMLTargetReader::readHardwareTarget(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
   }
   catch (const XMLException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA: " << message << endl;
+    cout << "XMLTargetReader.readFPGA: " << message << endl;
   }
 
   const char* xmlFile = path;
@@ -112,29 +98,29 @@ XilinxFPGA& XMLFPGAReader::readFPGA(const char *path)
 
     else
     {
-      cout << "XMLFPGAReader.readFPGA:  File not found! (" << xmlFile << ")" << endl;
+      cout << "XMLTargetReader.readFPGA:  File not found! (" << xmlFile << ")" << endl;
     }
   }
   catch (const XMLException& toCatch) {
 
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA:  " << message << endl;
+    cout << "XMLTargetReader.readFPGA:  " << message << endl;
 
 
   }
   catch (const SAXParseException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "XMLFPGAReader.readFPGA:  " << message << endl;
+    cout << "XMLTargetReader.readFPGA:  " << message << endl;
 
   }
   catch (...) {
-    cout << "XMLFPGAReader.readFPGA: Unexpected Error" << endl;
+    cout << "XMLTargetReader.readFPGA: Unexpected Error" << endl;
   }
 
   delete parser;
   XMLPlatformUtils::Terminate();
 
-  return *(this->xilinxfpga);
+  return *(this->hardwareTarget);
 }
 
 }

@@ -29,16 +29,16 @@ namespace HatScheT
 /*!
  * The XMLFPGAReader class use this class to parse FPGA objects from XML representations
  */
-class XMLFPGAReader : public Reader, DefaultHandler {
+class XMLTargetReader : public Reader, DefaultHandler {
 public:
-    XMLFPGAReader(FPGALayer* fpga);
-    ~XMLFPGAReader(){};
+    XMLTargetReader(Target* hw);
+    ~XMLTargetReader(){};
     /*!
      * main method to read and return FPGA class from a xml file
      * @param path
      * @return
      */
-    virtual XilinxFPGA& readFPGA(const char* path) final;
+    virtual Target& readHardwareTarget(const char* path) final;
     /*!
    * \brief readResourceModel dont use the function in this class
    * \param path
@@ -57,7 +57,7 @@ public:
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
 private:
-    XilinxFPGA* xilinxfpga;
+    Target* hardwareTarget;
     /*!
        * \brief startElement
        * \param uri

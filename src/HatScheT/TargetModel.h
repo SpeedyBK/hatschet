@@ -28,13 +28,13 @@ namespace HatScheT {
 /*!
  * This class is a placeholder for future attributes and functionality of hardware targets
  */
-class HardwareTargetBase {
+class Target {
 public:
   /*!
    * constructor
    * @param name
    */
-  HardwareTargetBase();
+  Target();
   /*!
    * get the hardware targets name
    * @return
@@ -48,18 +48,31 @@ public:
   string getFamily(){return this->family;}
   void setFamily(string f){this->family = f;}
   /*!
-   * add a generic hardware constraint to this target
+   * manage the vendor variable of the target
+   * @return
+   */
+  string getVendor(){return  this->vendor;}
+  void setVendor(string v){this->vendor = v;}
+  /*!
+   * add a generic hardware element to this target
    * e.g. "(c1,54),(cm^2, 47.34)"
    * @param constraint
    * @param limit
    */
-  void addConstraint(string constraint, double limit);
-  map<std::string, double>& getConstraints() {return this->constraints;}
+  void addElement(string element, double limit);
+  map<std::string, double>& getElements() {return this->elements;}
+  double getElement(string e);
+  /*!
+   * check whether an element exists in the constraints map
+   * @param c
+   * @return
+   */
+  bool elementExists(string e);
 protected:
   /*!
    * this container manages the hardware constraints of the target
    */
-  map<std::string, double> constraints;
+  map<std::string, double> elements;
   /*!
    * the hardware targets name
    */
@@ -68,6 +81,10 @@ protected:
    * the product family
    */
    string family;
+   /*!
+    * the vendor of the hardware target
+    */
+   string vendor;
 };
 
 }
