@@ -29,8 +29,26 @@ Target::Target()
   this->name = "";
 }
 
-void Target::addElement(string element, double limit)
-{
+ostream& operator<<(ostream& os, const Target& t){
+  os << "------------------------------------------------------------------------------------" << endl;
+  os << "------------------------------ Hardware Target Model -------------------------------" << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
+
+  os << "Vendor: " << t.vendor << endl;
+  os << "Familiy: " << t.family << endl;
+  os << "Name: " << t.name << endl;
+  os << "------------------------------------------------------------------------------------" << endl;
+
+  for(auto it=t.elements.begin();it!=t.elements.end(); ++it){
+    os << it->first << ": " << to_string(it->second) << endl;
+  }
+
+  os << "------------------------------------------------------------------------------------" << endl;
+
+  return os;
+}
+
+void Target::addElement(string element, double limit) {
   this->elements.insert(make_pair(element,limit));
 }
 

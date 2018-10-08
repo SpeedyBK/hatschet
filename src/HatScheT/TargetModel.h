@@ -35,6 +35,8 @@ public:
    * @param name
    */
   Target();
+
+  friend ostream& operator<<(ostream& os, const Target& t);
   /*!
    * get the hardware targets name
    * @return

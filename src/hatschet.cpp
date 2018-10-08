@@ -61,21 +61,16 @@
  * @param value as string if parameter string was found
  * @return True if parameter string was found
  */
-bool getCmdParameter(char* argv, const char* parameter, char* &value)
-{
-  if(strstr(argv, parameter))
-  {
+bool getCmdParameter(char* argv, const char* parameter, char* &value) {
+  if(strstr(argv, parameter)) {
     value = argv+strlen(parameter);
     return true;
-  }
-  else
-  {
+  } else {
     return false;
   }
 }
 
-void print_short_help()
-{
+void print_short_help() {
   std::cout << "usage: hatschet [OPTIONS] <path to graphML file>" << std::endl;
   std::cout << std::endl;
   std::cout << "General Options:" << std::endl;
@@ -104,8 +99,8 @@ void print_short_help()
   std::cout << "--show_ilp_solver_output  Shows the ILP solver output" << std::endl;
   std::cout << std::endl;
 }
-int main(int argc, char *args[])
-{
+
+int main(int argc, char *args[]) {
 #ifndef USE_XERCESC
   throw HatScheT::Exception("XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary");
 #else
@@ -131,14 +126,12 @@ int main(int argc, char *args[])
   std::string dotFile="";
   std::string htmlFile="";
 
-  if(argc <= 1)
-  {
+  if(argc <= 1) {
       print_short_help();
       exit(0);
   }
 
-  try
-  {
+  try {
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::Target target;
@@ -149,117 +142,90 @@ int main(int argc, char *args[])
     //parse command line
     for (int i = 1; i < argc; i++) {
       char* value;
-      if(getCmdParameter(args[i],"--timeout=",value))
-      {
+      if(getCmdParameter(args[i],"--timeout=",value)) {
         timeout = atol(value);
       }
-      else if(getCmdParameter(args[i],"--threads=",value))
-      {
+      else if(getCmdParameter(args[i],"--threads=",value)) {
         threads = atol(value);
       }
-      else if(getCmdParameter(args[i],"--show_ilp_solver_output",value))
-      {
+      else if(getCmdParameter(args[i],"--show_ilp_solver_output",value)) {
         solverQuiet=false;
       }
-      else if(getCmdParameter(args[i],"--solver=",value))
-      {
+      else if(getCmdParameter(args[i],"--solver=",value)) {
         #ifndef USE_SCALP
         throw HatScheT::Exception("ScaLP not active! Solver cant be chosen: " + std::string(value));
         #endif
         ilpSolver = std::string(value);
       }
-      else if(getCmdParameter(args[i],"--resource=",value))
-      {
+      else if(getCmdParameter(args[i],"--resource=",value)) {
         resourceModelFile = std::string(value);
       }
-      else if(getCmdParameter(args[i],"--graph=",value))
-      {
+      else if(getCmdParameter(args[i],"--graph=",value)) {
         graphMLFile = std::string(value);
       }
-      else if(getCmdParameter(args[i],"--target=",value))
-      {
+      else if(getCmdParameter(args[i],"--target=",value)) {
         targetFile = std::string(value);
       }
-      else if(getCmdParameter(args[i],"--dot=",value))
-      {
+      else if(getCmdParameter(args[i],"--dot=",value)) {
         dotFile = value;
       }
-      else if(getCmdParameter(args[i],"--samples=",value))
-      {
+      else if(getCmdParameter(args[i],"--samples=",value)) {
         samples = atol(value);
       }
-      else if(getCmdParameter(args[i],"--modulo=",value))
-      {
+      else if(getCmdParameter(args[i],"--modulo=",value)) {
         modulo = atol(value);
       }
-      else if(getCmdParameter(args[i],"--maxlatency=",value))
-      {
+      else if(getCmdParameter(args[i],"--maxlatency=",value)) {
         maxLatency = atol(value);
       }
-      else if(getCmdParameter(args[i],"--html=",value))
-      {
+      else if(getCmdParameter(args[i],"--html=",value)) {
         htmlFile = value;
       }
-      else if(getCmdParameter(args[i],"--scheduler=",value))
-      {
+      else if(getCmdParameter(args[i],"--scheduler=",value)) {
         std::string valueStr = std::string(value);//std::tolower(std::string(value));
 
         schedulerSelectionStr.resize(valueStr.size());
         std::transform(valueStr.begin(),valueStr.end(),schedulerSelectionStr.begin(),::tolower);
 
-        if(schedulerSelectionStr == "asap")
-        {
+        if(schedulerSelectionStr == "asap") {
           schedulerSelection = ASAP;
         }
-        else if(schedulerSelectionStr == "alap")
-        {
+        else if(schedulerSelectionStr == "alap") {
           schedulerSelection = ALAP;
         }
-        else if(schedulerSelectionStr == "ul")
-        {
+        else if(schedulerSelectionStr == "ul") {
           schedulerSelection = UL;
         }
-        else if(schedulerSelectionStr == "moovac")
-        {
+        else if(schedulerSelectionStr == "moovac") {
           schedulerSelection = MOOVAC;
         }
-        else if(schedulerSelectionStr == "moovacminreg")
-        {
+        else if(schedulerSelectionStr == "moovacminreg") {
           schedulerSelection = MOOVACMINREG;
         }
-        else if(schedulerSelectionStr == "moovacresaware")
-        {
+        else if(schedulerSelectionStr == "moovacresaware") {
           schedulerSelection = MOOVACRESAWARE;
         }
-        else if(schedulerSelectionStr == "ed97")
-        {
+        else if(schedulerSelectionStr == "ed97") {
           schedulerSelection = ED97;
         }
-        else if(schedulerSelectionStr == "modulosdc")
-        {
+        else if(schedulerSelectionStr == "modulosdc") {
           schedulerSelection = MODULOSDC;
         }
-        else if(schedulerSelectionStr == "rationalii")
-        {
+        else if(schedulerSelectionStr == "rationalii") {
           schedulerSelection = RATIONALII;
         }
-        else if(schedulerSelectionStr == "rationaliifimmel")
-        {
+        else if(schedulerSelectionStr == "rationaliifimmel") {
             schedulerSelection = RATIONALIIFIMMEL;
         }
-        else if(schedulerSelectionStr == "asapRationalII")
-        {
+        else if(schedulerSelectionStr == "asapRationalII") {
           schedulerSelection = ASAPRATIONALII;
         }
-        else
-        {
+        else {
           throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
         }
-
       }
       //HatScheT Auto Test Function
-      else if(getCmdParameter(args[i],"--test=",value))
-      {
+      else if(getCmdParameter(args[i],"--test=",value)) {
         #ifdef USE_SCALP
         string str = std::string(value);
         if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
@@ -279,20 +245,15 @@ int main(int argc, char *args[])
 
         exit(0);
       }
-      else if((args[i][0] != '-') && getCmdParameter(args[i],"",value))
-      {
+      else if((args[i][0] != '-') && getCmdParameter(args[i],"",value)) {
         string str = std::string(value);
-
         graphMLFile = std::string(value);
 
-      }
-      else
-      {
+      } else {
         std::cout << "Error: Illegal Option: " << args[i] << std::endl;
         print_short_help();
         exit(-1);
       }
-
     }
     //output major settings:
     std::cout << "settings:" << std::endl;
@@ -302,8 +263,7 @@ int main(int argc, char *args[])
     std::cout << "timeout=" << timeout << std::endl;
     std::cout << "threads=" << threads << std::endl;
     std::cout << "scheduler=";
-    switch(schedulerSelection)
-    {
+    switch(schedulerSelection) {
       case ASAP:
         cout << "ASAP";
         break;
@@ -343,16 +303,18 @@ int main(int argc, char *args[])
     }
     std::cout << std::endl;
 
-    //read resource model:
-    rm = readerRes.readResourceModel(resourceModelFile.c_str());
-    //read target
-    if(targetFile != ""){
+    //read target if provided
+    if(targetFile != "") {
       target = readerTarget.readHardwareTarget(targetFile.c_str());
+      cout << "target read" << endl;
+      cout << target << endl;
     }
 
+    //read resource model:
+    rm = readerRes.readResourceModel(resourceModelFile.c_str());
+
     //read graph:
-    if(rm.isEmpty() == false)
-    {
+    if(rm.isEmpty() == false) {
       HatScheT::GraphMLGraphReader graphReader(&rm, &g);
       g = graphReader.readGraph(graphMLFile.c_str());
       std::string graphName = graphMLFile.substr(0,graphMLFile.length()-8);
@@ -360,14 +322,11 @@ int main(int argc, char *args[])
       cout << "graphName=" << graphName << endl;
       cout << g << endl;
       cout << rm << endl;
-    }
-    else
-    {
+    } else {
       throw HatScheT::Exception("Empty Resource Model Provided for graph parsing! Provide a valid resource model using --resource=");
     }
 
-    if(dotFile != "")
-    {
+    if(dotFile != "") {
       cout << "Writing to dotfile " << dotFile << endl;
       HatScheT::DotWriter dw(dotFile, &g, &rm);
       dw.setDisplayNames(true);
@@ -378,19 +337,14 @@ int main(int argc, char *args[])
 
     bool isModuloScheduler=false;
     std::list<std::string> solverWishList;
-    if(ilpSolver.empty())
-    {
+    if(ilpSolver.empty()) {
       solverWishList = {"Gurobi","CPLEX","SCIP","LPSolve"};
-    }
-    else
-    {
+    } else {
       solverWishList = {ilpSolver};
     }
 
-    if(rm.isEmpty() == false && g.isEmpty() == false)
-    {
-      switch(schedulerSelection)
-      {
+    if(rm.isEmpty() == false && g.isEmpty() == false) {
+      switch(schedulerSelection) {
         case ASAP:
           scheduler = new HatScheT::ASAPScheduler(g,rm);
           break;
@@ -489,14 +443,11 @@ int main(int argc, char *args[])
       scheduler->schedule();
       cout << "Finished schedule" << endl;
 
-      if(isModuloScheduler)
-      {
+      if(isModuloScheduler) {
         if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), scheduler->getII())){
           cout << "Modulo schedule verified successfully" << endl;
           cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
-        }
-        else
-        {
+        } else {
           cout << ">>> Modulo schedule verifivation failed! <<<" << endl;
           exit(-1);
         }
@@ -508,29 +459,23 @@ int main(int argc, char *args[])
       std::cout << "latency = " << scheduler->getScheduleLength() << endl;
       HatScheT::Utility::printSchedule(scheduler->getSchedule());
 
-      if(htmlFile != "")
-      {
+      if(htmlFile != "") {
         scheduler->writeScheduleChart(htmlFile);
       }
 
       delete scheduler;
     }
-
-
   }
-  catch(HatScheT::Exception &e)
-  {
+  catch(HatScheT::Exception &e) {
     std::cerr << "Error: " << e.msg << std::endl;
     exit(-1);
   }
 #ifdef USE_SCALP
-  catch(ScaLP::Exception &e)
-  {
+  catch(ScaLP::Exception &e) {
     std::cerr << "Scalp Error: " << e.msg << std::endl;
     exit(-1);
   }
 #endif //USE_SCALP
-
   return 0;
 #endif
 }
