@@ -31,20 +31,52 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   }
 
   this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = Utility::calcMaxII(&g, &resourceModel);
+  this->maxII = this->computeMaxII(&g,&resourceModel);
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
 }
 
 void MoovacResAwScheduler::schedule()
 {
-  cout << "MoovacResAwScheduler.schedule: start " << this->g.getName() << endl;
+  this->totalTime = 0;
+  this->II = this->minII;
 
-  this->setUpSolverSettings();
-  this->constructProblem();
+  bool timeoutOccured=false;
 
-  cout << "MoovacResAwScheduler.schedule: finished " << this->g.getName() << endl;
-  cout << "Identified II: " << this->getII() << endl;
+  cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
+  if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
+  else cout << "Unlimited MaxLatency" << endl;
+  cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
+
+  while(this->II <= this->maxII) {
+    cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
+    this->resetContainer();
+    this->setUpSolverSettings();
+    this->constructProblem();
+
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
+
+    stat = this->solver->solve();
+
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
+    if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) this->optimalResult = true;
+
+    if(scheduleFound == false) (this->II)++;
+    else break;
+  }
+
+  if(this->scheduleFound == true) {
+    this->r = this->solver->getResult();
+    this->fillSolutionStructure();
+
+    if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
+    else cout << "Found feasible solution for II: " << this->II << endl;
+  }
+  else{
+    cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
+    this->II = -1;
+  }
 }
 
 void MoovacResAwScheduler::constructProblem()

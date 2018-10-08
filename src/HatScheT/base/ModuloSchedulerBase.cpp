@@ -29,4 +29,9 @@ namespace HatScheT
     {
     return Utility::calcMinII(g, rm);
   }
+
+  int ModuloSchedulerBase::computeMaxII(Graph *g, ResourceModel *rm)
+  {
+    return Utility::calcMaxII(g, rm);
+  }
 }

@@ -48,11 +48,12 @@ public:
   int getMaxII(){return this->maxII;}
 protected:
   /*!
-   * \brief computeMinII
+   * \brief computeMinII / computeMaxII
    * \param g
    * \param rm
    */
   int computeMinII(Graph* g, ResourceModel* rm);
+  int computeMaxII(Graph* g, ResourceModel* rm);
   /*!
    * \brief minII lower bound for II
    */
