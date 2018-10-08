@@ -26,26 +26,30 @@ namespace HatScheT
 
 MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, Target& target)
         : MoovacScheduler(g, resourceModel, solverWishlist), target(target) {
-  this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = Utility::calcMaxII(&g, &resourceModel);
-  this->SLMax = 0;
-
   if(Utility::resourceModelAndTargetValid(resourceModel,target) == false){
     throw HatScheT::Exception("MoovacResAwScheduler.MoovacResAwScheduler: ERROR Resource Model and Hardware Target are not corresponding!");
   }
+
+  this->minII = this->computeMinII(&g,&resourceModel);
+  this->maxII = Utility::calcMaxII(&g, &resourceModel);
+  if (this->minII >= this->maxII) this->maxII = this->minII+1;
+  this->SLMax = 0;
 }
 
 void MoovacResAwScheduler::schedule()
 {
-  cout << "MoovacResAwScheduler.schedule: start" << endl;
+  cout << "MoovacResAwScheduler.schedule: start " << this->g.getName() << endl;
 
-  cout << "MoovacResAwScheduler.schedule: finished" << endl;
-  cout << "II: " << this->getII() << endl;
+  this->setUpSolverSettings();
+  this->constructProblem();
+
+  cout << "MoovacResAwScheduler.schedule: finished " << this->g.getName() << endl;
+  cout << "Identified II: " << this->getII() << endl;
 }
 
 void MoovacResAwScheduler::constructProblem()
 {
-
+  this->setMaxLatency();
 }
 
 void MoovacResAwScheduler::setObjective()

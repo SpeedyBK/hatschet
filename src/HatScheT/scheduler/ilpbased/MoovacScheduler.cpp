@@ -28,7 +28,7 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
 {
   this->minII = this->computeMinII(&g,&resourceModel);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
-  if (minII >= maxII) maxII = minII+1;
+  if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
 }
 
@@ -55,18 +55,20 @@ void MoovacScheduler::setUpSolverSettings()
   this->solver->threads = this->threads;
 }
 
-void MoovacScheduler::constructProblem()
-{
+void MoovacScheduler::setMaxLatency() {
   //case unlimited
   if(this->maxLatencyConstraint == -1){
     this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
-  }
-  else if(this->maxLatencyConstraint > 0) {
+  } else if(this->maxLatencyConstraint > 0) {
     this->SLMax = this->maxLatencyConstraint;
+  } else {
+    throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
   }
-  else {
-     throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
-  }
+}
+
+void MoovacScheduler::constructProblem()
+{
+  this->setMaxLatency();
 
   this->setVectorVariables();
   this->fillRegVector();

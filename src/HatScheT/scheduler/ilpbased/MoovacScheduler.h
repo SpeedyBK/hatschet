@@ -108,6 +108,10 @@ protected:
    */
   void fillSolutionStructure();
   /*!
+   * set maxLatency based on user input or estimate as described in the moovac paper
+   */
+  void setMaxLatency();
+  /*!
    * \brief mi contains all mi for i in L. (20) in paper
    */
   vector< vector<ScaLP::Variable> > mi;
