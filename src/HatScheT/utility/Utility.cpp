@@ -132,7 +132,7 @@ double Utility::calcResMII(Graph *g, ResourceModel *rm, Target* t)
       int avSlots = r->getLimit();
 
       if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
-      double tempMax = ((double)opsUsingR)/((double)avSlots) + (double)(opsUsingR % avSlots != 0);
+      double tempMax = ((double)opsUsingR)/((double)avSlots); // + (double)(opsUsingR % avSlots != 0); < -- ?? patrick
 
       if(tempMax>resMII) resMII=tempMax;
     }

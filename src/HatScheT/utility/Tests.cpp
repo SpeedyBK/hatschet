@@ -143,10 +143,14 @@ bool Tests::rationalMinIITest() {
   g = readerGraph.readGraph(graphStr.c_str());
 
   double resMinII = HatScheT::Utility::calcResMII(&g,&rm);
+  double recMinII = HatScheT::Utility::calcRecMII(&g,&rm);
 
-  cout << resMinII << endl;
+  cout << "resMinII is: " << to_string(resMinII) << endl;
+  cout << "recMinII is: " << to_string(recMinII) << endl;
 
-  return false;
+  if(((double)10)/((double)3) != resMinII) return false;
+
+  return true;
 }
 
 bool Tests::readTest()
