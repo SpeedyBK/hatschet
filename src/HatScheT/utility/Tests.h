@@ -82,5 +82,10 @@ public:
    * \return
    */
   static bool ulSchedulerTest();
+  /*!
+   * the rational min II test
+   * @return
+   */
+  static bool rationalMinIITest();
 };
 }

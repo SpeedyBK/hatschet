@@ -129,6 +129,26 @@ bool Tests::alapHCTest()
   return false;
 }
 
+bool Tests::rationalMinIITest() {
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::GraphMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/vanDongenRM.xml";
+  string graphStr = "cTest/vanDongen.graphml";
+
+  rm = readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  g = readerGraph.readGraph(graphStr.c_str());
+
+  double resMinII = HatScheT::Utility::calcResMII(&g,&rm);
+
+  cout << resMinII << endl;
+
+  return false;
+}
+
 bool Tests::readTest()
 {
   HatScheT::ResourceModel rm;
