@@ -170,11 +170,11 @@ double Utility::calcRecMII(Graph *g, ResourceModel *rm)
   ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
   // construct decision variables
-  auto II = ScaLP::newIntegerVariable("II", 0, std::numeric_limits<int>::max());
+  auto II = ScaLP::newRealVariable("II", 0, ScaLP::INF());
   std::map<Vertex *, ScaLP::Variable> t;
   for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
     auto v = *it;
-    t[v] = ScaLP::newIntegerVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
+    t[v] = ScaLP::newRealVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
   }
 
   // construct constraints
@@ -195,7 +195,7 @@ double Utility::calcRecMII(Graph *g, ResourceModel *rm)
     throw HatScheT::Exception("RecMII computation failed!");
   }
 
-  return max(1.0, (double)(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+  return max(1.0, (solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
 #endif
