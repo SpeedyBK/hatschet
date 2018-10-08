@@ -6,6 +6,7 @@
 #include <ScaLP/Solver.h>
 #include <HatScheT/utility/Verifier.h>
 #include <cmath>
+#include <math.h>
 
 namespace HatScheT
 {
@@ -231,8 +232,8 @@ RationalIISchedulerFimmel::RationalIISchedulerFimmel(Graph &g, ResourceModel &re
         testResource->registerVertex(S[5], c);
         resourceModel = *testResource;
         */
-
-        this->minII = this->computeMinII(&g,&resourceModel);
+        this->computeMinII(&g,&resourceModel);
+        this->minII = ceil(this->minII);
         cout << "minII: " << this->minII << endl;
 
         cout << "Finished Generating Test Graph" << endl;
@@ -267,8 +268,8 @@ void RationalIISchedulerFimmel::schedule() {
     //this->generateTestSetup2();
 
     //cout << "Starting Fimmel Scheduler of " << g.getName() << " with "
-
-    this->minII = this->computeMinII(&g,&resourceModel);
+    this->computeMinII(&g,&resourceModel);
+    this->minII = ceil(this->minII);
     //cout << "minII: " << this->minII << endl;
 
 

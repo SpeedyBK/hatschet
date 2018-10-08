@@ -30,6 +30,7 @@
 #include <ctime>
 #include <numeric>
 #include <chrono>
+#include <math.h>
 
 HatScheT::MRT::MRT(HatScheT::ResourceModel& r, int ii)
 : rm(&r), II(ii)
@@ -163,8 +164,9 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   , mrt({resourceModel,1})
 {
   this->verbose = false;
-  this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = Utility::calcMaxII(&g, &resourceModel);
+  this->computeMinII(&g,&resourceModel);
+  this->minII = ceil(this->minII);
+  this->computeMaxII(&g, &resourceModel);
   if (minII >= maxII) maxII = minII+1;
 }
 

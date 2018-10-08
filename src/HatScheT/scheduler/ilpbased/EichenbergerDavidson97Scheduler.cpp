@@ -41,9 +41,9 @@ void EichenbergerDavidson97Scheduler::schedule()
   startTimes.clear();
   scheduleFound = false;
   optimalResult = true;
-
-  minII = computeMinII(&g, &resourceModel);
-  maxII = Utility::calcMaxII(&g, &resourceModel);
+  computeMinII(&g, &resourceModel);
+  minII = ceil(minII);
+  computeMaxII(&g, &resourceModel);
 
   std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
 

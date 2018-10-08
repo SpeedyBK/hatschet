@@ -20,6 +20,7 @@
 
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/utility/Utility.h>
+#include <math.h>
 
 namespace HatScheT
 {
@@ -27,7 +28,8 @@ namespace HatScheT
 MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
     : MoovacScheduler(g, resourceModel, solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);
+  this->computeMinII(&g,&resourceModel);
+  this->minII = ceil(this->minII);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
 }

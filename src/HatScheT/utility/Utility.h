@@ -76,29 +76,29 @@ public:
   * \return
   */
  static int getNoOfOutputsWithoutDistance(Graph* g, const Vertex* v);
-#ifdef USE_SCALP
  /*!
-  * \brief calcMinII precalculate the minimum possible II before modulo scheduling. minII is based on graph and resource model
+  * \brief calcMinII precalculate the minimum possible II before modulo scheduling.
   * minII min(ResMII,RecMII)
   * \param rm
   * \param g
   * \return
   */
- static int calcMinII(Graph *g, ResourceModel* rm);
+ static double calcMinII(double minResII, double maxResII);
+#ifdef USE_SCALP
  /*!
-  * \brief calcResMII
+  * \brief calcResMII with or witout a specific target
   * \param rm
   * \param g
   * \return
   */
- static int calcResMII(Graph *g, ResourceModel* rm);
+ static double calcResMII(Graph *g, ResourceModel* rm, Target* t=nullptr);
  /*!
   * \brief calcRecMII maximum distance of all edges
   * \param rm
   * \param g
   * \return
   */
- static int calcRecMII(Graph *g, ResourceModel *rm);
+ static double calcRecMII(Graph *g, ResourceModel *rm);
  /*!
   * \brief calcMaxII
   * \param rm

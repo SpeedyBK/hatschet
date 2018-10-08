@@ -112,31 +112,34 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
 }
 
 #ifdef USE_SCALP
-int Utility::calcMinII(Graph *g, ResourceModel *rm)
+double Utility::calcMinII(double minResII, double maxResII)
 {
-  int resMII = Utility::calcResMII(g, rm);
-  int recMII = Utility::calcRecMII(g, rm);
+  if(minResII>maxResII) return minResII;
 
-  if(resMII>recMII) return resMII;
-
-  return recMII;
+  return maxResII;
 }
 
-int Utility::calcResMII(Graph *g, ResourceModel *rm)
+double Utility::calcResMII(Graph *g, ResourceModel *rm, Target* t)
 {
-  int resMII = 1;
+  double resMII = 1.0f;
+  //standard case without using a hardware target
+  if(t == nullptr){
+    for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
+      Resource* r = *it;
+      //skip unlimited resources
+      if(r->getLimit()==-1)continue;
+      int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
+      int avSlots = r->getLimit();
 
-  for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
-    Resource* r = *it;
-    //skip unlimited resources
-    if(r->getLimit()==-1)continue;
-    int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
-    int avSlots = r->getLimit();
+      if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
+      double tempMax = ((double)opsUsingR)/((double)avSlots) + (double)(opsUsingR % avSlots != 0);
 
-    if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
-    int tempMax = opsUsingR/avSlots + (opsUsingR % avSlots != 0);
+      if(tempMax>resMII) resMII=tempMax;
+    }
+  }
+  //a target is provided
+  else{
 
-    if(tempMax>resMII) resMII=tempMax;
   }
 
   return resMII;
@@ -162,7 +165,7 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm)
   return criticalPath;
 }
 
-int Utility::calcRecMII(Graph *g, ResourceModel *rm)
+double Utility::calcRecMII(Graph *g, ResourceModel *rm)
 {
   ScaLP::Solver solver({"CPLEX", "Gurobi"});
 
@@ -192,7 +195,7 @@ int Utility::calcRecMII(Graph *g, ResourceModel *rm)
     throw HatScheT::Exception("RecMII computation failed!");
   }
 
-  return max(1, (int) std::round(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+  return max(1.0, (double)(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
 #endif

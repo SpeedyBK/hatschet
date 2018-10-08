@@ -20,14 +20,16 @@
 
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include "HatScheT/utility/Utility.h"
+#include "math.h"
 
 namespace HatScheT
 {
 
 MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = this->computeMaxII(&g,&resourceModel);
+  this->computeMinII(&g,&resourceModel);
+  this->minII = ceil(this->minII);
+  this->computeMaxII(&g,&resourceModel);
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
 }

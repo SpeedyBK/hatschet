@@ -20,6 +20,7 @@
 
 #include "MoovacResAwScheduler.h"
 #include <HatScheT/utility/Utility.h>
+#include <math.h>
 
 namespace HatScheT
 {
@@ -30,8 +31,9 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
     throw HatScheT::Exception("MoovacResAwScheduler.MoovacResAwScheduler: ERROR Resource Model and Hardware Target are not corresponding!");
   }
 
-  this->minII = this->computeMinII(&g,&resourceModel);
-  this->maxII = this->computeMaxII(&g,&resourceModel);
+  this->computeMinII(&g,&resourceModel,&target);
+  this->minII = ceil(this->minII);
+  this->computeMaxII(&g,&resourceModel);
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
 }
@@ -43,13 +45,13 @@ void MoovacResAwScheduler::schedule()
 
   bool timeoutOccured=false;
 
-  cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
+  cout << "Starting RAMS ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
   if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
 
   while(this->II <= this->maxII) {
-    cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
+    cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
     this->resetContainer();
     this->setUpSolverSettings();
     this->constructProblem();

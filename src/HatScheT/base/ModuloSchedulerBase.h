@@ -23,11 +23,11 @@
 
 #include <HatScheT/Graph.h>
 #include <HatScheT/ResourceModel.h>
+#include <HatScheT/TargetModel.h>
 #include <map>
 
 namespace HatScheT
 {
-
 /*!
  * \brief ModuloSchedulerBase is the base class of all schedulers that solve the modulo scheduling problem.
  *
@@ -36,6 +36,7 @@ namespace HatScheT
 class ModuloSchedulerBase
 {
 public:
+   ModuloSchedulerBase();
   /*!
    * \brief getMinII
    * \return
@@ -46,22 +47,44 @@ public:
    * \return
    */
   int getMaxII(){return this->maxII;}
-protected:
   /*!
-   * \brief computeMinII / computeMaxII
-   * \param g
-   * \param rm
+   * get the rational minimum recurrence II contraint
+   * this value is stored after the computeMinII method is called by the respective scheduler
+   * @return
    */
-  int computeMinII(Graph* g, ResourceModel* rm);
-  int computeMaxII(Graph* g, ResourceModel* rm);
+  double getRecMinII(){return this->recMinII;}
+  /*!
+   * get the rational minimum recurrence II contraint
+   * this value is stored after the computeMinII method is called by the respective scheduler
+   * @return
+   */
+  double getResMinII(){return this->resMinII;}
+protected:
   /*!
    * \brief minII lower bound for II
    */
-  int minII=-1;
+  double minII=-1.0f;
   /*!
    * \brief maxII upper bound for II
    */
   int maxII=-1;
+  /*!
+   * the rational minimum recurrence II contraint
+   * this value is stored after the computeMinII method is called by the respective scheduler
+   */
+  double recMinII=-1.0f;
+  /*!
+   * the rational minimum resource II contraint
+   * this value is stored after the computeMinII method is called by the respective scheduler
+   */
+  double resMinII=-1.0f;
+  /*!
+   * \brief computeMinII / computeMaxII with or without hardware target
+   * \param g
+   * \param rm
+   */
+  void computeMinII(Graph* g, ResourceModel* rm, Target* t = nullptr);
+  void computeMaxII(Graph* g, ResourceModel* rm);
 };
 
 }

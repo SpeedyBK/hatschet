@@ -22,13 +22,15 @@
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <algorithm>
+#include <math.h>
 
 namespace HatScheT
 {
 
 SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<string> solverWishlist, OccurrenceSetCombination *occSC) : MoovacScheduler(g, resourceModel, solverWishlist)
 {
-  this->minII = this->computeMinII(&g,&resourceModel);
+  this->computeMinII(&g,&resourceModel);
+  this->minII = ceil(this->minII);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
   this->occSC = occSC;
