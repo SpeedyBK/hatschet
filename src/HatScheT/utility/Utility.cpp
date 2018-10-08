@@ -289,6 +289,25 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
   return false;
 }
 
+bool Utility::resourceModelAndTargetValid(HatScheT::ResourceModel &rm, HatScheT::Target &t) {
+  for(auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it){
+    Resource* r  = *it;
+    //skip unlimited resources
+    //TODO: is this still valid?? valid in this context?? (patrick)
+    //if(r->getLimit() == -1) continue;
+    map<string,double>& costs = r->getHardwareCosts();
+
+    for(auto it2 = costs.begin(); it2 != costs.end(); ++it2) {
+      if (t.elementExists(it2->first) == false) {
+        cout << "Utility.resourceModelAndTargetValid: ERROR demanded hardware element '" << it2->first << "' of resource '" << r->getName() << "' is not available on this target:" << endl;
+        cout << t << endl;
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
 
 int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel& rm, Resource *r)
 {

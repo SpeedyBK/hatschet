@@ -22,6 +22,7 @@
 #include <string>
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
+#include "HatScheT/TargetModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
 
@@ -192,5 +193,7 @@ public:
   * \return
   */
  static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
+
+ static bool resourceModelAndTargetValid(ResourceModel &rm, Target& t);
 };
 }

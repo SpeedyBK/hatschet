@@ -182,7 +182,7 @@ int main(int argc, char *args[]) {
         htmlFile = value;
       }
       else if(getCmdParameter(args[i],"--scheduler=",value)) {
-        std::string valueStr = std::string(value);//std::tolower(std::string(value));
+        std::string valueStr = std::string(value);
 
         schedulerSelectionStr.resize(valueStr.size());
         std::transform(valueStr.begin(),valueStr.end(),schedulerSelectionStr.begin(),::tolower);
@@ -306,12 +306,18 @@ int main(int argc, char *args[]) {
     //read target if provided
     if(targetFile != "") {
       target = readerTarget.readHardwareTarget(targetFile.c_str());
-      cout << "target read" << endl;
       cout << target << endl;
     }
 
     //read resource model:
     rm = readerRes.readResourceModel(resourceModelFile.c_str());
+
+    //check target and resource model for consistency
+    if(target.isEmpty() == false && rm.isEmpty() == false){cout << "verify" << endl;
+      if(HatScheT::Utility::resourceModelAndTargetValid(rm,target) == false){
+        throw HatScheT::Exception("Hardware Target and Resource Model are inconsisent! Provide a valid resource model using --resource= and hardware target using --target==");
+      }
+    }
 
     //read graph:
     if(rm.isEmpty() == false) {

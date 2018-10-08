@@ -30,7 +30,9 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
 
-  this->resourceModelIsValid();
+  if(Utility::resourceModelAndTargetValid(resourceModel,target) == false){
+    throw HatScheT::Exception("MoovacResAwScheduler.MoovacResAwScheduler: ERROR Resource Model and Hardware Target are not corresponding!");
+  }
 }
 
 void MoovacResAwScheduler::schedule()
@@ -54,19 +56,6 @@ void MoovacResAwScheduler::setObjective()
 void MoovacResAwScheduler::setGeneralConstraints()
 {
 
-}
-
-bool MoovacResAwScheduler::resourceModelIsValid()
-{
-  /*for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
-    Resource* r  = *it;
-    //skip unlimited resources
-    if(r->getLimit() == -1) continue;
-
-    if(this->fpga.constraintExists(r->getName()) == false) return false;
-  }*/
-
-  return true;
 }
 
 }

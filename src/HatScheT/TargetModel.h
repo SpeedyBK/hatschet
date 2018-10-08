@@ -70,6 +70,11 @@ public:
    * @return
    */
   bool elementExists(string e);
+  /*!
+   * ask whether this target model is empty, i.e. has no elements
+   * @return
+   */
+  bool isEmpty();
 protected:
   /*!
    * this container manages the hardware constraints of the target

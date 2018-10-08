@@ -39,12 +39,6 @@ private:
   virtual void setObjective();
   virtual void setGeneralConstraints();
 
-  /*!
-   * This function is used to check whether the provided resource model is valid and all resources references can be found
-   * on the fpga and constraints are provided
-   * @return
-   */
-  bool resourceModelIsValid();
 
     Target& target;
 };

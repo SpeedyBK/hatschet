@@ -48,6 +48,11 @@ ostream& operator<<(ostream& os, const Target& t){
   return os;
 }
 
+bool Target::isEmpty() {
+  if(this->elements.size() == 0) return true;
+  return false;
+}
+
 void Target::addElement(string element, double limit) {
   this->elements.insert(make_pair(element,limit));
 }

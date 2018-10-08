@@ -61,8 +61,6 @@ protected:
    * \brief maxII upper bound for II
    */
   int maxII=-1;
-
-
 };
 
 }
