@@ -145,11 +145,14 @@ bool Tests::rationalMinIITest() {
   double resMinII = HatScheT::Utility::calcResMII(&g,&rm);
   double recMinII = HatScheT::Utility::calcRecMII(&g,&rm);
 
-  cout << "resMinII is: " << to_string(resMinII) << " instead of 10/3 = 3.333333" << endl;
-  cout << "recMinII is: " << to_string(recMinII) << " instead of 16/3 = 5.333333" << endl;
-
-  if(((double)10)/((double)3) != resMinII) return false;
-  if(((double)16)/((double)3) != recMinII) return false;
+  if(((double)10)/((double)3) != resMinII) {
+    cout << "resMinII is: " << to_string(resMinII) << " instead of 10/3 =" << to_string(((double)10)/((double)3) ) << endl;
+    return false;
+  }
+  if(((double)16)/((double)3) != recMinII) {
+    cout << "recMinII is: " << to_string(recMinII) << " instead of 16/3 =" << to_string(((double)16)/((double)3) ) << endl;
+    return false;
+  }
 
   return true;
 }
