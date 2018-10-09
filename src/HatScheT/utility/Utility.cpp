@@ -195,7 +195,7 @@ double Utility::calcRecMII(Graph *g, ResourceModel *rm)
     throw HatScheT::Exception("RecMII computation failed!");
   }
 
-  return max(1.0, (solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+  return max(1.0, (double)(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
 }
 
 #endif
