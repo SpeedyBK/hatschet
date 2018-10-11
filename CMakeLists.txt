@@ -100,6 +100,7 @@ src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
+src/HatScheT/utility/writer/GraphMLWriter.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
@@ -145,6 +146,7 @@ src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/Writer.h
+src/HatScheT/utility/writer/GraphMLWriter.h
 src/HatScheT/Vertex.h
 )
 
