@@ -40,6 +40,7 @@
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/GraphMLResourceReader.h>
+#include <HatScheT/utility/writer/GraphMLWriter.h>
 #endif
 
 #ifdef USE_SCALP
@@ -89,6 +90,7 @@ void print_short_help() {
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
+  std::cout << "--writegraph=[string]     Optional path to graphML file generated from graph model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
@@ -121,6 +123,7 @@ int main(int argc, char *args[]) {
   string schedulerSelectionStr;
 
   std::string graphMLFile="";
+  std::string writeGraphMLFile="";
   std::string resourceModelFile="";
   std::string targetFile="";
   std::string dotFile="";
@@ -168,6 +171,9 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--dot=",value)) {
         dotFile = value;
+      }
+      else if(getCmdParameter(args[i],"--writegraph=",value)) {
+        writeGraphMLFile = value;
       }
       else if(getCmdParameter(args[i],"--samples=",value)) {
         samples = atol(value);
@@ -338,6 +344,13 @@ int main(int argc, char *args[]) {
       HatScheT::DotWriter dw(dotFile, &g, &rm);
       dw.setDisplayNames(true);
       dw.write();
+    }
+
+    if(writeGraphMLFile != "") {
+      if(g.isEmpty()==true) throw HatScheT::Exception("No graph provided for graphML writing! Provide a graph using --graph=");
+      cout << "Writing graph to file " << writeGraphMLFile << endl;
+      HatScheT::GraphMLWriter gw(writeGraphMLFile, &g);
+      gw.write();
     }
 
     HatScheT::SchedulerBase *scheduler;

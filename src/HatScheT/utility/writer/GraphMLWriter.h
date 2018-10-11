@@ -30,6 +30,8 @@
 #include "../../ResourceModel.h"
 #include "../../Graph.h"
 
+using namespace xercesc;
+
 namespace HatScheT
 {
 class GraphMLWriter : public Writer {
@@ -37,11 +39,18 @@ public:
   GraphMLWriter(std::string path, Graph*);
   ~GraphMLWriter();
 
+    virtual void write();
+
 private:
   /*!
  * \brief g save pointer to graph to write
  */
   Graph* g;
+
+    ///
+    /// \brief DoOutput2File
+    ///
+    void DoOutput2File(DOMDocument*, XMLCh*);
 };
 
 }
