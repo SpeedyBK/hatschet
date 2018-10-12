@@ -25,8 +25,9 @@
 
 namespace HatScheT {
 
-GraphMLWriter::GraphMLWriter(std::string path, Graph *g) : Writer(path) {
+GraphMLWriter::GraphMLWriter(std::string path, Graph *g, ResourceModel* rm) : Writer(path) {
   this->g = g;
+  this->rm = rm;
 }
 
 GraphMLWriter::~GraphMLWriter() {
@@ -47,21 +48,50 @@ void GraphMLWriter::write() {
   // Pointer to a DOMDocument.
   DOMDocument* pDOMDocument = NULL;
 
-  // Root Element System
-  pDOMDocument = pDOMImplementation->createDocument(0, XMLString::transcode("graph"), 0);
+  // Root Element graphml
+  pDOMDocument = pDOMImplementation->createDocument(0, XMLString::transcode("graphml"), 0);
+
+  DOMElement * pRootElement = NULL;
+  pRootElement = pDOMDocument->getDocumentElement();
+
+  // Create an Element graph, then fill the with edges and nodes
+  // and then append this to the root element.
+  DOMElement * graphElement = NULL;
+  graphElement = pDOMDocument->createElement(XMLString::transcode("graph"));
+  graphElement->setAttribute(XMLString::transcode("id"), XMLString::transcode(this->g->getName().c_str()));
+  graphElement->setAttribute(XMLString::transcode("edgedefault"), XMLString::transcode("directed"));
 
   // Nodes of the graph
   for(auto it = this->g->verticesBegin(); it != this->g->verticesEnd(); ++it){
     Vertex* v = *it;
+    const Resource* r = this->rm->getResource(v);
 
     // Create an Element node, then fill in some attributes,
     // and then append this to the root element.
     DOMElement * pDataElement = NULL;
     pDataElement = pDOMDocument->createElement(XMLString::transcode("node"));
-
-    //append id
     pDataElement->setAttribute(XMLString::transcode("id"), XMLString::transcode(to_string(v->getId()).c_str()));
+
+    // Create an Element date, then fill in name attributes,
+    // and then append this to the node element.
+    DOMElement * nameElement = NULL;
+    nameElement = pDOMDocument->createElement(XMLString::transcode("data"));
+    nameElement->setAttribute(XMLString::transcode("key"), XMLString::transcode("name"));
+    nameElement->setTextContent(XMLString::transcode(v->getName().c_str()));
+    pDataElement->appendChild(nameElement);
+
+    // Create an Element date, then fill in name attributes,
+    // and then append this to the node element.
+    DOMElement * resElement = NULL;
+    resElement = pDOMDocument->createElement(XMLString::transcode("data"));
+    resElement->setAttribute(XMLString::transcode("key"), XMLString::transcode("uses_resource"));
+    resElement->setTextContent(XMLString::transcode(r->getName().c_str()));
+    pDataElement->appendChild(resElement);
+
+    graphElement->appendChild(pDataElement);
   }
+
+  pRootElement->appendChild(graphElement);
 
   //path for xml writing
   DoOutput2File(pDOMDocument, XMLString::transcode(this->path.c_str()));

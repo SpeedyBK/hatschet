@@ -65,6 +65,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
   if(name == "node" && this->nodeTagFound == true)
   {
     Vertex* v = &this->g->createVertex(this->currVertexId);
+    v->setName(this->currVertexName);
     Resource* r = this->rm->getResource(this->currVertexResName);
 
     this->rm->registerVertex(v, r);
@@ -106,7 +107,12 @@ void GraphMLGraphReader::characters(const XMLCh * const chars, const XMLSize_t l
     {
       if(this->nameTagFound)
       {
+        std::string name = XMLString::transcode(chars);
+        //remove whitespaces
+        std::string::iterator end_pos = std::remove(name.begin(), name.end(), ' ');
+        name.erase(end_pos, name.end());
 
+        this->currVertexName = name;
       }
 
       if(this->resourceTagFound)

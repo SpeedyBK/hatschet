@@ -138,6 +138,7 @@ private:
   int edgeDistance;
   string currVertexResName;
   string deptype;
+  string currVertexName;
   };
 }
 

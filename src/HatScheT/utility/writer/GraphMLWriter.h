@@ -36,7 +36,7 @@ namespace HatScheT
 {
 class GraphMLWriter : public Writer {
 public:
-  GraphMLWriter(std::string path, Graph*);
+  GraphMLWriter(std::string path, Graph* g, ResourceModel* rm);
   ~GraphMLWriter();
 
     virtual void write();
@@ -46,11 +46,14 @@ private:
  * \brief g save pointer to graph to write
  */
   Graph* g;
-
-    ///
-    /// \brief DoOutput2File
-    ///
-    void DoOutput2File(DOMDocument*, XMLCh*);
+  /*!
+   * save pointer to used resource model
+   */
+  ResourceModel* rm;
+  /*!
+   * write the xml file with the generated info
+   */
+  void DoOutput2File(DOMDocument*, XMLCh*);
 };
 
 }

@@ -348,8 +348,9 @@ int main(int argc, char *args[]) {
 
     if(writeGraphMLFile != "") {
       if(g.isEmpty()==true) throw HatScheT::Exception("No graph provided for graphML writing! Provide a graph using --graph=");
+      if(rm.isEmpty() == true) throw HatScheT::Exception("Empty Resource Model Provided for graph writing! Provide a valid resource model using --resource=");
       cout << "Writing graph to file " << writeGraphMLFile << endl;
-      HatScheT::GraphMLWriter gw(writeGraphMLFile, &g);
+      HatScheT::GraphMLWriter gw(writeGraphMLFile, &g, &rm);
       gw.write();
     }
 
