@@ -18,23 +18,23 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "GraphMLWriter.h"
+#include "GraphMLGraphWriter.h"
 #include <xercesc/util/XMLString.hpp>
 
 #ifdef USE_XERCESC
 
 namespace HatScheT {
 
-GraphMLWriter::GraphMLWriter(std::string path, Graph *g, ResourceModel* rm) : Writer(path) {
+GraphMLGraphWriter::GraphMLGraphWriter(std::string path, Graph *g, ResourceModel* rm) : Writer(path) {
   this->g = g;
   this->rm = rm;
 }
 
-GraphMLWriter::~GraphMLWriter() {
+GraphMLGraphWriter::~GraphMLGraphWriter() {
 
 }
 
-void GraphMLWriter::write() {
+void GraphMLGraphWriter::write() {
   // Initilize Xerces.
   XMLPlatformUtils::Initialize();
 
@@ -134,7 +134,7 @@ void GraphMLWriter::write() {
   DoOutput2File(pDOMDocument, XMLString::transcode(this->path.c_str()));
 }
 
-void GraphMLWriter::DoOutput2File(DOMDocument *pmyDOMDocument, XMLCh *FullFilePath) {
+void GraphMLGraphWriter::DoOutput2File(DOMDocument *pmyDOMDocument, XMLCh *FullFilePath) {
   DOMImplementation *pImplement = NULL;
   DOMLSSerializer *pSerializer = NULL;
   XMLFormatTarget *pTarget = NULL;

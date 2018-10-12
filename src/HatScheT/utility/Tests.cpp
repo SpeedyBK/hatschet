@@ -22,7 +22,7 @@
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
-#include "HatScheT/utility/writer/GraphMLWriter.h"
+#include "HatScheT/utility/writer/GraphMLGraphWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
@@ -183,7 +183,7 @@ bool Tests::readWriteReadScheduleTest() {
 
   //writer
   string writePath="test.graphml";
-  HatScheT::GraphMLWriter writerGraph(writePath,&g, &rm);
+  HatScheT::GraphMLGraphWriter writerGraph(writePath,&g, &rm);
   writerGraph.write();
 
   //reader 2

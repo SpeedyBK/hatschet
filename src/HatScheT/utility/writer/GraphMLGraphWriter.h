@@ -34,10 +34,10 @@ using namespace xercesc;
 
 namespace HatScheT
 {
-class GraphMLWriter : public Writer {
+class GraphMLGraphWriter : public Writer {
 public:
-  GraphMLWriter(std::string path, Graph* g, ResourceModel* rm);
-  ~GraphMLWriter();
+  GraphMLGraphWriter(std::string path, Graph* g, ResourceModel* rm);
+  ~GraphMLGraphWriter();
 
     virtual void write();
 

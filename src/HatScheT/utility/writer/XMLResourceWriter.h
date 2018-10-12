@@ -36,7 +36,21 @@ namespace HatScheT {
 
 
 class XMLResourceWriter : public Writer {
+public:
+  XMLResourceWriter(std::string path, ResourceModel* rm);
+  ~XMLResourceWriter();
 
+  virtual void write();
+
+private:
+  /*!
+   * save pointer to used resource model
+   */
+  ResourceModel* rm;
+  /*!
+   * write the xml file with the generated info
+   */
+  void DoOutput2File(DOMDocument*, XMLCh*);
 };
 
 }
