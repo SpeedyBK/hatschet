@@ -41,6 +41,7 @@
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/XMLResourceReader.h>
 #include <HatScheT/utility/writer/GraphMLGraphWriter.h>
+#include <HatScheT/utility/writer/XMLResourceWriter.h>
 #endif
 
 #ifdef USE_SCALP
@@ -90,7 +91,8 @@ void print_short_help() {
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
-  std::cout << "--writegraph=[string]     Optional path to graphML file generated from graph model (default: none)" << std::endl;
+  std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)" << std::endl;
+  std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
@@ -125,6 +127,7 @@ int main(int argc, char *args[]) {
   std::string graphMLFile="";
   std::string writeGraphMLFile="";
   std::string resourceModelFile="";
+  std::string writeResourceModelFile="";
   std::string targetFile="";
   std::string dotFile="";
   std::string htmlFile="";
@@ -174,6 +177,9 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--writegraph=",value)) {
         writeGraphMLFile = value;
+      }
+      else if(getCmdParameter(args[i],"--writeresource=",value)) {
+        writeResourceModelFile = value;
       }
       else if(getCmdParameter(args[i],"--samples=",value)) {
         samples = atol(value);
@@ -345,6 +351,13 @@ int main(int argc, char *args[]) {
       HatScheT::DotWriter dw(dotFile, &g, &rm);
       dw.setDisplayNames(true);
       dw.write();
+    }
+
+    if(writeResourceModelFile != "") {
+      if(rm.isEmpty() == true) throw HatScheT::Exception("Empty Resource Model Provided for resource writing! Provide a valid resource model using --resource=");
+      cout << "Writing resource to file " << writeResourceModelFile << endl;
+      HatScheT::XMLResourceWriter rw(writeResourceModelFile, &rm);
+      rw.write();
     }
 
     if(writeGraphMLFile != "") {

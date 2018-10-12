@@ -18,10 +18,12 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_XERCESC
+
 #include "XMLResourceWriter.h"
 #include <xercesc/util/XMLString.hpp>
-
-#ifdef USE_XERCESC
+#include <cmath>
+#include <cfenv>
 
 namespace HatScheT {
 
@@ -30,6 +32,74 @@ XMLResourceWriter::XMLResourceWriter(std::string path, ResourceModel* rm) : Writ
 }
 
 XMLResourceWriter::~XMLResourceWriter() {
+}
+
+void XMLResourceWriter::write() {
+  // Initilize Xerces.
+  XMLPlatformUtils::Initialize();
+
+  // Pointer to our DOMImplementation.
+  DOMImplementation *pDOMImplementation = NULL;
+
+  // Get the DOM Implementation (used for creating DOMDocuments).
+  pDOMImplementation =
+          DOMImplementationRegistry::getDOMImplementation(XMLString::transcode("core"));
+
+  // Pointer to a DOMDocument.
+  DOMDocument *pDOMDocument = NULL;
+
+  // Root Element graphml
+  pDOMDocument = pDOMImplementation->createDocument(0, XMLString::transcode("ModelInformation"), 0);
+
+  DOMElement *pRootElement = NULL;
+  pRootElement = pDOMDocument->getDocumentElement();
+
+  // Create an Element graph, then fill the with edges and nodes
+  // and then append this to the root element.
+  DOMElement *resourcesElement = NULL;
+  resourcesElement = pDOMDocument->createElement(XMLString::transcode("Resources"));
+
+  for(auto it = this->rm->resourcesBegin(); it != this->rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+
+    // Create an Element resource, then fill in attributes,
+    // and then append this to the root element.
+    DOMElement * pDataElement = NULL;
+    pDataElement = pDOMDocument->createElement(XMLString::transcode("Resource"));
+    pDataElement->setAttribute(XMLString::transcode("name"), XMLString::transcode(r->getName().c_str()));
+    pDataElement->setAttribute(XMLString::transcode("limit"), XMLString::transcode(to_string(r->getLimit()).c_str()));
+    pDataElement->setAttribute(XMLString::transcode("latency"), XMLString::transcode(to_string(r->getLatency()).c_str()));
+    pDataElement->setAttribute(XMLString::transcode("blockingTime"), XMLString::transcode(to_string(r->getBlockingTime()).c_str()));
+
+    //get resources cost
+    map<string,double>& costs = r->getHardwareCosts();
+
+    for(auto it = costs.begin(); it != costs.end(); ++it){
+      string name = it->first;
+      double amount = it->second;
+
+      //resource cost element
+      DOMElement * costElement = NULL;
+      costElement = pDOMDocument->createElement(XMLString::transcode("Cost"));
+      costElement->setAttribute(XMLString::transcode("name"), XMLString::transcode(name.c_str()));
+
+      //check if demand is a real flost
+      if(std::fmod(amount, 1.0) == 0.0){
+        costElement->setAttribute(XMLString::transcode("demand"), XMLString::transcode(to_string((int)amount).c_str()));
+      } else
+      costElement->setAttribute(XMLString::transcode("demand"), XMLString::transcode(to_string(amount).c_str()));
+
+      pDataElement->appendChild(costElement);
+    }
+
+
+    resourcesElement->appendChild(pDataElement);
+  }
+
+  pRootElement->appendChild(resourcesElement);
+
+  //path for xml writing
+  DoOutput2File(pDOMDocument, XMLString::transcode(this->path.c_str()));
 }
 
 void XMLResourceWriter::DoOutput2File(DOMDocument *pmyDOMDocument, XMLCh *FullFilePath) {
