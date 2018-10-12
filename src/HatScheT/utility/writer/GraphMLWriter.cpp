@@ -66,7 +66,7 @@ void GraphMLWriter::write() {
     Vertex* v = *it;
     const Resource* r = this->rm->getResource(v);
 
-    // Create an Element node, then fill in some attributes,
+    // Create an Element node, then fill in attributes,
     // and then append this to the root element.
     DOMElement * pDataElement = NULL;
     pDataElement = pDOMDocument->createElement(XMLString::transcode("node"));
@@ -87,6 +87,25 @@ void GraphMLWriter::write() {
     resElement->setAttribute(XMLString::transcode("key"), XMLString::transcode("uses_resource"));
     resElement->setTextContent(XMLString::transcode(r->getName().c_str()));
     pDataElement->appendChild(resElement);
+
+    graphElement->appendChild(pDataElement);
+  }
+
+  //edges
+  for(auto it = this->g->edgesBegin(); it != this->g->edgesEnd(); ++it){
+    Edge* e = *it;
+    Vertex* src = &e->getVertexSrc();
+    Vertex* dst = &e->getVertexDst();
+
+    string edgeId = to_string(src->getId()) + "_" + to_string(dst->getId());
+
+    // Create an Element edge, then fill in attributes,
+    // and then append this to the root element.
+    DOMElement * pDataElement = NULL;
+    pDataElement = pDOMDocument->createElement(XMLString::transcode("edge"));
+    pDataElement->setAttribute(XMLString::transcode("id"), XMLString::transcode(edgeId.c_str()));
+    pDataElement->setAttribute(XMLString::transcode("source"), XMLString::transcode(to_string(src->getId()).c_str()));
+    pDataElement->setAttribute(XMLString::transcode("target"), XMLString::transcode(to_string(dst->getId()).c_str()));
 
     graphElement->appendChild(pDataElement);
   }
