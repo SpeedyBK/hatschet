@@ -38,13 +38,13 @@ public:
      * @param path
      * @return
      */
-    virtual Target& readHardwareTarget(const char* path) final;
+    virtual void readHardwareTarget(const char* path) final;
     /*!
    * \brief readResourceModel dont use the function in this class
    * \param path
    * \return
    */
-  virtual ResourceModel& readResourceModel(const char* path){
+  virtual void readResourceModel(const char* path){
     string p(path);
     throw Exception("GraphMLGraphReader.readResourcemodel: Dont use this class to read resource: " + p);}
   /*!
@@ -53,7 +53,7 @@ public:
    * \param readGraph
    * \return
    */
-  virtual Graph& readGraph(const char* path){
+  virtual void readGraph(const char* path){
     string p(path);
     throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
 private:

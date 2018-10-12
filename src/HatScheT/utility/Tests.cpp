@@ -22,6 +22,7 @@
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/GraphMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
+#include "HatScheT/utility/writer/GraphMLWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
@@ -34,6 +35,8 @@
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 
+#include <stdio.h>
+
 namespace HatScheT {
 
 bool Tests::moovacTest()
@@ -44,10 +47,10 @@ bool Tests::moovacTest()
 
   string resStr = "cTest/MoovacExampleRM.xml";
   string graphStr = "cTest/MoovacExample.graphml";
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
   if(g.getNumberOfVertices()!=6){
     cout << "graph not read correctly! expected 6 vertices but got " << g.getNumberOfVertices() << endl;
@@ -84,10 +87,10 @@ bool Tests::asapHCTest()
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::ASAPScheduler asap(g,rm);
   asap.schedule();
@@ -111,10 +114,10 @@ bool Tests::alapHCTest()
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::ALAPScheduler alap(g,rm);
   alap.schedule();
@@ -137,10 +140,10 @@ bool Tests::rationalMinIITest() {
   string resStr = "cTest/vanDongenRM.xml";
   string graphStr = "cTest/vanDongen.graphml";
 
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
   double resMinII = HatScheT::Utility::calcResMII(&g,&rm);
   double recMinII = HatScheT::Utility::calcRecMII(&g,&rm);
@@ -160,6 +163,58 @@ bool Tests::rationalMinIITest() {
   return true;
 }
 
+bool Tests::readWriteReadScheduleTest() {
+  string resStr = "cTest/MoovacExampleRM.xml";
+  string graphStr = "cTest/MoovacExample.graphml";
+
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+
+  //reader
+  HatScheT::GraphMLResourceReader readerRes(&rm);
+  readerRes.readResourceModel(resStr.c_str());
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+  
+  //moovac original
+  HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi"});
+  ms1.schedule();
+  int IIOrg = ms1.getII();
+
+  //writer
+  string writePath="test.graphml";
+  HatScheT::GraphMLWriter writerGraph(writePath,&g, &rm);
+  writerGraph.write();
+
+  //reader 2
+  HatScheT::Graph g2;
+  HatScheT::ResourceModel rm2;
+  HatScheT::GraphMLResourceReader readerRes2(&rm2);
+  readerRes2.readResourceModel(resStr.c_str());
+  HatScheT::GraphMLGraphReader readerGraph2(&rm2, &g2);
+  readerGraph2.readGraph(writePath.c_str());
+
+  //moovac write read graph
+  HatScheT::MoovacScheduler  ms2(g2,rm2, {"CPLEX","Gurobi"});
+  ms2.schedule();
+  int IIWriteRead = ms2.getII();
+
+  //cleanup
+  if( remove( "test.graphml" ) != 0 ){
+    cout << "Test.readWriteReadScheduleTest: Error deleting File during cleanup process: test.graphml!" << endl;
+    return false;
+  }
+
+  if(IIOrg != IIWriteRead){
+    cout << "Test.readWriteReadScheduleTest: Error after write and read a differen II was determined!" << endl;
+    cout << "Test.readWriteReadScheduleTest: Org II " << IIOrg << endl;
+    cout << "Test.readWriteReadScheduleTest: WriteRead II " << IIWriteRead << endl;
+    return false;
+  }
+
+  return true;
+}
+
 bool Tests::readTest()
 {
   HatScheT::ResourceModel rm;
@@ -171,12 +226,12 @@ bool Tests::readTest()
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
   string fpgaStr = "cTest/virtex6.xml";
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
-  target = targetReader.readHardwareTarget(fpgaStr.c_str());
+  targetReader.readHardwareTarget(fpgaStr.c_str());
 
   if(rm.getNumResources() != 3){
     cout << "Incorrect no of resource read: " << rm.getNumResources() << " instead of 3!" << endl;
@@ -481,10 +536,10 @@ bool Tests::ulSchedulerTest()
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
-  rm = readerRes.readResourceModel(resStr.c_str());
+  readerRes.readResourceModel(resStr.c_str());
 
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-  g = readerGraph.readGraph(graphStr.c_str());
+  readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::ULScheduler uls(g,rm);
   uls.schedule();

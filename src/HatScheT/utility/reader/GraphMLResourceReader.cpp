@@ -107,7 +107,7 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
   }
 }
 
-ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
+    void GraphMLResourceReader::readResourceModel(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
@@ -159,8 +159,6 @@ ResourceModel& GraphMLResourceReader::readResourceModel(const char *path)
 
   delete parser;
   XMLPlatformUtils::Terminate();
-
-  return *(this->rm);
 }
 
 }

@@ -236,6 +236,7 @@ int main(int argc, char *args[]) {
         string str = std::string(value);
         if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
         if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
+        if(str=="RWRS" && HatScheT::Tests::readWriteReadScheduleTest()==false) exit(-1);
         if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
@@ -312,12 +313,12 @@ int main(int argc, char *args[]) {
 
     //read target if provided
     if(targetFile != "") {
-      target = readerTarget.readHardwareTarget(targetFile.c_str());
+      readerTarget.readHardwareTarget(targetFile.c_str());
       cout << target << endl;
     }
 
     //read resource model:
-    rm = readerRes.readResourceModel(resourceModelFile.c_str());
+    readerRes.readResourceModel(resourceModelFile.c_str());
 
     //check target and resource model for consistency
     if(target.isEmpty() == false && rm.isEmpty() == false){cout << "verify" << endl;
@@ -329,7 +330,7 @@ int main(int argc, char *args[]) {
     //read graph:
     if(rm.isEmpty() == false) {
       HatScheT::GraphMLGraphReader graphReader(&rm, &g);
-      g = graphReader.readGraph(graphMLFile.c_str());
+      graphReader.readGraph(graphMLFile.c_str());
       std::string graphName = graphMLFile.substr(0,graphMLFile.length()-8);
       g.setName(graphName);
       cout << "graphName=" << graphName << endl;

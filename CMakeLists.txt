@@ -204,6 +204,7 @@ enable_testing()
 
 add_test("Read" "./hatschet" "--test=READ")
 add_test("Moovac" "./hatschet" "--test=MOOVAC")
+add_test("ReadWriteReadSchedule" "./hatschet" "--test=RWRS")
 add_test("ModuloSDC" "./hatschet" "--test=MODULOSDC")
 add_test("API" "./hatschet" "--test=API")
 add_test("ASAPHC" "./hatschet" "--test=ASAPHC")

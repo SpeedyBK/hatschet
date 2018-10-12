@@ -207,7 +207,7 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
 
 }
 
-Graph& GraphMLGraphReader::readGraph(const char *path)
+void GraphMLGraphReader::readGraph(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
@@ -259,8 +259,6 @@ Graph& GraphMLGraphReader::readGraph(const char *path)
 
   delete parser;
   XMLPlatformUtils::Terminate();
-
-  return *(this->g);
 }
 
 }

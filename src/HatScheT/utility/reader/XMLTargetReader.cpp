@@ -67,7 +67,7 @@ void XMLTargetReader::endElement(const XMLCh * const uri, const XMLCh * const lo
 
 }
 
-Target& XMLTargetReader::readHardwareTarget(const char *path)
+void XMLTargetReader::readHardwareTarget(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
@@ -119,8 +119,6 @@ Target& XMLTargetReader::readHardwareTarget(const char *path)
 
   delete parser;
   XMLPlatformUtils::Terminate();
-
-  return *(this->hardwareTarget);
 }
 
 }

@@ -46,18 +46,17 @@ public:
      * \brief readGraph this function will generate a new graph object instance
      * afterwards the respective parseGraph function of a derived class is called
      * for parsing/filling the graph object
-     * \return a reference to the read Graph is returned
      */
-  virtual Graph& readGraph(const char* path)=0;
+  virtual void readGraph(const char* path)=0;
   /*!
    * \brief readResourceModel this function will generate a new resourcemodel object instance
    * \param path
    * \param g
    * \return
    */
-  virtual ResourceModel& readResourceModel(const char* path)=0;
+  virtual void readResourceModel(const char* path)=0;
 
-  virtual Target& readHardwareTarget(const char* path)=0;
+  virtual void readHardwareTarget(const char* path)=0;
 
 protected:
 

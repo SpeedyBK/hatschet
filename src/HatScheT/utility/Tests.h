@@ -33,6 +33,11 @@ public:
    */
   static bool readTest();
   /*!
+   * read a graph, write it, read it again, then schedule both and compare
+   * @return
+   */
+  static bool readWriteReadScheduleTest();
+  /*!
    * \brief moovacTest test whether moovac scheduling is running as expected
    * \return
    */
