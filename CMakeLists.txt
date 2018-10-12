@@ -109,7 +109,7 @@ src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-)
+        src/HatScheT/utility/writer/XMLResourceWriter.cpp src/HatScheT/utility/writer/XMLResourceWriter.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
