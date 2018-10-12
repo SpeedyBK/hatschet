@@ -39,7 +39,7 @@
 
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
-#include <HatScheT/utility/reader/GraphMLResourceReader.h>
+#include <HatScheT/utility/reader/XMLResourceReader.h>
 #include <HatScheT/utility/writer/GraphMLWriter.h>
 #endif
 
@@ -139,7 +139,7 @@ int main(int argc, char *args[]) {
     HatScheT::Graph g;
     HatScheT::Target target;
 
-    HatScheT::GraphMLResourceReader readerRes(&rm);
+    HatScheT::XMLResourceReader readerRes(&rm);
     HatScheT::XMLTargetReader readerTarget(&target);
 
     //parse command line

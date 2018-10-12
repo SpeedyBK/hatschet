@@ -30,14 +30,14 @@ namespace HatScheT
 /*!
  * \brief The graphMLReader class use this class to parse resource objects from graphML representations
  */
-class GraphMLResourceReader : public Reader, DefaultHandler
+class XMLResourceReader : public Reader, DefaultHandler
 {
 public:
   /*!
      * \brief graphMLReader
      */
-  GraphMLResourceReader(ResourceModel* rm);
-  ~GraphMLResourceReader();
+  XMLResourceReader(ResourceModel* rm);
+  ~XMLResourceReader();
   /*!
      * \brief readGraph Dont use this class to read graphs!
      * \param path
@@ -46,7 +46,7 @@ public:
      */
   virtual void readGraph(const char* path){
     string p(path);
-    throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
+    throw Exception("XMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
     /*!
    * dont use the function in this class
    * @param path
@@ -54,7 +54,7 @@ public:
    */
     virtual void readHardwareTarget(const char* path){
       string p(path);
-      throw Exception("GraphMLResourceReader.readHardwareTarget: Dont use this class to read hardware targets: " + p);}
+      throw Exception("XMLResourceReader.readHardwareTarget: Dont use this class to read hardware targets: " + p);}
   /*!
    * \brief readResourceModel use this class to read resource models from a graphml representation
    * see the attached chstone benchmark for info about how you resource should be build in this case

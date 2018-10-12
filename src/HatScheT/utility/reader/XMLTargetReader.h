@@ -55,7 +55,7 @@ public:
    */
   virtual void readGraph(const char* path){
     string p(path);
-    throw Exception("GraphMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
+    throw Exception("XMLResourceReader.readGraph: Dont use this class to read graph: " + p);}
 private:
     Target* hardwareTarget;
     /*!

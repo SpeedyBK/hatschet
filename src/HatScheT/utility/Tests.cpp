@@ -20,7 +20,7 @@
 
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
-#include "HatScheT/utility/reader/GraphMLResourceReader.h"
+#include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/utility/writer/GraphMLWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
@@ -43,7 +43,7 @@ bool Tests::moovacTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
 
   string resStr = "cTest/MoovacExampleRM.xml";
   string graphStr = "cTest/MoovacExample.graphml";
@@ -83,7 +83,7 @@ bool Tests::asapHCTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -110,7 +110,7 @@ bool Tests::alapHCTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";
@@ -135,7 +135,7 @@ bool Tests::alapHCTest()
 bool Tests::rationalMinIITest() {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
 
   string resStr = "cTest/vanDongenRM.xml";
   string graphStr = "cTest/vanDongen.graphml";
@@ -171,11 +171,11 @@ bool Tests::readWriteReadScheduleTest() {
   HatScheT::Graph g;
 
   //reader
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
   readerRes.readResourceModel(resStr.c_str());
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   readerGraph.readGraph(graphStr.c_str());
-  
+
   //moovac original
   HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi"});
   ms1.schedule();
@@ -189,7 +189,7 @@ bool Tests::readWriteReadScheduleTest() {
   //reader 2
   HatScheT::Graph g2;
   HatScheT::ResourceModel rm2;
-  HatScheT::GraphMLResourceReader readerRes2(&rm2);
+  HatScheT::XMLResourceReader readerRes2(&rm2);
   readerRes2.readResourceModel(resStr.c_str());
   HatScheT::GraphMLGraphReader readerGraph2(&rm2, &g2);
   readerGraph2.readGraph(writePath.c_str());
@@ -219,7 +219,7 @@ bool Tests::readTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
   HatScheT::Target target;
   HatScheT::XMLTargetReader targetReader(&target);
 
@@ -532,7 +532,7 @@ bool Tests::ulSchedulerTest()
 {
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
-  HatScheT::GraphMLResourceReader readerRes(&rm);
+  HatScheT::XMLResourceReader readerRes(&rm);
 
   string resStr = "cTest/ASAPHCExampleRM.xml";
   string graphStr = "cTest/ASAPHCExample.graphml";

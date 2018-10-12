@@ -95,7 +95,7 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
-src/HatScheT/utility/reader/GraphMLResourceReader.cpp
+        src/HatScheT/utility/reader/XMLResourceReader.cpp
 src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
@@ -135,7 +135,7 @@ src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
-src/HatScheT/utility/reader/GraphMLResourceReader.h
+        src/HatScheT/utility/reader/XMLResourceReader.h
 src/HatScheT/utility/reader/XMLTargetReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/Occurrence.h

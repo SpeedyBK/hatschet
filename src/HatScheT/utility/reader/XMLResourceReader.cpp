@@ -20,7 +20,7 @@
 
 #ifdef USE_XERCESC
 #include "../../ResourceModel.h"
-#include "GraphMLResourceReader.h"
+#include "XMLResourceReader.h"
 #include "xercesc/sax2/SAX2XMLReader.hpp"
 #include "xercesc/sax2/XMLReaderFactory.hpp"
 #include "xercesc/util/XMLString.hpp"
@@ -32,7 +32,7 @@
 
 namespace HatScheT {
 
-GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
+XMLResourceReader::XMLResourceReader(ResourceModel* rm)
 {
   this->rm = rm;
   this->reservationTableTagFound = false;
@@ -41,12 +41,12 @@ GraphMLResourceReader::GraphMLResourceReader(ResourceModel* rm)
   this->currentResourceParsing ="";
 }
 
-GraphMLResourceReader::~GraphMLResourceReader()
+XMLResourceReader::~XMLResourceReader()
 {
 
 }
 
-void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
+void XMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname)
 {
   string name = XMLString::transcode(localname);
 
@@ -60,12 +60,12 @@ void GraphMLResourceReader::endElement(const XMLCh * const uri, const XMLCh * co
 
 }
 
-void GraphMLResourceReader::characters(const XMLCh * const chars, const XMLSize_t length)
+void XMLResourceReader::characters(const XMLCh * const chars, const XMLSize_t length)
 {
 
 }
 
-void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
+void XMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * const localname, const XMLCh * const qname, const Attributes &attrs)
 {
   string tag = XMLString::transcode(localname);
 
@@ -107,7 +107,7 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
   }
 }
 
-    void GraphMLResourceReader::readResourceModel(const char *path)
+    void XMLResourceReader::readResourceModel(const char *path)
 {
   try {
     XMLPlatformUtils::Initialize();
@@ -138,23 +138,23 @@ void GraphMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * 
 
     else
     {
-      cout << "GraphMLResourceReader.readResourceModel:  File not found! (" << xmlFile << ")" << endl;
+      cout << "XMLResourceReader.readResourceModel:  File not found! (" << xmlFile << ")" << endl;
     }
   }
   catch (const XMLException& toCatch) {
 
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "GraphMLResourceReader.readResourceModel:  " << message << endl;
+    cout << "XMLResourceReader.readResourceModel:  " << message << endl;
 
 
   }
   catch (const SAXParseException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "GraphMLResourceReader.readResourceModel:  " << message << endl;
+    cout << "XMLResourceReader.readResourceModel:  " << message << endl;
 
   }
   catch (...) {
-    cout << "GraphMLResourceReader.readResourceModel: Unexpected Error" << endl;
+    cout << "XMLResourceReader.readResourceModel: Unexpected Error" << endl;
   }
 
   delete parser;
