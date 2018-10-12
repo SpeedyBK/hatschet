@@ -107,6 +107,24 @@ void GraphMLWriter::write() {
     pDataElement->setAttribute(XMLString::transcode("source"), XMLString::transcode(to_string(src->getId()).c_str()));
     pDataElement->setAttribute(XMLString::transcode("target"), XMLString::transcode(to_string(dst->getId()).c_str()));
 
+    // Create an Element date, then fill in distance attributes,
+    // and then append this to the node element.
+    DOMElement * dstElement = NULL;
+    dstElement = pDOMDocument->createElement(XMLString::transcode("data"));
+    dstElement->setAttribute(XMLString::transcode("key"), XMLString::transcode("distance"));
+    dstElement->setTextContent(XMLString::transcode(to_string(e->getDistance()).c_str()));
+    pDataElement->appendChild(dstElement);
+
+    // Create an Element date, then fill in delay attributes,
+    // and then append this to the node element.
+    DOMElement * delayElement = NULL;
+    delayElement = pDOMDocument->createElement(XMLString::transcode("data"));
+    delayElement->setAttribute(XMLString::transcode("key"), XMLString::transcode("delay"));
+    delayElement->setTextContent(XMLString::transcode(to_string(e->getDelay()).c_str()));
+    pDataElement->appendChild(delayElement);
+
+    //omit the backward attribute of edges, it not needed (patrick)
+
     graphElement->appendChild(pDataElement);
   }
 
