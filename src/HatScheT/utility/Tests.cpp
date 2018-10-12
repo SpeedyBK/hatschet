@@ -27,6 +27,7 @@
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
+#include "HatScheT/utility/writer/XMLResourceWriter.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
@@ -183,6 +184,9 @@ bool Tests::readWriteReadScheduleTest() {
 
   //writer
   string writePath="test.graphml";
+  string writeResourcePath="test.xml";
+  HatScheT::XMLResourceWriter writerResource(writeResourcePath,&rm);
+  writerResource.write();
   HatScheT::GraphMLGraphWriter writerGraph(writePath,&g, &rm);
   writerGraph.write();
 
@@ -190,7 +194,7 @@ bool Tests::readWriteReadScheduleTest() {
   HatScheT::Graph g2;
   HatScheT::ResourceModel rm2;
   HatScheT::XMLResourceReader readerRes2(&rm2);
-  readerRes2.readResourceModel(resStr.c_str());
+  readerRes2.readResourceModel(writeResourcePath.c_str());
   HatScheT::GraphMLGraphReader readerGraph2(&rm2, &g2);
   readerGraph2.readGraph(writePath.c_str());
 
@@ -202,6 +206,10 @@ bool Tests::readWriteReadScheduleTest() {
   //cleanup
   if( remove( "test.graphml" ) != 0 ){
     cout << "Test.readWriteReadScheduleTest: Error deleting File during cleanup process: test.graphml!" << endl;
+    return false;
+  }
+  if( remove( "test.xml" ) != 0 ){
+    cout << "Test.readWriteReadScheduleTest: Error deleting File during cleanup process: test.xml!" << endl;
     return false;
   }
 
