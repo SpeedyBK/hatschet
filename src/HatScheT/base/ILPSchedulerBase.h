@@ -96,7 +96,7 @@ public:
    * access ilp solver status (OPTIMAL, TIMEOUT, ...) see ScaLP paper for more information
    * @return
    */
-  ScaLP::status getScaLPStatus(){return this->stat;}
+  virtual ScaLP::status getScaLPStatus(){return this->stat;}
 protected:
   /*!
    * store the status of ilp-based scheduling

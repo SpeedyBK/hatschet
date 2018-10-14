@@ -139,7 +139,7 @@ double Utility::calcResMII(Graph *g, ResourceModel *rm, Target* t)
   }
   //a target is provided
   else{
-
+    throw Exception("Utility.calcResMII: ERROR calculating resMinII using a target is not supported yet");
   }
 
   return resMII;

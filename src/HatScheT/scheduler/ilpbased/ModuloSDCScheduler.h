@@ -124,6 +124,13 @@ namespace HatScheT
     void setVerbose(bool b){
       this->verbose=b;
     }
+    /*!
+     * the status of the ilp solver does not provide any information
+     * about the quality of the solution, because many ilp problems are
+     * solved for MRTs
+     * @return the unknown status
+     */
+    virtual ScaLP::status getScaLPStatus(){return ScaLP::status::UNKNOWN;}
   private:
     /*!
      * \brief constructProblem

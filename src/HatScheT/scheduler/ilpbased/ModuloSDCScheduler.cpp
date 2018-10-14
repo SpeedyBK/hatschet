@@ -419,11 +419,8 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
     std::time_t time_var_it = std::chrono::system_clock::to_time_t(time_It);
     auto diff = std::chrono::duration_cast<std::chrono::seconds>(time_It-time_Start);
     auto secondsRun = diff.count();
-    if(secondsRun>this->solver->timeout){
-      cout << "Timeout for II " << this->II << endl;
-      cout << "#operations left on schedQueue: " << schedQueue.size() << endl;
-      return false;
-    }
+    if(secondsRun>this->solver->timeout) return false;
+
     auto i = schedQueue.top();
     schedQueue.pop();
     if(this->verbose==true) std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
