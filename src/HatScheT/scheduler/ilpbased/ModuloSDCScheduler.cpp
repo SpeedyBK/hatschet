@@ -685,6 +685,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
       break; // found
     }
   }
+  if(scheduleFound==false) this->II = -1;
 }
 
 void HatScheT::ModuloSDCScheduler::setObjective()
