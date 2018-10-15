@@ -175,7 +175,7 @@ void EichenbergerDavidson97Scheduler::constructConstraints(int candII)
     for (int r = 0; r < candII; ++r) {
       ScaLP::Term sumRes;
       for (auto *i : using_q)
-        for (int c = 0; c < q->getBlockingTime(); ++c)
+        for (int c = 0; c <= q->getBlockingTime(); ++c)
           sumRes.add(a[mod(r - c, candII)][i], 1);
       solver->addConstraint(sumRes <= q->getLimit());
     }
