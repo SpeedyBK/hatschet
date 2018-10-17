@@ -48,7 +48,9 @@ public:
    * \param latency the number of time steps the resource needs to complete its function
    * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
    */
-  Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {}
+  Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
+    if(blockingTime==0 && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
+  }
   /*!
    * copy constructor is forbidden for this class
    */
@@ -61,7 +63,9 @@ public:
    * \return the limit
    */
   virtual int getLimit() const {return this->limit;}
-  void setLimit(int l){this->limit=l;}
+  void setLimit(int l){
+    if(this->blockingTime==0 && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    this->limit=l;}
   /*!
    * \return the latency
    */
