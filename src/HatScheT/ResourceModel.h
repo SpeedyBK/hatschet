@@ -50,6 +50,7 @@ public:
    */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
     if(blockingTime==0 && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    this->phyDelay = 0.0f;
   }
   /*!
    * copy constructor is forbidden for this class
@@ -85,6 +86,14 @@ public:
   map<string,double>& getHardwareCosts(){return this->hardwareCost;}
   void addHardwareCost(string n, double c);
   double getHardwareCost(string n);
+  /*!
+   * the physical delay of this resource in hardware
+   * @param d
+   */
+  void setPhysicalDelay(double d){
+    if(d < 0.0) throw Exception("Resource.setPhysicalDelay: ERROR a physical dealy has to be >= 0 : " + this->name);
+    this->phyDelay = d;}
+    double getPhysicalDelay(){return this->phyDelay;}
 protected:
   /*!
    * \brief the resource's name
@@ -102,6 +111,10 @@ protected:
    * \brief the number of time steps a resource instance is blocked by an individual operation
    */
   const int blockingTime;
+  /*!
+   * the physical delay of this resource in hardware
+   */
+  double phyDelay;
   /*!
    * \brief the hardware costs of this resource are modeled using this map, e.g. LUT -> 127, DSP -> 1
    */

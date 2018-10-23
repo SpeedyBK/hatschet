@@ -269,15 +269,14 @@ void RationalIISchedulerFimmel::schedule() {
 
     //cout << "Starting Fimmel Scheduler of " << g.getName() << " with "
     this->computeMinII(&g,&resourceModel);
-    this->minII = ceil(this->minII);
     //cout << "minII: " << this->minII << endl;
 
 
-    HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,resourceModel);
-    asap->schedule();
-
-    this->maxII = asap->getII();
-    delete asap;
+    //HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,resourceModel);
+    //asap->schedule();
+    this->computeMaxII(&g, &resourceModel);
+    //this->maxII = asap->getII();
+    //delete asap;
     //cout << "maxII: " << this->maxII << endl;
 
     auto s = solver;
