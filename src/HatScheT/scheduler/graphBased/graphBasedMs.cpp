@@ -26,7 +26,7 @@
 #include <algorithm>
 #include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
 #include <fstream>
-#include <boost/algorithm/string/split.hpp>
+//#include <boost/algorithm/string/split.hpp>
 #include <cstdio>
 #include <ctime>
 #include <chrono>
@@ -318,7 +318,7 @@ void GraphBasedMs::schedule()
 
         vector<string> splitNames;
 
-        boost::split(splitNames, g.getName(), [](char del){return del == '/';});
+        //boost::split(splitNames, g.getName(), [](char del){return del == '/';});
 
         std::ofstream resultfile;
         resultfile.open("Results.txt",ios::app);

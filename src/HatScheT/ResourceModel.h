@@ -49,6 +49,7 @@ public:
    * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
    */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
+    if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERORR it is not allowed to limit other than 1 to this resource!");
     if(blockingTime==0 && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
   }
   /*!
@@ -64,6 +65,7 @@ public:
    */
   virtual int getLimit() const {return this->limit;}
   void setLimit(int l){
+    if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
     if(this->blockingTime==0 && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
     this->limit=l;}
   /*!
