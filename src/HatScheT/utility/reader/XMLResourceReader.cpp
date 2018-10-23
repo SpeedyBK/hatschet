@@ -76,11 +76,13 @@ void XMLResourceReader::startElement(const XMLCh * const uri, const XMLCh * cons
     string limitstring = XMLString::transcode(attrs.getValue(XMLString::transcode("limit")));
     string latencystring = XMLString::transcode(attrs.getValue(XMLString::transcode("latency")));
     string blockingtimestring = XMLString::transcode(attrs.getValue(XMLString::transcode("blockingTime")));
+    string physicaldelaystring = XMLString::transcode(attrs.getValue(XMLString::transcode("physicalDelay")));
 
     int limit = -1;
     if(limitstring != "inf") limit = stoi(limitstring);
 
-    this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
+    auto r = &this->rm->makeResource(namestring, limit, stoi(latencystring), stoi(blockingtimestring));
+    r->setPhysicalDelay(stod(physicaldelaystring));
     this->currentResourceParsing = namestring;
   }
 

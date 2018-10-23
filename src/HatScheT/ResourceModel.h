@@ -51,6 +51,7 @@ public:
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
     if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERORR it is not allowed to limit other than 1 to this resource!");
     if(blockingTime==0 && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    this->phyDelay = 0.0f;
   }
   /*!
    * copy constructor is forbidden for this class
@@ -66,7 +67,7 @@ public:
   virtual int getLimit() const {return this->limit;}
   void setLimit(int l){
     if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
-    if(this->blockingTime==0 && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    if(this->blockingTime==0 && this->phyDelay==0.0f && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
     this->limit=l;}
   /*!
    * \return the latency
@@ -87,6 +88,14 @@ public:
   map<string,double>& getHardwareCosts(){return this->hardwareCost;}
   void addHardwareCost(string n, double c);
   double getHardwareCost(string n);
+  /*!
+   * the physical delay of this resource in hardware
+   * @param d
+   */
+  void setPhysicalDelay(double d){
+    if(d < 0.0) throw Exception("Resource.setPhysicalDelay: ERROR a physical dealy has to be >= 0 : " + this->name);
+    this->phyDelay = d;}
+    double getPhysicalDelay(){return this->phyDelay;}
 protected:
   /*!
    * \brief the resource's name
@@ -104,6 +113,10 @@ protected:
    * \brief the number of time steps a resource instance is blocked by an individual operation
    */
   const int blockingTime;
+  /*!
+   * the physical delay of this resource in hardware
+   */
+  double phyDelay;
   /*!
    * \brief the hardware costs of this resource are modeled using this map, e.g. LUT -> 127, DSP -> 1
    */

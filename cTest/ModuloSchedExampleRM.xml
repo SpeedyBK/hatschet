@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModelInformation Version="1.0">
 	<Resources>
-		<Resource name="Adder" limit="1" latency="2" blockingTime="1">
+		<Resource name="Adder" limit="1" latency="2" blockingTime="1" physicalDelay="0.0" >
 			<Cost name="DSP" demand="0" />
 			<Cost name="LUT" demand="0" />
 			<Cost name="MEM" demand="0" />
 		</Resource>
-		<Resource name="Multiplier" limit="1" latency="3" blockingTime="1" >
+		<Resource name="Multiplier" limit="1" latency="3" blockingTime="1" physicalDelay="0.0" >
 			<Cost name="DSP" demand="0" />
 			<Cost name="LUT" demand="0" />
 			<Cost name="MEM" demand="0" />

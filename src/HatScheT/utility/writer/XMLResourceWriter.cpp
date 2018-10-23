@@ -70,6 +70,7 @@ void XMLResourceWriter::write() {
     pDataElement->setAttribute(XMLString::transcode("limit"), XMLString::transcode(to_string(r->getLimit()).c_str()));
     pDataElement->setAttribute(XMLString::transcode("latency"), XMLString::transcode(to_string(r->getLatency()).c_str()));
     pDataElement->setAttribute(XMLString::transcode("blockingTime"), XMLString::transcode(to_string(r->getBlockingTime()).c_str()));
+    pDataElement->setAttribute(XMLString::transcode("physicalDelay"), XMLString::transcode(to_string(r->getPhysicalDelay()).c_str()));
 
     //get resources cost
     map<string,double>& costs = r->getHardwareCosts();
