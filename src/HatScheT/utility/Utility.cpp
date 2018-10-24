@@ -51,6 +51,17 @@ int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
   return count;
 }
 
+bool Utility::everyVertexisRegistered(HatScheT::Graph &g, HatScheT::ResourceModel &rm) {
+  cout << "Utility: everyVertexisRegistered: Start validation!" << endl;
+  for(auto it = g.verticesBegin(); it != g.verticesEnd(); ++it){
+    Vertex* v = *it;
+
+    rm.getResource(v);
+  }
+  cout << "Utility: everyVertexisRegistered: Finished with success!" << endl;
+  return true;
+}
+
 int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
 {
   int no=0;

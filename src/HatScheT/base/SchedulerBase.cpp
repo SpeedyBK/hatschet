@@ -33,7 +33,9 @@ namespace HatScheT
 
 SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceModel(resourceModel), g(g)
 {
-
+  //check for valid registrations
+  //throws exception when validation failed
+  Utility::everyVertexisRegistered(g,resourceModel);
 }
 
 SchedulerBase::~SchedulerBase()

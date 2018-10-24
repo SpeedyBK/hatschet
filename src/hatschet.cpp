@@ -327,7 +327,7 @@ int main(int argc, char *args[]) {
     readerRes.readResourceModel(resourceModelFile.c_str());
 
     //check target and resource model for consistency
-    if(target.isEmpty() == false && rm.isEmpty() == false){cout << "verify" << endl;
+    if(target.isEmpty() == false && rm.isEmpty() == false){
       if(HatScheT::Utility::resourceModelAndTargetValid(rm,target) == false){
         throw HatScheT::Exception("Hardware Target and Resource Model are inconsisent! Provide a valid resource model using --resource= and hardware target using --target==");
       }

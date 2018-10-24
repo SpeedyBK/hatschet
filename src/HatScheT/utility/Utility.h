@@ -41,13 +41,6 @@ public:
    * \return
    */
   static int getNoOfResConstrVertices(ResourceModel* rm, Graph *g);
-  /*!
-  * \brief examplUtilityFunction
-  * \param rm
-  * \param g
-  * \return
-  */
- static bool examplUtilityFunction(ResourceModel* rm, Graph *g);
  /*!
   * \brief getNoOfInputs determine the number of inputs a vertex v has in graph g
   * \param g
@@ -195,5 +188,7 @@ public:
  static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
 
  static bool resourceModelAndTargetValid(ResourceModel &rm, Target& t);
+
+ static bool everyVertexisRegistered(Graph& g, ResourceModel &rm);
 };
 }
