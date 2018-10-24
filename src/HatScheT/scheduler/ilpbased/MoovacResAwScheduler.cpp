@@ -83,12 +83,23 @@ void MoovacResAwScheduler::schedule()
 
 void MoovacResAwScheduler::constructProblem()
 {
+  //set up the problem
   this->setMaxLatency();
+  this->setVectorVariables();
+  this->fillRegVector();
+  this->setSourceVerticesToZero();
+
+  //set up constraints
+  this->setGeneralConstraints();
+  this->setModuloAndResourceConstraints();
+
+  //set Objective
+  this->setObjective();
 }
 
 void MoovacResAwScheduler::setObjective()
 {
-
+  throw Exception("MoovacResAwScheduler.setObjective: This function is not implemented yet!");
 }
 
 void MoovacResAwScheduler::setGeneralConstraints()

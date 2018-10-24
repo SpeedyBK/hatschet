@@ -75,7 +75,7 @@ void MoovacScheduler::constructProblem()
   this->setVectorVariables();
   this->fillRegVector();
 
-  //add constraints
+  //set up constraints
   this->setSourceVerticesToZero();
   this->setGeneralConstraints();
   this->setModuloAndResourceConstraints();

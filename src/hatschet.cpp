@@ -120,7 +120,7 @@ int main(int argc, char *args[]) {
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, MOOVACRESAWARE, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -214,8 +214,8 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "moovacminreg") {
           schedulerSelection = MOOVACMINREG;
         }
-        else if(schedulerSelectionStr == "moovacresaware") {
-          schedulerSelection = MOOVACRESAWARE;
+        else if(schedulerSelectionStr == "rams") {
+          schedulerSelection = RAMS;
         }
         else if(schedulerSelectionStr == "ed97") {
           schedulerSelection = ED97;
@@ -293,8 +293,8 @@ int main(int argc, char *args[]) {
       case MOOVACMINREG:
         cout << "MOOVACMINREG";
         break;
-      case MOOVACRESAWARE:
-        cout << "MOOVACRESAWARE";
+      case RAMS:
+        cout << "RAMS";
         break;
       case ED97:
         cout << "ED97";
@@ -406,7 +406,7 @@ int main(int argc, char *args[]) {
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
-        case MOOVACRESAWARE:
+        case RAMS:
           isModuloScheduler=true;
           scheduler = new HatScheT::MoovacResAwScheduler(g,rm, solverWishList, target);
           if(timeout > 0) ((HatScheT::MoovacResAwScheduler*) scheduler)->setSolverTimeout(timeout);

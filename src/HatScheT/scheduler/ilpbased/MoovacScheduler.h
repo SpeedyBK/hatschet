@@ -102,7 +102,7 @@ protected:
   /*!
    * \brief setModuloAndResourceConstraints read the paper for further information
    */
-  void setModuloAndResourceConstraints();
+  virtual void setModuloAndResourceConstraints();
   /*!
    * \brief fillSolutionStructure pass the solution of the modulo schedule
    */

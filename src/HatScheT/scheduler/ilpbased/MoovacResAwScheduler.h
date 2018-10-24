@@ -40,7 +40,7 @@ private:
   virtual void setGeneralConstraints();
 
 
-    Target& target;
+  Target& target;
 };
 
 }
