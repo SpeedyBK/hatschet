@@ -50,7 +50,7 @@ public:
    */
   Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
     if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERORR it is not allowed to limit other than 1 to this resource!");
-    if(blockingTime==0 && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    if(blockingTime==0 && this->phyDelay==0.0f && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
     this->phyDelay = 0.0f;
   }
   /*!
