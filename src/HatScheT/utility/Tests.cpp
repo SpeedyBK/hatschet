@@ -146,7 +146,7 @@ bool Tests::rationalMinIITest() {
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   readerGraph.readGraph(graphStr.c_str());
 
-  double resMinII = HatScheT::Utility::calcResMII(&g,&rm);
+  double resMinII = HatScheT::Utility::calcResMII(&rm);
   double recMinII = HatScheT::Utility::calcRecMII(&g,&rm);
 
   double epsilon1 = resMinII - ((double)10)/((double)3);

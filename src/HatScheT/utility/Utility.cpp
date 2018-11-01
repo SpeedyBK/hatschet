@@ -130,7 +130,7 @@ double Utility::calcMinII(double minResII, double maxResII)
   return maxResII;
 }
 
-double Utility::calcResMII(Graph *g, ResourceModel *rm, Target* t)
+double Utility::calcResMII(ResourceModel *rm, Target* t)
 {
   double resMII = 1.0f;
   //standard case without using a hardware target

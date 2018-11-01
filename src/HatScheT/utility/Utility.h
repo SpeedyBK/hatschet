@@ -81,10 +81,9 @@ public:
  /*!
   * \brief calcResMII with or witout a specific target
   * \param rm
-  * \param g
   * \return
   */
- static double calcResMII(Graph *g, ResourceModel* rm, Target* t=nullptr);
+ static double calcResMII(ResourceModel* rm, Target* t=nullptr);
  /*!
   * \brief calcRecMII maximum distance of all edges
   * \param rm
