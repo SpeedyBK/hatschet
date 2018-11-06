@@ -237,7 +237,7 @@ void MoovacResAwScheduler::getAk() {
       if(r == r_it || r_it->isUnlimited() == true) continue;
 
       //add resource costs of one time implementation
-      for(auto it3 = r->getHardwareCosts().begin(); it3 != r->getHardwareCosts().end(); ++it3){
+      for(auto it3 = r_it->getHardwareCosts().begin(); it3 != r_it->getHardwareCosts().end(); ++it3){
         std::string costName = it3->first;
         double resCost = it3->second;
 
@@ -258,13 +258,27 @@ void MoovacResAwScheduler::getAk() {
         throw Exception("MoovacResAwScheduler.getAk: Error negative space detected for hardware element " + it2->first);
       //add difference to remaining space map
       remainingSpace.insert(make_pair(it2->first, this->target.getElement(it2->first) - minCosts[it2->first]));
-
-      cout << "Remaing space of " << it2->first << " is " << remainingSpace[it2->first] << endl;
     }
 
     //finally, calculate maximal possible number of hardware units for this resource
+    int Ak = 0;
+    for(auto it2 = r->getHardwareCosts().begin(); it2 != r->getHardwareCosts().end(); ++it2){
+      std::string costName = it2->first;
+      double resCost = it2->second;
+      //skip if no costs for this element
+      if(resCost == 0.0f) continue;
 
-    cout << "calc Ak for resource " << r->getName() << " : " << endl;
+      cout << "cost for resource " << r->getName() << " : " << costName << " of " << resCost << endl;
+
+      int unitsFit = remainingSpace[costName] / resCost;
+
+      if(unitsFit < 1) throw Exception("MoovacResAwScheduler.getAk: Error no space left allocating one hardware unit of resource " + r->getName());
+      if(Ak == 0) Ak = unitsFit;
+      else if(unitsFit < Ak) Ak = unitsFit;
+    }
+    if(Ak == 0) throw Exception("MoovacResAwScheduler.getAk: Error maximal resource allocation of 0 determined: " + r->getName());
+
+    this->A_k.insert(make_pair(r,Ak));
   }
 }
 
