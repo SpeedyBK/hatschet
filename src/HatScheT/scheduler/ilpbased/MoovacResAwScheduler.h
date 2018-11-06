@@ -45,7 +45,8 @@ private:
    *
    * This is done to generate the corner in the design space for resource allocation
    */
-  void setLimitsToAk();
+  void getAk();
+  map<Resource*,int > A_k;
 
   Target& target;
 };

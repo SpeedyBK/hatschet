@@ -89,6 +89,9 @@ void MoovacResAwScheduler::constructProblem()
   this->fillRegVector();
   this->setSourceVerticesToZero();
 
+  //set up new values that are needed for RAMS scheduling
+  this->getAk();
+
   //set up constraints
   this->setGeneralConstraints();
   this->setModuloAndResourceConstraints();
@@ -216,6 +219,13 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
         }
       }
     }
+  }
+}
+
+void MoovacResAwScheduler::getAk() {
+  for(auto it = this->resourceModel.resourcesBegin(); it != resourceModel.resourcesEnd(); ++it){
+    Resource* r = *it;
+    if(r->isUnlimited() == true) continue;
   }
 }
 

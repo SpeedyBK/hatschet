@@ -62,6 +62,14 @@ public:
    */
   virtual bool isReservationTable(){return false;}
   /*!
+   * a resource is unlimited iff their limit is -1
+   * @return
+   */
+  virtual bool isUnlimited(){
+    if(this->limit == -1) return true;
+    return false;
+  }
+  /*!
    * \return the limit
    */
   virtual int getLimit() const {return this->limit;}
