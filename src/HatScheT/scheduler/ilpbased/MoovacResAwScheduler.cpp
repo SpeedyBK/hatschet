@@ -104,7 +104,119 @@ void MoovacResAwScheduler::setObjective()
 
 void MoovacResAwScheduler::setGeneralConstraints()
 {
+  //5
+  for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
+    Edge* e = *it;
+    Vertex* src = &(e->getVertexSrc());
+    unsigned int srcTVecIndex = this->tIndices[src];
+    Vertex* dst = &(e->getVertexDst());
+    unsigned int dstTVecIndex = this->tIndices[dst];
 
+    this->solver->addConstraint(ti[srcTVecIndex] - ti[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
+  }
+}
+
+void MoovacResAwScheduler::setModuloAndResourceConstraints()
+{
+  this->mi.resize(0);
+
+  for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+    Resource* r = *it;
+
+    int ak = r->getLimit();
+    if(ak==-1) continue;
+    set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
+    if(verOfRes.size()==0) continue;
+
+    //declare y-vector
+    vector<ScaLP::Variable> y_vector;
+    //declare m-vector
+    vector<ScaLP::Variable> m_vector;
+    //declare eps-matrix
+    vector<vector<ScaLP::Variable> > eps_matrix;
+    //declare mu-matrix
+    vector<vector<ScaLP::Variable> > mu_matrix;
+    //store corresponding pointer
+    vector<vector<pair<const Vertex*, const Vertex*> > > corrVerticesMatrix;
+
+    for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
+      const Vertex* v1 = (*it2);
+
+      int tIndex = this->tIndices.at(v1);
+      //18
+      int rvecIndex = this->rIndices.at(v1);
+      //19
+      m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
+      //20
+      y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
+
+      //13
+      this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
+      //14
+      this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
+      //15
+      this->solver->addConstraint(m_vector.back() <= this->II - 1);
+
+      //declare eps-vector
+      vector<ScaLP::Variable> eps_vector;
+      //declare mu-vector
+      vector<ScaLP::Variable> mu_vector;
+      vector<pair<const Vertex*, const Vertex*> > corrVerticesVec;
+
+      for(set<const Vertex*>::iterator it3 = verOfRes.begin(); it3 != verOfRes.end(); it3++) {
+        const Vertex* v2 = (*it3);
+        corrVerticesVec.push_back(make_pair(v1,v2));
+
+        if(v1 != v2) {
+          eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
+          mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
+        }
+
+        else if(v1==v2) {
+          eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+          mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+        }
+      }
+
+      eps_matrix.push_back(eps_vector);
+      mu_matrix.push_back(mu_vector);
+      corrVerticesMatrix.push_back(corrVerticesVec);
+    }
+
+    this->mi.push_back(m_vector);
+    this->yi.push_back(y_vector);
+    this->epsij.push_back(eps_matrix);
+    this->muij.push_back(mu_matrix);
+
+    if(eps_matrix.size() > 1) {
+      for(unsigned int j = 0; j < eps_matrix.size(); j++) {
+        for(unsigned int k = 0; k < eps_matrix.size(); k++) {
+          if(k!=j && j<k) {
+            //6
+            this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
+            //12
+            this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
+          }
+
+          if(k!=j) {
+            pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
+            //7
+            this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
+                                        - (ak*eps_matrix[j][k]) + ak >= 1);
+            //8
+            this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
+                                        - (ak*eps_matrix[j][k]) <= 0);
+            //9
+            this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
+            //10
+            this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
+            //11
+            this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
+          }
+        }
+      }
+    }
+  }
 }
 
 }

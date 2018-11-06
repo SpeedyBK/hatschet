@@ -35,7 +35,13 @@ public:
    * @param name
    */
   Target();
-
+  /*!
+   * overload the stream operator
+   * example: cout << target << endl;
+   * @param os
+   * @param t
+   * @return
+   */
   friend ostream& operator<<(ostream& os, const Target& t);
   /*!
    * get the hardware targets name

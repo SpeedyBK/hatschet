@@ -38,7 +38,14 @@ private:
   virtual void constructProblem();
   virtual void setObjective();
   virtual void setGeneralConstraints();
-
+  virtual void setModuloAndResourceConstraints();
+  /*!
+   * calculate and set the limit of every resource to the maximum possible
+   * value when only instance of all the others resource is used
+   *
+   * This is done to generate the corner in the design space for resource allocation
+   */
+  void setLimitsToAk();
 
   Target& target;
 };
