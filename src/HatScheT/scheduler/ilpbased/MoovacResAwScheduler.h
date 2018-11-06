@@ -30,14 +30,40 @@ namespace HatScheT {
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
+  /*!
+   *
+   * @param g
+   * @param resourceModel
+   * @param solverWishlist
+   * @param target provide a hardware target and resource limitation
+   * for resource aware modulo scheduling
+   */
   MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, Target& target);
-
+  /*!
+   * schedule the provided problem
+   */
   virtual void schedule();
 
 private:
+  /*!
+   * extension of the base class to use RAMS scheduling
+   * see base class for more information
+   */
   virtual void constructProblem();
+  /*!
+   * extension of the base class to use RAMS scheduling
+   * see base class for more information
+   */
   virtual void setObjective();
+  /*!
+   * extension of the base class to use RAMS scheduling
+   * see base class for more information
+   */
   virtual void setGeneralConstraints();
+  /*!
+   * extension of the base class to use RAMS scheduling
+   * see base class for more information
+   */
   virtual void setModuloAndResourceConstraints();
   /*!
    * calculate and set the limit of every resource to the maximum possible
@@ -46,8 +72,13 @@ private:
    * This is done to generate the corner in the design space for resource allocation
    */
   void getAk();
+  /*!
+   * the corner case maximum resource allocations for every limited resource is stored here
+   */
   map<Resource*,int > A_k;
-
+  /*!
+   * information about the hardware target is stored here
+   */
   Target& target;
 };
 
