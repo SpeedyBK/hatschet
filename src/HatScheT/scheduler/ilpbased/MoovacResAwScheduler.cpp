@@ -226,6 +226,45 @@ void MoovacResAwScheduler::getAk() {
   for(auto it = this->resourceModel.resourcesBegin(); it != resourceModel.resourcesEnd(); ++it){
     Resource* r = *it;
     if(r->isUnlimited() == true) continue;
+
+    //calculate minimum costs of all other resources
+    map<std::string, double> minCosts;
+
+    for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
+      Resource* r_it = *it2;
+      //skip the resource itself
+      //skip unlimited
+      if(r == r_it || r_it->isUnlimited() == true) continue;
+
+      //add resource costs of one time implementation
+      for(auto it3 = r->getHardwareCosts().begin(); it3 != r->getHardwareCosts().end(); ++it3){
+        std::string costName = it3->first;
+        double resCost = it3->second;
+
+        //check whether costs already in map or new
+        if(minCosts.find(costName) == minCosts.end()){
+          minCosts.insert(*it3); //not found, insert new
+        } else {
+          minCosts[costName] += resCost; //found, add to existing
+        }
+      }
+    }
+
+    //calculate remaining resources for this resource
+    map<std::string, double> remainingSpace;
+
+    for(auto it2 = minCosts.begin(); it2 != minCosts.end(); ++it2){
+      if(this->target.getElement(it2->first) - minCosts[it2->first] < 0)
+        throw Exception("MoovacResAwScheduler.getAk: Error negative space detected for hardware element " + it2->first);
+      //add difference to remaining space map
+      remainingSpace.insert(make_pair(it2->first, this->target.getElement(it2->first) - minCosts[it2->first]));
+
+      cout << "Remaing space of " << it2->first << " is " << remainingSpace[it2->first] << endl;
+    }
+
+    //finally, calculate maximal possible number of hardware units for this resource
+
+    cout << "calc Ak for resource " << r->getName() << " : " << endl;
   }
 }
 

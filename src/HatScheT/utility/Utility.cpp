@@ -150,7 +150,8 @@ double Utility::calcResMII(ResourceModel *rm, Target* t)
   }
   //a target is provided
   else{
-    throw Exception("Utility.calcResMII: ERROR calculating resMinII using a target is not supported yet");
+    //throw Exception("Utility.calcResMII: ERROR calculating resMinII using a target is not supported yet");
+    cout << "Utility.calcResMII: WARNING calculating resMinII using a target is not supported yet" << endl;
   }
 
   return resMII;
