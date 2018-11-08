@@ -219,6 +219,9 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     }
     //How many Iterations should be tested? up until phase of the latest vertex + denominator of II
     //Equivalent to cycle of latest vertex + numerator of II, divided by II
+
+    //Before splitting the II, we check for possible double imprecisions. if the error is smaller than 0,999 we round
+    if (fabs(II - (round(II))) < 0.001) { II = round(II);}
     pair<int,int> split = splitRational(II);
     if (split.second == 0) {
         cout << "HatScheT.verifyModuloScheduleRational Error couldn't deduce rational number from: " + to_string(II) << endl;
@@ -249,8 +252,8 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     for (int i = 0; i <= max_it; i++) {
         for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
             auto v = *it;
-            //cout.precision(17);
-            //cout << v->getName() << " " <<  i << " " << i*II << " " << S[v] << " " << safeRoundDown(S[v] + i*II) << endl;
+            cout.precision(17);
+            cout << v->getName() << " i =  " <<  i << " i*II = " << i*II << " Start = " << S[v] << " sum = " << safeRoundDown(S[v] + i*II) << endl;
             ressourceSlotByCycle[make_pair(rm.getResource(v), safeRoundDown(S[v] + i*II) )].push_back(v);
         }
     }
