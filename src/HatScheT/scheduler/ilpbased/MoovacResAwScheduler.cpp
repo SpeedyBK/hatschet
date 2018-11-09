@@ -209,8 +209,6 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
     Resource* r = *it;
     if(r->isUnlimited()==true) continue;
 
-    int ak = r->getLimit();
-
     set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
     if(verOfRes.size()==0) continue;
 
@@ -228,6 +226,7 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
     for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
       const Vertex* v1 = (*it2);
 
+
       int tIndex = this->tIndices.at(v1);
       //18 in moovac paper
       int rvecIndex = this->rIndices.at(v1);
@@ -238,8 +237,8 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
 
       //13 in moovac paper
       this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
-      //14 in moovac paper
-      this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
+      //11 in new paper sheet
+      this->solver->addConstraint(this->ri[rvecIndex] + 1 - this->aks[this->aksIndices[r]] <= 0);
       //15 in moovac paper
       this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
@@ -286,12 +285,12 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
 
           if(k!=j) {
             pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-            //7 in moovac paper
+            //4 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (ak*eps_matrix[j][k]) + ak >= 1);
-            //8 in moovac paper
+                                        - (this->A_k[r]*eps_matrix[j][k]) + this->A_k[r] >= 1);
+            //5 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (ak*eps_matrix[j][k]) <= 0);
+                                        - (this->A_k[r]*eps_matrix[j][k]) <= 0);
             //9 in moovac paper
             this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
             //10 in moovac paper
