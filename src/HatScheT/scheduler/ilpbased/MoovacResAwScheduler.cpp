@@ -72,6 +72,13 @@ void MoovacResAwScheduler::schedule()
     this->r = this->solver->getResult();
     this->fillSolutionStructure();
 
+    //display resource allocation here during developement
+    for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+      Resource* r = *it;
+      if(r->isUnlimited()== true) continue;
+      cout << "Allocated units for resource: " << r->getName() << ": " << this->r.values[this->aks[this->aksIndices[r]]] << endl;
+    }
+
     if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
     else cout << "Found feasible solution for II: " << this->II << endl;
   }
@@ -89,11 +96,11 @@ void MoovacResAwScheduler::constructProblem()
   this->fillRegVector();
   this->setSourceVerticesToZero();
 
-  //set up new aks vector that is needed for resource allocation
-  this->fillAksVectorAndSetConstaints();
-
   //set up new values that are needed for RAMS scheduling
   this->getAk();
+
+  //set up new aks vector that is needed for resource allocation
+  this->fillAksVectorAndSetConstaints();
 
   //set up constraints
   this->setGeneralConstraints();
@@ -146,6 +153,7 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
     else{
       //13 in new formulation sheet
       int Ak_tmp = this->A_k[r];
+      cout << r->getName() << " - Ak " << Ak_tmp << " - count " << count << endl;
       if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
       else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
 
