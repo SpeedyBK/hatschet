@@ -89,6 +89,9 @@ void MoovacResAwScheduler::constructProblem()
   this->fillRegVector();
   this->setSourceVerticesToZero();
 
+  //set up new aks vector that is needed for resource allocation
+  this->fillAksVectorAndSetConstaints();
+
   //set up new values that are needed for RAMS scheduling
   this->getAk();
 
@@ -100,6 +103,24 @@ void MoovacResAwScheduler::constructProblem()
   this->setObjective();
 }
 
+void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
+  for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+    Resource* r = *it;
+    int count = this->resourceModel.getNumVerticesRegisteredToResource(r);
+    if(r->isUnlimited()==true){
+      //14 in new formulation sheet
+      //does this work for ak == | Ok | ? Or is another contraint (==) needed?
+      this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),count,count));
+    }
+    else{
+      //13 in new formulation sheet
+      int Ak_tmp = this->A_k[r];
+      if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
+      else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
+    }
+  }
+}
+
 void MoovacResAwScheduler::setObjective()
 {
   throw Exception("MoovacResAwScheduler.setObjective: This function is not implemented yet!");
@@ -107,7 +128,7 @@ void MoovacResAwScheduler::setObjective()
 
 void MoovacResAwScheduler::setGeneralConstraints()
 {
-  //5
+  //5 in moovac paper
   for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
@@ -125,9 +146,10 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
 
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
+    if(r->isUnlimited()==true) continue;
 
     int ak = r->getLimit();
-    if(ak==-1) continue;
+
     set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
     if(verOfRes.size()==0) continue;
 
@@ -146,18 +168,18 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
       const Vertex* v1 = (*it2);
 
       int tIndex = this->tIndices.at(v1);
-      //18
+      //18 in moovac paper
       int rvecIndex = this->rIndices.at(v1);
-      //19
+      //19 in moovac paper
       m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
-      //20
+      //20 in moovac paper
       y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
 
-      //13
+      //13 in moovac paper
       this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
-      //14
+      //14 in moovac paper
       this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
-      //15
+      //15 in moovac paper
       this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
       //declare eps-vector
@@ -195,25 +217,25 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
       for(unsigned int j = 0; j < eps_matrix.size(); j++) {
         for(unsigned int k = 0; k < eps_matrix.size(); k++) {
           if(k!=j && j<k) {
-            //6
+            //6 in moovac paper
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
-            //12
+            //12 in moovac paper
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
           }
 
           if(k!=j) {
             pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-            //7
+            //7 in moovac paper
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                                         - (ak*eps_matrix[j][k]) + ak >= 1);
-            //8
+            //8 in moovac paper
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                                         - (ak*eps_matrix[j][k]) <= 0);
-            //9
+            //9 in moovac paper
             this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
-            //10
+            //10 in moovac paper
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
-            //11
+            //11 in moovac paper
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
           }
         }
