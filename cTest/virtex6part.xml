@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ModelInformation Version="1.0">
+  <FPGA vendor="xilinx" family="virtex6" name="XC6VLX75T">
+    <Element name="DSP" avail="30" />
+    <Element name="LUT" avail="2600" />
+    <Element name="MEM" avail="312" />
+  </FPGA>
+</ModelInformation>
