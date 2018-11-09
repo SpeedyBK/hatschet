@@ -98,9 +98,40 @@ void MoovacResAwScheduler::constructProblem()
   //set up constraints
   this->setGeneralConstraints();
   this->setModuloAndResourceConstraints();
+  //new constraints
+  this->setAllocationConstraints();
 
   //set Objective
   this->setObjective();
+}
+
+void MoovacResAwScheduler::setAllocationConstraints() {
+  //iterate over hardware cost types
+  for(auto it = this->target.getElements().begin(); it != this->target.getElements().end(); ++it){
+    std::string element = it->first;
+    double constraint = it->second;
+
+    ScaLP::Term ScaLPSum;
+
+    //iterate over resouces
+    for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
+      Resource* r = *it2;
+      //skip unlimited
+      if(r->isUnlimited()== true) continue;
+
+      double costs = r->getHardwareCost(element);
+      //skip iff costs are 0
+      if(costs == 0.0f) continue;
+      else {
+        ScaLP::Term term = costs*this->aks[this->aksIndices[r]];
+        ScaLPSum +=  ScaLPSum + term;
+      }
+    }
+
+    //add constraints
+    //16-18 in new formulation sheet
+    this->solver->addConstraint(ScaLPSum <= constraint);
+  }
 }
 
 void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
@@ -117,6 +148,9 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
       int Ak_tmp = this->A_k[r];
       if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
       else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
+
+      //store information
+      this->aksIndices.insert(make_pair(r,this->aks.size()-1));
     }
   }
 }

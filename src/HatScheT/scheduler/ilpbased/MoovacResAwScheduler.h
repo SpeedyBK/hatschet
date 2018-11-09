@@ -66,6 +66,11 @@ private:
    */
   virtual void setModuloAndResourceConstraints();
   /*!
+   * the new allocation constraints force the allocation
+   * to respect the hardware restriction
+   */
+  void setAllocationConstraints();
+  /*!
    * the aks vector contains the allocation variables for each limited resource
    */
   void fillAksVectorAndSetConstaints();
@@ -73,6 +78,7 @@ private:
    * this vector contains the allocation variables for each limited resource
    */
   vector<ScaLP::Variable> aks;
+  map<Resource*,int > aksIndices; //store info Resource -> ScaLP::Variable
   /*!
    * calculate and set the limit of every resource to the maximum possible
    * value when only instance of all the others resource is used
