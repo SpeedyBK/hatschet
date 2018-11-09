@@ -157,7 +157,34 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
 
 void MoovacResAwScheduler::setObjective()
 {
-  throw Exception("MoovacResAwScheduler.setObjective: This function is not implemented yet!");
+  ScaLP::Term objective;
+  //iterate over resouces
+  for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
+    Resource* r = *it2;
+    //skip unlimited
+    if(r->isUnlimited()== true) continue;
+
+    ScaLP::Term ScaLPSum;
+
+    //iterate over hardware cost types
+    for(auto it = this->target.getElements().begin(); it != this->target.getElements().end(); ++it){
+      std::string element = it->first;
+      double constraint = it->second;
+
+      double costs = r->getHardwareCost(element);
+      //skip iff costs are 0
+      if(costs == 0.0f) continue;
+      else {
+        ScaLP::Term term = this->aks[this->aksIndices[r]]*(costs/constraint);
+        ScaLPSum +=  ScaLPSum + term;
+      }
+    }
+
+    objective += ScaLPSum;
+  }
+
+  //set objective
+  this->solver->setObjective(ScaLP::minimize(objective));
 }
 
 void MoovacResAwScheduler::setGeneralConstraints()
