@@ -36,6 +36,8 @@
 #ifdef USE_SCALP
 #include "HatScheT/base/ILPSchedulerBase.h"
 #include "HatScheT/scheduler/ilpbased/ASAPILPScheduler.h"
+#include "HatScheT/utility/Verifier.h"
+#include "HatScheT/scheduler/ULScheduler.h"
 #endif
 
 namespace HatScheT {
@@ -164,7 +166,10 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm)
   asap.schedule();
   int criticalPath = asap.getScheduleLength();
 
-  if(g->getNumberOfVertices() > 200) return criticalPath;
+  if(g->getNumberOfVertices() > 200) {
+    HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getScheduleLength());
+    return criticalPath;
+  }
 
   //get optimal critical path using asap ilp scheduler
   HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
@@ -173,6 +178,17 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm)
   criticalPath = asapilp->getScheduleLength();
 
   delete asapilp;
+
+  //error in non ilp-based asap detected
+  //starting new asap ilp
+  if(criticalPath <= 0){
+    HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+    asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
+    asapilp->schedule();
+    criticalPath = asapilp->getScheduleLength();
+
+    delete asapilp;
+  }
 
   return criticalPath;
 }
