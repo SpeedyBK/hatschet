@@ -75,7 +75,8 @@ public:
   virtual int getLimit() const {return this->limit;}
   void setLimit(int l){
     if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
-    if(this->blockingTime==0 && this->phyDelay==0.0f && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    if(this->blockingTime==0 && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a blocking time of 0!");
+    if(this->latency==0 && this->phyDelay==0.0f && l!=-1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
     this->limit=l;}
   /*!
    * \return the latency
