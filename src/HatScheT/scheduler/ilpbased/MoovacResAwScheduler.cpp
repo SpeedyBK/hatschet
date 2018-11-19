@@ -72,6 +72,13 @@ void MoovacResAwScheduler::schedule()
     this->r = this->solver->getResult();
     this->fillSolutionStructure();
 
+    //display resource allocation here during developement
+    for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+      Resource* r = *it;
+      if(r->isUnlimited()== true) continue;
+      cout << "Allocated units for resource: " << r->getName() << ": " << this->r.values[this->aks[this->aksIndices[r]]] << endl;
+    }
+
     if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
     else cout << "Found feasible solution for II: " << this->II << endl;
   }
@@ -92,22 +99,105 @@ void MoovacResAwScheduler::constructProblem()
   //set up new values that are needed for RAMS scheduling
   this->getAk();
 
+  //set up new aks vector that is needed for resource allocation
+  this->fillAksVectorAndSetConstaints();
+
   //set up constraints
   this->setGeneralConstraints();
   this->setModuloAndResourceConstraints();
+  //new constraints
+  this->setAllocationConstraints();
 
   //set Objective
   this->setObjective();
 }
 
+void MoovacResAwScheduler::setAllocationConstraints() {
+  //iterate over hardware cost types
+  for(auto it = this->target.getElements().begin(); it != this->target.getElements().end(); ++it){
+    std::string element = it->first;
+    double constraint = it->second;
+
+    ScaLP::Term ScaLPSum;
+
+    //iterate over resouces
+    for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
+      Resource* r = *it2;
+      //skip unlimited
+      if(r->isUnlimited()== true) continue;
+
+      double costs = r->getHardwareCost(element);
+      //skip iff costs are 0
+      if(costs == 0.0f) continue;
+      else {
+        ScaLP::Term term = costs*this->aks[this->aksIndices[r]];
+        ScaLPSum +=  ScaLPSum + term;
+      }
+    }
+
+    //add constraints
+    //16-18 in new formulation sheet
+    this->solver->addConstraint(ScaLPSum <= constraint);
+  }
+}
+
+void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
+  for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+    Resource* r = *it;
+    int count = this->resourceModel.getNumVerticesRegisteredToResource(r);
+    if(r->isUnlimited()==true){
+      //14 in new formulation sheet
+      //does this work for ak == | Ok | ? Or is another contraint (==) needed?
+      this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),count,count));
+    }
+    else{
+      //13 in new formulation sheet
+      int Ak_tmp = this->A_k[r];
+      cout << r->getName() << " - Ak " << Ak_tmp << " - count " << count << endl;
+      if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
+      else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
+
+      //store information
+      this->aksIndices.insert(make_pair(r,this->aks.size()-1));
+    }
+  }
+}
+
 void MoovacResAwScheduler::setObjective()
 {
-  throw Exception("MoovacResAwScheduler.setObjective: This function is not implemented yet!");
+  ScaLP::Term objective;
+  //iterate over resouces
+  for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
+    Resource* r = *it2;
+    //skip unlimited
+    if(r->isUnlimited()== true) continue;
+
+    ScaLP::Term ScaLPSum;
+
+    //iterate over hardware cost types
+    for(auto it = this->target.getElements().begin(); it != this->target.getElements().end(); ++it){
+      std::string element = it->first;
+      double constraint = it->second;
+
+      double costs = r->getHardwareCost(element);
+      //skip iff costs are 0
+      if(costs == 0.0f) continue;
+      else {
+        ScaLP::Term term = this->aks[this->aksIndices[r]]*(costs/constraint);
+        ScaLPSum +=  ScaLPSum + term;
+      }
+    }
+
+    objective += ScaLPSum;
+  }
+
+  //set objective
+  this->solver->setObjective(ScaLP::minimize(objective));
 }
 
 void MoovacResAwScheduler::setGeneralConstraints()
 {
-  //5
+  //5 in moovac paper
   for(std::set<Edge*>::iterator it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
     Edge* e = *it;
     Vertex* src = &(e->getVertexSrc());
@@ -125,9 +215,8 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
 
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
     Resource* r = *it;
+    if(r->isUnlimited()==true) continue;
 
-    int ak = r->getLimit();
-    if(ak==-1) continue;
     set<const Vertex*> verOfRes = this->resourceModel.getVerticesOfResource(r);
     if(verOfRes.size()==0) continue;
 
@@ -145,19 +234,20 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
     for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
       const Vertex* v1 = (*it2);
 
+
       int tIndex = this->tIndices.at(v1);
-      //18
+      //18 in moovac paper
       int rvecIndex = this->rIndices.at(v1);
-      //19
+      //19 in moovac paper
       m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
-      //20
+      //20 in moovac paper
       y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
 
-      //13
+      //13 in moovac paper
       this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
-      //14
-      this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
-      //15
+      //11 in new paper sheet
+      this->solver->addConstraint(this->ri[rvecIndex] + 1 - this->aks[this->aksIndices[r]] <= 0);
+      //15 in moovac paper
       this->solver->addConstraint(m_vector.back() <= this->II - 1);
 
       //declare eps-vector
@@ -195,25 +285,25 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
       for(unsigned int j = 0; j < eps_matrix.size(); j++) {
         for(unsigned int k = 0; k < eps_matrix.size(); k++) {
           if(k!=j && j<k) {
-            //6
+            //6 in moovac paper
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
-            //12
+            //12 in moovac paper
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
           }
 
           if(k!=j) {
             pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
-            //7
+            //4 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (ak*eps_matrix[j][k]) + ak >= 1);
-            //8
+                                        - (this->A_k[r]*eps_matrix[j][k]) + this->A_k[r] >= 1);
+            //5 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (ak*eps_matrix[j][k]) <= 0);
-            //9
+                                        - (this->A_k[r]*eps_matrix[j][k]) <= 0);
+            //9 in moovac paper
             this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
-            //10
+            //10 in moovac paper
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
-            //11
+            //11 in moovac paper
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
           }
         }
@@ -267,8 +357,6 @@ void MoovacResAwScheduler::getAk() {
       double resCost = it2->second;
       //skip if no costs for this element
       if(resCost == 0.0f) continue;
-
-      cout << "cost for resource " << r->getName() << " : " << costName << " of " << resCost << endl;
 
       int unitsFit = remainingSpace[costName] / resCost;
 

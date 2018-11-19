@@ -227,7 +227,7 @@ int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
 
 double Resource::getHardwareCost(string n) {
   if ( this->hardwareCost.find(n) == this->hardwareCost.end() ) {
-    throw HatScheT::Exception("Resource::getHardwareCost: No Cost of found: " + n + " for " + this->getName());
+    return 0.0f;
   } else {
     return this->hardwareCost[n];
   }
