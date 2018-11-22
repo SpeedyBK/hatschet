@@ -21,6 +21,11 @@ cmake_minimum_required (VERSION 2.8)
 project (hatschet)
 
 ####################
+#Set options for used libs
+####################
+option(USE_XERCESC "Use XercesC for parsing" ON)
+
+####################
 #Find ScaLP
 ####################
 FIND_LIBRARY(SCALP_LIB
@@ -74,12 +79,16 @@ ENDIF (XERCESC_H)
 ####################
 #set define for XercesC
 ####################
-IF (XERCESC_H AND XERCESC_LIB)
-    add_definitions(-DUSE_XERCESC)
-    MESSAGE(STATUS "Found XercesC: GraphML parser will be available")
-ELSE (XERCESC_H AND XERCESC_LIB)
-    MESSAGE(STATUS "Did not found XercesC: GraphML parser will not be available")
-ENDIF (XERCESC_H AND XERCESC_LIB)
+IF (USE_XERCESC)
+    IF (XERCESC_H AND XERCESC_LIB)
+        add_definitions(-DUSE_XERCESC)
+        MESSAGE(STATUS "Found XercesC: GraphML parser will be available")
+    ELSE (XERCESC_H AND XERCESC_LIB)
+        MESSAGE(STATUS "Did not found XercesC: GraphML parser will not be available")
+    ENDIF (XERCESC_H AND XERCESC_LIB)
+ELSE(USE_XERCESC)
+    MESSAGE(STATUS "XercesC was turned off manually (-DUSE_XERCESC=OFF): GraphML parser will not be available")
+ENDIF (USE_XERCESC)
 
 set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
@@ -95,12 +104,12 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
-        src/HatScheT/utility/reader/XMLResourceReader.cpp
+src/HatScheT/utility/reader/XMLResourceReader.cpp
 src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
 src/HatScheT/utility/writer/Writer.cpp
-        src/HatScheT/utility/writer/GraphMLGraphWriter.cpp
+src/HatScheT/utility/writer/GraphMLGraphWriter.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
@@ -109,7 +118,7 @@ src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-        src/HatScheT/utility/writer/XMLResourceWriter.cpp src/HatScheT/utility/writer/XMLResourceWriter.h)
+src/HatScheT/utility/writer/XMLResourceWriter.cpp src/HatScheT/utility/writer/XMLResourceWriter.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -135,7 +144,7 @@ src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
-        src/HatScheT/utility/reader/XMLResourceReader.h
+src/HatScheT/utility/reader/XMLResourceReader.h
 src/HatScheT/utility/reader/XMLTargetReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/Occurrence.h
@@ -146,7 +155,7 @@ src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/Writer.h
-        src/HatScheT/utility/writer/GraphMLGraphWriter.h
+src/HatScheT/utility/writer/GraphMLGraphWriter.h
 src/HatScheT/Vertex.h
 )
 

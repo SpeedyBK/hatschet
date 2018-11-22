@@ -42,6 +42,9 @@ namespace HatScheT {
 
 bool Tests::moovacTest()
 {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -78,10 +81,14 @@ bool Tests::moovacTest()
   }
 
   return true;
+#endif
 }
 
 bool Tests::asapHCTest()
 {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -105,10 +112,14 @@ bool Tests::asapHCTest()
   cout << "Tests::asapHCTest: asap HC failed verification!" << endl;
 
   return false;
+#endif
 }
 
 bool Tests::alapHCTest()
 {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -131,9 +142,13 @@ bool Tests::alapHCTest()
   HatScheT::Utility::printSchedule(alap.getSchedule());
   cout << "Tests::alapHCTest: alap HC failed verification!" << endl;
   return false;
+#endif
 }
 
 bool Tests::rationalMinIITest() {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -162,9 +177,13 @@ bool Tests::rationalMinIITest() {
   }
 
   return true;
+#endif
 }
 
 bool Tests::readWriteReadScheduleTest() {
+#ifndef USE_XERCESC
+  return true;
+#else
   string resStr = "cTest/MoovacExampleRM.xml";
   string graphStr = "cTest/MoovacExample.graphml";
 
@@ -221,10 +240,14 @@ bool Tests::readWriteReadScheduleTest() {
   }
 
   return true;
+#endif
 }
 
 bool Tests::readTest()
 {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -307,6 +330,7 @@ bool Tests::readTest()
   }
 
   return true;
+#endif
 }
 
 bool Tests::moduloSDCTest()
@@ -538,6 +562,9 @@ bool Tests::occurrenceTest()
 
 bool Tests::ulSchedulerTest()
 {
+#ifndef USE_XERCESC
+  return true;
+#else
   HatScheT::ResourceModel rm;
   HatScheT::Graph g;
   HatScheT::XMLResourceReader readerRes(&rm);
@@ -561,6 +588,7 @@ bool Tests::ulSchedulerTest()
   if(uls.getScheduleLength()!=8) return false;
 
   return true;
+#endif
 }
 
 bool Tests::sgmSchedulerTest()
