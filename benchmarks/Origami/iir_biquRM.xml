@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="2" limit="1" physicalDelay="0.0" name="AddAdd"/>
+    <Resource blockingTime="1" latency="0" limit="1" physicalDelay="0.0" name="Product"/>
+    <Resource blockingTime="0" latency="0" limit="-1" physicalDelay="0.0" name="Constant"/>
+    <Resource blockingTime="0" latency="0" limit="-1" physicalDelay="0.0" name="Inport"/>
+    <Resource blockingTime="0" latency="0" limit="-1" physicalDelay="0.0" name="Outport"/>
+  </Resources>
+
+</ModelInformation>

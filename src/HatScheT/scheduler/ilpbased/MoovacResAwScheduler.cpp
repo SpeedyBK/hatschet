@@ -46,6 +46,7 @@ void MoovacResAwScheduler::schedule()
   bool timeoutOccured=false;
 
   cout << "Starting RAMS ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
+  cout << "resMinII is " << this->getResMinII() << ", recMinII is " << this->getRecMinII() << endl;
   if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
@@ -98,7 +99,6 @@ void MoovacResAwScheduler::constructProblem()
 
   //set up new values that are needed for RAMS scheduling
   this->getAk();
-
   //set up new aks vector that is needed for resource allocation
   this->fillAksVectorAndSetConstaints();
 
@@ -153,7 +153,7 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
     else{
       //13 in new formulation sheet
       int Ak_tmp = this->A_k[r];
-      cout << r->getName() << " - Ak " << Ak_tmp << " - count " << count << endl;
+ 
       if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
       else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
 
