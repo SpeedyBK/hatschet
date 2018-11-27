@@ -68,6 +68,20 @@ public:
     this->fullDSE = b;
   }
   bool getFullDSE(){return  this->fullDSE;}
+  /*!
+   * when a design space exploration is done, this map stores valid schedules (starttimes) for each found II
+   * @return
+   */
+  std::map<int , std::map<Vertex*,int> >& getDSEStartTimes(){
+    return this->dseStartTimes;
+  }
+  /*!
+   * when a design space exploration is done, this map stores valid resource allocations for each found II
+   * @return
+   */
+  std::map<int , std::map<Resource*,int> >& getDSEAllocations(){
+    return this->dseAllocations;
+  }
 private:
   /*!
    * extension of the base class to use RAMS scheduling
@@ -134,6 +148,14 @@ private:
    * Default FALSE (no DSE)
    */
   bool fullDSE;
+  /*!
+   * when a design space exploration is done, this map stores valid schedules (starttimes) for each found II
+   */
+  std::map<int , std::map<Vertex*,int> > dseStartTimes;
+  /*!
+   * when a design space exploration is done, this map stores valid resource allocations for each found II
+   */
+  std::map<int , std::map<Resource*,int> > dseAllocations;
 };
 
 }
