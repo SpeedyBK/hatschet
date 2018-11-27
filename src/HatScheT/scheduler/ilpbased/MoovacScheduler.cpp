@@ -173,7 +173,7 @@ void MoovacScheduler::setVectorVariables()
     for(set<const Vertex*>::iterator it2 = verOfRes.begin(); it2 != verOfRes.end(); it2++) {
       const Vertex* v1 = (*it2);
       //18
-      this->ri.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ak-1));
+      this->ri.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ScaLP::INF()));
       this->rIndices.insert(make_pair(v1, this->ri.size() -1));
     }
   }
