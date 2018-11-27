@@ -284,7 +284,7 @@ public:
    * \return the new resource
    * \sa Resource
    */
-  Resource &makeResource(std::string name, int limit, int latency, int blockingTime=0);
+  Resource &makeResource(std::string name, int limit, int latency, int blockingTime=1);
   /*!
    * \brief creates a complex, reservation table-based resource
    *

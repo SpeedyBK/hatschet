@@ -153,7 +153,7 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
     else{
       //13 in new formulation sheet
       int Ak_tmp = this->A_k[r];
- 
+
       if(Ak_tmp < count ) this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,Ak_tmp));
       else this->aks.push_back(ScaLP::newIntegerVariable("ak_" + r->getName(),0,count));
 
