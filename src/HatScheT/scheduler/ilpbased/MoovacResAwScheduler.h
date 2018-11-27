@@ -57,6 +57,17 @@ public:
     this->lambda = l;
   }
   double getLambda(){return this->lambda;}
+  /*!
+   * this value needs to be set true iff a full design space exploration is desired
+   * otherwise the rams scheduler will terminate after the first found II even if there might be other throughput/resource tradeoffs possible
+   *
+   * Default FALSE (no DSE)
+   * @param b
+   */
+  void setFullDSE(bool b){
+    this->fullDSE = b;
+  }
+  bool getFullDSE(){return  this->fullDSE;}
 private:
   /*!
    * extension of the base class to use RAMS scheduling
@@ -116,6 +127,13 @@ private:
    * default is 0
    */
   double lambda;
+  /*!
+   * this value needs to be set true iff a full design space exploration is desired
+   * otherwise the rams scheduler will terminate after the first found II even if there might be other throughput/resource tradeoffs possible
+   *
+   * Default FALSE (no DSE)
+   */
+  bool fullDSE;
 };
 
 }

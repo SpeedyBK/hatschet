@@ -37,6 +37,7 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
   this->lambda = 0.0f;
+  this->fullDSE = false;
 }
 
 void MoovacResAwScheduler::schedule()
@@ -67,7 +68,7 @@ void MoovacResAwScheduler::schedule()
     if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) this->optimalResult = true;
 
     if(scheduleFound == false) (this->II)++;
-    else break;
+    if(scheduleFound == true and this->fullDSE == false) break;
   }
 
   if(this->scheduleFound == true) {
