@@ -38,6 +38,37 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   this->SLMax = 0;
   this->lambda = 0.0f;
   this->fullDSE = false;
+  this->DSEfinshed = false;
+}
+
+void MoovacResAwScheduler::storeScheduleAndAllocation(){
+  std::map<Vertex*,int> schedule;
+  std::map<Resource*,int> allocationMap;
+  bool finished = true;
+
+  for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
+    Vertex* v = *it;
+    unsigned int index =this->tIndices.at(v);
+    ScaLP::Variable svTemp = this->ti[index];
+
+    int startTime = this->r.values[svTemp];
+    schedule.insert(make_pair(v, startTime));
+  }
+  this->dseStartTimes.insert(make_pair(this->II, schedule));
+
+  for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+    Resource* r = *it;
+    if(r->isUnlimited()== true) continue;
+    int allocation = this->r.values[this->aks[this->aksIndices[r]]];
+
+    //check whether the design space exploration is finished
+    if(allocation > 1) finished = false;
+
+    allocationMap.insert(make_pair(r,allocation));
+  }
+  this->dseAllocations.insert(make_pair(this->II,allocationMap));
+
+  if(finished == true) this->DSEfinshed = true;
 }
 
 void MoovacResAwScheduler::schedule()
@@ -69,6 +100,17 @@ void MoovacResAwScheduler::schedule()
 
     if(scheduleFound == false) (this->II)++;
     if(scheduleFound == true and this->fullDSE == false) break;
+    if(scheduleFound == true and this->fullDSE == true){
+      this->r = this->solver->getResult();
+      //store determined schedule and allocation for this II
+      //continue design space exploration in resource aware modulo scheduling afterwards
+      this->storeScheduleAndAllocation();
+
+      //continue with next II iff there are still resource to be saved
+      // (at least one resource got more than 1 unit allocated in hardware)
+      if(this->DSEfinshed == true) break;
+      else (this->II)++;
+    }
   }
 
   if(this->scheduleFound == true) {

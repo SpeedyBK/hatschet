@@ -113,6 +113,10 @@ private:
    */
   void fillAksVectorAndSetConstaints();
   /*!
+   * store determined schedule and allocation for this II when fullDSE == TRUE
+   */
+  void storeScheduleAndAllocation();
+  /*!
    * this vector contains the allocation variables for each limited resource
    */
   vector<ScaLP::Variable> aks;
@@ -148,6 +152,10 @@ private:
    * Default FALSE (no DSE)
    */
   bool fullDSE;
+  /*!
+   * this flag is used to stop the design space exploration when no more resource can be saved
+   */
+  bool DSEfinshed;
   /*!
    * when a design space exploration is done, this map stores valid schedules (starttimes) for each found II
    */
