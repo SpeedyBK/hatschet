@@ -77,7 +77,9 @@ void MoovacResAwScheduler::schedule()
     for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
       Resource* r = *it;
       if(r->isUnlimited()== true) continue;
-      cout << "Allocated units for resource: " << r->getName() << ": " << this->r.values[this->aks[this->aksIndices[r]]] << endl;
+      int allocation = this->r.values[this->aks[this->aksIndices[r]]];
+      cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
+      r->setLimit(allocation);
     }
 
     if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
