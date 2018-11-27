@@ -43,7 +43,20 @@ public:
    * schedule the provided problem
    */
   virtual void schedule();
-
+  /*!
+   * This is variable is used to balance the objective between resource and latency reduction
+   * 0 <= lambda <= 1
+   * 0 means only resources are minimzed
+   * 1 means only the latency is minimized
+   *
+   * default is 0
+   * @param l set lambda
+   */
+  void setLambda(double l){
+    if(l < 0.0f or l > 1.0f) throw Exception("MoovacResAwScheduler.setLambda: Lambda value is restricted to be 0 <=  lambda <= 1! You request: " + to_string(l));
+    this->lambda = l;
+  }
+  double getLambda(){return this->lambda;}
 private:
   /*!
    * extension of the base class to use RAMS scheduling
@@ -94,6 +107,15 @@ private:
    * information about the hardware target is stored here
    */
   Target& target;
+  /*!
+   * This is variable is used to balance the objective between resource and latency reduction
+   * 0 <= lambda <= 1
+   * 0 means only resources are minimzed
+   * 1 means only the latency is minimized
+   *
+   * default is 0
+   */
+  double lambda;
 };
 
 }

@@ -36,6 +36,7 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   this->computeMaxII(&g,&resourceModel);
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
+  this->lambda = 0.0f;
 }
 
 void MoovacResAwScheduler::schedule()
@@ -168,7 +169,7 @@ void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
 void MoovacResAwScheduler::setObjective()
 {
   ScaLP::Term objective;
-  //iterate over resouces
+  //iterate over resouces to set resource part of the objective
   for(auto it2 = this->resourceModel.resourcesBegin(); it2 != this->resourceModel.resourcesEnd(); ++it2){
     Resource* r = *it2;
     //skip unlimited
@@ -193,7 +194,23 @@ void MoovacResAwScheduler::setObjective()
     objective += ScaLPSum;
   }
 
-  //set objective
+  //set resource part of the objective
+  //lambda is used for weighting between latency and resource minimization
+  objective += (1-lambda)*objective;
+
+  //use supersink node for latency minimization
+  ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,ScaLP::INF());
+  for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it){
+    Vertex* v = *it;
+
+    this->solver->addConstraint(supersink - this->ti[this->tIndices[v]] - this->resourceModel.getVertexLatency(v) >= 0);
+  }
+
+  //set latency part of the objective
+  //lambda is used for weighting between latency and resource minimization
+  objective += lambda*supersink;
+
+  //set overall objective using minimize
   this->solver->setObjective(ScaLP::minimize(objective));
 }
 
