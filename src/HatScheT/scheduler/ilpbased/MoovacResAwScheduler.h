@@ -87,6 +87,12 @@ public:
    * @param II
    */
   void setDSEResult(int II);
+  /*!
+   * get a vector of all found IIs during a design space exploration
+   * the result is sorting begining with the smallest value
+   * @return
+   */
+  vector<int > getFoundIIs();
 private:
   /*!
    * extension of the base class to use RAMS scheduling

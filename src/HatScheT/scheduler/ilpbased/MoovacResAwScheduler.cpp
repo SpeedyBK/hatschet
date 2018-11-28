@@ -187,6 +187,20 @@ void MoovacResAwScheduler::setAllocationConstraints() {
   }
 }
 
+vector<int> MoovacResAwScheduler::getFoundIIs() {
+  if(this->dseStartTimes.size() == 0) throw Exception("MoovacResAwScheduler.getFoundIIs: ERROR no IIs found yet! startTimes map empty!");
+
+  vector<int> IIs;
+
+  for(auto it = this->dseStartTimes.begin(); it != this->dseStartTimes.end(); ++it){
+    IIs.push_back(it->first);
+  }
+
+  std::sort(IIs.begin(), IIs.end());
+
+  return IIs;
+}
+
 void MoovacResAwScheduler::setDSEResult(int II) {
   //set start times
   if ( this->dseStartTimes.find(II) == this->dseStartTimes.end() ) {
