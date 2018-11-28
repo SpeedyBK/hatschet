@@ -190,7 +190,7 @@ Resource *ResourceModel::getResource(string name) const
 
     if(r->getName() == name) return r;
   }
-  throw HatScheT::Exception("MoovacScheduler.constructProblem: Could not find resource with name " + name);
+  throw HatScheT::Exception("ResourceModel.getResource: Could not find resource with name " + name);
 }
 
 bool ResourceModel::isEmpty()
