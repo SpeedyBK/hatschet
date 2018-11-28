@@ -52,6 +52,7 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/utility/Tests.h"
 #endif
@@ -85,6 +86,7 @@ void print_short_help() {
   std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
   std::cout << "                            ED97: ILP formulation by Eichenberger & Davidson" << std::endl;
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
+  std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
@@ -120,7 +122,7 @@ int main(int argc, char *args[]) {
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, MODULOSDC, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -223,6 +225,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "modulosdc") {
           schedulerSelection = MODULOSDC;
         }
+        else if(schedulerSelectionStr == "modulosdcfiege") {
+          schedulerSelection = MODULOSDCFIEGE;
+        }
         else if(schedulerSelectionStr == "rationalii") {
           schedulerSelection = RATIONALII;
         }
@@ -244,6 +249,7 @@ int main(int argc, char *args[]) {
         if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
         if(str=="RWRS" && HatScheT::Tests::readWriteReadScheduleTest()==false) exit(-1);
         if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+        if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
@@ -302,6 +308,9 @@ int main(int argc, char *args[]) {
       case MODULOSDC:
         cout << "MODULOSDC";
         break;
+      case MODULOSDCFIEGE:
+        cout << "MODULOSDCFIEGE";
+            break;
       case RATIONALII:
         cout << "RATIONALII";
         break;
@@ -432,6 +441,14 @@ int main(int argc, char *args[]) {
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
+        case MODULOSDCFIEGE:
+          isModuloScheduler=true;
+              scheduler = new HatScheT::ModSDC(g,rm,solverWishList);
+              if(timeout>0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(timeout);
+              if(maxLatency > 0) ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(maxLatency);
+              ((HatScheT::ModSDC*) scheduler)->setThreads(threads);
+              ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
+              break;
         case RATIONALII:
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
@@ -462,6 +479,7 @@ int main(int argc, char *args[]) {
         case MOOVACMINREG:
         case ED97:
         case MODULOSDC:
+        case MODULOSDCFIEGE:
         case RATIONALII:
         case RATIONALIIFIMMEL:
         case ASAPRATIONALII:

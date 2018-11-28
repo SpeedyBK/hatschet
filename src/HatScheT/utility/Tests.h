@@ -47,6 +47,11 @@ public:
    * \return
    */
   static bool moduloSDCTest();
+    /*!
+     * \brief moduloSDCTestFiege test whether modulo SDC scheduling by nfiege is running as expected
+     * \return
+     */
+  static bool moduloSDCTestFiege();
   /*!
    * \brief apiTest tests API functionality
    * \return

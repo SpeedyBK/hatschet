@@ -102,6 +102,7 @@ src/HatScheT/ResourceModel.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
+src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/XMLResourceReader.cpp
@@ -142,6 +143,7 @@ src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
+src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h

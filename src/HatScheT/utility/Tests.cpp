@@ -35,6 +35,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
+#include "HatScheT/scheduler/dev/ModSDC.h"
 
 #include <stdio.h>
 
@@ -710,4 +711,58 @@ bool Tests::occurrenceSetCombinationTest()
   return true;
 }
 
+bool Tests::moduloSDCTestFiege() {
+  try
+  {
+	HatScheT::ResourceModel rm;
+
+	auto &load = rm.makeResource("load", 1, 2, 1);
+	auto &add = rm.makeResource("add", -1, 0, 1);
+
+	HatScheT::Graph g;
+
+	Vertex& a = g.createVertex(1);
+	Vertex& b = g.createVertex(2);
+	Vertex& c = g.createVertex(3);
+	Vertex& d = g.createVertex(4);
+
+	a.setName("a");
+	b.setName("b");
+	c.setName("c");
+	d.setName("d");
+
+	g.createEdge(a, c ,0);
+	g.createEdge(b, c ,0);
+	g.createEdge(c, d ,0);
+	g.createEdge(d, a ,1);
+
+	rm.registerVertex(&a, &load);
+	rm.registerVertex(&b, &load);
+	rm.registerVertex(&c, &add);
+	rm.registerVertex(&d, &load);
+
+	std::list<std::string> solverList = {"CPLEX","Gurobi", "SCIP"};
+	//std::list<std::string> solverList = {"SCIP"};
+	HatScheT::ModSDC m(g,rm,solverList);
+	m.setSolverQuiet(true);
+	m.schedule();
+
+	auto sch = m.getSchedule();
+
+	bool result = true;
+	for(auto&p:sch)
+	{
+	  std::cout << p.first->getName() << " = " << p.second << std::endl;
+	}
+
+	if(!verifyModuloSchedule(g,rm,sch,(int)m.getII())) return false;
+	if(m.getII()!=4) return false;
+	return result;
+  }
+  catch(HatScheT::Exception &e)
+  {
+	std::cout << e.msg << std::endl;
+  }
+  return false;
+}
 }
