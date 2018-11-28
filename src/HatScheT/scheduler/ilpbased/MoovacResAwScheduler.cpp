@@ -42,11 +42,49 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   this->DSEfinshed = false;
 }
 
+std::map<const Vertex*,int> MoovacResAwScheduler::getBindings() {
+  if(this->fullDSE == true){
+    if(this->dseBindings.size() == 0) throw Exception("MoovacResAwScheduler.getBindings: ERROR no bindings found yet!");
+    return this->dseBindings.at(this->II);
+  } else {
+    if (this->scheduleFound==false || this->startTimes.size()==0) throw HatScheT::Exception("MoovacScheduler.getBindings: schedule was found!");
+    std::map<const Vertex*,int> bindings;
+
+    //iterate over resources
+    for(auto it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it){
+      const Resource* r = *it;
+      set<const Vertex*> vs = this->resourceModel.getVerticesOfResource(r);
+
+      //unlimited resource, all in parallel
+      if(r->getLimit()<0){
+        int binding=0;
+        for(auto v:vs){
+          bindings.emplace(v,binding);
+          binding++;
+        }
+
+      }
+        //limited resource
+      else{
+        for(auto v:vs){
+          ScaLP::Variable bv = this->ri[this->rIndices[v]];
+          ScaLP::Result r = this->solver->getResult();
+          bindings.insert(make_pair(v,r.values[bv]));
+        }
+      }
+    }
+
+    return bindings;
+  }
+}
+
 void MoovacResAwScheduler::storeScheduleAndAllocation(){
   std::map<Vertex*,int> schedule;
   std::map<Resource*,int> allocationMap;
+  std::map<const Vertex*, int> bindings;
   bool finished = true;
 
+  //store schedule
   for(std::set<Vertex*>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
     Vertex* v = *it;
     unsigned int index =this->tIndices.at(v);
@@ -57,6 +95,7 @@ void MoovacResAwScheduler::storeScheduleAndAllocation(){
   }
   this->dseStartTimes.insert(make_pair(this->II, schedule));
 
+  //store resource allocation
   for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
     Resource* r = *it;
     if(r->isUnlimited()== true) continue;
@@ -69,7 +108,30 @@ void MoovacResAwScheduler::storeScheduleAndAllocation(){
   }
   this->dseAllocations.insert(make_pair(this->II,allocationMap));
 
-  this->dseILPResults.insert(make_pair(this->II, this->r));
+  //store hardware binding
+  for(auto it=this->resourceModel.resourcesBegin();it!=this->resourceModel.resourcesEnd();++it){
+    const Resource* r = *it;
+    set<const Vertex*> vs = this->resourceModel.getVerticesOfResource(r);
+
+    //unlimited resource, all in parallel
+    if(r->getLimit()<0){
+      int binding=0;
+      for(auto v:vs){
+        bindings.emplace(v,binding);
+        binding++;
+      }
+
+    }
+      //limited resource
+    else{
+      for(auto v:vs){
+        ScaLP::Variable bv = this->ri[this->rIndices[v]];
+        ScaLP::Result r = this->solver->getResult();
+        bindings.insert(make_pair(v,r.values[bv]));
+      }
+    }
+  }
+  this->dseBindings.insert(make_pair(this->II, bindings));
 
   if(finished == true) this->DSEfinshed = true;
 }
@@ -224,9 +286,6 @@ void MoovacResAwScheduler::setDSEResult(int requII) {
 
   //set requII to this value
   this->II = requII;
-
-  //restore correspinding ILP solver result
-  this->r = this->dseILPResults.at(requII);
 }
 
 void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {

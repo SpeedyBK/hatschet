@@ -44,6 +44,11 @@ public:
    */
   virtual void schedule();
   /*!
+   * get the hardware bindings of the determined II
+   * @return
+   */
+  virtual std::map<const Vertex*,int> getBindings();
+  /*!
    * This is variable is used to balance the objective between resource and latency reduction
    * 0 <= lambda <= 1
    * 0 means only resources are minimzed
@@ -176,9 +181,9 @@ private:
    */
   std::map<int , std::map<Resource*,int> > dseAllocations;
   /*!
-   * when a design space exploration is done, this map stores valid ilp results for each found II
+   * when a design space exploration is done, this map stores valid hardware bindings for each found II
    */
-  std::map<int , ScaLP::Result > dseILPResults;
+  std::map<int , std::map<const Vertex*, int> > dseBindings;
 };
 
 }
