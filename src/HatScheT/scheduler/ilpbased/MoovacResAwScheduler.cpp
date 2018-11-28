@@ -397,7 +397,7 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
             pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
             //4 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (this->A_k[r]*eps_matrix[j][k]) + this->A_k[r] >= 1);
+                                        - (Ak_temp*eps_matrix[j][k]) + Ak_temp >= 1);
             //5 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                                         - (Ak_temp*eps_matrix[j][k]) <= 0);
