@@ -391,13 +391,16 @@ void MoovacResAwScheduler::setModuloAndResourceConstraints()
           }
 
           if(k!=j) {
+            int Ak_temp;
+            if(verOfRes.size() < this->A_k[r]) Ak_temp = verOfRes.size();
+            else Ak_temp = this->A_k[r];
             pair<const Vertex*, const Vertex*> vPair = corrVerticesMatrix[j][k];
             //4 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                                         - (this->A_k[r]*eps_matrix[j][k]) + this->A_k[r] >= 1);
             //5 in new sheet
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
-                                        - (this->A_k[r]*eps_matrix[j][k]) <= 0);
+                                        - (Ak_temp*eps_matrix[j][k]) <= 0);
             //9 in moovac paper
             this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
             //10 in moovac paper
