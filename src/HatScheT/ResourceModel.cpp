@@ -110,6 +110,14 @@ void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
   this->registrations.insert({v, r});
 }
 
+bool ResourceModel::resourceExists(std::string name) {
+  for(auto it = this->resourcesBegin(); it != this->resourcesEnd(); ++it){
+    Resource* r = *it;
+    if(name == r->getName()) return true;
+  }
+  return false;
+}
+
 const Resource *ResourceModel::getResource(const Vertex *v) const
 {
   const auto it = this->registrations.find(v);

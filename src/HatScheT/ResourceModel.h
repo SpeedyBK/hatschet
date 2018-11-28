@@ -301,6 +301,12 @@ public:
    */
   void registerVertex(const Vertex* v, const Resource* r);
   /*!
+   * check whether a resource of name already exists
+   * @param name
+   * @return
+   */
+  bool resourceExists(std::string name);
+  /*!
    * \param v the vertex
    * \return the resource associated with the given vertex
    */
