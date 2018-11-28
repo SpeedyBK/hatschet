@@ -21,6 +21,7 @@
 #include "MoovacResAwScheduler.h"
 #include <HatScheT/utility/Utility.h>
 #include <math.h>
+#include <algorithm>
 
 namespace HatScheT
 {
