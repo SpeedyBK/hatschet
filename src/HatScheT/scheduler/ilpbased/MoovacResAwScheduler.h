@@ -82,6 +82,11 @@ public:
   std::map<int , std::map<Resource*,int> >& getDSEAllocations(){
     return this->dseAllocations;
   }
+  /*!
+   * fill the standard containers with a II specific design space exploration result iff it exists
+   * @param II
+   */
+  void setDSEResult(int II);
 private:
   /*!
    * extension of the base class to use RAMS scheduling

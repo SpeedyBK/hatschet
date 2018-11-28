@@ -187,6 +187,25 @@ void MoovacResAwScheduler::setAllocationConstraints() {
   }
 }
 
+void MoovacResAwScheduler::setDSEResult(int II) {
+  //set start times
+  if ( this->dseStartTimes.find(II) == this->dseStartTimes.end() ) {
+    throw Exception("MoovacResAwScheduler.setDSEResult: No startTimes entry found for II " + to_string(II));
+  } else {
+    this->startTimes = this->dseStartTimes.at(II);
+  }
+
+  //set allocations
+  if ( this->dseAllocations.find(II) == this->dseAllocations.end() ) {
+    throw Exception("MoovacResAwScheduler.setDSEResult: No allocation entry found for II " + to_string(II));
+  } else {
+    for(auto it = this->dseAllocations.at(II).begin(); it != this->dseAllocations.at(II).end(); ++it){
+      Resource* r = it->first;
+      r->setLimit(it->second);
+    }
+  }
+}
+
 void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
   for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
     Resource* r = *it;
