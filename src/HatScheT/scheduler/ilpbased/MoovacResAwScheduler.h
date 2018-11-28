@@ -84,9 +84,9 @@ public:
   }
   /*!
    * fill the standard containers with a II specific design space exploration result iff it exists
-   * @param II
+   * @param requII
    */
-  void setDSEResult(int II);
+  void setDSEResult(int requII);
   /*!
    * get a vector of all found IIs during a design space exploration
    * the result is sorting begining with the smallest value

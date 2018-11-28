@@ -202,23 +202,26 @@ vector<int> MoovacResAwScheduler::getFoundIIs() {
   return IIs;
 }
 
-void MoovacResAwScheduler::setDSEResult(int II) {
+void MoovacResAwScheduler::setDSEResult(int requII) {
   //set start times
-  if ( this->dseStartTimes.find(II) == this->dseStartTimes.end() ) {
-    throw Exception("MoovacResAwScheduler.setDSEResult: No startTimes entry found for II " + to_string(II));
+  if ( this->dseStartTimes.find(requII) == this->dseStartTimes.end() ) {
+    throw Exception("MoovacResAwScheduler.setDSEResult: No startTimes entry found for requII " + to_string(requII));
   } else {
-    this->startTimes = this->dseStartTimes.at(II);
+    this->startTimes = this->dseStartTimes.at(requII);
   }
 
   //set allocations
-  if ( this->dseAllocations.find(II) == this->dseAllocations.end() ) {
-    throw Exception("MoovacResAwScheduler.setDSEResult: No allocation entry found for II " + to_string(II));
+  if ( this->dseAllocations.find(requII) == this->dseAllocations.end() ) {
+    throw Exception("MoovacResAwScheduler.setDSEResult: No allocation entry found for requII " + to_string(requII));
   } else {
-    for(auto it = this->dseAllocations.at(II).begin(); it != this->dseAllocations.at(II).end(); ++it){
+    for(auto it = this->dseAllocations.at(requII).begin(); it != this->dseAllocations.at(requII).end(); ++it){
       Resource* r = it->first;
       r->setLimit(it->second);
     }
   }
+
+  //set requII to this value
+  this->II = requII;
 }
 
 void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {
