@@ -69,6 +69,8 @@ void MoovacResAwScheduler::storeScheduleAndAllocation(){
   }
   this->dseAllocations.insert(make_pair(this->II,allocationMap));
 
+  this->dseILPResults.insert(make_pair(this->II, this->r));
+
   if(finished == true) this->DSEfinshed = true;
 }
 
@@ -222,6 +224,9 @@ void MoovacResAwScheduler::setDSEResult(int requII) {
 
   //set requII to this value
   this->II = requII;
+
+  //restore correspinding ILP solver result
+  this->r = this->dseILPResults.at(requII);
 }
 
 void MoovacResAwScheduler::fillAksVectorAndSetConstaints() {

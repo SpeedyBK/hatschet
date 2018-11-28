@@ -175,6 +175,10 @@ private:
    * when a design space exploration is done, this map stores valid resource allocations for each found II
    */
   std::map<int , std::map<Resource*,int> > dseAllocations;
+  /*!
+   * when a design space exploration is done, this map stores valid ilp results for each found II
+   */
+  std::map<int , ScaLP::Result > dseILPResults;
 };
 
 }
