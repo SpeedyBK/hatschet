@@ -226,6 +226,7 @@ add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
 add_test("RationalMinII" "./hatschet" "--test=RATMINII")
+add_test("criticalpath" "./hatschet" "--test=CRITPATH")
 
 ####################
 # example project

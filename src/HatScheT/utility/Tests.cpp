@@ -244,8 +244,41 @@ bool Tests::readWriteReadScheduleTest() {
 #endif
 }
 
-bool Tests::readTest()
-{
+bool Tests::cpTest(){
+#ifndef USE_XERCESC
+  return true;
+#else
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/ASAPHCExampleRM.xml";
+  string graphStr = "cTest/ASAPHCExample.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  int cp = Utility::getCriticalPath(&g,&rm);
+
+  if(cp != 8){
+    cout << "Tests.cpTest: critital path calculated: " << cp << endl;
+    cout << "Tests.cpTest: the correct value is 8! " << endl;
+    return false;
+  }
+  for(auto it=rm.resourcesBegin(); it!=rm.resourcesEnd(); ++it){
+    Resource* r = *it;
+    if(r->isUnlimited()==true){
+      cout << "Tests.cpTest: unlimited resource detected after critical path calculation: " << r->getName() << endl;
+      cout << "Tests.cpTest: This should never happen! Old limits should be restored by the utility function!" << endl;
+      return false;
+    }
+  }
+  return true;
+#endif
+}
+
+bool Tests::readTest() {
 #ifndef USE_XERCESC
   return true;
 #else

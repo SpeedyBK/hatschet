@@ -98,6 +98,13 @@ public:
   * \return
   */
  static int calcMaxII(Graph *g, ResourceModel *rm);
+ /*!
+  * calculate and return the critical path of a graph
+  * @param g
+  * @param rm
+  * @return
+  */
+ static int getCriticalPath(Graph *g, ResourceModel *rm);
 #endif
  /*!
   * \brief sumOfStarttimes
@@ -135,7 +142,6 @@ public:
   * \param occ2
   * \return
   */
-
  static bool existEdgeBetweenVertices(Graph* g, Vertex *Vsrc, Vertex *Vdst);
  static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
  /*!

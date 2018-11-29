@@ -33,6 +33,11 @@ public:
    */
   static bool readTest();
   /*!
+   * test for the calculation of the critical path of a graph
+   * @return
+   */
+  static bool cpTest();
+  /*!
    * read a graph, write it, read it again, then schedule both and compare
    * @return
    */

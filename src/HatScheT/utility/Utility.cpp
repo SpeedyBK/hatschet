@@ -159,8 +159,38 @@ double Utility::calcResMII(ResourceModel *rm, Target* t)
   return resMII;
 }
 
-int Utility::calcMaxII(Graph *g, ResourceModel *rm)
-{
+int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+  map<Resource*, int> restoreLimits;
+  //set all resource unlimited for critical path calculation, store old values
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+    if(r->isUnlimited() == true) continue;
+
+    restoreLimits.insert(make_pair(r,r->getLimit()));
+    r->setLimit(-1);
+  }
+
+  //do critical path calculation
+  ASAPScheduler asap(*g,*rm);
+  asap.schedule();
+  int limitlat = asap.getScheduleLength();
+
+  ASAPILPScheduler ilp(*g,*rm,  {"CPLEX", "Gurobi", "SCIP"});
+  ilp.setMaxLatencyConstraint(limitlat);
+  ilp.schedule();
+
+  int criticalPath = ilp.getScheduleLength();
+
+  //restore old resource model
+  for(auto it = restoreLimits.begin(); it != restoreLimits.end(); ++it){
+    Resource* r = it->first;
+    r->setLimit(it->second);
+  }
+
+  return criticalPath;
+}
+
+int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   //determine minimum possible latency
   HatScheT::ASAPScheduler asap(*g,*rm);
   asap.schedule();

@@ -259,6 +259,7 @@ int main(int argc, char *args[]) {
         if(str=="OCCSC" && HatScheT::Tests::occurrenceSetCombinationTest()==false) exit(-1);
         if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
         if(str=="RATMINII" && HatScheT::Tests::rationalMinIITest()==false) exit(-1);
+        if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
