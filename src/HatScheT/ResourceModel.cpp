@@ -118,6 +118,19 @@ bool ResourceModel::resourceExists(std::string name) {
   return false;
 }
 
+void Resource::setLimit(int l)
+{
+  if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
+  if(this->blockingTime==0 && l!=-1) {
+    cout << this->name << ".setLimit: WARNING setting this resource limit to a limited value and a blocking time of 0 was detected! Blocking time set to 1!";
+    this->blockingTime = 1;
+  }
+  if(this->latency==0 && this->phyDelay==0.0f && l!=-1){
+    cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
+    //throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
+  }
+  this->limit=l;}
+
 const Resource *ResourceModel::getResource(const Vertex *v) const
 {
   const auto it = this->registrations.find(v);
