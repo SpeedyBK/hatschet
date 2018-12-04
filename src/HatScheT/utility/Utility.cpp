@@ -124,14 +124,14 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
   return outputs;
 }
 
-#ifdef USE_SCALP
-double Utility::calcMinII(double minResII, double maxResII)
+
+double Utility::calcMinII(double minResII, double minRecII)
 {
-  if(minResII>maxResII) return minResII;
+  if(minResII>minRecII) return minResII;
 
-  return maxResII;
+  return minRecII;
 }
-
+#ifdef USE_SCALP
 double Utility::calcResMII(ResourceModel *rm, Target* t)
 {
   double resMII = 1.0f;

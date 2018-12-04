@@ -76,7 +76,7 @@ public:
   * \param g
   * \return
   */
- static double calcMinII(double minResII, double maxResII);
+ static double calcMinII(double minResII, double minRecII);
 #ifdef USE_SCALP
  /*!
   * \brief calcResMII with or witout a specific target
