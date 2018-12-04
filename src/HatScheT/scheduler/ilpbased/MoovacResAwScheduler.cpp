@@ -163,6 +163,8 @@ void MoovacResAwScheduler::schedule()
     if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) timeoutOccured = true;
     if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) this->optimalResult = true;
 
+    if(this->fullDSE == true) cout << "Finished RAMS ILP-based modulo scheduling with II " << this->II << " status " << stat << endl;
+
     if(scheduleFound == false) (this->II)++;
     if(scheduleFound == true and this->fullDSE == false) break;
     if(scheduleFound == true and this->fullDSE == true){
