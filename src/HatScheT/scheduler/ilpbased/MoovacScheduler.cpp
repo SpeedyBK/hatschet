@@ -44,6 +44,8 @@ void MoovacScheduler::resetContainer()
   this->ti.clear();
   this->rIndices.clear();
   this->ri.resize(0);
+
+  this->scheduleFound = false;
 }
 
 void MoovacScheduler::setUpSolverSettings()
