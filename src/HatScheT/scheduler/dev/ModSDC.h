@@ -11,9 +11,27 @@
 
 #include <vector>
 #include <string>
+#include <chrono>
 
 namespace HatScheT
 {
+    /*!
+     * @brief The TimeoutException class implements exceptions thrown by HatScheT
+     */
+    class TimeoutException : public std::exception
+    {
+    public:
+        std::string msg;
+
+        TimeoutException(std::string s) :msg(s)
+        {
+        }
+
+        virtual const char* what() const noexcept override;
+    };
+
+    std::ostream& operator<<( std::ostream& oss, HatScheT::TimeoutException &e);
+
     class ModSDC : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
     {
     public:
@@ -50,7 +68,33 @@ namespace HatScheT
          * @return the number of resource constrained vertices
          */
         static int getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm);
+        /*!
+         * @brief get schedule length (return this->scheduleLength)
+         */
+        int getScheduleLength() override {return this->scheduleLength;}
     private:
+        /*!
+         * @brief schedule length, i.e. time of last sample (determined by ilp solver)
+         */
+        int scheduleLength;
+        /*!
+         * @brief just print the found schedule
+         */
+        void printSchedule();
+        /*!
+         * @brief manages the time budget between solving ilps
+         */
+        void manageTimeBudget();
+        /*!
+         * @brief is used to calculate this->timeBudget
+         */
+        //time_t timeTracker;
+        //struct timeval timeTracker;
+        std::chrono::high_resolution_clock::time_point timeTracker;
+        /*!
+         * @brief keep track of the overall time budget, so the algorithm runs only as long as specified by the user
+         */
+        double timeBudget;
         /*!
          * @brief schedQueue from paper
          */
@@ -188,14 +232,14 @@ namespace HatScheT
          * and stores results in this->sdcTimes
          * @return if the solver found a solution (ScaLP::status::FEASIBLE or ScaLP::status::OPTIMAL)
          */
-        bool solveSDCProblem();
+        bool solveSDCProblem(bool printDetailsOnFailure = false);
         /*!
          * @brief previously scheduled times (see paper for details)
          */
         std::map<Vertex*, int> prevSched;
         /*!
          * @brief get previously scheduled time for a given vertex; needed for backtracking
-         * @param v
+         * @param v vertex
          * @return -1 if no prevSched has no entry for the given vertex
          */
         int getPrevSched(Vertex* v);
@@ -224,10 +268,16 @@ namespace HatScheT
          */
         std::list<Vertex*> getResourceConflicts(Vertex* I, const int &evictTime);
         /*!
+         * @brief schedule instruction 'I' at time 't'
+         * @param I
+         * @param time
+         */
+        void scheduleInstruction(Vertex* I, int t, bool verbose = false);
+        /*!
          * @brief remove instruction 'evictInst' from this->mrt, clear additional constraints for this vertex and add to schedule queue
          * @param evictInst
          */
-        void unscheduleInstruction(Vertex* evictInst);
+        void unscheduleInstruction(Vertex* evictInst, bool verbose = false);
         /*!
          * @param I instruction
          * @param evictTime
@@ -248,6 +298,10 @@ namespace HatScheT
          * after finding a valid schedule for all resource constrained ones
          */
         void fillStartTimesWithUnconstrainedInstructions();
+        /*!
+         * @brief clear all unnecessary data between iterations (e.g. mrt, schedQueue, ...)
+         */
+        void clearMaps();
 
     };
 }

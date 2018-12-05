@@ -4,37 +4,74 @@
 
 #include "ModSDC.h"
 #include <cmath>
-
-#include "HatScheT/scheduler/ASAPScheduler.h"
+#include <ctime>
 
 namespace HatScheT
 {
+    const char* TimeoutException::what() const noexcept
+    {
+        return msg.c_str();
+    }
+
+    std::ostream& operator<<( std::ostream& oss, HatScheT::TimeoutException &e)
+    {
+        return oss << e.msg;
+    }
+
+
+
 
     ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> &sw) : SchedulerBase(g,rm), ILPSchedulerBase(sw), priorityForSchedQueue(), schedQueue(), scalpVariables() {
+        cout << "#q# MODSDC CONSTRUCTOR START" << endl;
         this->computeMinII(&this->g,&resourceModel);
+        cout << "#q# 1" << endl;
         this->minII = ceil(this->minII);
+        cout << "#q# 2" << endl;
         this->computeMaxII(&g, &resourceModel);
+        cout << "#q# 3" << endl;
         if (minII >= maxII) maxII = (int)minII+1;
+        cout << "#q# 4" << endl;
         this->budget = -1;
+        cout << "#q# 5" << endl;
         this->uniqueVariableName = "";
+        cout << "#q# 6" << endl;
         this->solverQuiet = false;
+        cout << "#q# MODSDC CONSTRUCTOR END" << endl;
     }
 
     void ModSDC::schedule() {
+        cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "'" << endl;
         this->mrt = std::map<Vertex*, int>(); // create empty mrt
         if(this->budget<0) this->setDefaultBudget(); // set default budget according to paper if no budget was given by the user
+        this->timeBudget = (double)this->solverTimeout;
+        //this->timeTracker = time(nullptr);
+        this->timeTracker = std::chrono::high_resolution_clock::now();
 
-        cout << "#q# ModSDC::schedule START for minII=" << this->minII << " and maxII=" << this->maxII << endl;
         for(this->II=this->minII; this->II<=this->maxII; this->II++)
         {
-            //this->setUpScalp();
+            cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
             bool foundSolution = this->modSDCIteration((int)this->II,this->budget);
             if(foundSolution)
             {
+                this->manageTimeBudget(); // this should never throw an error at this point
+                /*
                 this->startTimes = this->mrt;
+                 */
+                this->startTimes = this->sdcTimes; // last result from ILP solver is a valid schedule!
                 this->fillStartTimesWithUnconstrainedInstructions();
+                this->printSchedule();
                 break;
             }
+            else
+            {
+                cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
+                if(this->II == this->maxII)
+                {
+                    cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName() << "', consider a higher budget" << endl;
+                    throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget");
+                }
+            }
+            this->clearMaps();
         }
     }
 
@@ -73,13 +110,11 @@ namespace HatScheT
     }
 
     bool ModSDC::modSDCIteration(const int &II, int budget) {
-        cout << "#q# ModSDC::modSDCIteration BEGIN FOR II=" << II << endl;
         //////////////////////
         // ALGORITHM LINE 1 //
         //////////////////////
         // asap scheduling without resource constraints
         this->createInitialSchedule();
-        cout << "#q# modSDCIteration line 1 finished" << endl;
         //////////////////////
         // ALGORITHM LINE 2 //
         //////////////////////
@@ -88,70 +123,55 @@ namespace HatScheT
         this->sdcTimes = this->asapTimes;
         // delete scheduling constraints from previous iteration
         this->clearAllAdditionalConstraints();
-        cout << "#q# modSDCIteration line 2 finished" << endl;
         while((!this->schedQueue.empty()) && (budget>=0))
         {
-            cout << "#####################" << endl;
-            cout << "#q# budget: " << budget << endl;
-            cout << "#q# schedQueue:" << endl;
-            for(auto it : this->schedQueue) cout << "#q#    " << it->getName() << endl;
+            try {
+                this->manageTimeBudget();
+            }
+            catch(HatScheT::TimeoutException &e){
+                this->timeBudget = this->solverTimeout;
+                //this->timeTracker = time(nullptr);
+                this->timeTracker = std::chrono::high_resolution_clock::now();
+                return false;
+            }
             //////////////////////
             // ALGORITHM LINE 4 //
             //////////////////////
             // pop first element from scheduling queue
             Vertex* I = this->schedQueue.front();
             this->schedQueue.pop_front();
-            cout << "#q# Instruction: " << I->getName() << endl;
-            cout << "#q# modSDCIteration line 4 finished" << endl;
             //////////////////////
             // ALGORITHM LINE 5 //
             //////////////////////
-            int time = this->sdcTimes[I];
-            cout << "#q# schedule time: " << time << endl;
-            cout << "#q# modSDCIteration line 5 finished" << endl;
+            int time = this->sdcTimes.at(I);
+            if(time<0)
+                throw HatScheT::Exception("Error: ModSDC::modSDCIteration: invalid time ("+to_string(time)+") found by ILP solver for instruction '"+I->getName()+"'");
             if(!this->hasResourceConflict(I,time))
             {
-                cout << "#q# NO RESOURCE CONFLICT scheduling instruction '" << I->getName() << "' at time slot " << time << endl;
-                //////////////////////
-                // ALGORITHM LINE 7 //
-                //////////////////////
-                // add constraint t_I = time to ilp formulation
-                ScaLP::Constraint c(this->scalpVariables[I] == time);
-                this->createAdditionalConstraint(I,c);
-                cout << "#q# modSDCIteration line 7 finished" << endl;
-                //////////////////////
-                // ALGORITHM LINE 8 //
-                //////////////////////
-                // add schedule time to mrt
-                this->mrt[I] = time;
-                // add schedule time to prevSched
-                this->prevSched[I] = time;
-                cout << "#q# set prevSched[" << I->getName() << "] = " << time << endl;
-                cout << "#q# modSDCIteration line 8 finished" << endl;
+                ////////////////////////
+                // ALGORITHM LINE 7-8 //
+                ////////////////////////
+                scheduleInstruction(I,time);
             }
             else
             {
-                cout << "#q# RESOURCE CONFLICT scheduling instruction '" << I->getName() << "' at time slot " << time << endl;
                 ///////////////////////
                 // ALGORITHM LINE 10 //
                 ///////////////////////
                 // add constraint t_I >= time+1 to ilp formulation
-                ScaLP::Constraint c(this->scalpVariables[I] >= (time+1));
+                ScaLP::Constraint c(this->scalpVariables.at(I) >= (time+1));
                 this->clearConstraintForVertex(I);
                 this->createAdditionalConstraint(I,c);
-                cout << "#q# modSDCIteration line 10 finished" << endl;
                 ///////////////////////
                 // ALGORITHM LINE 11 //
                 ///////////////////////
                 bool foundSolution = this->solveSDCProblem();
-                cout << "#q# modSDCIteration line 11 finished" << endl;
                 if(foundSolution)
                 {
                     ///////////////////////
                     // ALGORITHM LINE 13 //
                     ///////////////////////
                     this->putIntoSchedQueue(I);
-                    cout << "#q# modSDCIteration line 13 finished" << endl;
                 }
                 else
                 {
@@ -159,65 +179,51 @@ namespace HatScheT
                     // ALGORITHM LINE 15 //
                     ///////////////////////
                     this->clearConstraintForVertex(I);
-                    cout << "#q# modSDCIteration line 15 finished" << endl;
                     ///////////////////////
                     // ALGORITHM LINE 16 //
                     ///////////////////////
                     this->backtracking(I,time);
-                    cout << "#q# modSDCIteration line 16 finished" << endl;
                     ///////////////////////
                     // ALGORITHM LINE 17 //
                     ///////////////////////
-                    foundSolution = this->solveSDCProblem();
+                    foundSolution = this->solveSDCProblem(true);
                     if(!foundSolution){
-
+                        cout << "ERROR: ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
                         throw HatScheT::Exception("ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution");
                     }
-
-                    cout << "#q# modSDCIteration line 17 finished" << endl;
                 }
             }
             ///////////////////////
             // ALGORITHM LINE 20 //
             ///////////////////////
             budget--;
-            cout << "#q# modSDCIteration line 20 finished" << endl;
-            cout << "#q# MRT after this iteration:" << endl;
-            for(auto it : this->mrt)
-            {
-                cout << "#q#    " << it.first->getName() << ": " << it.second << endl;
-            }
-            cout << "#####################" << endl << endl << endl;
         }
+        // reset timer for next II calculation
+        this->timeBudget = this->solverTimeout;
+        //this->timeTracker = time(nullptr);
+        this->timeTracker = std::chrono::high_resolution_clock::now();
         ///////////////////////
         // ALGORITHM LINE 22 //
         ///////////////////////
         if(!this->schedQueue.empty())
         {
-            cout << "#q# ModSDC::modSDCIteration END FOR II=" << II << endl;
             return false;
         }
-        cout << "#q# ModSDC::modSDCIteration END FOR II=" << II << endl;
         return true;
     }
 
     bool ModSDC::hasResourceConflict(const Vertex *I, const int &t) const {
-        cout << "#q# ModSDC::hasResourceConflict for instruction " << I->getName() << " at time " << t << endl;
         int limit = this->resourceModel.getResource(I)->getLimit();
-        cout << "#q#     limit: " << limit << endl;
         int neededResources(0);
         for(auto it : this->mrt)
         {
             auto v = it.first;
-            cout << "#q# other vertex: " << v->getName() << endl;
             auto t2 = it.second;
             // resource can only happen if both vertices use the same resource type
             if(this->resourceModel.getResource(I) == this->resourceModel.getResource(v))
             {
                 // they need the same resource type in the same time slot
                 if((t%((int)this->II)) == (t2%((int)this->II))) neededResources++;
-                cout << "#q#    t: " << t << "; t2: " << t2 << " at II=" << this->II << endl;
-                cout << "#q#    needed resources: " << neededResources << endl;
                 // resource conflict if more resources are needed than available
                 if(neededResources >= limit) return true;
             }
@@ -226,7 +232,7 @@ namespace HatScheT
     }
 
     void ModSDC::setDefaultBudget() {
-        this->budget = 6 * ModSDC::getNumberOfConstrainedVertices(this->g,this->resourceModel);
+        this->budget = 6 * this->g.getNumberOfVertices();
     }
 
     void ModSDC::createScalpVariables() {
@@ -256,11 +262,6 @@ namespace HatScheT
     }
 
     int ModSDC::getPrevSched(Vertex *v) {
-        cout << "#q# ModSDC::getPrevSched START" << endl;
-        for(auto it : this->prevSched)
-        {
-            cout << "#q#    " << it.first->getName() << ": " << it.second << endl;
-        }
         try
         {
             return this->prevSched.at(v);
@@ -279,7 +280,6 @@ namespace HatScheT
             Vertex& dst = edge->getVertexDst();
             ScaLP::Constraint c = (this->scalpVariables.at(&src) + this->resourceModel.getResource(&src)->getLatency() + edge->getDelay() - this->scalpVariables.at(&dst) <= ((int)this->II) * edge->getDistance());
             *this->solver << c;
-            cout << "#q# CONSTRAINT: " << c << endl;
         }
     }
 
@@ -310,7 +310,6 @@ namespace HatScheT
         for(auto it : this->additionalConstraints)
         {
             *this->solver << *it.second;
-            cout << "#q# ADDITIONAL CONSTRAINT: " << *it.second << endl;
         }
     }
 
@@ -321,13 +320,19 @@ namespace HatScheT
         }
     }
 
-    bool ModSDC::solveSDCProblem() {
+    bool ModSDC::solveSDCProblem(bool printDetailsOnFailure) {
         this->setUpScalp();
         ScaLP::status s = this->solver->solve();
-        if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL)) {
-            cout << "#q# ModSDC::solveSDCProblem: failed to find feasible solution; solution status: " << s << endl;
-            cout << "#q#    Attempted solution:" << endl;
-            cout << this->solver->getResult();
+        if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL) && (s!=ScaLP::status::TIMEOUT_FEASIBLE)) {
+            if(printDetailsOnFailure)
+            {
+                cout << "ModSDC::solveSDCProblem: didnt find solution. Status: " << s << endl;
+                cout << "    constraints: " << endl;
+                for(auto it : this->additionalConstraints)
+                {
+                    cout << "        " << it.first->getName() << ": " << (*it.second) << endl;
+                }
+            }
             return false;
         }
         ScaLP::Result r = this->solver->getResult();
@@ -335,9 +340,8 @@ namespace HatScheT
         {
             Vertex* v = this->getVertexFromVariable(it.first);
             if(v != nullptr) this->sdcTimes[v] = (int)it.second;
+            else this->scheduleLength = (int)it.second;
         }
-        cout << "#q# SOLUTION: " << endl;
-        cout << r << endl;
         return true;
     }
 
@@ -350,39 +354,36 @@ namespace HatScheT
     }
 
     void ModSDC::backtracking(Vertex *I, const int &time) {
-        cout << "#q# ModSDC::backtracking BEGIN" << endl;
         int minTime;
         for(minTime = this->asapTimes.at(I); minTime<=time; minTime++)
         {
             //////////////////////
             // ALGORITHM LINE 2 //
             //////////////////////
-            this->clearConstraintForVertex(I);
             auto tempConstraint = ScaLP::Constraint(this->scalpVariables.at(I) == minTime);
             this->createAdditionalConstraint(I,tempConstraint);
             bool foundSolution = this->solveSDCProblem();
-            cout << "#q# backtracking line 2 finished" << endl;
             //////////////////////
             // ALGORITHM LINE 3 //
             //////////////////////
+            this->clearConstraintForVertex(I);
             if(foundSolution) break;
-            if(minTime == time)
+            if(minTime == time){
+                cout << "ERROR: backtracking algorithm can't find time slot for instruction " << I->getName() << endl;
                 throw HatScheT::Exception("backtracking algorithm can't find time slot for instruction "+I->getName());
-            cout << "#q# backtracking line 3 finished (didn't find solution)" << endl;
+            }
         }
         //////////////////////
         // ALGORITHM LINE 5 //
         //////////////////////
         int prevSchedTime = this->getPrevSched(I);
         int evictTime;
-        cout << "#q# backtracking line 5 finished" << endl;
         if(prevSchedTime<0 || minTime>=prevSchedTime)
         {
             //////////////////////
             // ALGORITHM LINE 7 //
             //////////////////////
             evictTime = minTime;
-            cout << "#q# backtracking line 7 finished" << endl;
         }
         else
         {
@@ -390,8 +391,9 @@ namespace HatScheT
             // ALGORITHM LINE 9 //
             //////////////////////
             evictTime = prevSchedTime+1;
-            cout << "#q# backtracking line 9 finished" << endl;
         }
+        if(evictTime<0)
+            throw HatScheT::Exception("Error: ModSDC::backtracking: Invalid evict time ("+to_string(evictTime)+") for instruction '"+I->getName()+"'");
         std::list<Vertex*> evictInst = this->getResourceConflicts(I,evictTime);
         ///////////////////////////
         // ALGORITHM LINES 11-15 //
@@ -399,50 +401,33 @@ namespace HatScheT
         for(auto it : evictInst)
         {
             this->unscheduleInstruction(it);
-            // PUTTING OPERATION BACK INTO QUEUE EVEN THO IT IS NOT SPECIFIED IN PSEUDOCODE!
+            // PUT OPERATION BACK INTO QUEUE EVEN THO IT IS NOT SPECIFIED IN PSEUDOCODE!
             this->putIntoSchedQueue(it);
         }
-        cout << "#q# backtracking lines 11-15 finished" << endl;
         ///////////////////////
         // ALGORITHM LINE 16 //
         ///////////////////////
-        cout << "#q# backtracking line 16 finished" << endl;
         if(this->dependencyConflict(I,evictTime))
         {
-            cout << "#q# FOUND DEPENDENCY CONFLICT; UNSCHEDULING ALL OTHER OPERATIONS" << endl;
             ///////////////////////
             // ALGORITHM LINE 17 //
             ///////////////////////
-            for(auto it : this->prevSched)
+            for(auto it : this->additionalConstraints)
             {
                 ///////////////////////////
                 // ALGORITHM LINES 18-19 //
                 ///////////////////////////
                 this->unscheduleInstruction(it.first);
-                cout << "#q# backtracking lines 18-19 finished" << endl;
                 ///////////////////////
                 // ALGORITHM LINE 20 //
                 ///////////////////////
                 this->putIntoSchedQueue(it.first);
-                cout << "#q# backtracking line 20 finished" << endl;
             }
         }
-        ///////////////////////
-        // ALGORITHM LINE 23 //
-        ///////////////////////
-        auto tempConstraint(this->scalpVariables.at(I) == evictTime);
-        this->createAdditionalConstraint(I,tempConstraint);
-        cout << "#q# backtracking line 23 finished" << endl;
-        ///////////////////////
-        // ALGORITHM LINE 24 //
-        ///////////////////////
-        // add schedule time to mrt
-        this->mrt[I] = time;
-        // add schedule time to prevSched
-        this->prevSched[I] = time;
-        cout << "#q# set prevSched[" << I->getName() << "] = " << time << endl;
-        cout << "#q# backtracking line 24 finished" << endl;
-        cout << "#q# ModSDC::backtracking END" << endl;
+        //////////////////////////
+        // ALGORITHM LINE 23-24 //
+        //////////////////////////
+        scheduleInstruction(I,evictTime);
     }
 
     bool ModSDC::resourceConflict(Vertex *I, const int &evictTime) {
@@ -460,12 +445,11 @@ namespace HatScheT
     void ModSDC::createInitialSchedule() {
         this->setUpScalp();
         ScaLP::status s = this->solver->solve();
-        if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL))
+        if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL) && (s!=ScaLP::status::TIMEOUT_FEASIBLE))
         {
             cout << "ScaLP Backend: " << this->solver->getBackendName() << endl;
             cout << "ScaLP Status: " << s << endl;
-            cout << "Attempted solution: " << endl;
-            cout << this->solver->getResult() << endl;
+            cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
             throw HatScheT::Exception("ModSDC::createInitialSchedule: failed to find schedule without resource constraints");
         }
 
@@ -474,10 +458,9 @@ namespace HatScheT
         {
             Vertex* v = this->getVertexFromVariable(it.first);
             if(v != nullptr) this->asapTimes[v] = (int)it.second;
+            else this->scheduleLength = (int)it.second;
         }
 
-        cout << "#q# found ASAP values:" << endl;
-        cout << r << endl;
         this->calculatePriorities(); // calculate priorities for scheduling queue
     }
 
@@ -502,7 +485,8 @@ namespace HatScheT
         return l;
     }
 
-    void ModSDC::unscheduleInstruction(Vertex *evictInst) {
+    void ModSDC::unscheduleInstruction(Vertex *evictInst, bool verbose) {
+        if(verbose) cout << "ModSDC::unscheduleInstruction: unscheduling instruction " << evictInst->getName() << endl;
         this->clearConstraintForVertex(evictInst);
         this->mrt.erase(evictInst);
     }
@@ -511,17 +495,16 @@ namespace HatScheT
         for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); it++)
         {
             auto e = (*it);
-            // edge destination is in mrt and I == e.start
-            if((this->mrt.find(&e->getVertexDst()) != this->mrt.end()) && (&e->getVertexSrc() == I))
+            // I == e.start
+            if((&e->getVertexSrc() == I))
             {
                 if(this->dependencyConflictForTwoInstructions(I,evictTime,this->sdcTimes.at(&e->getVertexDst()),e->getDelay(),e->getDistance()))
                 {
                     return true;
                 }
             }
-
-            // edge source is in mrt and I == e.end
-            if((this->mrt.find(&e->getVertexSrc()) != this->mrt.end()) && (&e->getVertexDst() == I))
+            // I == e.dst
+            if((&e->getVertexDst() == I))
             {
                 if(this->dependencyConflictForTwoInstructions(&e->getVertexSrc(),this->sdcTimes.at(&e->getVertexSrc()),evictTime,e->getDelay(),e->getDistance()))
                 {
@@ -533,7 +516,7 @@ namespace HatScheT
     }
 
     bool ModSDC::dependencyConflictForTwoInstructions(Vertex* i, const int &newStartTime_i, const int &newStartTime_j, const int& edgeDelay, const int& distance) {
-        return ((newStartTime_i + this->resourceModel.getResource(i)->getLatency() + edgeDelay - newStartTime_j) <= (this->II * distance));
+        return ((newStartTime_i + this->resourceModel.getResource(i)->getLatency() + edgeDelay - newStartTime_j) > (this->II * distance));
     }
 
     void ModSDC::setUniqueVariableName() {
@@ -559,12 +542,15 @@ namespace HatScheT
         this->solver->reset();
         if(this->threads>0) this->solver->threads = this->threads;
         this->solver->quiet=this->solverQuiet;
-        this->solver->timeout=this->solverTimeout;
+        this->solver->timeout=(long)this->timeBudget;
     }
 
     void ModSDC::fillStartTimesWithUnconstrainedInstructions() {
+        /*
         for(auto it : this->sdcTimes)
         {
+            if(it.second<0)
+                throw HatScheT::Exception("Error: ModSDC::fillStartTimesWithUnconstrainedInstructions: invalid start time found by ILP solver for Instruction '"+it.first->getName()+"': "+to_string(it.second)+"");
             try
             {
                 this->startTimes.at(it.first);
@@ -574,6 +560,7 @@ namespace HatScheT
                 this->startTimes[it.first] = it.second;
             }
         }
+         */
     }
 
     void ModSDC::putIntoSchedQueue(Vertex *I) {
@@ -618,6 +605,45 @@ namespace HatScheT
 
     ModSDC::~ModSDC() {
         for(auto it : this->additionalConstraints) delete it.second;
+    }
+
+    void ModSDC::manageTimeBudget() {
+        std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
+        std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp-this->timeTracker);
+        double elapsedTime = ((double)timeSpan.count())/1000.0;
+        this->timeTracker = tp;
+        this->timeBudget -= elapsedTime;
+        if(this->timeBudget<0) {
+            cout << "timeout :)" << endl;
+            throw HatScheT::TimeoutException("Timeout for II="+to_string(this->II));
+        }
+    }
+
+    void ModSDC::printSchedule() {
+        cout << "Found schedule with ModSDC!" << endl;
+        cout << "    elapsed time: " << (double)this->solverTimeout - this->timeBudget << " sec; II=" << this->II << endl;
+        for(auto it : this->startTimes)
+        {
+            cout << "    " << it.first->getName() << ": " << it.second << endl;
+        }
+    }
+
+    void ModSDC::clearMaps() {
+        this->mrt.clear();
+        this->asapTimes.clear();
+        this->sdcTimes.clear();
+        this->prevSched.clear();
+        this->schedQueue.clear();
+    }
+
+    void ModSDC::scheduleInstruction(Vertex *I, int t, bool verbose) {
+        if(verbose) cout << "ModSDC::scheduleInstruction: scheduling instruction " << I->getName() << endl;
+        if(t<0)
+            throw HatScheT::Exception("Error: ModSDC::scheduleInstruction: Can't schedule instruction '"+I->getName()+"' to a cycle <0");
+        ScaLP::Constraint c(this->scalpVariables[I] == t);
+        this->createAdditionalConstraint(I,c);
+        this->mrt[I] = t;
+        this->prevSched[I] = t;
     }
 
 
