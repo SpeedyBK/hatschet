@@ -87,11 +87,8 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   constructConstraints(candII);
 
   stat     = solver->solve();
-  feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE | stat == ScaLP::status::TIMEOUT_FEASIBLE;
-  proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE_OR_UNBOUND | stat == ScaLP::status::INFEASIBLE_OR_UNBOUND;
-  // TODO: ^^ not sure about INFEASIBLE_OR_UNBOUNDED
-
-  // TODO: time measurements?
+  feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
+  proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;
 }
 
 void EichenbergerDavidson97Scheduler::constructDecisionVariables(int candII)
