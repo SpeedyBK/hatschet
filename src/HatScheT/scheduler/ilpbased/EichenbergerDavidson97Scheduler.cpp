@@ -18,10 +18,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h>
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Exception.h"
-#include "EichenbergerDavidson97Scheduler.h"
 
 
 #include <iostream>
