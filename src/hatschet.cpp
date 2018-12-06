@@ -49,6 +49,7 @@
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -85,6 +86,7 @@ void print_short_help() {
   std::cout << "                            UL: Universal list scheduling" << std::endl;
   std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
   std::cout << "                            ED97: ILP formulation by Eichenberger & Davidson" << std::endl;
+  std::cout << "                            SH11: ILP formulation by Sucha & Hanzalek" << std::endl;
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
@@ -122,7 +124,7 @@ int main(int argc, char *args[]) {
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -222,6 +224,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "ed97") {
           schedulerSelection = ED97;
         }
+        else if(schedulerSelectionStr == "sh11") {
+          schedulerSelection = SH11;
+        }
         else if(schedulerSelectionStr == "modulosdc") {
           schedulerSelection = MODULOSDC;
         }
@@ -305,6 +310,9 @@ int main(int argc, char *args[]) {
         break;
       case ED97:
         cout << "ED97";
+        break;
+      case SH11:
+        cout << "SH11";
         break;
       case MODULOSDC:
         cout << "MODULOSDC";
@@ -432,6 +440,16 @@ int main(int argc, char *args[]) {
           ed97->setThreads(threads);
           ed97->setSolverQuiet(solverQuiet);
           scheduler = ed97;
+          break;
+        }
+        case SH11: {
+          isModuloScheduler = true;
+          auto *sh11 = new HatScheT::SuchaHanzalek11Scheduler(g, rm, solverWishList);
+          if (timeout > 0)    sh11->setSolverTimeout(timeout);
+          if (maxLatency > 0) sh11->setMaxLatencyConstraint(maxLatency);
+          sh11->setThreads(threads);
+          sh11->setSolverQuiet(solverQuiet);
+          scheduler = sh11;
           break;
         }
         case MODULOSDC:
