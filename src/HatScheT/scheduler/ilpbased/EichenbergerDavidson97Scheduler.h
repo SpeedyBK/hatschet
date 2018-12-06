@@ -28,17 +28,18 @@
 namespace HatScheT
 {
 /*!
- * \brief Implementation of the ILP formulation by Eichenberger and Davidson
+ * \brief Implementation of the ILP formulation by Eichenberger and Davidson.
  *
- * TODO: reference
- *
+ * Reference:
+ *   Alexandre E. Eichenberger and Edward S. Davidson: Efficient Formulation for Optimal Modulo Schedulers.
+ *   Proceedings of the ACM SIGPLAN '97 Conference on Programming Language Design and Implementation (PLDI), 1997
  */
 class EichenbergerDavidson97Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {
 public:
   EichenbergerDavidson97Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
   /*!
-   * \brief TODO
+   * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */
   virtual void schedule();
 
