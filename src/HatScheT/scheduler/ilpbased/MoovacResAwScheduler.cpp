@@ -484,6 +484,8 @@ void MoovacResAwScheduler::getAk() {
   for(auto it = this->resourceModel.resourcesBegin(); it != resourceModel.resourcesEnd(); ++it){
     Resource* r = *it;
     if(r->isUnlimited() == true) continue;
+    //skip when resource is in model which is never used
+    if(this->resourceModel.getNumVerticesRegisteredToResource(r) == 0 ) continue;
 
     //calculate minimum costs of all other resources
     map<std::string, double> minCosts;
