@@ -148,6 +148,7 @@ void MoovacResAwScheduler::schedule()
   if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
+  cout << &this->target << endl;
 
   while(this->II <= this->maxII) {
     cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
