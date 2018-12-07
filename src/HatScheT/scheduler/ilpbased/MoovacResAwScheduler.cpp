@@ -148,7 +148,9 @@ void MoovacResAwScheduler::schedule()
   if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
-  cout << &this->target << endl;
+  cout << this->g << endl;
+  cout << this->resourceModel << endl;
+  cout << this->target << endl;
 
   while(this->II <= this->maxII) {
     cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
@@ -514,6 +516,12 @@ void MoovacResAwScheduler::getAk() {
     //calculate remaining resources for this resource
     map<std::string, double> remainingSpace;
 
+    //handle case when only limited resource is provided
+    if(minCosts.size() == 0){
+      remainingSpace = this->target.getElements();
+    }
+
+    //handle case when more limited resource are provided
     for(auto it2 = minCosts.begin(); it2 != minCosts.end(); ++it2){
       if(this->target.getElement(it2->first) - minCosts[it2->first] < 0)
         throw Exception("MoovacResAwScheduler.getAk: Error negative space detected for hardware element " + it2->first);
@@ -526,6 +534,8 @@ void MoovacResAwScheduler::getAk() {
     for(auto it2 = r->getHardwareCosts().begin(); it2 != r->getHardwareCosts().end(); ++it2){
       std::string costName = it2->first;
       double resCost = it2->second;
+      cout << "cost " << costName << " of " << resCost << " for " << r->getName() << endl;
+      cout << "remaining on device " << remainingSpace[costName] << endl;
       //skip if no costs for this element
       if(resCost == 0.0f) continue;
 
