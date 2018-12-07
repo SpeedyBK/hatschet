@@ -530,7 +530,11 @@ void MoovacResAwScheduler::getAk() {
 
       int unitsFit = remainingSpace[costName] / resCost;
 
-      if(unitsFit < 1) throw Exception("MoovacResAwScheduler.getAk: Error no space left allocating one hardware unit of resource " + r->getName());
+      if(unitsFit < 1){
+        cout << "MoovacResAwScheduler.getAk: Error for " << costName << " of " << r->getName() << endl;
+        cout << "MoovacResAwScheduler.getAk: Error " << remainingSpace[costName] << " / " << resCost << " < 1 " << endl;
+        throw Exception("MoovacResAwScheduler.getAk: Error no space left allocating one hardware unit of resource " + r->getName());
+      }
       if(Ak == 0) Ak = unitsFit;
       else if(unitsFit < Ak) Ak = unitsFit;
     }
