@@ -62,8 +62,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
 {
   string name = XMLString::transcode(localname);
 
-  if(name == "node" && this->nodeTagFound == true)
-  {
+  if(name == "node" && this->nodeTagFound == true) {
     Vertex* v = &this->g->createVertex(this->currVertexId);
     v->setName(this->currVertexName);
     Resource* r = this->rm->getResource(this->currVertexResName);
@@ -73,8 +72,7 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
     this->nodeTagFound = false;
   }
 
-  if(name == "edge")
-  {
+  if(name == "edge" && this->edgeTagFound == true) {
     Vertex& source = this->g->getVertexById(this->srcId);
     Vertex& target = this->g->getVertexById(this->dstId);
 
@@ -84,11 +82,15 @@ void GraphMLGraphReader::endElement(const XMLCh * const uri, const XMLCh * const
       edge.setDependencyType(Edge::DependencyType::Precedence);
     }
 
+    //reset id container
+    this->srcId = -1;
+    this->dstId = -1;
+    this->edgeDelay = -1;
+
     this->edgeTagFound = false;
   }
 
-  if(name == "data")
-  {
+  if(name == "data") {
     this->dataTagFound = false;
 
     if(this->nameTagFound == true) this->nameTagFound = false;
@@ -165,6 +167,8 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
 
     string sourcestring = XMLString::transcode(attrs.getValue(XMLString::transcode("source")));
     string targetstring = XMLString::transcode(attrs.getValue(XMLString::transcode("target")));
+
+    cout << "read ids " << sourcestring << " -> " << targetstring << endl;
 
     this->srcId = stoi(sourcestring);
     this->dstId = stoi(targetstring);
@@ -253,8 +257,13 @@ void GraphMLGraphReader::readGraph(const char *path)
     cout << "graphMLReader.parseGraph: " << message << endl;
 
   }
+  catch (const HatScheT::Exception& e){
+    cout << e.what() << endl;
+    throw HatScheT::Exception(e.what());
+  }
   catch (...) {
     cout << "graphMLReader.parseGraph: Unexpected Error" << endl;
+    throw HatScheT::Exception("graphMLReader.parseGraph: Unexpected Error");
   }
 
   delete parser;

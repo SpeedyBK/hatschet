@@ -231,7 +231,9 @@ add_test("Occurrence" "./hatschet" "--test=OCC")
 add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
 add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
-add_test("RationalMinII" "./hatschet" "--test=RATMINII")
+#currently disabled cause of ambiguous edges in input graph
+#think about supporting this feature somehow
+#add_test("RationalMinII" "./hatschet" "--test=RATMINII")
 add_test("criticalpath" "./hatschet" "--test=CRITPATH")
 
 ####################

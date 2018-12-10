@@ -22,6 +22,7 @@
 #pragma once
 
 #include "Vertex.h"
+#include "utility/Exception.h"
 
 namespace HatScheT
 {
@@ -74,8 +75,12 @@ public:
   /*! \brief sets the edge delay
    * @param delay the new delay
    */
-  void setDelay(int delay) { this->delay = delay; }
-
+  void setDelay(int delay) {
+    if(delay < 0 )
+      throw HatScheT::Exception("Edge.setDelay: ERROR You tried to set a negative delay for " +
+      this->getVertexSrcName() + " -> " + this->getVertexDstName() + ": " + to_string(delay));
+    this->delay = delay;
+  }
   /*! \return the edge distance */
   int getDistance() const { return distance; }
   /*! \brief sets the edge distance

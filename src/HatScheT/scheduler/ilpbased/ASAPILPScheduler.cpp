@@ -80,7 +80,6 @@ void ASAPILPScheduler::fillSolutionStructure() {
 }
 
 void ASAPILPScheduler::setGeneralConstraints() {
-
   for(auto it = this->g.verticesBegin(); it!=this->g.verticesEnd();++it){
     Vertex* v = *it;
     unsigned int vTVecIndex = this->tIndices[v];

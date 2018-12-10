@@ -129,6 +129,15 @@ public:
    */
   Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
   /*!
+   * check whether there is already an edge between these vertices
+   * double edges are not supported yet,
+   * because it is currently not possible to call a getter function for those kinds of edges in a graph
+   * @param srcV
+   * @param dstV
+   * @return
+   */
+  bool edgeExists(const Vertex* srcV, const Vertex* dstV);
+  /*!
    * \brief determines `v`'s successor vertices, i.e. the destination vertices of `v`'s outgoing edges
    * \param v the reference vertex
    * \return a set containing `v`'s successors

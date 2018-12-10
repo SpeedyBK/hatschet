@@ -54,6 +54,10 @@ Vertex& Graph::createVertex(int id)
 
 Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::DependencyType dependencyType)
 {
+  if(this->edgeExists(&Vsrc,&Vdst) == true) {
+    throw HatScheT::Exception("Graph.createEdge: Error! You tried add an already existing edge : " + Vsrc.getName() + " -> " + Vdst.getName());
+  }
+
   Edge *e = new Edge(Vsrc,Vdst,distance,dependencyType);
   e->setID(edges.size()+1);
   edges.insert(e);
@@ -130,6 +134,14 @@ Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const
   }
 
   throw HatScheT::Exception("Graph::getEdge: Edge not found!");
+}
+
+bool Graph::edgeExists(const HatScheT::Vertex *srcV, const HatScheT::Vertex *dstV) {
+  for(auto e:this->edges)
+  {
+    if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return true;
+  }
+  return false;
 }
 
 Vertex& Graph::getVertexById(int id) const

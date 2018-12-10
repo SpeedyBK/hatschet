@@ -74,7 +74,7 @@ void ASAPScheduler::schedule()
         }
 
         this->startTimes[v] = time;
-        stack.push(v);cout << "pushed " << v->getName() << endl;
+        stack.push(v);
       }
     }
   }
@@ -116,6 +116,7 @@ void ASAPScheduler::schedule()
       // if there are no more inputs left, add n to the stack
       if(input_counts[subV]==0){
         stack.push(subV);
+        cout << "finished scheduling of vertex " << subV->getName() << endl;
       }
     }
   }
