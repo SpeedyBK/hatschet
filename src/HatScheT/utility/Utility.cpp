@@ -54,13 +54,11 @@ int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
 }
 
 bool Utility::everyVertexisRegistered(HatScheT::Graph &g, HatScheT::ResourceModel &rm) {
-  cout << "Utility: everyVertexisRegistered: Start validation!" << endl;
   for(auto it = g.verticesBegin(); it != g.verticesEnd(); ++it){
     Vertex* v = *it;
 
     rm.getResource(v);
   }
-  cout << "Utility: everyVertexisRegistered: Finished with success!" << endl;
   return true;
 }
 

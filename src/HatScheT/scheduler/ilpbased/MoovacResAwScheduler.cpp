@@ -157,9 +157,6 @@ void MoovacResAwScheduler::schedule()
   if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
   else cout << "Unlimited MaxLatency" << endl;
   cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
-  cout << this->g << endl;
-  cout << this->resourceModel << endl;
-  cout << this->target << endl;
 
   while(this->II <= this->maxII) {
     cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
@@ -180,7 +177,7 @@ void MoovacResAwScheduler::schedule()
     if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) {
       this->optimalResult = true;
       //store info about the result quality when DSE is active
-      if(this->DSEfinshed == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
+      if(this->fullDSE == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
     }
 
     if(this->fullDSE == true) cout << "Finished RAMS ILP-based modulo scheduling with II " << this->II << " status " << stat << endl;
@@ -189,6 +186,16 @@ void MoovacResAwScheduler::schedule()
     if(scheduleFound == true and this->fullDSE == false) break;
     if(scheduleFound == true and this->fullDSE == true){
       this->r = this->solver->getResult();
+
+      //display resource allocation here during developement
+      for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
+        Resource* r = *it;
+        if(r->isUnlimited()== true) continue;
+        int allocation = this->r.values[this->aks[this->aksIndices[r]]];
+        cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
+        r->setLimit(allocation);
+      }
+
       //store determined schedule and allocation for this II
       //continue design space exploration in resource aware modulo scheduling afterwards
       this->storeScheduleAndAllocation();
@@ -205,12 +212,14 @@ void MoovacResAwScheduler::schedule()
     this->fillSolutionStructure();
 
     //display resource allocation here during developement
-    for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
-      Resource* r = *it;
-      if(r->isUnlimited()== true) continue;
-      int allocation = this->r.values[this->aks[this->aksIndices[r]]];
-      cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
-      r->setLimit(allocation);
+    if(this->fullDSE == false) {
+      for (auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+        Resource *r = *it;
+        if (r->isUnlimited() == true) continue;
+        int allocation = this->r.values[this->aks[this->aksIndices[r]]];
+        cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
+        r->setLimit(allocation);
+      }
     }
 
     if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
@@ -551,8 +560,6 @@ void MoovacResAwScheduler::getAk() {
     for(auto it2 = r->getHardwareCosts().begin(); it2 != r->getHardwareCosts().end(); ++it2){
       std::string costName = it2->first;
       double resCost = it2->second;
-      cout << "cost " << costName << " of " << resCost << " for " << r->getName() << endl;
-      cout << "remaining on device " << remainingSpace[costName] << endl;
       //skip if no costs for this element
       if(resCost == 0.0f) continue;
 
