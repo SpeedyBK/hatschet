@@ -87,6 +87,13 @@ public:
   std::map<int , std::map<Resource*,int> >& getDSEAllocations(){
     return this->dseAllocations;
   }
+    /*!
+   * when a design space exploration is done, this map stores whether a solution is optimal for each found II
+   * @return
+   */
+    std::map<int , bool >& getDSEResultOptimal(){
+      return this->dseResultOptimal;
+    }
   /*!
    * fill the standard containers with a II specific design space exploration result iff it exists
    * @param requII
@@ -184,6 +191,10 @@ private:
    * when a design space exploration is done, this map stores valid hardware bindings for each found II
    */
   std::map<int , std::map<const Vertex*, int> > dseBindings;
+  /*!
+   * when a design space exploration is done, this map stores whether a solution is optimal for each found II
+   */
+  std::map<int , bool > dseResultOptimal;
 };
 
 }
