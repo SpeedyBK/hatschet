@@ -24,5 +24,6 @@ namespace HatScheT
 void IterativeSchedulerBase::setMaxRuns(int m){
   if(m < -1 or m == 0) throw HatScheT::Exception("IterativeSchedulerBase.setMaxRuns: request unsupported value " + std::to_string(m));
   this->maxRuns=m;
+  this->timeouts = 0;
 }
 }

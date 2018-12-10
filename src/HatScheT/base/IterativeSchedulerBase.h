@@ -41,12 +41,20 @@ namespace HatScheT {
      */
     void setMaxRuns(int m);
     int getMaxRuns() { return this->maxRuns; }
-
+    /*!
+     * return the timeouts that may have occurred
+     * @return
+     */
+    unsigned int getTimeouts(){return this->timeouts;}
   protected:
     /*!
      * this values can be used to limit the maximum number of runs
      * for solving the scheduling problem iteratively
      */
     int maxRuns;
-  };
+    /*!
+   * count the timeouts that may have occurred
+   */
+    unsigned int timeouts;
+};
 }

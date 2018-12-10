@@ -37,6 +37,7 @@ void EichenbergerDavidson97Scheduler::schedule()
 {
   // reset previous solutions
   II = -1;
+  this->timeouts = 0;
   startTimes.clear();
   scheduleFound = false;
   optimalResult = true;
@@ -94,6 +95,7 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   constructConstraints(candII);
 
   stat     = solver->solve();
+  if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) this->timeouts++;
   feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
   proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;
 }

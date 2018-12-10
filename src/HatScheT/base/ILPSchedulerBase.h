@@ -97,6 +97,7 @@ public:
    * @return
    */
   virtual ScaLP::status getScaLPStatus(){return this->stat;}
+
 protected:
   /*!
    * store the status of ilp-based scheduling
@@ -146,9 +147,9 @@ protected:
    * \brief threads
    */
   unsigned int threads;
-  ///
-  /// \brief writeResultFile
-  ///
+  /*!
+   * flag to chose whether to write the lp file
+   */
   bool writeLPFile;
 };
 }

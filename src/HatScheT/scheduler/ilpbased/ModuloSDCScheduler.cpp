@@ -640,6 +640,7 @@ void HatScheT::ModuloSDCScheduler::backtracking(Queue& schedQueue, std::map<Vert
 
 void HatScheT::ModuloSDCScheduler::schedule()
 {
+  this->timeouts = 0;
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
@@ -692,6 +693,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
       std::cout << "FOUND for II=" << this->II << std::endl;
       break; // found
     }
+    else this->timeouts++;
   }
   if(scheduleFound==false) this->II = -1;
 }
