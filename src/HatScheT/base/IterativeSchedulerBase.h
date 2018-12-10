@@ -20,32 +20,33 @@
 
 #pragma once
 #include <HatScheT/utility/Exception.h>
+
+namespace HatScheT {
 /*!
  * is the base class of all schedulers that solve the scheduling problem iteratively.
  */
-class IterativeSchedulerBase {
-public:
-  IterativeSchedulerBase(){
-    //default infinity
-    this->maxRuns = -1;
+  class IterativeSchedulerBase {
+  public:
+    IterativeSchedulerBase() {
+      //default infinity
+      this->maxRuns = -1;
+    };
+
+    ~IterativeSchedulerBase() {};
+
+    /*!
+     * this values can be used to limit the maximum number of runs
+     * for solving the scheduling problem iteratively
+     * @param m
+     */
+    void setMaxRuns(int m);
+    int getMaxRuns() { return this->maxRuns; }
+
+  protected:
+    /*!
+     * this values can be used to limit the maximum number of runs
+     * for solving the scheduling problem iteratively
+     */
+    int maxRuns;
   };
-  ~IterativeSchedulerBase(){};
-  /*!
-   * this values can be used to limit the maximum number of runs
-   * for solving the scheduling problem iteratively
-   * @param m
-   */
-  void setMaxRuns(int m){
-    if(m < -1 or m == 0) throw HatScheT::Exception("IterativeSchedulerBase.setMaxRuns: request unsupported value " + std::to_string(m));
-    this->maxRuns=m;
-  }
-  int getMaxRuns(){return this->maxRuns;}
-
-protected:
-  /*!
-   * this values can be used to limit the maximum number of runs
-   * for solving the scheduling problem iteratively
-   */
-  int maxRuns;
-};
-
+}

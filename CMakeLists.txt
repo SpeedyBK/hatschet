@@ -119,12 +119,15 @@ src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
-src/HatScheT/utility/writer/XMLResourceWriter.cpp src/HatScheT/utility/writer/XMLResourceWriter.h src/HatScheT/base/IterativeSchedulerBase.cpp src/HatScheT/base/IterativeSchedulerBase.h)
+src/HatScheT/utility/writer/XMLResourceWriter.cpp
+src/HatScheT/base/IterativeSchedulerBase.cpp
+)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
 src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
+src/HatScheT/base/IterativeSchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
 src/HatScheT/TargetModel.h
 src/HatScheT/Edge.h
@@ -159,6 +162,7 @@ src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/Writer.h
 src/HatScheT/utility/writer/GraphMLGraphWriter.h
+src/HatScheT/utility/writer/XMLResourceWriter.h
 src/HatScheT/Vertex.h
 )
 

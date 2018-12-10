@@ -40,6 +40,14 @@ MoovacResAwScheduler::MoovacResAwScheduler(Graph &g, ResourceModel &resourceMode
   this->lambda = 0.0f;
   this->fullDSE = false;
   this->DSEfinshed = false;
+
+  //set maxRuns, e.g., maxII - minII, iff value if not -1
+  if(this->maxRuns > 0){
+    int runs = this->maxII - this->minII;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    std::cout << "MoovacResAwScheduler: maxII changed due to maxRuns value set by user!" << endl;
+    std::cout << "MoovacResAwScheduler: min/maxII = " << minII << " " << maxII << std::endl;
+  }
 }
 
 std::map<const Vertex*,int> MoovacResAwScheduler::getBindings() {

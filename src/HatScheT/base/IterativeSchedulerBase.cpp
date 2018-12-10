@@ -18,3 +18,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "IterativeSchedulerBase.h"
+
+namespace HatScheT
+{
+void IterativeSchedulerBase::setMaxRuns(int m){
+  if(m < -1 or m == 0) throw HatScheT::Exception("IterativeSchedulerBase.setMaxRuns: request unsupported value " + std::to_string(m));
+  this->maxRuns=m;
+}
+}
