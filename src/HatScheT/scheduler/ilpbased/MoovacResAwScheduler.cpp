@@ -163,6 +163,7 @@ void MoovacResAwScheduler::schedule()
 
   while(this->II <= this->maxII) {
     cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
+    this->optimalResult = false;
     this->resetContainer();
     this->setUpSolverSettings();
     this->constructProblem();
