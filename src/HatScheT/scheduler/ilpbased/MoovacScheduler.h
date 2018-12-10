@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -34,7 +35,7 @@ namespace HatScheT
  * Presented at the Proceedings of the International Conference on Compilers, Architectures and Synthesis for Embedded Systems (CASES) 2016
  *
  */
-class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
   MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);

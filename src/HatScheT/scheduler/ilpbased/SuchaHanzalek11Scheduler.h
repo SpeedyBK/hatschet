@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -34,7 +35,7 @@ namespace HatScheT
  *   Přemysl Šůcha and Zdenĕk Hanzálek: A cyclic scheduling problem with an undetermined number of parallel identical
  *   processors. Comp. Opt. and Appl., Vol 48, 2011.
  */
-class SuchaHanzalek11Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+class SuchaHanzalek11Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
     SuchaHanzalek11Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);

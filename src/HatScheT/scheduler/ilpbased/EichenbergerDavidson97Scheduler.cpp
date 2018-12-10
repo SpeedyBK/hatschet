@@ -46,6 +46,14 @@ void EichenbergerDavidson97Scheduler::schedule()
 
   std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
 
+  //set maxRuns, e.g., maxII - minII, iff value if not -1
+  if(this->maxRuns > 0){
+    int runs = this->maxII - this->minII;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
+    std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
+  }
+
   if (minII > maxII)
     throw HatScheT::Exception("Inconsistent II bounds");
 

@@ -32,6 +32,14 @@ MoovacMinRegScheduler::MoovacMinRegScheduler(Graph &g, ResourceModel &resourceMo
   this->minII = ceil(this->minII);
   this->maxII = Utility::calcMaxII(&g, &resourceModel);
   this->SLMax = 0;
+
+  //set maxRuns, e.g., maxII - minII, iff value if not -1
+  if(this->maxRuns > 0){
+    int runs = this->maxII - this->minII;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    std::cout << "MoovacMinRegScheduler: maxII changed due to maxRuns value set by user!" << endl;
+    std::cout << "MoovacMinRegScheduler: min/maxII = " << minII << " " << maxII << std::endl;
+  }
 }
 
 void MoovacMinRegScheduler::setGeneralConstraints()

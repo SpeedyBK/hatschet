@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -34,7 +35,7 @@ namespace HatScheT
  *   Alexandre E. Eichenberger and Edward S. Davidson: Efficient Formulation for Optimal Modulo Schedulers.
  *   Proceedings of the ACM SIGPLAN '97 Conference on Programming Language Design and Implementation (PLDI), 1997
  */
-class EichenbergerDavidson97Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+class EichenbergerDavidson97Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
   EichenbergerDavidson97Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);

@@ -23,6 +23,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 
 #include <queue>
 #include <functional>
@@ -100,7 +101,7 @@ namespace HatScheT
    * presented in the paper: Modulo SDC scheduling with recurrence minimization in high-level synthesis
    * Authors: Andrew Canis, Stephen D. Brown, Jason H. Anderson
    */
-  class ModuloSDCScheduler :public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+  class ModuloSDCScheduler :public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
   {
   public:
     /*!
