@@ -168,14 +168,6 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   this->minII = ceil(this->minII);
   this->computeMaxII(&g, &resourceModel);
   if (minII >= maxII) maxII = minII+1;
-
-  //set maxRuns, e.g., maxII - minII, iff value if not -1
-  if(this->maxRuns > 0){
-    int runs = this->maxII - this->minII;
-    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
-    std::cout << "ModuloSDCScheduler: maxII changed due to maxRuns value set by user!" << endl;
-    std::cout << "ModuloSDCScheduler: min/maxII = " << minII << " " << maxII << std::endl;
-  }
 }
 
 bool HatScheT::MRT::vertexIsIn(Vertex *v)
@@ -645,6 +637,14 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->variables.clear();
   createVariables(variables,g);
   unsigned int budget = 6*this->g.getNumberOfVertices();
+
+  //set maxRuns, e.g., maxII - minII, iff value if not -1
+  if(this->maxRuns > 0){
+    int runs = this->maxII - this->minII;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    std::cout << "ModuloSDCScheduler: maxII changed due to maxRuns value set by user!" << endl;
+    std::cout << "ModuloSDCScheduler: min/maxII = " << minII << " " << maxII << std::endl;
+  }
 
   std::map<Vertex*,unsigned int> priority;
 

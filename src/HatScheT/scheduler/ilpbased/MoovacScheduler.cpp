@@ -31,15 +31,6 @@ MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::li
   this->minII = ceil(this->minII);
   this->computeMaxII(&g,&resourceModel);
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
-
-  //set maxRuns, e.g., maxII - minII, iff value if not -1
-  if(this->maxRuns > 0){
-    int runs = this->maxII - this->minII;
-    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
-    std::cout << "Moovac: maxII changed due to maxRuns value set by user!" << endl;
-    std::cout << "Moovac: min/maxII = " << minII << " " << maxII << std::endl;
-  }
-
   this->SLMax = 0;
 }
 
@@ -110,6 +101,14 @@ void MoovacScheduler::schedule()
   this->timeouts = 0;
   this->totalTime = 0;
   this->II = this->minII;
+
+  //set maxRuns, e.g., maxII - minII, iff value if not -1
+  if(this->maxRuns > 0){
+    int runs = this->maxII - this->minII;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    std::cout << "Moovac: maxII changed due to maxRuns value set by user!" << endl;
+    std::cout << "Moovac: min/maxII = " << minII << " " << maxII << std::endl;
+  }
 
   bool timeoutOccured=false;
 
