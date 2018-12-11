@@ -176,8 +176,6 @@ void MoovacResAwScheduler::schedule()
     }
     if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) {
       this->optimalResult = true;
-      //store info about the result quality when DSE is active
-      if(this->fullDSE == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
     }
 
     if(this->fullDSE == true) cout << "Finished RAMS ILP-based modulo scheduling with II " << this->II << " status " << stat << endl;
@@ -185,6 +183,9 @@ void MoovacResAwScheduler::schedule()
     if(scheduleFound == false) (this->II)++;
     if(scheduleFound == true and this->fullDSE == false) break;
     if(scheduleFound == true and this->fullDSE == true){
+      //store info about the result quality when DSE is active
+      if(this->fullDSE == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
+
       this->r = this->solver->getResult();
 
       //display resource allocation here during developement
