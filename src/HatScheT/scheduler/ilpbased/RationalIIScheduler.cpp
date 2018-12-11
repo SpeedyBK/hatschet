@@ -30,6 +30,8 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 {
   this->consideredTimeSteps = 0;
   this->uniformSchedule = false;
+  this->integerMinII = -1;
+  this->tpBuffer = 0.0f;
 }
 
 void RationalIIScheduler::fillIIVector()
@@ -44,7 +46,15 @@ void RationalIIScheduler::fillIIVector()
 
 void RationalIIScheduler::setObjective()
 {
+  //supersink latency objective
+  ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,this->maxLatencyConstraint);
 
+  for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
+    Vertex *v = *it;
+    this->solver->addConstraint(supersink - t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) >= 0);
+  }
+
+  this->solver->setObjective(ScaLP::minimize(supersink));
 }
 
 void RationalIIScheduler::constructProblem()
@@ -182,7 +192,6 @@ void RationalIIScheduler::printScheduleToConsole()
 void RationalIIScheduler::schedule()
 {
   this->scheduleFound = false;
-  this->solver->reset();
 
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
@@ -206,33 +215,53 @@ void RationalIIScheduler::schedule()
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
   cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
-  cout << "RationalIIScheduler.schedule: considered time steps " << this->consideredTimeSteps << endl;
-  cout << "RationalIIScheduler.schedule: modulo " << this->modulo << endl;
 
-  //experimental auto set funciton
+  //experimental auto set function for the start values of modulo and sample
   this->autoSetMAndS();
+  //count runs, set maxRuns
+  int runs = 0;
+  int maxRuns = this->maxRuns;
+  if(maxRuns == -1) maxRuns = 1000000; //e.g. infinity
 
-  this->fillTMaxtrix();
-  this->fillIIVector();
+  while(runs <= maxRuns){
+    //clear up and reset
+    this->solver->reset();
 
-  this->constructProblem();
+    //set up new variables and constraints
+    this->fillTMaxtrix();
+    this->fillIIVector();
+    this->constructProblem();
 
-  //currently empty
-  this->setObjective();
+    //set up objective, currently asap using supersink
+    this->setObjective();
 
-  stat = this->solver->solve();
+    cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
+    //solve the current problem
+    stat = this->solver->solve();
 
-  if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
-    this->r = this->solver->getResult();
+    //check result and act accordingly
+    if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
+      cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
+      this->r = this->solver->getResult();
 
-    this->printScheduleToConsole();
-    this->scheduleFound = true;
-    this->fillSolutionStructure();
-  }
+      this->printScheduleToConsole();
+      this->scheduleFound = true;
+      this->fillSolutionStructure();
+    }
 
-  else{
-    cout << "RationalIIScheduler.schedule: no schedule found" << endl;
-    this->scheduleFound = false;
+    else{
+      cout << "RationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << endl;
+      this->scheduleFound = false;
+    }
+
+    //break while loop when a schedule was found
+    //increment runs counter if not
+    //modify s and m if not and continue scheduling
+    if(this->scheduleFound == true) break;
+    else {
+      this->autoSetNextMAndS();
+      runs++;
+    }
   }
 }
 
@@ -250,13 +279,42 @@ void RationalIIScheduler::setModuloConstraints() {
 void RationalIIScheduler::autoSetMAndS() {
   this->computeMinII(&this->g, &this->resourceModel);
   double minII = this->getMinII();
+  //ceiling
+  this->integerMinII = ceil(minII);
   pair<int,int> frac =  Utility::splitRational(minII);
 
+  cout << "integer min II is " << this->integerMinII << endl;
   cout << "auto setting samples to " << frac.second << endl;
   cout << "auto setting modulo to " << frac.first << endl;
 
   this->samples = frac.second;
   this->modulo = frac.first;
+}
+
+void RationalIIScheduler::autoSetNextMAndS() {
+  int currS = this->samples;
+  int currM = this->modulo;
+
+  //check whether it is useful to reduce the samples by 1 on this modulo
+  if(currS > 2){
+    double t = (double)currM / (double)(currS - 1);
+    if(t <= this->tpBuffer and t <= this->integerMinII){
+      //in this case, it is still usefull to reduce s
+      //reduce s and schedule again
+      this->samples--;
+      return;
+    }
+  }
+
+  //when its not useful to reduce s anymore
+  //increase m and set s on the maximum possible value for this problem
+  this->modulo++;
+  this->samples = this->modulo - 1;
+  double t = (double)this->samples / (double)(this->modulo);
+  while(t > this->getMinII()){
+    this->samples--;
+    t = (double)this->samples / (double)(this->modulo);
+  }
 }
 
 void RationalIIScheduler::fillSolutionStructure() {
