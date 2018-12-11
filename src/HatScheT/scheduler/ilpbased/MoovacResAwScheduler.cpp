@@ -225,9 +225,16 @@ void MoovacResAwScheduler::schedule()
     if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
     else cout << "Found feasible solution for II: " << this->II << endl;
   }
-  else{
-    cout << "Passed maxII boundary! No modulo schedule identified by Moovac!" << endl;
+  if(this->scheduleFound == false && this->fullDSE == false){
+    cout << "Passed maxII boundary! No modulo schedule identified by RAMS scheduler without DSE!" << endl;
     this->II = -1;
+  }
+  if(this->scheduleFound == false && this->fullDSE == true){
+    if(this->dseResultOptimal.size() > 0) this->scheduleFound = true;
+    else{
+      cout << "Passed maxII boundary! No modulo schedule identified by RAMS scheduler with DSE!" << endl;
+      this->II = -1;
+    }
   }
 }
 
