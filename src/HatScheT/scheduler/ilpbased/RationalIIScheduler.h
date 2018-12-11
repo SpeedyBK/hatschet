@@ -57,6 +57,8 @@ private:
   void fillTMaxtrix();
   void fillIIVector();
   void fillSolutionStructure();
+  //------
+  void autoSetMAndS();
   //--------
   bool uniformSchedule;
   unsigned int consideredTimeSteps;

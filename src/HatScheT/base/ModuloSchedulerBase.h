@@ -41,7 +41,7 @@ public:
    * \brief getMinII
    * \return
    */
-  int getMinII(){return this->minII;}
+  double getMinII(){return this->minII;}
   /*!
    * \brief getMaxII
    * \return

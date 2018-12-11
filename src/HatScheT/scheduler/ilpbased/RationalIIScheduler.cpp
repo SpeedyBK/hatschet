@@ -52,6 +52,7 @@ void RationalIIScheduler::constructProblem()
   //case unlimited
   if(this->maxLatencyConstraint == -1){
     this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
+    cout << "maxLatencyConstraint automatically set to " << this->maxLatencyConstraint << endl;
   }
   //correct limit
   else if(this->maxLatencyConstraint > 0) {
@@ -182,6 +183,7 @@ void RationalIIScheduler::schedule()
 {
   this->scheduleFound = false;
   this->solver->reset();
+
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
@@ -198,6 +200,18 @@ void RationalIIScheduler::schedule()
     throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle == 0! Scheduling not possible!");
   }
 
+  if(this->maxLatencyConstraint <= 0) {
+    throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
+  }
+
+  cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
+  cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
+  cout << "RationalIIScheduler.schedule: considered time steps " << this->consideredTimeSteps << endl;
+  cout << "RationalIIScheduler.schedule: modulo " << this->modulo << endl;
+
+  //experimental auto set funciton
+  this->autoSetMAndS();
+
   this->fillTMaxtrix();
   this->fillIIVector();
 
@@ -209,13 +223,15 @@ void RationalIIScheduler::schedule()
   stat = this->solver->solve();
 
   if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
-    r = this->solver->getResult();
+    this->r = this->solver->getResult();
+
     this->printScheduleToConsole();
     this->scheduleFound = true;
     this->fillSolutionStructure();
   }
 
   else{
+    cout << "RationalIIScheduler.schedule: no schedule found" << endl;
     this->scheduleFound = false;
   }
 }
@@ -229,6 +245,18 @@ void RationalIIScheduler::setModuloConstraints() {
       }
     }
   }
+}
+
+void RationalIIScheduler::autoSetMAndS() {
+  this->computeMinII(&this->g, &this->resourceModel);
+  double minII = this->getMinII();
+  pair<int,int> frac =  Utility::splitRational(minII);
+
+  cout << "auto setting samples to " << frac.second << endl;
+  cout << "auto setting modulo to " << frac.first << endl;
+
+  this->samples = frac.second;
+  this->modulo = frac.first;
 }
 
 void RationalIIScheduler::fillSolutionStructure() {

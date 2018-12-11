@@ -195,5 +195,20 @@ public:
  static bool resourceModelAndTargetValid(ResourceModel &rm, Target& t);
 
  static bool everyVertexisRegistered(Graph& g, ResourceModel &rm);
+ /*!
+  * return numerator and denominator of a rational number stored in double
+  * If the number is not rational, or a specific budget is hit, it returns the pair <0,0>
+  * As no rational number has a 0 as a denominator, this can be used to test the result
+  * @param x
+  * @return
+  */
+ static pair<int,int> splitRational(double x);
+
+ /*! Safely rounds a double down to the next integer, taking precision issues into account
+ * Inputing 3.9999999999999968 will return 4
+ * @param x
+ * @return
+ */
+ static int safeRoundDown(double x);
 };
 }

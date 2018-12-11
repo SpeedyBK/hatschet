@@ -188,6 +188,45 @@ int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
   return criticalPath;
 }
 
+  pair<int,int> Utility::splitRational(double x) {
+    //int[] A =new int[12];
+    //int[] B = new int[12];
+    //int[] k = new int[12];
+    int A0 = 1;
+    int A1 = 0;
+    int B0 = 0;
+    int B1 = 1;
+    for(int i = 0; i <1000; i++) {
+      //k[i+2] = (int) ((double)1/x);
+      int k = (int) ((double)1/x);
+      //A[i+2] = A[i] + k[i+2] * A[i+1];
+      int temp = A1;
+      A1 = A0 + k*A1;
+      A0 = temp;
+      //B[i+2] = B[i] + k[i+2] * B[i+1];
+      temp = B1;
+      B1 = B0 + k*B1;
+      B0 = temp;
+      x = ((double)1/x) - k;
+      if (abs(x)<=1.0E-3) {
+        return make_pair(A1,B1);
+      };
+    }
+
+    return make_pair(0,0);
+  }
+
+  int Utility::safeRoundDown(double x) {
+    if (x>=0) {
+      double error = x - (int) x;
+      if (error < 0.999) return (int) x;
+      return (int) ceil(x);
+    }
+    double error = (int) x -x;
+    if (error < 0.001) return (int) x;
+    return (int) floor(x);
+  }
+
 int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   //determine minimum possible latency
   HatScheT::ASAPScheduler asap(*g,*rm);
