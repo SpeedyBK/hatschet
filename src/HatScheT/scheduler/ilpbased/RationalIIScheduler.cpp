@@ -29,7 +29,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->consideredTimeSteps = 0;
-  this->uniformSchedule = false;
+  this->uniformSchedule = true;
   this->integerMinII = -1;
   this->tpBuffer = 0.0f;
 }
@@ -241,12 +241,17 @@ void RationalIIScheduler::schedule()
 
     //check result and act accordingly
     if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
-      cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
       this->r = this->solver->getResult();
+      this->tpBuffer = (double)(this->samples) / (double)(this->modulo);
 
-      this->printScheduleToConsole();
+      //this->printScheduleToConsole();
       this->scheduleFound = true;
       this->fillSolutionStructure();
+
+      cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
+      cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
+      cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
+      cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
     }
 
     else{

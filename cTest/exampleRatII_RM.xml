@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ModelInformation Version="1.0">
+    <Resources>
+      <Resource blockingTime="1" latency="1" limit="2" name="adder" physicalDelay="0.0">
+        <Cost demand="0" name="LUT"/>
+        <Cost demand="0" name="DSP"/>
+        <Cost demand="0" name="MEM"/>
+      </Resource>
+    </Resources>
+</ModelInformation>
