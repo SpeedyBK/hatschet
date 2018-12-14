@@ -244,7 +244,7 @@ void RationalIIScheduler::schedule()
       this->r = this->solver->getResult();
       this->tpBuffer = (double)(this->samples) / (double)(this->modulo);
 
-      //this->printScheduleToConsole();
+      this->printScheduleToConsole();
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
