@@ -32,7 +32,6 @@ ModuloSchedulerBase::ModuloSchedulerBase(){
 void ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm, Target* t) {
   this->resMinII = Utility::calcResMII(rm,t);
   this->recMinII = Utility::calcRecMII(g,rm);
-
   this->minII = Utility::calcMinII(this->resMinII,this->recMinII);
 }
 

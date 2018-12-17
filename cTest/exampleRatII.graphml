@@ -21,7 +21,7 @@
             <data key="name">A5</data>
             <data key="uses_resource">adder</data>
         </node>
-        <edge id="1_2" source="1" target="2">
+        <edge id="2_3" source="2" target="3">
             <data key="delay">0</data>
             <data key="distance">0</data>
             <data key="deptype">Data</data>
@@ -41,12 +41,7 @@
             <data key="distance">0</data>
             <data key="deptype">Data</data>
         </edge>
-        <edge id="1_4" source="1" target="4">
-            <data key="delay">0</data>
-            <data key="distance">0</data>
-            <data key="deptype">Data</data>
-        </edge>
-        <edge id="4_2" source="4" target="2">
+        <edge id="4_1" source="4" target="1">
             <data key="delay">0</data>
             <data key="distance">2</data>
             <data key="deptype">Data</data>

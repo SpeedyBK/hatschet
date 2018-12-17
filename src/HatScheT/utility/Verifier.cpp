@@ -137,8 +137,14 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
                 int currIIPosition = iloop;
 
                 while (stepsBack != 0) {
-                    if (currIIPosition == 0) II += IIs.back();
-                    else if (currIIPosition > 0) II += IIs[iloop - 1];
+                    if (currIIPosition == 0) {
+                      currIIPosition=IIs.size()-1;
+                      II += IIs.back();
+                    }
+                    else if(currIIPosition > 0){
+                      II += IIs[currIIPosition-1];
+                      currIIPosition-=1;
+                    }
 
                     stepsBack--;
                 }

@@ -22,6 +22,7 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Verifier.h>
 
 namespace HatScheT
 {
@@ -32,6 +33,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->uniformSchedule = true;
   this->integerMinII = -1;
   this->tpBuffer = 0.0f;
+  this->minRatIIFound = false;
 }
 
 void RationalIIScheduler::fillIIVector()
@@ -88,7 +90,20 @@ void RationalIIScheduler::setGeneralConstraints()
 
 
     for(unsigned int j = 0; j < this->samples; j++) {
-      if(j==0) {
+      if(e->getDistance()==0){
+        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex]
+                                    + e->getDelay() <= 0);
+      }
+      else{
+        int distanceIndex = this->getSampleDistance(e->getDistance(), j);
+        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
+                                    this->II_vector[distanceIndex]-5 + e->getDelay() <= 0);
+        cout << "sample " << j << endl;
+        cout << "distance " << e->getDistance() << endl;
+        cout << "distance II index " << distanceIndex << endl;
+      }
+
+      /*if(j==0) {
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
                                     e->getDistance() * (this->modulo - II_vector.back())
                                     + e->getDelay() <= 0);
@@ -97,7 +112,7 @@ void RationalIIScheduler::setGeneralConstraints()
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
                                     e->getDistance() * (II_vector[j] - II_vector[j-1])
                                     + e->getDelay() <= 0);
-      }
+      }*/
     }
   }
 
@@ -248,6 +263,11 @@ void RationalIIScheduler::schedule()
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
+      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimeVector, this->initInvervals, this->getScheduleLength());
+
+      if(((double)this->samples / (double)this->modulo) == this->getMinII()) this->minRatIIFound = true;
+
+      if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
       cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
       cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
       cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
@@ -255,15 +275,16 @@ void RationalIIScheduler::schedule()
     }
 
     else{
-      cout << "RationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << endl;
+      cout << "RationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << stat << " )" << endl;
       this->scheduleFound = false;
     }
 
     //break while loop when a schedule was found
     //increment runs counter if not
     //modify s and m if not and continue scheduling
-    if(this->scheduleFound == true) break;
+    if(this->scheduleFound == true and this->minRatIIFound == true) break;
     else {
+      this->tpBuffer = (double)this->modulo / (double)this->samples;
       this->autoSetNextMAndS();
       runs++;
     }
@@ -288,6 +309,7 @@ void RationalIIScheduler::autoSetMAndS() {
   this->integerMinII = ceil(minII);
   pair<int,int> frac =  Utility::splitRational(minII);
 
+  cout << "rational min II is " << minII << endl;
   cout << "integer min II is " << this->integerMinII << endl;
   cout << "auto setting samples to " << frac.second << endl;
   cout << "auto setting modulo to " << frac.first << endl;
@@ -302,8 +324,8 @@ void RationalIIScheduler::autoSetNextMAndS() {
 
   //check whether it is useful to reduce the samples by 1 on this modulo
   if(currS > 2){
-    double t = (double)currM / (double)(currS - 1);
-    if(t <= this->tpBuffer and t <= this->integerMinII){
+    double t = (double)currM / (double)(currS-1);
+    if(t >= this->tpBuffer and t >= ((double)1.0 / this->integerMinII)){
       //in this case, it is still usefull to reduce s
       //reduce s and schedule again
       this->samples--;
@@ -314,12 +336,26 @@ void RationalIIScheduler::autoSetNextMAndS() {
   //when its not useful to reduce s anymore
   //increase m and set s on the maximum possible value for this problem
   this->modulo++;
-  this->samples = this->modulo - 1;
+  this->samples = this->modulo-1;
   double t = (double)this->samples / (double)(this->modulo);
   while(t > this->getMinII()){
     this->samples--;
     t = (double)this->samples / (double)(this->modulo);
   }
+}
+
+int RationalIIScheduler::getSampleDistance(int d, int startIndex) {
+  if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + startIndex);
+
+  int sampleDistance = startIndex;
+
+  while(d>0){
+    if(startIndex>0) startIndex-=1;
+    else if(startIndex==0) startIndex=this->II_vector.size()-1;
+    d--;
+  }
+
+  return sampleDistance;
 }
 
 void RationalIIScheduler::fillSolutionStructure() {
@@ -406,7 +442,7 @@ void RationalIIScheduler::setResourceConstraints() {
       resourceVarContainer.push_back(tia_matrix);
     }
 
-    //iterate overe time steps
+    //iterate over time steps
     for(unsigned int j = 0; j < this->consideredTimeSteps+1; j++) {
       ScaLP::Term tiaSum;
       bool b = 0;
