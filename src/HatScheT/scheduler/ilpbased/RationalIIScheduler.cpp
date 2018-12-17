@@ -93,26 +93,11 @@ void RationalIIScheduler::setGeneralConstraints()
       if(e->getDistance()==0){
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex]
                                     + e->getDelay() <= 0);
+      } else {
+        ScaLP::Term distanceIIs = this->getSampleDistance(e->getDistance(), j);
+        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] +
+                                      distanceIIs  + e->getDelay() <= 0);
       }
-      else{
-        int distanceIndex = this->getSampleDistance(e->getDistance(), j);
-        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
-                                    this->II_vector[distanceIndex]-5 + e->getDelay() <= 0);
-        cout << "sample " << j << endl;
-        cout << "distance " << e->getDistance() << endl;
-        cout << "distance II index " << distanceIndex << endl;
-      }
-
-      /*if(j==0) {
-        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
-                                    e->getDistance() * (this->modulo - II_vector.back())
-                                    + e->getDelay() <= 0);
-      }
-      else {
-        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] -
-                                    e->getDistance() * (II_vector[j] - II_vector[j-1])
-                                    + e->getDelay() <= 0);
-      }*/
     }
   }
 
@@ -265,7 +250,8 @@ void RationalIIScheduler::schedule()
 
       bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimeVector, this->initInvervals, this->getScheduleLength());
 
-      if(((double)this->samples / (double)this->modulo) == this->getMinII()) this->minRatIIFound = true;
+      //determine whether rational minimum II was identified
+      if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
       if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
       cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
@@ -344,18 +330,21 @@ void RationalIIScheduler::autoSetNextMAndS() {
   }
 }
 
-int RationalIIScheduler::getSampleDistance(int d, int startIndex) {
+ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
   if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + startIndex);
 
-  int sampleDistance = startIndex;
-
+  ScaLP::Term w;
   while(d>0){
-    if(startIndex>0) startIndex-=1;
+    if(startIndex>0) {
+      startIndex-=1;
+    }
     else if(startIndex==0) startIndex=this->II_vector.size()-1;
+
+    w = w - this->II_vector[startIndex];
     d--;
   }
 
-  return sampleDistance;
+  return w;
 }
 
 void RationalIIScheduler::fillSolutionStructure() {

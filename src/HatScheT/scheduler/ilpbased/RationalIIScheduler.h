@@ -61,7 +61,7 @@ private:
   //------
   void autoSetMAndS();
   void autoSetNextMAndS();
-  int getSampleDistance(int d, int startIndex);
+  ScaLP::Term getSampleDistance(int d, int startIndex);
   //--------
   bool uniformSchedule;
   unsigned int consideredTimeSteps;
