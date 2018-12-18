@@ -62,7 +62,8 @@ void MoovacMinRegScheduler::fillRegVector()
     Vertex& dstV = e->getVertexDst();
 
     //infinity is limited might cause overflow during solving process
-    this->registers.push_back(ScaLP::newIntegerVariable("n_" + std::to_string(srcV.getId()) + "_" + std::to_string(dstV.getId()) +"_e" + to_string(e->getID()),0,1000));
+    this->registers.push_back(ScaLP::newIntegerVariable("n_" + std::to_string(srcV.getId()) + "_" + std::to_string(dstV.getId()) +"_e" + to_string(
+      e->getId()),0,1000));
     this->registerIndices.insert(make_pair(e, this->registers.size() - 1));
   }
 }
@@ -125,7 +126,8 @@ void MoovacMinRegScheduler::setObjective()
 
         for(unsigned int j = 0; j < (unsigned int)ak; j++){
             allocBinVars.push_back(ScaLP::newBinaryVariable("r_" + r->getName()  + "_ak_" + to_string(j)
-                                                           + "_d" + to_string(vSrc->getId()) + "-" + to_string(vDst->getId()) + "e" + to_string(e->getID()),0,1));
+                                                           + "_d" + to_string(vSrc->getId()) + "-" + to_string(vDst->getId()) + "e" + to_string(
+              e->getId()),0,1));
         }
 
         //only one r_ik is used

@@ -24,7 +24,7 @@
 namespace HatScheT
 {
 
-Edge::Edge(Vertex &src, Vertex &dst, int distance, DependencyType dependencyType) : dependencyType(dependencyType), distance(distance), Vsrc(src), Vdst(dst)
+Edge::Edge(Vertex &src, Vertex &dst, int distance, DependencyType dependencyType, int id) : dependencyType(dependencyType), distance(distance), Vsrc(src), Vdst(dst), id(id)
 {
 }
 
@@ -32,7 +32,7 @@ ostream& operator<<(ostream& os, const Edge& e)
 {
   string datatype = "Data";
   if(e.getDependencyType()==Edge::DependencyType::Precedence) datatype = "Precedence";
-   os << "Edge Id: " << e.getID() << ". From Node " << e.getVertexSrcName()<< " to " << e.getVertexDstName()
+   os << "Edge Id: " << e.getId() << ". From Node " << e.getVertexSrcName()<< " to " << e.getVertexDstName()
       << " (Delay " << e.getDelay() << " Distance " << e.getDistance() << ")" << " depType " << datatype;
 
   return os;

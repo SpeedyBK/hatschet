@@ -58,7 +58,7 @@ public:
    * @param distance The distance (=no of registers) on an edge
    * @param dependencyType Enum to distinguish dependencies and data edges
    */
-  Edge(Vertex &src, Vertex &dst, int distance=0, DependencyType dependencyType=Data);
+  Edge(Vertex &src, Vertex &dst, int distance=0, DependencyType dependencyType=Data, int id=-1);
   /*!
    * copy constructor is forbidden for this class
    */
@@ -89,11 +89,7 @@ public:
   void setDistance(int distance){ this->distance = distance; }
 
   /*! \return the edge ID */
-  int getID() const {return this->id;}
-  /*! \brief sets the edge ID
-   * @param id the new ID
-   */
-  void setID(int id){this->id = id;}
+  int getId() const {return this->id;}
 
   /*!
    * \brief sets the dependency type for this edge
@@ -109,7 +105,7 @@ public:
   bool isDataEdge();
 protected:
   /*! \brief the edge ID */
-  int id = -1;
+  const int id;
   /*! \brief the edge's dependency type (i.e. whether the edge represents data flow, or only models a precedence relation) */
   DependencyType dependencyType;
 

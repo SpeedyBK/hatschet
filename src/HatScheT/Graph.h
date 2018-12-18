@@ -129,6 +129,13 @@ public:
    */
   Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
   /*!
+   * looks up the edges for a specific id
+   * @param id unique edge id
+   * @return the requested edge
+   * \throws Exception if no matching edge was found
+   */
+  Edge& getEdge(int id) const;
+  /*!
    * check whether there is already an edge between these vertices
    * double edges are not supported yet,
    * because it is currently not possible to call a getter function for those kinds of edges in a graph
@@ -242,11 +249,6 @@ protected:
    * \brief This int is used to track the next valid vertex ID
    */
   int maxVertexId;
-
-  /*!
-   * \brief This int is used to track the next valid edge ID
-   */
-  int maxEdgeId;
   /*!
    * \brief The graph's name
    */
