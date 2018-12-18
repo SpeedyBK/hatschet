@@ -224,6 +224,11 @@ public:
 
 protected:
   /*!
+   * determine the largest of all vertices
+   * @return
+   */
+  int getMaxVertexId();
+  /*!
    * \brief The container for vertices
    */
   std::set<Vertex*> vertices;

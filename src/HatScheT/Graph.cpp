@@ -40,6 +40,15 @@ Graph::~Graph()
     delete e;
 }
 
+int Graph::getMaxVertexId() {
+  int maxId=0;
+  for(auto it=this->vertices.begin(); it!=this->vertices.end(); ++it){
+    Vertex* v = *it;
+    if(maxId < v->getId()) maxId=v->getId();
+  }
+  return maxId;
+}
+
 Vertex& Graph::createVertex()
 {
   return createVertex(++maxVertexId);
@@ -54,6 +63,10 @@ Vertex& Graph::createVertex(int id)
 
   Vertex *v = new Vertex(id);
   vertices.insert(v);
+
+  //keep maxVertexId consistent
+  if(this->maxVertexId < v->getId()) this->maxVertexId = this->getMaxVertexId()+1;
+
   return *v;
 }
 
