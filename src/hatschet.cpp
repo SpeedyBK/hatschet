@@ -481,8 +481,6 @@ int main(int argc, char *args[]) {
               scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
               if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
               if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-             // ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloClasses(moduloClasses);
-              //((HatScheT::RationalIISchedulerFimmel*) scheduler)->setModuloCycles(moduloCycles);
               ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);
               ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
               break;
