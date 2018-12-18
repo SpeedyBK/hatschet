@@ -47,6 +47,11 @@ Vertex& Graph::createVertex()
 
 Vertex& Graph::createVertex(int id)
 {
+  for(auto it=this->vertices.begin(); it!=this->vertices.end(); ++it){
+    Vertex* v = *it;
+    if(v->getId()==id) throw HatScheT::Exception("Graph.createVertex: Error! This id is already occupied: " + to_string(id) + "( " + v->getName() +" )");
+  }
+
   Vertex *v = new Vertex(id);
   vertices.insert(v);
   return *v;
