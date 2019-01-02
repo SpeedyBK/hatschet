@@ -50,6 +50,9 @@ protected:
   virtual void scheduleAttempt(int candII, bool &feasible, bool &proven);
   virtual void constructDecisionVariables(int candII);
   virtual void constructConstraints(int candII);
+  virtual void constructGeneralConstraints(int candII);
+  virtual void constructDependenceConstraints(int candII);
+  virtual void constructResourceConstraints(int candII);
   virtual void setObjective();
 
   virtual void constructProblem() {/* unused */}

@@ -139,8 +139,14 @@ void SuchaHanzalek11Scheduler::setObjective()
 
 void SuchaHanzalek11Scheduler::constructConstraints(int candII)
 {
-  const int w = candII;
+  constructGeneralConstraints(candII);
+  constructDependenceConstraints(candII);
+  constructResourceConstraints(candII);
+}
 
+void SuchaHanzalek11Scheduler::constructGeneralConstraints(int candII)
+{
+  const int w = candII;
   for (auto *i : g.Vertices()) {
     // anchor source vertices, but only if they are not resource-limited
     if (g.isSourceVertex(i) && resourceModel.getResource(i)->getLimit() == UNLIMITED) {
@@ -151,18 +157,25 @@ void SuchaHanzalek11Scheduler::constructConstraints(int candII)
     // bind result variable (3)
     solver->addConstraint(s[i] - q_hat[i] * w - s_hat[i] == 0);
   }
+}
 
-  // dependence constraints (5)
+void SuchaHanzalek11Scheduler::constructDependenceConstraints(int candII)
+{
+  const int w = candII;
   for (auto *e : g.Edges()) {
     auto *i = &e->getVertexSrc();
     auto *j = &e->getVertexDst();
     auto l_ij = resourceModel.getVertexLatency(i) + e->getDelay();
     auto h_ij = e->getDistance();
 
+    // (5)
     solver->addConstraint(s_hat[j] + q_hat[j] * w - s_hat[i] - q_hat[i] * w >= l_ij - h_ij * w);
   }
+}
 
-  // resource constraints
+void SuchaHanzalek11Scheduler::constructResourceConstraints(int candII)
+{
+  const int w = candII;
   for (auto pIt = resourceModel.resourcesBegin(), pEnd = resourceModel.resourcesEnd(); pIt != pEnd; ++pIt) {
     auto *p = *pIt;
     if (p->getLimit() == UNLIMITED)
