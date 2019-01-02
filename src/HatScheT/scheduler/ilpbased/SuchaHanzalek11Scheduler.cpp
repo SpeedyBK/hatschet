@@ -24,7 +24,6 @@
 
 #include <iostream>
 #include <map>
-#include <limits>
 #include <cmath>
 
 namespace HatScheT

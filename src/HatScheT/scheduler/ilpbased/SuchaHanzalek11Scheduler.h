@@ -24,7 +24,7 @@
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
-#include <vector>
+#include <map>
 
 namespace HatScheT
 {
