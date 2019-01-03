@@ -28,6 +28,8 @@ namespace HatScheT
 /*!
  * \brief Implementation of the resource-aware ILP formulation by Šůcha and Hanzálek.
  *
+ * --> EXPERIMENTAL <--
+ *
  * Reference:
  *   Přemysl Šůcha and Zdenĕk Hanzálek: A cyclic scheduling problem with an undetermined number of parallel identical
  *   processors. Comp. Opt. and Appl., Vol 48, 2011.
@@ -46,7 +48,18 @@ protected:
   virtual void constructResourceConstraints(int candII);
   virtual void setObjective();
 
+  void compute_m_max();
+
+  // weighting factor used in the bi-criteria objective
+  // 0 = only resource minimisation
+  // 1 = only schedule length minimisation
+  double alpha;
+
+  // description of the target device
   Target &target;
+
+  // precomputed maximum allocatable resource instances
+  std::map<const Resource*, int> m_max;
 
   // additional decision variables
   std::map<const Resource*, ScaLP::Variable> m;
