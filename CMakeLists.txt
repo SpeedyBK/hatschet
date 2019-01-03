@@ -144,6 +144,7 @@ src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h
+src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/ULScheduler.h
@@ -175,6 +176,7 @@ src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
 src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.cpp
+src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
