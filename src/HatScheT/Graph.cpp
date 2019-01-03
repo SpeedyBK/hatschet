@@ -73,9 +73,9 @@ Edge& Graph::getEdge(int id) const {
 }
 
 Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::DependencyType dependencyType){
-  if(this->edgeExists(&Vsrc,&Vdst) == true) {
-    throw HatScheT::Exception("Graph.createEdge: Error! You tried add an already existing edge : " + Vsrc.getName() + " -> " + Vdst.getName());
-  }
+  /*if(this->edgeExists(&Vsrc,&Vdst) == true) {
+    throw HatScheT::Exception("Graph.createEdge: Error! You tried to add an already existing edge : " + Vsrc.getName() + " -> " + Vdst.getName());
+  }*/
 
   Edge *e = new Edge(Vsrc,Vdst,distance,dependencyType,edges.size()+1);
 

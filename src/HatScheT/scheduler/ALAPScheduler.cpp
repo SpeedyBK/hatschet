@@ -69,24 +69,28 @@ void ALAPScheduler::schedule()
     for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
       Vertex* procV = *it;
       const Resource* r = this->resourceModel.getResource(procV);
+      std::list<const Edge *> edges = this->g.getEdges(v, procV);
+
       //algorithmic delays are considered as inputs to the circuit
-      Edge* e = &this->g.getEdge(procV,v);
-      if(e->getDistance() > 0){
-        continue;
-      }
+      for (auto it = edges.begin(); it != edges.end(); ++it) {
+        const Edge *e = *it;
+        if (e->getDistance() > 0) {
+          continue;
+        }
 
-      //set start time
-      int time = std::min(this->startTimes[v] - r->getLatency() - e->getDelay(), this->startTimes[procV]);
+        //set start time
+        int time = std::min(this->startTimes[v] - r->getLatency() - e->getDelay(), this->startTimes[procV]);
 
-      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time)  == false) {
-        time--;
-      }
+        while (Utility::resourceAvailable(this->startTimes, &this->resourceModel, r, v, time) == false) {
+          time--;
+        }
 
-      this->startTimes[procV] = time;
-      ouput_counts[procV]--;
-      // if there are no more outputs left, add to the stack
-      if(ouput_counts[procV]==0){
-        stack.push(procV);
+        this->startTimes[procV] = time;
+        ouput_counts[procV]--;
+        // if there are no more outputs left, add to the stack
+        if (ouput_counts[procV] == 0) {
+          stack.push(procV);
+        }
       }
     }
   }
