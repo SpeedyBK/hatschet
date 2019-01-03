@@ -69,7 +69,7 @@ Edge& Graph::getEdge(int id) const {
   for(auto e:this->edges){
     if(e->getId()==id) return *e;
   }
-  throw HatScheT::Exception("Graph::getEdge: Edge not found! Request Id was: " + id);
+  throw HatScheT::Exception("Graph::getEdge: Edge not found! Request Id was: " + to_string(id));
 }
 
 Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::DependencyType dependencyType){
@@ -81,7 +81,7 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::Dependen
 
   for(auto it=this->edges.begin(); it!=this->edges.end(); ++it){
     Edge* eIt = *it;
-    if(e->getId()==eIt->getId()) throw HatScheT::Exception("Graph.createEdge: Error! This edge id is already occupied: " + e->getId());
+    if(e->getId()==eIt->getId()) throw HatScheT::Exception("Graph.createEdge: Error! This edge id is already occupied: " + to_string(e->getId()));
   }
 
   edges.insert(e);
@@ -139,6 +139,17 @@ set<Vertex *> Graph::getSuccessors(const Vertex *v) const{
   }
 
   return vset;
+}
+
+std::list<const Edge* > Graph::getEdges(const HatScheT::Vertex *srcV, const HatScheT::Vertex *dstV) const {
+  std::list<const Edge* > edges;
+  for(auto e:this->edges){
+    if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) edges.push_back(e);
+  }
+
+  if(edges.size() == 0) throw HatScheT::Exception("Graph::getEdges: No Edge could be found!");
+
+  return edges;
 }
 
 Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const{

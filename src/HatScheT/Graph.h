@@ -23,6 +23,7 @@
 
 #include "Vertex.h"
 #include "Edge.h"
+#include <list>
 #include <map>
 #include <set>
 
@@ -122,12 +123,22 @@ public:
   Vertex& getVertexById(int id) const;
   /*!
    * \brief looks up the edge between the given vertices
+   * IMPORTANT NOTE: This does not support multiple edges between vertices
+   * REMOVE SOON
    * \param srcV the source vertex
    * \param dstV the destination vertex
    * \return the edge from `srcV` to `dstV`
    * \throws Exception if no matching edge was found
    */
   Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
+  /*!
+   * \brief looks up the edges between the given vertices
+   * IMPORTANT NOTE: This supports multiple edges between vertices
+   * @param srcV
+   * @param dstV
+   * @return
+   */
+  std::list<const Edge* > getEdges(const Vertex* srcV, const Vertex* dstV) const;
   /*!
    * looks up the edges for a specific id
    * @param id unique edge id

@@ -331,7 +331,7 @@ void RationalIIScheduler::autoSetNextMAndS() {
 }
 
 ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
-  if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + startIndex);
+  if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + to_string(startIndex));
 
   ScaLP::Term w;
   while(d>0){
