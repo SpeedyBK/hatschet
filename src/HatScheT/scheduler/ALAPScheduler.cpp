@@ -69,7 +69,7 @@ void ALAPScheduler::schedule()
     for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
       Vertex* procV = *it;
       const Resource* r = this->resourceModel.getResource(procV);
-      std::list<const Edge *> edges = this->g.getEdges(v, procV);
+      std::list<const Edge *> edges = this->g.getEdges(procV, v);
 
       //algorithmic delays are considered as inputs to the circuit
       for (auto it = edges.begin(); it != edges.end(); ++it) {

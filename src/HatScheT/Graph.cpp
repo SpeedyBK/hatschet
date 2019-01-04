@@ -144,7 +144,10 @@ std::list<const Edge* > Graph::getEdges(const HatScheT::Vertex *srcV, const HatS
     if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) edges.push_back(e);
   }
 
-  if(edges.size() == 0) throw HatScheT::Exception("Graph::getEdges: No Edge could be found!");
+  if(edges.size() == 0){
+    cout << *this << endl;
+    throw HatScheT::Exception("Graph::getEdges: No Edge could be found: " + srcV->getName() + " -> " + dstV->getName());
+  }
 
   return edges;
 }
