@@ -73,21 +73,6 @@ public:
    */
   static bool alapHCTest();
   /*!
-   * \brief occurrenceTest test all functions of occurrences
-   * \return
-   */
-  static bool occurrenceTest();
-  /*!
-   * \brief occurrenceSetTest test all functions of occurrenceSets
-   * \return
-   */
-  static bool occurrenceSetTest();
-  /*!
-   * \brief occurrenceSetCombinationTest test all functions of occurrenceSetCombinations
-   * \return
-   */
-  static bool occurrenceSetCombinationTest();
-  /*!
    * \brief sgmSchedulerTest test the subgraph modulo scheduler with a small example
    * \return
    */

@@ -229,9 +229,6 @@ add_test("API" "./hatschet" "--test=API")
 add_test("ASAPHC" "./hatschet" "--test=ASAPHC")
 add_test("ALAPHC" "./hatschet" "--test=ALAPHC")
 add_test("ULScheduler" "./hatschet" "--test=ULScheduler")
-add_test("Occurrence" "./hatschet" "--test=OCC")
-add_test("OccurrenceSet" "./hatschet" "--test=OCCS")
-add_test("OccurrenceSetCombination" "./hatschet" "--test=OCCSC")
 add_test("SGMScheduler" "./hatschet" "--test=SGMS")
 #currently disabled cause of ambiguous edges in input graph
 #think about supporting this feature somehow
