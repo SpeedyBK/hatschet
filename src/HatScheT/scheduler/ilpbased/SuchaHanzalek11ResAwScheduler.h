@@ -20,45 +20,48 @@
 
 #pragma once
 
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <map>
 
 namespace HatScheT
 {
 /*!
- * \brief Implementation of the ILP formulation by Šůcha and Hanzálek.
+ * \brief Implementation of the resource-aware ILP formulation by Šůcha and Hanzálek.
+ *
+ * --> EXPERIMENTAL <--
  *
  * Reference:
  *   Přemysl Šůcha and Zdenĕk Hanzálek: A cyclic scheduling problem with an undetermined number of parallel identical
  *   processors. Comp. Opt. and Appl., Vol 48, 2011.
  */
-class SuchaHanzalek11Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
+class SuchaHanzalek11ResAwScheduler :  public SuchaHanzalek11Scheduler
 {
 public:
-    SuchaHanzalek11Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    SuchaHanzalek11ResAwScheduler(Graph& g, ResourceModel &resourceModel, Target &target, std::list<std::string> solverWishlist);
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */
   virtual void schedule();
 
 protected:
-  virtual void setUpSolverSettings();
-
-  virtual void scheduleAttempt(int candII, bool &feasible, bool &proven);
   virtual void constructDecisionVariables(int candII);
-  virtual void constructConstraints(int candII);
-  virtual void constructGeneralConstraints(int candII);
-  virtual void constructDependenceConstraints(int candII);
   virtual void constructResourceConstraints(int candII);
   virtual void setObjective();
 
-  virtual void constructProblem() {/* unused */}
+  void compute_m_max();
 
-  // decision variables
-  std::map<const Vertex*, ScaLP::Variable> s, s_hat, q_hat;
-  std::map<const Vertex*, std::map<const Vertex*, ScaLP::Variable>> x_hat, y_hat;
+  // weighting factor used in the bi-criteria objective
+  // 0 = only resource minimisation
+  // 1 = only schedule length minimisation
+  double alpha;
+
+  // description of the target device
+  Target &target;
+
+  // precomputed maximum allocatable resource instances
+  std::map<const Resource*, int> m_max;
+
+  // additional decision variables
+  std::map<const Resource*, ScaLP::Variable> m;
 };
 }

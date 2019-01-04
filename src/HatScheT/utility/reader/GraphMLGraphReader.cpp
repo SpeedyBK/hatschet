@@ -168,8 +168,6 @@ void GraphMLGraphReader::startElement(const XMLCh * const uri, const XMLCh * con
     string sourcestring = XMLString::transcode(attrs.getValue(XMLString::transcode("source")));
     string targetstring = XMLString::transcode(attrs.getValue(XMLString::transcode("target")));
 
-    cout << "read ids " << sourcestring << " -> " << targetstring << endl;
-
     this->srcId = stoi(sourcestring);
     this->dstId = stoi(targetstring);
   }

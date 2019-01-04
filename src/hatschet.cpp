@@ -50,6 +50,7 @@
 #include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -124,7 +125,7 @@ int main(int argc, char *args[]) {
 
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -227,6 +228,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "sh11") {
           schedulerSelection = SH11;
         }
+        else if(schedulerSelectionStr == "sh11ra") {
+          schedulerSelection = SH11RA;
+        }
         else if(schedulerSelectionStr == "modulosdc") {
           schedulerSelection = MODULOSDC;
         }
@@ -313,6 +317,9 @@ int main(int argc, char *args[]) {
         break;
       case SH11:
         cout << "SH11";
+        break;
+      case SH11RA:
+        cout << "SH11RA";
         break;
       case MODULOSDC:
         cout << "MODULOSDC";
@@ -450,6 +457,16 @@ int main(int argc, char *args[]) {
           sh11->setThreads(threads);
           sh11->setSolverQuiet(solverQuiet);
           scheduler = sh11;
+          break;
+        }
+        case SH11RA: {
+          isModuloScheduler = true;
+          auto *sh11ra = new HatScheT::SuchaHanzalek11ResAwScheduler(g, rm, target, solverWishList);
+          if (timeout > 0)    sh11ra->setSolverTimeout(timeout);
+          if (maxLatency > 0) sh11ra->setMaxLatencyConstraint(maxLatency);
+          sh11ra->setThreads(threads);
+          sh11ra->setSolverQuiet(solverQuiet);
+          scheduler = sh11ra;
           break;
         }
         case MODULOSDC:

@@ -92,30 +92,33 @@ void ASAPScheduler::schedule()
 
     set<Vertex*> subVertices = this->g.getSuccessors(v);
 
-    for(auto it=subVertices.begin(); it!=subVertices.end(); ++it){
-      Vertex* subV = *it;
+    for(auto it=subVertices.begin(); it!=subVertices.end(); ++it) {
+      Vertex *subV = *it;
+      std::list<const Edge *> edges = this->g.getEdges(v, subV);
 
-      //algorithmic delays are considered as inputs to the circuit
-      Edge* e = &this->g.getEdge(v,subV);
-      if(e->getDistance() > 0){
-        continue;
-      }
+      for (auto it = edges.begin(); it != edges.end(); ++it) {
+        const Edge *e = *it;
 
-      //set start time
-      //there might be a delay that is not a distance
-      int time = std::max(this->startTimes[v] + r->getLatency() + e->getDelay(), this->startTimes[subV]);
-      const Resource* rSub = this->resourceModel.getResource(subV);
+        if (e->getDistance() > 0) {
+          continue;
+        }
 
-      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,rSub,subV,time) == false) {
-        ++time;
-      }
+        //set start time
+        //there might be a delay that is not a distance
+        int time = std::max(this->startTimes[v] + r->getLatency() + e->getDelay(), this->startTimes[subV]);
+        const Resource *rSub = this->resourceModel.getResource(subV);
 
-      this->startTimes[subV] = time;
+        while (Utility::resourceAvailable(this->startTimes, &this->resourceModel, rSub, subV, time) == false) {
+          ++time;
+        }
 
-      input_counts[subV]--;
-      // if there are no more inputs left, add n to the stack
-      if(input_counts[subV]==0){
-        stack.push(subV);
+        this->startTimes[subV] = time;
+
+        input_counts[subV]--;
+        // if there are no more inputs left, add n to the stack
+        if (input_counts[subV] == 0) {
+          stack.push(subV);
+        }
       }
     }
   }

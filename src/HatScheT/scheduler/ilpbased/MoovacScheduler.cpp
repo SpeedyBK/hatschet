@@ -329,12 +329,17 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
         for(auto it3:followingVertices) {
           const Vertex* followV = it3;
-          Edge* e = &this->g.getEdge(v,followV);
-          int followVTIndex = this->tIndices[followV];
-          ScaLP::Result r = this->solver->getResult();
+          std::list<const Edge *> edges = this->g.getEdges(v, followV);
 
-          int currLifetime = r.values[this->ti[followVTIndex]] - r.values[this->ti[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
-          if(currLifetime > maxLifetime) maxLifetime = currLifetime;
+          for (auto it = edges.begin(); it != edges.end(); ++it) {
+            const Edge *e = *it;
+            int followVTIndex = this->tIndices[followV];
+            ScaLP::Result r = this->solver->getResult();
+
+            int currLifetime = r.values[this->ti[followVTIndex]] - r.values[this->ti[vTIndex]] -
+                               this->resourceModel.getVertexLatency(v) + this->II * e->getDistance();
+            if (currLifetime > maxLifetime) maxLifetime = currLifetime;
+          }
         }
 
         //add the max lifetime to overall registercount, because they are implemented using register sharing
@@ -367,13 +372,18 @@ int MoovacScheduler::getNoOfImplementedRegisters()
 
           for(auto it4:followingVertices) {
             const Vertex* followV = it4;
-            Edge* e = &this->g.getEdge(v,followV);
-            int followVTIndex = this->tIndices[followV];
-            ScaLP::Result res = this->solver->getResult();
+            std::list<const Edge *> edges = this->g.getEdges(v, followV);
 
-            int currLifetime = res.values[this->ti[followVTIndex]] - res.values[this->ti[vTIndex]] - this->resourceModel.getVertexLatency(v) + this->II*e->getDistance();
+            for (auto it = edges.begin(); it != edges.end(); ++it) {
+              const Edge *e = *it;
+              int followVTIndex = this->tIndices[followV];
+              ScaLP::Result res = this->solver->getResult();
 
-            if(currLifetime > maxLifetime) maxLifetime = currLifetime;
+              int currLifetime = res.values[this->ti[followVTIndex]] - res.values[this->ti[vTIndex]] -
+                                 this->resourceModel.getVertexLatency(v) + this->II * e->getDistance();
+
+              if (currLifetime > maxLifetime) maxLifetime = currLifetime;
+            }
           }
         }
 

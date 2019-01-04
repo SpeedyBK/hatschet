@@ -281,7 +281,7 @@ void MoovacResAwScheduler::setAllocationConstraints() {
       if(costs == 0.0f) continue;
       else {
         ScaLP::Term term = costs*this->aks[this->aksIndices[r]];
-        ScaLPSum +=  ScaLPSum + term;
+        ScaLPSum += term;
       }
     }
 
@@ -370,7 +370,7 @@ void MoovacResAwScheduler::setObjective()
       if(costs == 0.0f) continue;
       else {
         ScaLP::Term term = this->aks[this->aksIndices[r]]*(costs/constraint);
-        ScaLPSum +=  ScaLPSum + term;
+        ScaLPSum += term;
       }
     }
 
@@ -379,7 +379,7 @@ void MoovacResAwScheduler::setObjective()
 
   //set resource part of the objective
   //lambda is used for weighting between latency and resource minimization
-  objective += (1-lambda)*objective;
+  objective = (1-lambda)*objective;
 
   //use supersink node for latency minimization
   ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,ScaLP::INF());
