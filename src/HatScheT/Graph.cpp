@@ -152,13 +152,13 @@ std::list<const Edge* > Graph::getEdges(const HatScheT::Vertex *srcV, const HatS
   return edges;
 }
 
-Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const{
+/*Edge& Graph::getEdge(const Vertex *srcV, const Vertex *dstV) const{
   for(auto e:this->edges){
     if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
   }
 
   throw HatScheT::Exception("Graph::getEdge: Edge not found!");
-}
+}*/
 
 bool Graph::edgeExists(const HatScheT::Vertex *srcV, const HatScheT::Vertex *dstV) {
   for(auto e:this->edges){

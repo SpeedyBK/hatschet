@@ -124,13 +124,13 @@ public:
   /*!
    * \brief looks up the edge between the given vertices
    * IMPORTANT NOTE: This does not support multiple edges between vertices
-   * REMOVE SOON
+   * REMOVED / UNSUPPORTED CODE
    * \param srcV the source vertex
    * \param dstV the destination vertex
    * \return the edge from `srcV` to `dstV`
    * \throws Exception if no matching edge was found
    */
-  Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
+  //Edge& getEdge(const Vertex* srcV, const Vertex* dstV) const;
   /*!
    * \brief looks up the edges between the given vertices
    * IMPORTANT NOTE: This supports multiple edges between vertices
