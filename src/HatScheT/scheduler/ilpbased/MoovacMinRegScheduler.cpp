@@ -94,10 +94,13 @@ void MoovacMinRegScheduler::setObjective()
         for(auto it3:followingVertices)
         {
           const Vertex* followV = it3;
-          Edge* e = &this->g.getEdge(v,followV);
-          int eRegContainerIndex = this->registerIndices[e];
+          std::list<const Edge *> edges = this->g.getEdges(v, followV);
 
-          this->solver->addConstraint(minMaxRegVariablesVector.back() - this->registers[eRegContainerIndex] >= 0);
+          for (auto it = edges.begin(); it != edges.end(); ++it) {
+            const Edge *e = *it;
+            int eRegContainerIndex = this->registerIndices[e];
+            this->solver->addConstraint(minMaxRegVariablesVector.back() - this->registers[eRegContainerIndex] >= 0);
+          }
         }
       }
 
