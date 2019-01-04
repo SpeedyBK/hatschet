@@ -263,7 +263,6 @@ int main(int argc, char *args[]) {
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
         if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
-        if(str=="SGMS" && HatScheT::Tests::sgmSchedulerTest()==false) exit(-1);
         if(str=="RATMINII" && HatScheT::Tests::rationalMinIITest()==false) exit(-1);
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         #else

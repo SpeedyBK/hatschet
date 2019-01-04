@@ -73,11 +73,6 @@ public:
    */
   static bool alapHCTest();
   /*!
-   * \brief sgmSchedulerTest test the subgraph modulo scheduler with a small example
-   * \return
-   */
-  static bool sgmSchedulerTest();
-  /*!
    * \brief ulSchedulerTest
    * \return
    */
