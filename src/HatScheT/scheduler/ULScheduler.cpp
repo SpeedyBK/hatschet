@@ -37,10 +37,14 @@ bool ULScheduler::inputs_not_in(Vertex *v, list<Vertex *> vList)
 
   for(auto it:inputs){
     //register inputs are considered to be input for the graph
-    Edge& e = this->g.getEdge(it,v);
-    if(e.getDistance()>0) continue;
-    for(auto it2:vList){
-      if(it==it2) return false;
+    std::list<const Edge *> edges = this->g.getEdges(it,v);
+
+    for (auto it2 = edges.begin(); it2 != edges.end(); ++it2) {
+      const Edge *e = *it2;
+      if (e->getDistance() > 0) continue;
+      for (auto it3:vList) {
+        if (it == it3) return false;
+      }
     }
   }
   return true;
@@ -53,14 +57,18 @@ bool ULScheduler::vertexRdyForScheduling(Vertex *v, int timeSlot)
 
   for(auto it:inputs){
     //skip inputs over edges with distance as they represent next samples
-    Edge& e= this->g.getEdge(it,v);
-    if(e.getDistance()>0) continue;
-    //input not scheduled yet
-    if(this->startTimes[it]==-1) return false;
+    std::list<const Edge *> edges = this->g.getEdges(it, v);
 
-    //this input demands later execution time
-    if(this->startTimes[it]+this->resourceModel.getVertexLatency(it)+e.getDelay()>timeSlot){
-      return false;
+    for (auto it2 = edges.begin(); it2 != edges.end(); ++it2) {
+      const Edge *e = *it2;
+      if (e->getDistance() > 0) continue;
+      //input not scheduled yet
+      if (this->startTimes[it] == -1) return false;
+
+      //this input demands later execution time
+      if (this->startTimes[it] + this->resourceModel.getVertexLatency(it) + e->getDelay() > timeSlot) {
+        return false;
+      }
     }
   }
   return true;
