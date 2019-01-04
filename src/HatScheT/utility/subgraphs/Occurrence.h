@@ -41,12 +41,12 @@ public:
    * \param e
    * \return
    */
-  bool addEdge(Edge* e);
+  bool addEdge(const Edge* e);
   /*!
    * \brief getEdges
    * \return
    */
-  std::vector<Edge*> getEdges() const {return this->edges;}
+  std::vector<const Edge*> getEdges() const {return this->edges;}
   /*!
    * \brief getVertices
    * \return
@@ -69,7 +69,7 @@ public:
    * \param e
    * \return
    */
-  bool edgeIsNew(Edge* e);
+  bool edgeIsNew(const Edge* e);
   /*!
    * \brief vertexIsNew
    * \param v
@@ -84,7 +84,7 @@ private:
    * \param e
    * \return
    */
-  bool isConnected(Edge* e);
+  bool isConnected(const Edge* e);
   /*!
    * \brief g this Occurrence occurs in the graph g
    */
@@ -92,7 +92,7 @@ private:
   /*!
    * The container for edges
    */
-  std::vector<Edge*> edges;
+  std::vector<const Edge*> edges;
   /*!
    * The container for vertices
    */

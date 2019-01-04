@@ -38,7 +38,7 @@ ostream& operator<<(ostream& os, const Occurrence& o)
   }
   os << "---Printing Edges---" << endl;
   for(auto it:o.edges){
-    Edge* e = it;
+    const Edge* e = it;
     os << *e << endl;
   }
 
@@ -46,10 +46,10 @@ ostream& operator<<(ostream& os, const Occurrence& o)
   return os;
 }
 
-bool Occurrence::edgeIsNew(Edge *e)
+bool Occurrence::edgeIsNew(const Edge *e)
 {
   for(auto it:this->edges){
-    Edge* eIter = it;
+    const Edge* eIter = it;
 
     if(eIter==e) return false;
   }
@@ -67,7 +67,7 @@ bool Occurrence::vertexIsNew(Vertex *v)
   return true;
 }
 
-bool Occurrence::addEdge(Edge *e)
+bool Occurrence::addEdge(const Edge *e)
 {
   if(this->edges.size()==0){
     this->edges.push_back(e);
@@ -98,10 +98,10 @@ bool Occurrence::addEdge(Edge *e)
   }
 }
 
-bool Occurrence::isConnected(Edge *e)
+bool Occurrence::isConnected(const Edge *e)
 {
   for(auto it=this->edges.begin();it!=this->edges.end();++it){
-    Edge* iterE = *it;
+    const Edge* iterE = *it;
     if(&e->getVertexDst()==&iterE->getVertexDst()) return true;
     if(&e->getVertexSrc()==&iterE->getVertexDst()) return true;
     if(&e->getVertexDst()==&iterE->getVertexSrc()) return true;

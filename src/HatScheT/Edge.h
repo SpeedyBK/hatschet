@@ -64,8 +64,8 @@ public:
    */
    Edge(const Edge&) = delete;
 
-  Vertex& getVertexSrc(){ return Vsrc; } /*!< \return the source vertex */
-  Vertex& getVertexDst(){ return Vdst; } /*!< \return the destination vertex */
+  Vertex& getVertexSrc() const { return Vsrc; } /*!< \return the source vertex */
+  Vertex& getVertexDst() const { return Vdst; } /*!< \return the destination vertex */
 
   const string getVertexSrcName() const {return this->Vsrc.getName();} /*!< \return the source vertex's name */
   const string getVertexDstName() const {return this->Vdst.getName();} /*!< \return the destination vertex's name */

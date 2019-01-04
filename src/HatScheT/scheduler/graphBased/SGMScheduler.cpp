@@ -45,7 +45,7 @@ void SGMScheduler::setSubgraphConstraints()
   for(auto it:occSets){
     //fetch corresponding vertices and edges
     vector<vector<Vertex*> > vertsContainer;
-    vector<vector<Edge*> > edgesContainer;
+    vector<vector<const Edge*> > edgesContainer;
     OccurrenceSet* occS = it;
     set<Occurrence*> occurrences = occS->getOccurrences();
 
@@ -59,13 +59,13 @@ void SGMScheduler::setSubgraphConstraints()
   //add constraints (lifetimes on corressponding edges have to be the same)
   for(int i=0; i<edgesContainer.size()-1;i++){
     for(int j=0;j<edgesContainer[i].size();j++){
-      Edge* e1 = edgesContainer[i][j];
+      const Edge* e1 = edgesContainer[i][j];
       Vertex* src1 = &(e1->getVertexSrc());
       unsigned int srcTVecIndex1 = this->tIndices[src1];
       Vertex* dst1 = &(e1->getVertexDst());
       unsigned int dstTVecIndex1 = this->tIndices[dst1];
 
-      Edge* e2 = edgesContainer[i+1][j];
+      const Edge* e2 = edgesContainer[i+1][j];
       Vertex* src2 = &(e2->getVertexSrc());
       unsigned int srcTVecIndex2 = this->tIndices[src2];
       Vertex* dst2 = &(e2->getVertexDst());

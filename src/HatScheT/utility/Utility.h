@@ -128,7 +128,7 @@ public:
   * \param e
   * \return
   */
- static bool edgeIsInGraph(Graph* g, Edge* e);
+ static bool edgeIsInGraph(Graph* g, const Edge* e);
  /*!
   * \brief isInput returns true if this vertex is no inputs or only inputs of edges with a distance
   * \param g
