@@ -81,6 +81,7 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::Dependen
 
   for(auto it=this->edges.begin(); it!=this->edges.end(); ++it){
     Edge* eIt = *it;
+    //this should never happen as there is no method for removing edges, yet
     if(e->getId()==eIt->getId()) throw HatScheT::Exception("Graph.createEdge: Error! This edge id is already occupied: " + e->getId());
   }
 
