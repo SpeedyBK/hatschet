@@ -193,6 +193,9 @@ void RationalIIScheduler::schedule()
 {
   this->scheduleFound = false;
 
+  //experimental auto set function for the start values of modulo and sample
+  this->autoSetMAndS();
+
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
@@ -210,14 +213,14 @@ void RationalIIScheduler::schedule()
   }
 
   if(this->maxLatencyConstraint <= 0) {
-    throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
+    //experimental
+    this->maxLatencyConstraint = this->consideredTimeSteps;
+    //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
   }
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
   cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
 
-  //experimental auto set function for the start values of modulo and sample
-  this->autoSetMAndS();
   //count runs, set maxRuns
   int runs = 0;
   int maxRuns = this->maxRuns;
@@ -258,6 +261,7 @@ void RationalIIScheduler::schedule()
       cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
       cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
       cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
+      this->II = (double)(this->modulo) / (double)(this->samples);
     }
 
     else{
