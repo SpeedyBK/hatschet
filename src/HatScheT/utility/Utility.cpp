@@ -122,6 +122,13 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
   return outputs;
 }
 
+bool Utility::IIisRational(double II) {
+  double intpart;
+  if(modf(II, &intpart) != 0.0) {
+    return true;
+  }
+  return false;
+}
 
 double Utility::calcMinII(double minResII, double minRecII)
 {

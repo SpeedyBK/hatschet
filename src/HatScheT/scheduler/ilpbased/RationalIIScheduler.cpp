@@ -356,6 +356,18 @@ void RationalIIScheduler::fillSolutionStructure() {
   this->startTimeVector.resize(0);
   this->initInvervals.resize(0);
 
+  //store schedule using standard interface if uniform schedule is true
+  if(this->uniformSchedule == true){
+    for (std::set<Vertex *>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
+      Vertex* v = *it;
+      unsigned int index =this->tIndices.at(v);
+      ScaLP::Variable svTemp = this->t_matrix[0][index];
+
+      int startTime = this->r.values[svTemp];
+      this->startTimes.insert(make_pair(v,startTime));
+    }
+  }
+
   //store start times of the scheduled samples
   for(int i = 0; i < this->t_matrix.size(); i++) {
     std::map<Vertex*,int> tempMap;

@@ -77,6 +77,12 @@ public:
   * \return
   */
  static double calcMinII(double minResII, double minRecII);
+ /*!
+  *
+  * @param II
+  * @return
+  */
+ static bool IIisRational(double II);
 #ifdef USE_SCALP
  /*!
   * \brief calcResMII with or witout a specific target
@@ -143,6 +149,12 @@ public:
   * \return
   */
  static bool existEdgeBetweenVertices(Graph* g, Vertex *Vsrc, Vertex *Vdst);
+ /*!
+  *
+  * @param occ1
+  * @param occ2
+  * @return
+  */
  static bool occurrencesAreConflictFree(Occurrence* occ1, Occurrence* occ2);
  /*!
   * \brief occurenceSetsAreConflictFree
@@ -191,9 +203,19 @@ public:
   * \return
   */
  static int calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r);
-
+ /*!
+  *
+  * @param rm
+  * @param t
+  * @return
+  */
  static bool resourceModelAndTargetValid(ResourceModel &rm, Target& t);
-
+ /*!
+  *
+  * @param g
+  * @param rm
+  * @return
+  */
  static bool everyVertexisRegistered(Graph& g, ResourceModel &rm);
  /*!
   * return numerator and denominator of a rational number stored in double
