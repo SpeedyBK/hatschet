@@ -8,6 +8,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 
 #include <vector>
 #include <string>
@@ -32,7 +33,44 @@ namespace HatScheT
 
     std::ostream& operator<<( std::ostream& oss, HatScheT::TimeoutException &e);
 
-    class ModSDC : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
+    class PriorityHandler
+	{
+	public:
+		/*!
+		 * @brief this is used to determine the order of the schedule queue
+		 */
+		enum priorityType
+		{
+			RANDOM, // random ordering
+			ASAP, // based on inverse asap times
+			ALAP, // based on inverse alap times
+			MOBILITY_HIGH, // based on difference between alap and alap times; HIGH mobility vertices are scheduled FIRST
+			MOBILITY_LOW, // based on difference between alap and alap times; LOW mobility vertices are scheduled FIRST
+			MOBLAP, // combine ALAP and MOBILITY_LOW; LOW mobility vertices with LOW alap time are scheduled FIRST
+			ALABILITY, // combine ALAP and MOBILITY_LOW; LOW alap time vertices with LOW mobility are scheduled FIRST
+			SUBSEQUALAP, // combine the number of subsequent vertices with ALAP time
+			CUSTOM, // priority must be set manually (only feasible if HatScheT is used as library)
+			NONE
+		};
+		inline static std::list<priorityType> getAllAutomaticPriorityTypes() {return {SUBSEQUALAP,ALABILITY,MOBLAP,ALAP,ASAP,MOBILITY_LOW,MOBILITY_HIGH,RANDOM};}
+		static priorityType getPriorityTypeFromString(std::string priorityTypeStr);
+
+		PriorityHandler(priorityType p, int prio1, int prio2 = 0);
+		inline priorityType getPriorityType() const {return this->pType;}
+		inline int getFirstPriority() const {return this->firstPriority;}
+		inline int getSecondPriority() const {return this->secondPriority;}
+
+		static void putIntoSchedQueue(Vertex* v, const priorityType &p, const map<Vertex*,PriorityHandler*>* pHandlers, std::list<Vertex*> *schedQ);
+
+		static std::string getPriorityTypeAsString(const priorityType &p);
+
+	protected:
+		priorityType pType;
+		int firstPriority;
+		int secondPriority;
+	};
+
+    class ModSDC : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
     {
     public:
         /*!
@@ -44,11 +82,19 @@ namespace HatScheT
          * @param sw solver wishlist
          */
         ModSDC(Graph& g, ResourceModel &rm, std::list<std::string> &sw);
+        /*!
+         * @brief destructor
+         */
         ~ModSDC() override;
         /*!
          * @brief schedule main method that runs the algorithm and determines a schedule
          */
         void schedule() override;
+        /*!
+         * @brief override SchedulerBase::getBindings()
+         * @return
+         */
+		std::map<const Vertex*,int> getBindings() override;
         /*!
          * the status of the ilp solver does not provide any information
          * about the quality of the solution, because many ilp problems are
@@ -60,7 +106,7 @@ namespace HatScheT
          * @brief defines a new budget
          * @param newBudget
          */
-        void setBudget(int &newBudget){this->budget = newBudget;}
+        void setBudgetMultiplier(unsigned int &newBudget){this->budgetMultiplier = newBudget;}
         /*!
          * @brief getNumberOfConstrainedVertices
          * @param g graph which contains vertices
@@ -68,15 +114,48 @@ namespace HatScheT
          * @return the number of resource constrained vertices
          */
         static int getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm);
+		/*!
+		 * @brief
+		 * @return the total time spent in ilp solvers
+		 */
+        double getTimeInILPSolvers() const {return this->timeInILPSolvers;}
         /*!
-         * @brief get schedule length (return this->scheduleLength)
+         * @brief set variable for this->fastObjective (see below for details)
+         * @param b
          */
-        int getScheduleLength() override {return this->scheduleLength;}
+        void setFastObjective(bool b) {this->fastObjective = b;}
+		/*!
+		 * @brief set priority type for scheduling queue ordering
+		 * @param p
+		 */
+		void setPriorityType(PriorityHandler::priorityType p) {this->pType = p;}
+		/*!
+		 * @brief use this function to set the priority for each vertex (if you want to set them all manually)
+		 * only use this if priorityType == CUSTOM, otherwise this has no effect
+		 * @param v
+		 * @param p
+		 */
+		void setPriority(Vertex* v, PriorityHandler p);
     private:
-        /*!
-         * @brief schedule length, i.e. time of last sample (determined by ilp solver)
-         */
-        int scheduleLength;
+    	/*!
+    	 * @brief create a resource model with unlimited resources for each resource type
+    	 * @return the address (don't forget to delete it when it's not needed anymore!)
+    	 */
+    	ResourceModel* getUnlimitedResourceModel();
+    	/*!
+    	 * @brief create asap schedule of this->g without resource constraints
+    	 * @return map of start times
+    	 */
+		map<Vertex*, int> getASAPScheduleWithoutResourceConstraints();
+		/*!
+    	 * @brief create alap schedule of this->g without resource constraints
+    	 * @return map of start times
+    	 */
+		map<Vertex*, int> getALAPScheduleWithoutResourceConstraints();
+    	/*!
+    	 * @brief track time spent in ilp solvers
+    	 */
+    	double timeInILPSolvers;
         /*!
          * @brief just print the found schedule
          */
@@ -84,12 +163,14 @@ namespace HatScheT
         /*!
          * @brief manages the time budget between solving ilps
          */
-        void manageTimeBudget();
+        bool manageTimeBudgetSuccess();
+        /*!
+         * @brief reset all timers etc
+         */
+        void handleTimeout();
         /*!
          * @brief is used to calculate this->timeBudget
          */
-        //time_t timeTracker;
-        //struct timeval timeTracker;
         std::chrono::high_resolution_clock::time_point timeTracker;
         /*!
          * @brief keep track of the overall time budget, so the algorithm runs only as long as specified by the user
@@ -100,18 +181,23 @@ namespace HatScheT
          */
         std::list<Vertex*> schedQueue;
         /*!
-         * @brief put instruction 'I' into this->schedQueue based in priority function in paper
-         * @param I
-         */
-        void putIntoSchedQueue(Vertex* I);
-        /*!
          * @brief map to store priority for scheduling queue
          */
-        map<Vertex*, int> priorityForSchedQueue;
+		map<Vertex*, PriorityHandler*> priorityForSchedQueue;
         /*!
-         * @brief fill this->priorityForSchedQueue
+         * @brief fill this->priorityForSchedQueue based on method specified in this->pType
          */
         void calculatePriorities();
+        /*!
+         * @brief see enum for details
+         */
+		PriorityHandler::priorityType pType;
+        /*!
+         * @brief get number of vertices which depend on the result of vertex 'v'
+         * @param v
+         * @return
+         */
+		int getNoOfSubsequentVertices(Vertex* v);
         /*!
          * @brief one iteration of Modulo SDC algorithm
          * @param II the II to try and find a scheduling for
@@ -124,7 +210,7 @@ namespace HatScheT
          * @brief creates scheduling queue based on initial asap scheduling
          * @param scheduleMe asap scheduling
          */
-        void createSchedulingQueue(const std::map<Vertex*,int>& scheduleMe);
+        void createSchedulingQueue(std::list<Vertex*> scheduleMe);
         /*!
          * @brief getInitialSchedule
          * @return an asap schedule without resource constraints
@@ -142,6 +228,12 @@ namespace HatScheT
          * @brief setObjective
          */
         void setObjective() override;
+        /*!
+         * @brief instead of minimizing last start time, minimize sum of all start time
+         * => objective function is more complex, but the number of constraints is nearly halfed!
+         * 	=> that is faster but the latency is not always optimal!
+         */
+        bool fastObjective;
         /*!
          * @brief this is needed for this->setObjective()
          */
@@ -213,7 +305,7 @@ namespace HatScheT
          * @param v
          * @param c
          */
-        void createAdditionalConstraint(Vertex* v, ScaLP::Constraint& c);
+        inline void createAdditionalConstraint(Vertex* v, ScaLP::Constraint& c);
         /*!
          * @brief this clears the constraints associated to the given vertexptr
          * @param v
@@ -240,7 +332,7 @@ namespace HatScheT
         /*!
          * @brief get previously scheduled time for a given vertex; needed for backtracking
          * @param v vertex
-         * @return -1 if no prevSched has no entry for the given vertex
+         * @return -1 if prevSched has no entry for the given vertex
          */
         int getPrevSched(Vertex* v);
         /*!
@@ -249,18 +341,6 @@ namespace HatScheT
          * @param time time slot
          */
         void backtracking(Vertex* I, const int &time);
-        /*!
-         * @brief checks if a resource conflict exists when scheduling instruction 'I' at time slot 'evictTime'
-         * @param I instruction
-         * @param evictTime time slot
-         * @return true if a conflict exists
-         */
-        bool resourceConflict(Vertex* I, const int &evictTime);
-        /*!
-         * @param t time slot
-         * @return all vertices scheduled to the given time slot 't'
-         */
-        std::list<Vertex*> getVerticesAtTimeSlot(const int &t);
         /*!
          * @param I Instruction
          * @param evictTime
@@ -272,12 +352,12 @@ namespace HatScheT
          * @param I
          * @param time
          */
-        void scheduleInstruction(Vertex* I, int t, bool verbose = false);
+        void scheduleInstruction(Vertex* I, int t);
         /*!
          * @brief remove instruction 'evictInst' from this->mrt, clear additional constraints for this vertex and add to schedule queue
          * @param evictInst
          */
-        void unscheduleInstruction(Vertex* evictInst, bool verbose = false);
+        void unscheduleInstruction(Vertex* evictInst);
         /*!
          * @param I instruction
          * @param evictTime
@@ -286,23 +366,30 @@ namespace HatScheT
         bool dependencyConflict(Vertex* I, const int &evictTime);
         /*!
          * @param i start of an edge (j is the destination, that doesn't have to be passed)
-         * @paragm newStartTime_i new start time of instruction i
-         * @paragm newStartTime_j new start time of instruction j
+         * @param newStartTime_i new start time of instruction i
+         * @param newStartTime_j new start time of instruction j
          * @param edgeDelay delay on edge between operation i and j
          * @param distance on edge between operation i and j
          * @return end_i - start_j <= II * distance(i,j)
          */
         bool dependencyConflictForTwoInstructions(Vertex* i, const int &newStartTime_i, const int &newStartTime_j, const int& edgeDelay, const int& edgeDistance);
         /*!
-         * @brief fill map with start times for unconstrained instructions
-         * after finding a valid schedule for all resource constrained ones
-         */
-        void fillStartTimesWithUnconstrainedInstructions();
-        /*!
          * @brief clear all unnecessary data between iterations (e.g. mrt, schedQueue, ...)
          */
         void clearMaps();
-
+        /*!
+         * @brief print all additional constraints for solver
+         */
+        void printAdditionalSolverConstraints();
+        /*!
+         * @brief
+         * @return all vertices with limit != -1
+         */
+        list<Vertex*> getResourceConstrainedVertices();
+        /*!
+         * @brief is used to determine budget per II
+         */
+        unsigned int budgetMultiplier;
     };
 }
 

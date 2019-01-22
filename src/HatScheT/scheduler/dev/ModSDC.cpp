@@ -5,6 +5,11 @@
 #include "ModSDC.h"
 #include <cmath>
 #include <ctime>
+#include <stdlib.h>
+#include <sstream>
+#include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT
 {
@@ -18,33 +23,29 @@ namespace HatScheT
         return oss << e.msg;
     }
 
+    ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> &sw) :
+        SchedulerBase(g,rm), ILPSchedulerBase(sw),
+        priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
+        pType(PriorityHandler::priorityType::ALAP), budget(-1), uniqueVariableName(""),
+        budgetMultiplier(6) {
 
-
-
-    ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> &sw) : SchedulerBase(g,rm), ILPSchedulerBase(sw), priorityForSchedQueue(), schedQueue(), scalpVariables() {
-        cout << "#q# MODSDC CONSTRUCTOR START" << endl;
+        this->solverQuiet = true;
         this->computeMinII(&this->g,&resourceModel);
-        cout << "#q# 1" << endl;
         this->minII = ceil(this->minII);
-        cout << "#q# 2" << endl;
         this->computeMaxII(&g, &resourceModel);
-        cout << "#q# 3" << endl;
         if (minII >= maxII) maxII = (int)minII+1;
-        cout << "#q# 4" << endl;
-        this->budget = -1;
-        cout << "#q# 5" << endl;
-        this->uniqueVariableName = "";
-        cout << "#q# 6" << endl;
-        this->solverQuiet = false;
-        cout << "#q# MODSDC CONSTRUCTOR END" << endl;
+
     }
 
     void ModSDC::schedule() {
-        cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "'" << endl;
+        time_t t = time(nullptr);
+        cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
+		this->calculatePriorities(); // calculate priorities for scheduling queue
+		t = time(nullptr);
+		cout << "ModSDC::schedule: time after calculating priorities: " << ctime(&t) << endl;
         this->mrt = std::map<Vertex*, int>(); // create empty mrt
         if(this->budget<0) this->setDefaultBudget(); // set default budget according to paper if no budget was given by the user
         this->timeBudget = (double)this->solverTimeout;
-        //this->timeTracker = time(nullptr);
         this->timeTracker = std::chrono::high_resolution_clock::now();
 
         for(this->II=this->minII; this->II<=this->maxII; this->II++)
@@ -53,12 +54,12 @@ namespace HatScheT
             bool foundSolution = this->modSDCIteration((int)this->II,this->budget);
             if(foundSolution)
             {
-                this->manageTimeBudget(); // this should never throw an error at this point
-                /*
-                this->startTimes = this->mrt;
-                 */
+				cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
+                if(!this->manageTimeBudgetSuccess())
+                {
+                    throw HatScheT::Exception("Time budget used up after scheduling success - that should never happen!");
+                }
                 this->startTimes = this->sdcTimes; // last result from ILP solver is a valid schedule!
-                this->fillStartTimesWithUnconstrainedInstructions();
                 this->printSchedule();
                 break;
             }
@@ -67,8 +68,9 @@ namespace HatScheT
                 cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
                 if(this->II == this->maxII)
                 {
-                    cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName() << "', consider a higher budget" << endl;
-                    throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget");
+                	cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
+                    cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName() << "', consider a higher budget or another priority function" << endl;
+                    throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget or another priority function");
                 }
             }
             this->clearMaps();
@@ -83,33 +85,43 @@ namespace HatScheT
     }
 
     void ModSDC::setObjective() {
-        ScaLP::Term o;
-        // minimize the latest end time
-        // do that by creating a new variable with the constraint t_new >= t_start(i) + latency(i)
-        this->setUniqueVariableName();
-        ScaLP::Variable newVar = ScaLP::newIntegerVariable(this->uniqueVariableName,0,ScaLP::INF());
-
-        for(auto it : this->scalpVariables)
-        {
-            ScaLP::Constraint c = (newVar-it.second >= this->resourceModel.getResource(it.first)->getLatency());
-            *this->solver << c;
+        if(this->fastObjective) {
+            // minimize sum of all start times (significantly less constraints, but slightly more complex objective)
+            ScaLP::Term o;
+            for(auto it : this->scalpVariables) {
+                o += it.second;
+            }
+            this->solver->setObjective(ScaLP::minimize(o));
         }
-        o = 1*newVar;
-        this->solver->setObjective(ScaLP::minimize(o));
+        else {
+            // minimize the latest end time
+            // do that by creating a new variable with the constraint t_new >= t_start(i) + latency(i)
+            this->setUniqueVariableName();
+            ScaLP::Variable newVar = ScaLP::newIntegerVariable(this->uniqueVariableName,0,ScaLP::INF());
+            for(auto it : this->scalpVariables)
+            {
+                ScaLP::Constraint c = (newVar-it.second >= this->resourceModel.getResource(it.first)->getLatency());
+                *this->solver << c;
+            }
+            ScaLP::Term o = 1*newVar;
+            this->solver->setObjective(ScaLP::minimize(o));
+        }
     }
 
-    void ModSDC::createSchedulingQueue(const std::map<Vertex*, int> &scheduleMe) {
+    void ModSDC::createSchedulingQueue(const std::list<Vertex*> scheduleMe) {
         for(auto it : scheduleMe)
         {
-            Vertex* v = it.first;
-            if(this->resourceModel.getResource(v)->getLimit()>0)
+            if(this->resourceModel.getResource(it)->getLimit()>0)
             {
-                this->schedQueue.emplace_back(v);
+                PriorityHandler::putIntoSchedQueue(it,this->pType,&this->priorityForSchedQueue,&this->schedQueue);
             }
         }
     }
 
     bool ModSDC::modSDCIteration(const int &II, int budget) {
+
+        // delete scheduling constraints from previous iteration
+        this->clearAllAdditionalConstraints();
         //////////////////////
         // ALGORITHM LINE 1 //
         //////////////////////
@@ -119,21 +131,11 @@ namespace HatScheT
         // ALGORITHM LINE 2 //
         //////////////////////
         // create scheduling queue from all resource constrained instructions
-        this->createSchedulingQueue(this->asapTimes);
+        this->createSchedulingQueue(this->getResourceConstrainedVertices());
         this->sdcTimes = this->asapTimes;
-        // delete scheduling constraints from previous iteration
-        this->clearAllAdditionalConstraints();
+
         while((!this->schedQueue.empty()) && (budget>=0))
         {
-            try {
-                this->manageTimeBudget();
-            }
-            catch(HatScheT::TimeoutException &e){
-                this->timeBudget = this->solverTimeout;
-                //this->timeTracker = time(nullptr);
-                this->timeTracker = std::chrono::high_resolution_clock::now();
-                return false;
-            }
             //////////////////////
             // ALGORITHM LINE 4 //
             //////////////////////
@@ -165,13 +167,22 @@ namespace HatScheT
                 ///////////////////////
                 // ALGORITHM LINE 11 //
                 ///////////////////////
-                bool foundSolution = this->solveSDCProblem();
+                bool foundSolution;
+                try
+                {
+                    foundSolution = this->solveSDCProblem();
+                }
+                catch(HatScheT::TimeoutException &e)
+                {
+                    this->handleTimeout();
+                    return false;
+                }
                 if(foundSolution)
                 {
                     ///////////////////////
                     // ALGORITHM LINE 13 //
                     ///////////////////////
-                    this->putIntoSchedQueue(I);
+                    PriorityHandler::putIntoSchedQueue(I,this->pType,&this->priorityForSchedQueue,&this->schedQueue);
                 }
                 else
                 {
@@ -182,14 +193,28 @@ namespace HatScheT
                     ///////////////////////
                     // ALGORITHM LINE 16 //
                     ///////////////////////
-                    this->backtracking(I,time);
+                    try{
+                        this->backtracking(I,time);
+                    }
+                    catch(HatScheT::TimeoutException &e)
+                    {
+                        this->handleTimeout();
+                        return false;
+                    }
                     ///////////////////////
                     // ALGORITHM LINE 17 //
                     ///////////////////////
-                    foundSolution = this->solveSDCProblem(true);
-                    if(!foundSolution){
-                        cout << "ERROR: ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
-                        throw HatScheT::Exception("ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution");
+                    try {
+                        foundSolution = this->solveSDCProblem(true);
+                        if(!foundSolution){
+                            cout << "ERROR: ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
+                            throw HatScheT::Exception("ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution");
+                        }
+                    }
+                    catch(HatScheT::TimeoutException &e)
+                    {
+                        this->handleTimeout();
+                        return false;
                     }
                 }
             }
@@ -200,16 +225,11 @@ namespace HatScheT
         }
         // reset timer for next II calculation
         this->timeBudget = this->solverTimeout;
-        //this->timeTracker = time(nullptr);
         this->timeTracker = std::chrono::high_resolution_clock::now();
         ///////////////////////
         // ALGORITHM LINE 22 //
         ///////////////////////
-        if(!this->schedQueue.empty())
-        {
-            return false;
-        }
-        return true;
+        return this->schedQueue.empty();
     }
 
     bool ModSDC::hasResourceConflict(const Vertex *I, const int &t) const {
@@ -223,16 +243,20 @@ namespace HatScheT
             if(this->resourceModel.getResource(I) == this->resourceModel.getResource(v))
             {
                 // they need the same resource type in the same time slot
-                if((t%((int)this->II)) == (t2%((int)this->II))) neededResources++;
+                if((t%((int)this->II)) == (t2%((int)this->II))) {
+                	neededResources++;
+                }
                 // resource conflict if more resources are needed than available
-                if(neededResources >= limit) return true;
+                if(neededResources >= limit) {
+                	return true;
+                }
             }
         }
         return false;
     }
 
     void ModSDC::setDefaultBudget() {
-        this->budget = 6 * this->g.getNumberOfVertices();
+		this->budget = (int)(this->budgetMultiplier * this->g.getNumberOfVertices());
     }
 
     void ModSDC::createScalpVariables() {
@@ -273,8 +297,7 @@ namespace HatScheT
     }
 
     void ModSDC::createDataDependencyConstraints() {
-        for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); it++)
-        {
+        for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); it++) {
             Edge* edge = (*it);
             Vertex& src = edge->getVertexSrc();
             Vertex& dst = edge->getVertexDst();
@@ -284,19 +307,16 @@ namespace HatScheT
     }
 
     ScaLP::Constraint* ModSDC::getAdditionalConstraint(Vertex *v) {
-        try
-        {
+        try {
             return this->additionalConstraints.at(v);
         }
-        catch(std::out_of_range&)
-        {
+        catch(std::out_of_range&) {
             return nullptr;
         }
     }
 
     void ModSDC::clearConstraintForVertex(Vertex *v) {
-        if(this->getAdditionalConstraint(v)!=nullptr)
-        {
+        if(this->getAdditionalConstraint(v)!=nullptr) {
             delete this->additionalConstraints.at(v);
             this->additionalConstraints.erase(v);
         }
@@ -307,22 +327,36 @@ namespace HatScheT
     }
 
     void ModSDC::createAdditionalConstraints() {
-        for(auto it : this->additionalConstraints)
-        {
+        for(auto it : this->additionalConstraints) {
             *this->solver << *it.second;
         }
     }
 
     void ModSDC::clearAllAdditionalConstraints() {
-        for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); it++)
-        {
+        for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); it++) {
             this->clearConstraintForVertex(*it);
         }
     }
 
     bool ModSDC::solveSDCProblem(bool printDetailsOnFailure) {
+        std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
         this->setUpScalp();
+        if(!this->manageTimeBudgetSuccess()) {
+            cout << "Timeout!" << endl;
+            throw HatScheT::TimeoutException("Time budget empty when trying to find solution for II="+to_string(this->II));
+        }
+
+        // solve ilp and track time
         ScaLP::status s = this->solver->solve();
+        std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2-t1);
+        this->timeInILPSolvers += (((double)timeSpan.count())/1000000000.0);
+
+        if(s==ScaLP::status::TIMEOUT_INFEASIBLE)
+        {
+            cout << "Timeout!" << endl;
+            throw HatScheT::TimeoutException("Solver timeout when trying to find solution for II="+to_string(this->II));
+        }
         if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL) && (s!=ScaLP::status::TIMEOUT_FEASIBLE)) {
             if(printDetailsOnFailure)
             {
@@ -335,13 +369,14 @@ namespace HatScheT
             }
             return false;
         }
+
         ScaLP::Result r = this->solver->getResult();
         for(auto it : r.values)
         {
             Vertex* v = this->getVertexFromVariable(it.first);
             if(v != nullptr) this->sdcTimes[v] = (int)it.second;
-            else this->scheduleLength = (int)it.second;
         }
+
         return true;
     }
 
@@ -378,7 +413,7 @@ namespace HatScheT
         //////////////////////
         int prevSchedTime = this->getPrevSched(I);
         int evictTime;
-        if(prevSchedTime<0 || minTime>=prevSchedTime)
+        if(minTime>=prevSchedTime || prevSchedTime<0)
         {
             //////////////////////
             // ALGORITHM LINE 7 //
@@ -402,7 +437,7 @@ namespace HatScheT
         {
             this->unscheduleInstruction(it);
             // PUT OPERATION BACK INTO QUEUE EVEN THO IT IS NOT SPECIFIED IN PSEUDOCODE!
-            this->putIntoSchedQueue(it);
+            PriorityHandler::putIntoSchedQueue(it,this->pType,&this->priorityForSchedQueue,&this->schedQueue);
         }
         ///////////////////////
         // ALGORITHM LINE 16 //
@@ -412,7 +447,8 @@ namespace HatScheT
             ///////////////////////
             // ALGORITHM LINE 17 //
             ///////////////////////
-            for(auto it : this->additionalConstraints)
+            auto copy = this->additionalConstraints;
+            for(auto it : copy)
             {
                 ///////////////////////////
                 // ALGORITHM LINES 18-19 //
@@ -421,8 +457,10 @@ namespace HatScheT
                 ///////////////////////
                 // ALGORITHM LINE 20 //
                 ///////////////////////
-                this->putIntoSchedQueue(it.first);
+                PriorityHandler::putIntoSchedQueue(it.first,this->pType,&this->priorityForSchedQueue,&this->schedQueue);
             }
+
+
         }
         //////////////////////////
         // ALGORITHM LINE 23-24 //
@@ -430,25 +468,15 @@ namespace HatScheT
         scheduleInstruction(I,evictTime);
     }
 
-    bool ModSDC::resourceConflict(Vertex *I, const int &evictTime) {
-        unsigned int usedResources = 0;
-        auto maxResources = (unsigned int)this->resourceModel.getResource(I)->getLimit(); // limit=-1 => unsigned int maximum
-        std::list<Vertex*> verticesAtTimeSlot = this->getVerticesAtTimeSlot(evictTime);
-        for(auto v : verticesAtTimeSlot)
-        {
-            if(this->resourceModel.getResource(v) == this->resourceModel.getResource(I)) usedResources++;
-            if(usedResources>maxResources) return true;
-        }
-        return false;
-    }
-
     void ModSDC::createInitialSchedule() {
         this->setUpScalp();
-        ScaLP::status s = this->solver->solve();
+        ScaLP::status s = this->solver->solve(); // solver should never timeout here...
         if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL) && (s!=ScaLP::status::TIMEOUT_FEASIBLE))
         {
             cout << "ScaLP Backend: " << this->solver->getBackendName() << endl;
             cout << "ScaLP Status: " << s << endl;
+            cout << "Additional constraints: " << endl;
+            this->printAdditionalSolverConstraints();
             cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
             throw HatScheT::Exception("ModSDC::createInitialSchedule: failed to find schedule without resource constraints");
         }
@@ -458,19 +486,8 @@ namespace HatScheT
         {
             Vertex* v = this->getVertexFromVariable(it.first);
             if(v != nullptr) this->asapTimes[v] = (int)it.second;
-            else this->scheduleLength = (int)it.second;
         }
 
-        this->calculatePriorities(); // calculate priorities for scheduling queue
-    }
-
-    std::list<Vertex *> ModSDC::getVerticesAtTimeSlot(const int &t) {
-        std::list<Vertex*> l;
-        for(auto it : this->sdcTimes)
-        {
-            if(it.second == t) l.emplace_back(it.first);
-        }
-        return l;
     }
 
     std::list<Vertex*> ModSDC::getResourceConflicts(Vertex* I, const int &evictTime) {
@@ -480,13 +497,12 @@ namespace HatScheT
         {
             auto v = it.first;
             auto t = it.second;
-            if(this->resourceModel.getResource(v) == resourceType && t==evictTime && v!=I) l.emplace_back(v);
+            if(this->resourceModel.getResource(v) == resourceType && (t%((int)this->II))==(evictTime%((int)this->II)) && v!=I) l.emplace_back(v);
         }
         return l;
     }
 
-    void ModSDC::unscheduleInstruction(Vertex *evictInst, bool verbose) {
-        if(verbose) cout << "ModSDC::unscheduleInstruction: unscheduling instruction " << evictInst->getName() << endl;
+    void ModSDC::unscheduleInstruction(Vertex *evictInst) {
         this->clearConstraintForVertex(evictInst);
         this->mrt.erase(evictInst);
     }
@@ -545,85 +561,142 @@ namespace HatScheT
         this->solver->timeout=(long)this->timeBudget;
     }
 
-    void ModSDC::fillStartTimesWithUnconstrainedInstructions() {
-        /*
-        for(auto it : this->sdcTimes)
-        {
-            if(it.second<0)
-                throw HatScheT::Exception("Error: ModSDC::fillStartTimesWithUnconstrainedInstructions: invalid start time found by ILP solver for Instruction '"+it.first->getName()+"': "+to_string(it.second)+"");
-            try
-            {
-                this->startTimes.at(it.first);
-            }
-            catch(std::out_of_range&)
-            {
-                this->startTimes[it.first] = it.second;
-            }
-        }
-         */
-    }
-
-    void ModSDC::putIntoSchedQueue(Vertex *I) {
-        int prio = this->priorityForSchedQueue.at(I);
-        for(auto it = this->schedQueue.begin(); it != this->schedQueue.end(); it++)
-        {
-            if(prio >= this->priorityForSchedQueue.at(*it))
-            {
-                this->schedQueue.emplace(it,I);
-                return;
-            }
-        }
-        this->schedQueue.emplace_back(I);
-    }
-
     void ModSDC::calculatePriorities() {
-        // priority of an instruction depends on how many operations depend on the result of this one
-        // use asap times to estimate that metric :)
-        int scheduleLength = 0;
-        for(auto it : this->solver->getResult().values)
-        {
-            bool found = false;
-            for(auto it2 : this->scalpVariables)
-            {
-                if(it.first == it2.second)
-                {
-                    found = true;
-                    break;
+        // Paper: priority of an instruction depends on how many operations depend on the result of this one
+        // => different metrics possible; only god knows whats best
+        switch (this->pType) {
+            case PriorityHandler::priorityType::ALAP: {
+                auto p = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : p) {
+                	if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+						this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second);
+                	}
                 }
-            }
-            // schedule length is coded into the additional variable (created in this->setObjective())
-            if(!found) {
-                scheduleLength = (int)it.second;
                 break;
             }
-        }
-        for(auto it : this->asapTimes)
-        {
-            this->priorityForSchedQueue[it.first] = scheduleLength - it.second;
+            case PriorityHandler::priorityType::ASAP: {
+                auto p = this->getASAPScheduleWithoutResourceConstraints();
+                for(auto it : p) {
+					if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+						this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second);
+					}
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::MOBILITY_LOW: {
+                auto pASAP = this->getASAPScheduleWithoutResourceConstraints();
+                auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : pALAP) {
+                    try {
+						if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+							this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second-pASAP.at(it.first));
+						}
+                    }
+                    catch(std::out_of_range&) {
+                        throw HatScheT::Exception("Can't determine priority for scheduling queue, ASAP or ALAP scheduler might be buggy");
+                    }
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::MOBILITY_HIGH: {
+                auto pASAP = this->getASAPScheduleWithoutResourceConstraints();
+                auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : pALAP) {
+                    try {
+						if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+							this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second-pASAP.at(it.first));
+						}
+                    }
+                    catch(std::out_of_range&) {
+                        throw HatScheT::Exception("Can't determine priority for scheduling queue, ASAP or ALAP scheduler might be buggy");
+                    }
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::MOBLAP: {
+                auto pASAP = this->getASAPScheduleWithoutResourceConstraints();
+                auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : pALAP) {
+                    try {
+						if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+							this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second-pASAP.at(it.first),it.second);
+						}
+                    }
+                    catch(std::out_of_range&) {
+                        throw HatScheT::Exception("Can't determine priority for scheduling queue, ASAP or ALAP scheduler might be buggy");
+                    }
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::ALABILITY: {
+                auto pASAP = this->getASAPScheduleWithoutResourceConstraints();
+                auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : pALAP) {
+                    try {
+						if(this->resourceModel.getResource(it.first)->getLimit()>=0){
+							this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,it.second,it.second-pASAP.at(it.first));
+						}
+                    }
+                    catch(std::out_of_range&) {
+                        throw HatScheT::Exception("Can't determine priority for scheduling queue, ASAP or ALAP scheduler might be buggy");
+                    }
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::SUBSEQUALAP: {
+                auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
+                for(auto it : pALAP) {
+                    auto noOfSubseq = this->getNoOfSubsequentVertices(it.first);
+                    this->priorityForSchedQueue[it.first] = new PriorityHandler(this->pType,noOfSubseq,it.second);
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::RANDOM: {
+                srand((unsigned int)time(nullptr));
+                for(auto it : this->g.Vertices()) {
+					if(this->resourceModel.getResource(it)->getLimit()>=0){
+						this->priorityForSchedQueue[it] = new PriorityHandler(this->pType,rand());
+					}
+                }
+                break;
+            }
+            case PriorityHandler::priorityType::CUSTOM: {
+				// just check if all priorities are set
+				for(auto it : this->g.Vertices()) {
+					if(this->resourceModel.getResource(it)->getLimit()>=0) {
+						try {
+							this->priorityForSchedQueue.at(it);
+						}
+						catch(std::out_of_range&) {
+							throw HatScheT::Exception("Priority for vertex '"+it->getName()+"' is not set");
+						}
+					}
+				}
+				break;
+			}
+            default:
+                throw HatScheT::Exception("No priority type for scheduling queue order specified");
         }
     }
 
     ModSDC::~ModSDC() {
-        for(auto it : this->additionalConstraints) delete it.second;
+		for(auto it : this->additionalConstraints) delete it.second;
+		for(auto it : this->priorityForSchedQueue) delete it.second;
     }
 
-    void ModSDC::manageTimeBudget() {
+    bool ModSDC::manageTimeBudgetSuccess() {
         std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
         std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp-this->timeTracker);
         double elapsedTime = ((double)timeSpan.count())/1000.0;
         this->timeTracker = tp;
         this->timeBudget -= elapsedTime;
-        if(this->timeBudget<0) {
-            cout << "timeout :)" << endl;
-            throw HatScheT::TimeoutException("Timeout for II="+to_string(this->II));
-        }
+        return this->timeBudget>=0.0;
     }
 
     void ModSDC::printSchedule() {
         cout << "Found schedule with ModSDC!" << endl;
         cout << "    elapsed time: " << (double)this->solverTimeout - this->timeBudget << " sec; II=" << this->II << endl;
-        for(auto it : this->startTimes)
-        {
+        for(auto it : this->startTimes) {
             cout << "    " << it.first->getName() << ": " << it.second << endl;
         }
     }
@@ -636,15 +709,268 @@ namespace HatScheT
         this->schedQueue.clear();
     }
 
-    void ModSDC::scheduleInstruction(Vertex *I, int t, bool verbose) {
-        if(verbose) cout << "ModSDC::scheduleInstruction: scheduling instruction " << I->getName() << endl;
-        if(t<0)
-            throw HatScheT::Exception("Error: ModSDC::scheduleInstruction: Can't schedule instruction '"+I->getName()+"' to a cycle <0");
-        ScaLP::Constraint c(this->scalpVariables[I] == t);
+    void ModSDC::scheduleInstruction(Vertex *I, int t) {
+        ScaLP::Constraint c(this->scalpVariables.at(I) == t);
         this->createAdditionalConstraint(I,c);
         this->mrt[I] = t;
         this->prevSched[I] = t;
     }
 
+    void ModSDC::handleTimeout() {
+        this->timeBudget = this->solverTimeout;
+        this->timeTracker = std::chrono::high_resolution_clock::now();
+    }
 
+    void ModSDC::printAdditionalSolverConstraints() {
+        for(auto it : this->additionalConstraints) {
+            cout << (*it.second) << endl;
+        }
+    }
+
+	int ModSDC::getNoOfSubsequentVertices(Vertex *v) {
+        int noOfSubseq = 0;
+        std::map<Vertex*,bool> visited;
+        for(auto it : this->g.Vertices()) {
+            visited[it] = false;
+        }
+
+        std::list<Vertex*> queue = {v};
+
+        while(!queue.empty()) {
+            Vertex* pop = queue.front();
+            queue.pop_front();
+
+            for(auto it : this->g.Edges()) {
+                if(&it->getVertexSrc() == pop) {
+                    Vertex* dst = &it->getVertexDst();
+                    if(!visited[dst]) {
+                        visited[dst] = true;
+                        queue.emplace_back(dst);
+                        noOfSubseq++;
+                    }
+                }
+            }
+        }
+
+        return noOfSubseq;
+    }
+
+    map<Vertex *, int> ModSDC::getASAPScheduleWithoutResourceConstraints() {
+        auto resM = this->getUnlimitedResourceModel();
+        auto asap = ASAPScheduler(this->g,*resM);
+        asap.schedule();
+        delete resM;
+        return asap.getSchedule();
+    }
+
+    map<Vertex *, int> ModSDC::getALAPScheduleWithoutResourceConstraints() {
+        auto resM = this->getUnlimitedResourceModel();
+        auto alap = ALAPScheduler(this->g,*resM);
+        alap.schedule();
+        delete resM;
+        return alap.getSchedule();
+    }
+
+    ResourceModel* ModSDC::getUnlimitedResourceModel() {
+        auto resM = new ResourceModel();
+        for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); it++) {
+            // copy resource but make it unlimited
+            auto originalRes = (*it);
+            int limit = -1; // unlimited resource
+            // special_loop always throws an error if it's not set to 1
+            if(originalRes->getName() == "special_loop") limit = 1;
+            Resource &res = resM->makeResource(originalRes->getName(),limit,originalRes->getLatency(),originalRes->getBlockingTime());
+            auto vertices = this->resourceModel.getVerticesOfResource(originalRes);
+            for(auto it2 : vertices) {
+                resM->registerVertex(it2,&res);
+            }
+        }
+        return resM;
+    }
+
+    list<Vertex *> ModSDC::getResourceConstrainedVertices() {
+        list<Vertex*> returnMe;
+        for(auto it : this->g.Vertices()) {
+            if(this->resourceModel.getResource(it)->getLimit() >= 0)
+                returnMe.emplace_back(it);
+        }
+        return returnMe;
+    }
+
+	void ModSDC::setPriority(Vertex *v, PriorityHandler p) {
+        if(this->pType!=PriorityHandler::priorityType::CUSTOM)
+            throw HatScheT::Exception("ModSDC::setPriority: priority type must be CUSTOM but is "+PriorityHandler::getPriorityTypeAsString(this->pType));
+		try{
+			auto a = this->priorityForSchedQueue.at(v);
+			delete a;
+		}
+		catch(std::out_of_range&){
+			// chill for a second and enjoy the view
+		}
+		this->priorityForSchedQueue[v] = new PriorityHandler(p);
+	}
+
+    std::map<const Vertex *, int> ModSDC::getBindings() {
+        return Utility::Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+    }
+
+    PriorityHandler::PriorityHandler(PriorityHandler::priorityType p, int prio1, int prio2) :
+        pType(p), firstPriority(prio1), secondPriority(prio2){
+    }
+
+    void PriorityHandler::putIntoSchedQueue(Vertex *v, const priorityType &p, const map<Vertex*,PriorityHandler*> *pHandlers, std::list<Vertex *> *schedQ) {
+		PriorityHandler* pV;
+    	try{
+			pV = pHandlers->at(v);
+    	}
+        catch(std::out_of_range&){
+    		stringstream err;
+			err << "PriorityHandler::putIntoSchedQueue: can't find vertex '";
+			if(v!=nullptr) err << v->getName();
+			err << "' (" << v << ") in priority map";
+    		throw HatScheT::Exception(err.str());
+    	}
+        for(auto it = (*schedQ).begin(); it != (*schedQ).end(); it++) {
+			PriorityHandler* pI;
+			try{
+				pI = pHandlers->at(*it);
+			}
+			catch(std::out_of_range&){
+				stringstream err;
+				err << "PriorityHandler::putIntoSchedQueue: can't find vertex '";
+				if((*it)!=nullptr) err << (*it)->getName();
+				err << "' (" << (*it) << ") in priority map";
+				throw HatScheT::Exception(err.str());
+			}
+            switch(p) {
+                case priorityType::ASAP:{
+                    if(pV->getFirstPriority() < pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::ALAP:{
+                    if(pV->getFirstPriority() < pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::MOBLAP:{
+                    if(pV->getFirstPriority() < pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    else if(pV->getFirstPriority() == pI->getFirstPriority() && pV->getSecondPriority() < pI->getSecondPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::ALABILITY:{
+                    if(pV->getFirstPriority() < pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    else if(pV->getFirstPriority() == pI->getFirstPriority() && pV->getSecondPriority() < pI->getSecondPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::MOBILITY_HIGH:{
+                    if(pV->getFirstPriority() > pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::MOBILITY_LOW:{
+                    if(pV->getFirstPriority() < pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+				case priorityType::SUBSEQUALAP:{
+					if(pV->getFirstPriority() > pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+					}
+					else if(pV->getFirstPriority() == pI->getFirstPriority() && pV->getSecondPriority() < pI->getSecondPriority()){
+						schedQ->emplace(it,v);
+						return;
+					}
+					break;
+				}
+                case priorityType::RANDOM:{
+                    if(pV->getFirstPriority() > pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+                    }
+                    break;
+                }
+                case priorityType::CUSTOM:{
+                    if(pV->getFirstPriority() > pI->getFirstPriority()){
+                        schedQ->emplace(it,v);
+                        return;
+                    }
+                    break;
+                }
+                default:{
+                    throw HatScheT::Exception("PriorityHandler::putIntoSchedQueue: unknown priority type ("+PriorityHandler::getPriorityTypeAsString(p)+")");
+                }
+            }
+        }
+        schedQ->emplace_back(v);
+    }
+
+    std::string PriorityHandler::getPriorityTypeAsString(const priorityType &p) {
+        switch(p){
+            case priorityType::ASAP:{
+                return "ASAP";
+            }
+            case priorityType::ALAP:{
+                return "ALAP";
+            }
+            case priorityType::MOBLAP:{
+                return "MOBLAP";
+            }
+            case priorityType::ALABILITY:{
+                return "ALABILITY";
+            }
+            case priorityType::MOBILITY_HIGH:{
+                return "MOBILITY_HIGH";
+            }
+            case priorityType::MOBILITY_LOW:{
+                return "MOBILITY_LOW";
+            }
+            case priorityType::RANDOM:{
+                return "RANDOM";
+            }
+            case priorityType::CUSTOM:{
+                return "CUSTOM";
+            }
+            case priorityType::SUBSEQUALAP:{
+                return "SUBSEQUALAP";
+            }
+			case priorityType::NONE:{
+				return "NONE";
+			}
+        }
+    }
+
+    PriorityHandler::priorityType PriorityHandler::getPriorityTypeFromString(std::string priorityTypeStr) {
+        if(priorityTypeStr=="ASAP") return priorityType::ASAP;
+        if(priorityTypeStr=="ALAP") return priorityType::ALAP;
+        if(priorityTypeStr=="MOBLAP") return priorityType::MOBLAP;
+        if(priorityTypeStr=="ALABILITY") return priorityType::ALABILITY;
+        if(priorityTypeStr=="MOBILITY_HIGH") return priorityType::MOBILITY_HIGH;
+        if(priorityTypeStr=="MOBILITY_LOW") return priorityType::MOBILITY_LOW;
+        if(priorityTypeStr=="RANDOM") return priorityType::RANDOM;
+        if(priorityTypeStr=="CUSTOM") return priorityType::CUSTOM;
+        if(priorityTypeStr=="SUBSEQUALAP") return priorityType::SUBSEQUALAP;
+        return priorityType::NONE;
+    }
 }

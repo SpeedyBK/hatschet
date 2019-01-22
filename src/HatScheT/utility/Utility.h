@@ -210,5 +210,13 @@ public:
  * @return
  */
  static int safeRoundDown(double x);
+/*!
+ * @brief create simple binding that just assignes resources as vertices appear in the schedule
+ * @param sched
+ * @param rm
+ * @param II
+ * @return
+ */
+ static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);																									 
 };
 }

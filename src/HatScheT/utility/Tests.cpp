@@ -517,53 +517,128 @@ bool Tests::moduloSDCTestFiege() {
   {
 	HatScheT::ResourceModel rm;
 
-	auto &load = rm.makeResource("load", 1, 2, 1);
+	auto &load = rm.makeResource("load", 2, 2, 1);
 	auto &add = rm.makeResource("add", -1, 0, 1);
 
 	HatScheT::Graph g;
 
 	Vertex& a = g.createVertex(1);
 	Vertex& b = g.createVertex(2);
-	Vertex& c = g.createVertex(3);
-	Vertex& d = g.createVertex(4);
+    Vertex& c1 = g.createVertex(3);
+    Vertex& d1 = g.createVertex(4);
+    Vertex& e1 = g.createVertex(5);
+	Vertex& f1 = g.createVertex(6);
+	Vertex& g1 = g.createVertex(7);
+    Vertex& c2 = g.createVertex(8);
+    Vertex& d2 = g.createVertex(9);
+    Vertex& e2 = g.createVertex(10);
+    Vertex& f2 = g.createVertex(11);
+	Vertex& g2 = g.createVertex(12);
+	Vertex& h2 = g.createVertex(13);
+	Vertex& i2 = g.createVertex(14);
+	Vertex& j2 = g.createVertex(15);
+	Vertex& k2 = g.createVertex(16);
+	Vertex& l2 = g.createVertex(17);
+	Vertex& m2 = g.createVertex(18);
+	Vertex& n2 = g.createVertex(19);
+    Vertex& o2 = g.createVertex(20);
+    Vertex& p2 = g.createVertex(21);
 
 	a.setName("a");
-	b.setName("b");
-	c.setName("c");
-	d.setName("d");
+    b.setName("b");
+    c1.setName("c1");
+    d1.setName("d1");
+    e1.setName("e1");
+    f1.setName("f1");
+	g1.setName("g1");
+    c2.setName("c2");
+    d2.setName("d2");
+    e2.setName("e2");
+    f2.setName("f2");
+	g2.setName("g2");
+	h2.setName("h2");
+	i2.setName("i2");
+	j2.setName("j2");
+	k2.setName("k2");
+	l2.setName("l2");
+	m2.setName("m2");
+    n2.setName("n2");
+    o2.setName("o2");
+    p2.setName("p2");
 
-	g.createEdge(a, c ,0);
-	g.createEdge(b, c ,0);
-	g.createEdge(c, d ,0);
-	g.createEdge(d, a ,1);
+    g.createEdge(a, b ,0);
+    g.createEdge(b, c1 ,0);
+    g.createEdge(b, c2 ,0);
+    g.createEdge(c1, d1 ,0);
+    g.createEdge(d1, e1 ,0);
+    g.createEdge(e1, f1 ,0);
+    g.createEdge(f1, c1 ,1);
+	g.createEdge(f1, g1 ,0);
+    g.createEdge(c2, d2 ,0);
+    g.createEdge(d2, e2 ,0);
+    g.createEdge(e2, f2 ,0);
+    g.createEdge(f2, c2 ,1);
+	g.createEdge(f2, g2 ,0);
+	g.createEdge(g2, h2 ,0);
+	g.createEdge(h2, i2 ,0);
+	g.createEdge(i2, j2 ,0);
+	g.createEdge(j2, k2 ,0);
+	g.createEdge(k2, h2 ,1);
+	g.createEdge(k2, l2 ,0);
+	g.createEdge(l2, m2 ,0);
+	g.createEdge(m2, h2 ,1);
+	g.createEdge(k2, n2 ,0);
+    g.createEdge(l2, o2 ,0);
+    g.createEdge(m2, p2 ,0);
 
 	rm.registerVertex(&a, &load);
-	rm.registerVertex(&b, &load);
-	rm.registerVertex(&c, &add);
-	rm.registerVertex(&d, &load);
+	rm.registerVertex(&b, &add);
+    rm.registerVertex(&c1, &load);
+    rm.registerVertex(&d1, &load);
+    rm.registerVertex(&e1, &load);
+    rm.registerVertex(&f1, &load);
+	rm.registerVertex(&g1, &load);
+    rm.registerVertex(&c2, &load);
+    rm.registerVertex(&d2, &load);
+    rm.registerVertex(&e2, &load);
+    rm.registerVertex(&f2, &load);
+	rm.registerVertex(&g2, &load);
+	rm.registerVertex(&h2, &load);
+	rm.registerVertex(&i2, &load);
+	rm.registerVertex(&j2, &load);
+	rm.registerVertex(&k2, &load);
+	rm.registerVertex(&l2, &load);
+	rm.registerVertex(&m2, &load);
+	rm.registerVertex(&n2, &load);
+    rm.registerVertex(&o2, &load);
+    rm.registerVertex(&p2, &load);
 
-	std::list<std::string> solverList = {"CPLEX","Gurobi", "SCIP"};
-	//std::list<std::string> solverList = {"SCIP"};
+	std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
 	HatScheT::ModSDC m(g,rm,solverList);
 	m.setSolverQuiet(true);
 	m.schedule();
 
 	auto sch = m.getSchedule();
 
-	bool result = true;
 	for(auto&p:sch)
 	{
 	  std::cout << p.first->getName() << " = " << p.second << std::endl;
 	}
+	std::cout << "latency = " << m.getScheduleLength() << std::endl;
 
-	if(!verifyModuloSchedule(g,rm,sch,(int)m.getII())) return false;
-	if(m.getII()!=4) return false;
-	return result;
+	if(!verifyModuloSchedule(g,rm,sch,(int)m.getII())){
+		return false;
+	}
+
+	auto binding = m.getBindings();
+	cout << "Binding: " << endl;
+	for(auto it : binding) {
+		cout << it.first->getName() << ": " << rm.getResource(it.first)->getName() << " " << it.second << endl;
+	}
   }
   catch(HatScheT::Exception &e)
   {
 	std::cout << e.msg << std::endl;
   }
   return false;
-}
-}
+}}
