@@ -36,42 +36,155 @@ namespace HatScheT
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
 {
 public:
+  /*!
+   * the rational II modulo scheduler is able to provide a higher throughput than traditional integer II schedulers in many cases
+   * the trade off is a more complex control flow structure
+   * @param g
+   * @param resourceModel
+   * @param solverWishlist
+   */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+  /*!
+   * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
+   * the theoretical min II boundary. For this the variables s / m are used
+   */
   virtual void schedule();
+  /*!
+   *
+   * @return the schedule length / sample latency of the determined rational II modulo schedule
+   */
   virtual int getScheduleLength();
-  void setModulo(int m) {this->modulo=m;}
-  void setSamples(int s){this->samples=s;}
+  /*!
+   * the number of clock cycles after which the schedule repeats itself
+   * @param m
+   */
+  void setModulo(int m) {
+    this->modulo=m;
+  }
+  int getModulo(){
+    return this->modulo;
+  }
+  /*!
+   * the number of samples that are inserted every m clock cycles
+   * @param s
+   */
+  void setSamples(int s){
+    this->samples=s;
+  }
+  int getSamples(){
+    return this->samples;
+  }
+  /*!
+   * print the rational II modulo schedule
+   */
   void printScheduleToConsole();
-
+  /*!
+   * print the uneven spaced initiation times of data samples
+   * those repeat every m cycles
+   * @return
+   */
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
 
+  /*!
+   * EXPERIMENTAL: DONT USE THIS CURRENTLY
+   * @param b
+   */
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
 
+  /*!
+ * \brief getLifeTimes using the determined rational II
+ * lifetimes in rational II schedules are determined using the initiation intervall vector
+ * this is crucial because samples are inserted in not evenly spaced intervalls
+ * remark: overloaded function from the scheduler base class
+ * \return
+ */
+  virtual std::map<Edge*,int> getLifeTimes();
+
 private:
+  /*!
+   * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
+   */
   virtual void constructProblem();
+  /*!
+   * setObjective currently asap
+   */
   virtual void setObjective();
-  //--------
+  /*!
+   * set the resource constranints / often referred to as modulo reservation table (MRT)
+   */
   void setResourceConstraints();
+  /*!
+   * set dependency contraints
+   */
   void setGeneralConstraints();
+  /*!
+   * set modulo constraints
+   */
   void setModuloConstraints();
+  /*!
+   * the ILP variables of the operations in the input graph
+   */
   void fillTMaxtrix();
+  /*!
+   * the ILP variables for the data insertion intervals
+   */
   void fillIIVector();
+  /*!
+   * fill interface to pass values to next step in the tool flow after solving
+   */
   void fillSolutionStructure();
-  //------
+  /*!
+   * this function sets the s and m values in a way that not needed values are skipped
+   * and the rational II becomes as small as possible
+   */
   void autoSetMAndS();
+  /*!
+   * dito
+   */
   void autoSetNextMAndS();
+  /*!
+   * this method is used to determine the distances in clock cycles
+   * @param d
+   * @param startIndex
+   * @return
+   */
   ScaLP::Term getSampleDistance(int d, int startIndex);
-  //--------
+  /*!
+   * EXPERIMETAL: DONT USE THIS
+   */
   bool uniformSchedule;
+  /*!
+   * the considered time steps for solving the problem
+   */
   unsigned int consideredTimeSteps;
+  /*!
+   * container for ILP variables
+   */
   vector<vector<ScaLP::Variable> > t_matrix;
+  /*!
+   * container for ILP variables
+   */
   vector<ScaLP::Variable> II_vector;
+  /*!
+   * container to find the correct ILP variables later on
+   */
   map<const Vertex*,int> tIndices;
+  /*!
+   * the final rational II schedule
+   */
   vector<std::map<Vertex*,int> > startTimeVector;
-  //--------
+  /*!
+   * the minimum interger II that is possible
+   */
   int integerMinII;
+  /*!
+   * buffer
+   */
   double tpBuffer;
+  /*!
+   * flag
+   */
   bool minRatIIFound;
 };
 }
