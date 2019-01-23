@@ -254,7 +254,7 @@ void RationalIIScheduler::schedule()
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
-      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimeVector, this->initInvervals, this->getScheduleLength());
+      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->initInvervals, this->getScheduleLength());
 
       //determine whether rational minimum II was identified
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
@@ -311,26 +311,37 @@ void RationalIIScheduler::autoSetMAndS() {
   this->modulo = frac.first;
 }
 
-std::map<Edge*,int> RationalIIScheduler::getLifeTimes()
-{
-  if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
-  if(this->II <= 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no II determined!");
+std::map<Edge*,int> RationalIIScheduler::getLifeTimes(){
+  throw HatScheT::Exception("RationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
+}
 
-  std::map<Edge*,int> lifetimes;
+std::map<Edge*,vector<int> > RationalIIScheduler::getRatIILifeTimes(){
+  if(this->startTimesVector.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
+  if(this->initIntervals.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
+  if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
+
+  std::map<Edge*,vector<int> > allLifetimes;
 
   for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
     Edge* e = *it;
     Vertex* vSrc = &e->getVertexSrc();
     Vertex* vDst = &e->getVertexDst();
-    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->II;
 
-    if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
-    else lifetimes.insert(make_pair(e, lifetime));
+    vector<int > lifetimes;
+
+    for(int i = 0; i < (int)(this->initIntervals.size()); i++){
+      int lifetime = this->startTimes[vDst] - this->startTimes[vSrc]
+        - this->resourceModel.getVertexLatency(vSrc) + this->getDeterminedSampleDistance(e->getDistance(),i);
+
+      if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+      else lifetimes.push_back(lifetime);
+    }
+    allLifetimes.insert(make_pair(e, lifetimes));
   }
-  return lifetimes;
+  return allLifetimes;
 }
 
-void RationalIIScheduler::autoSetNextMAndS() {
+void RationalIIScheduler::autoSetNextMAndS(){
   int currS = this->samples;
   int currM = this->modulo;
 
@@ -356,6 +367,26 @@ void RationalIIScheduler::autoSetNextMAndS() {
   }
 }
 
+int RationalIIScheduler::getDeterminedSampleDistance(int d, int startIndex) {
+  if(startIndex > this->initIntervals.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + to_string(startIndex));
+
+  //immediately return 0 when requested distance was 0
+  if(d==0) return 0;
+
+  int distance;
+  while(d>0){
+    if(startIndex>0) {
+      startIndex-=1;
+    }
+    else if(startIndex==0) startIndex=this->initIntervals.size()-1;
+
+    distance += this->initIntervals[startIndex];
+    d--;
+  }
+
+  return distance;
+}
+
 ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
   if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + to_string(startIndex));
 
@@ -375,7 +406,7 @@ ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
 
 void RationalIIScheduler::fillSolutionStructure() {
   //reset possible old values
-  this->startTimeVector.resize(0);
+  this->startTimesVector.resize(0);
   this->initInvervals.resize(0);
 
   //store schedule using standard interface if uniform schedule is true
@@ -402,7 +433,7 @@ void RationalIIScheduler::fillSolutionStructure() {
       int startTime = this->r.values[svTemp];
       tempMap.insert(make_pair(v, startTime));
     }
-    this->startTimeVector.push_back(tempMap);
+    this->startTimesVector.push_back(tempMap);
   }
 
   //store differences (in clock cycles) between the scheduled samples
@@ -419,7 +450,7 @@ void RationalIIScheduler::fillSolutionStructure() {
 int RationalIIScheduler::getScheduleLength() {
   int maxTime=-1;
   for(int i = 0; i < this->t_matrix.size(); i++) {
-    for (std::pair<Vertex *, int> vtPair : this->startTimeVector[i]) {
+    for (std::pair<Vertex *, int> vtPair : this->startTimesVector[i]) {
       Vertex *v = vtPair.first;
 
       if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)

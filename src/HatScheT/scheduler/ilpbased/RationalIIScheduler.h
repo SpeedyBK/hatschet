@@ -2,7 +2,7 @@
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
 
-    Copyright (C) 2018
+    Copyright (C) 2019
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -50,6 +50,28 @@ public:
    */
   virtual void schedule();
   /*!
+   * the determined initIntervals of the rational II schedule after solving
+   * @return
+   */
+  vector<int> getInitInervalls(){
+    return this->initIntervals;
+  }
+    /*!
+ * \brief getLifeTimes using the determined rational II
+ * lifetimes in rational II schedules are determined using the initiation intervall vector
+ * this is crucial because samples are inserted in not evenly spaced intervalls
+ * remark: overloaded function from the scheduler base class
+ * \return
+ */
+  virtual std::map<Edge*,vector<int> > getRatIILifeTimes();
+  /*!
+   * dont use this function for rational II modulo schedules
+   * this function will throw an exception
+   * use getRatIILifeTimes()
+   * @return
+   */
+  virtual std::map<Edge*,int> getLifeTimes();
+  /*!
    *
    * @return the schedule length / sample latency of the determined rational II modulo schedule
    */
@@ -83,7 +105,7 @@ public:
    * those repeat every m cycles
    * @return
    */
-  vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimeVector;}
+  vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
 
   /*!
    * EXPERIMENTAL: DONT USE THIS CURRENTLY
@@ -91,15 +113,6 @@ public:
    */
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
-
-  /*!
- * \brief getLifeTimes using the determined rational II
- * lifetimes in rational II schedules are determined using the initiation intervall vector
- * this is crucial because samples are inserted in not evenly spaced intervalls
- * remark: overloaded function from the scheduler base class
- * \return
- */
-  virtual std::map<Edge*,int> getLifeTimes();
 
 private:
   /*!
@@ -150,6 +163,7 @@ private:
    * @return
    */
   ScaLP::Term getSampleDistance(int d, int startIndex);
+  int getDeterminedSampleDistance(int d, int startIndex);
   /*!
    * EXPERIMETAL: DONT USE THIS
    */
@@ -173,7 +187,11 @@ private:
   /*!
    * the final rational II schedule
    */
-  vector<std::map<Vertex*,int> > startTimeVector;
+  vector<std::map<Vertex*,int> > startTimesVector;
+  /*!
+   * the determined initIntervals of the rational II schedule after solving
+   */
+  vector<int> initIntervals;
   /*!
    * the minimum interger II that is possible
    */
