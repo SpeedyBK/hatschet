@@ -178,6 +178,7 @@ std::map<const Vertex *, int> SchedulerBase::getBindings()
 std::map<Edge*,int> SchedulerBase::getLifeTimes()
 {
   if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+  if(this->II <= 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no II determined!");
 
   std::map<Edge*,int> lifetimes;
 
@@ -185,7 +186,7 @@ std::map<Edge*,int> SchedulerBase::getLifeTimes()
     Edge* e = *it;
     Vertex* vSrc = &e->getVertexSrc();
     Vertex* vDst = &e->getVertexDst();
-    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->getScheduleLength();
+    int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*this->II;
 
     if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
     else lifetimes.insert(make_pair(e, lifetime));

@@ -68,18 +68,15 @@ public:
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
+   * ToDo: implement a dedicated binding function!
    * \return
    */
   virtual std::map<const Vertex*,int> getBindings();
   /*!
-   * \brief getLifeTimes II = scheduleLength
+   * \brief getLifeTimes using the determined II
    * \return
    */
   virtual std::map<Edge*,int> getLifeTimes();
-  /*!
-   * \brief printStartTimes
-   */
-  //void printStartTimes();
   /*!
    * \brief Generates an HTML file which contains the schedule chart
 	 * \param filename is the file name where to store the chart

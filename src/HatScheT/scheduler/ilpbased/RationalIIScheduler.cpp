@@ -34,6 +34,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->integerMinII = -1;
   this->tpBuffer = 0.0f;
   this->minRatIIFound = false;
+  this->maxLatencyConstraint = 0;
 }
 
 void RationalIIScheduler::fillIIVector()
@@ -41,8 +42,8 @@ void RationalIIScheduler::fillIIVector()
   this->II_vector.clear();
 
   for(unsigned int i = 0; i < this->samples; i++) {
-    if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),0,0));
-    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i+1),i,this->modulo-1));
+    if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),0,0));
+    else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),i,this->modulo-1));
   }
 }
 
@@ -87,7 +88,6 @@ void RationalIIScheduler::setGeneralConstraints()
     unsigned int srcTVecIndex = this->tIndices[src];
     Vertex* dst = &(e->getVertexDst());
     unsigned int dstTVecIndex = this->tIndices[dst];
-
 
     for(unsigned int j = 0; j < this->samples; j++) {
       if(e->getDistance()==0){
@@ -214,7 +214,9 @@ void RationalIIScheduler::schedule()
 
   if(this->maxLatencyConstraint <= 0) {
     //experimental
-    this->maxLatencyConstraint = this->consideredTimeSteps;
+    this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
+    this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+    //this->maxLatencyConstraint = this->consideredTimeSteps;
     //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
   }
 
@@ -240,6 +242,7 @@ void RationalIIScheduler::schedule()
 
     cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
     //solve the current problem
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
     stat = this->solver->solve();
 
     //check result and act accordingly
@@ -484,8 +487,8 @@ void RationalIIScheduler::fillTMaxtrix()
       Vertex* v = *it;
       int id = v->getId();
 
-      if(i==0) t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->maxLatencyConstraint -  this->resourceModel.getVertexLatency(v)));
-      else t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + std::to_string(id),i,this->consideredTimeSteps*(i+1) + i*1));
+      if(i==0) t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + v->getName(),i,this->maxLatencyConstraint -  this->resourceModel.getVertexLatency(v)));
+      else t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + v->getName(),i,this->consideredTimeSteps*(i+1) + i*1));
 
       this->tIndices.insert(make_pair(v,t_vector.size()-1));
     }
