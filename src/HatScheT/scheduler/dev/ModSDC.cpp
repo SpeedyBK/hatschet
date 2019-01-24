@@ -42,7 +42,6 @@ namespace HatScheT
         cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
 		this->calculatePriorities(); // calculate priorities for scheduling queue
 		t = time(nullptr);
-		cout << "ModSDC::schedule: time after calculating priorities: " << ctime(&t) << endl;
         this->mrt = std::map<Vertex*, int>(); // create empty mrt
         if(this->budget<0) this->setDefaultBudget(); // set default budget according to paper if no budget was given by the user
         this->timeBudget = (double)this->solverTimeout;
@@ -60,7 +59,7 @@ namespace HatScheT
                     throw HatScheT::Exception("Time budget used up after scheduling success - that should never happen!");
                 }
                 this->startTimes = this->sdcTimes; // last result from ILP solver is a valid schedule!
-                this->printSchedule();
+				this->scheduleFound = true;
                 break;
             }
             else
@@ -693,14 +692,6 @@ namespace HatScheT
         return this->timeBudget>=0.0;
     }
 
-    void ModSDC::printSchedule() {
-        cout << "Found schedule with ModSDC!" << endl;
-        cout << "    elapsed time: " << (double)this->solverTimeout - this->timeBudget << " sec; II=" << this->II << endl;
-        for(auto it : this->startTimes) {
-            cout << "    " << it.first->getName() << ": " << it.second << endl;
-        }
-    }
-
     void ModSDC::clearMaps() {
         this->mrt.clear();
         this->asapTimes.clear();
@@ -812,6 +803,24 @@ namespace HatScheT
 
     std::map<const Vertex *, int> ModSDC::getBindings() {
         return Utility::Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+        //return Utility::Utility::getILPMinRegBinding(this->getSchedule(),&this->g,&this->resourceModel,(int)this->II,{"CPLEX"});
+    }
+
+    std::map<Edge *, int> ModSDC::getLifeTimes() {
+        if(this->startTimes.size()==0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+
+        std::map<Edge*,int> lifetimes;
+
+        for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
+            Edge* e = *it;
+            Vertex* vSrc = &e->getVertexSrc();
+            Vertex* vDst = &e->getVertexDst();
+            int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*(int)this->II;
+
+            if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+            else lifetimes.insert(make_pair(e, lifetime));
+        }
+        return lifetimes;
     }
 
     PriorityHandler::PriorityHandler(PriorityHandler::priorityType p, int prio1, int prio2) :

@@ -240,5 +240,8 @@ public:
  * @return
  */
  static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);																									 
+#ifdef USE_SCALP
+ static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
+#endif
 };
 }

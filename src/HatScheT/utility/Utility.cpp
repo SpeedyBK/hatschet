@@ -502,24 +502,187 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
   return true;
 }
 
-std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
+	std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
   std::map<const Vertex *, int> binding;
   std::map<const Resource*, std::map<int, int>> resourceCounters;
 
   for(auto it : sched) {
     auto v = it.first;
     const Resource* res = rm->getResource(v);
-    int time = it.second % II;
-    if(resourceCounters[res].find(time) != resourceCounters[res].end()) {
-      resourceCounters[res][time]++;
+    if(res->getLimit()<0) {
+		if(resourceCounters[res].find(0) != resourceCounters[res].end()) {
+			resourceCounters[res][0]++;
+		}
+		else {
+			resourceCounters[res][0] = 0;
+		}
+		binding[v] = resourceCounters[res][0];
+    } else {
+		int time = it.second % II;
+		if(resourceCounters[res].find(time) != resourceCounters[res].end()) {
+			resourceCounters[res][time]++;
+		}
+		else {
+			resourceCounters[res][time] = 0;
+		}
+		if(resourceCounters[res][time] >= res->getLimit())
+			throw HatScheT::Exception("Utility::getSimpleBinding: found resource conflict while creating binding");
+		binding[v] = resourceCounters[res][time];
     }
-    else {
-      resourceCounters[res][time] = 0;
-    }
-    if(res->getLimit()>0 && resourceCounters[res][time] >= res->getLimit())
-      throw HatScheT::Exception("Utility::getSimpleBinding: found resource conflict while creating binding");
-    binding[v] = resourceCounters[res][time];
   }
   return binding;
-}			 
+}
+#ifdef USE_SCALP
+std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, std::list<std::string> sw, int timeout) {
+  // create solver
+  if(sw.empty()) sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
+  auto solver = ScaLP::Solver(sw);
+  solver.quiet = true;
+  solver.threads = 1;
+  solver.timeout = timeout;
+
+  // create vertex-binding variables
+  std::map<Vertex*,std::vector<ScaLP::Variable>> vertexVariables;
+  std::map<const Resource*,std::vector<ScaLP::Variable>> registerVariables;
+  std::map<const Resource*,std::list<Vertex*>> sameResources;
+  std::map<const Resource*,int> resourceLimits;
+  for(auto &it : sched){
+	auto res = rm->getResource(it.first);
+	try{
+	  sameResources.at(res).emplace_back(it.first);
+	}
+	catch(std::out_of_range&){
+	  sameResources[res] = {it.first};
+	  registerVariables[res] = std::vector<ScaLP::Variable>();
+	}
+	int limit = res->getLimit();
+	if(limit<0) {
+	  // check how many resources were allocated by scheduling algorithm
+	  try{
+		limit = resourceLimits.at(res);
+	  }
+	  catch(std::out_of_range&){
+		limit = 0;
+		for(auto &it2 : sched){
+		  if(rm->getResource(it2.first) == res) limit++;
+		}
+		resourceLimits[res] = limit;
+	  }
+	}
+	vertexVariables[it.first] = std::vector<ScaLP::Variable>();
+	for(auto i = 0; i<limit; i++){
+	  vertexVariables[it.first].emplace_back(ScaLP::newIntegerVariable(it.first->getName()+"_"+to_string(i),0,1));
+	}
+  }
+
+  // create register variables
+  for(auto &it : registerVariables){
+	auto res = it.first;
+	auto limit = res->getLimit();
+	for(int i=0; i<limit; i++){
+	  auto var = ScaLP::newIntegerVariable(res->getName()+to_string(i),0,ScaLP::INF());
+	  it.second.emplace_back(var);
+	}
+  }
+
+  // calculate lifetimes
+  std::map<Vertex*,int> lifetimes;
+  for(auto &it : g->Edges()){
+	auto* src = &it->getVertexSrc();
+	auto* dst = &it->getVertexDst();
+	int tempLifetime = sched[dst] - sched[src] - rm->getResource(src)->getLatency() + (II * it->getDistance());
+	if(tempLifetime>lifetimes[src]) lifetimes[src] = tempLifetime;
+  }
+
+  // check, which vertices can potetially be bind to the same resource at the same control step
+  std::map<const Resource*,std::map<int,std::list<Vertex*>>> potentiallySame;
+  for(auto &it : sched){
+	auto vert = it.first;
+	auto timepoint = it.second % II;
+	auto res = rm->getResource(vert);
+	if(potentiallySame.find(res)==potentiallySame.end())
+	  potentiallySame[res] = std::map<int,std::list<Vertex*>>();
+	try{
+	  potentiallySame[res].at(timepoint).emplace_back(vert);
+	}
+	catch(std::out_of_range&){
+	  potentiallySame[res][timepoint] = {vert};
+	}
+  }
+
+  // create constraints: bind each vertex to EXACTLY one resource
+  for(auto &it1 : vertexVariables){
+	ScaLP::Term t;
+	for(auto &it2 : it1.second){
+	  t += it2;
+	}
+	auto c = ScaLP::Constraint(t == 1);
+	solver << c;
+  }
+
+  // create constraints: bind AT MOST one vertex to each resource in each control step
+  for(auto &it1 : potentiallySame){
+	auto res = it1.first;
+	for(auto &it2 : it1.second){
+	  for(int resourceCounter = 0; resourceCounter<res->getLimit(); resourceCounter++){
+		ScaLP::Term t;
+		for(auto &it3 : it2.second){
+		  t += vertexVariables[it3][resourceCounter];
+		}
+		auto c = ScaLP::Constraint(t <= 1);
+		solver << c;
+	  }
+	}
+  }
+
+  // create edge register constraints
+  for(auto &it1 : registerVariables){
+	auto res = it1.first;
+	for(int resoureCounter = 0; resoureCounter<it1.second.size(); resoureCounter++){
+	  auto var = it1.second[resoureCounter];
+	  for(auto &it2 : sameResources[res]){
+	  	auto c = ScaLP::Constraint(var - (lifetimes[it2] * vertexVariables[it2][resoureCounter]) >= 0);
+		solver << c;
+	  }
+	}
+  }
+
+  // minimize the sum of all registers
+  ScaLP::Term obj;
+  for(auto &it1 : registerVariables){
+	for(auto &it2 : it1.second){
+	  obj += it2;
+	}
+  }
+  solver.setObjective(ScaLP::minimize(obj));
+
+  // solve and put results into binding map
+  try{
+    auto status = solver.solve();
+    if(status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE && status != ScaLP::status::TIMEOUT_FEASIBLE){
+	  cout << "Utility::getILPMinRegBinding: didn't find solution, returning simple binding" << endl;
+	  return Utility::getSimpleBinding(sched,rm,II);
+  	}
+  }
+  catch(ScaLP::Exception& e){
+  	throw HatScheT::Exception("Utility::getILPMinRegBinding: caught ScaLP exception: "+std::string(e.what()));
+  }
+
+  auto results = solver.getResult().values;
+  map<const Vertex*,int> binding;
+  for(auto &it1 : vertexVariables){
+	auto vertex = it1.first;
+	for(int i = 0; i < (int)it1.second.size(); i++){
+	  auto &it2 = it1.second[i];
+	  auto val = results[it2];
+	  cout << "#q# result for variable '" << it2 << "': " << val << endl;
+	  if(val==1.0){
+		binding[vertex] = i;
+	  }
+	}
+  }
+
+  return binding;
+}
+#endif	 
 }

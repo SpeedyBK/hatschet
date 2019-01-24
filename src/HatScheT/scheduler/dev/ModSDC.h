@@ -95,6 +95,11 @@ namespace HatScheT
          * @return
          */
 		std::map<const Vertex*,int> getBindings() override;
+		/*!
+		 * @brief calculate life times considering II instead of schedule length
+		 * @return
+		 */
+		std::map<Edge*,int> getLifeTimes() override;
         /*!
          * the status of the ilp solver does not provide any information
          * about the quality of the solution, because many ilp problems are
@@ -156,10 +161,6 @@ namespace HatScheT
     	 * @brief track time spent in ilp solvers
     	 */
     	double timeInILPSolvers;
-        /*!
-         * @brief just print the found schedule
-         */
-        void printSchedule();
         /*!
          * @brief manages the time budget between solving ilps
          */
