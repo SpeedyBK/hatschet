@@ -41,6 +41,11 @@ public:
 protected:
     virtual void constructProblem(){};
     virtual void setObjective(){};
+
+    /*!
+     * not needed
+     */
+    virtual void resetContainer(){}
 private:
     void generateTestSetup();
     void generateTestSetup2();

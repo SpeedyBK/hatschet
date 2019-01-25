@@ -112,6 +112,12 @@ protected:
    */
   virtual void setObjective() = 0;
   /*!
+   * setObjective This pure virtual function has to be implemented in the derived classes
+   * to set the reset/clear the respective containers
+   * if needed
+   */
+  virtual void resetContainer() = 0;
+  /*!
    * A pointer to the ScaLP solver
    */
   ScaLP::Solver *solver;

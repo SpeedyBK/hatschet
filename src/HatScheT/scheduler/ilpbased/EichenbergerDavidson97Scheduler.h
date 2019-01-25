@@ -52,6 +52,11 @@ protected:
   virtual void constructConstraints(int candII);
   virtual void setObjective();
 
+    /*!
+     * not needed
+     */
+    virtual void resetContainer(){}
+
   virtual void constructProblem() {/* unused */}
 
   // decision variables

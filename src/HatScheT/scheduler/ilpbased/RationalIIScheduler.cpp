@@ -226,7 +226,7 @@ void RationalIIScheduler::schedule()
   //count runs, set maxRuns
   int runs = 0;
   int maxRuns = this->maxRuns;
-  if(maxRuns == -1) maxRuns = 1000000; //e.g. infinity
+  if(maxRuns == -1) maxRuns = 1000000; //e.g. 'infinity'
 
   while(runs <= maxRuns){
     //clear up and reset

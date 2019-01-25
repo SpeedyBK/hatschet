@@ -377,7 +377,7 @@ namespace HatScheT
         /*!
          * @brief clear all unnecessary data between iterations (e.g. mrt, schedQueue, ...)
          */
-        void clearMaps();
+        virtual void resetContainer();
         /*!
          * @brief print all additional constraints for solver
          */

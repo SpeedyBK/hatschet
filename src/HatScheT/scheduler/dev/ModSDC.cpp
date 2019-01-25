@@ -72,7 +72,7 @@ namespace HatScheT
                     throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget or another priority function");
                 }
             }
-            this->clearMaps();
+            this->resetContainer();
         }
     }
 
@@ -692,7 +692,7 @@ namespace HatScheT
         return this->timeBudget>=0.0;
     }
 
-    void ModSDC::clearMaps() {
+    void ModSDC::resetContainer() {
         this->mrt.clear();
         this->asapTimes.clear();
         this->sdcTimes.clear();
