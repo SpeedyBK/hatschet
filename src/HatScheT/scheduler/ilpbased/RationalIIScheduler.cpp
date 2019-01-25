@@ -37,6 +37,11 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->maxLatencyConstraint = 0;
 }
 
+void RationalIIScheduler::resetContainer() {
+  this->t_matrix.clear();
+  this->tIndices.clear();
+}
+
 void RationalIIScheduler::fillIIVector()
 {
   this->II_vector.clear();
@@ -231,6 +236,7 @@ void RationalIIScheduler::schedule()
   while(runs <= maxRuns){
     //clear up and reset
     this->solver->reset();
+    this->resetContainer();
 
     //set up new variables and constraints
     this->fillTMaxtrix();
@@ -244,6 +250,7 @@ void RationalIIScheduler::schedule()
     //solve the current problem
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
     stat = this->solver->solve();
+    cout << "Finished solving: " << stat << endl;
 
     //check result and act accordingly
     if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
