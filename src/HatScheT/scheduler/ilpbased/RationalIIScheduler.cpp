@@ -226,6 +226,9 @@ void RationalIIScheduler::schedule()
   }
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
+  cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
+  cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
+  cout << "RationalIIScheduler.schedule: max runs for rat ii sheduling " << this->getMaxRuns() << endl;
   cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
 
   //count runs, set maxRuns
