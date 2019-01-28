@@ -195,7 +195,7 @@ private:
   /*!
    * the determined initIntervals of the rational II schedule after solving
    */
-  vector<int> initIntervals;
+  //vector<int> initIntervals;
   /*!
    * the minimum interger II that is possible
    */

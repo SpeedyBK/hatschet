@@ -254,7 +254,6 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
         bindings.emplace(v,binding);
         binding++;
       }
-
     }
     //limited resource
     else{

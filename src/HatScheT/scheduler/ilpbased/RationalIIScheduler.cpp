@@ -136,7 +136,6 @@ void RationalIIScheduler::printScheduleToConsole()
   cout << "----" << "Found IIs: ";
   for(unsigned int i = 0; i < II_vector.size(); i++)
   {
-    this->initInvervals.push_back((unsigned int)(lround(r.values[II_vector[i]])));
     cout << (unsigned int)(lround(r.values[II_vector[i]])) << "(" << II_vector[i] << ")  ";
   }
   cout << endl;
@@ -219,7 +218,11 @@ void RationalIIScheduler::schedule()
 
   if(this->maxLatencyConstraint <= 0) {
     //experimental
-    this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
+    ASAPScheduler asap(this->g,this->resourceModel);
+    asap.schedule();
+    this->maxLatencyConstraint = asap.getScheduleLength() * 1.5;
+
+    //this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
     //this->maxLatencyConstraint = this->consideredTimeSteps;
     //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
@@ -237,6 +240,7 @@ void RationalIIScheduler::schedule()
   if(maxRuns == -1) maxRuns = 1000000; //e.g. 'infinity'
 
   while(runs <= maxRuns){
+    cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
     //clear up and reset
     this->solver->reset();
     this->resetContainer();
@@ -264,7 +268,7 @@ void RationalIIScheduler::schedule()
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
-      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->initInvervals, this->getScheduleLength());
+      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->initIntervals, this->getScheduleLength());
 
       //determine whether rational minimum II was identified
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
@@ -357,7 +361,7 @@ void RationalIIScheduler::autoSetNextMAndS(){
 
   //check whether it is useful to reduce the samples by 1 on this modulo
   if(currS > 2){
-    double t = (double)currM / (double)(currS-1);
+    double t = (double)(currS-1) / (double)currM ;
     if(t >= this->tpBuffer and t >= ((double)1.0 / this->integerMinII)){
       //in this case, it is still usefull to reduce s
       //reduce s and schedule again
@@ -371,7 +375,7 @@ void RationalIIScheduler::autoSetNextMAndS(){
   this->modulo++;
   this->samples = this->modulo-1;
   double t = (double)this->samples / (double)(this->modulo);
-  while(t > this->getMinII()){
+  while(t > (double)1/this->getMinII()){
     this->samples--;
     t = (double)this->samples / (double)(this->modulo);
   }
@@ -417,7 +421,7 @@ ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
 void RationalIIScheduler::fillSolutionStructure() {
   //reset possible old values
   this->startTimesVector.resize(0);
-  this->initInvervals.resize(0);
+  this->initIntervals.resize(0);
 
   //store schedule using standard interface if uniform schedule is true
   if(this->uniformSchedule == true){
@@ -451,9 +455,9 @@ void RationalIIScheduler::fillSolutionStructure() {
     ScaLP::Variable svTemp1 = this->II_vector[i - 1];
     ScaLP::Variable svTemp2 = this->II_vector[i];
     int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
-    this->initInvervals.push_back(IITimeDiff);
+    this->initIntervals.push_back(IITimeDiff);
 
-    if(i==II_vector.size()-1) this->initInvervals.push_back(this->modulo - this->r.values[svTemp2]);
+    if(i==II_vector.size()-1) this->initIntervals.push_back(this->modulo - this->r.values[svTemp2]);
   }
 }
 
