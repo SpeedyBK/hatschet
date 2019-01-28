@@ -157,6 +157,8 @@ void SchedulerBase::writeScheduleChart(string filename)
 
 std::map<const Vertex *, int> SchedulerBase::getBindings()
 {
+  return Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+  /*
   std::map<const Vertex*,int> bindings;
   std::map<const Resource*, int> naiveBindingCounter;
 
@@ -173,6 +175,7 @@ std::map<const Vertex *, int> SchedulerBase::getBindings()
   }
 
   return bindings;
+   */
 }
 
 std::map<Edge*,int> SchedulerBase::getLifeTimes()

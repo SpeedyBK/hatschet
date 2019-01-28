@@ -417,7 +417,11 @@ namespace HatScheT
             this->clearConstraintForVertex(I);
             if(foundSolution) break;
             if(minTime == time){
-                cout << "ERROR: backtracking algorithm can't find time slot for instruction " << I->getName() << endl;
+                cout << "ERROR: backtracking algorithm (" << I->getName() << "," << time << ") can't find time slot for instruction " << I->getName() << endl;
+				cout << "Additional constraints: " << endl;
+				for(auto it : this->additionalConstraints) {
+					cout << "    " << *it.second << endl;
+				}
                 throw HatScheT::Exception("backtracking algorithm can't find time slot for instruction "+I->getName());
             }
         }
@@ -482,7 +486,7 @@ namespace HatScheT
     }
 
     void ModSDC::createInitialSchedule() {
-    	/*
+
         this->setUpScalp();
         ScaLP::status s = this->solver->solve(); // solver should never timeout here...
         if((s!=ScaLP::status::FEASIBLE) && (s!=ScaLP::status::OPTIMAL) && (s!=ScaLP::status::TIMEOUT_FEASIBLE))
@@ -502,10 +506,6 @@ namespace HatScheT
             if(v != nullptr) this->asapTimes[v] = (int)it.second;
             else this->scheduleLength = (int)it.second;
         }
-		*/
-		this->setUpScalp();
-    	this->asapTimes = this->getASAPScheduleWithoutResourceConstraints();
-
     }
 
     std::list<Vertex*> ModSDC::getResourceConflicts(Vertex* I, const int &evictTime) {

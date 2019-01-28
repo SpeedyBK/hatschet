@@ -534,6 +534,9 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
 }
 #ifdef USE_SCALP
 std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, std::list<std::string> sw, int timeout) {
+
+  // container to return
+  map<const Vertex*,int> binding;
   // create solver
   if(sw.empty()) sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
   auto solver = ScaLP::Solver(sw);
@@ -546,6 +549,7 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
   std::map<const Resource*,std::vector<ScaLP::Variable>> registerVariables;
   std::map<const Resource*,std::list<Vertex*>> sameResources;
   std::map<const Resource*,int> resourceLimits;
+  std::map<const Resource*,int> unlimitedResourceCounter;
   for(auto &it : sched){
 	auto res = rm->getResource(it.first);
 	try{
@@ -557,18 +561,11 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
 	}
 	int limit = res->getLimit();
 	if(limit<0) {
-	  // check how many resources were allocated by scheduling algorithm
-	  try{
-		limit = resourceLimits.at(res);
-	  }
-	  catch(std::out_of_range&){
-		limit = 0;
-		for(auto &it2 : sched){
-		  if(rm->getResource(it2.first) == res) limit++;
-		}
-		resourceLimits[res] = limit;
-	  }
+	  binding[it.first] = unlimitedResourceCounter[res];
+	  unlimitedResourceCounter[res]++;
+	  continue;
 	}
+
 	vertexVariables[it.first] = std::vector<ScaLP::Variable>();
 	for(auto i = 0; i<limit; i++){
 	  vertexVariables[it.first].emplace_back(ScaLP::newIntegerVariable(it.first->getName()+"_"+to_string(i),0,1));
@@ -670,7 +667,6 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
   }
 
   auto results = solver.getResult().values;
-  map<const Vertex*,int> binding;
   for(auto &it1 : vertexVariables){
 	auto vertex = it1.first;
 	for(int i = 0; i < (int)it1.second.size(); i++){

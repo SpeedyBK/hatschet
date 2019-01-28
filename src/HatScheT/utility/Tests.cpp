@@ -517,7 +517,7 @@ bool Tests::moduloSDCTestFiege() {
   {
 	HatScheT::ResourceModel rm;
 
-	auto &load = rm.makeResource("load", 4, 2, 1);
+	auto &load = rm.makeResource("load", 3, 2, 1);
 	auto &add = rm.makeResource("add", -1, 0, 1);
 
 	HatScheT::Graph g;
@@ -609,9 +609,9 @@ bool Tests::moduloSDCTestFiege() {
 	rm.registerVertex(&k2, &load);
 	rm.registerVertex(&l2, &load);
 	rm.registerVertex(&m2, &load);
-	rm.registerVertex(&n2, &load);
-    rm.registerVertex(&o2, &load);
-    rm.registerVertex(&p2, &load);
+	rm.registerVertex(&n2, &add);
+    rm.registerVertex(&o2, &add);
+    rm.registerVertex(&p2, &add);
 
 	std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
 	HatScheT::ModSDC m(g,rm,solverList);
