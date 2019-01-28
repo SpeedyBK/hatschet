@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="2" limit="1" name="AddAdd" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="662" name="LUT"/>
+    </Resource>
+    <Resource blockingTime="1" latency="0" limit="-1" name="Inport" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.618146&#xA;" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.182858" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.467353" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.947276" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.276524" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Gain-0.201756" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="0" limit="-1" name="Gain-1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="0" limit="-1" name="Outport" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

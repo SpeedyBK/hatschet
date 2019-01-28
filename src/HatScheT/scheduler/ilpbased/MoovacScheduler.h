@@ -87,7 +87,7 @@ protected:
   /*!
    * \brief resetContainer
    */
-  void resetContainer();
+  virtual void resetContainer();
   /*!
    * \brief setUpSolverSettings
    */

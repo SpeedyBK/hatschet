@@ -124,6 +124,10 @@ private:
    */
   virtual void setObjective();
   /*!
+   *
+   */
+  virtual void resetContainer();
+  /*!
    * set the resource constranints / often referred to as modulo reservation table (MRT)
    */
   void setResourceConstraints();

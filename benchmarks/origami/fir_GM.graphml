@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<graphml>
+
+  <graph edgedefault="directed" id="">
+    <node id="8">
+      <data key="name">Product2</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="2">
+      <data key="name">Constant</data>
+      <data key="uses_resource">Constant</data>
+    </node>
+    <node id="1">
+      <data key="name">X</data>
+      <data key="uses_resource">Inport</data>
+    </node>
+    <node id="4">
+      <data key="name">Constant2</data>
+      <data key="uses_resource">Constant</data>
+    </node>
+    <node id="7">
+      <data key="name">Product1</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="3">
+      <data key="name">Constant1</data>
+      <data key="uses_resource">Constant</data>
+    </node>
+    <node id="5">
+      <data key="name">Constant3</data>
+      <data key="uses_resource">Constant</data>
+    </node>
+    <node id="6">
+      <data key="name">Product</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="9">
+      <data key="name">Product3</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="10">
+      <data key="name">Sum7</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="11">
+      <data key="name">Sum8</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="12">
+      <data key="name">Sum9</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="13">
+      <data key="name">Y</data>
+      <data key="uses_resource">Outport</data>
+    </node>
+    <node id="14">
+      <data key="name">Sum1Tree0</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="15">
+      <data key="name">Sum1Tree1</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="16">
+      <data key="name">Sum1Tree2</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <edge id="2_6" source="2" target="6">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="10_6" source="10" target="6">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="3_7" source="3" target="7">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="11_7" source="11" target="7">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="4_8" source="4" target="8">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="12_8" source="12" target="8">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="5_9" source="5" target="9">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_10" source="1" target="10">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="16_13" source="16" target="13">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="6_14" source="6" target="14">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="7_14" source="7" target="14">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="14_15" source="14" target="15">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="8_15" source="8" target="15">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="15_16" source="15" target="16">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="9_16" source="9" target="16">
+      <data key="distance">0</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_9" source="1" target="9">
+      <data key="distance">5</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_10" source="1" target="10">
+      <data key="distance">10</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_11" source="1" target="11">
+      <data key="distance">2</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_11" source="1" target="11">
+      <data key="distance">8</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_12" source="1" target="12">
+      <data key="distance">4</data>
+      <data key="delay">0</data>
+    </edge>
+    <edge id="1_12" source="1" target="12">
+      <data key="distance">6</data>
+      <data key="delay">0</data>
+    </edge>
+  </graph>
+
+</graphml>

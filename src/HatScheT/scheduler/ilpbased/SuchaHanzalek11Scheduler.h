@@ -57,6 +57,11 @@ protected:
 
   virtual void constructProblem() {/* unused */}
 
+    /*!
+     * not needed
+     */
+    virtual void resetContainer(){}
+
   // decision variables
   std::map<const Vertex*, ScaLP::Variable> s, s_hat, q_hat;
   std::map<const Vertex*, std::map<const Vertex*, ScaLP::Variable>> x_hat, y_hat;

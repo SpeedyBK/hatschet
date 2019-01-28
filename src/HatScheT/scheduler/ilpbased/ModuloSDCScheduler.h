@@ -142,6 +142,10 @@ namespace HatScheT
      */
     virtual void setObjective();
     /*!
+    * not needed
+    */
+      virtual void resetContainer(){}
+    /*!
      * \brief baseConstraints contains the base constraints that have to reset for very new II
      */
     std::vector<ScaLP::Constraint> baseConstraints;

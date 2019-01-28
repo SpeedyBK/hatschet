@@ -72,6 +72,10 @@ protected:
    */
   void setResourceConstraints();
   /*!
+   * not needed
+   */
+  virtual void resetContainer(){}
+  /*!
    * \brief container for time variables
    */
   vector<ScaLP::Variable> ti;
