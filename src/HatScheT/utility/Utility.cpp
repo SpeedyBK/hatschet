@@ -665,7 +665,8 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
   	}
   }
   catch(ScaLP::Exception& e){
-  	throw HatScheT::Exception("Utility::getILPMinRegBinding: caught ScaLP exception: "+std::string(e.what()));
+  	cout << "Utility::getILPMinRegBinding: caught ScaLP exception: '" << std::string(e.what()) << "' returning simple binding";
+  	return Utility::getSimpleBinding(sched,rm,II);
   }
 
   auto results = solver.getResult().values;
@@ -675,7 +676,6 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
 	for(int i = 0; i < (int)it1.second.size(); i++){
 	  auto &it2 = it1.second[i];
 	  auto val = results[it2];
-	  cout << "#q# result for variable '" << it2 << "': " << val << endl;
 	  if(val==1.0){
 		binding[vertex] = i;
 	  }

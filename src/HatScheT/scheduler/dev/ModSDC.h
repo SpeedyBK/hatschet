@@ -49,10 +49,11 @@ namespace HatScheT
 			MOBLAP, // combine ALAP and MOBILITY_LOW; LOW mobility vertices with LOW alap time are scheduled FIRST
 			ALABILITY, // combine ALAP and MOBILITY_LOW; LOW alap time vertices with LOW mobility are scheduled FIRST
 			SUBSEQUALAP, // combine the number of subsequent vertices with ALAP time
+			ALASUB, // combine ALAP time with the number of subsequent vertices
 			CUSTOM, // priority must be set manually (only feasible if HatScheT is used as library)
 			NONE
 		};
-		inline static std::list<priorityType> getAllAutomaticPriorityTypes() {return {SUBSEQUALAP,ALABILITY,MOBLAP,ALAP,ASAP,MOBILITY_LOW,MOBILITY_HIGH,RANDOM};}
+		inline static std::list<priorityType> getAllAutomaticPriorityTypes() {return {SUBSEQUALAP,ALASUB,ALABILITY,MOBLAP,ALAP,ASAP,MOBILITY_LOW,MOBILITY_HIGH,RANDOM};}
 		static priorityType getPriorityTypeFromString(std::string priorityTypeStr);
 
 		PriorityHandler(priorityType p, int prio1, int prio2 = 0);
@@ -90,6 +91,11 @@ namespace HatScheT
          * @brief schedule main method that runs the algorithm and determines a schedule
          */
         void schedule() override;
+        /*!
+         * @brief override base method
+         * @return schedule length
+         */
+		int getScheduleLength() override;
         /*!
          * @brief override SchedulerBase::getBindings()
          * @return
@@ -141,7 +147,20 @@ namespace HatScheT
 		 * @param p
 		 */
 		void setPriority(Vertex* v, PriorityHandler p);
+		/*!
+		 * @brief this forces all vertices without outgoing edges on the same control step (which is equal to the schedule length)!
+		 */
+		void setOutputsOnLatestControlStep();
     private:
+    	int scheduleLength;
+    	/*!
+    	 * @brief schedule times of all vertices without outgoing edges are equal to the schedule length
+    	 */
+    	bool outputsEqualScheduleLength;
+    	/*!
+    	 *
+    	 */
+    	std::map<Vertex*,bool> vertexHasOutgoingEdges;
     	/*!
     	 * @brief create a resource model with unlimited resources for each resource type
     	 * @return the address (don't forget to delete it when it's not needed anymore!)
@@ -221,10 +240,10 @@ namespace HatScheT
          * @brief initialize solver (i.e. reset etc.)
          */
         void initSolver();
-        /*!
-         * @brief constructProblem
-         */
-        void constructProblem() override;
+		/*!
+		 * @brief
+		 */
+		void constructProblem() override;
         /*!
          * @brief setObjective
          */
@@ -290,6 +309,7 @@ namespace HatScheT
         void createDataDependencyConstraints();
         /*!
          * @brief this creates all additional constraints stored in this->additionalConstraints
+         * @brief v only create additional constraint for vertex v (create all if nullptr)
          */
         void createAdditionalConstraints();
         /*!
@@ -318,14 +338,15 @@ namespace HatScheT
         void clearAllAdditionalConstraints();
         /*!
          * @brief this sets up scalp for the current II
+         * @param v only respect additional constraint for this vertex (if nullptr, respect all additional constraints!)
          */
         void setUpScalp();
         /*!
          * @brief this does everything needed to solves the problem specified in this->solver
          * and stores results in this->sdcTimes
-         * @return if the solver found a solution (ScaLP::status::FEASIBLE or ScaLP::status::OPTIMAL)
+         * @return if the solver found a feasible solution
          */
-        bool solveSDCProblem(bool printDetailsOnFailure = false);
+        bool solveSDCProblem();
         /*!
          * @brief previously scheduled times (see paper for details)
          */

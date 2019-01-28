@@ -615,6 +615,7 @@ bool Tests::moduloSDCTestFiege() {
 
 	std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
 	HatScheT::ModSDC m(g,rm,solverList);
+	m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 	m.setSolverQuiet(true);
 	m.schedule();
 

@@ -475,12 +475,12 @@ int main(int argc, char *args[]) {
           break;
         case MODULOSDCFIEGE:
           isModuloScheduler=true;
-              scheduler = new HatScheT::ModSDC(g,rm,solverWishList);
-              if(timeout>0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(timeout);
-              if(maxLatency > 0) ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(maxLatency);
-              ((HatScheT::ModSDC*) scheduler)->setThreads(threads);
-              ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
-              break;
+          scheduler = new HatScheT::ModSDC(g,rm,solverWishList);
+          if(timeout>0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::ModSDC*) scheduler)->setThreads(threads);
+          ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
         case RATIONALII:
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
