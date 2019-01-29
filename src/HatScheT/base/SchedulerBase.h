@@ -68,7 +68,6 @@ public:
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
-   * ToDo: implement a dedicated binding function!
    * \return
    */
   virtual std::map<const Vertex*,int> getBindings();
@@ -118,5 +117,9 @@ protected:
    * \brief II the initiation interval of a schedule
    */
   double II = -1.0f;
+  /*!
+   * the binding after scheduling
+   */
+  std::map<const Vertex*,int> binding;
 };
 }

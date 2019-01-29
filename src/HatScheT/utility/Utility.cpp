@@ -502,7 +502,7 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
   return true;
 }
 
-	std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
+std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
   std::map<const Vertex *, int> binding;
   std::map<const Resource*, std::map<int, int>> resourceCounters;
 
@@ -525,7 +525,6 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
 		else {
 			resourceCounters[res][time] = 0;
 		}
-      //if(resourceCounters[res][time] >= res->getLimit()) <- this should be > (!) ? (Patrick)
 		if(resourceCounters[res][time] > res->getLimit())
 			throw HatScheT::Exception("Utility::getSimpleBinding: found resource conflict while creating binding for resource "
 			+ res->getName() + "(limit " + to_string(res->getLimit()) + " )");

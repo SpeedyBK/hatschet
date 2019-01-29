@@ -49,13 +49,6 @@ public:
    * the theoretical min II boundary. For this the variables s / m are used
    */
   virtual void schedule();
-  /*!
-   * the determined initIntervals of the rational II schedule after solving
-   * @return
-   */
-  vector<int> getInitInervalls(){
-    return this->initIntervals;
-  }
     /*!
  * \brief getLifeTimes using the determined rational II
  * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -71,6 +64,11 @@ public:
    * @return
    */
   virtual std::map<Edge*,int> getLifeTimes();
+  /*!
+   *
+   * @return
+   */
+  virtual std::map<const Vertex*,int> getBindings();
   /*!
    *
    * @return the schedule length / sample latency of the determined rational II modulo schedule

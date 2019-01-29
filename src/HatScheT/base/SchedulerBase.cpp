@@ -157,25 +157,15 @@ void SchedulerBase::writeScheduleChart(string filename)
 
 std::map<const Vertex *, int> SchedulerBase::getBindings()
 {
-  return Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-  /*
-  std::map<const Vertex*,int> bindings;
-  std::map<const Resource*, int> naiveBindingCounter;
+  //generate new binding when no binding is available
+  if(this->binding.size() == 0)
+    this->binding = Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
 
-  for(auto it:this->startTimes){
-    Vertex* v = it.first;
-    const Resource* r = this->resourceModel.getResource(v);
-    if(r->getLimit() == -1) throw HatScheT::Exception("SchedulerBase.getBindings: resource not unlimited " + r->getName() + "! SchedulerBase does not support this behavior! Use a ResourceConstraint Scheduler!");
+  //throw exception when no binding was generated
+  if(this->binding.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
 
-    if(naiveBindingCounter.find(r) == naiveBindingCounter.end()) naiveBindingCounter.insert(make_pair(r,0));
-    //make naive binding
-    bindings.insert(make_pair(v,naiveBindingCounter[r]));
-    //increment naive binding counter for next possible binding
-    naiveBindingCounter[r]++;
-  }
-
-  return bindings;
-   */
+  //return the stored binding
+  return this->binding;
 }
 
 std::map<Edge*,int> SchedulerBase::getLifeTimes()
