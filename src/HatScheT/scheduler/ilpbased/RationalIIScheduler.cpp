@@ -474,17 +474,20 @@ int RationalIIScheduler::getScheduleLength() {
   return maxTime;
 }
 
-std::map<const Vertex *, int> RationalIIScheduler::getBindings() {
+vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
   //generate new binding when no binding is available
-  if (this->binding.size() == 0)
-    this->binding = Utility::getSimpleBinding(this->startTimes, &this->resourceModel, this->modulo);
+  if(this->ratIIbindings.size() == 0)
+    this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->initIntervals);
 
   //throw exception when no binding was generated
-  if (this->binding.size() == 0)
-    throw Exception("RationalIIScheduler.getBindings: Error no binding could be generated! No schedule available?");
+  if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
 
   //return the stored binding
-  return this->binding;
+  return this->ratIIbindings;
+}
+
+std::map<const Vertex *, int> RationalIIScheduler::getBindings() {
+    throw Exception("RationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 }
 
 void RationalIIScheduler::setResourceConstraints() {

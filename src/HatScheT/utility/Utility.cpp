@@ -502,6 +502,16 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
   return true;
 }
 
+vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT::Vertex *, int> sched,
+                                                                    HatScheT::ResourceModel *rm, int II,
+                                                                    vector<int> initIntervalls) {
+  int samples = initIntervalls.size();
+
+  for(int i = 0; i < samples; i++){
+
+  }
+}
+
 std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
   std::map<const Vertex *, int> binding;
   std::map<const Resource*, std::map<int, int>> resourceCounters;

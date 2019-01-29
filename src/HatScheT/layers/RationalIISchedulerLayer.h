@@ -46,7 +46,16 @@ public:
    * @return
    */
   int getSamples(){return this->samples;}
+  /*!
+   * base function for rational II schedule bindings
+   * @return
+   */
+  virtual vector<std::map<const Vertex*,int> > getRationalIIBindings() = 0;
 protected:
+  /*!
+   * the bindings of rational II schedule
+   */
+  vector<std::map<const Vertex *, int> > ratIIbindings;
   /*!
    * \brief initIntervals
    */

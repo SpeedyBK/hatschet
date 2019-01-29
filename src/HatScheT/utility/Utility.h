@@ -239,7 +239,17 @@ public:
  * @param II
  * @return
  */
- static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);																									 
+ static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
+ /*!
+  * create a simple for a rational II schedule
+  * NOTE the binding might result in a bad register allocation for lifetime variables as it is a very simple utility function
+  * @param sched
+  * @param rm
+  * @param II
+  * @param initIntervalls
+  * @return
+  */
+ static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int II, vector<int> initIntervalls);
 #ifdef USE_SCALP
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif

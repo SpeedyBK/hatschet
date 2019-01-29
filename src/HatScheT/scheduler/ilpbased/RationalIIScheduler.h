@@ -65,10 +65,16 @@ public:
    */
   virtual std::map<Edge*,int> getLifeTimes();
   /*!
-   *
+   * dont use this function fo rational II modulo schedules
    * @return
    */
   virtual std::map<const Vertex*,int> getBindings();
+  /*!
+   * generate a binding using the determined rational II schedule
+   * TODO figure out the best binding method (ILP?)
+   * @return
+   */
+   virtual vector<std::map<const Vertex*,int> > getRationalIIBindings();
   /*!
    *
    * @return the schedule length / sample latency of the determined rational II modulo schedule
