@@ -502,14 +502,96 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
   return true;
 }
 
-vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT::Vertex *, int> sched,
-                                                                    HatScheT::ResourceModel *rm, int II,
-                                                                    vector<int> initIntervalls) {
-  int samples = initIntervalls.size();
+void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<const HatScheT::Vertex *, int> > ratIIbindings,
+                                 HatScheT::ResourceModel *rm, int modulo, vector<int> initIntervalls) {
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    const Resource* r = *it;
 
-  for(int i = 0; i < samples; i++){
+    //operation start time -> operation, unit
+    map<int,vector< pair<string,int> > > MRT;
 
+    //insert MRT information over modulo slots
+    for(int i = 0; i < modulo; i++){
+      vector<pair<string, int> > slot;
+      for(auto it : sched){
+        auto v = it.first;
+        if(r != rm->getResource(v)) continue;
+
+        //track the offset for the samples
+        int offset=0;
+        //iterate over samples
+        for(int j = 0; j < initIntervalls.size(); j++){
+          //increase offset
+          if(j>0) offset+=initIntervalls[j-1];
+
+          int moduloTime = (it.second+offset) % modulo;
+
+          if(moduloTime != i) continue;
+          slot.push_back(make_pair(v->getName() + "_s" + to_string(j), ratIIbindings[j][v]));
+        }
+      }
+      MRT.insert(make_pair(i,slot));
+    }
+
+    //do the printing
+    cout << "-----" << endl;
+    cout << "MRT after binding for resource " << r->getName() << " (limit " << r->getLimit() << ")" << endl;
+    for(auto it:MRT){
+      cout << to_string(it.first) << ": ";
+
+      for(auto it2:it.second){
+        cout << "(" << it2.first << ", " << to_string(it2.second) << ") ";
+      }
+      cout << "-----" << endl;
+    }
   }
+}
+
+vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT::Vertex *, int> sched,
+                                                                    HatScheT::ResourceModel *rm, int modulo,
+                                                                    vector<int> initIntervalls) {
+  vector<std::map<const Vertex*,int> > ratIIBindings;
+  int samples = initIntervalls.size();
+  ratIIBindings.resize(samples);
+
+  std::map<const Resource*, std::map<int, int>> resourceCounters;
+
+  for(auto it : sched) {
+    auto v = it.first;
+    const Resource* res = rm->getResource(v);
+    //the offset for the respective sample based on the initInterval vector
+    int offset = 0;
+    //iterate over the samples
+    for(int i = 0; i < samples; i++) {
+      //increase the offset
+      if(i>0) offset+=initIntervalls[i-1];
+
+      if (res->getLimit() < 0) {
+        //for unlimited resources, each sample gets bound to the same unit, each operation gets implemented by its own unit
+        if (resourceCounters[res].find(0) != resourceCounters[res].end()) {
+          if(offset==0) resourceCounters[res][0]++;
+        } else {
+          resourceCounters[res][0] = 0;
+        }
+        ratIIBindings[i][v] = resourceCounters[res][0];
+      } else {
+        int time = (it.second + offset) % modulo;
+        if (resourceCounters[res].find(time) != resourceCounters[res].end()) {
+          resourceCounters[res][time]++;
+        } else {
+          resourceCounters[res][time] = 0;
+        }
+        if (resourceCounters[res][time] > res->getLimit())
+          throw HatScheT::Exception(
+            "Utility::getSimpleRatIIBinding: found resource conflict while creating binding for resource "
+            + res->getName() + "(limit " + to_string(res->getLimit()) + " )");
+        ratIIBindings[i][v] = resourceCounters[res][time];
+      }
+
+    }
+  }
+
+  return ratIIBindings;
 }
 
 std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {

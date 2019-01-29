@@ -249,7 +249,15 @@ public:
   * @param initIntervalls
   * @return
   */
- static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int II, vector<int> initIntervalls);
+ static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
+ /*!
+  * @brief print the modulo reservation table of rational II schedule and binding
+  * @param sched
+  * @param rm
+  * @param modulo
+  * @param initIntervalls
+  */
+ static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings, ResourceModel* rm, int modulo, vector<int> initIntervalls);
 #ifdef USE_SCALP
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
