@@ -604,25 +604,15 @@ std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched
     auto v = it.first;
     const Resource* res = rm->getResource(v);
     if(res->getLimit()<0) {
-		if(resourceCounters[res].find(0) != resourceCounters[res].end()) {
-			resourceCounters[res][0]++;
-		}
-		else {
-			resourceCounters[res][0] = 0;
-		}
-		binding[v] = resourceCounters[res][0];
+      binding[v] = resourceCounters[res][0];
+      resourceCounters[res][0]++;
     } else {
-		int time = it.second % II;
-		if(resourceCounters[res].find(time) != resourceCounters[res].end()) {
-			resourceCounters[res][time]++;
-		}
-		else {
-			resourceCounters[res][time] = 0;
-		}
-		if(resourceCounters[res][time] > res->getLimit())
-			throw HatScheT::Exception("Utility::getSimpleBinding: found resource conflict while creating binding for resource "
-			+ res->getName() + "(limit " + to_string(res->getLimit()) + " )");
-		binding[v] = resourceCounters[res][time];
+      int time = it.second % II;
+      binding[v] = resourceCounters[res][time];
+      if(resourceCounters[res][time] >= res->getLimit())
+          throw HatScheT::Exception("Utility::getSimpleBinding: found resource conflict while creating binding for resource "
+          + res->getName() + "(limit " + to_string(res->getLimit()) + " )");
+      resourceCounters[res][time]++;
     }
   }
   return binding;

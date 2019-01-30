@@ -259,6 +259,16 @@ public:
   */
  static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings, ResourceModel* rm, int modulo, vector<int> initIntervalls);
 #ifdef USE_SCALP
+ /*!
+  * @brief getILPMinRegBinding create a binding with minimal number of lifetime registers (assuming register sharing!)
+  * @param sched schedule times
+  * @param g graph
+  * @param rm resource model
+  * @param II
+  * @param sw solver wishlist
+  * @param timeout timeout for ilp solver
+  * @return binding
+  */
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
 };
