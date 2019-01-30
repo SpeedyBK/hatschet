@@ -542,8 +542,10 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
       for(auto it2:it.second){
         cout << "(" << it2.first << ", " << to_string(it2.second) << ") ";
       }
-      cout << "-----" << endl;
+      if(it.second.size()==0) cout << "-----";
+      cout << endl;
     }
+    cout << "-----" << endl;
   }
 }
 
