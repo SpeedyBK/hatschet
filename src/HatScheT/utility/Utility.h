@@ -241,8 +241,8 @@ public:
  */
  static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
  /*!
-  * create a simple for a rational II schedule
-  * NOTE the binding might result in a bad register allocation for lifetime variables as it is a very simple utility function
+  * create a simple binding for a rational II schedule
+  * NOTE the binding might result in a bad register and MUX allocation for lifetime variables as it is a very simple utility function
   * @param sched
   * @param rm
   * @param II
@@ -250,6 +250,16 @@ public:
   * @return
   */
  static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
+  /*!
+   * @brief create an ilp-based binding for a rational II schedule
+   * the goal is to minimize MUX and register allocation
+   * @param sched
+   * @param rm
+   * @param modulo
+   * @param initIntervalls
+   * @return
+   */
+ static vector<std::map<const Vertex*,int> > getILPBasedRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
  /*!
   * @brief print the modulo reservation table of rational II schedule and binding
   * @param sched

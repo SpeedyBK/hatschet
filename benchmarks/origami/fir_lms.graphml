@@ -4,27 +4,27 @@
   <graph edgedefault="directed" id="">
     <node id="1">
       <data key="name">In_x</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_x</data>
+    </node>
+    <node id="2">
+      <data key="name">In_d</data>
+      <data key="uses_resource">In_d</data>
     </node>
     <node id="3">
       <data key="name">e=d-y</data>
       <data key="uses_resource">AddSub</data>
     </node>
-    <node id="5">
-      <data key="name">f(1)</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="2">
-      <data key="name">In_d</data>
-      <data key="uses_resource">Inport</data>
-    </node>
     <node id="4">
       <data key="name">f(0)</data>
       <data key="uses_resource">AddAdd</data>
     </node>
+    <node id="5">
+      <data key="name">f(1)</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
     <node id="6">
       <data key="name">mu</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.25_22</data>
     </node>
     <node id="7">
       <data key="name">mu*e</data>
@@ -52,15 +52,15 @@
     </node>
     <node id="13">
       <data key="name">Out_f(0)</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_f(0)</data>
     </node>
     <node id="14">
       <data key="name">Out_f(1)</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_f(1)</data>
     </node>
     <node id="15">
       <data key="name">Out_e</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_e</data>
     </node>
     <edge id="2_3" source="2" target="3">
       <data key="distance">0</data>

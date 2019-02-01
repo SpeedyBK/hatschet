@@ -6,13 +6,53 @@
       <data key="name">Add2</data>
       <data key="uses_resource">AddAdd</data>
     </node>
+    <node id="16">
+      <data key="name">Add18</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="13">
+      <data key="name">Add14</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="14">
+      <data key="name">Add15</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="19">
+      <data key="name">Add20</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="2">
+      <data key="name">Const</data>
+      <data key="uses_resource">Const</data>
+    </node>
+    <node id="22">
+      <data key="name">Add5</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
     <node id="11">
       <data key="name">Add12</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="12">
+      <data key="name">Add13</data>
       <data key="uses_resource">AddAdd</data>
     </node>
     <node id="4">
       <data key="name">A3</data>
       <data key="uses_resource">Gain-0.182858</data>
+    </node>
+    <node id="9">
+      <data key="name">Add10</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="6">
+      <data key="name">A52</data>
+      <data key="uses_resource">Gain-0.947276</data>
+    </node>
+    <node id="23">
+      <data key="name">Add6</data>
+      <data key="uses_resource">AddAdd</data>
     </node>
     <node id="17">
       <data key="name">Add19</data>
@@ -22,114 +62,74 @@
       <data key="name">Add8</data>
       <data key="uses_resource">AddAdd</data>
     </node>
-    <node id="22">
-      <data key="name">Add5</data>
-      <data key="uses_resource">AddAdd</data>
+    <node id="1">
+      <data key="name">XN</data>
+      <data key="uses_resource">XN</data>
     </node>
-    <node id="6">
-      <data key="name">A52</data>
-      <data key="uses_resource">Gain-0.947276</data>
-    </node>
-    <node id="15">
-      <data key="name">Add17</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="19">
-      <data key="name">Add20</data>
-      <data key="uses_resource">AddAdd</data>
+    <node id="27">
+      <data key="name">B2</data>
+      <data key="uses_resource">Gain-0.276524</data>
     </node>
     <node id="20">
       <data key="name">Add3</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="12">
-      <data key="name">Add13</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="1">
-      <data key="name">XN</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="23">
-      <data key="name">Add6</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="30">
-      <data key="name">YN</data>
-      <data key="uses_resource">Outport</data>
-    </node>
-    <node id="28">
-      <data key="name">B4</data>
-      <data key="uses_resource">Gain-0.201756</data>
-    </node>
-    <node id="32">
-      <data key="name">Add16Tree0</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="3">
-      <data key="name">A1</data>
-      <data key="uses_resource">Gain-0.618146
-</data>
-    </node>
-    <node id="7">
-      <data key="name">Add</data>
       <data key="uses_resource">AddAdd</data>
     </node>
     <node id="5">
       <data key="name">A51</data>
       <data key="uses_resource">Gain-0.467353</data>
     </node>
-    <node id="9">
-      <data key="name">Add10</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="2">
-      <data key="name">Const</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="27">
-      <data key="name">B2</data>
-      <data key="uses_resource">Gain-0.276524</data>
-    </node>
-    <node id="24">
-      <data key="name">Add7</data>
-      <data key="uses_resource">AddAdd</data>
+    <node id="3">
+      <data key="name">A1</data>
+      <data key="uses_resource">Gain-0.618146
+</data>
     </node>
     <node id="8">
       <data key="name">Add1</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="7">
+      <data key="name">Add</data>
       <data key="uses_resource">AddAdd</data>
     </node>
     <node id="10">
       <data key="name">Add11</data>
       <data key="uses_resource">AddAdd</data>
     </node>
-    <node id="14">
-      <data key="name">Add15</data>
+    <node id="15">
+      <data key="name">Add17</data>
       <data key="uses_resource">AddAdd</data>
     </node>
-    <node id="13">
-      <data key="name">Add14</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="16">
-      <data key="name">Add18</data>
+    <node id="24">
+      <data key="name">Add7</data>
       <data key="uses_resource">AddAdd</data>
     </node>
     <node id="21">
       <data key="name">Add4</data>
       <data key="uses_resource">AddAdd</data>
     </node>
-    <node id="29">
-      <data key="name">Gain</data>
-      <data key="uses_resource">Gain-1</data>
-    </node>
     <node id="26">
       <data key="name">Add9</data>
       <data key="uses_resource">AddAdd</data>
     </node>
+    <node id="28">
+      <data key="name">B4</data>
+      <data key="uses_resource">Gain-0.201756</data>
+    </node>
+    <node id="29">
+      <data key="name">Gain</data>
+      <data key="uses_resource">Gain-1</data>
+    </node>
+    <node id="30">
+      <data key="name">YN</data>
+      <data key="uses_resource">YN</data>
+    </node>
     <node id="31">
       <data key="name">unconnected</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">unconnected</data>
+    </node>
+    <node id="32">
+      <data key="name">Add16Tree0</data>
+      <data key="uses_resource">AddAdd</data>
     </node>
     <node id="33">
       <data key="name">Add16Tree1</data>

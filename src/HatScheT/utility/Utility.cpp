@@ -549,6 +549,25 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
   }
 }
 
+vector<std::map<const Vertex*,int> > Utility::getILPBasedRatIIBinding(map<Vertex*, int> sched,
+    ResourceModel* rm,  int modulo, vector<int> initIntervalls){
+  vector<std::map<const Vertex*,int> > ratIIBindings;
+  int samples = initIntervalls.size();
+  ratIIBindings.resize(samples);
+
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+    int HUs = r->getLimit();
+    //MRT modulo timestep, unit, vertex -> (sample, binding)
+    vector<vector<map<Vertex*, pair<int, ScaLP::Variable > > > > MRT;
+
+    //set range of modulo
+    MRT.resize(modulo);
+  }
+
+  return ratIIBindings;
+}
+
 vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT::Vertex *, int> sched,
                                                                     HatScheT::ResourceModel *rm, int modulo,
                                                                     vector<int> initIntervalls) {

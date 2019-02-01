@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="2" limit="1" name="Product" physicalDelay="0.000000">
+      <Cost demand="2" name="DSP"/>
+      <Cost demand="287" name="LUT"/>
+    </Resource>
+    <Resource blockingTime="1" latency="4" limit="1" name="AddAdd" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="662" name="LUT"/>
+    </Resource>
+    <Resource blockingTime="1" latency="0" limit="-1" name="In2" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_46" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_633" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_831" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_832" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_833" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_834" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_835" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_836" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_657" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_658" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_733" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_734" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_735" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_736" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_829" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_830" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_48" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_634" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_839" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_840" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_841" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_842" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_843" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_844" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_659" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_660" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_737" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_738" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_739" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_740" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_837" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_838" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_47" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_635" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_847" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_848" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_849" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_850" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_851" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_852" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_661" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_662" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_741" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_742" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_743" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_744" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_845" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_846" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_49" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_636" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_855" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_856" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_857" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_858" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_859" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_860" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_663" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_664" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_745" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_746" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_747" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_748" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_853" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_854" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="0" limit="-1" name="Out2" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

@@ -4,39 +4,39 @@
   <graph edgedefault="directed" id="">
     <node id="1">
       <data key="name">In_CR</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_CR</data>
     </node>
     <node id="2">
       <data key="name">In_Y</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_Y</data>
     </node>
     <node id="3">
       <data key="name">In_CB</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_CB</data>
     </node>
     <node id="4">
       <data key="name">Const7</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1.402_21</data>
     </node>
     <node id="5">
       <data key="name">Const8</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant128_22</data>
     </node>
     <node id="6">
       <data key="name">Const9</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1.772_23</data>
     </node>
     <node id="7">
       <data key="name">Constant6</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant128_24</data>
     </node>
     <node id="8">
       <data key="name">Constant7</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.714_25</data>
     </node>
     <node id="9">
       <data key="name">Constant8</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.344_26</data>
     </node>
     <node id="10">
       <data key="name">Product4</data>
@@ -72,15 +72,15 @@
     </node>
     <node id="18">
       <data key="name">Out_R</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_R</data>
     </node>
     <node id="19">
       <data key="name">Out_G</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_G</data>
     </node>
     <node id="20">
       <data key="name">Out_B</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_B</data>
     </node>
     <node id="21">
       <data key="name">Sum6Tree0</data>

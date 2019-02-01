@@ -4,39 +4,39 @@
   <graph edgedefault="directed" id="">
     <node id="1">
       <data key="name">In1</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In1</data>
     </node>
     <node id="2">
       <data key="name">Const</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1/16_10</data>
     </node>
     <node id="3">
       <data key="name">Const1</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant-1/8_11</data>
     </node>
     <node id="4">
       <data key="name">Const2</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1/4_13</data>
     </node>
     <node id="5">
       <data key="name">Const3</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant-1/2_15</data>
     </node>
     <node id="6">
       <data key="name">Const4</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant-1/2_38</data>
     </node>
     <node id="7">
       <data key="name">Const5</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1/4_39</data>
     </node>
     <node id="8">
       <data key="name">Const6</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant-1/8_40</data>
     </node>
     <node id="9">
       <data key="name">Const7</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant1/16_41</data>
     </node>
     <node id="10">
       <data key="name">Product</data>
@@ -72,7 +72,7 @@
     </node>
     <node id="18">
       <data key="name">Out1</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out1</data>
     </node>
     <node id="19">
       <data key="name">SumTree0</data>

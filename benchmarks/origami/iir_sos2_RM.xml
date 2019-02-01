@@ -12,9 +12,13 @@
     </Resource>
     <Resource blockingTime="1" latency="0" limit="-1" name="In2" physicalDelay="0.000000"/>
     <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_46" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1.19967756820218_633" physicalDelay="0.000000"/>
     <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_48" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant2_634" physicalDelay="0.000000"/>
     <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_47" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-0.515738756176753_635" physicalDelay="0.000000"/>
     <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_49" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant1_636" physicalDelay="0.000000"/>
     <Resource blockingTime="1" latency="0" limit="-1" name="Out2" physicalDelay="0.000000"/>
   </Resources>
 

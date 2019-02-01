@@ -2,17 +2,20 @@
 <ModelInformation>
 
   <Resources>
-    <Resource blockingTime="1" latency="0" limit="1" name="Product" physicalDelay="0.000000">
+    <Resource blockingTime="1" latency="2" limit="1" name="Product" physicalDelay="0.000000">
       <Cost demand="2" name="DSP"/>
       <Cost demand="287" name="LUT"/>
     </Resource>
-    <Resource blockingTime="1" latency="2" limit="1" name="AddAdd" physicalDelay="0.000000">
+    <Resource blockingTime="1" latency="4" limit="1" name="AddAdd" physicalDelay="0.000000">
       <Cost demand="0" name="DSP"/>
       <Cost demand="662" name="LUT"/>
     </Resource>
-    <Resource blockingTime="1" latency="0" limit="-1" name="Inport" physicalDelay="0.000000"/>
-    <Resource blockingTime="1" latency="0" limit="-1" name="Constant" physicalDelay="0.000000"/>
-    <Resource blockingTime="1" latency="0" limit="-1" name="Outport" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="0" limit="-1" name="X" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant9/1024_544" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant-44/1024_545" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant208/1024_552" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="-1" name="Constant346/1024_553" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="0" limit="-1" name="Y" physicalDelay="0.000000"/>
   </Resources>
 
 </ModelInformation>

@@ -2,41 +2,41 @@
 <graphml>
 
   <graph edgedefault="directed" id="">
-    <node id="1">
-      <data key="name">In_R</data>
-      <data key="uses_resource">Inport</data>
-    </node>
     <node id="2">
       <data key="name">In_G</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_G</data>
+    </node>
+    <node id="1">
+      <data key="name">In_R</data>
+      <data key="uses_resource">In_R</data>
     </node>
     <node id="3">
       <data key="name">In_B</data>
-      <data key="uses_resource">Inport</data>
+      <data key="uses_resource">In_B</data>
     </node>
     <node id="4">
       <data key="name">Constant</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.299_15</data>
     </node>
     <node id="5">
       <data key="name">Constant1</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.114_16</data>
     </node>
     <node id="6">
       <data key="name">Constant2</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.564_17</data>
     </node>
     <node id="7">
       <data key="name">Constant3</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant0.713_18</data>
     </node>
     <node id="8">
       <data key="name">Constant4</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant128_19</data>
     </node>
     <node id="9">
       <data key="name">Constant5</data>
-      <data key="uses_resource">Constant</data>
+      <data key="uses_resource">Constant128_20</data>
     </node>
     <node id="10">
       <data key="name">Product</data>
@@ -80,15 +80,15 @@
     </node>
     <node id="20">
       <data key="name">Out_CR</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_CR</data>
     </node>
     <node id="21">
       <data key="name">Out_Y</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_Y</data>
     </node>
     <node id="22">
       <data key="name">Out_CB</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out_CB</data>
     </node>
     <node id="23">
       <data key="name">SumTree0</data>

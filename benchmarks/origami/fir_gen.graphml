@@ -2,65 +2,65 @@
 <graphml>
 
   <graph edgedefault="directed" id="">
-    <node id="6">
-      <data key="name">Add</data>
-      <data key="uses_resource">AddAdd</data>
+    <node id="2">
+      <data key="name">In2</data>
+      <data key="uses_resource">In2</data>
     </node>
     <node id="1">
       <data key="name">In1</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="8">
-      <data key="name">Add2</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="3">
-      <data key="name">In3</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="2">
-      <data key="name">In2</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="10">
-      <data key="name">Constant</data>
-      <data key="uses_resource">Constant</data>
-    </node>
-    <node id="5">
-      <data key="name">In5</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="7">
-      <data key="name">Add1</data>
-      <data key="uses_resource">AddAdd</data>
-    </node>
-    <node id="4">
-      <data key="name">In4</data>
-      <data key="uses_resource">Inport</data>
-    </node>
-    <node id="9">
-      <data key="name">CMult</data>
-      <data key="uses_resource">Product</data>
-    </node>
-    <node id="11">
-      <data key="name">Mult</data>
-      <data key="uses_resource">Product</data>
-    </node>
-    <node id="12">
-      <data key="name">Mult1</data>
-      <data key="uses_resource">Product</data>
+      <data key="uses_resource">In1</data>
     </node>
     <node id="13">
       <data key="name">Mult2</data>
       <data key="uses_resource">Product</data>
     </node>
-    <node id="14">
-      <data key="name">Mult3</data>
+    <node id="7">
+      <data key="name">Add1</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="10">
+      <data key="name">Constant</data>
+      <data key="uses_resource">Constant0.003906_40</data>
+    </node>
+    <node id="5">
+      <data key="name">In5</data>
+      <data key="uses_resource">In5</data>
+    </node>
+    <node id="3">
+      <data key="name">In3</data>
+      <data key="uses_resource">In3</data>
+    </node>
+    <node id="6">
+      <data key="name">Add</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="8">
+      <data key="name">Add2</data>
+      <data key="uses_resource">AddAdd</data>
+    </node>
+    <node id="11">
+      <data key="name">Mult</data>
       <data key="uses_resource">Product</data>
     </node>
     <node id="15">
       <data key="name">Out6</data>
-      <data key="uses_resource">Outport</data>
+      <data key="uses_resource">Out6</data>
+    </node>
+    <node id="4">
+      <data key="name">In4</data>
+      <data key="uses_resource">In4</data>
+    </node>
+    <node id="12">
+      <data key="name">Mult1</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="9">
+      <data key="name">CMult</data>
+      <data key="uses_resource">Product</data>
+    </node>
+    <node id="14">
+      <data key="name">Mult3</data>
+      <data key="uses_resource">Product</data>
     </node>
     <edge id="12_6" source="12" target="6">
       <data key="distance">0</data>
