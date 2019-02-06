@@ -540,7 +540,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
       cout << to_string(it.first) << ": ";
 
       for(auto it2:it.second){
-        cout << "(" << it2.first << ", " << to_string(it2.second) << ") ";
+        cout << "(" << it2.first << ", unit " << to_string(it2.second) << ") ";
       }
       if(it.second.size()==0) cout << "-----";
       cout << endl;
@@ -549,21 +549,178 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
   }
 }
 
-vector<std::map<const Vertex*,int> > Utility::getILPBasedRatIIBinding(map<Vertex*, int> sched,
-    ResourceModel* rm,  int modulo, vector<int> initIntervalls){
+vector<std::map<const Vertex*,int> > Utility::getBruteForceRatIIBinding(map<HatScheT::Vertex *, int> sched,
+                                 HatScheT::Graph *g, HatScheT::ResourceModel *rm, int modulo, vector<int> initIntervalls,
+                                 map<HatScheT::Edge *, pair<int, int>> edgePortMappings) {
+  //generate cotainer for bindings
   vector<std::map<const Vertex*,int> > ratIIBindings;
+
+
+
+  return ratIIBindings;
+}
+
+vector<std::map<const Vertex*,int> > Utility::getILPBasedRatIIBinding(map<Vertex*, int> sched, Graph* g,
+  ResourceModel* rm,  int modulo, vector<int> initIntervalls, std::list<std::string> sw , int timeout){
+  // create and setup solver
+  if(sw.empty()) sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
+  auto solver = ScaLP::Solver(sw);
+  solver.quiet = true;
+  solver.threads = 1;
+  solver.timeout=timeout;
+
   int samples = initIntervalls.size();
+
+  vector<std::map<const Vertex*,int> > ratIIBindings;
   ratIIBindings.resize(samples);
 
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    Resource* r = *it;
-    int HUs = r->getLimit();
-    //MRT modulo timestep, unit, vertex -> (sample, binding)
-    vector<vector<map<Vertex*, pair<int, ScaLP::Variable > > > > MRT;
+  // samples, vertex, resource unit (true/false)
+  vector<map<const Vertex*, vector<ScaLP::Variable > > > binding_vars;
+  binding_vars.resize(samples);
 
-    //set range of modulo
-    MRT.resize(modulo);
+  //fill binding_vars
+  for(int i = 0; i < samples; i++) {
+    for (auto it = g->verticesBegin(); it != g->verticesEnd(); ++it) {
+      Vertex *v = *it;
+      const Resource *r = rm->getResource(v);
+      //skip unlimited
+      //TODO handle unlimited resources
+      //TODO fix their binding variables using '==constraint' ?
+      if (r->getLimit() == -1) continue;
+
+      //generate ilp variables for binding
+      vector<ScaLP::Variable> vars;
+      for (int j = 0; j < r->getLimit(); j++) {
+        vars.push_back(ScaLP::newBinaryVariable("t'" + v->getName() + "_s" + to_string(i) + "_r" + to_string(j)));
+      }
+
+      binding_vars[i].insert(make_pair(v, vars));
+    }
   }
+
+  //add explicitness constraint(1) from the paper
+  for(auto it : binding_vars){
+    for(auto it2 : it) {
+      //TODO get here all vertices that use samples in this time step and combine them
+      ScaLP::Term expl;
+      for(auto it3 : it2.second) {
+        expl += it3;
+      }
+      solver.addConstraint(expl == 1);
+    }
+  }
+
+  //sort the vertices by the time slot they are scheduled
+  //map<int, vector<const Vertex*> > v_timesorted;
+
+  //add binding constraints
+  //respect the MRT in respect to modulo slots and resource constraints
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    const Resource* r = *it;
+    set<const Vertex*> verts = rm->getVerticesOfResource(r);
+
+    //sort all ILP variables that fall into the same modulo time slot
+    map<int, vector<ScaLP::Variable > > variables_timesorted;
+
+    //use scalp term for every hardware unit and MRT time slot
+    vector<vector<ScaLP::Term> > slot_terms;
+    for(int i = 0; i < r->getLimit(); i++) {
+      vector<ScaLP::Term> terms;
+      for (int j = 0; j < modulo; j++) {
+        ScaLP::Term t;
+        terms.push_back(t);
+      }
+      slot_terms.push_back(terms);
+    }
+
+    //add the ScaLP::Variables to the corresponding ScaLP::Term
+    //this describes the MRT
+    for(auto it2 : verts) {
+      const Vertex* v = it2;
+      int modulo_slot = 0;
+      for(auto it3: sched) {
+        Vertex* v2 = it3.first;
+        if(v==v2) {
+          int distance = 0;
+          for(int i = 0; i < samples; i++){
+            if(i>0) distance+=initIntervalls[i-1];
+
+            modulo_slot = (it3.second + distance) % modulo;
+            for(int j = 0; j < r->getLimit(); j++){
+              slot_terms[j][modulo_slot] += binding_vars[i][v][j];
+            }
+          }
+        }
+      }
+
+    }
+    //every hardware unit can only perform one operation each time step
+    //according to (3) / (4) in the paper
+    //question : what about blocking time > 1 ? this should have harder constraints than a fixed '1' (patrick)
+    for(auto it2: slot_terms){
+      for(auto it3 : it2){
+        solver.addConstraint(it3 <= 1);
+      }
+    }
+  }
+
+  //TODO add MUX constraints
+  //this is an attempt for two layer if->else using big-M
+  //for all inports -> boolean variable if there is a mux input needed for this input edge
+  vector<vector<ScaLP::Variable > > mux_inputs;
+  //for all inports: boolean variable if mux is needed at all
+  vector<ScaLP::Variable> mux_number;
+
+  //TODO model mux_inputs
+  for(auto it = g->verticesBegin(); it != g->verticesEnd(); ++it){
+    Vertex* v = *it;
+    set<Vertex*> pred = g->getPredecessors(v);
+
+    //TODO experimental, debugging reasons
+    if(pred.size() > 1) continue;
+    list<const Edge*> edges = g->getEdges(v, *pred.begin());
+    const Edge* e = *edges.begin();
+
+    //TODO if
+  }
+
+  //TODO model total mux number
+
+  //TODO add objective
+
+  //write lp file
+  solver.writeLP("binding.lp");
+
+  //solve the problem
+  ScaLP::status stat = solver.solve();
+  cout << "Utility.getILPBasedRatIIBinding: The binding problem was solved: " << stat << endl;
+  cout << solver.getResult() << endl;
+
+  //add the solution to return container and print the binding
+  //TODO include check for consistency / feasible binding
+  int sample=0;
+  for(auto it : binding_vars){
+    for(auto it2 : it) {
+      const Vertex* v = it2.first;
+      int unit = 0;
+      for(auto it3 : it2.second) {
+        if(solver.getResult().values[it3] == true) {
+          //add to solution structure
+          ratIIBindings[sample][v] = unit;
+
+          cout << "Bound " << v->getName() << "_s" << to_string(sample) << " to unit " << to_string(unit) << endl;
+        }
+        else unit++;
+      }
+    }
+    sample++;
+  }
+
+  Utility::printRationalIIMRT(sched, ratIIBindings, rm, modulo, initIntervalls);
+
+  //throw error, this binding function is not finished yet
+  cout << "Utility.getILPBasedRatIIBinding: this binding function is not finished yet" << endl;
+  throw Exception("Utility.getILPBasedRatIIBinding: this binding function is not finished yet");
 
   return ratIIBindings;
 }

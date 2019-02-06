@@ -128,6 +128,10 @@ void RationalIIScheduler::setGeneralConstraints()
   }
 }
 
+void RationalIIScheduler::printBindingToConsole() {
+  Utility::printRationalIIMRT(this->startTimes, this->ratIIbindings, &this->resourceModel, this->modulo, this->initIntervals);
+}
+
 void RationalIIScheduler::printScheduleToConsole()
 {
   cout << "----" << "Samples: " << this->samples << " mod: "
@@ -231,13 +235,13 @@ void RationalIIScheduler::schedule()
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
   cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
   cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
-  cout << "RationalIIScheduler.schedule: max runs for rat ii sheduling " << this->getMaxRuns() << endl;
+  cout << "RationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
   cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
 
   //count runs, set maxRuns
   int runs = 0;
   int maxRuns = this->maxRuns;
-  if(maxRuns == -1) maxRuns = 1000000; //e.g. 'infinity'
+  if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
 
   while(runs <= maxRuns){
     cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
@@ -279,6 +283,7 @@ void RationalIIScheduler::schedule()
       cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
       cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
       this->II = (double)(this->modulo) / (double)(this->samples);
+      this->getRationalIIBindings();
     }
 
     else{
@@ -478,7 +483,7 @@ vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBinding
   //generate new binding when no binding is available
   if(this->ratIIbindings.size() == 0)
     this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->initIntervals);
-
+    //this->ratIIbindings = Utility::getILPBasedRatIIBinding(this->getSchedule(),&this->g, &this->resourceModel,this->modulo, this->initIntervals);
   //throw exception when no binding was generated
   if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
 

@@ -250,25 +250,33 @@ public:
   * @return
   */
  static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
-  /*!
+ /*!
+  * @brief print the modulo reservation tables of rational II schedule and binding
+  * @param sched
+  * @param rm
+  * @param modulo
+  * @param initIntervalls
+  */
+ static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings,
+   ResourceModel* rm, int modulo, vector<int> initIntervalls);
+#ifdef USE_SCALP
+    static vector<std::map<const Vertex*,int> > getBruteForceRatIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+      int modulo, vector<int> initIntervalls, map<Edge*, pair<int, int> > edgePortMappings);
+   /*!
    * @brief create an ilp-based binding for a rational II schedule
    * the goal is to minimize MUX and register allocation
+   * if you try to understand this: good luck, may the force be with you :-) for questions ask sittel@uni-kassel.de
+   * rational II enhancement of 'Simultaneous FU and Register Binding Based on Network Flow Method'
+   * Jason Cong and Junjuan Xu
+   * DATE 2008
    * @param sched
    * @param rm
    * @param modulo
    * @param initIntervalls
    * @return
    */
- static vector<std::map<const Vertex*,int> > getILPBasedRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
- /*!
-  * @brief print the modulo reservation table of rational II schedule and binding
-  * @param sched
-  * @param rm
-  * @param modulo
-  * @param initIntervalls
-  */
- static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings, ResourceModel* rm, int modulo, vector<int> initIntervalls);
-#ifdef USE_SCALP
+   static vector<std::map<const Vertex*,int> > getILPBasedRatIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+     int modulo, vector<int> initIntervalls, std::list<std::string> sw = {}, int timeout=300);
  /*!
   * @brief getILPMinRegBinding create a binding with minimal number of lifetime registers (assuming register sharing!)
   * @param sched schedule times

@@ -105,6 +105,10 @@ public:
    */
   void printScheduleToConsole();
   /*!
+   * @brief print the MRTs of all resources after rational II scheduling and binding
+   */
+  void printBindingToConsole();
+  /*!
    * print the uneven spaced initiation times of data samples
    * those repeat every m cycles
    * @return
@@ -117,7 +121,17 @@ public:
    */
   void setUniformScheduleFlag(bool b){this->uniformSchedule=b;}
   bool getUniformScheduleFlag(){return this->uniformSchedule;}
-
+  /*!
+   * @brief the edgePortMapping can be used to optmize the binding in order
+   * to minimize the effort for MUX hardware
+   * @param epm
+   */
+  void setedgePortMapping(map<Edge*, pair<int, int> > epm){
+    this->edgePortMapping = epm;
+  }
+  map<Edge*, pair<int, int> > getedgePortMapping(){
+    return this->edgePortMapping;
+  }
 private:
   /*!
    * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
@@ -212,5 +226,10 @@ private:
    * flag
    */
   bool minRatIIFound;
+  /*!
+   * @brief the edgePortMapping can be used to optmize the binding in order
+   * to minimize the effort for MUX hardware
+   */
+  map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
 };
 }
