@@ -44,6 +44,7 @@ namespace HatScheT
 			RANDOM, // random ordering
 			ASAP, // based on inverse asap times
 			ALAP, // based on inverse alap times
+			PERTUBATION, // number of subsequent vertices (recommended in paper)
 			MOBILITY_HIGH, // based on difference between alap and alap times; HIGH mobility vertices are scheduled FIRST
 			MOBILITY_LOW, // based on difference between alap and alap times; LOW mobility vertices are scheduled FIRST
 			MOBLAP, // combine ALAP and MOBILITY_LOW; LOW mobility vertices with LOW alap time are scheduled FIRST
@@ -53,7 +54,7 @@ namespace HatScheT
 			CUSTOM, // priority must be set manually (only feasible if HatScheT is used as library)
 			NONE
 		};
-		inline static std::list<priorityType> getAllAutomaticPriorityTypes() {return {SUBSEQUALAP,ALASUB,ALABILITY,MOBLAP,ALAP,ASAP,MOBILITY_LOW,MOBILITY_HIGH,RANDOM};}
+		inline static std::list<priorityType> getAllAutomaticPriorityTypes() {return {PERTUBATION,SUBSEQUALAP,ALASUB,ALABILITY,MOBLAP,ALAP,ASAP,MOBILITY_LOW,MOBILITY_HIGH,RANDOM};}
 		static priorityType getPriorityTypeFromString(std::string priorityTypeStr);
 
 		PriorityHandler(priorityType p, int prio1, int prio2 = 0);

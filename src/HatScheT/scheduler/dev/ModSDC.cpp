@@ -26,7 +26,7 @@ namespace HatScheT
     ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> &sw) :
         SchedulerBase(g,rm), ILPSchedulerBase(sw),
         priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
-        pType(PriorityHandler::priorityType::ALAP), budget(-1), uniqueVariableName(""),
+        pType(PriorityHandler::priorityType::PERTUBATION), budget(-1), uniqueVariableName(""),
         budgetMultiplier(6), outputsEqualScheduleLength(false), vertexHasOutgoingEdges(),
         scheduleLength(-1){
 
@@ -608,6 +608,16 @@ namespace HatScheT
                 }
                 break;
             }
+			case PriorityHandler::priorityType::PERTUBATION: {
+				for(auto it : this->g.Vertices()) {
+					if(this->resourceModel.getResource(it)->getLimit()>0)
+					{
+						auto noOfSubseq = this->getNoOfSubsequentVertices(it);
+						this->priorityForSchedQueue[it] = new PriorityHandler(this->pType,noOfSubseq);
+					}
+				}
+				break;
+			}
             case PriorityHandler::priorityType::MOBILITY_LOW: {
                 auto pASAP = this->getASAPScheduleWithoutResourceConstraints();
                 auto pALAP = this->getALAPScheduleWithoutResourceConstraints();
@@ -841,7 +851,7 @@ namespace HatScheT
     }
 
     std::map<Edge *, int> ModSDC::getLifeTimes() {
-        if(this->startTimes.empty()) throw HatScheT::Exception("SchedulerBase.getLifeTimes: cant return lifetimes! no startTimes determined!");
+        if(this->startTimes.empty()) throw HatScheT::Exception("ModSDC.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
         std::map<Edge*,int> lifetimes;
 
@@ -850,15 +860,14 @@ namespace HatScheT
             Vertex* vSrc = &e->getVertexSrc();
             Vertex* vDst = &e->getVertexDst();
             int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) + e->getDistance()*(int)this->II;
-
-            if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
+            if(lifetime < 0) throw HatScheT::Exception("ModSDC.getLifeTimes: negative lifetime detected!");
             else lifetimes.insert(make_pair(e, lifetime));
         }
         return lifetimes;
     }
 
 	void ModSDC::setOutputsOnLatestControlStep() {
-		this->optimalResult = true;
+		this->fastObjective = false;
 		this->outputsEqualScheduleLength = true;
 		if(this->vertexHasOutgoingEdges.empty()){
 			// initialize map
@@ -919,6 +928,13 @@ namespace HatScheT
                     }
                     break;
                 }
+				case priorityType::PERTUBATION:{
+					if(pV->getFirstPriority() > pI->getFirstPriority()){
+						schedQ->emplace(it,v);
+						return;
+					}
+					break;
+				}
                 case priorityType::MOBLAP:{
                     if(pV->getFirstPriority() < pI->getFirstPriority()){
 						schedQ->emplace(it,v);
@@ -1007,6 +1023,9 @@ namespace HatScheT
             case priorityType::ALAP:{
                 return "ALAP";
             }
+			case priorityType::PERTUBATION:{
+				return "PERTUBATION";
+			}
             case priorityType::MOBLAP:{
                 return "MOBLAP";
             }
@@ -1041,6 +1060,7 @@ namespace HatScheT
     PriorityHandler::priorityType PriorityHandler::getPriorityTypeFromString(std::string priorityTypeStr) {
         if(priorityTypeStr=="ASAP") return priorityType::ASAP;
         if(priorityTypeStr=="ALAP") return priorityType::ALAP;
+		if(priorityTypeStr=="PERTUBATION") return priorityType::PERTUBATION;
         if(priorityTypeStr=="MOBLAP") return priorityType::MOBLAP;
         if(priorityTypeStr=="ALABILITY") return priorityType::ALABILITY;
         if(priorityTypeStr=="MOBILITY_HIGH") return priorityType::MOBILITY_HIGH;
