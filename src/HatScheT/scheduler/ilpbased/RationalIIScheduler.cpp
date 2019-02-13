@@ -292,9 +292,7 @@ void RationalIIScheduler::schedule()
     }
 
     //break while loop when a schedule was found
-    //increment runs counter if not
-    //modify s and m if not and continue scheduling
-    if(this->scheduleFound == true and this->minRatIIFound == true) break;
+    if(this->scheduleFound == true) break;
     else {
       this->tpBuffer = (double)this->modulo / (double)this->samples;
       this->autoSetNextMAndS();
