@@ -83,7 +83,7 @@ namespace HatScheT
          * @param rm resource model
          * @param sw solver wishlist
          */
-        ModSDC(Graph& g, ResourceModel &rm, std::list<std::string> &sw);
+        ModSDC(Graph& g, ResourceModel &rm, std::list<std::string> sw);
         /*!
          * @brief destructor
          */
@@ -107,35 +107,35 @@ namespace HatScheT
 		 * @return
 		 */
 		std::map<Edge*,int> getLifeTimes() override;
-        /*!
-         * the status of the ilp solver does not provide any information
-         * about the quality of the solution, because many ilp problems are
-         * solved for MRTs
-         * @return the unknown status
-         */
-        ScaLP::status getScaLPStatus() override {return ScaLP::status::UNKNOWN;}
-        /*!
-         * @brief defines a new budget
-         * @param newBudget
-         */
-        void setBudgetMultiplier(unsigned int &newBudget){this->budgetMultiplier = newBudget;}
-        /*!
-         * @brief getNumberOfConstrainedVertices
-         * @param g graph which contains vertices
-         * @param rm resource model that specifies for each vertex if it's limited
-         * @return the number of resource constrained vertices
-         */
-        static int getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm);
+		/*!
+		 * the status of the ilp solver does not provide any information
+		 * about the quality of the solution, because many ilp problems are
+		 * solved for MRTs
+		 * @return the unknown status
+		 */
+		ScaLP::status getScaLPStatus() override {return ScaLP::status::UNKNOWN;}
+		/*!
+		 * @brief defines a new budget
+		 * @param newBudget
+		 */
+		void setBudgetMultiplier(unsigned int &newBudget){this->budgetMultiplier = newBudget;}
+		/*!
+		 * @brief getNumberOfConstrainedVertices
+		 * @param g graph which contains vertices
+		 * @param rm resource model that specifies for each vertex if it's limited
+		 * @return the number of resource constrained vertices
+		 */
+		static int getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm);
 		/*!
 		 * @brief
 		 * @return the total time spent in ilp solvers
 		 */
-        double getTimeInILPSolvers() const {return this->timeInILPSolvers;}
-        /*!
-         * @brief set variable for this->fastObjective (see below for details)
-         * @param b
-         */
-        void setFastObjective(bool b) {this->fastObjective = b;}
+		double getTimeInILPSolvers() const {return this->timeInILPSolvers;}
+		/*!
+		 * @brief set variable for this->fastObjective (see below for details)
+		 * @param b
+		 */
+		void setFastObjective(bool b) {this->fastObjective = b;}
 		/*!
 		 * @brief set priority type for scheduling queue ordering
 		 * @param p

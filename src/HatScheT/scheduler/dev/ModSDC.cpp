@@ -23,7 +23,7 @@ namespace HatScheT
         return oss << e.msg;
     }
 
-    ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> &sw) :
+    ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw) :
         SchedulerBase(g,rm), ILPSchedulerBase(sw),
         priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
         pType(PriorityHandler::priorityType::PERTUBATION), budget(-1), uniqueVariableName(""),
