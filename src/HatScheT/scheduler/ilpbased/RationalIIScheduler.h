@@ -31,7 +31,7 @@ namespace HatScheT
 {
 /*!
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
- * THIS CLASSES IS UNDER DEVELOPMENT
+ * 
  */
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
 {

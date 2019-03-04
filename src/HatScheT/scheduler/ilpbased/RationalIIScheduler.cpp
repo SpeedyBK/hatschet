@@ -473,7 +473,7 @@ int RationalIIScheduler::getScheduleLength() {
     if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
       maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
   }
-  
+
   return maxTime;
 }
 
@@ -481,7 +481,7 @@ vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBinding
   //generate new binding when no binding is available
   if(this->ratIIbindings.size() == 0)
     this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->initIntervals);
-    //this->ratIIbindings = Utility::getILPBasedRatIIBinding(this->getSchedule(),&this->g, &this->resourceModel,this->modulo, this->initIntervals);
+
   //throw exception when no binding was generated
   if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
 
