@@ -466,14 +466,14 @@ void RationalIIScheduler::fillSolutionStructure() {
 
 int RationalIIScheduler::getScheduleLength() {
   int maxTime=-1;
-  for(int i = 0; i < this->t_matrix.size(); i++) {
-    for (std::pair<Vertex *, int> vtPair : this->startTimesVector[i]) {
-      Vertex *v = vtPair.first;
 
-      if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
-        maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
-    }
+  for (std::pair<Vertex *, int> vtPair : this->startTimesVector[0]) {
+    Vertex *v = vtPair.first;
+
+    if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
+      maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
   }
+  
   return maxTime;
 }
 
