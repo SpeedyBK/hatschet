@@ -536,7 +536,7 @@ void RationalIISchedulerFimmel::schedule() {
     bool ok = verifyModuleScheduleRational(g,resourceModel,vertexValues,lambdaValue);
     if (ok) {
         cout << "Schedule is correct" << endl;
-        this->scheduleFound == true;
+        this->scheduleFound = true;
     } else {
         cout << "Schedule is faulty" << endl;
         this->II = -1;
