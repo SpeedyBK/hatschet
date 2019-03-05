@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <math.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/Verifier.h>
@@ -227,10 +228,14 @@ void RationalIIScheduler::schedule()
     asap.schedule();
     this->maxLatencyConstraint = asap.getScheduleLength() * 1.5;
 
+    this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples);
+
+    //Utility::printSchedule(asap.getSchedule());
+    //cout << "length: " << asap.getScheduleLength() << endl;
     //this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
     //this->maxLatencyConstraint = this->consideredTimeSteps;
-    //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
+    //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0!
   }
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;

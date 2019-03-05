@@ -83,6 +83,15 @@ public:
   * @return
   */
  static bool IIisRational(double II);
+ /*!
+  * @brief use a graph search to calculate the longest path
+  * this methode is safer than asap scheduling
+  * asap scheduling failes when there is no way to the ouput without algorithmic delays
+  * @param g
+  * @param rm
+  * @return
+  */
+ static int getCyclesOfLongestPath(Graph* g, ResourceModel* rm, double II);
 #ifdef USE_SCALP
  /*!
   * \brief calcResMII with or witout a specific target
@@ -289,5 +298,9 @@ public:
   */
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
+
+  private:
+
+  static void cycle(const Edge* e, vector<Vertex*>& visited, int& currLength, Graph* g, ResourceModel* rm, double II);
 };
 }

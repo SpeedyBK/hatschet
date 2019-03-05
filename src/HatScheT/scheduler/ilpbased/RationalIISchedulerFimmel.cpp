@@ -513,10 +513,10 @@ void RationalIISchedulerFimmel::schedule() {
     cout.precision(17);
     cout << "Solver finished" << endl;
     cout << "Found II = " << res.values[Lambda] << endl;
-    cout << r << endl;
+    //cout << r << endl;
     cout << "##############" << endl;
 
-    cout << res << endl;
+    //cout << res << endl;
 
     cout << "##############" << endl;
 
