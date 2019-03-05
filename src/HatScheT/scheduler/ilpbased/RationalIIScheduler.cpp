@@ -35,6 +35,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->tpBuffer = 0.0f;
   this->minRatIIFound = false;
   this->maxLatencyConstraint = 0;
+  this->maxRuns = 1;
 }
 
 void RationalIIScheduler::resetContainer() {

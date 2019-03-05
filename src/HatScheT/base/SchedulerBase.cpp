@@ -36,6 +36,7 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceM
   //check for valid registrations
   //throws exception when validation failed
   Utility::everyVertexisRegistered(g,resourceModel);
+  this->scheduleFound = false;
 }
 
 SchedulerBase::~SchedulerBase()

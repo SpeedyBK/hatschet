@@ -101,6 +101,7 @@ void ALAPScheduler::schedule()
   for(auto &p:this->startTimes) p.second -=offset;
 
   this->II = this->getScheduleLength();
+  if(this->II >= 1) this->scheduleFound = true;
 }
 
 }

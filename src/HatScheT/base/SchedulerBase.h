@@ -96,6 +96,11 @@ public:
    * @return the used resource Model
    */
   ResourceModel* getResourceModel(){return &this->resourceModel;}
+  /*!
+ * \brief getScheduleFound
+ * \return
+ */
+  bool getScheduleFound(){return this->scheduleFound;}
 protected:
   /*!
    * \brief resourceModel
@@ -121,5 +126,9 @@ protected:
    * the binding after scheduling
    */
   std::map<const Vertex*,int> binding;
+  /*!
+ * \brief scheduleFound
+ */
+  bool scheduleFound;
 };
 }

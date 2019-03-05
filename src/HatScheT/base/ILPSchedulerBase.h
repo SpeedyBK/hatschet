@@ -74,11 +74,6 @@ public:
    */
   void printResult(){std::cout<< this->solver->getResult() << std::endl;}
   /*!
-   * \brief getScheduleFound
-   * \return
-   */
-  bool getScheduleFound(){return this->scheduleFound;}
-  /*!
    * \brief setWriteLPFile
    * \param b
    */
@@ -129,10 +124,6 @@ protected:
    * \brief optimalResult
    */
   bool optimalResult;
-  /*!
-   * \brief scheduleFound
-   */
-  bool scheduleFound;
   /*!
    * \brief solverQuiet
    */
