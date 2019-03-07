@@ -37,6 +37,10 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->minRatIIFound = false;
   this->maxLatencyConstraint = 0;
   this->maxRuns = 1;
+  this->s_start = -1;
+  this->m_start = -1;
+  this->s_found = -1;
+  this->m_found = -1;
 }
 
 void RationalIIScheduler::resetContainer() {
@@ -205,6 +209,8 @@ void RationalIIScheduler::schedule()
 
   //experimental auto set function for the start values of modulo and sample
   this->autoSetMAndS();
+  this->s_start = this->samples;
+  this->m_start = this->modulo;
 
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
@@ -275,6 +281,8 @@ void RationalIIScheduler::schedule()
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
       if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
+      this->s_found = this->samples;
+      this->m_found = this->modulo;
       cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
       cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
       cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
