@@ -224,18 +224,9 @@ void RationalIIScheduler::schedule()
 
   if(this->maxLatencyConstraint <= 0) {
     //experimental
-    ASAPScheduler asap(this->g,this->resourceModel);
-    asap.schedule();
-    this->maxLatencyConstraint = asap.getScheduleLength() * 1.5;
+    this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples) + 1;
 
-    this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples);
-
-    //Utility::printSchedule(asap.getSchedule());
-    //cout << "length: " << asap.getScheduleLength() << endl;
-    //this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
-    //this->maxLatencyConstraint = this->consideredTimeSteps;
-    //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0!
   }
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
@@ -300,6 +291,7 @@ void RationalIIScheduler::schedule()
     //break while loop when a schedule was found
     if(this->scheduleFound == true) break;
     else {
+      this->timeouts++;
       this->tpBuffer = (double)this->modulo / (double)this->samples;
       this->autoSetNextMAndS();
       runs++;
