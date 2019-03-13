@@ -34,7 +34,6 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->solverTimeout = 300;
   this->solvingTime = 0;
   this->totalTime = 0;
-  this->scheduleFound = false;
   this->writeLPFile = false;
 }
 

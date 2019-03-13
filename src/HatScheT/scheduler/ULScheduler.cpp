@@ -157,6 +157,7 @@ void ULScheduler::schedule()
 
   //set II
   this->II = this->getScheduleLength();
+  if(this->II >= 1) this->scheduleFound = true;
 }
 
 std::map<Vertex*,int> *ULScheduler::mobility(std::map<Vertex*,int> *asap, std::map<Vertex*,int> *alap)

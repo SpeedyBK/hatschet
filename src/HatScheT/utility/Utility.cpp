@@ -122,6 +122,81 @@ int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
   return outputs;
 }
 
+int Utility::getCyclesOfLongestPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm, double II) {
+  int length = 0;
+
+  //identify inputs
+  vector<Vertex*> inputs;
+  for(auto it = g->verticesBegin(); it != g->verticesEnd(); ++it){
+    Vertex* v = *it;
+
+    if(g->getPredecessors(v).size() == 0) inputs.push_back(v);
+  }
+
+  //find seed edges
+  vector<const Edge*> seeds;
+  //iterate over inputs
+  for(auto it = inputs.begin(); it != inputs.end(); ++it){
+    Vertex* in = *it;
+
+    set<Vertex*> succ = g->getSuccessors(in);
+
+    for(auto it2 : succ) {
+      list<const Edge*> s = g->getEdges(in,it2);
+
+      for(auto it3 : s) {
+        seeds.push_back(it3);
+      }
+    }
+  }
+
+  //start recursion
+  for(auto it : seeds) {
+    vector<Vertex*> visited;
+    int l = rm->getVertexLatency(&it->getVertexSrc());
+    l += std::ceil(II*it->getDistance());
+    Utility::cycle(it, visited, l, g, rm, II);
+
+    if(l > length) length = l;
+  }
+
+  return length;
+}
+
+void Utility::cycle(const HatScheT::Edge *e, vector<HatScheT::Vertex *>& visited, int &currLength, Graph* g, ResourceModel* rm, double II) {
+  Vertex* succ = &e->getVertexDst();
+
+  //check whether succ was already visited (cycle ends)
+  for(auto it : visited) {
+    if(succ == it) return;
+  }
+
+  //put to visited
+  visited.push_back(succ);
+  //increase length
+  currLength += rm->getVertexLatency(succ);
+
+  //collect all outgoing edges
+  set<Vertex*> s = g->getSuccessors(succ);
+  vector<const Edge*> outgoing;
+  for(auto it : s) {
+    list<const Edge*> o = g->getEdges(succ, it);
+
+    for(auto it2 : o) {
+      outgoing.push_back(it2);
+    }
+  }
+
+  //check if outport found
+  if(outgoing.size() == 0) return;
+
+  //continue recursion
+  for(auto it : outgoing) {
+    currLength += std::ceil(II*it->getDistance());
+    Utility::cycle(it, visited, currLength, g, rm, II);
+  }
+}
+
 bool Utility::IIisRational(double II) {
   double intpart;
   if(modf(II, &intpart) != 0.0) {
@@ -241,22 +316,28 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   int criticalPath = asap.getScheduleLength();
 
   if(g->getNumberOfVertices() > 200) {
-    if(!HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getII())) {
-      throw HatScheT::Exception("Utility.calcMaxII: invalid result by asap scheduler detected");
-    }
+    HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getScheduleLength());
     return criticalPath;
   }
 
   //get optimal critical path using asap ilp scheduler
   HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-  if(criticalPath > 0)
-    asapilp->setMaxLatencyConstraint(criticalPath);
-  else //error in asap scheduler
-    asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
+  asapilp->setMaxLatencyConstraint(criticalPath);
   asapilp->schedule();
   criticalPath = asapilp->getScheduleLength();
 
   delete asapilp;
+
+  //error in non ilp-based asap detected
+  //starting new asap ilp
+  if(criticalPath <= 0){
+    HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+    asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
+    asapilp->schedule();
+    criticalPath = asapilp->getScheduleLength();
+
+    delete asapilp;
+  }
 
   return criticalPath;
 }

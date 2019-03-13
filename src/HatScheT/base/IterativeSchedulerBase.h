@@ -30,6 +30,7 @@ namespace HatScheT {
     IterativeSchedulerBase() {
       //default infinity
       this->maxRuns = -1;
+      this->timeouts = 0;
     };
 
     ~IterativeSchedulerBase() {};

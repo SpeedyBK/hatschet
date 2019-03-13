@@ -124,8 +124,7 @@ void ASAPScheduler::schedule()
   }
 
   this->II = this->getScheduleLength();
-  if(this->II<1) this->II=1;
-  this->scheduleFound = true;
+  if(this->II >= 1) this->scheduleFound = true;
 }
 
 }

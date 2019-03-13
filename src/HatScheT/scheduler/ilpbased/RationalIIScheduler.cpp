@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <math.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/Verifier.h>
@@ -35,6 +36,11 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->tpBuffer = 0.0f;
   this->minRatIIFound = false;
   this->maxLatencyConstraint = 0;
+  this->maxRuns = 1;
+  this->s_start = -1;
+  this->m_start = -1;
+  this->s_found = -1;
+  this->m_found = -1;
 }
 
 void RationalIIScheduler::resetContainer() {
@@ -203,6 +209,8 @@ void RationalIIScheduler::schedule()
 
   //experimental auto set function for the start values of modulo and sample
   this->autoSetMAndS();
+  this->s_start = this->samples;
+  this->m_start = this->modulo;
 
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
@@ -222,14 +230,9 @@ void RationalIIScheduler::schedule()
 
   if(this->maxLatencyConstraint <= 0) {
     //experimental
-    ASAPScheduler asap(this->g,this->resourceModel);
-    asap.schedule();
-    this->maxLatencyConstraint = asap.getScheduleLength() * 1.5;
+    this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples) + 1;
 
-    //this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
-    //this->maxLatencyConstraint = this->consideredTimeSteps;
-    //throw HatScheT::Exception("RationalIIScheduler.schedule : maxLatencyConstraint <= 0! Scheduling not possible!");
   }
 
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
@@ -278,6 +281,8 @@ void RationalIIScheduler::schedule()
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
       if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
+      this->s_found = this->samples;
+      this->m_found = this->modulo;
       cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
       cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
       cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
@@ -294,6 +299,7 @@ void RationalIIScheduler::schedule()
     //break while loop when a schedule was found
     if(this->scheduleFound == true) break;
     else {
+      this->timeouts++;
       this->tpBuffer = (double)this->modulo / (double)this->samples;
       this->autoSetNextMAndS();
       runs++;
@@ -466,14 +472,14 @@ void RationalIIScheduler::fillSolutionStructure() {
 
 int RationalIIScheduler::getScheduleLength() {
   int maxTime=-1;
-  for(int i = 0; i < this->t_matrix.size(); i++) {
-    for (std::pair<Vertex *, int> vtPair : this->startTimesVector[i]) {
-      Vertex *v = vtPair.first;
 
-      if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
-        maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
-    }
+  for (std::pair<Vertex *, int> vtPair : this->startTimesVector[0]) {
+    Vertex *v = vtPair.first;
+
+    if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
+      maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
   }
+
   return maxTime;
 }
 
@@ -481,7 +487,7 @@ vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBinding
   //generate new binding when no binding is available
   if(this->ratIIbindings.size() == 0)
     this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->initIntervals);
-    //this->ratIIbindings = Utility::getILPBasedRatIIBinding(this->getSchedule(),&this->g, &this->resourceModel,this->modulo, this->initIntervals);
+
   //throw exception when no binding was generated
   if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
 

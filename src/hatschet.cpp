@@ -536,15 +536,18 @@ int main(int argc, char *args[]) {
         }
       }
 
-      std::cout << "------------------------------------------------------------------------------------" << endl;
-      std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
-      std::cout << "------------------------------------------------------------------------------------" << endl;
-      std::cout << "latency = " << scheduler->getScheduleLength() << endl;
-      HatScheT::Utility::printSchedule(scheduler->getSchedule());
+      if(scheduler->getScheduleFound() == true) {
+        std::cout << "------------------------------------------------------------------------------------" << endl;
+        std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
+        std::cout << "------------------------------------------------------------------------------------" << endl;
+        std::cout << "latency = " << scheduler->getScheduleLength() << endl;
+        HatScheT::Utility::printSchedule(scheduler->getSchedule());
 
-      if(htmlFile != "") {
-        scheduler->writeScheduleChart(htmlFile);
+        if (htmlFile != "") {
+          scheduler->writeScheduleChart(htmlFile);
+        }
       }
+      else cout << "No schedule found!" << endl;
 
       delete scheduler;
     }

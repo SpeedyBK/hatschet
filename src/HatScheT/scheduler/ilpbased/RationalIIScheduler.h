@@ -31,7 +31,7 @@ namespace HatScheT
 {
 /*!
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
- * THIS CLASSES IS UNDER DEVELOPMENT
+ *
  */
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
 {
@@ -87,18 +87,12 @@ public:
   void setModulo(int m) {
     this->modulo=m;
   }
-  int getModulo(){
-    return this->modulo;
-  }
   /*!
    * the number of samples that are inserted every m clock cycles
    * @param s
    */
   void setSamples(int s){
     this->samples=s;
-  }
-  int getSamples(){
-    return this->samples;
   }
   /*!
    * print the rational II modulo schedule
@@ -132,6 +126,26 @@ public:
   map<Edge*, pair<int, int> > getedgePortMapping(){
     return this->edgePortMapping;
   }
+  /*!
+   * @brief iteration start of s
+   * @return
+   */
+  int getS_Start(){return this->s_start;}
+  /*!
+   * @brief iteration start of m
+   * @return
+   */
+  int getM_Start(){return this->m_start;}
+  /*!
+   * @brief found value for s (-1 if no schedule was found)
+   * @return
+   */
+  int getS_Found(){return this->s_found;}
+  /*!
+   * @brief found value for m (-1 if no schedule was found)
+   * @return
+   */
+  int getM_Found(){return this->m_found;}
 private:
   /*!
    * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
@@ -231,5 +245,21 @@ private:
    * to minimize the effort for MUX hardware
    */
   map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
+  /*!
+   * @brief the s value for the iteration start
+   */
+  int s_start;
+  /*!
+   * @brief the m value for the iteration start
+   */
+  int m_start;
+  /*!
+   * @brief the identified s value
+   */
+  int s_found;
+  /*!
+   * @brief the identified s value
+   */
+  int m_found;
 };
 }

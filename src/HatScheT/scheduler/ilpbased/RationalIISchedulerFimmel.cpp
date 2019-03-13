@@ -513,10 +513,10 @@ void RationalIISchedulerFimmel::schedule() {
     cout.precision(17);
     cout << "Solver finished" << endl;
     cout << "Found II = " << res.values[Lambda] << endl;
-    cout << r << endl;
+    //cout << r << endl;
     cout << "##############" << endl;
 
-    cout << res << endl;
+    //cout << res << endl;
 
     cout << "##############" << endl;
 
@@ -536,6 +536,7 @@ void RationalIISchedulerFimmel::schedule() {
     bool ok = verifyModuleScheduleRational(g,resourceModel,vertexValues,lambdaValue);
     if (ok) {
         cout << "Schedule is correct" << endl;
+        this->scheduleFound = true;
     } else {
         cout << "Schedule is faulty" << endl;
         this->II = -1;
