@@ -316,7 +316,9 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   int criticalPath = asap.getScheduleLength();
 
   if(g->getNumberOfVertices() > 200) {
-    HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getScheduleLength());
+    if(!HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getII())) {
+      throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
+    }
     return criticalPath;
   }
 
