@@ -103,11 +103,11 @@ void RationalIIScheduler::setGeneralConstraints()
     for(unsigned int j = 0; j < this->samples; j++) {
       if(e->getDistance()==0){
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex]
-                                    + e->getDelay() <= 0);
+                                    - e->getDelay() <= 0);
       } else {
         ScaLP::Term distanceIIs = this->getSampleDistance(e->getDistance(), j);
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] +
-                                      distanceIIs  + e->getDelay() <= 0);
+                                      distanceIIs  - e->getDelay() <= 0);
       }
     }
   }
@@ -420,7 +420,11 @@ ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
     }
     else if(startIndex==0) startIndex=this->II_vector.size()-1;
 
-    w = w - this->II_vector[startIndex];
+    //w = w - this->II_vector[startIndex];
+
+    if(startIndex == 0) w = w - this->modulo - this->II_vector[startIndex];
+    else w = w - this->II_vector[startIndex] - this->II_vector[startIndex-1];
+
     d--;
   }
 
