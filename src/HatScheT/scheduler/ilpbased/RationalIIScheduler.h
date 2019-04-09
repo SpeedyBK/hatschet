@@ -30,7 +30,12 @@
 namespace HatScheT
 {
 /*!
- * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
+ * This scheduler determines a modulo schedule with uneven/rational initiation intervals
+ * provides: schedule, initiation interval sequence, task latency sequence
+ * the standard configuration returns a static schedule
+ * the configuration that supports dynamic schedules is not supported and tested yet!
+ *
+ * This scheduler was developed by Patrick Sittel (affiliated with University of Kassel, Imperial College London)
  *
  */
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
