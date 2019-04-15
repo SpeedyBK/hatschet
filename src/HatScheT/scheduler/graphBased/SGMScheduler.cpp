@@ -2,7 +2,7 @@
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
 
-    Copyright (C) 2018
+    Copyright (C) 2019
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -31,9 +31,13 @@ SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<str
 {
   this->computeMinII(&g,&resourceModel);
   this->minII = ceil(this->minII);
-  this->maxII = Utility::calcMaxII(&g, &resourceModel);
+  this->computeMaxII(&g,&resourceModel);
+  if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
   this->occSC = occSC;
+  cout << "SGMScheduler.SGMScheduler: Start minII/maxII " << this->minII << " / " << this->maxII << endl;
+
+  //ToDo: dedicated subgraph based minII calculation
 }
 
 void SGMScheduler::setSubgraphConstraints()
@@ -71,8 +75,8 @@ void SGMScheduler::setSubgraphConstraints()
       Vertex* dst2 = &(e2->getVertexDst());
       unsigned int dstTVecIndex2 = this->tIndices[dst2];
 
-      this->solver->addConstraint(this->II*(e1->getDistance()) - ti[srcTVecIndex1] + ti[dstTVecIndex1] - this->resourceModel.getVertexLatency(src1)
-                                 - this->II*(e2->getDistance()) + ti[srcTVecIndex2] - ti[dstTVecIndex2] + this->resourceModel.getVertexLatency(src2) == 0);
+      this->solver->addConstraint(this->ti[dstTVecIndex1] - this->ti[srcTVecIndex1]
+       - this->ti[dstTVecIndex2] + this->ti[srcTVecIndex2]  == 0);
     }
   }
 
@@ -147,6 +151,7 @@ void SGMScheduler::setGeneralConstraints()
   }
 
   this->setSubgraphConstraints();
+
 }
 
 }

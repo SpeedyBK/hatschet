@@ -2,7 +2,7 @@
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
 
-    Copyright (C) 2018
+    Copyright (C) 2019
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
