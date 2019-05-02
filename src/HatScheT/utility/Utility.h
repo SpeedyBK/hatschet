@@ -113,6 +113,13 @@ public:
   * \return
   */
  static int calcMaxII(Graph *g, ResourceModel *rm);
+  /*!
+  * \brief calcAbsolutMaxII calculate the absolute max II when all resources are limited to 1 FU
+  * \param rm
+  * \param g
+  * \return
+  */
+  static int calcAbsolutMaxII(Graph *g, ResourceModel *rm);
  /*!
   * calculate and return the critical path of a graph
   * @param g

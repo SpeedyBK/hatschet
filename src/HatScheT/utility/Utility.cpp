@@ -309,6 +309,60 @@ int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
     return (int) floor(x);
   }
 
+int Utility::calcAbsolutMaxII(Graph *g, ResourceModel *rm) {
+  map<Resource*, int> limit_map;
+
+  //store initial values
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+
+    limit_map.insert(make_pair(r, r->getLimit()));
+
+    //set temporarily to limit 1
+    r->setLimit(1);
+  }
+
+  //determine minimum possible latency
+  HatScheT::ASAPScheduler asap(*g,*rm);
+  asap.schedule();
+  int criticalPath = asap.getScheduleLength();
+
+  if(g->getNumberOfVertices() > 200) {
+    if(!HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getII())) {
+      throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
+    }
+  }
+
+  else {
+    //get optimal critical path using asap ilp scheduler
+    HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+    asapilp->setMaxLatencyConstraint(criticalPath);
+    asapilp->schedule();
+    criticalPath = asapilp->getScheduleLength();
+
+    delete asapilp;
+
+    //error in non ilp-based asap detected
+    //starting new asap ilp
+    if (criticalPath <= 0) {
+      HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+      asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * (rm->getMaxLatency() + 1));
+      asapilp->schedule();
+      criticalPath = asapilp->getScheduleLength();
+
+      delete asapilp;
+    }
+  }
+
+  //restore values
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    Resource* r = *it;
+    r->setLimit(limit_map[r]);
+  }
+
+  return criticalPath;
+}
+
 int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   //determine minimum possible latency
   HatScheT::ASAPScheduler asap(*g,*rm);
