@@ -256,6 +256,14 @@ public:
  * @return
  */
  static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
+/*!
+ * UNDER CONSTRUCTION: this function is meant to determine MUX optimal FU bindings after modulo scheduling
+ * @param sched
+ * @param rm
+ * @param II
+ * @return
+ */
+ static std::map<const Vertex*,int> getMUXOptimalBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
  /*!
   * create a simple binding for a rational II schedule
   * NOTE the binding might result in a bad register and MUX allocation for lifetime variables as it is a very simple utility function

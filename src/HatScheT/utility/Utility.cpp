@@ -903,6 +903,14 @@ vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT
   return ratIIBindings;
 }
 
+std::map<const Vertex *, int> Utility::getMUXOptimalBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
+    std::map<const Vertex *, int> binding;
+
+
+    throw HatScheT::Exception("Utility.getMUXOptimalBinding: this method is not working currently!! use getSimpleBinding!");
+    return binding;
+}
+
 std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
   std::map<const Vertex *, int> binding;
   std::map<const Resource*, std::map<int, int>> resourceCounters;
