@@ -126,7 +126,8 @@ void Resource::setLimit(int l)
     this->blockingTime = 1;
   }
   if(this->latency==0 && this->phyDelay==0.0f && l!=-1){
-    cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
+    //ToDo (patrick) ist this warning really neccessary?
+    //cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
     //throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
   }
   this->limit=l;}
