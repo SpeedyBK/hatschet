@@ -37,6 +37,7 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceM
   //throws exception when validation failed
   Utility::everyVertexisRegistered(g,resourceModel);
   this->scheduleFound = false;
+  this->useOptimalBinding = false;
 }
 
 SchedulerBase::~SchedulerBase()
@@ -159,8 +160,14 @@ void SchedulerBase::writeScheduleChart(string filename)
 std::map<const Vertex *, int> SchedulerBase::getBindings()
 {
   //generate new binding when no binding is available
-  if(this->binding.size() == 0)
+  if(this->binding.size() == 0 && this->useOptimalBinding==false)
     this->binding = Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+  else if(this->binding.size() == 0 && this->useOptimalBinding==true)
+#ifdef USE_SCALP
+      this->binding = Utility::getMUXOptimalBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+#else
+    throw Exception("SchedulerBase.getBindings: MUX optimal binding algorithm requires the ScaLP ILP wraper!");
+#endif
 
   //throw exception when no binding was generated
   if(this->binding.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");

@@ -903,13 +903,21 @@ vector<std::map<const Vertex*,int> > Utility::getSimpleRatIIBinding(map<HatScheT
   return ratIIBindings;
 }
 
+#ifdef USE_SCALP
 std::map<const Vertex *, int> Utility::getMUXOptimalBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
+    cout << "starting mux optimal binding" << endl;
     std::map<const Vertex *, int> binding;
 
+    // create solver
+    auto s = ScaLP::Solver({"Gurobi","CPLEX","SCIP","LPSolve"});
+
+    //work for jorge
+    //stream constraints into solver and solve!
 
     throw HatScheT::Exception("Utility.getMUXOptimalBinding: this method is not working currently!! use getSimpleBinding!");
     return binding;
 }
+#endif
 
 std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched, ResourceModel *rm, int II) {
   std::map<const Vertex *, int> binding;

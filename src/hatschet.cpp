@@ -123,6 +123,10 @@ int main(int argc, char *args[]) {
   int samples=2; //default
   int modulo=2; //defaul
 
+  //flag to enable mux optimal binding
+  //experimental
+  bool optBinding = false;
+
   bool solverQuiet=true;
 
   enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
@@ -191,6 +195,10 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--modulo=",value)) {
         modulo = atol(value);
+      }
+      else if(getCmdParameter(args[i],"--binding=",value)) {
+          if(atol(value) == 1)
+        optBinding = true;
       }
       else if(getCmdParameter(args[i],"--maxlatency=",value)) {
         maxLatency = atol(value);
@@ -522,6 +530,10 @@ int main(int argc, char *args[]) {
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
 
+      //chossing binding
+      //experimental
+      scheduler->setUseMuxOptBinding(optBinding);
+
       cout << "Performing schedule" << endl;
       scheduler->schedule();
       cout << "Finished schedule" << endl;
@@ -542,6 +554,8 @@ int main(int argc, char *args[]) {
         std::cout << "------------------------------------------------------------------------------------" << endl;
         std::cout << "latency = " << scheduler->getScheduleLength() << endl;
         HatScheT::Utility::printSchedule(scheduler->getSchedule());
+        std::map<const HatScheT::Vertex*,int> b = scheduler->getBindings();
+        HatScheT::Utility::printBinding(*&b,rm);
 
         if (htmlFile != "") {
           scheduler->writeScheduleChart(htmlFile);

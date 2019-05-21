@@ -101,6 +101,17 @@ public:
  * \return
  */
   bool getScheduleFound(){return this->scheduleFound;}
+  /*!
+   * use this flag to control the mux optimal binding algorithm
+   * NOTE: EXPERIMENTAL
+   * @param b
+   */
+  void setUseMuxOptBinding(bool b){
+      this->useOptimalBinding = b;
+  }
+  bool getUseMuxOptBinding(){
+      return this->useOptimalBinding;
+  }
 protected:
   /*!
    * \brief resourceModel
@@ -130,5 +141,9 @@ protected:
  * \brief scheduleFound
  */
   bool scheduleFound;
+  /*!
+   * \brief use this flag to determine optimal binding using ILP
+   */
+  bool useOptimalBinding;
 };
 }
