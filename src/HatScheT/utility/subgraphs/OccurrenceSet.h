@@ -51,6 +51,13 @@ public:
    * \return
    */
   Graph* getGraph() const {return this->g;}
+  /*!
+   * @brief the frequency is the number of times the graph occurrs within the input model
+   * @return
+   */
+  int getFrequency(){
+    return this->occurrences.size();
+  }
 protected:
 
 private:

@@ -35,9 +35,19 @@ SGMScheduler::SGMScheduler(Graph &g, ResourceModel &resourceModel, std::list<str
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
   this->occSC = occSC;
-  cout << "SGMScheduler.SGMScheduler: Start minII/maxII " << this->minII << " / " << this->maxII << endl;
 
-  //ToDo: dedicated subgraph based minII calculation
+  int maxFrequ=0;
+  for(auto it : this->occSC->getOccurrenceSets()) {
+    if(maxFrequ < it->getFrequency()) maxFrequ = it->getFrequency();
+  }
+
+  if(maxFrequ > this->minII) {
+    cout << "SGMScheduler.SGMScheduler: max subgraph frequency(" << to_string(maxFrequ)
+      << ") exceeds the calculated minII(" << to_string(this->minII) << ") and minII is updated!" << endl;
+    this->minII = maxFrequ;
+  }
+
+  cout << "SGMScheduler.SGMScheduler: Start minII/maxII " << this->minII << " / " << this->maxII << endl;
 }
 
 void SGMScheduler::setSubgraphConstraints()
