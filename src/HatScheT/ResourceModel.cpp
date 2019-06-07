@@ -107,7 +107,7 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
 
 void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
 {
-  this->registrations.insert({v, r});
+  this->registrations[v] = r;
 }
 
 bool ResourceModel::resourceExists(std::string name) {
