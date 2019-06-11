@@ -35,7 +35,6 @@
 HatScheT::MRT::MRT(HatScheT::ResourceModel& r, int ii)
 : rm(&r), II(ii)
 {
-  std::cout << "Create MRT with II=" << II << std::endl;
   for(auto it=r.resourcesBegin(); it != r.resourcesEnd(); ++it)
   {
     if((*it)->getLimit()<0) continue;
