@@ -363,6 +363,7 @@ public:
    * \return the number of vertices associated with `r`
    */
   int getNumVerticesRegisteredToResource(Resource *r) const;
+  int getNumVerticesRegisteredToResource(const Resource *r) const;
   /*!
    * \brief collects all vertices that use the given resource
    * \param r the resource

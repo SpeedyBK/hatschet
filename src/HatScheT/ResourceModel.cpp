@@ -248,6 +248,19 @@ int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
   return count;
 }
 
+int ResourceModel::getNumVerticesRegisteredToResource(const Resource *r) const
+{
+  int count = 0;
+
+  for(auto it:this->registrations)
+  {
+    const Resource* rr = it.second;
+    if(r==rr) count++;
+  }
+
+  return count;
+}
+
 double Resource::getHardwareCost(string n) {
   if ( this->hardwareCost.find(n) == this->hardwareCost.end() ) {
     return 0.0f;
