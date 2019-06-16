@@ -148,7 +148,6 @@ bool HatScheT::MRT::remove(HatScheT::Vertex* i)
     {
       if(a==i){
         a=nullptr;
-        //cout << "Removed vertex " << i->getName() << " from MRT!" << endl;
         return true;
       }
     }
@@ -179,7 +178,6 @@ bool HatScheT::MRT::vertexIsIn(Vertex *v)
       {
         if(it3==nullptr) continue;
         if(it3==v) {
-          cout << "Found " << v->getName() << " in current MRT!" << endl;
           printMRT(*this);
           return true;
         }
@@ -192,7 +190,6 @@ bool HatScheT::MRT::vertexIsIn(Vertex *v)
 
 HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource* r)
 {
-  //std::cout << "getInstruction at " << std::to_string(i) << ": ";// << std::endl;
   for(auto&p:data)
   {
     if(p.second.size()>=i && p.first==r)
@@ -201,7 +198,6 @@ HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource
       {
         if(o!=nullptr)
         {
-         // std::cout << "returning instruction " << o->getName() << std::endl;
           return o;
         }
       }
@@ -211,7 +207,6 @@ HatScheT::Vertex* HatScheT::MRT::getInstructionAt(unsigned int i, const Resource
       continue;
     }
   }
-  //std::cout << "NO INSTRUCTION" << std::endl;
 
   return nullptr;
 }
@@ -264,7 +259,6 @@ bool HatScheT::ModuloSDCScheduler::dependencyConflict(std::map<Vertex*,int>& pre
       auto r = this->resourceModel.getResource(s);
       if(prevSched[s]+r->getLatency()+e->getDelay()>time+this->II*e->getDistance())
       {
-        std::cout << "Dependency conflict between " << s->getName() << " and " << d->getName() << std::endl;
         return true;
       }
     }
@@ -279,7 +273,6 @@ bool HatScheT::ModuloSDCScheduler::dependencyConflict(std::map<Vertex*,int>& pre
       auto r = this->resourceModel.getResource(d);
       if(time+r->getLatency()+e->getDelay()>prevSched[s]+this->II*e->getDistance())
       {
-        std::cout << "Dependency conflict between " << s->getName() << " and " << d->getName() << std::endl;
         return true;
       }
     }
@@ -333,7 +326,7 @@ static std::map<HatScheT::Vertex*,int> solveLP(ScaLP::Solver& s, HatScheT::Graph
 static void createVariables(std::map<HatScheT::Vertex*,ScaLP::Variable>& variables,HatScheT::Graph& g)
 {
   for(HatScheT::Vertex*v:g.Vertices())
-  { // TODO: remove upper bound
+  {
     ScaLP::Variable t_i = ScaLP::newIntegerVariable(v->getName(),0,10000);
     variables.emplace(v,t_i);
   }
@@ -375,12 +368,7 @@ static std::map<HatScheT::Vertex*,unsigned int> createPerturbation(HatScheT::Gra
   std::map<HatScheT::Vertex*,unsigned int> res;
   for(HatScheT::Vertex*v:g.Vertices())
   {
-    res.emplace(v,addLayerRec(g,res,v,v)); // TODO: FIXME: wrong?
-  }
-
-  for(auto&p:res)
-  {
-    std::cout << "Perturbation: " << p.first->getName() << " = " << std::to_string(p.second) << std::endl;
+    res.emplace(v,addLayerRec(g,res,v,v));
   }
 
   return res;
@@ -425,16 +413,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
     if(this->verbose==true) std::cout << "#### Begin of Iteration " << (budget-b+1) << " at II " << this->II << " at time " << std::ctime(&time_var_it) << " with " << i->getName() << std::endl;
     if(this->verbose==true) std::cout << "Elapsed run time is " << secondsRun << " (sec) with timeout " << this->solverTimeout << " (sec)" << std::endl;
 
-    if(this->resourceModel.getResource(i)->getLimit()==-1){
-      cout << "Warning: unconstrained vertex found on schedQueue " << i->getName() << endl;
-      continue;
-    }
-    //DIRTY HACK
-    //there is a bug that will put vertices that are already in the mrt back to schedule queue
-    if(mrt.vertexIsIn(i)==true) {
-      cout << "Warning : Already scheduled vertex found on Queue: " << i->getName() <<" ! This should never happen!" << endl;
-      //continue;
-    }
+    if(this->resourceModel.getResource(i)->getLimit()==-1) continue;
 
     if(this->verbose==true) std::cout << "Current Instruction: " << i->getName() << std::endl;
     if(this->verbose==true) cout << "budget b : " << b << endl;
@@ -443,10 +422,7 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
     {
       auto it = asap.find(i);
       if(it!=asap.end()) asapI = it->second;
-      else{
-        cout << "Warning: No asap time for " << i->getName() << " was found! This should never happen!" << endl;
-        asapI = 0;
-      }
+      else asapI = 0;
     }
 
     int time = 0;
@@ -497,7 +473,6 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
         auto a =  solveLP(*this->solver,this->g,this->variables,this->constraints, this->baseConstraints);
 
         if(not a.empty()) prevSched.swap(a);
-        else cout << "Warning: No Solution for SDC after backtracking was found! This should never happen!" << endl;
       }
 
       if(this->writeLPFile) this->solver->writeLP(to_string(this->II));
@@ -668,7 +643,6 @@ void HatScheT::ModuloSDCScheduler::schedule()
     }   
 
     // create perturbation
-    cout << "ModuloSDCScheduler::schedule: createPerturbation Start!" << endl;
     clock_t begin = clock();
     priority.clear();
     int max =0; 
@@ -683,7 +657,6 @@ void HatScheT::ModuloSDCScheduler::schedule()
     }
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    cout << "ModuloSDCScheduler::schedule: createPerturbation Finished after " << elapsed_secs << " seconds!" << endl;
 
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
     if(sched(budget,priority,asap))
