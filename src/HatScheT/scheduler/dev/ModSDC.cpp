@@ -47,6 +47,7 @@ namespace HatScheT
         this->timeBudget = (double)this->solverTimeout;
         this->timeTracker = std::chrono::high_resolution_clock::now();
 
+        bool failed = false;
         for(this->II=this->minII; this->II<=this->maxII; this->II++)
         {
             cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
@@ -71,11 +72,13 @@ namespace HatScheT
                 {
                 	cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
                     cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName() << "', consider a higher budget or another priority function" << endl;
-                    throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget or another priority function");
+                    failed = true;
+                    //throw HatScheT::Exception("ModuloSDC heuristic didn't find solution for graph '" + this->g.getName() + "', consider a higher budget or another priority function");
                 }
             }
             this->resetContainer();
         }
+        if(failed == true) this->II = -1;
     }
 
     void ModSDC::constructProblem() {
@@ -881,7 +884,7 @@ namespace HatScheT
 	}
 
     int ModSDC::getScheduleLength() {
-        if(this->scheduleLength<0) return SchedulerBase::getScheduleLength();
+        if(this->scheduleLength<0) return -1;
         else return this->scheduleLength;
     }
 
