@@ -249,4 +249,4 @@ ENDIF (SCALP_H AND SCALP_LIB)
 
 install (TARGETS hatschet-bin DESTINATION bin)
 install (TARGETS hatschet DESTINATION lib)
-install (FILES ${HatScheT_HEADERS} DESTINATION include/HatScheT)
+install (DIRECTORY src/HatScheT/ DESTINATION include/HatScheT FILES_MATCHING PATTERN "*.h")
