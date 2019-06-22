@@ -146,7 +146,7 @@ void MoovacScheduler::schedule()
     else cout << "Found feasible solution for II: " << this->II << endl;
   }
   else{
-    cout << "RAMS: Passed maxII boundary! No modulo schedule identified!" << endl;
+    cout << "Moovac: Passed maxII boundary! No modulo schedule identified!" << endl;
     this->II = -1;
   }
 }
