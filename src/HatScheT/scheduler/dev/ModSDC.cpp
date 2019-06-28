@@ -862,11 +862,6 @@ namespace HatScheT {
     }
   }
 
-  int ModSDC::getScheduleLength() {
-    if (this->scheduleLength < 0) return -1;
-    else return this->scheduleLength;
-  }
-
   PriorityHandler::PriorityHandler(PriorityHandler::priorityType p, int prio1, int prio2) :
     pType(p), firstPriority(prio1), secondPriority(prio2) {
   }

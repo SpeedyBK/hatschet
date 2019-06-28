@@ -99,12 +99,6 @@ namespace HatScheT {
     void schedule() override;
 
     /*!
-     * @brief override base method
-     * @return schedule length
-     */
-    int getScheduleLength() override;
-
-    /*!
      * @brief override SchedulerBase::getBindings()
      * @return
      */

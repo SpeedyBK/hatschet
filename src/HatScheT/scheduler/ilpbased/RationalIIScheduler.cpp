@@ -246,7 +246,7 @@ void RationalIIScheduler::schedule()
   int maxRuns = this->maxRuns;
   if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
 
-  while(runs <= maxRuns){
+  while(runs < maxRuns){
     cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
     //clear up and reset
     this->solver->reset();
