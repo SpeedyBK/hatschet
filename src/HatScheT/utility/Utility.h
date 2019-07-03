@@ -127,7 +127,21 @@ public:
   * @return
   */
  static int getCriticalPath(Graph *g, ResourceModel *rm);
+ /*!
+  * @brief determine ILP based asap schedule and return schedule length
+  * @param g
+  * @param rm
+  * @return
+  */
+ static int getILPASAPScheduleLength(Graph *g, ResourceModel *rm);
 #endif
+ /*!
+  * @brief determine asap schedule and return schedule length
+  * @param g
+  * @param rm
+  * @return
+  */
+ static int getASAPScheduleLength(Graph *g, ResourceModel *rm);
  /*!
   * \brief sumOfStarttimes
   * \param startTimes

@@ -239,6 +239,25 @@ double Utility::calcResMII(ResourceModel *rm, Target* t)
   return resMII;
 }
 
+int Utility::getILPASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+  HatScheT::ASAPScheduler a(*g,*rm);
+  a.schedule();
+  int criticalPath = a.getScheduleLength();
+
+  ASAPILPScheduler asap(*g,*rm,  {"CPLEX", "Gurobi", "SCIP"});
+  asap.setMaxLatencyConstraint(criticalPath);
+  asap.schedule();
+
+  return asap.getScheduleLength();
+}
+
+int Utility::getASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+  HatScheT::ASAPScheduler a(*g,*rm);
+  a.schedule();
+
+  return a.getScheduleLength();
+}
+
 int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
   map<Resource*, int> restoreLimits;
   //set all resource unlimited for critical path calculation, store old values
@@ -425,6 +444,7 @@ double Utility::calcRecMII(Graph *g, ResourceModel *rm)
   auto status = solver.solve();
   if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
     cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
+    cout << "Utility.calcRecMII: ScaLP::STATUS " << status << endl;
     throw HatScheT::Exception("RecMII computation failed!");
   }
 

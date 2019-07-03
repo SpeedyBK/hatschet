@@ -44,52 +44,68 @@
       <data key="uses_resource">Adder</data>
     </node>
     <edge id="1_2a" source="1" target="2">
+	  <data key="delay">0</data>
       <data key="distance"> 0 </data>
     </edge>
     <edge id="1_2b" source="1" target="2">
+	  <data key="delay">0</data>
       <data key="distance"> 1 </data>
     </edge>
     <edge id="2_3a" source="2" target="3">
+	  <data key="delay">0</data>
       <data key="distance"> 0 </data>
     </edge>
     <edge id="2_3b" source="2" target="3">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="3_4a" source="3" target="4">
       <data key="distance"> 0 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="3_4b" source="3" target="4">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="4_5a" source="4" target="5">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="4_5b" source="4" target="5">
       <data key="distance"> 2 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="5_6a" source="5" target="6">
       <data key="distance"> 2 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="5_6b" source="5" target="6">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="6_7" source="6" target="7">
       <data key="distance"> 0 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="7_8" source="7" target="8">
       <data key="distance"> 0 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="8_1" source="8" target="1">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="4_9" source="4" target="9">
       <data key="distance"> 0 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="9_10" source="9" target="10">
       <data key="distance"> 0 </data>
+      <data key="delay">0</data>
     </edge>
     <edge id="10_9" source="10" target="9">
       <data key="distance"> 1 </data>
+      <data key="delay">0</data>
     </edge>
   </graph>
   </graphml>

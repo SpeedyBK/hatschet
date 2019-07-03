@@ -35,12 +35,18 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->integerMinII = -1;
   this->tpBuffer = 0.0f;
   this->minRatIIFound = false;
-  this->maxLatencyConstraint = 0;
+  this->maxLatencyConstraint = -1;
   this->maxRuns = 1;
-  this->s_start = -1;
-  this->m_start = -1;
   this->s_found = -1;
   this->m_found = -1;
+
+  //experimental auto set function for the start values of modulo and sample
+  this->autoSetMAndS();
+  this->s_start = this->samples;
+  this->m_start = this->modulo;
+
+  cout << "RationalIIScheduler::RationalIIScheduler: recMinII is " << this->getRecMinII() << endl;
+  cout << "RationalIIScheduler::RationalIIScheduler: resMinII is " << this->getResMinII() << endl;
 }
 
 void RationalIIScheduler::resetContainer() {
@@ -207,25 +213,20 @@ void RationalIIScheduler::schedule()
 {
   this->scheduleFound = false;
 
-  //experimental auto set function for the start values of modulo and sample
-  this->autoSetMAndS();
-  this->s_start = this->samples;
-  this->m_start = this->modulo;
-
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
 
   if(this->consideredTimeSteps <= 0) {
-    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps == 0! Scheduling not possible!");
+    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredTimeSteps <= 0! Scheduling not possible!");
   }
 
   if(this->samples <= 0) {
-    throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses == 0! Scheduling not possible!");
+    throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses <= 0! Scheduling not possible!");
   }
 
   if(this->modulo <= 0) {
-    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle == 0! Scheduling not possible!");
+    throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle <= 0! Scheduling not possible!");
   }
 
   if(this->maxLatencyConstraint <= 0) {
@@ -578,7 +579,6 @@ void RationalIIScheduler::fillTMaxtrix()
     //j vertices
     for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it){
       Vertex* v = *it;
-      int id = v->getId();
 
       if(i==0) t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + v->getName(),i,this->maxLatencyConstraint -  this->resourceModel.getVertexLatency(v)));
       else t_vector.push_back(ScaLP::newIntegerVariable("t'" + std::to_string(i) + "_" + v->getName(),i,this->consideredTimeSteps*(i+1) + i*1));

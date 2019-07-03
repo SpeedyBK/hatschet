@@ -1,13 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 	This example models a single-precision floating point adder that was proposed
-			for a virtex 7 FPGA in : "Floating-Point Single-Precision Fused Multiplier-adder Unit on FPGA",
-			(Wilson et. al. @ REC 2014)
-
-			The pipelinestage/operator latence used is changed to fit the vanDongen example program
--->
-<ModelInformation Version="1.0">
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
 	<Resources>
-		<Resource blockingTime="1" latency="2" limit="2" name="Adder">
+		<Resource blockingTime="1" latency="2" limit="2" name="Adder" physicalDelay="0.000000">
 			<Cost name="DSP" demand="2" />
 			<Cost name="LUT" demand="845" />
 			<Cost name="MEM" demand="0" />
