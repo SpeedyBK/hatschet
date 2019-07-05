@@ -45,7 +45,7 @@ EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, Resou
 
 void EichenbergerDavidson97Scheduler::schedule()
 {
-  std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
+  std::cout << "ED97: min/maxII = " << minII << " " << maxII << "(minResII/minRecII " << this->resMinII << " / " << this->recMinII << std::endl;
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
@@ -75,6 +75,7 @@ void EichenbergerDavidson97Scheduler::schedule()
       std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
       break;
     }
+    if(!feasible) cout << "  II" << candII << " : " << this->stat << endl;
   }
 }
 

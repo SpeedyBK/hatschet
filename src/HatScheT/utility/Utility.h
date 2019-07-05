@@ -86,7 +86,7 @@ public:
  /*!
   * @brief use a graph search to calculate the longest path
   * this methode is safer than asap scheduling
-  * asap scheduling failes when there is no way to the ouput without algorithmic delays
+  * asap scheduling failes when there is no way to the output without algorithmic delays
   * @param g
   * @param rm
   * @return

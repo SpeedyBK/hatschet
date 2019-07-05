@@ -338,7 +338,7 @@ int Utility::calcAbsolutMaxII(Graph *g, ResourceModel *rm) {
     limit_map.insert(make_pair(r, r->getLimit()));
 
     //set temporarily to limit 1
-    r->setLimit(1);
+    if(r->getName() != "special_virtual") r->setLimit(1);
   }
 
   //determine minimum possible latency

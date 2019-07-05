@@ -78,9 +78,9 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
     int reg = rm.getNumVerticesRegisteredToResource(r);
 
     if(r->getLimit() > 0) os << "Resource Model has limited resource: " << r->getName() << " with limit/vertices " << r->getLimit() << "/" << reg << ", latency "
-                             << r->getLatency() << ", blockingTime " << r->getBlockingTime() << endl;
+                             << r->getLatency() << ", blockingTime " << r->getBlockingTime() << ", physicalDelay " << r->getPhysicalDelay() << endl;
     if(r->getLimit() == -1) os << "Resource Model has unlimited resource: " << r->getName() << " with latency "
-                               << r->getLatency() << ", blockingTime " << r->getBlockingTime() << endl;
+                               << r->getLatency() << ", blockingTime " << r->getBlockingTime() << ", physicalDelay " << r->getPhysicalDelay() << endl;
   }
 
   os << "------------------------------------------------------------------------------------" << endl;
