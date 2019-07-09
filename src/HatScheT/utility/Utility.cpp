@@ -168,7 +168,8 @@ void Utility::cycle(const HatScheT::Edge *e, vector<HatScheT::Vertex *>& visited
 
   //check whether succ was already visited (cycle ends)
   for(auto it : visited) {
-    if(succ == it) return;
+    if(succ == it)
+      return;
   }
 
   //put to visited
@@ -256,6 +257,32 @@ int Utility::getASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *
   a.schedule();
 
   return a.getScheduleLength();
+}
+
+int Utility::getASAPNoHCScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+  map<HatScheT::Resource*, int> limits;
+
+  //save old limits
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    HatScheT::Resource* r = *it;
+    limits.insert(make_pair(r, r->getLimit()));
+
+    r->setLimit(-1);
+  }
+
+  //determine schedule
+  ASAPScheduler asap(*g,*rm);
+  asap.schedule();
+  int lat = asap.getScheduleLength();
+
+  //restore old limits
+  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
+    HatScheT::Resource* r = *it;
+
+    r->setLimit(limits[r]);
+  }
+
+  return lat;
 }
 
 int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {

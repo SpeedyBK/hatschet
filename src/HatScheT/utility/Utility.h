@@ -143,6 +143,13 @@ public:
   */
  static int getASAPScheduleLength(Graph *g, ResourceModel *rm);
  /*!
+  * @brief determine asap schedule for only unlimited resources
+  * @param g
+  * @param rm
+  * @return
+  */
+ static int getASAPNoHCScheduleLength(Graph *g, ResourceModel *rm);
+ /*!
   * \brief sumOfStarttimes
   * \param startTimes
   * \return

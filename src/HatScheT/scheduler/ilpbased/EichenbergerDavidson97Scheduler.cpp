@@ -41,11 +41,13 @@ EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, Resou
   computeMinII(&g, &resourceModel);
   minII = ceil(minII);
   computeMaxII(&g, &resourceModel);
+
+  setUpSolverSettings();
 }
 
 void EichenbergerDavidson97Scheduler::schedule()
 {
-  std::cout << "ED97: min/maxII = " << minII << " " << maxII << "(minResII/minRecII " << this->resMinII << " / " << this->recMinII << std::endl;
+  std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
@@ -57,8 +59,6 @@ void EichenbergerDavidson97Scheduler::schedule()
 
   if (minII > maxII)
     throw HatScheT::Exception("Inconsistent II bounds");
-
-  setUpSolverSettings();
 
   bool feasible = false;
   for (int candII = minII; candII <= maxII; ++candII) {
