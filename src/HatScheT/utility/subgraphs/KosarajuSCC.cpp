@@ -21,5 +21,7 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 namespace HatScheT {
-  
+  KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
+    this->g = &g;
+  }
 }

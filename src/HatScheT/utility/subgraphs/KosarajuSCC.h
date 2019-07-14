@@ -19,10 +19,26 @@
 */
 #ifndef HATSCHET_KOSARAJUSCC_H
 #define HATSCHET_KOSARAJUSCC_H
+
+#include <iostream>
+#include <list>
+#include <stack>
+
+#include "HatScheT/Graph.h"
+
 namespace HatScheT {
 
+  /*
+   * M. Sharir; "A strong-connectivity algorithm and its applications in data flow analysis";
+   * in Computers & Mathematics with Applications; 1981
+   *
+   */
   class KosarajuSCC {
+  public:
+    KosarajuSCC(Graph& g);
 
+  private:
+    Graph* g;
   };
 
 }

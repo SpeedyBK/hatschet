@@ -92,6 +92,14 @@ public:
    * @return
    */
   virtual ScaLP::status getScaLPStatus(){return this->stat;}
+  /*!
+   * @brief this functions retuns the solving time in seconds
+   * (if set by the schedulers, -1.0 otherwise)
+   * @return
+   */
+  double getSolvingTime(){
+    return this->solvingTime;
+  }
 
 protected:
   /*!
