@@ -36,6 +36,7 @@
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
+#include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
@@ -126,7 +127,7 @@ int main(int argc, char *args[]) {
   //flag to enable mux optimal binding
   //experimental
   bool optBinding = false;
-
+  bool printSCC = false;
   bool solverQuiet=true;
 
   enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
@@ -177,6 +178,9 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--graph=",value)) {
         graphMLFile = std::string(value);
+      }
+      else if(getCmdParameter(args[i],"--scc=",value)) {
+        if(atol(value) == 1) printSCC = true;
       }
       else if(getCmdParameter(args[i],"--target=",value)) {
         targetFile = std::string(value);
@@ -380,6 +384,12 @@ int main(int argc, char *args[]) {
       HatScheT::DotWriter dw(dotFile, &g, &rm);
       dw.setDisplayNames(true);
       dw.write();
+    }
+
+    if(printSCC == true) {
+      cout << "printing strongly connected components of the graph: " << endl;
+      HatScheT::KosarajuSCC scc(g);
+      scc.printSCCs();
     }
 
     if(writeResourceModelFile != "") {

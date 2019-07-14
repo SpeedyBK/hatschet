@@ -24,4 +24,10 @@ namespace HatScheT {
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
     this->g = &g;
   }
+
+  void KosarajuSCC::printSCCs() {
+    cout << "KosarajuSCC::printSCCs: start!" << endl;
+
+    cout << "KosarajuSCC::printSCCs: finished!" << endl;
+  }
 }

@@ -32,10 +32,13 @@ namespace HatScheT {
    * M. Sharir; "A strong-connectivity algorithm and its applications in data flow analysis";
    * in Computers & Mathematics with Applications; 1981
    *
+   * this algorithm was later credited to Kosaraju
+   *
    */
   class KosarajuSCC {
   public:
     KosarajuSCC(Graph& g);
+    void printSCCs();
 
   private:
     Graph* g;
