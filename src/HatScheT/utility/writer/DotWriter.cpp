@@ -48,6 +48,9 @@ void DotWriter::write()
   colors.push_back("orange");
   colors.push_back("violetred3");
   colors.push_back("purple");
+  colors.push_back("darkorange");
+  colors.push_back("dimgray");
+  colors.push_back("brown3");
 
   //assign resource
   std::map<const Resource*, int> resColAssignments;
@@ -59,11 +62,9 @@ void DotWriter::write()
     //skip unlimited
     if(r->getLimit() == -1) continue;
 
-    resColAssignments.insert({r, i});
+    if(i <= 9) resColAssignments.insert({r, i});
+    else resColAssignments.insert({r, 9});
     i++;
-
-    //only 7 supported
-    if(i == 6) break;
   }
 
   FILE* graphfilepointer = NULL;

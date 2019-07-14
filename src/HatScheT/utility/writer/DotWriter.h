@@ -33,7 +33,7 @@ class DotWriter : public Writer
 public:
   /*!
    * \brief DotWriter
-   * \param path provide a filename (witout .dot!)
+   * \param path provide a filename (without .dot!)
    * \param g
    * \param rm
    */

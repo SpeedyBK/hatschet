@@ -106,6 +106,7 @@ src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/XMLResourceReader.cpp
+src/HatScheT/utility/subgraphs/KosarajuSCC.cpp
 src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.cpp
@@ -154,6 +155,7 @@ src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h
 src/HatScheT/utility/reader/XMLTargetReader.h
 src/HatScheT/utility/reader/Reader.h
+src/HatScheT/utility/subgraphs/KosarajuSCC.h
 src/HatScheT/utility/subgraphs/Occurrence.h
 src/HatScheT/utility/subgraphs/OccurrenceSet.h
 src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
