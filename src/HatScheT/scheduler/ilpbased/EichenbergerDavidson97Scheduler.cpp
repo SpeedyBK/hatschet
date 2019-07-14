@@ -95,7 +95,17 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   setObjective();
   constructConstraints(candII);
 
-  stat     = solver->solve();
+  //timestamp
+  this->begin = clock();
+  //solve
+  stat = this->solver->solve();
+  //timestamp
+  this->end = clock();
+
+  //log time
+  if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+  this->solvingTime += (double)(this->end - this->end) / CLOCKS_PER_SEC;
+
   if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) this->timeouts++;
   feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
   proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;

@@ -643,7 +643,6 @@ void HatScheT::ModuloSDCScheduler::schedule()
     }   
 
     // create perturbation
-    clock_t begin = clock();
     priority.clear();
     int max =0; 
     for(auto&p:asap)
@@ -655,11 +654,20 @@ void HatScheT::ModuloSDCScheduler::schedule()
       int prio = std::abs(max - p.second);
       priority.emplace(p.first,prio);
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
     cout << "Starting new iteration of ModuloSDC for II " << this->II << " with timeout " << this->solver->timeout << "(sec)" << endl;
-    if(sched(budget,priority,asap))
+
+    //timestamp
+    this->begin = clock();
+    //solve
+    bool attempt = sched(budget,priority,asap);
+    //timestamp
+    this->end = clock();
+    //log time
+    if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+    this->solvingTime += (double)(this->end - this->end) / CLOCKS_PER_SEC;
+
+    if(attempt==true)
     {
       scheduleFound=true;
       std::cout << "FOUND for II=" << this->II << std::endl;

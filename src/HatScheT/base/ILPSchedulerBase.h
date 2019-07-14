@@ -24,6 +24,7 @@
 #include <HatScheT/Vertex.h>
 #include <HatScheT/Edge.h>
 #include <map>
+#include <ctime>
 
 #include <ScaLP/Solver.h>
 
@@ -156,5 +157,13 @@ protected:
    * flag to chose whether to write the lp file
    */
   bool writeLPFile;
+  /*!
+   * @brief timestamp that can be used for time measurements
+   */
+  clock_t begin;
+  /*!
+   * @brief timestamp that can be used for time measurements
+   */
+  clock_t end;
 };
 }

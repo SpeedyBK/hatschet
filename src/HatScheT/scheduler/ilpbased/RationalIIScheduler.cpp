@@ -264,7 +264,18 @@ void RationalIIScheduler::schedule()
     cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
     //solve the current problem
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
+
+    //timestamp
+    this->begin = clock();
+    //solve
     stat = this->solver->solve();
+    //timestamp
+    this->end = clock();
+
+    //log time
+    if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+    this->solvingTime += (double)(this->end - this->end) / CLOCKS_PER_SEC;
+
     cout << "Finished solving: " << stat << endl;
 
     //check result and act accordingly
