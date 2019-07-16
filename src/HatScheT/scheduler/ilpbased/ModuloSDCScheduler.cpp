@@ -665,7 +665,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->end = clock();
     //log time
     if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-    this->solvingTime += (double)(this->end - this->end) / CLOCKS_PER_SEC;
+    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
     if(attempt==true)
     {

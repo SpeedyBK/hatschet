@@ -36,7 +36,7 @@ void ASAPILPScheduler::schedule() {
   stat = this->solver->solve();
   this->end = clock();
   if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-  this->solvingTime += (double)(this->end - this->end) / CLOCKS_PER_SEC;
+  this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
   if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
   if(stat == ScaLP::status::OPTIMAL) this->optimalResult = true;
