@@ -23,6 +23,7 @@
 #include <iostream>
 #include <list>
 #include <stack>
+#include <vector>
 
 #include "HatScheT/Graph.h"
 

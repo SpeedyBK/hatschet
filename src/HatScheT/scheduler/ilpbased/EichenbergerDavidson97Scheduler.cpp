@@ -77,6 +77,7 @@ void EichenbergerDavidson97Scheduler::schedule()
     }
     if(!feasible) cout << "  II" << candII << " : " << this->stat << endl;
   }
+  if(scheduleFound == false) this->II = -1;
 }
 
 void EichenbergerDavidson97Scheduler::setUpSolverSettings()

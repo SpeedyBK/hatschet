@@ -27,6 +27,14 @@ namespace HatScheT {
 
   void KosarajuSCC::printSCCs() {
     cout << "KosarajuSCC::printSCCs: start!" << endl;
+    stack<int> Stack;
+    map<HatScheT::Vertex*, bool> visited;
+
+    //init visited vector
+    for(auto it = g->verticesBegin(); it != g->verticesEnd(); it++){
+      HatScheT::Vertex* v = *it;
+      visited.insert({v,false});
+    }
 
     cout << "KosarajuSCC::printSCCs: finished!" << endl;
   }
