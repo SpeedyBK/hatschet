@@ -162,6 +162,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
   , mrt({resourceModel,1})
 {
   this->verbose = false;
+  this->userdef_budget = -1;
   this->computeMinII(&g,&resourceModel);
   this->minII = ceil(this->minII);
   this->computeMaxII(&g, &resourceModel);
@@ -610,7 +611,9 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
-  unsigned int budget = 6*this->g.getNumberOfVertices();
+  unsigned int budget = 0;
+  if(this->userdef_budget < 0) budget = 6*this->g.getNumberOfVertices();
+  else budget = this->userdef_budget;
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
@@ -665,7 +668,7 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->end = clock();
     //log time
     if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+    this->solvingTime += (double)(this->end - this->end)  / CLOCKS_PER_SEC;
 
     if(attempt==true)
     {

@@ -73,6 +73,7 @@ void EichenbergerDavidson97Scheduler::schedule()
         startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
       std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
+      std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
       break;
     }
     if(!feasible) cout << "  II" << candII << " : " << this->stat << endl;
