@@ -22,7 +22,6 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Exception.h"
 
-
 #include <iostream>
 #include <map>
 #include <limits>
