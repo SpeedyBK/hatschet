@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
+            Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
 
     Copyright (C) 2018
 
@@ -21,21 +22,40 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 namespace HatScheT {
+
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
     this->g = &g;
   }
 
+
   void KosarajuSCC::printSCCs() {
     cout << "KosarajuSCC::printSCCs: start!" << endl;
     stack<int> Stack;
-    map<HatScheT::Vertex*, bool> visited;
+    map<HatScheT::Vertex *, bool> visited;
 
     //init visited vector
-    for(auto it = g->verticesBegin(); it != g->verticesEnd(); it++){
-      HatScheT::Vertex* v = *it;
-      visited.insert({v,false});
+    for (auto it = g->verticesBegin(); it != g->verticesEnd(); it++) {
+      HatScheT::Vertex *v = *it;
+      visited.insert({v, false});
     }
 
     cout << "KosarajuSCC::printSCCs: finished!" << endl;
+  }
+
+
+  void KosarajuSCC::DFSUtil() {
+    cout << "Hello World" << endl;
+  }
+
+  void KosarajuSCC::TranposeGraph(){
+    cout << "Hello World" << endl;
+  }
+
+  void KosarajuSCC::AddEdge(){
+    cout << "Hello World" << endl;
+  }
+
+  void KosarajuSCC::FillOrder(){
+    cout << "Hello World" << endl;
   }
 }

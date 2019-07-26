@@ -20,6 +20,8 @@ namespace HatScheT {
     computeMaxII(&g, &resourceModel);
 
   }
+
+
   void GraphReduction::schedule() {
     cout << "GraphReduction::schedule: start" << endl;
 
@@ -28,6 +30,6 @@ namespace HatScheT {
     kscc.printSCCs();
 
     cout << "GraphReduction::schedule: finished" << endl;
-  }
 
+  }
 }

@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
+            Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
 
     Copyright (C) 2019
 
@@ -40,6 +41,31 @@ namespace HatScheT {
   public:
     KosarajuSCC(Graph& g);
     void printSCCs();
+
+    void DFSUtil();
+    /*!
+        *\brief Will hopefully do something useful. (Under Development)
+        *\return Don't know yet
+    */
+
+
+    void TranposeGraph();
+    /*!
+        *\brief Will hopefully do something useful. (Under Development)
+        *\return Don't know yet
+    */
+
+    void AddEdge();
+    /*!
+        *\brief Will hopefully do something useful. (Under Development)
+        *\return Don't know yet
+    */
+
+    void FillOrder();
+    /*!
+        *\brief Will hopefully do something useful. (Under Development)
+        *\return Don't know yet
+    */
 
   private:
     Graph* g;
