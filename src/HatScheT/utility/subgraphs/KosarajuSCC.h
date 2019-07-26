@@ -39,36 +39,28 @@ namespace HatScheT {
    */
   class KosarajuSCC {
   public:
-    KosarajuSCC(Graph& g);
+
+    explicit KosarajuSCC(Graph& g);
+
+    explicit KosarajuSCC(int nodes);
+
+    void DebugPrint();
+
+    void addEdge(int v, int w);
+
+    void DFSUtil(int v, bool visited[]);
+
+    KosarajuSCC getTranspose();
+
+    void fillOrder(int v, bool visited[], std::stack<int> &Stack);
+
     void printSCCs();
-
-    void DFSUtil();
-    /*!
-        *\brief Will hopefully do something useful. (Under Development)
-        *\return Don't know yet
-    */
-
-
-    void TranposeGraph();
-    /*!
-        *\brief Will hopefully do something useful. (Under Development)
-        *\return Don't know yet
-    */
-
-    void AddEdge();
-    /*!
-        *\brief Will hopefully do something useful. (Under Development)
-        *\return Don't know yet
-    */
-
-    void FillOrder();
-    /*!
-        *\brief Will hopefully do something useful. (Under Development)
-        *\return Don't know yet
-    */
 
   private:
     Graph* g;
+    int V;
+    std::list <int> *adj;
+
   };
 
 }

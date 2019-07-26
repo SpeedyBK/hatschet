@@ -27,35 +27,102 @@ namespace HatScheT {
     this->g = &g;
   }
 
+  KosarajuSCC::KosarajuSCC(int nodes){
+    this -> V = nodes;
+    adj = new std::list <int> [nodes];
+  }
 
-  void KosarajuSCC::printSCCs() {
-    cout << "KosarajuSCC::printSCCs: start!" << endl;
-    stack<int> Stack;
-    map<HatScheT::Vertex *, bool> visited;
 
-    //init visited vector
-    for (auto it = g->verticesBegin(); it != g->verticesEnd(); it++) {
-      HatScheT::Vertex *v = *it;
-      visited.insert({v, false});
+  void KosarajuSCC::DebugPrint(){
+    std::cout << "Nodes: " << V << std::endl;
+
+    std::cout << "Doesn't work properly" << std::endl;
+
+    std::list <int> :: iterator it;
+    for (it = adj->begin(); it != adj->end(); ++it){
+      std::cout << *it << std::endl;
     }
-
-    cout << "KosarajuSCC::printSCCs: finished!" << endl;
   }
 
-
-  void KosarajuSCC::DFSUtil() {
-    cout << "Hello World" << endl;
+  void KosarajuSCC::addEdge(int v, int w){
+    adj[v].push_back(w); // Add w to v’s list.
   }
 
-  void KosarajuSCC::TranposeGraph(){
-    cout << "Hello World" << endl;
+  void KosarajuSCC::DFSUtil(int v, bool visited[]){
+    // Mark the current node as visited and print it
+    visited[v] = true;
+    std::cout << v << " ";
+
+    // Recur for all the vertices adjacent to this vertex
+    std::list <int>::iterator i;
+    for (i = adj[v].begin(); i != adj[v].end(); ++i)
+      if (!visited[*i])
+        DFSUtil(*i, visited);
   }
 
-  void KosarajuSCC::AddEdge(){
-    cout << "Hello World" << endl;
+  KosarajuSCC KosarajuSCC::getTranspose(){
+    KosarajuSCC g(V);
+    for (int v = 0; v < V; v++)
+    {
+      // Recur for all the vertices adjacent to this vertex
+      std::list<int>::iterator i;
+      for(i = adj[v].begin(); i != adj[v].end(); ++i)
+      {
+        g.adj[*i].push_back(v);
+      }
+    }
+    return g;
   }
 
-  void KosarajuSCC::FillOrder(){
-    cout << "Hello World" << endl;
+  void KosarajuSCC::fillOrder(int v, bool visited[], std::stack<int> &Stack){
+    // Mark the current node as visited and print it
+    visited[v] = true;
+
+    // Recur for all the vertices adjacent to this vertex
+    std::list<int>::iterator i;
+    for(i = adj[v].begin(); i != adj[v].end(); ++i)
+      if(!visited[*i])
+        fillOrder(*i, visited, Stack);
+
+    // All vertices reachable from v are processed by now, push v
+    Stack.push(v);
+  }
+
+// The main function that finds and prints all strongly connected
+// components
+  void KosarajuSCC::printSCCs(){
+    std::stack<int> Stack;
+
+    // Mark all the vertices as not visited (For first DFS)
+    bool *visited = new bool[V];
+    for(int i = 0; i < V; i++)
+      visited[i] = false;
+
+    // Fill vertices in stack according to their finishing times
+    for(int i = 0; i < V; i++)
+      if(visited[i] == false)
+        fillOrder(i, visited, Stack);
+
+    // Create a reversed graph
+    KosarajuSCC gr = getTranspose();
+
+    // Mark all the vertices as not visited (For second DFS)
+    for(int i = 0; i < V; i++)
+      visited[i] = false;
+
+    // Now process all vertices in order defined by Stack
+    while (Stack.empty() == false)
+    {
+      // Pop a vertex from stack
+      int v = Stack.top();
+      Stack.pop();
+
+      // Print Strongly connected component of the popped vertex
+      if (visited[v] == false)
+      {
+        gr.DFSUtil(v, visited);
+        std::cout << std::endl;
+      }
+    }
   }
 }
