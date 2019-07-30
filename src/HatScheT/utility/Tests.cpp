@@ -36,6 +36,7 @@
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 #include <stdio.h>
 
@@ -675,6 +676,10 @@ bool Tests::moduloSDCTestFiege() {
     cout << "Generating graphml file: " << graphmlpath << endl;
     HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
     DW.write();
+
+    KosarajuSCC SCC(KosaGr);
+
+    SCC.DebugPrint();
 
     return false;
   }

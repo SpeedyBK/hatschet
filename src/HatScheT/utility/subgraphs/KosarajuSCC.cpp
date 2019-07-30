@@ -34,14 +34,7 @@ namespace HatScheT {
 
 
   void KosarajuSCC::DebugPrint(){
-    std::cout << "Nodes: " << V << std::endl;
-
-    std::cout << "Doesn't work properly" << std::endl;
-
-    std::list <int> :: iterator it;
-    for (it = adj->begin(); it != adj->end(); ++it){
-      std::cout << *it << std::endl;
-    }
+    cout << "Hello" << endl;
   }
 
   void KosarajuSCC::addEdge(int v, int w){
