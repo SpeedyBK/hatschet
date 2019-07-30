@@ -642,4 +642,41 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
-}}
+}
+
+  bool Tests::KosarajuTest(){
+
+    HatScheT::Graph KosaGr;
+    HatScheT::ResourceModel rm;
+    string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
+
+    auto &add = rm.makeResource("add", -1, 0, 1);
+
+    //Hardcoding the examplegraph from https://www.geeksforgeeks.org/strongly-connected-components/
+
+    Vertex& A = KosaGr.createVertex(0);
+    Vertex& B = KosaGr.createVertex(1);
+    Vertex& C = KosaGr.createVertex(2);
+    Vertex& D = KosaGr.createVertex(3);
+    Vertex& E = KosaGr.createVertex(4);
+
+    KosaGr.createEdge(A, C ,0);
+    KosaGr.createEdge(C, B ,0);
+    KosaGr.createEdge(B, A ,0);
+    KosaGr.createEdge(A, D ,0);
+    KosaGr.createEdge(D, E ,0);
+
+    rm.registerVertex(&A, &add);
+    rm.registerVertex(&B, &add);
+    rm.registerVertex(&C, &add);
+    rm.registerVertex(&D, &add);
+    rm.registerVertex(&E, &add);
+
+    cout << "Generating graphml file: " << graphmlpath << endl;
+    HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
+    DW.write();
+
+    return false;
+  }
+
+}

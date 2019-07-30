@@ -112,6 +112,7 @@ void print_short_help() {
 }
 
 int main(int argc, char *args[]) {
+
 #ifndef USE_XERCESC
   throw HatScheT::Exception("XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary");
 #else
@@ -281,6 +282,7 @@ int main(int argc, char *args[]) {
         if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
         if(str=="RATMINII" && HatScheT::Tests::rationalMinIITest()==false) exit(-1);
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
+        if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif

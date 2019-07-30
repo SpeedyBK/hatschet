@@ -44,8 +44,17 @@ namespace HatScheT {
 
     explicit KosarajuSCC(int nodes);
 
+    /*!
+    * \brief Is Used for Debugging, has to be removed...
+    * \return nothing
+    */
     void DebugPrint();
 
+
+    /*!
+    * \brief This function adds an edge from Vertex V to Vertex W from Kosaraju Algorithm, needs to be removed later
+    * \param v the vertex from which the edge starts, w vertex where the edeg ends.
+    */
     void addEdge(int v, int w);
 
     void DFSUtil(int v, bool visited[]);

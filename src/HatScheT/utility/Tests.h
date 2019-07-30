@@ -82,5 +82,10 @@ public:
    * @return
    */
   static bool rationalMinIITest();
+    /*!
+    * \brief Test if the Kosaraju works properly.
+    * \return
+    */
+  static bool KosarajuTest();
 };
 }
