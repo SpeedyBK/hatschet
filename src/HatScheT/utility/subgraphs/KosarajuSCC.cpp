@@ -46,6 +46,14 @@ namespace HatScheT {
     for (it = visited.begin(); it != visited.end(); ++it) {
       cout << '\t' << it->first->getName() << '\t' << it->second << endl;
     }
+
+    cout << endl;
+    cout << "Graph G has " << g->getNumberOfEdges() << " Edges" << endl;
+    cout << "Edge ID" << '\t' << '\t' << "Src Vertex" << '\t' << "Dst Vertex" << endl;
+
+    for (auto e:this->g->Edges()){
+      cout << '\t' << e->getId() << '\t' << e->getVertexSrcName() << '\t' << e->getVertexDstName() << endl;
+    }
   }
 
 

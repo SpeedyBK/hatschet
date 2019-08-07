@@ -673,6 +673,7 @@ bool Tests::moduloSDCTestFiege() {
     rm.registerVertex(&D, &add);
     rm.registerVertex(&E, &add);
 
+    //Write the graphml-file for Debugging
     cout << "Generating graphml file: " << graphmlpath << endl;
     HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
     DW.write();
@@ -680,8 +681,6 @@ bool Tests::moduloSDCTestFiege() {
     KosarajuSCC SCC(KosaGr);
 
     SCC.DebugPrint();
-
-    SCC.DFS();
 
     return false;
   }
