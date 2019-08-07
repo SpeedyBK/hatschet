@@ -40,9 +40,27 @@ namespace HatScheT {
   class KosarajuSCC {
   public:
 
+    /*!
+     * \brief Constructor for this class, it needs a graph, and is used to find the SCCs in this graph.
+     * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
+     */
     explicit KosarajuSCC(Graph& g);
 
-    explicit KosarajuSCC(int nodes);
+    /*!
+    * \brief This Method performs a Deep First Search on the Vertex V
+    * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
+    */
+    void Zeugs();
+
+    void DFS(Vertex* V);
+
+    //void DFSUtil(int v, bool visited[]);
+
+    //KosarajuSCC getTranspose();
+
+    //void fillOrder(int v, bool visited[], std::stack<int> &Stack);
+
+    void printSCCs(){}; //Muss weg... Später!
 
     /*!
     * \brief Is Used for Debugging, has to be removed...
@@ -50,25 +68,11 @@ namespace HatScheT {
     */
     void DebugPrint();
 
-
-    /*!
-    * \brief This function adds an edge from Vertex V to Vertex W from Kosaraju Algorithm, needs to be removed later
-    * \param v the vertex from which the edge starts, w vertex where the edeg ends.
-    */
-    void addEdge(int v, int w);
-
-    void DFSUtil(int v, bool visited[]);
-
-    KosarajuSCC getTranspose();
-
-    void fillOrder(int v, bool visited[], std::stack<int> &Stack);
-
-    void printSCCs();
-
   private:
     Graph* g;
-    int V;
-    std::list <int> *adj;
+    int NumOfVerticies;
+    std::map <Vertex*, bool> visited;
+    std::map <Vertex*, bool> :: iterator it;
 
   };
 

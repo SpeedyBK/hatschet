@@ -225,10 +225,8 @@ public:
   class Vertices
   {
     public:
-    Vertices(const std::set<Vertex*>::iterator& begin, const std::set<Vertex*>::iterator& end)
-      : b(begin), e(end)
-    {
-    }
+    Vertices(const std::set<Vertex*>::iterator& begin, const std::set<Vertex*>::iterator& end) : b(begin), e(end) {}
+
     std::set<Vertex*>::iterator begin() { return b; }
     std::set<Vertex*>::iterator end() { return e; }
     std::set<Vertex*>::iterator b;

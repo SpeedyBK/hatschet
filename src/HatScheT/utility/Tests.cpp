@@ -681,6 +681,8 @@ bool Tests::moduloSDCTestFiege() {
 
     SCC.DebugPrint();
 
+    SCC.DFS();
+
     return false;
   }
 

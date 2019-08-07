@@ -24,24 +24,50 @@
 namespace HatScheT {
 
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
+
+    // Debug:
+    cout << "KosarajuSCC Object built." << endl;
+
     this->g = &g;
+
+    //Probaly Useless:
+    NumOfVerticies = g.getNumberOfVertices();
+
+    //Generating a Map and mark all Verticies as unvisited.
+    for (auto v:this->g->Vertices()) {
+      visited.insert(std::make_pair(v, false));
+    }
   }
 
-  KosarajuSCC::KosarajuSCC(int nodes){
-    this -> V = nodes;
-    adj = new std::list <int> [nodes];
+  void KosarajuSCC::DebugPrint() {
+    cout << "Graph G has " << NumOfVerticies << " Vertecies" << endl;
+
+    cout << '\t' << "Vertex:" << '\t' << "Visited:" << endl;
+    for (it = visited.begin(); it != visited.end(); ++it) {
+      cout << '\t' << it->first->getName() << '\t' << it->second << endl;
+    }
   }
 
 
-  void KosarajuSCC::DebugPrint(){
-    cout << "Hello" << endl;
+  void KosarajuSCC::Zeugs(){
+    for (auto v:g->Vertices()) {
+      DFS(v);
+    }
   }
 
-  void KosarajuSCC::addEdge(int v, int w){
-    adj[v].push_back(w); // Add w to v’s list.
+  void KosarajuSCC::DFS(Vertex *V) {
+    //Mark vertex as visited:
+    visited[V] = true;
+
+
+
+    //Performing Deep First Search;
+
   }
 
-  void KosarajuSCC::DFSUtil(int v, bool visited[]){
+}
+
+/*  void KosarajuSCC::DFSUtil(int v, bool visited[]){
     // Mark the current node as visited and print it
     visited[v] = true;
     std::cout << v << " ";
@@ -54,8 +80,8 @@ namespace HatScheT {
   }
 
   KosarajuSCC KosarajuSCC::getTranspose(){
-    KosarajuSCC g(V);
-    for (int v = 0; v < V; v++)
+    KosarajuSCC g(Verticies);
+    for (int v = 0; v < Verticies; v++)
     {
       // Recur for all the vertices adjacent to this vertex
       std::list<int>::iterator i;
@@ -87,12 +113,12 @@ namespace HatScheT {
     std::stack<int> Stack;
 
     // Mark all the vertices as not visited (For first DFS)
-    bool *visited = new bool[V];
-    for(int i = 0; i < V; i++)
+    bool *visited = new bool[Verticies];
+    for(int i = 0; i < Verticies; i++)
       visited[i] = false;
 
     // Fill vertices in stack according to their finishing times
-    for(int i = 0; i < V; i++)
+    for(int i = 0; i < Verticies; i++)
       if(visited[i] == false)
         fillOrder(i, visited, Stack);
 
@@ -100,7 +126,7 @@ namespace HatScheT {
     KosarajuSCC gr = getTranspose();
 
     // Mark all the vertices as not visited (For second DFS)
-    for(int i = 0; i < V; i++)
+    for(int i = 0; i < Verticies; i++)
       visited[i] = false;
 
     // Now process all vertices in order defined by Stack
@@ -118,4 +144,4 @@ namespace HatScheT {
       }
     }
   }
-}
+}*/

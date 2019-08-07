@@ -395,7 +395,7 @@ int main(int argc, char *args[]) {
       dw.write();
     }
 
-    if(printSCC == true) {
+    if(printSCC) {
       cout << "printing strongly connected components of the graph: " << endl;
       HatScheT::KosarajuSCC scc(g);
       scc.printSCCs();
