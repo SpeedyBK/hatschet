@@ -30,6 +30,7 @@
 #include <ctime>
 #include <cstddef>
 #include <iomanip>
+#include <HatScheT/utility/writer/DotWriter.h>
 
 #include "HatScheT/scheduler/ASAPScheduler.h"
 
@@ -1135,5 +1136,20 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
 
   return binding;
 }
-#endif	 
+
+  void Utility::TransposeGraph(Graph *g) {
+
+    Graph H;
+
+    for (auto V:g->Vertices()){
+      H.createVertex(V->getId());
+    }
+
+    for (auto E:g->Edges()){
+      H.createEdge(E->getVertexDst(), E->getVertexSrc(), E->getDistance(), E->getDependencyType());
+    }
+
+  }
+
+#endif
 }

@@ -697,6 +697,8 @@ bool Tests::moduloSDCTestFiege() {
 
     SCC.DebugPrint();
 
+    HatScheT::Utility::TransposeGraph(&KosaGr);
+
     return false;
   }
 
