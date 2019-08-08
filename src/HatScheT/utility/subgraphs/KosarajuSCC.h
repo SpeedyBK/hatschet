@@ -47,14 +47,16 @@ namespace HatScheT {
     explicit KosarajuSCC(Graph& g);
 
     /*!
-    * \brief This Method performs a Deep First Search on the Vertex V
+    * \brief This Method performs a Deep First Search on the Vertex V.
     * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
     */
-    void getNeighbors();
+    void FillStack(Vertex* V);
 
-    void DFS(Vertex* V);
-
-    void printSCCs(); //Muss weg... Später!
+    /*!
+    * \brief Main method of this class. Will call all the other functions to find Strongly Connected Components in a Graph g.
+    * \param Bla
+    */
+    void printSCCs();
 
     /*!
     * \brief Is Used for Debugging, has to be removed...

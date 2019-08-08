@@ -697,10 +697,6 @@ bool Tests::moduloSDCTestFiege() {
 
     SCC.DebugPrint();
 
-    SCC.getNeighbors();
-
-    SCC.DebugPrint();
-
     return false;
   }
 

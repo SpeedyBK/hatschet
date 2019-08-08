@@ -61,15 +61,7 @@ namespace HatScheT {
   }
 
 
-  void KosarajuSCC::getNeighbors(){
-    for (auto v:g->Vertices()) {
-      if (!visited[v]) {
-        DFS(v);
-      }
-    }
-  }
-
-  void KosarajuSCC::DFS(Vertex *V) {
+  void KosarajuSCC::FillStack(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;
     cout << endl << V->getName() << " Visited." << endl;
@@ -87,7 +79,7 @@ namespace HatScheT {
           cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
         }else {
           cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
-          DFS(&e->getVertexDst());
+          FillStack(&e->getVertexDst());
         }
       }
     }
@@ -100,6 +92,17 @@ namespace HatScheT {
     //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
+    }
+
+    //Calling Debug Output
+    DebugPrint();
+
+    //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
+    //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
+    for (auto v:g->Vertices()) {
+      if (!visited[v]) {
+        FillStack(v);
+      }
     }
   }
 }
