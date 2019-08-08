@@ -59,20 +59,30 @@ namespace HatScheT {
 
   void KosarajuSCC::Zeugs(){
     for (auto v:g->Vertices()) {
-      DFS(v);
+      if (!visited[v]) {
+        DFS(v);
+      }
     }
   }
 
   void KosarajuSCC::DFS(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;
-
-
+    cout << endl << V->getName() << " Visited." << endl;
 
     //Performing Deep First Search;
 
+    for (auto e:this->g->Edges()){
+      if (&e->getVertexSrc() == V){
+        cout << "Edge from " << e->getVertexSrcName() << " to " << e->getVertexDstName() << endl;
+        if (!visited[&e->getVertexDst()]) {
+          DFS(&e->getVertexDst());
+        }else{
+          cout << "Done with " << e->getVertexSrcName() << endl;
+        }
+      }
+    }
   }
-
 }
 
 /*  void KosarajuSCC::DFSUtil(int v, bool visited[]){

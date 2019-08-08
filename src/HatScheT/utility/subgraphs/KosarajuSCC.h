@@ -73,6 +73,7 @@ namespace HatScheT {
     int NumOfVerticies;
     std::map <Vertex*, bool> visited;
     std::map <Vertex*, bool> :: iterator it;
+    stack <Vertex*> s;
 
   };
 
