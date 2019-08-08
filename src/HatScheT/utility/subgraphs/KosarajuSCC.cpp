@@ -25,22 +25,14 @@ namespace HatScheT {
 
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
 
-    // Debug:
-    cout << "KosarajuSCC Object built." << endl;
-
     this->g = &g;
 
-    //Probaly Useless:
-    NumOfVerticies = g.getNumberOfVertices();
-
-    //Generating a Map and mark all Verticies as unvisited.
-    for (auto v:this->g->Vertices()) {
-      visited.insert(std::make_pair(v, false));
-    }
   }
 
   void KosarajuSCC::DebugPrint() {
-    cout << "Graph G has " << NumOfVerticies << " Vertecies" << endl;
+    static bool Bums = false;
+
+    cout << "Graph G has " << g->getNumberOfVertices() << " Vertecies" << endl;
 
     cout << '\t' << "Vertex:" << '\t' << "Visited:" << endl;
     for (it = visited.begin(); it != visited.end(); ++it) {
@@ -54,10 +46,22 @@ namespace HatScheT {
     for (auto e:this->g->Edges()){
       cout << '\t' << e->getId() << '\t' << e->getVertexSrcName() << '\t' << e->getVertexDstName() << endl;
     }
+    cout << endl;
+
+    if (Bums) {
+      cout << "Stack contains:" << endl;
+      while (!Stack.empty()) {
+        cout << Stack.top()->getId() << " ";
+        Stack.pop();
+      }
+      cout << endl;
+    }
+
+    Bums = true;
   }
 
 
-  void KosarajuSCC::Zeugs(){
+  void KosarajuSCC::getNeighbors(){
     for (auto v:g->Vertices()) {
       if (!visited[v]) {
         DFS(v);
@@ -70,96 +74,33 @@ namespace HatScheT {
     visited[V] = true;
     cout << endl << V->getName() << " Visited." << endl;
 
-    //Performing Deep First Search;
-
+    //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
+    //already visited.
+    cout << V->getName() << " has the following neighbors:";
     for (auto e:this->g->Edges()){
       if (&e->getVertexSrc() == V){
-        cout << "Edge from " << e->getVertexSrcName() << " to " << e->getVertexDstName() << endl;
-        if (!visited[&e->getVertexDst()]) {
+        cout << " " << e->getVertexDst().getName() << endl;
+
+        //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
+        //perform a DFS on this destination-vertex.
+        if(visited[&e->getVertexDst()]){
+          cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
+        }else {
+          cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
           DFS(&e->getVertexDst());
-        }else{
-          cout << "Done with " << e->getVertexSrcName() << endl;
         }
       }
+    }
+    //Filling the Stack with the finished vertecies.
+    cout << endl << "DFS on " << V->getName() << " is done !!" << endl;
+    Stack.push(V);
+  }
+
+  void KosarajuSCC::printSCCs (){
+    //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
+    for (auto v:this->g->Vertices()) {
+      visited.insert(std::make_pair(v, false));
     }
   }
 }
 
-/*  void KosarajuSCC::DFSUtil(int v, bool visited[]){
-    // Mark the current node as visited and print it
-    visited[v] = true;
-    std::cout << v << " ";
-
-    // Recur for all the vertices adjacent to this vertex
-    std::list <int>::iterator i;
-    for (i = adj[v].begin(); i != adj[v].end(); ++i)
-      if (!visited[*i])
-        DFSUtil(*i, visited);
-  }
-
-  KosarajuSCC KosarajuSCC::getTranspose(){
-    KosarajuSCC g(Verticies);
-    for (int v = 0; v < Verticies; v++)
-    {
-      // Recur for all the vertices adjacent to this vertex
-      std::list<int>::iterator i;
-      for(i = adj[v].begin(); i != adj[v].end(); ++i)
-      {
-        g.adj[*i].push_back(v);
-      }
-    }
-    return g;
-  }
-
-  void KosarajuSCC::fillOrder(int v, bool visited[], std::stack<int> &Stack){
-    // Mark the current node as visited and print it
-    visited[v] = true;
-
-    // Recur for all the vertices adjacent to this vertex
-    std::list<int>::iterator i;
-    for(i = adj[v].begin(); i != adj[v].end(); ++i)
-      if(!visited[*i])
-        fillOrder(*i, visited, Stack);
-
-    // All vertices reachable from v are processed by now, push v
-    Stack.push(v);
-  }
-
-// The main function that finds and prints all strongly connected
-// components
-  void KosarajuSCC::printSCCs(){
-    std::stack<int> Stack;
-
-    // Mark all the vertices as not visited (For first DFS)
-    bool *visited = new bool[Verticies];
-    for(int i = 0; i < Verticies; i++)
-      visited[i] = false;
-
-    // Fill vertices in stack according to their finishing times
-    for(int i = 0; i < Verticies; i++)
-      if(visited[i] == false)
-        fillOrder(i, visited, Stack);
-
-    // Create a reversed graph
-    KosarajuSCC gr = getTranspose();
-
-    // Mark all the vertices as not visited (For second DFS)
-    for(int i = 0; i < Verticies; i++)
-      visited[i] = false;
-
-    // Now process all vertices in order defined by Stack
-    while (Stack.empty() == false)
-    {
-      // Pop a vertex from stack
-      int v = Stack.top();
-      Stack.pop();
-
-      // Print Strongly connected component of the popped vertex
-      if (visited[v] == false)
-      {
-        gr.DFSUtil(v, visited);
-        std::cout << std::endl;
-      }
-    }
-  }
-}*/

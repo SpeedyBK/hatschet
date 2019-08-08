@@ -50,17 +50,11 @@ namespace HatScheT {
     * \brief This Method performs a Deep First Search on the Vertex V
     * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
     */
-    void Zeugs();
+    void getNeighbors();
 
     void DFS(Vertex* V);
 
-    //void DFSUtil(int v, bool visited[]);
-
-    //KosarajuSCC getTranspose();
-
-    //void fillOrder(int v, bool visited[], std::stack<int> &Stack);
-
-    void printSCCs(){}; //Muss weg... Später!
+    void printSCCs(); //Muss weg... Später!
 
     /*!
     * \brief Is Used for Debugging, has to be removed...
@@ -70,10 +64,13 @@ namespace HatScheT {
 
   private:
     Graph* g;
-    int NumOfVerticies;
+
     std::map <Vertex*, bool> visited;
     std::map <Vertex*, bool> :: iterator it;
-    stack <Vertex*> s;
+
+    std::vector <Vertex*> Neighborgs;
+
+    stack <Vertex*> Stack;
 
   };
 

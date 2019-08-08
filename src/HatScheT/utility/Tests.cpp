@@ -693,9 +693,13 @@ bool Tests::moduloSDCTestFiege() {
 
     KosarajuSCC SCC(KosaGr);
 
+    SCC.printSCCs();
+
     SCC.DebugPrint();
 
-    SCC.Zeugs();
+    SCC.getNeighbors();
+
+    SCC.DebugPrint();
 
     return false;
   }
