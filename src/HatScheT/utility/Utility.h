@@ -335,7 +335,7 @@ public:
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
 
-  static void TransposeGraph(Graph* g);
+  static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
 
   private:
 

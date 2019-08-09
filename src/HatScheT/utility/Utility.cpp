@@ -1137,18 +1137,25 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
   return binding;
 }
 
-  void Utility::TransposeGraph(Graph *g) {
+  std::pair<Graph*, map<Vertex*, Vertex*> >  Utility::transposeGraph(Graph *g) {
 
-    Graph H;
+    auto *h = new Graph();
+    std::map<Vertex*,Vertex*> m;
 
+    //Copy all verticies from graph g to graph h. And creating a map with the corresponding verticies.
+    //(gVertex : hVertex).
     for (auto V:g->Vertices()){
-      H.createVertex(V->getId());
+      m[V] = &h->createVertex(V->getId());
     }
+
+    //Creating the edge
 
     for (auto E:g->Edges()){
-      H.createEdge(E->getVertexDst(), E->getVertexSrc(), E->getDistance(), E->getDependencyType());
+      h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
     }
 
+
+    return make_pair(h,m);
   }
 
 #endif

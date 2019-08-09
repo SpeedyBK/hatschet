@@ -52,6 +52,7 @@ namespace HatScheT {
     */
     void FillStack(Vertex* V);
 
+    void DFS(Vertex* V);
     /*!
     * \brief Main method of this class. Will call all the other functions to find Strongly Connected Components in a Graph g.
     * \param Bla
@@ -62,10 +63,12 @@ namespace HatScheT {
     * \brief Is Used for Debugging, has to be removed...
     * \return nothing
     */
-    void DebugPrint();
+    void DebugPrint(bool Bums);
 
   private:
+
     Graph* g;
+    Graph* gT;
 
     std::map <Vertex*, bool> visited;
     std::map <Vertex*, bool> :: iterator it;

@@ -20,6 +20,7 @@
 */
 
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
@@ -29,8 +30,8 @@ namespace HatScheT {
 
   }
 
-  void KosarajuSCC::DebugPrint() {
-    static bool Bums = false;
+  void KosarajuSCC::DebugPrint(bool Bums) {
+
 
     cout << "Graph G has " << g->getNumberOfVertices() << " Vertecies" << endl;
 
@@ -64,11 +65,11 @@ namespace HatScheT {
   void KosarajuSCC::FillStack(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;
-    cout << endl << V->getName() << " Visited." << endl;
+    //cout << endl << V->getName() << " Visited." << endl;
 
     //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
     //already visited.
-    cout << V->getName() << " has the following neighbors:";
+    //cout << V->getName() << " has the following neighbors:";
     for (auto e:this->g->Edges()){
       if (&e->getVertexSrc() == V){
         cout << " " << e->getVertexDst().getName() << endl;
@@ -76,9 +77,9 @@ namespace HatScheT {
         //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
         //perform a DFS on this destination-vertex.
         if(visited[&e->getVertexDst()]){
-          cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
+          //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
         }else {
-          cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
+          //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
           FillStack(&e->getVertexDst());
         }
       }
@@ -88,6 +89,33 @@ namespace HatScheT {
     Stack.push(V);
   }
 
+
+  void KosarajuSCC::DFS(Vertex *V) {
+
+    cout << "Bums" << endl;
+    //Mark vertex as visited:
+    visited[V] = true;
+    cout << endl << V->getName() << " Visited." << endl;
+
+    //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
+    //already visited.
+    //cout << V->getName() << " has the following neighbors:";
+    for (auto e:this->g->Edges()) {
+      if (&e->getVertexSrc() == V) {
+        cout << " " << e->getVertexDst().getName() << endl;
+
+        //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
+        //perform a DFS on this destination-vertex.
+        if (visited[&e->getVertexDst()]) {
+          //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
+        } else {
+          //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
+          this->DFS(&e->getVertexDst());
+        }
+      }
+    }
+  }
+
   void KosarajuSCC::printSCCs (){
     //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
     for (auto v:this->g->Vertices()) {
@@ -95,15 +123,41 @@ namespace HatScheT {
     }
 
     //Calling Debug Output
-    DebugPrint();
+
+    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    DebugPrint(false);
 
     //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
     //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
-    for (auto v:g->Vertices()) {
+    for (auto v:this->g->Vertices()) {
       if (!visited[v]) {
         FillStack(v);
       }
     }
+
+    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    DebugPrint(false);
+
+    //Getting the transposed graph of g.
+    auto GraphMap = Utility::transposeGraph(g);
+    gT = GraphMap.first;
+
+    //Marking all verticies of the transposed graph as unvisited
+    visited.clear();
+    for (auto v:this->gT->Vertices()){
+      visited.insert(std::make_pair(v, false));
+    }
+    DebugPrint(false);
+
+    while (!Stack.empty()) {
+      auto V = Stack.top();
+      if (!visited[V]){
+        this->DFS(Stack.top());
+      }
+      Stack.pop();
+    }
+    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    DebugPrint(true);
   }
 }
 
