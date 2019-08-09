@@ -63,19 +63,20 @@ namespace HatScheT {
     * \brief Is Used for Debugging, has to be removed...
     * \return nothing
     */
-    void DebugPrint(bool Bums);
+    void DebugPrint(bool Bums, Graph* gr);
 
   private:
 
     Graph* g;
     Graph* gT;
 
-    std::map <Vertex*, bool> visited;
-    std::map <Vertex*, bool> :: iterator it;
-
-    std::vector <Vertex*> Neighborgs;
+    map <Vertex*, bool> visited;
+    map <Vertex*, bool> :: iterator it;
 
     stack <Vertex*> Stack;
+
+    vector <Vertex*> scc;
+    vector <vector<Vertex*>> sccs;
 
   };
 
