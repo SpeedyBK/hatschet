@@ -168,6 +168,9 @@ namespace HatScheT {
 
     //Basic output for debugging.. Will be removed:
     //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+  }
+
+  void KosarajuSCC::printSSC() {
     int i = 0;
     for (auto stronglyConectedComponent:sccs){
       i++;

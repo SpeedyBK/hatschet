@@ -701,6 +701,8 @@ bool Tests::moduloSDCTestFiege() {
 
     KosarajuSCC SCC(KosaGr);
 
+    SCC.printSSC();
+
     return false;
   }
 

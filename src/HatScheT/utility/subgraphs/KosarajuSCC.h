@@ -68,6 +68,11 @@ namespace HatScheT {
     void getSCCs();
 
     /*!
+    * \brief Printfunction, which prints out the names of verticies for each SSC.
+    */
+    void printSSC();
+
+    /*!
     * \brief Is used for debugging, has to be removed...
     */
     void DebugPrint(bool Bums, Graph* gr);
