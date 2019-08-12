@@ -1148,8 +1148,7 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
       m[V] = &h->createVertex(V->getId());
     }
 
-    //Creating the edge
-
+    //Creating the edges
     for (auto E:g->Edges()){
       h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
     }

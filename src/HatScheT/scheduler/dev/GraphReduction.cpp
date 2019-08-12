@@ -27,7 +27,7 @@ namespace HatScheT {
 
     //ToDo implement all the stuff!
     KosarajuSCC kscc(this->g);
-    kscc.printSCCs();
+    kscc.getSCCs();
 
     cout << "GraphReduction::schedule: finished" << endl;
 

@@ -396,9 +396,9 @@ int main(int argc, char *args[]) {
     }
 
     if(printSCC) {
-      cout << "printing strongly connected components of the graph: " << endl;
+      cout << "Printing strongly connected components of the graph: " << endl;
       HatScheT::KosarajuSCC scc(g);
-      scc.printSCCs();
+      scc.getSCCs();
     }
 
     if(writeResourceModelFile != "") {

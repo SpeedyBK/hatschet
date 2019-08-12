@@ -47,28 +47,35 @@ namespace HatScheT {
     explicit KosarajuSCC(Graph& g);
 
     /*!
-    * \brief This Method performs a Deep First Search on the Vertex V.
-    * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
+    * \brief This method performs a recursive deep first seach on the verticies of graph g and fills a stack with the
+    * with the verticies for with the deep first search is finished in reversed order of the finish times.
+    * \param Parameter V is a vertex-pointer which points to the vertex where the DFS starts.
     */
-    void FillStack(Vertex* V);
-
-    void DFS(Vertex* V);
-    /*!
-    * \brief Main method of this class. Will call all the other functions to find Strongly Connected Components in a Graph g.
-    * \param Bla
-    */
-    void printSCCs();
+    void fillStack(Vertex* V);
 
     /*!
-    * \brief Is Used for Debugging, has to be removed...
-    * \return nothing
+    * \brief The dfs function performes a DFS on vertex V. The Function is almost similar to the fillStack function. But
+    * this time, we do not fill a stack with the verticies.
+    * \param Parameter V is a vertex-pointer which points to the vertex where the DFS starts.
+    */
+    void dfs(Vertex* V);
+
+    /*!
+    * \brief GetSCCs() is the main function of this class. It finds stongly connected component of graph g. At this
+    * moment it will store the verticies which are stronly connected in a vector called scc. The vector scc itself is
+    * will be a component of the vector sccs which contains all the strongly connected components of graph g.
+    */
+    void getSCCs();
+
+    /*!
+    * \brief Is used for debugging, has to be removed...
     */
     void DebugPrint(bool Bums, Graph* gr);
 
   private:
 
     Graph* g;
-    Graph* gT;
+    Graph* gT; //Transposed Graph
 
     map <Vertex*, bool> visited;
     map <Vertex*, bool> :: iterator it;

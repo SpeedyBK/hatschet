@@ -29,6 +29,8 @@ namespace HatScheT {
     this->g = &g;
     this->gT = nullptr;
 
+    getSCCs();
+
   }
 
   void KosarajuSCC::DebugPrint(bool Bums, Graph* gr) {
@@ -57,12 +59,12 @@ namespace HatScheT {
         cout << StackCopy.top()->getId() << " ";
         StackCopy.pop();
       }
-      cout << endl;
+      cout << endl << endl;
     }
   }
 
 
-  void KosarajuSCC::FillStack(Vertex *V) {
+  void KosarajuSCC::fillStack(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;
     //cout << endl << V->getName() << " Visited." << endl;
@@ -80,17 +82,17 @@ namespace HatScheT {
           //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
         }else {
           //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
-          FillStack(&e->getVertexDst());
+          fillStack(&e->getVertexDst());
         }
       }
     }
     //Filling the Stack with the finished vertecies.
-    cout << endl << "DFS on " << V->getName() << " is done !!" << endl;
+    cout << endl << "DFS on " << V->getName() << " is done !!";
     Stack.push(V);
   }
 
 
-  void KosarajuSCC::DFS(Vertex *V) {
+  void KosarajuSCC::dfs(Vertex *V) {
 
     //Mark vertex as visited:
     visited[V] = true;
@@ -108,7 +110,7 @@ namespace HatScheT {
           //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
         } else {
           //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
-          this->DFS(&e->getVertexDst());
+          this->dfs(&e->getVertexDst());
         }
       }
     }
@@ -116,7 +118,7 @@ namespace HatScheT {
     scc.push_back(V);
   }
 
-  void KosarajuSCC::printSCCs (){
+  void KosarajuSCC::getSCCs (){
     //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
@@ -124,19 +126,19 @@ namespace HatScheT {
 
     //Calling Debug Output
 
-    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    DebugPrint(false, g);
+    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    //DebugPrint(false, g);
 
     //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
     //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
     for (auto v:this->g->Vertices()) {
       if (!visited[v]) {
-        FillStack(v);
+        fillStack(v);
       }
     }
 
     cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    DebugPrint(true, g);
+    //DebugPrint(true, g);
 
     //Getting the transposed graph of g. And a map, which maps the verticies of g to the verticies of gT.
     auto GraphMap = Utility::transposeGraph(g);
@@ -150,14 +152,14 @@ namespace HatScheT {
       visited.insert(std::make_pair(v, false));
     }
 
-    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    DebugPrint(true, this -> gT);
+    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    //DebugPrint(true, this -> gT);
 
     //Doing a DFS in the transposed graph. The order of the verticies, where the DFS starts is determinated by
     //the order of the verticies in the Stack.
     while (!Stack.empty()){
       if (!visited[VertexMap[Stack.top()]]) {
-        DFS(VertexMap[Stack.top()]);
+        dfs(VertexMap[Stack.top()]);
         sccs.push_back(scc);
         scc.clear();
       }
@@ -165,13 +167,13 @@ namespace HatScheT {
     }
 
     //Basic output for debugging.. Will be removed:
-    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
     int i = 0;
-    for (auto element:sccs){
+    for (auto stronglyConectedComponent:sccs){
       i++;
       cout << endl << "SCC " << i << ": ";
-      for (auto something:element){
-        cout << something->getName() << "  ";
+      for (auto Vertex:stronglyConectedComponent){
+        cout << Vertex->getName() << "  ";
       }
       cout << endl;
     }
