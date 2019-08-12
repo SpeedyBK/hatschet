@@ -703,6 +703,8 @@ bool Tests::moduloSDCTestFiege() {
 
     SCC.printSSC();
 
+    cout << SCC.getOriginalVertex(nullptr)->getName() << endl;
+
     return false;
   }
 

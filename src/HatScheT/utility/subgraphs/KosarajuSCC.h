@@ -47,6 +47,11 @@ namespace HatScheT {
     explicit KosarajuSCC(Graph& g);
 
     /*!
+    * \brief Printfunction, which prints out the names of verticies for each SSC.
+    */
+    void printSSC();
+
+    /*!
     * \brief This method performs a recursive deep first seach on the verticies of graph g and fills a stack with the
     * with the verticies for with the deep first search is finished in reversed order of the finish times.
     * \param Parameter V is a vertex-pointer which points to the vertex where the DFS starts.
@@ -67,20 +72,20 @@ namespace HatScheT {
     */
     void getSCCs();
 
-    /*!
-    * \brief Printfunction, which prints out the names of verticies for each SSC.
-    */
-    void printSSC();
+    Vertex* getOriginalVertex(Vertex* V);
 
     /*!
     * \brief Is used for debugging, has to be removed...
     */
-    void DebugPrint(bool Bums, Graph* gr);
+    //void DebugPrint(bool Bums, Graph* gr);
 
   private:
 
     Graph* g;
     Graph* gT; //Transposed Graph
+
+    map <Vertex*, Vertex*> VertexMap;
+    map <Vertex*, Vertex*> :: iterator itr;
 
     map <Vertex*, bool> visited;
     map <Vertex*, bool> :: iterator it;

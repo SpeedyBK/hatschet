@@ -33,7 +33,7 @@ namespace HatScheT {
 
   }
 
-  void KosarajuSCC::DebugPrint(bool Bums, Graph* gr) {
+/*  void KosarajuSCC::DebugPrint(bool Bums, Graph* gr) {
 
 
     cout << "Graph has " << gr->getNumberOfVertices() << " Vertecies" << endl;
@@ -61,7 +61,7 @@ namespace HatScheT {
       }
       cout << endl << endl;
     }
-  }
+  }*/
 
 
   void KosarajuSCC::fillStack(Vertex *V) {
@@ -141,9 +141,9 @@ namespace HatScheT {
     //DebugPrint(true, g);
 
     //Getting the transposed graph of g. And a map, which maps the verticies of g to the verticies of gT.
-    auto GraphMap = Utility::transposeGraph(g);
-    this -> gT = GraphMap.first;
-    auto VertexMap = GraphMap.second;
+    auto graphMap = Utility::transposeGraph(g);
+    this -> gT = graphMap.first;
+    this -> VertexMap = graphMap.second;
 
 
     //Marking all verticies of the transposed graph as unvisited
@@ -181,5 +181,18 @@ namespace HatScheT {
       cout << endl;
     }
   }
+
+  Vertex *KosarajuSCC::getOriginalVertex(Vertex *V) {
+
+    for (itr = VertexMap.begin(); itr != VertexMap.end(); ++itr){
+      if (itr->second == V){
+        return itr->first;
+      }
+    }
+    cout << "Vertex not in map..." << endl;
+    return nullptr;
+  }
+
+
 }
 
