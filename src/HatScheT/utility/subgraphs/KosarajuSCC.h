@@ -70,14 +70,14 @@ namespace HatScheT {
     * moment it will store the verticies which are stronly connected in a vector called scc. The vector scc itself is
     * will be a component of the vector sccs which contains all the strongly connected components of graph g.
     */
-    void getSCCs();
+    vector <vector<Vertex*>> getSCCs();
 
     Vertex* getOriginalVertex(Vertex* V);
 
     /*!
     * \brief Is used for debugging, has to be removed...
     */
-    //void DebugPrint(bool Bums, Graph* gr);
+    //void DebugPrint(bool energydrink, Graph* gr);
 
   private:
 

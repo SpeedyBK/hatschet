@@ -29,11 +29,9 @@ namespace HatScheT {
     this->g = &g;
     this->gT = nullptr;
 
-    getSCCs();
-
   }
 
-/*  void KosarajuSCC::DebugPrint(bool Bums, Graph* gr) {
+/*  void KosarajuSCC::DebugPrint(bool energydrink, Graph* gr) {
 
 
     cout << "Graph has " << gr->getNumberOfVertices() << " Vertecies" << endl;
@@ -53,7 +51,7 @@ namespace HatScheT {
     cout << endl;
 
     auto StackCopy = this -> Stack;
-    if (Bums) {
+    if (energydrink) {
       cout << "Stack contains:" << endl;
       while (!StackCopy.empty()) {
         cout << StackCopy.top()->getId() << " ";
@@ -115,10 +113,10 @@ namespace HatScheT {
       }
     }
     cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
-    scc.push_back(V);
+    scc.push_back(getOriginalVertex(V));
   }
 
-  void KosarajuSCC::getSCCs (){
+  vector <vector<Vertex*>> KosarajuSCC::getSCCs (){
     //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
@@ -166,6 +164,8 @@ namespace HatScheT {
       Stack.pop();
     }
 
+    return sccs;
+
     //Basic output for debugging.. Will be removed:
     //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
   }
@@ -189,10 +189,7 @@ namespace HatScheT {
         return itr->first;
       }
     }
-    cout << "Vertex not in map..." << endl;
-    return nullptr;
+    throw HatScheT::Exception("A vertex of the transposed graph does not exist in the original graph.");
   }
-
-
 }
 

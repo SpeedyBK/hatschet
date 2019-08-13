@@ -18,18 +18,82 @@ namespace HatScheT {
     computeMinII(&g, &resourceModel);
     minII = ceil(minII);
     computeMaxII(&g, &resourceModel);
-
   }
 
 
   void GraphReduction::schedule() {
-    cout << "GraphReduction::schedule: start" << endl;
+    cout << endl << "GraphReduction::schedule: start" << endl;
 
-    //ToDo implement all the stuff!
+    //ToDo implement all the stuff! .. WIP
+
+    // Gets the SCCs of graph g.
     KosarajuSCC kscc(this->g);
-    kscc.getSCCs();
+    this -> sccs = kscc.getSCCs();
 
-    cout << "GraphReduction::schedule: finished" << endl;
+    //To check wether we have a complex or a basic SCC, we have to iterrate through the SCC vectors, and lookup
+    //the resources for each vertex. If all verticies in a SCC have unlimited ressources, the SCC will be a basic
+    //component else the component is a complex component.
+    sortSCCs();
+
+
+    //Debug Output:
+    cout << "Complex:" << endl;
+
+    int i = 0;
+    for (auto strongly:complexSCCs){
+      cout << "SCC " << i << ": ";
+      for (auto V: strongly){
+        cout << V->getName() << " ";
+      }
+      cout << endl;
+      i++;
+    }
+
+    cout << endl << "Basic:" << endl;
+
+    i = 0;
+    for (auto strongly:basicSCCs){
+      cout << "SSC " << i << ": ";
+      for (auto V: strongly){
+        cout << V->getName() << " ";
+      }
+      cout << endl;
+      i++;
+    }
+
+    //ToDo: Check if basic SCCs are connected. If they are not, then put them in a basic-supergraph.
+
+    //ToDo: Do the same for complex SCCs.
+
+    //ToDo: Get a sheduling for each supergraph.
+
+    //ToDo: Get a general scheduling for the complete graph.
+
+    cout << endl << "GraphReduction::schedule: finished" << endl;
 
   }
+
+  void GraphReduction::sortSCCs() {
+
+    bool complex = false;
+
+    for (auto stronglyConnectedComponent:sccs){
+      for (auto V: stronglyConnectedComponent){
+        if (resourceModel.getResource(V)->getLimit() != -1){
+          complex = true;
+          break;
+        }else{
+          complex = false;
+        }
+      }
+      if (complex){
+        complexSCCs.push_back(stronglyConnectedComponent);
+      } else {
+        basicSCCs.push_back(stronglyConnectedComponent);
+      }
+    }
+  }
+
+
 }
+

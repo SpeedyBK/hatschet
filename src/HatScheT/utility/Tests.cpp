@@ -37,6 +37,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/scheduler/dev/GraphReduction.h"
 
 #include <stdio.h>
 
@@ -652,7 +653,8 @@ bool Tests::moduloSDCTestFiege() {
     string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
     string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
 
-    auto &add = rm.makeResource("add", -1, 0, 1);
+    auto &add = rm.makeResource("add", -1, 1, 1);
+    auto &mult = rm.makeResource("mult", 1, 1, 1);
 
     //Hardcoding the examplegraph from https://www.geeksforgeeks.org/strongly-connected-components/
 
@@ -670,15 +672,15 @@ bool Tests::moduloSDCTestFiege() {
     KosaGr.createEdge(B, C ,0);
     KosaGr.createEdge(C, D ,0);
     KosaGr.createEdge(C, E ,0);
-    KosaGr.createEdge(D, A ,0);
+    KosaGr.createEdge(D, A ,1);
     KosaGr.createEdge(E, F ,0);
     KosaGr.createEdge(F, G ,0);
-    KosaGr.createEdge(G, E ,0);
+    KosaGr.createEdge(G, E ,1);
     KosaGr.createEdge(H, G ,0);
     KosaGr.createEdge(H, I ,0);
 
     rm.registerVertex(&A, &add);
-    rm.registerVertex(&B, &add);
+    rm.registerVertex(&B, &mult);
     rm.registerVertex(&C, &add);
     rm.registerVertex(&D, &add);
     rm.registerVertex(&E, &add);
@@ -701,9 +703,13 @@ bool Tests::moduloSDCTestFiege() {
 
     KosarajuSCC SCC(KosaGr);
 
+    auto Zeugs = SCC.getSCCs();
+
     SCC.printSSC();
 
-    cout << SCC.getOriginalVertex(nullptr)->getName() << endl;
+    GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
+
+    GraRed.schedule();
 
     return false;
   }

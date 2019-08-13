@@ -33,7 +33,20 @@ namespace HatScheT {
     virtual void setObjective() {/* unused */}
     virtual void resetContainer(){/* unused */}
     virtual void constructProblem() {/* unused */}
+
+    /*!
+     * \brief sortSCC() iterates through the vector of SCCS, an checks if an SCC is basic or complex. If a SCC is complex,
+     * it will be pushed on the complexSCC vector, else it will be pushed on the basicSCC vector.
+     */
+    void sortSCCs();
+
   private:
+
+    vector <vector<Vertex*>> sccs;
+
+    vector <vector<Vertex*>> basicSCCs;
+    vector <vector<Vertex*>> complexSCCs;
+
 
   };
 
