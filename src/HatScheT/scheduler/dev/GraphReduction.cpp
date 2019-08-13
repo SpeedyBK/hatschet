@@ -27,17 +27,22 @@ namespace HatScheT {
     //ToDo implement all the stuff! .. WIP
 
     // Gets the SCCs of graph g.
+    cout << endl << "Starting Kosajaru's SCC Algorithm..." << endl;
     KosarajuSCC kscc(this->g);
     this -> sccs = kscc.getSCCs();
+    cout << endl << "Finished Kosajaru's SCC Algorithm." << endl;
+
 
     //To check wether we have a complex or a basic SCC, we have to iterrate through the SCC vectors, and lookup
     //the resources for each vertex. If all verticies in a SCC have unlimited ressources, the SCC will be a basic
     //component else the component is a complex component.
+    cout << endl << "Sorting strongly connected components..." << endl;
     sortSCCs();
+    cout << "Sorting done." << endl;
 
 
     //Debug Output:
-    cout << "Complex:" << endl;
+    cout << endl << "Complex:" << endl;
 
     int i = 0;
     for (auto strongly:complexSCCs){
@@ -53,6 +58,18 @@ namespace HatScheT {
 
     i = 0;
     for (auto strongly:basicSCCs){
+      cout << "SSC " << i << ": ";
+      for (auto V: strongly){
+        cout << V->getName() << " ";
+      }
+      cout << endl;
+      i++;
+    }
+
+    cout << endl << "Trivial:" << endl;
+
+    i = 0;
+    for (auto strongly:trivialSCCs){
       cout << "SSC " << i << ": ";
       for (auto V: strongly){
         cout << V->getName() << " ";
@@ -77,21 +94,37 @@ namespace HatScheT {
 
     bool complex = false;
 
-    for (auto stronglyConnectedComponent:sccs){
-      for (auto V: stronglyConnectedComponent){
-        if (resourceModel.getResource(V)->getLimit() != -1){
-          complex = true;
-          break;
-        }else{
-          complex = false;
+    for (auto stronglyConnectedComponent:sccs) {
+      if (stronglyConnectedComponent.size() > 1) {
+        for (auto V: stronglyConnectedComponent) {
+          if (resourceModel.getResource(V)->getLimit() != -1) {
+            complex = true;
+            break;
+          } else {
+            complex = false;
+          }
         }
-      }
-      if (complex){
-        complexSCCs.push_back(stronglyConnectedComponent);
-      } else {
-        basicSCCs.push_back(stronglyConnectedComponent);
+        if (complex) {
+          complexSCCs.push_back(stronglyConnectedComponent);
+        } else {
+          basicSCCs.push_back(stronglyConnectedComponent);
+        }
+      }else {
+        trivialSCCs.push_back(stronglyConnectedComponent);
       }
     }
+  }
+
+  Graph *GraphReduction::generateGraph(vector<Vertex *> SCC) {
+
+    cout << endl << "Generating Graph from SCC" << endl;
+    auto *h = new Graph();
+
+    for (auto V:SCC) {
+      &h->createVertex(V->getId());
+    }
+
+    return h;
   }
 
 

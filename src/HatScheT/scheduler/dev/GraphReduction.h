@@ -40,12 +40,18 @@ namespace HatScheT {
      */
     void sortSCCs();
 
+    Graph* generateGraph(vector<Vertex*> SCC);
+
   private:
 
     vector <vector<Vertex*>> sccs;
 
     vector <vector<Vertex*>> basicSCCs;
     vector <vector<Vertex*>> complexSCCs;
+    vector <vector<Vertex*>> trivialSCCs;
+
+    vector <Graph*> complexSubGraph;
+    vector <Graph*> basicSubGraph;
 
 
   };

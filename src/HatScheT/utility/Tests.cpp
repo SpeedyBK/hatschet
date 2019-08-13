@@ -701,11 +701,11 @@ bool Tests::moduloSDCTestFiege() {
     HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
     DWT.write();
 
-    KosarajuSCC SCC(KosaGr);
+    //KosarajuSCC SCC(KosaGr);
 
-    auto Zeugs = SCC.getSCCs();
+    //auto Zeugs = SCC.getSCCs();
 
-    SCC.printSSC();
+    //SCC.printSSC();
 
     GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
 
