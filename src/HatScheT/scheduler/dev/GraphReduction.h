@@ -42,6 +42,10 @@ namespace HatScheT {
 
     Graph* generateGraph(vector<Vertex*> SCC);
 
+    void getConnectedComponents(vector <vector<Vertex*>> SCCs);
+
+    void mapVertexToComponent (vector <vector<Vertex*>> SCCs);
+
   private:
 
     vector <vector<Vertex*>> sccs;
@@ -49,6 +53,8 @@ namespace HatScheT {
     vector <vector<Vertex*>> basicSCCs;
     vector <vector<Vertex*>> complexSCCs;
     vector <vector<Vertex*>> trivialSCCs;
+
+    map <Vertex*, vector<Vertex*>> vertexComponentMap;
 
     vector <Graph*> complexSubGraph;
     vector <Graph*> basicSubGraph;

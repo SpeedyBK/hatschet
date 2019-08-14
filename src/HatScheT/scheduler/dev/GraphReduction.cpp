@@ -38,7 +38,7 @@ namespace HatScheT {
     //component else the component is a complex component.
     cout << endl << "Sorting strongly connected components..." << endl;
     sortSCCs();
-    cout << "Sorting done." << endl;
+    cout << endl << "Sorting done." << endl;
 
 
     //Debug Output:
@@ -78,6 +78,10 @@ namespace HatScheT {
       i++;
     }
 
+    mapVertexToComponent(basicSCCs);
+    mapVertexToComponent(complexSCCs);
+    mapVertexToComponent(trivialSCCs);
+
     //ToDo: Check if basic SCCs are connected. If they are not, then put them in a basic-supergraph.
 
     //ToDo: Do the same for complex SCCs.
@@ -97,6 +101,7 @@ namespace HatScheT {
     for (auto stronglyConnectedComponent:sccs) {
       if (stronglyConnectedComponent.size() > 1) {
         for (auto V: stronglyConnectedComponent) {
+          cout << ".";
           if (resourceModel.getResource(V)->getLimit() != -1) {
             complex = true;
             break;
@@ -109,11 +114,12 @@ namespace HatScheT {
         } else {
           basicSCCs.push_back(stronglyConnectedComponent);
         }
-      }else {
+      } else {
         trivialSCCs.push_back(stronglyConnectedComponent);
       }
     }
   }
+
 
   Graph *GraphReduction::generateGraph(vector<Vertex *> SCC) {
 
@@ -128,5 +134,28 @@ namespace HatScheT {
   }
 
 
+
+
+  void GraphReduction::getConnectedComponents(vector<vector<Vertex *>> SCCs) {
+      //ToDo: Has to be done.
+    for (auto component:SCCs){
+      cout << "Bums" << endl;
+    }
+  }
+
+  void GraphReduction::mapVertexToComponent(vector <vector<Vertex*>> SCCs) {
+
+    for (auto component: SCCs){
+      for (auto v : component){
+        vertexComponentMap[v] = component;
+      }
+    }
+
+    cout << endl;
+
+    for (auto it : vertexComponentMap){
+      cout << it.first->getName() << ": " << &it.second[0]->getName() << endl;
+    }
+  }
 }
 
