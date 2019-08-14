@@ -650,8 +650,8 @@ bool Tests::moduloSDCTestFiege() {
 
     HatScheT::Graph KosaGr;
     HatScheT::ResourceModel rm;
-    string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
-    string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
+    //string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
+    //string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
 
     auto &add = rm.makeResource("add", -1, 1, 1);
     auto &mult = rm.makeResource("mult", 1, 1, 1);
@@ -690,16 +690,16 @@ bool Tests::moduloSDCTestFiege() {
     rm.registerVertex(&I, &add);
 
     //Write the graphml-file for Debugging
-    cout << "Generating graphml file: " << graphmlpath << endl;
-    HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
-    DW.write();
+    //cout << "Generating graphml file: " << graphmlpath << endl;
+    //HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
+    //DW.write();
     //Printing the transposed Graph.
-    auto paar = HatScheT::Utility::transposeGraph(&KosaGr);
-    for (auto V:paar.first->Vertices()){
-      rm.registerVertex(V, &add);
-    }
-    HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
-    DWT.write();
+    //auto paar = HatScheT::Utility::transposeGraph(&KosaGr);
+    //for (auto V:paar.first->Vertices()){
+    //  rm.registerVertex(V, &add);
+    //}
+    //HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
+    //DWT.write();
 
     //KosarajuSCC SCC(KosaGr);
 
