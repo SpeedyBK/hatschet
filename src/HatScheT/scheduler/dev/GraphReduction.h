@@ -44,6 +44,10 @@ namespace HatScheT {
 
     void getConnectedComponents(vector <vector<Vertex*>> SCCs);
 
+
+    /*!
+    * \brief mapVertexToComponent() generates a map, which contains the informatation, to which SCC a Vertex belongs.
+    */
     void mapVertexToComponent (vector <vector<Vertex*>> SCCs);
 
   private:

@@ -82,6 +82,12 @@ namespace HatScheT {
     mapVertexToComponent(complexSCCs);
     mapVertexToComponent(trivialSCCs);
 
+    getConnectedComponents(complexSCCs);
+
+    for (auto components : basicSCCs) {
+      generateGraph(components);
+    }
+
     //ToDo: Check if basic SCCs are connected. If they are not, then put them in a basic-supergraph.
 
     //ToDo: Do the same for complex SCCs.
@@ -95,6 +101,8 @@ namespace HatScheT {
   }
 
   void GraphReduction::sortSCCs() {
+
+    //Iterates through the SCCs, and sorts them into basic, complex, or trivial, depending on the resource model.
 
     bool complex = false;
 
@@ -123,6 +131,7 @@ namespace HatScheT {
 
   Graph *GraphReduction::generateGraph(vector<Vertex *> SCC) {
 
+    //ToDo: Not done yet...
     cout << endl << "Generating Graph from SCC" << endl;
     auto *h = new Graph();
 
@@ -134,12 +143,17 @@ namespace HatScheT {
   }
 
 
-
-
   void GraphReduction::getConnectedComponents(vector<vector<Vertex *>> SCCs) {
       //ToDo: Has to be done.
+
     for (auto component:SCCs){
-      cout << "Bums" << endl;
+      for (auto V:component){
+        for (auto e:g.Edges()){
+          if (&e->getVertexSrc() == V){
+            cout << e->getVertexSrcName() << " - " << e->getVertexDstName() << endl;
+          }
+        }
+      }
     }
   }
 
