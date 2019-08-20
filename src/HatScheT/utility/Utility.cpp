@@ -30,6 +30,7 @@
 #include <ctime>
 #include <cstddef>
 #include <iomanip>
+#include <HatScheT/utility/writer/DotWriter.h>
 
 #include "HatScheT/scheduler/ASAPScheduler.h"
 
@@ -1135,5 +1136,26 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
 
   return binding;
 }
-#endif	 
+
+  std::pair<Graph*, map<Vertex*, Vertex*> >  Utility::transposeGraph(Graph *g) {
+
+    auto *h = new Graph();
+    std::map<Vertex*,Vertex*> m;
+
+    //Copy all verticies from graph g to graph h. And creating a map with the corresponding verticies.
+    //(gVertex : hVertex).
+    for (auto V:g->Vertices()){
+      m[V] = &h->createVertex(V->getId());
+    }
+
+    //Creating the edges
+    for (auto E:g->Edges()){
+      h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
+    }
+
+
+    return make_pair(h,m);
+  }
+
+#endif
 }

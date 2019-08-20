@@ -36,6 +36,7 @@
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 #include <stdio.h>
 
@@ -642,4 +643,67 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
-}}
+}
+
+  bool Tests::KosarajuTest(){
+
+    HatScheT::Graph KosaGr;
+    HatScheT::ResourceModel rm;
+    string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
+    string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
+
+    auto &add = rm.makeResource("add", -1, 0, 1);
+
+    //Hardcoding the examplegraph from https://www.geeksforgeeks.org/strongly-connected-components/
+
+    Vertex& A = KosaGr.createVertex(0);
+    Vertex& B = KosaGr.createVertex(1);
+    Vertex& C = KosaGr.createVertex(2);
+    Vertex& D = KosaGr.createVertex(3);
+    Vertex& E = KosaGr.createVertex(4);
+    Vertex& F = KosaGr.createVertex(5);
+    Vertex& G = KosaGr.createVertex(6);
+    Vertex& H = KosaGr.createVertex(7);
+    Vertex& I = KosaGr.createVertex(8);
+
+    KosaGr.createEdge(A, B ,0);
+    KosaGr.createEdge(B, C ,0);
+    KosaGr.createEdge(C, D ,0);
+    KosaGr.createEdge(C, E ,0);
+    KosaGr.createEdge(D, A ,0);
+    KosaGr.createEdge(E, F ,0);
+    KosaGr.createEdge(F, G ,0);
+    KosaGr.createEdge(G, E ,0);
+    KosaGr.createEdge(H, G ,0);
+    KosaGr.createEdge(H, I ,0);
+
+    rm.registerVertex(&A, &add);
+    rm.registerVertex(&B, &add);
+    rm.registerVertex(&C, &add);
+    rm.registerVertex(&D, &add);
+    rm.registerVertex(&E, &add);
+    rm.registerVertex(&F, &add);
+    rm.registerVertex(&G, &add);
+    rm.registerVertex(&H, &add);
+    rm.registerVertex(&I, &add);
+
+    //Write the graphml-file for Debugging
+    cout << "Generating graphml file: " << graphmlpath << endl;
+    HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
+    DW.write();
+    //Printing the transposed Graph.
+    auto paar = HatScheT::Utility::transposeGraph(&KosaGr);
+    for (auto V:paar.first->Vertices()){
+      rm.registerVertex(V, &add);
+    }
+    HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
+    DWT.write();
+
+    KosarajuSCC SCC(KosaGr);
+
+    SCC.printSSC();
+
+    return false;
+  }
+
+}

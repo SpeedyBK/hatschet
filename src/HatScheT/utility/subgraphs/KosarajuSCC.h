@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Patrick Sittel (sittel@uni-kassel.de)
+            Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
 
     Copyright (C) 2019
 
@@ -38,11 +39,57 @@ namespace HatScheT {
    */
   class KosarajuSCC {
   public:
-    KosarajuSCC(Graph& g);
-    void printSCCs();
+
+    /*!
+     * \brief Constructor for this class, it needs a graph, and is used to find the SCCs in this graph.
+     * \param Parameter g is the graph, in which we want to find Strongly Connected Components.
+     */
+    explicit KosarajuSCC(Graph& g);
+
+    /*!
+    * \brief This method performs a recursive deep first seach on the verticies of graph g and fills a stack with the
+    * with the verticies for with the deep first search is finished in reversed order of the finish times.
+    * \param Parameter V is a vertex-pointer which points to the vertex where the DFS starts.
+    */
+    void fillStack(Vertex* V);
+
+    /*!
+    * \brief The dfs function performes a DFS on vertex V. The Function is almost similar to the fillStack function. But
+    * this time, we do not fill a stack with the verticies.
+    * \param Parameter V is a vertex-pointer which points to the vertex where the DFS starts.
+    */
+    void dfs(Vertex* V);
+
+    /*!
+    * \brief GetSCCs() is the main function of this class. It finds stongly connected component of graph g. At this
+    * moment it will store the verticies which are stronly connected in a vector called scc. The vector scc itself is
+    * will be a component of the vector sccs which contains all the strongly connected components of graph g.
+    */
+    void getSCCs();
+
+    /*!
+    * \brief Printfunction, which prints out the names of verticies for each SSC.
+    */
+    void printSSC();
+
+    /*!
+    * \brief Is used for debugging, has to be removed...
+    */
+    void DebugPrint(bool Bums, Graph* gr);
 
   private:
+
     Graph* g;
+    Graph* gT; //Transposed Graph
+
+    map <Vertex*, bool> visited;
+    map <Vertex*, bool> :: iterator it;
+
+    stack <Vertex*> Stack;
+
+    vector <Vertex*> scc;
+    vector <vector<Vertex*>> sccs;
+
   };
 
 }

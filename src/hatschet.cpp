@@ -53,6 +53,7 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/GraphReduction.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
@@ -111,6 +112,7 @@ void print_short_help() {
 }
 
 int main(int argc, char *args[]) {
+
 #ifndef USE_XERCESC
   throw HatScheT::Exception("XercesC not active! Without XML-parsing, this interface is disabled! Install XeresC for using the HatScheT binary");
 #else
@@ -130,7 +132,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -258,6 +260,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "asapRationalII") {
           schedulerSelection = ASAPRATIONALII;
         }
+        else if(schedulerSelectionStr == "subgrreduction") {
+          schedulerSelection = SUGRREDUCTION;
+        }
         else {
           throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
         }
@@ -277,6 +282,7 @@ int main(int argc, char *args[]) {
         if(str=="ULScheduler" && HatScheT::Tests::ulSchedulerTest()==false) exit(-1);
         if(str=="RATMINII" && HatScheT::Tests::rationalMinIITest()==false) exit(-1);
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
+        if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
@@ -344,6 +350,9 @@ int main(int argc, char *args[]) {
       case ASAPRATIONALII:
         cout << "ASAPRATIONALII";
         break;
+      case SUGRREDUCTION:
+        cout << "SUGRREDUCTION";
+        break;
       case NONE:
         cout << "NONE";
         break;
@@ -386,10 +395,10 @@ int main(int argc, char *args[]) {
       dw.write();
     }
 
-    if(printSCC == true) {
-      cout << "printing strongly connected components of the graph: " << endl;
+    if(printSCC) {
+      cout << "Printing strongly connected components of the graph: " << endl;
       HatScheT::KosarajuSCC scc(g);
-      scc.printSCCs();
+      scc.getSCCs();
     }
 
     if(writeResourceModelFile != "") {
@@ -520,6 +529,17 @@ int main(int argc, char *args[]) {
           HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
           scheduler = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
           delete asap;
+          break;
+        }
+        case SUGRREDUCTION:
+        {
+          isModuloScheduler = true;
+          auto *subgrred = new HatScheT::GraphReduction(g, rm, solverWishList);
+          if (timeout > 0)    subgrred->setSolverTimeout(timeout);
+          if (maxLatency > 0) subgrred->setMaxLatencyConstraint(maxLatency);
+          subgrred->setThreads(threads);
+          subgrred->setSolverQuiet(solverQuiet);
+          scheduler = subgrred;
           break;
         }
 #else
