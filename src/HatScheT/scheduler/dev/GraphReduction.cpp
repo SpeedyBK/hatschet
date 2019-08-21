@@ -22,7 +22,7 @@ namespace HatScheT {
 
 
   void GraphReduction::schedule() {
-    cout << endl << "GraphReduction::schedule: start" << endl;
+   /* cout << endl << "GraphReduction::schedule: start" << endl;
 
     //ToDo implement all the stuff! .. WIP
 
@@ -98,7 +98,7 @@ namespace HatScheT {
 
     cout << endl << "GraphReduction::schedule: finished" << endl;
 
-  }
+  */}
 
   void GraphReduction::sortSCCs() {
 
@@ -144,12 +144,21 @@ namespace HatScheT {
 
 
   void GraphReduction::getConnectedComponents(vector<vector<Vertex *>> SCCs) {
-      //ToDo: Has to be done.
 
-    for (auto component:SCCs){
-      for (auto V:component){
-        for (auto e:g.Edges()){
-          if (&e->getVertexSrc() == V){
+    for (auto scc : SCCs){
+      for (auto V : scc) {
+        for (auto bums : vertexComponentMap[V]){
+          cout << bums->getName() << " - " << endl;
+        }
+      }
+    }
+
+    cout << endl;
+
+    for (auto scc : SCCs) {
+      for (auto V : scc) {
+        for (auto e : g.Edges()) {
+          if (&e->getVertexSrc() == V) {
             cout << e->getVertexSrcName() << " - " << e->getVertexDstName() << endl;
           }
         }

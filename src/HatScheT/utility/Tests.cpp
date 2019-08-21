@@ -37,6 +37,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/scheduler/dev/SCC.h"
 #include "HatScheT/scheduler/dev/GraphReduction.h"
 
 #include <stdio.h>
@@ -701,15 +702,17 @@ bool Tests::moduloSDCTestFiege() {
     //HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
     //DWT.write();
 
-    //KosarajuSCC SCC(KosaGr);
+    KosarajuSCC KosaSCC(KosaGr);
 
-    //auto Zeugs = SCC.getSCCs();
+    auto Zeugs = KosaSCC.getSCCs();
 
     //SCC.printSSC();
 
-    GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
+    //GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
 
-    GraRed.schedule();
+    //GraRed.schedule();
+
+    SCC scc;
 
     return false;
   }

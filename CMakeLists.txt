@@ -123,7 +123,7 @@ src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/scheduler/dev/GraphReduction.cpp
-)
+        src/HatScheT/scheduler/dev/SCC.cpp src/HatScheT/scheduler/dev/SCC.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
