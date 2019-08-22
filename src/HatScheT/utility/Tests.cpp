@@ -702,15 +702,15 @@ bool Tests::moduloSDCTestFiege() {
     //HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
     //DWT.write();
 
-    KosarajuSCC KosaSCC(KosaGr);
+    //KosarajuSCC KosaSCC(KosaGr);
 
-    auto Zeugs = KosaSCC.getSCCs();
+    //auto Zeugs = KosaSCC.getSCCs();
 
     //SCC.printSSC();
 
-    //GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
+    GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
 
-    //GraRed.schedule();
+    GraRed.schedule();
 
     SCC scc;
 

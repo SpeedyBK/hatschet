@@ -87,6 +87,8 @@ namespace HatScheT {
     }
     cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
     _sccs[_sccs.size()-1]->createVertex();
+    _sccs[_sccs.size()-1]->createVertexMap(getOriginalVertex(V));
+
   }
 
 
@@ -136,6 +138,7 @@ namespace HatScheT {
         cout << "Size of SCCVector is " << _sccs.size() << endl;
         cout << _sccs[_sccs.size()-1]->getName() << _sccs[_sccs.size()-1]->getId();
         cout << " Has " << _sccs[_sccs.size()-1]->getNumberOfVertices() << " Verticies" << endl;
+        _sccs[_sccs.size()-1]->printVertexMap();
         i++;
       }
 
@@ -150,9 +153,9 @@ namespace HatScheT {
 
   Vertex *KosarajuSCC::getOriginalVertex(Vertex *V) {
 
-    for (itr = VertexMap.begin(); itr != VertexMap.end(); ++itr){
-      if (itr->second == V){
-        return itr->first;
+    for (auto itr : VertexMap){
+      if (itr.second == V){
+        return itr.first;
       }
     }
     throw HatScheT::Exception("A vertex of the transposed graph does not exist in the original graph.");

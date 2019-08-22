@@ -13,6 +13,7 @@
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/scheduler/dev/SCC.h>
 #include <vector>
 
 namespace HatScheT {
@@ -34,35 +35,12 @@ namespace HatScheT {
     virtual void resetContainer(){/* unused */}
     virtual void constructProblem() {/* unused */}
 
-    /*!
-     * \brief sortSCC() iterates through the vector of SCCS, an checks if an SCC is basic or complex. If a SCC is complex,
-     * it will be pushed on the complexSCC vector, else it will be pushed on the basicSCC vector.
-     */
-    void sortSCCs();
 
-    Graph* generateGraph(vector<Vertex*> SCC);
-
-    void getConnectedComponents(vector <vector<Vertex*>> SCCs);
-
-
-    /*!
-    * \brief mapVertexToComponent() generates a map, which contains the informatation, to which SCC a Vertex belongs.
-    */
-    void mapVertexToComponent (vector <vector<Vertex*>> SCCs);
+    scctype determineType(SCC* scc);
 
   private:
 
-    vector <vector<Vertex*>> sccs;
-
-    vector <vector<Vertex*>> basicSCCs;
-    vector <vector<Vertex*>> complexSCCs;
-    vector <vector<Vertex*>> trivialSCCs;
-
-    map <Vertex*, vector<Vertex*>> vertexComponentMap;
-
-    vector <Graph*> complexSubGraph;
-    vector <Graph*> basicSubGraph;
-
+    vector <SCC*> sccs;
 
   };
 

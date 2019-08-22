@@ -20,13 +20,24 @@ namespace HatScheT {
     //Getter Functions:
     scctype getSccType();
     int getId ();
+    map <Vertex*, Vertex*> getVertexMap();
+
 
     //Setter Functions:
     void setId (int id);
+    void setSCCType(scctype sT);
+
+    void createVertexMap(Vertex* V);
+
+
+    void printVertexMap();
 
   private:
     int id;
     scctype _type;
+
+    map <Vertex*, Vertex*> vertexMap;
+
   };
 
 }

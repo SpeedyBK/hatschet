@@ -75,10 +75,6 @@ namespace HatScheT {
     */
     Vertex* getOriginalVertex(Vertex* V);
 
-    /*!
-    * \brief Is used for debugging, has to be removed...
-    */
-    //void DebugPrint(bool energydrink, Graph* gr);
 
   private:
 
@@ -86,10 +82,8 @@ namespace HatScheT {
     Graph* gT; //Transposed Graph
 
     map <Vertex*, Vertex*> VertexMap;
-    map <Vertex*, Vertex*> :: iterator itr;
 
     map <Vertex*, bool> visited;
-    map <Vertex*, bool> :: iterator it;
 
     stack <Vertex*> Stack;
 
