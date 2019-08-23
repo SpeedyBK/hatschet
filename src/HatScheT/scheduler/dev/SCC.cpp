@@ -17,7 +17,11 @@ HatScheT::scctype HatScheT::SCC::getSccType() { return _type; }
 
 int HatScheT::SCC::getId() { return this->id; }
 
+vector<int> HatScheT::SCC::getConnections() { return connections; }
+
 map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMap() { return vertexMap; }
+
+map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMapReverse() { return vertexMapReverse; }
 
 
 
@@ -28,12 +32,15 @@ void HatScheT::SCC::setId(int newid) { this->id = newid; }
 
 void HatScheT::SCC::setSCCType(scctype sT) { this -> _type = sT ;}
 
+void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); }
+
 
 
 
 void HatScheT::SCC::createVertexMap(HatScheT::Vertex *V) {
 
   this -> vertexMap.insert(std::make_pair(&getVertexById(vertices.size()), V));
+  this -> vertexMapReverse.insert(std::make_pair(V, &getVertexById(vertices.size())));
 
 }
 
@@ -51,6 +58,10 @@ void HatScheT::SCC::printVertexMap() {
 
   cout << endl;
 }
+
+
+
+
 
 
 

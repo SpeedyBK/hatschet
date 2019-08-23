@@ -40,11 +40,63 @@ namespace HatScheT {
 
     cout << endl << "Done setting Types." << endl;
 
+    cout << endl << "Creating edges in SCCs" << endl;
+
+    for (auto it:g.Edges()){
+      if (getSccIdbyVertex(&it->getVertexSrc()) == getSccIdbyVertex(&it->getVertexDst())){
+        auto vertexMapReverse = sccs[getSccIdbyVertex(&it->getVertexSrc())]->getVertexMapReverse();
+        sccs[getSccIdbyVertex(&it->getVertexSrc())]->createEdge(*vertexMapReverse[&it->getVertexSrc()], *vertexMapReverse[&it->getVertexDst()], it->getDistance(), it->getDependencyType());
+      } else{
+        sccs[getSccIdbyVertex(&it->getVertexSrc())]->setConnections(getSccIdbyVertex(&it->getVertexDst()));
+      }
+    }
+
+    cout << endl << "Done creating edges." << endl;
+
+    //Has to be removed:
+    for (auto it:sccs){
+      cout << "SCC_" << it->getId() << endl;
+      cout << "Has " << it->getNumberOfEdges() << " Edges" << endl;
+      for (auto e:it->Edges()){
+        cout << e->getVertexSrcName() << " - " << e->getVertexDstName() << endl;
+      }
+      cout << "SCC_" << it->getId() << " is connected to the following SCCs:" << endl;
+      auto connections = it->getConnections();
+      for (auto itr:connections){
+       cout << itr << ", ";
+      }
+      cout << endl << endl;
+    }
+
+    cout << "Sorting SCCs by Type..." << endl;
+
+    for (auto it:sccs){
+      sortSCCs(it);
+    }
+
+    cout << "Sorting Done..." << endl;
+
+    cout << endl << "Basic: " << endl;
+    for (auto it:basicSCCs){
+      cout << it->getId() << " ";
+    }
+
+    cout << endl << "Complex: " << endl;
+    for (auto it:complexSCCs){
+      cout << it->getId() << " ";
+    }
+
+    cout << endl << "Trivial: " << endl;
+    for (auto it:trivialSCCs){
+      cout << it->getId() << " ";
+    }
 
 
     cout << endl << "GraphReduction::schedule: done!" << endl;
 
   }
+
+
 
   scctype GraphReduction::determineType(SCC* scc) {
 
@@ -62,4 +114,42 @@ namespace HatScheT {
 
     return basic;
   }
+
+
+
+  int GraphReduction::getSccIdbyVertex(Vertex *v) {
+
+    int sccID = 0;
+
+    for (auto it:sccs){
+      auto vertexMap = it->getVertexMap();
+      for (auto V:it->Vertices()){
+        if (vertexMap[V] == v){
+          sccID = it->getId();
+        }
+      }
+    }
+
+    return sccID;
+
+  }
+
+  void GraphReduction::sortSCCs(SCC *scc) {
+
+    if (scc->getSccType() == basic){
+      basicSCCs.push_back(scc);
+    }else if(scc->getSccType() == complex){
+      complexSCCs.push_back(scc);
+    }else if(scc->getSccType() == trivial) {
+      trivialSCCs.push_back(scc);
+    }else {
+      throw HatScheT::Exception("GraphReduction.sortSCCs: SCC with of type unknown, set SccType first.");
+    }
+  }
+
+  Graph *GraphReduction::buildSupergraphs() {
+    return nullptr;
+  }
 }
+
+
