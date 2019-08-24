@@ -32,7 +32,7 @@ void HatScheT::SCC::setId(int newid) { this->id = newid; }
 
 void HatScheT::SCC::setSCCType(scctype sT) { this -> _type = sT ;}
 
-void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); }
+void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); } //ToDo: Handle double connections.
 
 
 

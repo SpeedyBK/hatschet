@@ -32,82 +32,100 @@ namespace HatScheT {
 
     cout << endl << "Setting SCC-Types" << endl;
 
-    for (auto it : sccs){
+    for (auto it : sccs) {
       it->setSCCType(determineType(it));
       //Debug
-      cout << endl << "SCC " << it->getId() << " is Type (0 = unknown, 1 = Basic, 2 = Complex, 3 = Trivial): " << it->getSccType() << endl;
+      cout << endl << "SCC " << it->getId() << " is Type (0 = unknown, 1 = Basic, 2 = Complex, 3 = Trivial): "
+           << it->getSccType() << endl;
     }
 
     cout << endl << "Done setting Types." << endl;
 
     cout << endl << "Creating edges in SCCs" << endl;
 
-    for (auto it:g.Edges()){
-      if (getSccIdbyVertex(&it->getVertexSrc()) == getSccIdbyVertex(&it->getVertexDst())){
+    for (auto it:g.Edges()) {
+      if (getSccIdbyVertex(&it->getVertexSrc()) == getSccIdbyVertex(&it->getVertexDst())) {
         auto vertexMapReverse = sccs[getSccIdbyVertex(&it->getVertexSrc())]->getVertexMapReverse();
-        sccs[getSccIdbyVertex(&it->getVertexSrc())]->createEdge(*vertexMapReverse[&it->getVertexSrc()], *vertexMapReverse[&it->getVertexDst()], it->getDistance(), it->getDependencyType());
-      } else{
+        sccs[getSccIdbyVertex(&it->getVertexSrc())]->createEdge(*vertexMapReverse[&it->getVertexSrc()],
+                                                                *vertexMapReverse[&it->getVertexDst()],
+                                                                it->getDistance(), it->getDependencyType());
+      } else {
         sccs[getSccIdbyVertex(&it->getVertexSrc())]->setConnections(getSccIdbyVertex(&it->getVertexDst()));
+        sccs[getSccIdbyVertex(&it->getVertexDst())]->setConnections(getSccIdbyVertex(&it->getVertexSrc()));
       }
     }
 
     cout << endl << "Done creating edges." << endl;
 
     //Has to be removed:
-    for (auto it:sccs){
+    for (auto it:sccs) {
       cout << "SCC_" << it->getId() << endl;
       cout << "Has " << it->getNumberOfEdges() << " Edges" << endl;
-      for (auto e:it->Edges()){
+      for (auto e:it->Edges()) {
         cout << e->getVertexSrcName() << " - " << e->getVertexDstName() << endl;
       }
       cout << "SCC_" << it->getId() << " is connected to the following SCCs:" << endl;
       auto connections = it->getConnections();
-      for (auto itr:connections){
-       cout << itr << ", ";
+      for (auto itr:connections) {
+        cout << itr << ", ";
       }
       cout << endl << endl;
     }
 
     cout << "Sorting SCCs by Type..." << endl;
 
-    for (auto it:sccs){
+    for (auto it:sccs) {
       sortSCCs(it);
     }
 
     cout << "Sorting Done..." << endl;
 
     cout << endl << "Basic: " << endl;
-    for (auto it:basicSCCs){
+    for (auto it:basicSCCs) {
       cout << it->getId() << " ";
     }
 
     cout << endl << "Complex: " << endl;
-    for (auto it:complexSCCs){
+    for (auto it:complexSCCs) {
       cout << it->getId() << " ";
     }
 
     cout << endl << "Trivial: " << endl;
-    for (auto it:trivialSCCs){
+    for (auto it:trivialSCCs) {
       cout << it->getId() << " ";
     }
 
+    //ToDo: Has to be checked.
+    cout << endl << "Building Basic Supergraphs.." << endl;
+    if (!basicSCCs.empty()){
+      basicSupergraphs.push_back(buildSupergraphs(basicSCCs, basic));
+    }else{
+      cout << "No basic SCCs, skipping.." << endl;
+    }
+
+    cout << endl << "Building Complex Supergraphs.." << endl;
+    if (!complexSCCs.empty()){
+      complexSupergraphs.push_back(buildSupergraphs(complexSCCs, complex));
+    }else{
+      cout << "No complex SCCs, skipping.." << endl;
+    }
+    //Todo: End!
 
     cout << endl << "GraphReduction::schedule: done!" << endl;
 
   }
 
 
+  scctype GraphReduction::determineType(SCC *scc) {
 
-  scctype GraphReduction::determineType(SCC* scc) {
-
-    if (scc->getNumberOfVertices() == 1){
+    if (scc->getNumberOfVertices() == 1) {
       return trivial;
     }
 
     auto vertexMap = scc->getVertexMap();
 
-    for (auto it:vertexMap){
-      if (resourceModel.getResource(it.second)->getLimit() != -1){
+    for (auto it:vertexMap) {
+      if (resourceModel.getResource(it.second)->getLimit() != -1) {
         return complex;
       }
     }
@@ -116,15 +134,14 @@ namespace HatScheT {
   }
 
 
-
   int GraphReduction::getSccIdbyVertex(Vertex *v) {
 
     int sccID = 0;
 
-    for (auto it:sccs){
+    for (auto it:sccs) {
       auto vertexMap = it->getVertexMap();
-      for (auto V:it->Vertices()){
-        if (vertexMap[V] == v){
+      for (auto V:it->Vertices()) {
+        if (vertexMap[V] == v) {
           sccID = it->getId();
         }
       }
@@ -136,20 +153,33 @@ namespace HatScheT {
 
   void GraphReduction::sortSCCs(SCC *scc) {
 
-    if (scc->getSccType() == basic){
+    if (scc->getSccType() == basic) {
       basicSCCs.push_back(scc);
-    }else if(scc->getSccType() == complex){
+    } else if (scc->getSccType() == complex) {
       complexSCCs.push_back(scc);
-    }else if(scc->getSccType() == trivial) {
+    } else if (scc->getSccType() == trivial) {
       trivialSCCs.push_back(scc);
-    }else {
+    } else {
       throw HatScheT::Exception("GraphReduction.sortSCCs: SCC with of type unknown, set SccType first.");
     }
   }
 
-  Graph *GraphReduction::buildSupergraphs() {
+  SCC *GraphReduction::buildSupergraphs(vector<SCC *> SCCvec, scctype sT) {
+
+    //Finding unconnected components.
+    for (auto it:SCCvec) {
+      cout << it->getId() << " -> ";
+      for (auto itr:it->getConnections()){
+        if (sccs[itr]->getSccType() == sT){
+          cout << sccs[itr]->getId();
+        }
+      }
+      cout << endl;
+    }
+
     return nullptr;
   }
+
 }
 
 

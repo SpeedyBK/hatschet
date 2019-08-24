@@ -49,7 +49,7 @@ namespace HatScheT {
     int id;
 
     /*!
-     * connections contains the ID of each component which is connected to the actual SCC.
+     * connections contains the ID of each component which is connected to the actual SCC (inbound and outbound connections).
      */
     vector <int> connections;
 
