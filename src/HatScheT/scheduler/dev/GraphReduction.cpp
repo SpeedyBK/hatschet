@@ -166,15 +166,27 @@ namespace HatScheT {
 
   SCC *GraphReduction::buildSupergraphs(vector<SCC *> SCCvec, scctype sT) {
 
-    //Finding unconnected components.
-    for (auto it:SCCvec) {
-      cout << it->getId() << " -> ";
-      for (auto itr:it->getConnections()){
-        if (sccs[itr]->getSccType() == sT){
-          cout << sccs[itr]->getId();
+    //Marking all SCCs as not checked.
+    map <SCC*, bool> checked;
+    for (auto it : SCCvec){
+      checked.insert(make_pair(it, false));
+      cout << it->getId() << " - " << checked[it] << endl;
+    }
+
+    for (auto it: SCCvec){
+      if (!checked[it]){
+        for (auto connections : it->getConnections()){
+          for(auto itr : SCCvec){
+            if (connections == itr->getId()){
+              checked[itr] = true;
+            }
+          }
         }
       }
-      cout << endl;
+    }
+
+    for (auto it : checked){
+      cout << it.first->getId() << " - " << it.second << endl;
     }
 
     return nullptr;
