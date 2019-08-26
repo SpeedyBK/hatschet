@@ -58,7 +58,7 @@ namespace HatScheT {
     /*!
      *
      */
-    SCC* buildSupergraphs(vector <SCC*> SCCvec, scctype sT);
+    SCC* findSupergraphs(vector <SCC*> SCCvec, scctype sT);
 
   private:
 
@@ -72,13 +72,13 @@ namespace HatScheT {
      * A basic supergraph is a graph, which contains all only unconnected basic SCCs. If there is a connection between
      * two basic SCCs, then they can not be in the same supergraph.
      */
-    vector <SCC*> basicSupergraphs;
+    vector <vector<SCC*>> basicSupergraphs;
 
     /*!
      * A complex supergraph is a graph, which contains all only unconnected complex SCCs. If there is a connection between
      * two complex SCCs, then they can not be in the same supergraph.
      */
-    vector <SCC*> complexSupergraphs;
+    vector <vector<SCC*>> complexSupergraphs;
 
     /*!
      * Vector off SCCs which are classified as basic.

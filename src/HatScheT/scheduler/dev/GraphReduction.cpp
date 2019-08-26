@@ -98,18 +98,25 @@ namespace HatScheT {
     //ToDo: Has to be checked.
     cout << endl << "Building Basic Supergraphs.." << endl;
     if (!basicSCCs.empty()){
-      basicSupergraphs.push_back(buildSupergraphs(basicSCCs, basic));
+      findSupergraphs(basicSCCs, basic);
     }else{
       cout << "No basic SCCs, skipping.." << endl;
     }
 
     cout << endl << "Building Complex Supergraphs.." << endl;
     if (!complexSCCs.empty()){
-      complexSupergraphs.push_back(buildSupergraphs(complexSCCs, complex));
+      findSupergraphs(complexSCCs, complex);
     }else{
       cout << "No complex SCCs, skipping.." << endl;
     }
     //Todo: End!
+
+    for (auto &it:basicSupergraphs){
+      for (auto itr:it){
+        cout << itr->getId() << " ";
+      }
+      cout << endl;
+    }
 
     cout << endl << "GraphReduction::schedule: done!" << endl;
 
@@ -164,31 +171,54 @@ namespace HatScheT {
     }
   }
 
-  SCC *GraphReduction::buildSupergraphs(vector<SCC *> SCCvec, scctype sT) {
+  SCC *GraphReduction::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
 
-    //Marking all SCCs as not checked.
-    map <SCC*, bool> checked;
-    for (auto it : SCCvec){
-      checked.insert(make_pair(it, false));
-      cout << it->getId() << " - " << checked[it] << endl;
-    }
+    cout << "-------------------------------------------------------------------------" << endl;
 
-    for (auto it: SCCvec){
-      if (!checked[it]){
-        for (auto connections : it->getConnections()){
-          for(auto itr : SCCvec){
-            if (connections == itr->getId()){
-              checked[itr] = true;
+    if (!SCCvec.empty()) {
+      vector<SCC *> superGraph;
+
+      //Marking all SCCs as not checked.
+      map<SCC *, bool> checked;
+      for (auto it : SCCvec) {
+        checked.insert(make_pair(it, false));
+        //cout << it->getId() << " - " << checked[it] << endl;
+      }
+
+      //Finding connected stuff.
+      for (auto it: SCCvec) {
+        if (!checked[it]) {
+          for (auto connections : it->getConnections()) {
+            for (auto itr : SCCvec) {
+              if (connections == itr->getId()) {
+                checked[itr] = true;
+              }
             }
           }
         }
       }
-    }
 
-    for (auto it : checked){
-      cout << it.first->getId() << " - " << it.second << endl;
-    }
+      SCCvec.clear();
 
+      //Putting unconnected stuff in a Vector
+      for (auto it : checked) {
+        if (!it.second) {
+          cout << it.first->getId() << " - " << it.second << endl;
+          superGraph.push_back(it.first);
+        } else {
+          SCCvec.push_back(it.first);
+        }
+      }
+
+      if (sT == basic) {
+        basicSupergraphs.push_back(superGraph);
+      } else if (sT == complex) {
+        complexSupergraphs.push_back(superGraph);
+      }
+
+      findSupergraphs(SCCvec, sT);
+
+    }
     return nullptr;
   }
 
