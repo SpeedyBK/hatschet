@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "HatScheT/Graph.h"
-#include "HatScheT/scheduler/dev/SCC.h"
+#include "HatScheT/utility/subgraphs/SCC.h"
 
 namespace HatScheT {
 

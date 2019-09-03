@@ -37,7 +37,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
-#include "HatScheT/scheduler/dev/SCC.h"
+#include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/GraphReduction.h"
 
 #include <stdio.h>

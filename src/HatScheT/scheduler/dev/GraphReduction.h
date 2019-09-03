@@ -13,7 +13,7 @@
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
-#include <HatScheT/scheduler/dev/SCC.h>
+#include "HatScheT/utility/subgraphs/SCC.h"
 #include <HatScheT/Graph.h>
 #include <vector>
 

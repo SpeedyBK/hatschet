@@ -5,6 +5,7 @@
 #include "GraphReduction.h"
 
 #include <cmath>
+#include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 
 namespace HatScheT {
