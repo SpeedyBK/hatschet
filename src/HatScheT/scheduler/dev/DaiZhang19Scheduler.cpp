@@ -112,7 +112,20 @@ namespace HatScheT {
     }
     //Todo: End!
 
+    cout << "-------------------------------------------------------------------------" << endl;
+    cout << "Iteration through Basic SuperGraphs" << endl;
+    cout << "-------------------------------------------------------------------------" << endl;
     for (auto &it:basicSupergraphs){
+      for (auto itr:it){
+        cout << itr->getId() << " ";
+      }
+      cout << endl;
+    }
+
+    cout << "-------------------------------------------------------------------------" << endl;
+    cout << "Iteration through Complex SuperGraphs" << endl;
+    cout << "-------------------------------------------------------------------------" << endl;
+    for (auto &it:complexSupergraphs){
       for (auto itr:it){
         cout << itr->getId() << " ";
       }
@@ -174,8 +187,6 @@ namespace HatScheT {
 
   SCC *DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
 
-    cout << "-------------------------------------------------------------------------" << endl;
-
     if (!SCCvec.empty()) {
       vector<SCC *> superGraph;
 
@@ -204,7 +215,7 @@ namespace HatScheT {
       //Putting unconnected stuff in a Vector
       for (auto it : checked) {
         if (!it.second) {
-          cout << it.first->getId() << " - " << it.second << endl;
+          //cout << it.first->getId() << " - " << it.second << endl;
           superGraph.push_back(it.first);
         } else {
           SCCvec.push_back(it.first);

@@ -283,6 +283,7 @@ int main(int argc, char *args[]) {
         if(str=="RATMINII" && HatScheT::Tests::rationalMinIITest()==false) exit(-1);
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
+        if(str=="DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif

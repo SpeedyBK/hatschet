@@ -239,6 +239,7 @@ add_test("ULScheduler" "./hatschet" "--test=ULScheduler")
 #think about supporting this feature somehow
 #add_test("RationalMinII" "./hatschet" "--test=RATMINII")
 add_test("criticalpath" "./hatschet" "--test=CRITPATH")
+add_test("KosarajuSCC" "./hatschet" "--test=KOSARAJU")
 
 ####################
 # example project
