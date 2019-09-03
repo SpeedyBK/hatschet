@@ -38,7 +38,7 @@
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
-#include "HatScheT/scheduler/dev/GraphReduction.h"
+#include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
 #include <stdio.h>
 
@@ -784,7 +784,7 @@ bool Tests::moduloSDCTestFiege() {
 
     //SCC.printSSC();
 
-    GraphReduction GraRed(KosaGr, rm, {"CPLEX"});
+    DaiZhang19Scheduler GraRed(KosaGr, rm, {"CPLEX"});
 
     GraRed.schedule();
 

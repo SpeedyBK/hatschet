@@ -53,7 +53,7 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
-#include <HatScheT/scheduler/dev/GraphReduction.h>
+#include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
@@ -534,7 +534,7 @@ int main(int argc, char *args[]) {
         case SUGRREDUCTION:
         {
           isModuloScheduler = true;
-          auto *subgrred = new HatScheT::GraphReduction(g, rm, solverWishList);
+          auto *subgrred = new HatScheT::DaiZhang19Scheduler(g, rm, solverWishList);
           if (timeout > 0)    subgrred->setSolverTimeout(timeout);
           if (maxLatency > 0) subgrred->setMaxLatencyConstraint(maxLatency);
           subgrred->setThreads(threads);

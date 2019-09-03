@@ -19,9 +19,9 @@
 
 namespace HatScheT {
 
-  class GraphReduction : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+  class DaiZhang19Scheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
   public:
-    GraphReduction(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 
     /*!
      * main method to do the scheduling

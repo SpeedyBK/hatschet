@@ -2,7 +2,7 @@
 // Created by bkessler on 23/07/19.
 //
 
-#include "GraphReduction.h"
+#include "DaiZhang19Scheduler.h"
 
 #include <cmath>
 #include "HatScheT/utility/subgraphs/SCC.h"
@@ -10,7 +10,7 @@
 
 namespace HatScheT {
 
-  GraphReduction::GraphReduction(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
+  DaiZhang19Scheduler::DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
       : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
     II = -1;
     this->timeouts = 0;
@@ -23,8 +23,8 @@ namespace HatScheT {
   }
 
 
-  void GraphReduction::schedule() {
-    cout << endl << "GraphReduction::schedule: start" << endl;
+  void DaiZhang19Scheduler::schedule() {
+    cout << endl << "DaiZhang19Scheduler::schedule: start" << endl;
 
     cout << endl << "Starting Kosajaru's SCC Algorithm..." << endl;
     KosarajuSCC kscc(this->g);
@@ -119,12 +119,12 @@ namespace HatScheT {
       cout << endl;
     }
 
-    cout << endl << "GraphReduction::schedule: done!" << endl;
+    cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
 
   }
 
 
-  scctype GraphReduction::determineType(SCC *scc) {
+  scctype DaiZhang19Scheduler::determineType(SCC *scc) {
 
     if (scc->getNumberOfVertices() == 1) {
       return trivial;
@@ -142,7 +142,7 @@ namespace HatScheT {
   }
 
 
-  int GraphReduction::getSccIdbyVertex(Vertex *v) {
+  int DaiZhang19Scheduler::getSccIdbyVertex(Vertex *v) {
 
     int sccID = 0;
 
@@ -159,7 +159,7 @@ namespace HatScheT {
 
   }
 
-  void GraphReduction::sortSCCs(SCC *scc) {
+  void DaiZhang19Scheduler::sortSCCs(SCC *scc) {
 
     if (scc->getSccType() == basic) {
       basicSCCs.push_back(scc);
@@ -168,11 +168,11 @@ namespace HatScheT {
     } else if (scc->getSccType() == trivial) {
       trivialSCCs.push_back(scc);
     } else {
-      throw HatScheT::Exception("GraphReduction.sortSCCs: SCC with of type unknown, set SccType first.");
+      throw HatScheT::Exception("DaiZhang19Scheduler.sortSCCs: SCC with of type unknown, set SccType first.");
     }
   }
 
-  SCC *GraphReduction::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
+  SCC *DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
 
     cout << "-------------------------------------------------------------------------" << endl;
 
