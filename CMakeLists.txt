@@ -122,7 +122,8 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
-src/HatScheT/scheduler/dev/GraphReduction.cpp
+src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
+src/HatScheT/utility/subgraphs/SCC.cpp
 )
 
 set(HatScheT_HEADERS
@@ -167,8 +168,9 @@ src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/Writer.h
 src/HatScheT/utility/writer/GraphMLGraphWriter.h
 src/HatScheT/utility/writer/XMLResourceWriter.h
+src/HatScheT/utility/subgraphs/SCC.h
 src/HatScheT/Vertex.h
-src/HatScheT/scheduler/dev/GraphReduction.h
+src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 )
 
 IF (SCALP_H AND SCALP_LIB)

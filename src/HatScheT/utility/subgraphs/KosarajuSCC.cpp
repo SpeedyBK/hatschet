@@ -29,39 +29,8 @@ namespace HatScheT {
     this->g = &g;
     this->gT = nullptr;
 
-    getSCCs();
-
   }
 
-  void KosarajuSCC::DebugPrint(bool Bums, Graph* gr) {
-
-
-    cout << "Graph has " << gr->getNumberOfVertices() << " Vertecies" << endl;
-
-    cout << '\t' << "Vertex:" << '\t' << "Visited:" << endl;
-    for (it = visited.begin(); it != visited.end(); ++it) {
-      cout << '\t' << it->first->getName() << '\t' << it->second << endl;
-    }
-
-    cout << endl;
-    cout << "Graph has " << gr->getNumberOfEdges() << " Edges" << endl;
-    cout << "Edge ID" << '\t' << '\t' << "Src Vertex" << '\t' << "Dst Vertex" << endl;
-
-    for (auto e:gr->Edges()){
-      cout << '\t' << e->getId() << '\t' << e->getVertexSrcName() << '\t' << e->getVertexDstName() << endl;
-    }
-    cout << endl;
-
-    auto StackCopy = this -> Stack;
-    if (Bums) {
-      cout << "Stack contains:" << endl;
-      while (!StackCopy.empty()) {
-        cout << StackCopy.top()->getId() << " ";
-        StackCopy.pop();
-      }
-      cout << endl << endl;
-    }
-  }
 
 
   void KosarajuSCC::fillStack(Vertex *V) {
@@ -92,6 +61,8 @@ namespace HatScheT {
   }
 
 
+
+
   void KosarajuSCC::dfs(Vertex *V) {
 
     //Mark vertex as visited:
@@ -115,19 +86,19 @@ namespace HatScheT {
       }
     }
     cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
-    scc.push_back(V);
+    _sccs[_sccs.size()-1]->createVertex();
+    _sccs[_sccs.size()-1]->createVertexMap(getOriginalVertex(V));
+
   }
 
-  void KosarajuSCC::getSCCs (){
+
+
+
+  vector <SCC*> KosarajuSCC::getSCCs () {
     //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
-
-    //Calling Debug Output
-
-    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    //DebugPrint(false, g);
 
     //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
     //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
@@ -137,49 +108,57 @@ namespace HatScheT {
       }
     }
 
-    cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    //DebugPrint(true, g);
+    cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
     //Getting the transposed graph of g. And a map, which maps the verticies of g to the verticies of gT.
-    auto GraphMap = Utility::transposeGraph(g);
-    this -> gT = GraphMap.first;
-    auto VertexMap = GraphMap.second;
+    auto graphMap = Utility::transposeGraph(g);
+    this->gT = graphMap.first;
+    this->VertexMap = graphMap.second;
 
 
     //Marking all verticies of the transposed graph as unvisited
     visited.clear();
-    for (auto v:this->gT->Vertices()){
+    for (auto v:this->gT->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
-    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
-    //DebugPrint(true, this -> gT);
-
     //Doing a DFS in the transposed graph. The order of the verticies, where the DFS starts is determinated by
     //the order of the verticies in the Stack.
-    while (!Stack.empty()){
+
+    int i = 0;
+
+    while (!Stack.empty()) {
+
       if (!visited[VertexMap[Stack.top()]]) {
+        auto *scc = new SCC();
+        _sccs.push_back(scc);
+        _sccs[_sccs.size()-1]->setId(i);
+        _sccs[_sccs.size()-1]->setName("SSC_");
         dfs(VertexMap[Stack.top()]);
-        sccs.push_back(scc);
-        scc.clear();
+        cout << "Size of SCCVector is " << _sccs.size() << endl;
+        cout << _sccs[_sccs.size()-1]->getName() << _sccs[_sccs.size()-1]->getId();
+        cout << " Has " << _sccs[_sccs.size()-1]->getNumberOfVertices() << " Verticies" << endl;
+        _sccs[_sccs.size()-1]->printVertexMap();
+        i++;
       }
+
       Stack.pop();
+
     }
 
-    //Basic output for debugging.. Will be removed:
-    //cout << endl << "-------------------------------------------------------------------------------------"  << endl;
+    return _sccs;
   }
 
-  void KosarajuSCC::printSSC() {
-    int i = 0;
-    for (auto stronglyConectedComponent:sccs){
-      i++;
-      cout << endl << "SCC " << i << ": ";
-      for (auto Vertex:stronglyConectedComponent){
-        cout << Vertex->getName() << "  ";
+
+
+  Vertex *KosarajuSCC::getOriginalVertex(Vertex *V) {
+
+    for (auto itr : VertexMap){
+      if (itr.second == V){
+        return itr.first;
       }
-      cout << endl;
     }
+    throw HatScheT::Exception("A vertex of the transposed graph does not exist in the original graph.");
   }
 }
 

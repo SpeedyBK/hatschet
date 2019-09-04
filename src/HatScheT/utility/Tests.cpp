@@ -37,6 +37,8 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/utility/subgraphs/SCC.h"
+#include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
 #include <stdio.h>
 
@@ -649,14 +651,16 @@ bool Tests::moduloSDCTestFiege() {
 
     HatScheT::Graph KosaGr;
     HatScheT::ResourceModel rm;
-    string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
-    string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
+    //string graphmlpath = "/home/bkessler/Projects/HatScheT_Debug/KosajaruTest.graphml";
+    //string transposedpath = "/home/bkessler/Projects/HatScheT_Debug/TransposedTest.graphml";
 
-    auto &add = rm.makeResource("add", -1, 0, 1);
+    auto &add = rm.makeResource("add", -1, 1, 1);
+    auto &mult = rm.makeResource("mult", 1, 1, 1);
 
+    //-----------------------------------------------------------------------------------------------------------------
     //Hardcoding the examplegraph from https://www.geeksforgeeks.org/strongly-connected-components/
 
-    Vertex& A = KosaGr.createVertex(0);
+    /*Vertex& A = KosaGr.createVertex(0);
     Vertex& B = KosaGr.createVertex(1);
     Vertex& C = KosaGr.createVertex(2);
     Vertex& D = KosaGr.createVertex(3);
@@ -670,12 +674,79 @@ bool Tests::moduloSDCTestFiege() {
     KosaGr.createEdge(B, C ,0);
     KosaGr.createEdge(C, D ,0);
     KosaGr.createEdge(C, E ,0);
-    KosaGr.createEdge(D, A ,0);
+    KosaGr.createEdge(D, A ,1);
     KosaGr.createEdge(E, F ,0);
     KosaGr.createEdge(F, G ,0);
-    KosaGr.createEdge(G, E ,0);
+    KosaGr.createEdge(G, E ,1);
     KosaGr.createEdge(H, G ,0);
     KosaGr.createEdge(H, I ,0);
+
+    rm.registerVertex(&A, &add);
+    rm.registerVertex(&B, &mult);
+    rm.registerVertex(&C, &add);
+    rm.registerVertex(&D, &add);
+    rm.registerVertex(&E, &add);
+    rm.registerVertex(&F, &add);
+    rm.registerVertex(&G, &add);
+    rm.registerVertex(&H, &add);
+    rm.registerVertex(&I, &add);*/
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //Graph to test the build supergraph method.
+
+    Vertex& A = KosaGr.createVertex(0);
+    Vertex& B = KosaGr.createVertex(1);
+    Vertex& C = KosaGr.createVertex(2);
+    Vertex& D = KosaGr.createVertex(3);
+    Vertex& E = KosaGr.createVertex(4);
+    Vertex& F = KosaGr.createVertex(5);
+    Vertex& G = KosaGr.createVertex(6);
+    Vertex& H = KosaGr.createVertex(7);
+    Vertex& I = KosaGr.createVertex(8);
+    Vertex& J = KosaGr.createVertex(9);
+    Vertex& K = KosaGr.createVertex(10);
+    Vertex& L = KosaGr.createVertex(11);
+    Vertex& M = KosaGr.createVertex(12);
+    Vertex& N = KosaGr.createVertex(13);
+    Vertex& O = KosaGr.createVertex(14);
+
+    // SSC 0:
+    KosaGr.createEdge(A, B ,1);
+    KosaGr.createEdge(B, C ,0);
+    KosaGr.createEdge(C, A ,0);
+
+    // SCC 1:
+    KosaGr.createEdge(D, E ,1);
+    KosaGr.createEdge(E, F ,0);
+    KosaGr.createEdge(F, D ,0);
+
+    // SCC 2:
+    KosaGr.createEdge(G, H ,1);
+    KosaGr.createEdge(H, I ,0);
+    KosaGr.createEdge(I, G ,0);
+
+    // SCC 3:
+    KosaGr.createEdge(J, K ,1);
+    KosaGr.createEdge(K, L ,0);
+    KosaGr.createEdge(L, J ,0);
+
+    // SCC 4:
+    KosaGr.createEdge(M, N ,1);
+    KosaGr.createEdge(N, O ,0);
+    KosaGr.createEdge(O, M ,0);
+
+    //0-2
+    KosaGr.createEdge(A, G ,0);
+    //0-3
+    KosaGr.createEdge(A, J ,0);
+    //1-3
+    KosaGr.createEdge(D, L ,0);
+    //1-4
+    KosaGr.createEdge(D, M ,0);
+    //3-4
+    KosaGr.createEdge(L, M ,0);
+    //3-2
+    KosaGr.createEdge(L, G ,0);
 
     rm.registerVertex(&A, &add);
     rm.registerVertex(&B, &add);
@@ -686,22 +757,38 @@ bool Tests::moduloSDCTestFiege() {
     rm.registerVertex(&G, &add);
     rm.registerVertex(&H, &add);
     rm.registerVertex(&I, &add);
+    rm.registerVertex(&J, &add);
+    rm.registerVertex(&K, &add);
+    rm.registerVertex(&L, &add);
+    rm.registerVertex(&M, &add);
+    rm.registerVertex(&N, &add);
+    rm.registerVertex(&O, &add);
+
+    //------------------------------------------------------------------------------------------------------------------
 
     //Write the graphml-file for Debugging
-    cout << "Generating graphml file: " << graphmlpath << endl;
-    HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
-    DW.write();
+    //cout << "Generating graphml file: " << graphmlpath << endl;
+    //HatScheT::DotWriter DW(graphmlpath, &KosaGr, &rm);
+    //DW.write();
     //Printing the transposed Graph.
-    auto paar = HatScheT::Utility::transposeGraph(&KosaGr);
-    for (auto V:paar.first->Vertices()){
-      rm.registerVertex(V, &add);
-    }
-    HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
-    DWT.write();
+    //auto paar = HatScheT::Utility::transposeGraph(&KosaGr);
+    //for (auto V:paar.first->Vertices()){
+    //  rm.registerVertex(V, &add);
+    //}
+    //HatScheT::DotWriter DWT(transposedpath, paar.first, &rm);
+    //DWT.write();
 
-    KosarajuSCC SCC(KosaGr);
+    //KosarajuSCC KosaSCC(KosaGr);
 
-    SCC.printSSC();
+    //auto Zeugs = KosaSCC.getSCCs();
+
+    //SCC.printSSC();
+
+    DaiZhang19Scheduler GraRed(KosaGr, rm, {"CPLEX"});
+
+    GraRed.schedule();
+
+    SCC scc;
 
     return false;
   }
