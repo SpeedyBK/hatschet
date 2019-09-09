@@ -788,18 +788,27 @@ bool Tests::moduloSDCTestFiege() {
     //3-2
     Gr.createEdge(L, G ,0);
 
+    //SCC 0
     rm.registerVertex(&A, &red);
     rm.registerVertex(&B, &blue);
     rm.registerVertex(&C, &blue);
+
+    //SCC 1
     rm.registerVertex(&D, &green);
     rm.registerVertex(&E, &green);
     rm.registerVertex(&F, &green);
-    rm.registerVertex(&G, &red);
-    rm.registerVertex(&H, &blue);
-    rm.registerVertex(&I, &blue);
-    rm.registerVertex(&J, &green);
-    rm.registerVertex(&K, &green);
-    rm.registerVertex(&L, &green);
+
+    //SCC 2
+    rm.registerVertex(&J, &red);
+    rm.registerVertex(&K, &blue);
+    rm.registerVertex(&L, &blue);
+
+    //SCC 4
+    rm.registerVertex(&G, &green);
+    rm.registerVertex(&H, &green);
+    rm.registerVertex(&I, &green);
+
+    //SCC 3
     rm.registerVertex(&M, &blue);
     rm.registerVertex(&N, &blue);
     rm.registerVertex(&O, &red);

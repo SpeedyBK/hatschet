@@ -57,10 +57,9 @@ namespace HatScheT {
 
     /*!
      * findSupergraph finds the maximum independet set for a type of SCCs in a Graph.
-     * A simple parallel algorithm for the maximal independent set problem by M.Luby 1985
-     * https://dl.acm.org/citation.cfm?id=22146
+     * ToDo: find a reference for that...
      */
-    SCC* findSupergraphs(vector <SCC*> SCCvec, scctype sT);
+    void findSupergraphs(vector <SCC*> SCCvec, scctype sT);
 
   private:
 

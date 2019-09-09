@@ -185,7 +185,7 @@ namespace HatScheT {
     }
   }
 
-  SCC *DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
+  void DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
 
     if (!SCCvec.empty()) {
       vector<SCC *> superGraph;
@@ -200,8 +200,8 @@ namespace HatScheT {
       //Finding connected stuff.
       for (auto it: SCCvec) {
         if (!checked[it]) {
-          for (auto connections : it->getConnections()) {
-            for (auto itr : SCCvec) {
+          for (auto &connections : it->getConnections()) {
+            for (auto &itr : SCCvec) {
               if (connections == itr->getId()) {
                 checked[itr] = true;
               }
@@ -231,7 +231,6 @@ namespace HatScheT {
       findSupergraphs(SCCvec, sT);
 
     }
-    return nullptr;
   }
 
 }
