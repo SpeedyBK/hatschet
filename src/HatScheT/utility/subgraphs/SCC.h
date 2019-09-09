@@ -29,6 +29,9 @@
 
 namespace HatScheT {
 
+  /*!
+  * Datatyp to classify the SCCs, more information at line 110..
+  */
   enum scctype {unknown, basic, complex, trivial};
 
   class SCC : public Graph {
@@ -36,25 +39,60 @@ namespace HatScheT {
     SCC();
 
     //Getter Functions:
+    /*!
+    * @return The type of a SCC.
+    */
     scctype getSccType();
 
+    /*!
+    * @return The ID of a SCC.
+    */
     int getId ();
+
+    /*!
+    * @return The vector with the IDs of all SCCs the actual SCC is connected to.
+    */
     vector <int> getConnections();
 
+    /*!
+    * @return The map in which the verticies of a SCC are mapped to the verticies of the original graph.
+    */
     map <Vertex*, Vertex*> getVertexMap();
+
+    /*!
+    * @return The map in which the verticies of the origianl graph are mapped to the verticies of the SCC.
+    */
     map <Vertex*, Vertex*> getVertexMapReverse();
 
 
 
     //Setter Functions:
+    /*!
+    * Can be used to set the ID of an SCC.
+    */
     void setId (int id);
+
+    /*!
+    * Sets the type of a SCC.
+    */
     void setSCCType(scctype sT);
+
+    /*!
+    * Can be used to set the connection vector, which contains the information to which SCCs this SCC is connected to.
+    * Does not contain any directional Information.
+    */
     void setConnections(int conID);
 
-    //Methods
+    /*!
+    * createVertexMap creates two maps. The first one maps the vertex in the SCC to the corresponding vertex in the
+    * original graph and the second one maps a vertex in the original graph to its corresponding vertex in the SCC.
+    */
     void createVertexMap(Vertex* V);
 
-    //Debugging:
+    /*!
+    * printVertexMap() prints the verticies of a SCC and the verticies in the original graph which it is mapped to.
+    * used for debugging in the first place.
+    */
     void printVertexMap();
 
   private:
