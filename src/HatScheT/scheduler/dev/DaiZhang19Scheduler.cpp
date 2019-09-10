@@ -99,14 +99,14 @@ namespace HatScheT {
     //ToDo: Has to be checked.
     cout << endl << "Building Basic Supergraphs.." << endl;
     if (!basicSCCs.empty()){
-      findSupergraphs(basicSCCs, basic);
+      findMaximalIndependentSet(basicSCCs, basic);
     }else{
       cout << "No basic SCCs, skipping.." << endl;
     }
 
     cout << endl << "Building Complex Supergraphs.." << endl;
     if (!complexSCCs.empty()){
-      findSupergraphs(complexSCCs, complex);
+      findMaximalIndependentSet(complexSCCs, complex);
     }else{
       cout << "No complex SCCs, skipping.." << endl;
     }
@@ -185,7 +185,7 @@ namespace HatScheT {
     }
   }
 
-  void DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
+  void DaiZhang19Scheduler::findMaximalIndependentSet(vector<SCC *> SCCvec, scctype sT) {
 
     if (!SCCvec.empty()) {
       vector<SCC *> superGraph;
@@ -228,9 +228,18 @@ namespace HatScheT {
         complexSupergraphs.push_back(superGraph);
       }
 
-      findSupergraphs(SCCvec, sT);
+      findMaximalIndependentSet(SCCvec, sT);
 
     }
+  }
+
+  std::pair<Graph*, map<Vertex*, Vertex*>> DaiZhang19Scheduler::buildSupergraph(vector <SCC*> superGraph) {
+
+    for (auto &it : superGraph){
+
+    }
+
+    return pair<Graph *, map<Vertex *, Vertex *>>();
   }
 
 }

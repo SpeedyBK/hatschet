@@ -56,10 +56,12 @@ namespace HatScheT {
     void sortSCCs(SCC* scc);
 
     /*!
-     * findSupergraph finds the maximum independet set for a type of SCCs in a Graph.
+     * findMaximalIndependentSet finds the maximum independet set for a type of SCCs in a Graph.
      * ToDo: find a reference for that...
      */
-    void findSupergraphs(vector <SCC*> SCCvec, scctype sT);
+    void findMaximalIndependentSet(vector <SCC*> SCCvec, scctype sT);
+
+    std::pair<Graph*, map<Vertex*, Vertex*>> buildSupergraph(vector <SCC*> superGraph);
 
   private:
 
