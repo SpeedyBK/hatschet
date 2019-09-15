@@ -115,7 +115,7 @@ namespace HatScheT {
     cout << "-------------------------------------------------------------------------" << endl;
     cout << "Iteration through Basic SuperGraphs" << endl;
     cout << "-------------------------------------------------------------------------" << endl;
-    for (auto &it:basicSupergraphs){
+    for (auto &it:basicSupergraphSCCs){
       for (auto itr:it){
         cout << itr->getId() << " ";
       }
@@ -125,12 +125,39 @@ namespace HatScheT {
     cout << "-------------------------------------------------------------------------" << endl;
     cout << "Iteration through Complex SuperGraphs" << endl;
     cout << "-------------------------------------------------------------------------" << endl;
-    for (auto &it:complexSupergraphs){
+    for (auto &it:complexSupergraphSCCs){
       for (auto itr:it){
         cout << itr->getId() << " ";
       }
       cout << endl;
     }
+
+    cout << "Starting to build basic Supergraphs..." << endl;
+
+    for (auto &it : basicSupergraphSCCs){
+      basicSupergraphs.push_back(buildSupergraph(it).first);
+      cout << endl;
+    }
+
+    cout << "Starting to build complex Supergraph..." << endl;
+
+    for (auto &it : complexSupergraphSCCs){
+      buildSupergraph(it);
+      cout << endl;
+    }
+
+    cout << endl << " Done!" << endl;
+
+    cout << "------------------------------------------------------------------------------" << endl;
+    cout << "Generating relativ Schedule for Basic Supergraphs" << endl;
+    cout << "------------------------------------------------------------------------------" << endl;
+
+    for (auto &it : basicSupergraphs){
+    }
+
+    cout << "------------------------------------------------------------------------------" << endl;
+    cout << "Generating relativ Schedule for Complex Supergraphs" << endl;
+    cout << "------------------------------------------------------------------------------" << endl;
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
 
@@ -223,9 +250,9 @@ namespace HatScheT {
       }
 
       if (sT == basic) {
-        basicSupergraphs.push_back(superGraph);
+        basicSupergraphSCCs.push_back(superGraph);
       } else if (sT == complex) {
-        complexSupergraphs.push_back(superGraph);
+        complexSupergraphSCCs.push_back(superGraph);
       }
 
       findMaximalIndependentSet(SCCvec, sT);
@@ -235,11 +262,31 @@ namespace HatScheT {
 
   std::pair<Graph*, map<Vertex*, Vertex*>> DaiZhang19Scheduler::buildSupergraph(vector <SCC*> superGraph) {
 
-    for (auto &it : superGraph){
+    auto *sG = new Graph();
+    std::map<Vertex*,Vertex*> m;
 
+    for (auto &it : superGraph){
+      for (auto &V : it->Vertices()){
+        m[V] = &sG->createVertex();
+      }
+
+      for (auto &E : it->Edges()){
+        sG->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
+      }
     }
 
-    return pair<Graph *, map<Vertex *, Vertex *>>();
+    cout << "Verticies:" << endl;
+    for (auto &Ver:sG->Vertices()) {
+      cout << Ver->getName() << endl;
+    }
+
+    cout << "Edges:" << endl;
+    for (auto &Ed:sG->Edges()){
+      cout << Ed->getVertexSrc() << " - " << Ed->getVertexDst() << endl;
+    }
+
+    //return pair<Graph *, map<Vertex *, Vertex *>>();
+    return make_pair(sG, m);
   }
 
 }
