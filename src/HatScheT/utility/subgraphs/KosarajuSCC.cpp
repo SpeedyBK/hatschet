@@ -86,8 +86,7 @@ namespace HatScheT {
       }
     }
     cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
-    _sccs[_sccs.size()-1]->createVertex();
-    _sccs[_sccs.size()-1]->createVertexMap(getOriginalVertex(V));
+    sccVector[sccVector.size()-1]->setVertexAsPartOfSCC(V);
 
   }
 
@@ -130,15 +129,14 @@ namespace HatScheT {
     while (!Stack.empty()) {
 
       if (!visited[VertexMap[Stack.top()]]) {
-        auto *scc = new SCC();
-        _sccs.push_back(scc);
-        _sccs[_sccs.size()-1]->setId(i);
-        _sccs[_sccs.size()-1]->setName("SSC_");
+        auto *scc = new SCC(*g);
+        sccVector.push_back(scc);
+        sccVector[sccVector.size()-1]->setId(i);
+        sccVector[sccVector.size()-1]->setName("SSC_");
         dfs(VertexMap[Stack.top()]);
-        cout << "Size of SCCVector is " << _sccs.size() << endl;
-        cout << _sccs[_sccs.size()-1]->getName() << _sccs[_sccs.size()-1]->getId();
-        cout << " Has " << _sccs[_sccs.size()-1]->getNumberOfVertices() << " Verticies" << endl;
-        _sccs[_sccs.size()-1]->printVertexMap();
+        cout << "Size of SCCVector is " << sccVector.size() << endl;
+        cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
+        cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Verticies" << endl;
         i++;
       }
 
@@ -146,7 +144,7 @@ namespace HatScheT {
 
     }
 
-    return _sccs;
+    return sccVector;
   }
 
 

@@ -87,7 +87,7 @@ namespace HatScheT {
 
     stack <Vertex*> Stack;
 
-    vector <SCC*> _sccs;
+    vector <SCC*> sccVector;
 
   };
 

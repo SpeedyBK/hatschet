@@ -30,72 +30,87 @@
 namespace HatScheT {
 
   /*!
-  * Datatyp to classify the SCCs, more information at line 110..
+  * Datatyp to classify the SCCs, more information at line 100..
   */
   enum scctype {unknown, basic, complex, trivial};
 
-  class SCC : public Graph {
+  class SCC {
   public:
-    SCC();
+    SCC(Graph &g);
 
     //Getter Functions:
-    /*!
-    * @return The type of a SCC.
-    */
-    scctype getSccType();
 
     /*!
-    * @return The ID of a SCC.
-    */
+     * @return Name of the SCC.
+     */
+    const string& getName() const {return this->name;}
+
+    /*!
+     * @return The ID of a SCC.
+     */
     int getId ();
 
     /*!
-    * @return The vector with the IDs of all SCCs the actual SCC is connected to.
-    */
+     * @return Number of Verticies which belong to the SCC.
+     */
+    int getNumberOfVertices();
+
+    /*!
+     * @return The type of a SCC.
+     */
+    scctype getSccType();
+
+    /*!
+     * @return A list of the verticies which belong to an SCC.
+     */
+    list <Vertex*> getVerticiesOfSCC();
+
+    /*!
+     * Used for debugging
+     */
+    void printVertexStatus();
+
+    /*!
+     * @return The vector with the IDs of all SCCs the actual SCC is connected to.
+     */
     vector <int> getConnections();
-
-    /*!
-    * @return The map in which the verticies of a SCC are mapped to the verticies of the original graph.
-    */
-    map <Vertex*, Vertex*> getVertexMap();
-
-    /*!
-    * @return The map in which the verticies of the origianl graph are mapped to the verticies of the SCC.
-    */
-    map <Vertex*, Vertex*> getVertexMapReverse();
-
 
 
     //Setter Functions:
     /*!
-    * Can be used to set the ID of an SCC.
-    */
+     * Sets the name of a SCC
+     */
+    void setName(string s){this->name = s;}
+
+    /*!
+     * Can be used to set the ID of an SCC.
+     */
     void setId (int id);
 
     /*!
-    * Sets the type of a SCC.
-    */
+     * Sets the type of a SCC.
+     */
     void setSCCType(scctype sT);
 
     /*!
-    * Can be used to set the connection vector, which contains the information to which SCCs this SCC is connected to.
-    * Does not contain any directional Information.
-    */
+     * Can be used to set the connection vector, which contains the information to which SCCs this SCC is connected to.
+     * Does not contain any directional Information.
+     */
     void setConnections(int conID);
 
     /*!
-    * createVertexMap creates two maps. The first one maps the vertex in the SCC to the corresponding vertex in the
-    * original graph and the second one maps a vertex in the original graph to its corresponding vertex in the SCC.
-    */
-    void createVertexMap(Vertex* V);
+     * This function Sets the Vertex V of Graph g as a part of the SCC.
+     * @param V is the vertex which should be set as a part of the SCC
+     */
+    void setVertexAsPartOfSCC(Vertex* V);
 
-    /*!
-    * printVertexMap() prints the verticies of a SCC and the verticies in the original graph which it is mapped to.
-    * used for debugging in the first place.
-    */
-    void printVertexMap();
 
   private:
+
+    /*!
+     * Pointer to the original graph.
+     */
+    Graph* g;
 
     /*!
      * ID of the SCC.
@@ -103,29 +118,33 @@ namespace HatScheT {
     int id;
 
     /*!
+     * Name of the SCC
+     */
+    string name;
+
+    /*!
      * connections contains the ID of each component which is connected to the actual SCC (inbound and outbound connections).
      */
     vector <int> connections;
 
     /*!
-    * Type of the SCC.
-    * - unknown: Set by constructor, just for initialisation.
-    * - trivial: SCCs which contain just 1 vertex.
-    * - basic: SCCs which contain multiple verticies, but none of them has a ressource constraint.
-    * - complex: SCCs which contain multiple verticies, and at least one vertex has a ressource constraint.
-    */
-    scctype _type;
+     * Type of the SCC.
+     * - unknown: Set by constructor, just for initialisation.
+     * - trivial: SCCs which contain just 1 vertex.
+     * - basic: SCCs which contain multiple verticies, but none of them has a ressource constraint.
+     * - complex: SCCs which contain multiple verticies, and at least one vertex has a ressource constraint.
+     */
+    scctype typeOfSCC;
 
     /*!
-     * vertexMap contains Vertex* of the SCCs verticies as key, and Vertex* of the original graphs verticies as value
+     * vertexInSCC indicates, if a vertex of the Graph g belongs to the SCC.
      */
-    map <Vertex*, Vertex*> vertexMap;
+    map <Vertex*, bool> vertexInSCC;
 
     /*!
-     * vertexMapReverse contains Vertex* of the original graphs verticies as key, and Vertex* of the SCCs verticies as value
+     * List of Verticies which belong to the SCC.
      */
-    map <Vertex*, Vertex*> vertexMapReverse;
-
+    list <Vertex*> verticiesOfSCC;
 
   };
 

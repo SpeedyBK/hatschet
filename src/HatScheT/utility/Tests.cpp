@@ -649,8 +649,6 @@ bool Tests::moduloSDCTestFiege() {
 
   bool Tests::KosarajuTest() {
 
-    int errorCount = 0;
-
     HatScheT::Graph KosaGr;
     HatScheT::ResourceModel rm;
 
@@ -695,32 +693,48 @@ bool Tests::moduloSDCTestFiege() {
 
     vector <SCC*> sccs = kscc.getSCCs();
 
-    if (sccs.size() != 4){
-      errorCount++;
+    vector <list<int>> compValues;
+    list <int> sccA = {7};
+    compValues.push_back(sccA);
+    list <int> sccB = {8};
+    compValues.push_back(sccB);
+    list <int> sccC = {1, 2, 3, 0};
+    compValues.push_back(sccC);
+    list <int> sccD = {5, 6, 4};
+    compValues.push_back(sccD);
+
+    for (auto &it : sccs){
+      cout << endl;
+      it->printVertexStatus();
+      auto v = it->getVerticiesOfSCC();
+      int i = 0;
+      for (auto &itr : v){
+        cout << i << ": " << itr->getName() << " ";
+        i++;
+      }
+      cout << endl;
     }
 
-    if (sccs[0]->getNumberOfVertices() != 1){
-      errorCount++;
+    vector <list<int>> testValues;
+    list<int> value;
+
+    for (auto &it : sccs) {
+      auto vertexList = it->getVerticiesOfSCC();
+        value.clear();
+        for (auto &itr : vertexList){
+          value.push_back(itr->getId());
+        }
+        testValues.push_back(value);
     }
 
-    if (sccs[1]->getNumberOfVertices() != 1){
-      errorCount++;
+    for (int j = 0; j < 4; j++){
+      if (compValues[j] != testValues[j]){
+        return false;
+      }
     }
 
-    if (sccs[2]->getNumberOfVertices() != 4){
-      errorCount++;
-    }
+    return true;
 
-    if (sccs[3]->getNumberOfVertices() != 3){
-      errorCount++;
-    }
-
-
-    if (errorCount == 0){
-      return true;
-    } else{
-      return false;
-    }
   }
     //-----------------------------------------------------------------------------------------------------------------
     //Graph to test the build supergraph method.

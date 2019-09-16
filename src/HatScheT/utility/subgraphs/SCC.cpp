@@ -4,25 +4,26 @@
 
 #include "SCC.h"
 
-HatScheT::SCC::SCC() {
-  this->_type = unknown;
-  this->maxVertexId = 0;
+HatScheT::SCC::SCC(Graph &g) {
+  this->g = &g;
+  this->typeOfSCC = unknown;
   this->name = "";
   this->id = 0;
+
+  for (auto &it : g.Vertices()){
+    vertexInSCC[it] = false;
+  }
 }
 
 //Getter Functions:
 
-HatScheT::scctype HatScheT::SCC::getSccType() { return _type; }
+HatScheT::scctype HatScheT::SCC::getSccType() { return typeOfSCC; }
 
 int HatScheT::SCC::getId() { return this->id; }
 
 vector<int> HatScheT::SCC::getConnections() { return connections; }
 
-map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMap() { return vertexMap; }
-
-map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMapReverse() { return vertexMapReverse; }
-
+list<HatScheT::Vertex *> HatScheT::SCC::getVerticiesOfSCC() { return verticiesOfSCC; }
 
 
 
@@ -30,34 +31,41 @@ map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMapReverse()
 
 void HatScheT::SCC::setId(int newid) { this->id = newid; }
 
-void HatScheT::SCC::setSCCType(scctype sT) { this -> _type = sT ;}
+void HatScheT::SCC::setSCCType(scctype sT) { this -> typeOfSCC = sT ;}
 
-void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); } //ToDo: Handle double connections.
-
-
+void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); }
 
 
-void HatScheT::SCC::createVertexMap(HatScheT::Vertex *V) {
+void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
 
-  this -> vertexMap.insert(std::make_pair(&getVertexById(vertices.size()), V));
-  this -> vertexMapReverse.insert(std::make_pair(V, &getVertexById(vertices.size())));
+  for (auto &it : g->Vertices()){
+    if (it->getId() == V->getId()){
+      vertexInSCC[it] = true;
+      verticiesOfSCC.push_back(it);
+    }
+  }
+}
 
+int HatScheT::SCC::getNumberOfVertices() {
+
+  int i = 0;
+
+  for (auto &it : vertexInSCC){
+    if (it.second){
+      i++;
+    }
+  }
+  return i;
+}
+
+void HatScheT::SCC::printVertexStatus() {
+
+  for (auto &it:vertexInSCC){
+    cout << it.first->getName() << " -- " << it.second << endl;
+  }
 }
 
 
-void HatScheT::SCC::printVertexMap() {
-  for (auto i : vertices){
-    cout << i->getName() << "; ";
-  }
-
-  cout << endl << endl;
-
-  for(auto it : this->vertexMap) {
-    cout << it.first->getName() << " - " << it.second->getName() << endl;
-  }
-
-  cout << endl;
-}
 
 
 
