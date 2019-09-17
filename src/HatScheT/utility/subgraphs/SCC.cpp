@@ -4,60 +4,76 @@
 
 #include "SCC.h"
 
+/*!
+ * Contructor, does a basic initialisation of an empty SCC.
+ * @param g is the original graph.
+ */
 HatScheT::SCC::SCC(Graph &g) {
   this->g = &g;
   this->typeOfSCC = unknown;
   this->name = "";
   this->id = 0;
 
-  for (auto &it : g.Vertices()){
+  for (auto &it : g.Vertices()) {
     vertexInSCC[it] = false;
   }
 }
 
-//Getter Functions:
-
+/*!
+ * @return Type of the SCC
+ */
 HatScheT::scctype HatScheT::SCC::getSccType() { return typeOfSCC; }
 
+/*!
+ * @return ID of the SCC.
+ */
 int HatScheT::SCC::getId() { return this->id; }
 
-vector<int> HatScheT::SCC::getConnections() { return connections; }
+/*!
+ * @return the list of Vertices in the SCC.
+ */
+list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return VerticesOfSCC; }
 
-list<HatScheT::Vertex *> HatScheT::SCC::getVerticiesOfSCC() { return verticiesOfSCC; }
+/*!
+ * @return a set of Vertices which are connected to the SCC
+ */
+set<HatScheT::Vertex *> HatScheT::SCC::getConnectedVertices() { return set<HatScheT::Vertex *>(); }
 
+/*!
+ * @return The number of Vertices which belong to the SCC.
+ */
+int HatScheT::SCC::getNumberOfVertices() { return vertexInSCC.size(); }
 
-
-//Setter Functions:
-
+/*!
+ * Sets the ID of a SCC.
+ * @param newid
+ */
 void HatScheT::SCC::setId(int newid) { this->id = newid; }
 
+/*!
+ * Sets the type of an SCC to unknown, basic, trivial or complex
+ * @param sT
+ */
 void HatScheT::SCC::setSCCType(scctype sT) { this -> typeOfSCC = sT ;}
 
-void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); }
-
-
+/*!
+ * If a vertex should be part of the SCC it can be passed to this function, which sets the value of vertexInSCC
+ * for this vertex and pushes the to a list
+ * @param V
+ */
 void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
 
   for (auto &it : g->Vertices()){
     if (it->getId() == V->getId()){
       vertexInSCC[it] = true;
-      verticiesOfSCC.push_back(it);
+      VerticesOfSCC.push_back(it);
     }
   }
 }
 
-int HatScheT::SCC::getNumberOfVertices() {
-
-  int i = 0;
-
-  for (auto &it : vertexInSCC){
-    if (it.second){
-      i++;
-    }
-  }
-  return i;
-}
-
+/*!
+ * Used for debugging.
+ */
 void HatScheT::SCC::printVertexStatus() {
 
   for (auto &it:vertexInSCC){
@@ -65,12 +81,4 @@ void HatScheT::SCC::printVertexStatus() {
   }
 }
 
-
-
-
-
-
-
-
-
-
+map<HatScheT::Vertex *, bool> HatScheT::SCC::getVertexInSccMap() { return vertexInSCC; }

@@ -94,12 +94,12 @@ namespace HatScheT {
 
 
   vector <SCC*> KosarajuSCC::getSCCs () {
-    //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
+    //Generating a map which holds the information if a vertex is visited and mark all Vertices as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
-    //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
+    //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with Vertices depending
     //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
     for (auto v:this->g->Vertices()) {
       if (!visited[v]) {
@@ -109,20 +109,20 @@ namespace HatScheT {
 
     cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
-    //Getting the transposed graph of g. And a map, which maps the verticies of g to the verticies of gT.
+    //Getting the transposed graph of g. And a map, which maps the Vertices of g to the Vertices of gT.
     auto graphMap = Utility::transposeGraph(g);
     this->gT = graphMap.first;
     this->VertexMap = graphMap.second;
 
 
-    //Marking all verticies of the transposed graph as unvisited
+    //Marking all Vertices of the transposed graph as unvisited
     visited.clear();
     for (auto v:this->gT->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
-    //Doing a DFS in the transposed graph. The order of the verticies, where the DFS starts is determinated by
-    //the order of the verticies in the Stack.
+    //Doing a DFS in the transposed graph. The order of the Vertices, where the DFS starts is determinated by
+    //the order of the Vertices in the Stack.
 
     int i = 0;
 
@@ -136,7 +136,7 @@ namespace HatScheT {
         dfs(VertexMap[Stack.top()]);
         cout << "Size of SCCVector is " << sccVector.size() << endl;
         cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
-        cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Verticies" << endl;
+        cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
         i++;
       }
 

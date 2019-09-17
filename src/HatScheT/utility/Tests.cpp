@@ -706,7 +706,7 @@ bool Tests::moduloSDCTestFiege() {
     for (auto &it : sccs){
       cout << endl;
       it->printVertexStatus();
-      auto v = it->getVerticiesOfSCC();
+      auto v = it->getVerticesOfSCC();
       int i = 0;
       for (auto &itr : v){
         cout << i << ": " << itr->getName() << " ";
@@ -719,7 +719,7 @@ bool Tests::moduloSDCTestFiege() {
     list<int> value;
 
     for (auto &it : sccs) {
-      auto vertexList = it->getVerticiesOfSCC();
+      auto vertexList = it->getVerticesOfSCC();
         value.clear();
         for (auto &itr : vertexList){
           value.push_back(itr->getId());

@@ -51,8 +51,37 @@ namespace HatScheT {
       sortSCCs(it);
     }
 
+    cout << endl << "Basic SCCs:" << endl;
+
+    for (auto &it : basicSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
+    }
+
+    cout << endl << "Complex SCCs:" << endl;
+    for (auto &it : complexSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
+    }
+
+    cout << endl << "Trivial SCCs:" << endl;
+    for (auto &it : trivialSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
+    }
+
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }
+
 
   scctype DaiZhang19Scheduler::determineType(SCC *scc) {
 
@@ -60,9 +89,9 @@ namespace HatScheT {
       return trivial;
     }
 
-    list<Vertex*> verticiesOfSCC = scc->getVerticiesOfSCC();
+    list<Vertex*> VerticesOfSCC = scc->getVerticesOfSCC();
 
-    for (auto &it:verticiesOfSCC) {
+    for (auto &it:VerticesOfSCC) {
       if (resourceModel.getResource(it)->getLimit() != -1) {
         return complex;
       }
@@ -74,19 +103,18 @@ namespace HatScheT {
 
   int DaiZhang19Scheduler::getSccIdbyVertex(Vertex *v) {
 
-    int sccID = 0;
-
-    /*for (auto it:sccs) {
-      auto vertexMap = it->getVertexMap();
-      for (auto V:it->Vertices()) {
-        if (vertexMap[V] == v) {
-          sccID = it->getId();
+    for (auto &it : sccs) {
+      map <Vertex*, bool> vMap = it->getVertexInSccMap();
+      for (auto &mapElements : vMap){
+        if (mapElements.first->getId() == v->getId()){
+          if (mapElements.second){
+            return it->getId();
+          }
         }
       }
-    }*/
+    }
 
-    return sccID;
-
+    throw HatScheT::Exception("DaiZhang19Scheduler.getSccIdbyVertex: Vertex is not in any SCC.");
   }
 
   void DaiZhang19Scheduler::sortSCCs(SCC *scc) {
@@ -150,5 +178,7 @@ namespace HatScheT {
     }
   }
 
+  void DaiZhang19Scheduler::findConnectedSCCs() {
 
+  }
 }

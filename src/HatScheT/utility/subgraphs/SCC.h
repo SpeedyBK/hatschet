@@ -39,7 +39,6 @@ namespace HatScheT {
     SCC(Graph &g);
 
     //Getter Functions:
-
     /*!
      * @return Name of the SCC.
      */
@@ -51,7 +50,7 @@ namespace HatScheT {
     int getId ();
 
     /*!
-     * @return Number of Verticies which belong to the SCC.
+     * @return Number of Vertices which belong to the SCC.
      */
     int getNumberOfVertices();
 
@@ -61,19 +60,19 @@ namespace HatScheT {
     scctype getSccType();
 
     /*!
-     * @return A list of the verticies which belong to an SCC.
+     * @return A list of the Vertices which belong to an SCC.
      */
-    list <Vertex*> getVerticiesOfSCC();
+    list <Vertex*> getVerticesOfSCC();
 
     /*!
-     * Used for debugging
+     * @return A map with the Vertices as key and a bool which tells if they belong to the SCC.
      */
-    void printVertexStatus();
+    map <Vertex*, bool> getVertexInSccMap();
 
     /*!
-     * @return The vector with the IDs of all SCCs the actual SCC is connected to.
+     * @return A set of the Vertices which are connected to the SCC.
      */
-    vector <int> getConnections();
+    set <Vertex*> getConnectedVertices();
 
 
     //Setter Functions:
@@ -93,16 +92,21 @@ namespace HatScheT {
     void setSCCType(scctype sT);
 
     /*!
-     * Can be used to set the connection vector, which contains the information to which SCCs this SCC is connected to.
-     * Does not contain any directional Information.
-     */
-    void setConnections(int conID);
-
-    /*!
      * This function Sets the Vertex V of Graph g as a part of the SCC.
      * @param V is the vertex which should be set as a part of the SCC
      */
     void setVertexAsPartOfSCC(Vertex* V);
+
+
+    //Member Methods
+    /*!
+     * Used for debugging
+     */
+    void printVertexStatus();
+
+    //Dummy function.
+    //ToDo Remove dummy.
+    vector <int> getConnections () {return {0};}
 
 
   private:
@@ -123,16 +127,16 @@ namespace HatScheT {
     string name;
 
     /*!
-     * connections contains the ID of each component which is connected to the actual SCC (inbound and outbound connections).
+     * connectedSCCs contains the ID of each component which is connected to the actual SCC (inbound and outbound connections).
      */
-    vector <int> connections;
+    vector <int> connectedSCCs;
 
     /*!
      * Type of the SCC.
      * - unknown: Set by constructor, just for initialisation.
      * - trivial: SCCs which contain just 1 vertex.
-     * - basic: SCCs which contain multiple verticies, but none of them has a ressource constraint.
-     * - complex: SCCs which contain multiple verticies, and at least one vertex has a ressource constraint.
+     * - basic: SCCs which contain multiple Vertices, but none of them has a ressource constraint.
+     * - complex: SCCs which contain multiple Vertices, and at least one vertex has a ressource constraint.
      */
     scctype typeOfSCC;
 
@@ -142,9 +146,14 @@ namespace HatScheT {
     map <Vertex*, bool> vertexInSCC;
 
     /*!
-     * List of Verticies which belong to the SCC.
+     * List of Vertices which belong to the SCC.
      */
-    list <Vertex*> verticiesOfSCC;
+    list <Vertex*> VerticesOfSCC;
+
+    /*!
+     * List of Vertices which are connected to the SCC but not belong to it.
+     */
+    set <Vertex*> VerticesConnectedToSCC;
 
   };
 
