@@ -134,7 +134,7 @@ namespace HatScheT {
         sccVector[sccVector.size()-1]->setId(i);
         sccVector[sccVector.size()-1]->setName("SSC_");
         dfs(VertexMap[Stack.top()]);
-        cout << "Size of SCCVector is " << sccVector.size() << endl;
+        //cout << "Size of SCCVector is " << sccVector.size() << endl;
         cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
         cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
         i++;

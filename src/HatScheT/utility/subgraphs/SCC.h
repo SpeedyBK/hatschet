@@ -148,12 +148,12 @@ namespace HatScheT {
     /*!
      * List of Vertices which belong to the SCC.
      */
-    list <Vertex*> VerticesOfSCC;
+    list <Vertex*> verticesOfSCC;
 
     /*!
      * List of Vertices which are connected to the SCC but not belong to it.
      */
-    set <Vertex*> VerticesConnectedToSCC;
+    set <Vertex*> verticesConnectedToSCC;
 
   };
 

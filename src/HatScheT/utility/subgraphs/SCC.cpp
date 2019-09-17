@@ -32,7 +32,7 @@ int HatScheT::SCC::getId() { return this->id; }
 /*!
  * @return the list of Vertices in the SCC.
  */
-list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return VerticesOfSCC; }
+list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return verticesOfSCC; }
 
 /*!
  * @return a set of Vertices which are connected to the SCC
@@ -42,7 +42,7 @@ set<HatScheT::Vertex *> HatScheT::SCC::getConnectedVertices() { return set<HatSc
 /*!
  * @return The number of Vertices which belong to the SCC.
  */
-int HatScheT::SCC::getNumberOfVertices() { return vertexInSCC.size(); }
+int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
 
 /*!
  * Sets the ID of a SCC.
@@ -66,7 +66,7 @@ void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
   for (auto &it : g->Vertices()){
     if (it->getId() == V->getId()){
       vertexInSCC[it] = true;
-      VerticesOfSCC.push_back(it);
+      verticesOfSCC.push_back(it);
     }
   }
 }

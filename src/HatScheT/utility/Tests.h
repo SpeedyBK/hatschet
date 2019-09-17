@@ -92,5 +92,8 @@ public:
     * \return
     */
   static bool DaiZhangTest();
+
+  static bool findConnectionTest();
+
 };
 }

@@ -178,7 +178,4 @@ namespace HatScheT {
     }
   }
 
-  void DaiZhang19Scheduler::findConnectedSCCs() {
-
-  }
 }
