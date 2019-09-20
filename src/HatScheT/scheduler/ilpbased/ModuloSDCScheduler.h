@@ -216,7 +216,8 @@ namespace HatScheT
      */
     bool verbose;
 
-    unsigned int userdef_budget;
+    int userdef_budget;
+    int timesOutOfBudget;
   };
 
 }

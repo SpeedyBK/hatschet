@@ -163,6 +163,7 @@ HatScheT::ModuloSDCScheduler::ModuloSDCScheduler(Graph& g, ResourceModel &resour
 {
   this->verbose = false;
   this->userdef_budget = -1;
+  this->timesOutOfBudget = 0;
   this->computeMinII(&g,&resourceModel);
   this->minII = ceil(this->minII);
   this->computeMaxII(&g, &resourceModel);
@@ -480,6 +481,8 @@ bool HatScheT::ModuloSDCScheduler::sched(int budget, const std::map<HatScheT::Ve
     }
 
     if(this->verbose==true) std::cout << "#### End of Iteration\n\n" << std::endl;
+
+    if(b==0  and schedQueue.empty()==false) this->timesOutOfBudget++;
   }
 
   if(this->verbose==true) std::cout << "Result for II " << this->II << std::endl;
@@ -611,9 +614,17 @@ void HatScheT::ModuloSDCScheduler::schedule()
   this->totalTime = 0;
   this->variables.clear();
   createVariables(variables,g);
-  unsigned int budget = 0;
-  if(this->userdef_budget < 0) budget = 6*this->g.getNumberOfVertices();
-  else budget = this->userdef_budget;
+  int budget = 0;
+  int b_fac = 6;
+
+  if(this->userdef_budget < 0) {
+    budget = b_fac*this->g.getNumberOfVertices();
+    std::cout << "ModuloSDCScheduler: automatic set budget = " << budget << "(" << b_fac << " * " << budget << ")" << std::endl;
+  }
+  else{
+    budget = this->userdef_budget;
+    std::cout << "ModuloSDCScheduler: user defined budget = " << budget << std::endl;
+  }
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
@@ -668,17 +679,18 @@ void HatScheT::ModuloSDCScheduler::schedule()
     this->end = clock();
     //log time
     if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-    this->solvingTime += (double)(this->end - this->end)  / CLOCKS_PER_SEC;
+    this->solvingTime += (double)(this->end - this->begin)  / CLOCKS_PER_SEC;
 
     if(attempt==true)
     {
       scheduleFound=true;
-      std::cout << "FOUND for II=" << this->II << std::endl;
+      std::cout << "FOUND for II=" << this->II << " after " << this->solvingTime << " seconds" << std::endl;
       break; // found
     }
     else this->timeouts++;
   }
   if(scheduleFound==false) this->II = -1;
+  std::cout << "ModuloSDCScheduler: total times out of budget = " << this->timesOutOfBudget << std::endl;
 }
 
 void HatScheT::ModuloSDCScheduler::setObjective()
