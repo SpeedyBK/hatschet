@@ -182,6 +182,7 @@ namespace HatScheT {
 
     list <Vertex*> conVertices;
     set <Vertex*> PreSuccessors;
+    list <SCC*> conSCCs;
 
     for (auto &it : scc->getVerticesOfSCC()){
       PreSuccessors = g.getPredecessors(it);
@@ -201,8 +202,34 @@ namespace HatScheT {
       conVertices.remove(sVIt);
     }
 
+    for (auto &it : sccs){
+      for (auto &vIt : it->getVerticesOfSCC()){
+        for (auto &cVIt : conVertices){
+          if (vIt->getId() == cVIt->getId()){
+            conSCCs.push_back(it);
+          }
+        }
+      }
+    }
+
+    scc->setConnectedSCCs(conSCCs);
+
   }
 
-  bool DaiZhang19Scheduler::is_equal(Vertex* A, Vertex* B){ return (A == B); }
+  void DaiZhang19Scheduler::testdummy() {
+
+    schedule();
+    for (auto &it : sccs){
+      findConnectedSCCs(it);
+    }
+
+    for (auto &it : sccs){
+      cout << endl << it->getName() + to_string(it->getId()) << endl;
+      for (auto &sIt : it->getConnectedSCCs()){
+        cout << sIt->getId() << " ";
+      }
+    }
+
+  }
 
 }

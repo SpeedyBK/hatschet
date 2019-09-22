@@ -77,3 +77,7 @@ void HatScheT::SCC::printVertexStatus() {
 }
 
 map<HatScheT::Vertex *, bool> HatScheT::SCC::getVertexInSccMap() { return vertexInSCC; }
+
+void HatScheT::SCC::setConnectedSCCs(list<HatScheT::SCC *> conSCCs) { this -> connectedSCCs = conSCCs;}
+
+list<HatScheT::SCC *> HatScheT::SCC::getConnectedSCCs() { return connectedSCCs;}

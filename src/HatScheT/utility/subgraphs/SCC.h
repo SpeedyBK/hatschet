@@ -92,12 +92,17 @@ namespace HatScheT {
      */
     void setVertexAsPartOfSCC(Vertex* V);
 
+    void setConnectedSCCs(list <SCC*> conSCCs);
+
 
     //Member Methods
     /*!
      * Used for debugging
      */
     void printVertexStatus();
+
+
+    list <SCC*> getConnectedSCCs();
 
     //Dummy function.
     //ToDo Remove dummy.
@@ -124,7 +129,7 @@ namespace HatScheT {
     /*!
      * connectedSCCs contains the ID of each component which is connected to the actual SCC (inbound and outbound connections).
      */
-    vector <int> connectedSCCs;
+    list <SCC*> connectedSCCs;
 
     /*!
      * Type of the SCC.

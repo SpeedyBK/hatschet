@@ -64,7 +64,7 @@ namespace HatScheT {
 
     void findConnectedSCCs(SCC* scc);
 
-    bool is_equal(Vertex* A, Vertex* B);
+    void testdummy();
 
 
   private:

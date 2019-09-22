@@ -873,21 +873,11 @@ bool Tests::moduloSDCTestFiege() {
     Gr.createEdge(C, E ,0);
     Gr.createEdge(A, F, 0);
 
-    KosarajuSCC kosa(Gr);
-
-    auto sccs = kosa.getSCCs();
-
     cout << endl;
-
-    for (auto &it:sccs){
-      cout << it->getName() + to_string(it->getId()) << endl;
-    }
 
     DaiZhang19Scheduler Dai(Gr, rm, {"CPLEX"});
 
-    for (auto &it:sccs) {
-      Dai.findConnectedSCCs(it);
-    }
+    Dai.testdummy();
 
     return false;
   }
