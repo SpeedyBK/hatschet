@@ -883,6 +883,12 @@ bool Tests::moduloSDCTestFiege() {
       cout << it->getName() + to_string(it->getId()) << endl;
     }
 
+    DaiZhang19Scheduler Dai(Gr, rm, {"CPLEX"});
+
+    for (auto &it:sccs) {
+      Dai.findConnectedSCCs(it);
+    }
+
     return false;
   }
 

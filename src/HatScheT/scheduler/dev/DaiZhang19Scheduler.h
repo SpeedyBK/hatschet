@@ -62,6 +62,10 @@ namespace HatScheT {
 
     void findMaximalIndependentSet(vector <SCC*> SCCvec, scctype sT);
 
+    void findConnectedSCCs(SCC* scc);
+
+    bool is_equal(Vertex* A, Vertex* B);
+
 
   private:
 

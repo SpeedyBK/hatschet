@@ -178,4 +178,31 @@ namespace HatScheT {
     }
   }
 
+  void DaiZhang19Scheduler::findConnectedSCCs(SCC *scc) {
+
+    list <Vertex*> conVertices;
+    set <Vertex*> PreSuccessors;
+
+    for (auto &it : scc->getVerticesOfSCC()){
+      PreSuccessors = g.getPredecessors(it);
+      for (auto &psIt : PreSuccessors){
+        conVertices.push_back(psIt);
+      }
+      PreSuccessors = g.getSuccessors(it);
+      for (auto &psIt : PreSuccessors){
+        conVertices.push_back(psIt);
+      }
+    }
+
+    conVertices.sort();
+    conVertices.unique();
+
+    for(auto &sVIt : scc->getVerticesOfSCC()){
+      conVertices.remove(sVIt);
+    }
+
+  }
+
+  bool DaiZhang19Scheduler::is_equal(Vertex* A, Vertex* B){ return (A == B); }
+
 }

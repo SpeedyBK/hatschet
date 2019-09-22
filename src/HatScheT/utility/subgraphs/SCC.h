@@ -69,11 +69,6 @@ namespace HatScheT {
      */
     map <Vertex*, bool> getVertexInSccMap();
 
-    /*!
-     * @return A set of the Vertices which are connected to the SCC.
-     */
-    set <Vertex*> getConnectedVertices();
-
 
     //Setter Functions:
     /*!

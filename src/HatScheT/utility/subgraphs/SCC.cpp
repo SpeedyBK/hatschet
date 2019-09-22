@@ -35,11 +35,6 @@ int HatScheT::SCC::getId() { return this->id; }
 list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return verticesOfSCC; }
 
 /*!
- * @return a set of Vertices which are connected to the SCC
- */
-set<HatScheT::Vertex *> HatScheT::SCC::getConnectedVertices() { return set<HatScheT::Vertex *>(); }
-
-/*!
  * @return The number of Vertices which belong to the SCC.
  */
 int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
