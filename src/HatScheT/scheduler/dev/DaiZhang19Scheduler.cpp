@@ -123,15 +123,22 @@ namespace HatScheT {
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
-    cout << "Building SuperGraphs ..." << endl;
+    cout << "Edges inside the SCCs ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
 
     for (auto &sIt : sccs){
+      cout << sIt->getName() + to_string(sIt->getId()) << ": " << endl;
       for (auto &eIt : sIt->getSCCEdges()){
         cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << endl;
       }
       cout << endl;
     }
+
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Building SuperGraphs ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }
@@ -267,7 +274,15 @@ namespace HatScheT {
     }
 
     scc->setConnectedSCCs(conSCCs);
-
   }
 
+  void DaiZhang19Scheduler::buildSuperGraphAndShedule(vector<SCC *> SCCvec, scctype sT) {
+
+    if (sT == basic){
+
+    }
+    else if (sT == complex){
+      //ToDo...
+    }
+  }
 }
