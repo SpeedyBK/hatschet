@@ -62,9 +62,12 @@ namespace HatScheT {
 
     void findMaximalIndependentSet(vector <SCC*> SCCvec, scctype sT);
 
+    /*!
+     * findConncetedSCCs finds the NeighborSCCs of a SCC, and writes it to as a list to the individual SCC.
+     * @param scc, we are looking for scc's Neighbors.
+     */
     void findConnectedSCCs(SCC* scc);
 
-    void testdummy();
 
 
   private:

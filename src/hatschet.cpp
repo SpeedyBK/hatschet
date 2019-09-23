@@ -284,7 +284,6 @@ int main(int argc, char *args[]) {
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
         if(str=="DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
-        if(str=="FINDCONN" && HatScheT::Tests::findConnectionTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif

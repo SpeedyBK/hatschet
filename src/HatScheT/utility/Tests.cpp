@@ -841,45 +841,4 @@ bool Tests::moduloSDCTestFiege() {
     return false;
   }
 
-  bool Tests::findConnectionTest() {
-
-    HatScheT::Graph Gr;
-    HatScheT::ResourceModel rm;
-
-    auto &red = rm.makeResource("red", -1, 1, 1);
-
-    Vertex& A = Gr.createVertex(0);
-    Vertex& B = Gr.createVertex(1);
-    Vertex& C = Gr.createVertex(2);
-    Vertex& D = Gr.createVertex(3);
-    Vertex& E = Gr.createVertex(4);
-    Vertex& F = Gr.createVertex(5);
-
-    rm.registerVertex(&A, &red);
-    rm.registerVertex(&B, &red);
-    rm.registerVertex(&C, &red);
-    rm.registerVertex(&D, &red);
-    rm.registerVertex(&E, &red);
-    rm.registerVertex(&F, &red);
-
-    //Basic SCC:
-    Gr.createEdge(B, C ,0);
-    Gr.createEdge(C, D ,1);
-    Gr.createEdge(D, B ,0);
-
-    //Trivial SCCs:
-    Gr.createEdge(A, B ,0);
-    Gr.createEdge(D, E ,0);
-    Gr.createEdge(C, E ,0);
-    Gr.createEdge(A, F, 0);
-
-    cout << endl;
-
-    DaiZhang19Scheduler Dai(Gr, rm, {"CPLEX"});
-
-    Dai.testdummy();
-
-    return false;
-  }
-
 }

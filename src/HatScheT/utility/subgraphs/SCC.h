@@ -87,11 +87,14 @@ namespace HatScheT {
     void setSCCType(scctype sT);
 
     /*!
-     * This function Sets the Vertex V of Graph g as a part of the SCC.
+     * This function sets the Vertex V of Graph g as a part of the SCC.
      * @param V is the vertex which should be set as a part of the SCC
      */
     void setVertexAsPartOfSCC(Vertex* V);
 
+    /*!
+     * Sets a list, with the Neighbors of the SCC.
+     */
     void setConnectedSCCs(list <SCC*> conSCCs);
 
 
@@ -149,11 +152,6 @@ namespace HatScheT {
      * List of Vertices which belong to the SCC.
      */
     list <Vertex*> verticesOfSCC;
-
-    /*!
-     * List of Vertices which are connected to the SCC but not belong to it.
-     */
-    set <Vertex*> verticesConnectedToSCC;
 
   };
 

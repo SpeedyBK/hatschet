@@ -79,6 +79,38 @@ namespace HatScheT {
       }
     }
 
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Searching connected SCCs ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    for (auto &it : sccs){
+      findConnectedSCCs(it);
+    }
+
+    for (auto &it : sccs){
+      cout << endl << it->getName() + to_string(it->getId()) << endl;
+      for (auto &sIt : it->getConnectedSCCs()){
+        cout << sIt->getId() << " ";
+      }
+    }
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Searching max. independent sets ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+
+    cout << endl << "Basic Component:" << endl;
+    //findMaximalIndependentSet(basicSCCs, basic);
+
+    cout << endl << "Complex Component:" << endl;
+    //findMaximalIndependentSet(complexSCCs, complex);
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Building SuperGraphs ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+
+
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }
 
@@ -213,22 +245,6 @@ namespace HatScheT {
     }
 
     scc->setConnectedSCCs(conSCCs);
-
-  }
-
-  void DaiZhang19Scheduler::testdummy() {
-
-    schedule();
-    for (auto &it : sccs){
-      findConnectedSCCs(it);
-    }
-
-    for (auto &it : sccs){
-      cout << endl << it->getName() + to_string(it->getId()) << endl;
-      for (auto &sIt : it->getConnectedSCCs()){
-        cout << sIt->getId() << " ";
-      }
-    }
 
   }
 
