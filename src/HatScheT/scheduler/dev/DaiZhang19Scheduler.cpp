@@ -175,7 +175,7 @@ namespace HatScheT {
       }
 
       //Finding connected stuff.
-      for (auto it: SCCvec) {
+      /*for (auto it: SCCvec) {
         if (!checked[it]) {
           for (auto &connections : it->getConnections()) {
             for (auto &itr : SCCvec) {
@@ -185,7 +185,7 @@ namespace HatScheT {
             }
           }
         }
-      }
+      }*/
 
       SCCvec.clear();
 

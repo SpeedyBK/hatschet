@@ -107,11 +107,6 @@ namespace HatScheT {
 
     list <SCC*> getConnectedSCCs();
 
-    //Dummy function.
-    //ToDo Remove dummy.
-    vector <int> getConnections () {return {0};}
-
-
   private:
 
     /*!

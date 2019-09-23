@@ -132,7 +132,7 @@ namespace HatScheT {
         auto *scc = new SCC(*g);
         sccVector.push_back(scc);
         sccVector[sccVector.size()-1]->setId(i);
-        sccVector[sccVector.size()-1]->setName("SSC_");
+        sccVector[sccVector.size()-1]->setName("SCC_");
         dfs(VertexMap[Stack.top()]);
         //cout << "Size of SCCVector is " << sccVector.size() << endl;
         cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
