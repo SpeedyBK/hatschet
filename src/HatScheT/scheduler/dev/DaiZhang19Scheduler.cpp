@@ -99,17 +99,39 @@ namespace HatScheT {
     cout << "Searching max. independent sets ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
 
-    cout << endl << "Basic Component:" << endl;
-    //findMaximalIndependentSet(basicSCCs, basic);
+    cout << endl << "Basic max independent Sets:" << endl;
+    findMaximalIndependentSet(basicSCCs, basic);
+    cout << "Size of basicSupergraphSCCs is " << basicSupergraphSCCs.size() << endl;
 
-    cout << endl << "Complex Component:" << endl;
-    //findMaximalIndependentSet(complexSCCs, complex);
+    for (auto &it : basicSupergraphSCCs){
+      for (auto &iTem : it){
+        cout << iTem->getName() + to_string(iTem->getId()) << " ";
+      }
+      cout << endl;
+    }
+
+    cout << endl << "Complex max independent Sets:" << endl;
+    findMaximalIndependentSet(complexSCCs, complex);
+    cout << "Size of complexSupergraphSCCs is " << complexSupergraphSCCs.size() << endl;
+
+    for (auto &it : complexSupergraphSCCs){
+      for (auto &iTem : it){
+        cout << iTem->getName() + to_string(iTem->getId()) << " ";
+      }
+      cout << endl;
+    }
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     cout << "Building SuperGraphs ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
 
+    for (auto &sIt : sccs){
+      for (auto &eIt : sIt->getSCCEdges()){
+        cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << endl;
+      }
+      cout << endl;
+    }
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }
@@ -162,35 +184,35 @@ namespace HatScheT {
     }
   }
 
-  void DaiZhang19Scheduler::findMaximalIndependentSet(vector<SCC *> SCCvec, scctype sT) {
+  void DaiZhang19Scheduler::findMaximalIndependentSet(vector<SCC*> SCCvec, scctype sT) {
 
     if (!SCCvec.empty()) {
       vector<SCC *> superGraph;
 
       //Marking all SCCs as not checked.
       map<SCC *, bool> checked;
-      for (auto it : SCCvec) {
+      for (auto &it : SCCvec) {
         checked.insert(make_pair(it, false));
         //cout << it->getId() << " - " << checked[it] << endl;
       }
 
       //Finding connected stuff.
-      /*for (auto it: SCCvec) {
+      for (auto &it: SCCvec) {
         if (!checked[it]) {
-          for (auto &connections : it->getConnections()) {
+          for (auto &connections : it->getConnectedSCCs()) {
             for (auto &itr : SCCvec) {
-              if (connections == itr->getId()) {
+              if (connections->getId() == itr->getId()) {
                 checked[itr] = true;
               }
             }
           }
         }
-      }*/
+      }
 
       SCCvec.clear();
 
       //Putting unconnected stuff in a Vector
-      for (auto it : checked) {
+      for (auto &it : checked) {
         if (!it.second) {
           //cout << it.first->getId() << " - " << it.second << endl;
           superGraph.push_back(it.first);

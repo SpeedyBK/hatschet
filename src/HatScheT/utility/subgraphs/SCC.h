@@ -69,6 +69,11 @@ namespace HatScheT {
      */
     map <Vertex*, bool> getVertexInSccMap();
 
+    /*!
+     * @return A list of edges which has Source and Destination in the SCC.
+     */
+    list<Edge*> getSCCEdges();
+
 
     //Setter Functions:
     /*!

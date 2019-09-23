@@ -57,9 +57,7 @@ namespace HatScheT {
 
     /*!
      * findMaximalIndependentSet finds the maximum independet set for a type of SCCs in a Graph.
-     * ToDo: find a reference for that...
      */
-
     void findMaximalIndependentSet(vector <SCC*> SCCvec, scctype sT);
 
     /*!

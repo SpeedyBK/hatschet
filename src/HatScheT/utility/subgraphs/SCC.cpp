@@ -80,4 +80,31 @@ map<HatScheT::Vertex *, bool> HatScheT::SCC::getVertexInSccMap() { return vertex
 
 void HatScheT::SCC::setConnectedSCCs(list<HatScheT::SCC *> conSCCs) { this -> connectedSCCs = conSCCs;}
 
+
 list<HatScheT::SCC *> HatScheT::SCC::getConnectedSCCs() { return connectedSCCs;}
+
+
+list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() {
+
+  bool srcVertexInSCC = false;
+  bool dstVertexInSCC = false;
+  list <Edge*> EdgesInSCC;
+
+  for (auto &eIt : g->Edges()){
+    for (auto &vIt : verticesOfSCC){
+      if(&eIt->getVertexSrc() == vIt){
+        srcVertexInSCC = true;
+      }
+      if((&eIt->getVertexDst() == vIt)){
+        dstVertexInSCC = true;
+      }
+    }
+    if (srcVertexInSCC && dstVertexInSCC){
+      EdgesInSCC.push_back(eIt);
+    }
+    srcVertexInSCC = false;
+    dstVertexInSCC = false;
+  }
+
+  return EdgesInSCC;
+}
