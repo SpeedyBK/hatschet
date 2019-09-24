@@ -7,6 +7,7 @@
 #include <cmath>
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
 namespace HatScheT {
@@ -36,7 +37,7 @@ namespace HatScheT {
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
-    cout << "Determine type of SCCs..." << endl;
+    cout << "DeteresourceModeline type of SCCs..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     for (auto &it : sccs){
       it->setSCCType(determineType(it));
@@ -140,11 +141,15 @@ namespace HatScheT {
     cout << "Building SuperGraphs ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
 
+    for (auto &it:basicSupergraphSCCs){
+      buildSuperGraph(it, basic);
+    }
+
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }
 
 
-  scctype DaiZhang19Scheduler::determineType(SCC *scc) {
+  scctype DaiZhang19Scheduler::determineType(HatScheT::SCC *scc){
 
     if (scc->getNumberOfVertices() == 1) {
       return trivial;
@@ -276,13 +281,65 @@ namespace HatScheT {
     scc->setConnectedSCCs(conSCCs);
   }
 
-  void DaiZhang19Scheduler::buildSuperGraphAndShedule(vector<SCC *> SCCvec, scctype sT) {
+  //ToDo...
+  void DaiZhang19Scheduler::buildSuperGraph(vector<SCC*> SCCvec, scctype sT) {
+
+    Graph h;
+    std::map<Vertex*,Vertex*> m;
+
+    //Creting Verticies
+    //(gVertex : hVertex).
+    for (auto &sccIt : SCCvec) {
+      for (auto &VSCC:sccIt->getVerticesOfSCC()) {
+        m[VSCC] = &h.createVertex(VSCC->getId());
+        this -> resourceModel.registerVertex(m[VSCC], this -> resourceModel.getResource(VSCC));
+      }
+    }
+
+    //Creating the edges
+    for (auto &sccIt : SCCvec) {
+      for (auto &E:sccIt->getSCCEdges()) {
+        h.createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
+      }
+    }
+
+    //Displaying Stuff
+    cout << "Writing Graph..."<< endl;
+    cout << "Vertices..."<< endl;
+    for (auto &vIt : h.Vertices()) {
+      cout << vIt->getId() << endl;
+    }
+    cout << "Edges..."<< endl;
+    for (auto &eIt : h.Edges()){
+      cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << endl;
+    }
+
+    DotWriter Dot ("SuperGraph.graphml", &h, &this->resourceModel);
+    Dot.write();
+
+    computeRelativeShedule(&h, &this->resourceModel, sT);
+
+  }
+
+
+  void DaiZhang19Scheduler::computeRelativeShedule(Graph* g, ResourceModel* rm, scctype sT) {
 
     if (sT == basic){
+      cout << "Starting ModuloSDC" << endl;
+      std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
+      ModuloSDCScheduler msdc(*g, *rm, solverList);
+      msdc.schedule();
+      /*auto sched = msdc.getSchedule();
+
+      for (auto &it : sched){
+        cout << it.first->getName() << "--" << it.second << endl;
+      }*/
 
     }
     else if (sT == complex){
       //ToDo...
     }
   }
+
+
 }
