@@ -23,8 +23,9 @@
 #include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/utility/writer/GraphMLGraphWriter.h"
-#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/utility/writer/XMLResourceWriter.h"
@@ -645,6 +646,56 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
+}
+
+bool Tests::compareModuloScheduler() {
+#ifndef USE_XERCESC
+  cout << "Tests::compareModuloScheduler: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+
+  int modSDC_II = -1;
+  int moovac_II = -1;
+  int ED97_II = -1;
+  int moovacminreg_II = -1;
+
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/iir_biquRM.xml";
+  string graphStr = "cTest/iir_biqu.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  //------------
+  HatScheT::ModuloSDCScheduler sdc{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  sdc.schedule();
+  modSDC_II = sdc.getII();
+  //------------
+  HatScheT::MoovacScheduler moovac{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  moovac.schedule();
+  moovac_II = moovac.getII();
+  //------------
+  HatScheT::MoovacMinRegScheduler minreg{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  minreg.schedule();
+  moovacminreg_II = minreg.getII();
+  //------------
+  HatScheT::EichenbergerDavidson97Scheduler ed97{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  ed97.schedule();
+  ED97_II = ed97.getII();
+
+  cout << "Tests::compareModuloScheduler: Expected II is 11" << endl;
+  cout << "Tests::compareModuloScheduler: ModuloSDC found II " << modSDC_II << endl;
+  cout << "Tests::compareModuloScheduler: MoovacScheduler found II " << moovac_II << endl;
+  cout << "Tests::compareModuloScheduler: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
+  cout << "Tests::compareModuloScheduler: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
+
+  if(modSDC_II != 11 or moovac_II != 11 or moovacminreg_II != 11 or ED97_II != 11) return false;
+  else return true;
+#endif
 }
 
   bool Tests::KosarajuTest() {
