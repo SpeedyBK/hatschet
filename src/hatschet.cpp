@@ -286,6 +286,7 @@ int main(int argc, char *args[]) {
         if(str=="DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
+        if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif

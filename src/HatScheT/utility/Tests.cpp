@@ -27,6 +27,7 @@
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
+#include "HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/utility/writer/XMLResourceWriter.h"
@@ -648,6 +649,33 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
+}
+
+bool Tests::rationalIISchedulerFimmelTest() {
+#ifndef USE_XERCESC
+  cout << "Tests::rationalIISchedulerFimmelTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+return false;
+#else
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/vanDongenRM.xml";
+  string graphStr = "cTest/vanDongen.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::RationalIISchedulerFimmel fimmel{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  fimmel.schedule();
+
+  cout << "Tests::rationalIISchedulerFimmelTest: expected II is 5.333..." << endl;
+  cout << "Tests::rationalIISchedulerFimmelTest: found II is " << fimmel.getII() << endl;
+
+  if(fimmel.getII() < 5.333 or fimmel.getII()>=5.334) return false;
+  else return true;
+#endif
 }
 
 bool Tests::rationalIISchedulerTest() {

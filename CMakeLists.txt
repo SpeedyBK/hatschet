@@ -242,6 +242,7 @@ add_test("criticalpath" "./hatschet" "--test=CRITPATH")
 add_test("KosarajuSCC" "./hatschet" "--test=KOSARAJU")
 add_test("CompareMSAlgorithms" "./hatschet" "--test=COMPAREMSALGORITHMS")
 add_test("rationalIISchedulerTest" "./hatschet" "--test=RATIONALIISCHEDULER")
+add_test("rationalIISchedulerFimmelTest" "./hatschet" "--test=RATIONALIISCHEDULERFIMMEL")
 
 ####################
 # example project
