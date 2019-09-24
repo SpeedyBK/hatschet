@@ -70,7 +70,7 @@ bool Tests::moovacTest()
   }
 
   int maxLatencyConstraint = 18;
-  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"});
+  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
   sched.setMaxLatencyConstraint(maxLatencyConstraint);
   sched.setSolverQuiet(false);
 
@@ -205,7 +205,7 @@ bool Tests::readWriteReadScheduleTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   //moovac original
-  HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi"});
+  HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi", "SCIP", "LPSolve"});
   ms1.schedule();
   int IIOrg = ms1.getII();
 
@@ -226,7 +226,7 @@ bool Tests::readWriteReadScheduleTest() {
   readerGraph2.readGraph(writePath.c_str());
 
   //moovac write read graph
-  HatScheT::MoovacScheduler  ms2(g2,rm2, {"CPLEX","Gurobi"});
+  HatScheT::MoovacScheduler  ms2(g2,rm2, {"CPLEX","Gurobi", "SCIP", "LPSolve"});
   ms2.schedule();
   int IIWriteRead = ms2.getII();
 
@@ -405,7 +405,7 @@ bool Tests::moduloSDCTest()
     rm.registerVertex(&c, &add);
     rm.registerVertex(&d, &load);
 
-    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
     m.setSolverQuiet(true);
     m.setVerbose(true);
     m.schedule();
@@ -620,7 +620,7 @@ bool Tests::moduloSDCTestFiege() {
     rm.registerVertex(&o2, &add);
     rm.registerVertex(&p2, &add);
 
-	std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
+	std::list<std::string> solverList = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
 	HatScheT::ModSDC m(g,rm,solverList);
 	m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 	m.setSolverQuiet(true);
@@ -667,7 +667,7 @@ return false;
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   readerGraph.readGraph(graphStr.c_str());
 
-  HatScheT::RationalIISchedulerFimmel fimmel{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::RationalIISchedulerFimmel fimmel{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   fimmel.schedule();
 
   cout << "Tests::rationalIISchedulerFimmelTest: expected II is 5.333..." << endl;
@@ -694,7 +694,7 @@ bool Tests::rationalIISchedulerTest() {
   HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
   readerGraph.readGraph(graphStr.c_str());
 
-  HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   rii.schedule();
 
   cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
@@ -728,19 +728,19 @@ bool Tests::compareModuloSchedulerTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   //------------
-  HatScheT::ModuloSDCScheduler sdc{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::ModuloSDCScheduler sdc{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   sdc.schedule();
   modSDC_II = sdc.getII();
   //------------
-  HatScheT::MoovacScheduler moovac{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::MoovacScheduler moovac{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   moovac.schedule();
   moovac_II = moovac.getII();
   //------------
-  HatScheT::MoovacMinRegScheduler minreg{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::MoovacMinRegScheduler minreg{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   minreg.schedule();
   moovacminreg_II = minreg.getII();
   //------------
-  HatScheT::EichenbergerDavidson97Scheduler ed97{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  HatScheT::EichenbergerDavidson97Scheduler ed97{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
   ed97.schedule();
   ED97_II = ed97.getII();
 
@@ -937,7 +937,7 @@ bool Tests::compareModuloSchedulerTest() {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    DaiZhang19Scheduler DaiZhang(Gr, rm, {"CPLEX"});
+    DaiZhang19Scheduler DaiZhang(Gr, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
     DaiZhang.schedule();
 
