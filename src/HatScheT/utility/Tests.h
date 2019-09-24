@@ -97,7 +97,7 @@ public:
    * this test also compares results achieved by different modulo scheduling algorithms
    * @return
    */
-  static bool compareModuloScheduler();
+  static bool compareModuloSchedulerTest();
 
 };
 }

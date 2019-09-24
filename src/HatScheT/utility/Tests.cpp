@@ -648,7 +648,7 @@ bool Tests::moduloSDCTestFiege() {
   return false;
 }
 
-bool Tests::compareModuloScheduler() {
+bool Tests::compareModuloSchedulerTest() {
 #ifndef USE_XERCESC
   cout << "Tests::compareModuloScheduler: XERCESC parsing library is not active! This test is disabled!" << endl;
   return false;
@@ -687,11 +687,11 @@ bool Tests::compareModuloScheduler() {
   ed97.schedule();
   ED97_II = ed97.getII();
 
-  cout << "Tests::compareModuloScheduler: Expected II is 11" << endl;
-  cout << "Tests::compareModuloScheduler: ModuloSDC found II " << modSDC_II << endl;
-  cout << "Tests::compareModuloScheduler: MoovacScheduler found II " << moovac_II << endl;
-  cout << "Tests::compareModuloScheduler: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
-  cout << "Tests::compareModuloScheduler: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: Expected II is 11" << endl;
+  cout << "Tests::compareModuloSchedulerTest: ModuloSDC found II " << modSDC_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: MoovacScheduler found II " << moovac_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
 
   if(modSDC_II != 11 or moovac_II != 11 or moovacminreg_II != 11 or ED97_II != 11) return false;
   else return true;
