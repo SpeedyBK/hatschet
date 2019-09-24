@@ -4,65 +4,107 @@
 
 #include "SCC.h"
 
-HatScheT::SCC::SCC() {
-  this->_type = unknown;
-  this->maxVertexId = 0;
+/*!
+ * Contructor, does a basic initialisation of an empty SCC.
+ * @param g is the original graph.
+ */
+HatScheT::SCC::SCC(Graph &g) {
+  this->g = &g;
+  this->typeOfSCC = unknown;
   this->name = "";
   this->id = 0;
+
+  for (auto &it : g.Vertices()) {
+    vertexInSCC[it] = false;
+  }
 }
 
-//Getter Functions:
+/*!
+ * @return Type of the SCC
+ */
+HatScheT::scctype HatScheT::SCC::getSccType() { return typeOfSCC; }
 
-HatScheT::scctype HatScheT::SCC::getSccType() { return _type; }
-
+/*!
+ * @return ID of the SCC.
+ */
 int HatScheT::SCC::getId() { return this->id; }
 
-vector<int> HatScheT::SCC::getConnections() { return connections; }
+/*!
+ * @return the list of Vertices in the SCC.
+ */
+list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return verticesOfSCC; }
 
-map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMap() { return vertexMap; }
+/*!
+ * @return The number of Vertices which belong to the SCC.
+ */
+int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
 
-map<HatScheT::Vertex *, HatScheT::Vertex *> HatScheT::SCC::getVertexMapReverse() { return vertexMapReverse; }
-
-
-
-
-//Setter Functions:
-
+/*!
+ * Sets the ID of a SCC.
+ * @param newid
+ */
 void HatScheT::SCC::setId(int newid) { this->id = newid; }
 
-void HatScheT::SCC::setSCCType(scctype sT) { this -> _type = sT ;}
+/*!
+ * Sets the type of an SCC to unknown, basic, trivial or complex
+ * @param sT
+ */
+void HatScheT::SCC::setSCCType(scctype sT) { this -> typeOfSCC = sT ;}
 
-void HatScheT::SCC::setConnections(int conID) { this -> connections.push_back(conID); } //ToDo: Handle double connections.
+/*!
+ * If a vertex should be part of the SCC it can be passed to this function, which sets the value of vertexInSCC
+ * for this vertex and pushes the to a list
+ * @param V
+ */
+void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
 
-
-
-
-void HatScheT::SCC::createVertexMap(HatScheT::Vertex *V) {
-
-  this -> vertexMap.insert(std::make_pair(&getVertexById(vertices.size()), V));
-  this -> vertexMapReverse.insert(std::make_pair(V, &getVertexById(vertices.size())));
-
+  for (auto &it : g->Vertices()){
+    if (it->getId() == V->getId()){
+      vertexInSCC[it] = true;
+      verticesOfSCC.push_back(it);
+    }
+  }
 }
 
+/*!
+ * Used for debugging.
+ */
+void HatScheT::SCC::printVertexStatus() {
 
-void HatScheT::SCC::printVertexMap() {
-  for (auto i : vertices){
-    cout << i->getName() << "; ";
+  for (auto &it:vertexInSCC){
+    cout << it.first->getName() << " -- " << it.second << endl;
   }
-
-  cout << endl << endl;
-
-  for(auto it : this->vertexMap) {
-    cout << it.first->getName() << " - " << it.second->getName() << endl;
-  }
-
-  cout << endl;
 }
 
+map<HatScheT::Vertex *, bool> HatScheT::SCC::getVertexInSccMap() { return vertexInSCC; }
+
+void HatScheT::SCC::setConnectedSCCs(list<HatScheT::SCC *> conSCCs) { this -> connectedSCCs = conSCCs;}
 
 
+list<HatScheT::SCC *> HatScheT::SCC::getConnectedSCCs() { return connectedSCCs;}
 
 
+list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() {
 
+  bool srcVertexInSCC = false;
+  bool dstVertexInSCC = false;
+  list <Edge*> EdgesInSCC;
 
+  for (auto &eIt : g->Edges()){
+    for (auto &vIt : verticesOfSCC){
+      if(&eIt->getVertexSrc() == vIt){
+        srcVertexInSCC = true;
+      }
+      if((&eIt->getVertexDst() == vIt)){
+        dstVertexInSCC = true;
+      }
+    }
+    if (srcVertexInSCC && dstVertexInSCC){
+      EdgesInSCC.push_back(eIt);
+    }
+    srcVertexInSCC = false;
+    dstVertexInSCC = false;
+  }
 
+  return EdgesInSCC;
+}

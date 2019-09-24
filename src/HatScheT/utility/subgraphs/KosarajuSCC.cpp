@@ -86,8 +86,7 @@ namespace HatScheT {
       }
     }
     cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
-    _sccs[_sccs.size()-1]->createVertex();
-    _sccs[_sccs.size()-1]->createVertexMap(getOriginalVertex(V));
+    sccVector[sccVector.size()-1]->setVertexAsPartOfSCC(V);
 
   }
 
@@ -95,12 +94,12 @@ namespace HatScheT {
 
 
   vector <SCC*> KosarajuSCC::getSCCs () {
-    //Generating a map which holds the information if a vertex is visited and mark all verticies as unvisited.
+    //Generating a map which holds the information if a vertex is visited and mark all Vertices as unvisited.
     for (auto v:this->g->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
-    //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with verticies depending
+    //This performs Deep First Searches on each unvisited vertex of g. It will fill the stack with Vertices depending
     //on the finish time of the DFS. First finished vertex will be at the bottom of the vertex stack.
     for (auto v:this->g->Vertices()) {
       if (!visited[v]) {
@@ -110,35 +109,34 @@ namespace HatScheT {
 
     cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
-    //Getting the transposed graph of g. And a map, which maps the verticies of g to the verticies of gT.
+    //Getting the transposed graph of g. And a map, which maps the Vertices of g to the Vertices of gT.
     auto graphMap = Utility::transposeGraph(g);
     this->gT = graphMap.first;
     this->VertexMap = graphMap.second;
 
 
-    //Marking all verticies of the transposed graph as unvisited
+    //Marking all Vertices of the transposed graph as unvisited
     visited.clear();
     for (auto v:this->gT->Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
-    //Doing a DFS in the transposed graph. The order of the verticies, where the DFS starts is determinated by
-    //the order of the verticies in the Stack.
+    //Doing a DFS in the transposed graph. The order of the Vertices, where the DFS starts is determinated by
+    //the order of the Vertices in the Stack.
 
     int i = 0;
 
     while (!Stack.empty()) {
 
       if (!visited[VertexMap[Stack.top()]]) {
-        auto *scc = new SCC();
-        _sccs.push_back(scc);
-        _sccs[_sccs.size()-1]->setId(i);
-        _sccs[_sccs.size()-1]->setName("SSC_");
+        auto *scc = new SCC(*g);
+        sccVector.push_back(scc);
+        sccVector[sccVector.size()-1]->setId(i);
+        sccVector[sccVector.size()-1]->setName("SCC_");
         dfs(VertexMap[Stack.top()]);
-        cout << "Size of SCCVector is " << _sccs.size() << endl;
-        cout << _sccs[_sccs.size()-1]->getName() << _sccs[_sccs.size()-1]->getId();
-        cout << " Has " << _sccs[_sccs.size()-1]->getNumberOfVertices() << " Verticies" << endl;
-        _sccs[_sccs.size()-1]->printVertexMap();
+        //cout << "Size of SCCVector is " << sccVector.size() << endl;
+        cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
+        cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
         i++;
       }
 
@@ -146,7 +144,7 @@ namespace HatScheT {
 
     }
 
-    return _sccs;
+    return sccVector;
   }
 
 

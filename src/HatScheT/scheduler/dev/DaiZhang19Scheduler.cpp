@@ -7,10 +7,12 @@
 #include <cmath>
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
 namespace HatScheT {
 
-  DaiZhang19Scheduler::DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
+  DaiZhang19Scheduler::DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel,
+                                           std::list<std::string> solverWishlist)
       : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
     II = -1;
     this->timeouts = 0;
@@ -26,101 +28,112 @@ namespace HatScheT {
   void DaiZhang19Scheduler::schedule() {
     cout << endl << "DaiZhang19Scheduler::schedule: start" << endl;
 
-    cout << endl << "Starting Kosajaru's SCC Algorithm..." << endl;
-    KosarajuSCC kscc(this->g);
-    this->sccs = kscc.getSCCs();
-    cout << endl << "Finished Kosajaru's SCC Algorithm." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Finding the SCCs in Graph..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    KosarajuSCC kosaraju(this -> g);
+    sccs = kosaraju.getSCCs();
 
-    cout << endl << "Setting SCC-Types" << endl;
-
-    for (auto it : sccs) {
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Determine type of SCCs..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    for (auto &it : sccs){
       it->setSCCType(determineType(it));
-      //Debug
-      cout << endl << "SCC " << it->getId() << " is Type (0 = unknown, 1 = Basic, 2 = Complex, 3 = Trivial): "
-           << it->getSccType() << endl;
+      cout << it->getName() << "Type is: " << it->getSccType() << " (0 = unknown, 1 = Basic, 2 = Complex, 3 = Trivial)" << endl;
     }
 
-    cout << endl << "Done setting Types." << endl;
-
-    cout << endl << "Creating edges in SCCs" << endl;
-
-    for (auto it:g.Edges()) {
-      if (getSccIdbyVertex(&it->getVertexSrc()) == getSccIdbyVertex(&it->getVertexDst())) {
-        auto vertexMapReverse = sccs[getSccIdbyVertex(&it->getVertexSrc())]->getVertexMapReverse();
-        sccs[getSccIdbyVertex(&it->getVertexSrc())]->createEdge(*vertexMapReverse[&it->getVertexSrc()],
-                                                                *vertexMapReverse[&it->getVertexDst()],
-                                                                it->getDistance(), it->getDependencyType());
-      } else {
-        sccs[getSccIdbyVertex(&it->getVertexSrc())]->setConnections(getSccIdbyVertex(&it->getVertexDst()));
-        sccs[getSccIdbyVertex(&it->getVertexDst())]->setConnections(getSccIdbyVertex(&it->getVertexSrc()));
-      }
-    }
-
-    cout << endl << "Done creating edges." << endl;
-
-    //Has to be removed:
-    for (auto it:sccs) {
-      cout << "SCC_" << it->getId() << endl;
-      cout << "Has " << it->getNumberOfEdges() << " Edges" << endl;
-      for (auto e:it->Edges()) {
-        cout << e->getVertexSrcName() << " - " << e->getVertexDstName() << endl;
-      }
-      cout << "SCC_" << it->getId() << " is connected to the following SCCs:" << endl;
-      auto connections = it->getConnections();
-      for (auto itr:connections) {
-        cout << itr << ", ";
-      }
-      cout << endl << endl;
-    }
-
-    cout << "Sorting SCCs by Type..." << endl;
-
-    for (auto it:sccs) {
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Sorting the SCCs by type..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    for (auto &it : sccs){
       sortSCCs(it);
     }
 
-    cout << "Sorting Done..." << endl;
+    cout << endl << "Basic SCCs:" << endl;
 
-    cout << endl << "Basic: " << endl;
-    for (auto it:basicSCCs) {
-      cout << it->getId() << " ";
+    for (auto &it : basicSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
     }
 
-    cout << endl << "Complex: " << endl;
-    for (auto it:complexSCCs) {
-      cout << it->getId() << " ";
+    cout << endl << "Complex SCCs:" << endl;
+    for (auto &it : complexSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
     }
 
-    cout << endl << "Trivial: " << endl;
-    for (auto it:trivialSCCs) {
-      cout << it->getId() << " ";
+    cout << endl << "Trivial SCCs:" << endl;
+    for (auto &it : trivialSCCs){
+      cout << it->getName() + to_string(it->getId()) << endl;
+      auto v = it->getVerticesOfSCC();
+      for (auto &itr : v){
+        cout << itr->getName() << endl;
+      }
     }
 
-    //ToDo: Has to be checked.
-    cout << endl << "Building Basic Supergraphs.." << endl;
-    if (!basicSCCs.empty()){
-      findSupergraphs(basicSCCs, basic);
-    }else{
-      cout << "No basic SCCs, skipping.." << endl;
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Searching connected SCCs ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    for (auto &it : sccs){
+      findConnectedSCCs(it);
     }
 
-    cout << endl << "Building Complex Supergraphs.." << endl;
-    if (!complexSCCs.empty()){
-      findSupergraphs(complexSCCs, complex);
-    }else{
-      cout << "No complex SCCs, skipping.." << endl;
+    for (auto &it : sccs){
+      cout << endl << it->getName() + to_string(it->getId()) << endl;
+      for (auto &sIt : it->getConnectedSCCs()){
+        cout << sIt->getId() << " ";
+      }
     }
-    //Todo: End!
 
-    for (auto &it:basicSupergraphs){
-      for (auto itr:it){
-        cout << itr->getId() << " ";
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Searching max. independent sets ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+
+    cout << endl << "Basic max independent Sets:" << endl;
+    findMaximalIndependentSet(basicSCCs, basic);
+    cout << "Size of basicSupergraphSCCs is " << basicSupergraphSCCs.size() << endl;
+
+    for (auto &it : basicSupergraphSCCs){
+      for (auto &iTem : it){
+        cout << iTem->getName() + to_string(iTem->getId()) << " ";
+      }
+      cout << endl;
+    }
+
+    cout << endl << "Complex max independent Sets:" << endl;
+    findMaximalIndependentSet(complexSCCs, complex);
+    cout << "Size of complexSupergraphSCCs is " << complexSupergraphSCCs.size() << endl;
+
+    for (auto &it : complexSupergraphSCCs){
+      for (auto &iTem : it){
+        cout << iTem->getName() + to_string(iTem->getId()) << " ";
+      }
+      cout << endl;
+    }
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Building SuperGraphs ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+
+    for (auto &sIt : sccs){
+      for (auto &eIt : sIt->getSCCEdges()){
+        cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << endl;
       }
       cout << endl;
     }
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
-
   }
 
 
@@ -130,10 +143,10 @@ namespace HatScheT {
       return trivial;
     }
 
-    auto vertexMap = scc->getVertexMap();
+    list<Vertex*> VerticesOfSCC = scc->getVerticesOfSCC();
 
-    for (auto it:vertexMap) {
-      if (resourceModel.getResource(it.second)->getLimit() != -1) {
+    for (auto &it:VerticesOfSCC) {
+      if (resourceModel.getResource(it)->getLimit() != -1) {
         return complex;
       }
     }
@@ -144,19 +157,18 @@ namespace HatScheT {
 
   int DaiZhang19Scheduler::getSccIdbyVertex(Vertex *v) {
 
-    int sccID = 0;
-
-    for (auto it:sccs) {
-      auto vertexMap = it->getVertexMap();
-      for (auto V:it->Vertices()) {
-        if (vertexMap[V] == v) {
-          sccID = it->getId();
+    for (auto &it : sccs) {
+      map <Vertex*, bool> vMap = it->getVertexInSccMap();
+      for (auto &mapElements : vMap){
+        if (mapElements.first->getId() == v->getId()){
+          if (mapElements.second){
+            return it->getId();
+          }
         }
       }
     }
 
-    return sccID;
-
+    throw HatScheT::Exception("DaiZhang19Scheduler.getSccIdbyVertex: Vertex is not in any SCC.");
   }
 
   void DaiZhang19Scheduler::sortSCCs(SCC *scc) {
@@ -172,26 +184,24 @@ namespace HatScheT {
     }
   }
 
-  SCC *DaiZhang19Scheduler::findSupergraphs(vector<SCC *> SCCvec, scctype sT) {
-
-    cout << "-------------------------------------------------------------------------" << endl;
+  void DaiZhang19Scheduler::findMaximalIndependentSet(vector<SCC*> SCCvec, scctype sT) {
 
     if (!SCCvec.empty()) {
       vector<SCC *> superGraph;
 
       //Marking all SCCs as not checked.
       map<SCC *, bool> checked;
-      for (auto it : SCCvec) {
+      for (auto &it : SCCvec) {
         checked.insert(make_pair(it, false));
         //cout << it->getId() << " - " << checked[it] << endl;
       }
 
       //Finding connected stuff.
-      for (auto it: SCCvec) {
+      for (auto &it: SCCvec) {
         if (!checked[it]) {
-          for (auto connections : it->getConnections()) {
-            for (auto itr : SCCvec) {
-              if (connections == itr->getId()) {
+          for (auto &connections : it->getConnectedSCCs()) {
+            for (auto &itr : SCCvec) {
+              if (connections->getId() == itr->getId()) {
                 checked[itr] = true;
               }
             }
@@ -202,9 +212,9 @@ namespace HatScheT {
       SCCvec.clear();
 
       //Putting unconnected stuff in a Vector
-      for (auto it : checked) {
+      for (auto &it : checked) {
         if (!it.second) {
-          cout << it.first->getId() << " - " << it.second << endl;
+          //cout << it.first->getId() << " - " << it.second << endl;
           superGraph.push_back(it.first);
         } else {
           SCCvec.push_back(it.first);
@@ -212,17 +222,52 @@ namespace HatScheT {
       }
 
       if (sT == basic) {
-        basicSupergraphs.push_back(superGraph);
+        basicSupergraphSCCs.push_back(superGraph);
       } else if (sT == complex) {
-        complexSupergraphs.push_back(superGraph);
+        complexSupergraphSCCs.push_back(superGraph);
       }
 
-      findSupergraphs(SCCvec, sT);
+      findMaximalIndependentSet(SCCvec, sT);
 
     }
-    return nullptr;
+  }
+
+  void DaiZhang19Scheduler::findConnectedSCCs(SCC *scc) {
+
+    list <Vertex*> conVertices;
+    set <Vertex*> PreSuccessors;
+    list <SCC*> conSCCs;
+
+    for (auto &it : scc->getVerticesOfSCC()){
+      PreSuccessors = g.getPredecessors(it);
+      for (auto &psIt : PreSuccessors){
+        conVertices.push_back(psIt);
+      }
+      PreSuccessors = g.getSuccessors(it);
+      for (auto &psIt : PreSuccessors){
+        conVertices.push_back(psIt);
+      }
+    }
+
+    conVertices.sort();
+    conVertices.unique();
+
+    for(auto &sVIt : scc->getVerticesOfSCC()){
+      conVertices.remove(sVIt);
+    }
+
+    for (auto &it : sccs){
+      for (auto &vIt : it->getVerticesOfSCC()){
+        for (auto &cVIt : conVertices){
+          if (vIt->getId() == cVIt->getId()){
+            conSCCs.push_back(it);
+          }
+        }
+      }
+    }
+
+    scc->setConnectedSCCs(conSCCs);
+
   }
 
 }
-
-

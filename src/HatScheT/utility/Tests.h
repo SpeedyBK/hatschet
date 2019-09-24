@@ -87,5 +87,11 @@ public:
     * \return
     */
   static bool KosarajuTest();
+    /*!
+    * \brief To test the DaiZhang scheduler
+    * \return
+    */
+  static bool DaiZhangTest();
+
 };
 }
