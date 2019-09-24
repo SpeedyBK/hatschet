@@ -26,6 +26,7 @@
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/utility/writer/XMLResourceWriter.h"
@@ -42,6 +43,7 @@
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
 #include <stdio.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 
 namespace HatScheT {
 
@@ -646,6 +648,33 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
+}
+
+bool Tests::rationalIISchedulerTest() {
+#ifndef USE_XERCESC
+  cout << "Tests::rationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/exampleRatII_RM.xml";
+  string graphStr = "cTest/exampleRatII.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+  rii.schedule();
+
+  cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
+  cout << "Tests::rationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+  if(rii.getM_Found() != 5 or rii.getS_Found() != 3) return false;
+  else return true;
+#endif
 }
 
 bool Tests::compareModuloSchedulerTest() {

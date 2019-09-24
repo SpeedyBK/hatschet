@@ -98,6 +98,12 @@ public:
    * @return
    */
   static bool compareModuloSchedulerTest();
-
+  /*!
+   * @brief a test for functionallity of the rational II scheduler
+   * by Sittel et. al.
+   * this test tries to solve the example problem from the paper
+   * @return
+   */
+  static bool rationalIISchedulerTest();
 };
 }
