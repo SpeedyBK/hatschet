@@ -138,7 +138,6 @@ src/HatScheT/Graph.h
 src/HatScheT/ResourceModel.h
 src/HatScheT/scheduler/ALAPScheduler.h
 src/HatScheT/scheduler/ASAPScheduler.h
-src/HatScheT/scheduler/graphBased/graphBasedMs.h
 src/HatScheT/scheduler/graphBased/SGMScheduler.h
 src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
@@ -185,7 +184,6 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
-src/HatScheT/scheduler/graphBased/graphBasedMs.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 )
@@ -235,9 +233,6 @@ add_test("API" "./hatschet" "--test=API")
 add_test("ASAPHC" "./hatschet" "--test=ASAPHC")
 add_test("ALAPHC" "./hatschet" "--test=ALAPHC")
 add_test("ULScheduler" "./hatschet" "--test=ULScheduler")
-#currently disabled cause of ambiguous edges in input graph
-#think about supporting this feature somehow
-#add_test("RationalMinII" "./hatschet" "--test=RATMINII")
 add_test("criticalpath" "./hatschet" "--test=CRITPATH")
 add_test("KosarajuSCC" "./hatschet" "--test=KOSARAJU")
 add_test("CompareMSAlgorithms" "./hatschet" "--test=COMPAREMSALGORITHMS")
