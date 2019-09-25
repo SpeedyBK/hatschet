@@ -68,7 +68,7 @@ namespace HatScheT {
 
     void buildSuperGraph(vector<SCC*> SCCvec, scctype sT);
 
-    void computeRelativeShedule(Graph* G, ResourceModel* rm, scctype sT);
+    void computeRelativeShedule(Graph& g, ResourceModel &rm, scctype sT);
 
 
   private:

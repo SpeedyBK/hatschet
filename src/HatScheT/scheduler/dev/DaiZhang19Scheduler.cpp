@@ -12,9 +12,7 @@
 
 namespace HatScheT {
 
-  DaiZhang19Scheduler::DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel,
-                                           std::list<std::string> solverWishlist)
-      : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+  DaiZhang19Scheduler::DaiZhang19Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
     II = -1;
     this->timeouts = 0;
     startTimes.clear();
@@ -143,6 +141,10 @@ namespace HatScheT {
 
     for (auto &it:basicSupergraphSCCs){
       buildSuperGraph(it, basic);
+    }
+
+    for (auto &it:complexSupergraphSCCs){
+      buildSuperGraph(it, complex);
     }
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
@@ -286,13 +288,18 @@ namespace HatScheT {
 
     Graph h;
     std::map<Vertex*,Vertex*> m;
+    ResourceModel rmTemp;
 
     //Creting Verticies
     //(gVertex : hVertex).
     for (auto &sccIt : SCCvec) {
       for (auto &VSCC:sccIt->getVerticesOfSCC()) {
         m[VSCC] = &h.createVertex(VSCC->getId());
-        this -> resourceModel.registerVertex(m[VSCC], this -> resourceModel.getResource(VSCC));
+        if (sT == basic) {
+          rmTemp.registerVertex(m[VSCC], resourceModel.getResource(VSCC));
+        }else{
+          rmTemp.registerVertex(m[VSCC], resourceModel.getResource(VSCC));
+        }
       }
     }
 
@@ -307,37 +314,54 @@ namespace HatScheT {
     cout << "Writing Graph..."<< endl;
     cout << "Vertices..."<< endl;
     for (auto &vIt : h.Vertices()) {
-      cout << vIt->getId() << endl;
+      cout << vIt->getId() << " Resource: " << rmTemp.getResource(vIt)->getName() << endl;
     }
     cout << "Edges..."<< endl;
     for (auto &eIt : h.Edges()){
-      cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << endl;
+      cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << " -- " << eIt->getDistance() << endl;
     }
 
-    DotWriter Dot ("SuperGraph.graphml", &h, &this->resourceModel);
-    Dot.write();
 
-    computeRelativeShedule(&h, &this->resourceModel, sT);
+    //DotWriter Dot ("SuperGraph.graphml", &h, &rmTemp);
+    //Dot.write();
 
+    cout << m.size() << endl;
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Computing relative schedule ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+
+    computeRelativeShedule(h, rmTemp, sT);
+
+    cout << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
+    cout << "Computing relative schedule DONE ..." << endl;
+    cout << "-----------------------------------------------------------------------------------------------" << endl;
   }
 
 
-  void DaiZhang19Scheduler::computeRelativeShedule(Graph* g, ResourceModel* rm, scctype sT) {
+  void DaiZhang19Scheduler::computeRelativeShedule(Graph &g, ResourceModel &rm, scctype sT) {
 
     if (sT == basic){
-      cout << "Starting ModuloSDC" << endl;
-      std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
-      ModuloSDCScheduler msdc(*g, *rm, solverList);
-      msdc.schedule();
-      /*auto sched = msdc.getSchedule();
+      ModuloSDCScheduler mSDC(g, rm, {"CPLEX", "Gurobi"});
+      mSDC.schedule();
+      auto sched = mSDC.getSchedule();
 
-      for (auto &it : sched){
-        cout << it.first->getName() << "--" << it.second << endl;
-      }*/
-
+      cout << "Vertex: -- Starttime:" << endl;
+      for (auto &schedIt : sched){
+        cout << schedIt.first->getName()<< ": " << schedIt.second << endl;
+      }
     }
     else if (sT == complex){
-      //ToDo...
+      ModuloSDCScheduler mSDC(g, rm, {"CPLEX", "Gurobi"});
+      mSDC.schedule();
+      auto sched = mSDC.getSchedule();
+
+      cout << "Vertex: -- Starttime:" << endl;
+      for (auto &schedIt : sched){
+        cout << schedIt.first->getName()<< ": " << schedIt.second << endl;
+      }
     }
   }
 
