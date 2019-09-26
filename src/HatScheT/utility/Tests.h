@@ -92,6 +92,25 @@ public:
     * \return
     */
   static bool DaiZhangTest();
-
+  /*!
+   * @brief a test for functionallity of modulo schedulers
+   * this test also compares results achieved by different modulo scheduling algorithms
+   * @return
+   */
+  static bool compareModuloSchedulerTest();
+  /*!
+   * @brief a test for functionallity of the rational II scheduler
+   * by Sittel et. al.
+   * this test tries to solve the example problem from their paper
+   * @return
+   */
+  static bool rationalIISchedulerTest();
+  /*!
+   * @brief a test for functionallity of the rational II scheduler
+   * by Fimmel & Müller
+   * this test tries to solve the example problem from their paper (vanDongen)
+   * @return
+   */
+  static bool rationalIISchedulerFimmelTest();
 };
 }

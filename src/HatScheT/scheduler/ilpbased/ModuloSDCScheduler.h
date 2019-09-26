@@ -126,6 +126,14 @@ namespace HatScheT
       this->verbose=b;
     }
     /*!
+     * @brief define the budget (see paper)
+     * if not user defined, the proposed value is set on default
+     * @param b
+     */
+    void setUserDefBudget(unsigned int b) {
+      this->userdef_budget = b;
+    }
+    /*!
      * the status of the ilp solver does not provide any information
      * about the quality of the solution, because many ilp problems are
      * solved for MRTs
@@ -207,6 +215,9 @@ namespace HatScheT
      * \brief verbose default false
      */
     bool verbose;
+
+    int userdef_budget;
+    int timesOutOfBudget;
   };
 
 }

@@ -14,7 +14,10 @@ namespace HatScheT
 {
 /*!
  * experimental: This scheduler determines a modulo schedule with uneven/rational initiation intervals
- * THIS CLASSES CONSTRUCTOR IS CURRENTLY DISABLED
+ *
+ * For the details see
+ * Fimmel, Mueller: Optimal Software Pipelining under resource constraints
+ * Journal of Foundations of Computer Science 2001
  */
 class RationalIISchedulerFimmel :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase
 {

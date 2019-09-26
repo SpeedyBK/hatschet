@@ -29,7 +29,6 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
 #include "HatScheT/utility/Tests.h"
-#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
@@ -57,7 +56,6 @@
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
-#include "HatScheT/scheduler/graphBased/graphBasedMs.h"
 #include "HatScheT/utility/Tests.h"
 #endif
 
@@ -132,7 +130,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, ASAPRATIONALII, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -257,9 +255,6 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "rationaliifimmel") {
             schedulerSelection = RATIONALIIFIMMEL;
         }
-        else if(schedulerSelectionStr == "asapRationalII") {
-          schedulerSelection = ASAPRATIONALII;
-        }
         else if(schedulerSelectionStr == "subgrreduction") {
           schedulerSelection = SUGRREDUCTION;
         }
@@ -284,6 +279,9 @@ int main(int argc, char *args[]) {
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
         if(str=="DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
+        if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
+        if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
+        if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
         #endif
@@ -345,12 +343,9 @@ int main(int argc, char *args[]) {
       case RATIONALII:
         cout << "RATIONALII";
         break;
-        case RATIONALIIFIMMEL:
-            cout << "RATIONALIIFIMMEL";
-            break;
-      case ASAPRATIONALII:
-        cout << "ASAPRATIONALII";
-        break;
+      case RATIONALIIFIMMEL:
+          cout << "RATIONALIIFIMMEL";
+          break;
       case SUGRREDUCTION:
         cout << "SUGRREDUCTION";
         break;
@@ -525,13 +520,6 @@ int main(int argc, char *args[]) {
               ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);
               ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
               break;
-        case ASAPRATIONALII:
-        {
-          HatScheT::ASAPScheduler* asap = new HatScheT::ASAPScheduler(g,rm);
-          scheduler = new HatScheT::GraphBasedMs(asap,g,rm,0.5,2);
-          delete asap;
-          break;
-        }
         case SUGRREDUCTION:
         {
           isModuloScheduler = true;

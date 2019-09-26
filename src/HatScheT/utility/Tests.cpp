@@ -23,8 +23,11 @@
 #include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/utility/writer/GraphMLGraphWriter.h"
-#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
+#include "HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/utility/writer/XMLResourceWriter.h"
@@ -41,6 +44,7 @@
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
 #include <stdio.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 
 namespace HatScheT {
 
@@ -66,7 +70,7 @@ bool Tests::moovacTest()
   }
 
   int maxLatencyConstraint = 18;
-  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi"});
+  HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
   sched.setMaxLatencyConstraint(maxLatencyConstraint);
   sched.setSolverQuiet(false);
 
@@ -201,7 +205,7 @@ bool Tests::readWriteReadScheduleTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   //moovac original
-  HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi"});
+  HatScheT::MoovacScheduler  ms1(g,rm, {"CPLEX","Gurobi", "SCIP", "LPSolve"});
   ms1.schedule();
   int IIOrg = ms1.getII();
 
@@ -222,7 +226,7 @@ bool Tests::readWriteReadScheduleTest() {
   readerGraph2.readGraph(writePath.c_str());
 
   //moovac write read graph
-  HatScheT::MoovacScheduler  ms2(g2,rm2, {"CPLEX","Gurobi"});
+  HatScheT::MoovacScheduler  ms2(g2,rm2, {"CPLEX","Gurobi", "SCIP", "LPSolve"});
   ms2.schedule();
   int IIWriteRead = ms2.getII();
 
@@ -401,7 +405,7 @@ bool Tests::moduloSDCTest()
     rm.registerVertex(&c, &add);
     rm.registerVertex(&d, &load);
 
-    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP"}};
+    HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
     m.setSolverQuiet(true);
     m.setVerbose(true);
     m.schedule();
@@ -616,7 +620,7 @@ bool Tests::moduloSDCTestFiege() {
     rm.registerVertex(&o2, &add);
     rm.registerVertex(&p2, &add);
 
-	std::list<std::string> solverList = {"CPLEX","Gurobi","SCIP"};
+	std::list<std::string> solverList = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
 	HatScheT::ModSDC m(g,rm,solverList);
 	m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 	m.setSolverQuiet(true);
@@ -645,6 +649,110 @@ bool Tests::moduloSDCTestFiege() {
 	std::cout << e.msg << std::endl;
   }
   return false;
+}
+
+bool Tests::rationalIISchedulerFimmelTest() {
+#ifndef USE_XERCESC
+  cout << "Tests::rationalIISchedulerFimmelTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+return false;
+#else
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/vanDongenRM.xml";
+  string graphStr = "cTest/vanDongen.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::RationalIISchedulerFimmel fimmel{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  fimmel.schedule();
+
+  cout << "Tests::rationalIISchedulerFimmelTest: expected II is 5.333..." << endl;
+  cout << "Tests::rationalIISchedulerFimmelTest: found II is " << fimmel.getII() << endl;
+
+  if(fimmel.getII() < 5.333 or fimmel.getII()>=5.334) return false;
+  else return true;
+#endif
+}
+
+bool Tests::rationalIISchedulerTest() {
+#ifndef USE_XERCESC
+  cout << "Tests::rationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/exampleRatII_RM.xml";
+  string graphStr = "cTest/exampleRatII.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  rii.schedule();
+
+  cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
+  cout << "Tests::rationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+  if(rii.getM_Found() != 5 or rii.getS_Found() != 3) return false;
+  else return true;
+#endif
+}
+
+bool Tests::compareModuloSchedulerTest() {
+#ifndef USE_XERCESC
+  cout << "Tests::compareModuloScheduler: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+
+  int modSDC_II = -1;
+  int moovac_II = -1;
+  int ED97_II = -1;
+  int moovacminreg_II = -1;
+
+  HatScheT::ResourceModel rm;
+  HatScheT::Graph g;
+  HatScheT::XMLResourceReader readerRes(&rm);
+
+  string resStr = "cTest/iir_biquRM.xml";
+  string graphStr = "cTest/iir_biqu.graphml";
+  readerRes.readResourceModel(resStr.c_str());
+
+  HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+  readerGraph.readGraph(graphStr.c_str());
+
+  //------------
+  HatScheT::ModuloSDCScheduler sdc{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  sdc.schedule();
+  modSDC_II = sdc.getII();
+  //------------
+  HatScheT::MoovacScheduler moovac{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  moovac.schedule();
+  moovac_II = moovac.getII();
+  //------------
+  HatScheT::MoovacMinRegScheduler minreg{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  minreg.schedule();
+  moovacminreg_II = minreg.getII();
+  //------------
+  HatScheT::EichenbergerDavidson97Scheduler ed97{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  ed97.schedule();
+  ED97_II = ed97.getII();
+
+  cout << "Tests::compareModuloSchedulerTest: Expected II is 11" << endl;
+  cout << "Tests::compareModuloSchedulerTest: ModuloSDC found II " << modSDC_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: MoovacScheduler found II " << moovac_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
+  cout << "Tests::compareModuloSchedulerTest: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
+
+  if(modSDC_II != 11 or moovac_II != 11 or moovacminreg_II != 11 or ED97_II != 11) return false;
+  else return true;
+#endif
 }
 
   bool Tests::KosarajuTest() {
@@ -829,7 +937,7 @@ bool Tests::moduloSDCTestFiege() {
 
     //------------------------------------------------------------------------------------------------------------------
 
-    DaiZhang19Scheduler DaiZhang(Gr, rm, {"CPLEX", "Gurobi"});
+    DaiZhang19Scheduler DaiZhang(Gr, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
     DaiZhang.schedule();
 

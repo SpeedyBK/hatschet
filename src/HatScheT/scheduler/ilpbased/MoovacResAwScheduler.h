@@ -23,10 +23,15 @@
 
 namespace HatScheT {
 /*!
- * EXPERIMENTAL! DO NOT USE THIS CLASS
- * @param g
- * @param resourceModel
- * @param solverWishlist
+ * This scheduler determines an optimal resource allocation and a modulo schedule
+ *
+ * Developed by Patrick Sittel (affiliated with University of Kassel, Imperial College London)
+ *
+ * For the details see
+ * Oppermann, Sittel, Kumm, Reuter-Oppermann, Koch, Sinnen: Design-space Exploration with Multi-objective Resource
+ * Aware Modulo Scheduling,
+ * Presented at the Proceedings of the 25th International Conference on Parallel and Distributed Computing, Goettingen 2019.
+ *
  */
 class MoovacResAwScheduler : public MoovacScheduler {
 public:
