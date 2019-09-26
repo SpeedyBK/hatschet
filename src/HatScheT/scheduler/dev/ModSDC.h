@@ -122,7 +122,7 @@ namespace HatScheT {
      * @brief defines a new budget
      * @param newBudget
      */
-    void setBudgetMultiplier(unsigned int &newBudget) { this->budgetMultiplier = newBudget; }
+    void setBudgetMultiplier(unsigned int newBudget) { this->budgetMultiplier = newBudget; }
 
     /*!
      * @brief getNumberOfConstrainedVertices

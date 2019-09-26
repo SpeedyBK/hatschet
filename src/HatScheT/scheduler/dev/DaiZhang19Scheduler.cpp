@@ -8,7 +8,9 @@
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/writer/DotWriter.h"
+#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/dev/ModSDC.h"
 
 namespace HatScheT {
 
@@ -290,15 +292,21 @@ namespace HatScheT {
     std::map<Vertex*,Vertex*> m;
     ResourceModel rmTemp;
 
+    // create resources
+    for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+      auto rIt = *it;
+      rmTemp.makeResource(rIt->getName(),rIt->getLimit(),rIt->getLatency(),rIt->getBlockingTime());
+    }
+
     //Creting Verticies
     //(gVertex : hVertex).
     for (auto &sccIt : SCCvec) {
       for (auto &VSCC:sccIt->getVerticesOfSCC()) {
         m[VSCC] = &h.createVertex(VSCC->getId());
         if (sT == basic) {
-          rmTemp.registerVertex(m[VSCC], resourceModel.getResource(VSCC));
+          rmTemp.registerVertex(m[VSCC], rmTemp.getResource(resourceModel.getResource(VSCC)->getName()));
         }else{
-          rmTemp.registerVertex(m[VSCC], resourceModel.getResource(VSCC));
+          rmTemp.registerVertex(m[VSCC], rmTemp.getResource(resourceModel.getResource(VSCC)->getName()));
         }
       }
     }
@@ -344,9 +352,12 @@ namespace HatScheT {
   void DaiZhang19Scheduler::computeRelativeShedule(Graph &g, ResourceModel &rm, scctype sT) {
 
     if (sT == basic){
-      ModuloSDCScheduler mSDC(g, rm, {"CPLEX", "Gurobi"});
-      mSDC.schedule();
-      auto sched = mSDC.getSchedule();
+      ModSDC moovac(g,rm,{"Gurobi"});
+      moovac.setSolverTimeout(300);
+      moovac.setPriorityType(PriorityHandler::priorityType::SUBSEQUALAP);
+      //MoovacScheduler moovac(g, rm, {"CPLEX", "Gurobi"});
+      moovac.schedule();
+      auto sched = moovac.getSchedule();
 
       cout << "Vertex: -- Starttime:" << endl;
       for (auto &schedIt : sched){
@@ -354,9 +365,12 @@ namespace HatScheT {
       }
     }
     else if (sT == complex){
-      ModuloSDCScheduler mSDC(g, rm, {"CPLEX", "Gurobi"});
-      mSDC.schedule();
-      auto sched = mSDC.getSchedule();
+      ModSDC moovacTwo(g,rm,{"Gurobi"});
+      moovacTwo.setSolverTimeout(300);
+      moovacTwo.setPriorityType(PriorityHandler::priorityType::SUBSEQUALAP);
+      //MoovacScheduler moovac(g, rm, {"CPLEX", "Gurobi"});
+      moovacTwo.schedule();
+      auto sched = moovacTwo.getSchedule();
 
       cout << "Vertex: -- Starttime:" << endl;
       for (auto &schedIt : sched){

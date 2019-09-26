@@ -745,7 +745,7 @@ bool Tests::moduloSDCTestFiege() {
     HatScheT::ResourceModel rm;
 
     auto &red = rm.makeResource("red", 1, 1, 1);
-    auto &blue = rm.makeResource("blue", 2, 1, 1);
+    auto &blue = rm.makeResource("blue", 1, 1, 1);
     auto &green = rm.makeResource("green", -1 , 1, 1);
 
     Vertex& A = Gr.createVertex(0);
@@ -840,5 +840,4 @@ bool Tests::moduloSDCTestFiege() {
 
     return false;
   }
-
 }

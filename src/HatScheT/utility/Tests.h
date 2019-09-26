@@ -93,7 +93,5 @@ public:
     */
   static bool DaiZhangTest();
 
-  static bool ModSDCTest();
-
 };
 }

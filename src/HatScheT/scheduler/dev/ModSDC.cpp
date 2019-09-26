@@ -23,7 +23,7 @@ namespace HatScheT {
   ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw) :
     SchedulerBase(g, rm), ILPSchedulerBase(sw),
     priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
-    pType(PriorityHandler::priorityType::PERTUBATION), budget(-1), uniqueVariableName(""),
+    pType(PriorityHandler::priorityType::SUBSEQUALAP), budget(-1), uniqueVariableName(""),
     budgetMultiplier(6), outputsEqualScheduleLength(false), vertexHasOutgoingEdges(),
     scheduleLength(-1) {
 
