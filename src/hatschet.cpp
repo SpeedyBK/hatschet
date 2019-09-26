@@ -279,6 +279,7 @@ int main(int argc, char *args[]) {
         if(str=="CRITPATH" && HatScheT::Tests::cpTest()==false) exit(-1);
         if(str=="KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
         if(str=="DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
+        if(str=="DAIZHANGTWO" && HatScheT::Tests::DaiZhangTestTwo() == false) exit(-1);
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);

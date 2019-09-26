@@ -7,7 +7,6 @@
 #include <cmath>
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
-#include "HatScheT/utility/writer/DotWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
@@ -23,6 +22,7 @@ namespace HatScheT {
     computeMinII(&g, &resourceModel);
     minII = ceil(minII);
     computeMaxII(&g, &resourceModel);
+    this->solverWishlist = solverWishlist;
   }
 
 
@@ -37,7 +37,7 @@ namespace HatScheT {
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
-    cout << "DeteresourceModeline type of SCCs..." << endl;
+    cout << "Determine type of SCCs..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     for (auto &it : sccs){
       it->setSCCType(determineType(it));
@@ -285,7 +285,6 @@ namespace HatScheT {
     scc->setConnectedSCCs(conSCCs);
   }
 
-  //ToDo...
   void DaiZhang19Scheduler::buildSuperGraph(vector<SCC*> SCCvec, scctype sT) {
 
     Graph h;
@@ -322,62 +321,59 @@ namespace HatScheT {
     cout << "Writing Graph..."<< endl;
     cout << "Vertices..."<< endl;
     for (auto &vIt : h.Vertices()) {
-      cout << vIt->getId() << " Resource: " << rmTemp.getResource(vIt)->getName() << endl;
+      cout << vIt->getName() << " Resource: " << rmTemp.getResource(vIt)->getName() << endl;
     }
     cout << "Edges..."<< endl;
     for (auto &eIt : h.Edges()){
       cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << " -- " << eIt->getDistance() << endl;
     }
 
-
-    //DotWriter Dot ("SuperGraph.graphml", &h, &rmTemp);
-    //Dot.write();
-
-    cout << m.size() << endl;
-
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     cout << "Computing relative schedule ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
 
-    computeRelativeShedule(h, rmTemp, sT);
+    std::map <Vertex*, int> relativSchedule;
+    relativSchedule = computeRelativeSchedule(h, rmTemp, sT);
+
+    for (auto &it : relativSchedule){
+      cout << it.first->getName() << " - " << it.second << endl;
+    }
+
+    //Mapping the relative schedules
+    if (sT == basic){
+      auto funnyThing = make_pair(SCCvec, relativSchedule);
+      scheduledBasicSupergraphSCCs.push_back(funnyThing);
+    }else if (sT == complex){
+      auto funnyThing = make_pair(SCCvec, relativSchedule);
+      scheduledComplexSupergraphSCCs.push_back(funnyThing);
+    }
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     cout << "Computing relative schedule DONE ..." << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
+
   }
 
 
-  void DaiZhang19Scheduler::computeRelativeShedule(Graph &g, ResourceModel &rm, scctype sT) {
+  std::map<Vertex*, int> DaiZhang19Scheduler::computeRelativeSchedule(Graph &g, ResourceModel &rm, scctype sT) {
+
+    std::map<Vertex*, int> relativSchedule;
 
     if (sT == basic){
-      ModSDC moovac(g,rm,{"Gurobi"});
-      moovac.setSolverTimeout(300);
-      moovac.setPriorityType(PriorityHandler::priorityType::SUBSEQUALAP);
-      //MoovacScheduler moovac(g, rm, {"CPLEX", "Gurobi"});
-      moovac.schedule();
-      auto sched = moovac.getSchedule();
-
-      cout << "Vertex: -- Starttime:" << endl;
-      for (auto &schedIt : sched){
-        cout << schedIt.first->getName()<< ": " << schedIt.second << endl;
-      }
+      ModuloSDCScheduler mSDC(g,rm,solverWishlist);
+      mSDC.setSolverTimeout(300);
+      mSDC.schedule();
+      relativSchedule = mSDC.getSchedule();
     }
     else if (sT == complex){
-      ModSDC moovacTwo(g,rm,{"Gurobi"});
-      moovacTwo.setSolverTimeout(300);
-      moovacTwo.setPriorityType(PriorityHandler::priorityType::SUBSEQUALAP);
-      //MoovacScheduler moovac(g, rm, {"CPLEX", "Gurobi"});
-      moovacTwo.schedule();
-      auto sched = moovacTwo.getSchedule();
-
-      cout << "Vertex: -- Starttime:" << endl;
-      for (auto &schedIt : sched){
-        cout << schedIt.first->getName()<< ": " << schedIt.second << endl;
-      }
+      //ToDo: Probably replace with a SAT-Based approach.
+      ModuloSDCScheduler mSDCTwo(g,rm,solverWishlist);
+      mSDCTwo.setSolverTimeout(300);
+      mSDCTwo.schedule();
+      relativSchedule = mSDCTwo.getSchedule();
     }
+    return relativSchedule;
   }
-
-
 }

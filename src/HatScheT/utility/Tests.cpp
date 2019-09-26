@@ -948,4 +948,31 @@ bool Tests::compareModuloSchedulerTest() {
 
     return false;
   }
+
+  bool Tests::DaiZhangTestTwo() {
+
+  #ifndef USE_XERCESC
+    return true;
+  #else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "cTest/MoovacExampleRM.xml";
+    string graphStr = "cTest/MoovacExample.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::DaiZhang19Scheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+
+    cout << "starting DaiZhang Scheduler" << endl;
+    sched.schedule();
+    cout << "starting DaiZhang Scheduler" << endl;
+
+    return true;
+  #endif
+    return false;
+  }
 }

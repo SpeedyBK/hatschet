@@ -112,5 +112,11 @@ public:
    * @return
    */
   static bool rationalIISchedulerFimmelTest();
+  /*!
+   * \brief A simpler test for the DaiZhang19Scheduler, with examples from the Paper "Improving Scalability of Exact
+   * Modulo Scheduling with Specialized Conflict-Driven Learning"
+   */
+  static bool DaiZhangTestTwo();
+
 };
 }
