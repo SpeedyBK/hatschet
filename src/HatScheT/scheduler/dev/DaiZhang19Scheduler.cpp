@@ -10,6 +10,8 @@
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/utility/writer/DotWriter.h"
 
 namespace HatScheT {
 
@@ -328,6 +330,11 @@ namespace HatScheT {
       cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << " -- " << eIt->getDistance() << endl;
     }
 
+    //Writing a Graphml ToDo: Remove and remove folder as well.
+    string path = "SuperGraphml/Supergraph"+to_string(SCCvec[0]->getId())+".graphml";
+    DotWriter dotW (path , &h, &rmTemp);
+    dotW.write();
+
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
     cout << "Computing relative schedule ..." << endl;
@@ -362,14 +369,14 @@ namespace HatScheT {
     std::map<Vertex*, int> relativSchedule;
 
     if (sT == basic){
-      ModuloSDCScheduler mSDC(g,rm,solverWishlist);
+      EichenbergerDavidson97Scheduler mSDC(g,rm,solverWishlist);
       mSDC.setSolverTimeout(300);
       mSDC.schedule();
       relativSchedule = mSDC.getSchedule();
     }
     else if (sT == complex){
       //ToDo: Probably replace with a SAT-Based approach.
-      ModuloSDCScheduler mSDCTwo(g,rm,solverWishlist);
+      EichenbergerDavidson97Scheduler mSDCTwo(g,rm,solverWishlist);
       mSDCTwo.setSolverTimeout(300);
       mSDCTwo.schedule();
       relativSchedule = mSDCTwo.getSchedule();

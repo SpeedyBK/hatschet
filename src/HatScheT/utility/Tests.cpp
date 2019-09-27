@@ -43,8 +43,9 @@
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
-#include <stdio.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <stdio.h>
+
 
 namespace HatScheT {
 
@@ -958,18 +959,19 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "cTest/MoovacExampleRM.xml";
-    string graphStr = "cTest/MoovacExample.graphml";
+    string resStr = "benchmarks/origami/iir_sos16_RM.xml";
+    string graphStr = "benchmarks/origami/iir_sos16.graphml";
     readerRes.readResourceModel(resStr.c_str());
 
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
     HatScheT::DaiZhang19Scheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+    //EichenbergerDavidson97Scheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
     cout << "starting DaiZhang Scheduler" << endl;
     sched.schedule();
-    cout << "starting DaiZhang Scheduler" << endl;
+    cout << "Finished DaiZhang Scheduler" << endl;
 
     return true;
   #endif
