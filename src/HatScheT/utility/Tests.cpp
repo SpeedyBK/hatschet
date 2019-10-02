@@ -961,6 +961,8 @@ bool Tests::compareModuloSchedulerTest() {
 
     string resStr = "benchmarks/origami/iir_sos16_RM.xml";
     string graphStr = "benchmarks/origami/iir_sos16.graphml";
+    //string resStr = "benchmarks/origami/fir_SAM_RM.xml";
+    //string graphStr = "benchmarks/origami/fir_SAM.graphml";
     readerRes.readResourceModel(resStr.c_str());
 
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);

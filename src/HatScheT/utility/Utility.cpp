@@ -1157,5 +1157,46 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
     return make_pair(h,m);
   }
 
+  bool Utility::iscyclic(Graph *g) {
+
+    map <Vertex*, bool> visited;
+    map <Vertex*, bool> recStack;
+
+    for (auto &v : g->Vertices()){
+      visited[v] = false;
+      recStack[v] = false;
+    }
+
+    for (auto &it : g->Vertices()){
+      if (iscyclicHelper(g, it, visited, recStack)){
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  bool Utility::iscyclicHelper(Graph *g, Vertex *V, map<Vertex *, bool> &visited, map<Vertex *, bool> &recStack) {
+
+    if (!visited[V]) {
+
+      visited[V] = true;
+      recStack[V] = true;
+
+      for (auto &it : g->getSuccessors(V)) {
+        if (!visited[it] && iscyclicHelper(g, it, visited, recStack)){
+          return true;
+        }
+        else if (recStack[it]){
+          return true;
+        }
+      }
+    }
+
+    recStack[V] = false;
+    return false;
+
+  }
+
 #endif
 }

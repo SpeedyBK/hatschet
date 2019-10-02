@@ -334,11 +334,27 @@ public:
   */
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
-
+ /*!
+  * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
+  * @param g is the graph to transpose
+  * @return transposed graph
+  */
   static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
+
+  /*!
+   * Checks if graph g has cycles
+   * @param Graph g
+   * @return true if graph is cyclic, false if graph is acyclic.
+   */
+  static bool iscyclic (Graph *g);
 
   private:
 
   static void cycle(const Edge* e, vector<Vertex*>& visited, int& currLength, Graph* g, ResourceModel* rm, double II);
+
+    /*!
+   * Helperfunction for iscyclic(), basicly a variation of a DFS.
+   */
+  static bool iscyclicHelper(Graph* g, Vertex *V, map <Vertex*, bool> &visited, map <Vertex*, bool> &recStack);
 };
 }
