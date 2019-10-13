@@ -342,7 +342,7 @@ public:
   static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
 
   /*!
-   * Checks if graph g has cycles
+   * Checks if graph g has cycles. https://www.geeksforgeeks.org/detect-cycle-in-a-graph/
    * @param Graph g
    * @return true if graph is cyclic, false if graph is acyclic.
    */
@@ -350,11 +350,12 @@ public:
 
   private:
 
-  static void cycle(const Edge* e, vector<Vertex*>& visited, int& currLength, Graph* g, ResourceModel* rm, double II);
-
-    /*!
+  /*!
    * Helperfunction for iscyclic(), basicly a variation of a DFS.
    */
   static bool iscyclicHelper(Graph* g, Vertex *V, map <Vertex*, bool> &visited, map <Vertex*, bool> &recStack);
+
+  static void cycle(const Edge* e, vector<Vertex*>& visited, int& currLength, Graph* g, ResourceModel* rm, double II);
+
 };
 }
