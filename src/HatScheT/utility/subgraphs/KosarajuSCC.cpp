@@ -31,8 +31,6 @@ namespace HatScheT {
 
   }
 
-
-
   void KosarajuSCC::fillStack(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;

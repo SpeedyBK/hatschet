@@ -42,6 +42,14 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
+//****************************************************************************************
+//Cadical Testing:
+#include "/home/bkessler/dep/cadical/src/cadical.hpp"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+#include <cassert>
+//****************************************************************************************
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <stdio.h>
@@ -978,5 +986,30 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
   #endif
     return false;
+  }
+
+  bool Tests::cadicalTest() {
+    #ifdef USE_CADICAL
+    cout << "CaDiCaL-Test started..." << endl;
+
+    CaDiCaL::Solver solver;
+    solver.add (1);
+    solver.add (0);
+    int res = solver.solve ();
+    cout << "solver.solve () = " << res << endl << flush;
+    assert (res == 10);
+    res = solver.val (1);
+    cout << "solver.val (1) = " << res << endl << flush;
+    cout << "solver.val (-1) = " << solver.val (-1) << endl << flush;
+    cout << "solver.val (2) = " << solver.val (2) << endl << flush;
+    cout << "solver.val (3) = " << solver.val (3) << endl << flush;
+    assert (res > 0);
+
+    cout << "CaDiCal-Test finished..." << endl;
+    return false;
+    #else
+    throw HatScheT::Exception("CaDiCaL not active! Test function disabled!");
+    return false;
+    #endif
   }
 }

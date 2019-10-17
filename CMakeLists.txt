@@ -24,6 +24,7 @@ project (hatschet)
 #Set options for used libs
 ####################
 option(USE_XERCESC "Use XercesC for parsing" ON)
+#option(USE_CADICAL "Use CaDiCaL SAT solving" ON)
 
 ####################
 #Find ScaLP
@@ -89,6 +90,36 @@ IF (USE_XERCESC)
 ELSE(USE_XERCESC)
     MESSAGE(STATUS "XercesC was turned off manually (-DUSE_XERCESC=OFF): GraphML parser will not be available")
 ENDIF (USE_XERCESC)
+
+####################
+#Find CaDiCaL lib
+####################
+FIND_LIBRARY(CADICAL_LIB
+             NAMES libcadical.a
+             HINTS "${CADICAL_LIBRARY_PATH}"
+             DOC "Directory of the CaDiCaL library")
+
+IF(CADICAL_LIB)
+    MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB}")
+ELSE(CADICAL_LIB)
+    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}). Please specify path by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>)")
+ENDIF(CADICAL_LIB)
+
+####################
+#Find CaDiCaL Headers
+####################
+FIND_PATH(CADICAL_H
+          cadical.hpp
+          HINTS "${CADICAL_INCLUDE_PATH}"
+          DOC "Path to main CaDiCal header file"
+        )
+
+IF(CADICAL_H)
+    MESSAGE(STATUS "Found CaDiCaL Header: ${CADICAL_H}")
+ELSE(CADICAL_H)
+    MESSAGE(STATUS "Could not find CaDiCaL Headers (${CADICAL_H}). Please specify path by setting CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
+ENDIF(CADICAL_H)
+
 
 set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
@@ -203,14 +234,24 @@ ENDIF (SCALP_H AND SCALP_LIB)
 IF (XERCESC_H AND XERCESC_LIB)
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
 ENDIF (XERCESC_H AND XERCESC_LIB)
+IF (CADICAL_H AND CADICAL_LIB)
+    target_link_libraries(hatschet-bin ${CADICAL_LIB})
+ENDIF (CADICAL_H AND CADICAL_LIB)
 
 include_directories(src/)
+
 IF (SCALP_H AND SCALP_LIB)
 include_directories(${SCALP_H})
 ENDIF (SCALP_H AND SCALP_LIB)
+
 IF (XERCESC_H AND XERCESC_LIB)
 include_directories(${XERCESC_H})
 ENDIF (XERCESC_H AND XERCESC_LIB)
+
+IF (CADICAL_H AND CADICAL_LIB)
+add_definitions(-DUSE_CADICAL)
+include_directories(${CADICAL_H})
+ENDIF (CADICAL_H AND CADICAL_LIB)
 
 
 ####################

@@ -117,6 +117,11 @@ public:
    * Modulo Scheduling with Specialized Conflict-Driven Learning"
    */
   static bool DaiZhangTestTwo();
+  /*!
+   * \brief Test for the CaDiCaL-(SAT)-Solver (WIP)
+   * @return
+   */
+  static bool cadicalTest();
 
 };
 }

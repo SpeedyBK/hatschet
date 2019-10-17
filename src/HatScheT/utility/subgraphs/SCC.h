@@ -74,6 +74,11 @@ namespace HatScheT {
      */
     list<Edge*> getSCCEdges();
 
+    /*!
+     * @return A list of SCC*s which are connected to the actual SCC.
+     */
+    list <SCC*> getConnectedSCCs();
+
 
     //Setter Functions:
     /*!
@@ -109,8 +114,6 @@ namespace HatScheT {
      */
     void printVertexStatus();
 
-
-    list <SCC*> getConnectedSCCs();
 
   private:
 
