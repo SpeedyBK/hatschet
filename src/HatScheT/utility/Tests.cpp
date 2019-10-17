@@ -1006,7 +1006,7 @@ bool Tests::compareModuloSchedulerTest() {
     assert (res > 0);
 
     cout << "CaDiCal-Test finished..." << endl;
-    return false;
+    return true;
     #else
     throw HatScheT::Exception("CaDiCaL not active! Test function disabled!");
     return false;

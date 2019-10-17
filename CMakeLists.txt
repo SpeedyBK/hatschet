@@ -279,6 +279,8 @@ add_test("KosarajuSCC" "./hatschet" "--test=KOSARAJU")
 add_test("CompareMSAlgorithms" "./hatschet" "--test=COMPAREMSALGORITHMS")
 add_test("rationalIISchedulerTest" "./hatschet" "--test=RATIONALIISCHEDULER")
 add_test("rationalIISchedulerFimmelTest" "./hatschet" "--test=RATIONALIISCHEDULERFIMMEL")
+## Added for CaDiCaL 17.10.2019
+add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
 
 ####################
 # example project
