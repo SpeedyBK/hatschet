@@ -1029,7 +1029,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(g1, g2 ,0);
     g.createEdge(g2, g3 ,0);
     g.createEdge(g3, g4 ,0);
-    g.createEdge(g4, g1 ,3);
+    g.createEdge(g4, g1 ,2);
     g.createEdge(g4, g5 ,0);
     g.createEdge(g4, g6 ,0);
 

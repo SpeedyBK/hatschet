@@ -30,7 +30,7 @@
 namespace HatScheT {
 
   /*!
-  * Datatyp to classify the SCCs, more information at line 100..
+  * Datatyp to classify the SCCs, more information at line 138ff..
   */
   enum scctype {unknown, basic, complex, trivial};
 

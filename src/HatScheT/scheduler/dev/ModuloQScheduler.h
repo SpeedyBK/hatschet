@@ -26,9 +26,16 @@ namespace HatScheT {
 		 */
 		double getII() override { return this->II;}
 		/*!
-		 *
+		 * Main schedule function
 		 */
 		void schedule() override;
+		/*!
+		 * Calculate all possible latency sequences for the given M and S values
+		 * @param M
+		 * @param S
+		 * @return
+		 */
+		static std::vector<std::vector<unsigned int>> getAllLatencySequences(int M, int S);
 	protected:
 		/*!
 		 * not needed
@@ -36,6 +43,24 @@ namespace HatScheT {
 		void constructProblem() override {}
 		void setObjective() override {}
 		void resetContainer() override {}
+
+	private:
+		/*!
+		 * all possible latency sequences for the current S and M values
+		 */
+		std::vector<std::vector<unsigned int>> latencySequences;
+		/*!
+		 * the minimum interger II that is possible
+		 */
+		int integerMinII;
+		/*!
+ 		* @brief the s value for the iteration start
+ 		*/
+		int S;
+		/*!
+		 * @brief the m value for the iteration start
+		 */
+		int M;
 	};
 }
 

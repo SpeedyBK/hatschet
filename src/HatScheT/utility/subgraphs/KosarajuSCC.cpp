@@ -36,27 +36,23 @@ namespace HatScheT {
   void KosarajuSCC::fillStack(Vertex *V) {
     //Mark vertex as visited:
     visited[V] = true;
-    //cout << endl << V->getName() << " Visited." << endl;
 
     //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
     //already visited.
-    //cout << V->getName() << " has the following neighbors:";
     for (auto e:this->g->Edges()){
       if (&e->getVertexSrc() == V){
-        //cout << " " << e->getVertexDst().getName() << endl;
 
         //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
         //perform a DFS on this destination-vertex.
         if(visited[&e->getVertexDst()]){
-          //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
-        }else {
-          //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
+          // do nothing
+        } else {
           fillStack(&e->getVertexDst());
         }
       }
     }
     //Filling the Stack with the finished vertecies.
-    cout << endl << "DFS on " << V->getName() << " is done !!";
+    if(!this->quiet) cout << endl << "DFS on " << V->getName() << " is done !!";
     Stack.push(V);
   }
 
@@ -67,25 +63,22 @@ namespace HatScheT {
 
     //Mark vertex as visited:
     visited[V] = true;
-    //cout << endl << V->getName() << " Visited." << endl;
 
     //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
     //already visited.
-    //cout << V->getName() << " has the following neighbors:";
     for (auto e:this->gT->Edges()) {
       if (&e->getVertexSrc() == V) {
 
         //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
         //perform a DFS on this destination-vertex.
         if (visited[&e->getVertexDst()]) {
-          //cout << e->getVertexDstName() << " is already visited... Moving on..." << endl;
+          // do nothing
         } else {
-          //cout << e->getVertexDstName() << " is not visited... Perfroming DFS on " << e->getVertexDstName() << endl;
           this->dfs(&e->getVertexDst());
         }
       }
     }
-    cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
+    if(!this->quiet) cout << "DFS of Vertex " << V->getId() << " is finished" << endl;
     sccVector[sccVector.size()-1]->setVertexAsPartOfSCC(V);
 
   }
@@ -107,7 +100,7 @@ namespace HatScheT {
       }
     }
 
-    cout << endl << "-------------------------------------------------------------------------------------" << endl;
+    if(!this->quiet) cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
     //Getting the transposed graph of g. And a map, which maps the Vertices of g to the Vertices of gT.
     auto graphMap = Utility::transposeGraph(g);
@@ -135,8 +128,8 @@ namespace HatScheT {
         sccVector[sccVector.size()-1]->setName("SCC_");
         dfs(VertexMap[Stack.top()]);
         //cout << "Size of SCCVector is " << sccVector.size() << endl;
-        cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
-        cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
+        if(!this->quiet) cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
+        if(!this->quiet) cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
         i++;
       }
 
