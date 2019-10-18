@@ -285,6 +285,7 @@ int main(int argc, char *args[]) {
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
         if(str=="CADICAL" && HatScheT::Tests::cadicalTest() == false) exit(-1);
         if(str=="MODULOQ" && HatScheT::Tests::moduloQTest() == false) exit(-1);
+        if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

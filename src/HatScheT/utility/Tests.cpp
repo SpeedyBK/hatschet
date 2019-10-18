@@ -42,6 +42,8 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
+#include "HatScheT/scheduler/dev/SDSScheduler.h"
+
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <stdio.h>
@@ -991,6 +993,7 @@ bool Tests::compareModuloSchedulerTest() {
     int solvable;
     list <int> solution;
     list <int> expectedSolution = {-1, 2, 3, -4, -5};
+
     CaDiCaL::Solver solver;
 
     solver.read_dimacs("SATTest/SATTest.cnf", vars, 1);
@@ -1013,7 +1016,7 @@ bool Tests::compareModuloSchedulerTest() {
     }
 
     for (int i = 0; i < 5; i++){
-      solution.push_back(solver.val(i+1)); //Solver variable start at 1, since negated variables are shown as negative numbers.
+      solution.push_back(solver.val(i+1)); //Solver variable starts at 1, since negated variables are shown as negative numbers.
     }
 
     for (auto &it : solution){
@@ -1102,5 +1105,54 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
 #endif
   }
+
+  bool Tests::sdsSchedulerTest() {
+
+    #ifdef USE_CADICAL
+
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      auto &ld = rm.makeResource("Load", 2, 1, 1);
+      auto &add = rm.makeResource("Adder", -1, 1, 1);
+      auto &st = rm.makeResource("Store", -1, 1, 1);
+
+      //Load operations:
+      Vertex &A = g.createVertex(0);
+      Vertex &B = g.createVertex(1);
+      Vertex &C = g.createVertex(2);
+      //Add operations:
+      Vertex &D = g.createVertex(3);
+      Vertex &E = g.createVertex(4);
+      //Store operations:
+      Vertex &F = g.createVertex(5);
+
+      //Load operations:
+      rm.registerVertex(&A, &ld);
+      rm.registerVertex(&B, &ld);
+      rm.registerVertex(&C, &ld);
+      //Add operations:
+      rm.registerVertex(&D, &add);
+      rm.registerVertex(&E, &add);
+      //Store operations:
+      rm.registerVertex(&F, &st);
+
+      //Edges:
+      g.createEdge(B, D, 0);
+      g.createEdge(C, D, 0);
+      g.createEdge(A, E, 0);
+      g.createEdge(D, E, 0);
+      g.createEdge(E, F, 0);
+
+      SDSScheduler sds(g, rm);
+
+      return false;
+    #else
+      //CaDiCaL not active! Test function disabled!
+      return true;
+    #endif
+  }
+
+
 }
 

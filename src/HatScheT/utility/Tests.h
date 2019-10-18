@@ -122,10 +122,15 @@ public:
    */
   static bool DaiZhangTestTwo();
   /*!
-   * \brief Test for the CaDiCaL-(SAT)-Solver (WIP)
+   * \brief Test for the CaDiCaL-(SAT)-Solver. Reads a simple SAT-Problem from a file, solves it and compares the results
+   * with the expected results.
    * @return
    */
   static bool cadicalTest();
+  /*!
+   * @brief test functionality of the SDSScheduler (joined SDC and SAT)
+   */
+  static bool sdsSchedulerTest();
 
 };
 }
