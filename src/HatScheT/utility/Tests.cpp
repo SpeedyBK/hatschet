@@ -529,133 +529,130 @@ bool Tests::ulSchedulerTest()
 }
 
 bool Tests::moduloSDCTestFiege() {
-  try
-  {
-	HatScheT::ResourceModel rm;
+  try {
+    HatScheT::ResourceModel rm;
 
-	auto &load = rm.makeResource("load", 3, 2, 1);
-	auto &add = rm.makeResource("add", -1, 0, 1);
+    auto &load = rm.makeResource("load", 3, 2, 1);
+    auto &add = rm.makeResource("add", -1, 0, 1);
 
-	HatScheT::Graph g;
+    HatScheT::Graph g;
 
-	Vertex& a = g.createVertex(1);
-	Vertex& b = g.createVertex(2);
-    Vertex& c1 = g.createVertex(3);
-    Vertex& d1 = g.createVertex(4);
-    Vertex& e1 = g.createVertex(5);
-	Vertex& f1 = g.createVertex(6);
-	Vertex& g1 = g.createVertex(7);
-    Vertex& c2 = g.createVertex(8);
-    Vertex& d2 = g.createVertex(9);
-    Vertex& e2 = g.createVertex(10);
-    Vertex& f2 = g.createVertex(11);
-	Vertex& g2 = g.createVertex(12);
-	Vertex& h2 = g.createVertex(13);
-	Vertex& i2 = g.createVertex(14);
-	Vertex& j2 = g.createVertex(15);
-	Vertex& k2 = g.createVertex(16);
-	Vertex& l2 = g.createVertex(17);
-	Vertex& m2 = g.createVertex(18);
-	Vertex& n2 = g.createVertex(19);
-    Vertex& o2 = g.createVertex(20);
-    Vertex& p2 = g.createVertex(21);
+    Vertex &a = g.createVertex(1);
+    Vertex &b = g.createVertex(2);
+    Vertex &c1 = g.createVertex(3);
+    Vertex &d1 = g.createVertex(4);
+    Vertex &e1 = g.createVertex(5);
+    Vertex &f1 = g.createVertex(6);
+    Vertex &g1 = g.createVertex(7);
+    Vertex &c2 = g.createVertex(8);
+    Vertex &d2 = g.createVertex(9);
+    Vertex &e2 = g.createVertex(10);
+    Vertex &f2 = g.createVertex(11);
+    Vertex &g2 = g.createVertex(12);
+    Vertex &h2 = g.createVertex(13);
+    Vertex &i2 = g.createVertex(14);
+    Vertex &j2 = g.createVertex(15);
+    Vertex &k2 = g.createVertex(16);
+    Vertex &l2 = g.createVertex(17);
+    Vertex &m2 = g.createVertex(18);
+    Vertex &n2 = g.createVertex(19);
+    Vertex &o2 = g.createVertex(20);
+    Vertex &p2 = g.createVertex(21);
 
-	a.setName("a");
+    a.setName("a");
     b.setName("b");
     c1.setName("c1");
     d1.setName("d1");
     e1.setName("e1");
     f1.setName("f1");
-	g1.setName("g1");
+    g1.setName("g1");
     c2.setName("c2");
     d2.setName("d2");
     e2.setName("e2");
     f2.setName("f2");
-	g2.setName("g2");
-	h2.setName("h2");
-	i2.setName("i2");
-	j2.setName("j2");
-	k2.setName("k2");
-	l2.setName("l2");
-	m2.setName("m2");
+    g2.setName("g2");
+    h2.setName("h2");
+    i2.setName("i2");
+    j2.setName("j2");
+    k2.setName("k2");
+    l2.setName("l2");
+    m2.setName("m2");
     n2.setName("n2");
     o2.setName("o2");
     p2.setName("p2");
 
-    g.createEdge(a, b ,0);
-    g.createEdge(b, c1 ,0);
-    g.createEdge(b, c2 ,0);
-    g.createEdge(c1, d1 ,0);
-    g.createEdge(d1, e1 ,0);
-    g.createEdge(e1, f1 ,0);
-    g.createEdge(f1, c1 ,1);
-	g.createEdge(f1, g1 ,0);
-    g.createEdge(c2, d2 ,0);
-    g.createEdge(d2, e2 ,0);
-    g.createEdge(e2, f2 ,0);
-    g.createEdge(f2, c2 ,1);
-	g.createEdge(f2, g2 ,0);
-	g.createEdge(g2, h2 ,0);
-	g.createEdge(h2, i2 ,0);
-	g.createEdge(i2, j2 ,0);
-	g.createEdge(j2, k2 ,0);
-	g.createEdge(k2, h2 ,1);
-	g.createEdge(k2, l2 ,0);
-	g.createEdge(l2, m2 ,0);
-	g.createEdge(m2, h2 ,1);
-	g.createEdge(k2, n2 ,0);
-    g.createEdge(l2, o2 ,0);
-    g.createEdge(m2, p2 ,0);
+    g.createEdge(a, b, 0);
+    g.createEdge(b, c1, 0);
+    g.createEdge(b, c2, 0);
+    g.createEdge(c1, d1, 0);
+    g.createEdge(d1, e1, 0);
+    g.createEdge(e1, f1, 0);
+    g.createEdge(f1, c1, 1);
+    g.createEdge(f1, g1, 0);
+    g.createEdge(c2, d2, 0);
+    g.createEdge(d2, e2, 0);
+    g.createEdge(e2, f2, 0);
+    g.createEdge(f2, c2, 1);
+    g.createEdge(f2, g2, 0);
+    g.createEdge(g2, h2, 0);
+    g.createEdge(h2, i2, 0);
+    g.createEdge(i2, j2, 0);
+    g.createEdge(j2, k2, 0);
+    g.createEdge(k2, h2, 1);
+    g.createEdge(k2, l2, 0);
+    g.createEdge(l2, m2, 0);
+    g.createEdge(m2, h2, 1);
+    g.createEdge(k2, n2, 0);
+    g.createEdge(l2, o2, 0);
+    g.createEdge(m2, p2, 0);
 
-	rm.registerVertex(&a, &load);
-	rm.registerVertex(&b, &add);
+    rm.registerVertex(&a, &load);
+    rm.registerVertex(&b, &add);
     rm.registerVertex(&c1, &load);
     rm.registerVertex(&d1, &load);
     rm.registerVertex(&e1, &load);
     rm.registerVertex(&f1, &load);
-	rm.registerVertex(&g1, &load);
+    rm.registerVertex(&g1, &load);
     rm.registerVertex(&c2, &load);
     rm.registerVertex(&d2, &load);
     rm.registerVertex(&e2, &load);
     rm.registerVertex(&f2, &load);
-	rm.registerVertex(&g2, &load);
-	rm.registerVertex(&h2, &load);
-	rm.registerVertex(&i2, &load);
-	rm.registerVertex(&j2, &load);
-	rm.registerVertex(&k2, &load);
-	rm.registerVertex(&l2, &load);
-	rm.registerVertex(&m2, &load);
-	rm.registerVertex(&n2, &add);
+    rm.registerVertex(&g2, &load);
+    rm.registerVertex(&h2, &load);
+    rm.registerVertex(&i2, &load);
+    rm.registerVertex(&j2, &load);
+    rm.registerVertex(&k2, &load);
+    rm.registerVertex(&l2, &load);
+    rm.registerVertex(&m2, &load);
+    rm.registerVertex(&n2, &add);
     rm.registerVertex(&o2, &add);
     rm.registerVertex(&p2, &add);
 
-	std::list<std::string> solverList = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
-	HatScheT::ModSDC m(g,rm,solverList);
-	m.setPriorityType(PriorityHandler::priorityType::ALASUB);
-	m.setSolverQuiet(true);
-	m.schedule();
+    std::list<std::string> solverList = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
+    HatScheT::ModSDC m(g, rm, solverList);
+    m.setPriorityType(PriorityHandler::priorityType::ALASUB);
+    m.setSolverQuiet(true);
+    m.schedule();
 
-	auto sch = m.getSchedule();
+    auto sch = m.getSchedule();
 
-	for(auto&p:sch)
-	{
-	  std::cout << p.first->getName() << " = " << p.second << std::endl;
-	}
-	std::cout << "latency = " << m.getScheduleLength() << std::endl;
+    for (auto &p:sch) {
+      std::cout << p.first->getName() << " = " << p.second << std::endl;
+    }
+    std::cout << "latency = " << m.getScheduleLength() << std::endl;
 
-	if(!verifyModuloSchedule(g,rm,sch,(int)m.getII())){
-		return false;
-	}
+    if (!verifyModuloSchedule(g, rm, sch, (int) m.getII())) {
+      return false;
+    }
 
-	auto binding = m.getBindings();
-	cout << "Binding: " << endl;
-	for(auto it : binding) {
-		cout << it.first->getName() << ": " << rm.getResource(it.first)->getName() << " " << it.second << endl;
-	}
+    auto binding = m.getBindings();
+    cout << "Binding: " << endl;
+    for (auto it : binding) {
+      cout << it.first->getName() << ": " << rm.getResource(it.first)->getName() << " " << it.second << endl;
+    }
   }
-  catch(HatScheT::Exception &e)
-  {
-	std::cout << e.msg << std::endl;
+  catch (HatScheT::Exception &e) {
+    std::cout << e.msg << std::endl;
   }
   return false;
 }
@@ -992,21 +989,50 @@ bool Tests::compareModuloSchedulerTest() {
     #ifdef USE_CADICAL
     cout << "CaDiCaL-Test started..." << endl;
 
+    int vars = 5;
+    int solvable;
+    list <int> solution;
+    list <int> expectedSolution = {-1, 2, 3, -4, -5};
     CaDiCaL::Solver solver;
-    solver.add (1);
-    solver.add (0);
-    int res = solver.solve ();
-    cout << "solver.solve () = " << res << endl << flush;
-    assert (res == 10);
-    res = solver.val (1);
-    cout << "solver.val (1) = " << res << endl << flush;
-    cout << "solver.val (-1) = " << solver.val (-1) << endl << flush;
-    cout << "solver.val (2) = " << solver.val (2) << endl << flush;
-    cout << "solver.val (3) = " << solver.val (3) << endl << flush;
-    assert (res > 0);
 
-    cout << "CaDiCal-Test finished..." << endl;
-    return true;
+    solver.read_dimacs("/home/bkessler/Repositories/hatschet/SATTest/SATTest.cnf", vars, 1); //ToDO Path has to be changed.
+
+    solvable = solver.solve();
+
+    if (solvable == 0) {
+      cout << "Problem is not solved..." << endl;
+      cout << "Problem is not solved, check the solver or the input file." << endl;
+      return false;
+    } else if (solvable == 10) {
+      cout << "Problem is SATISFIABLE..." << endl;
+    } else if (solvable == 20) {
+      cout << "Problem is UNSATISFIABLE..." << endl;
+      cout << "Problem UNSATISFIABLE, but should be SATISFIABLE, check the solver or the input file." << endl;
+      return false;
+    } else {
+      cout << "Unexpected Return-Value from SAT-Solver" << endl;
+      return false;
+    }
+
+    for (int i = 0; i < 5; i++){
+      solution.push_back(solver.val(i+1)); //Solver variable start at 1, since negated variables are shown as negative numbers.
+    }
+
+    for (auto &it : solution){
+      cout << it << " ";
+    }
+    cout << endl;
+
+    if (solution == expectedSolution){
+      cout << "Zappel-Jupp and Narben-Johny are TRUE criminals... ARREST them!!!" << endl;
+      cout << "Test passed.." << endl;
+      return true;
+    }else {
+      cout << "Inspector, you are arresting the wrong guys.." << endl;
+      cout << "Test failed, solver returned a wrong solution. " << endl;
+      return false;
+    }
+
     #else
     throw HatScheT::Exception("CaDiCaL not active! Test function disabled!");
     return false;
