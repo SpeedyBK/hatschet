@@ -75,6 +75,7 @@ namespace HatScheT {
     */
     Vertex* getOriginalVertex(Vertex* V);
 
+    void setQuiet(bool b=true) {this->quiet = b;}
 
   private:
 
@@ -88,6 +89,8 @@ namespace HatScheT {
     stack <Vertex*> Stack;
 
     vector <SCC*> sccVector;
+
+    bool quiet;
 
   };
 
