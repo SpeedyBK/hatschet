@@ -44,6 +44,7 @@
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <stdio.h>
 
 
@@ -978,5 +979,70 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
   #endif
     return false;
+  }
+
+  bool Tests::moduloQTest() {
+#ifndef USE_XERCESC
+    return true;
+#else
+    HatScheT::Graph g;
+    HatScheT::ResourceModel rm;
+
+    auto &red = rm.makeResource("red", 2, 2, 1);
+    auto &green = rm.makeResource("green", 3, 1, 1);
+
+    // critical resource (#vertices=5, limit=2)
+    // loop: latency=6, distance=4
+    Vertex& r0 = g.createVertex(0);
+    Vertex& r1 = g.createVertex(1);
+    Vertex& r2 = g.createVertex(2);
+    Vertex& r3 = g.createVertex(3);
+    Vertex& r4 = g.createVertex(4);
+    rm.registerVertex(&r0, &red);
+    rm.registerVertex(&r1, &red);
+    rm.registerVertex(&r2, &red);
+    rm.registerVertex(&r3, &red);
+    rm.registerVertex(&r4, &red);
+    g.createEdge(r0, r2 ,0);
+    g.createEdge(r1, r2 ,0);
+    g.createEdge(r2, r3 ,0);
+    g.createEdge(r3, r4 ,0);
+    g.createEdge(r3, r0 ,4);
+
+    // non-critical resource (#vertices=7, limit=3)
+    // loop: latency=4, distance=2
+    Vertex& g0 = g.createVertex(5);
+    Vertex& g1 = g.createVertex(6);
+    Vertex& g2 = g.createVertex(7);
+    Vertex& g3 = g.createVertex(8);
+    Vertex& g4 = g.createVertex(9);
+    Vertex& g5 = g.createVertex(10);
+    Vertex& g6 = g.createVertex(11);
+    rm.registerVertex(&g0, &green);
+    rm.registerVertex(&g1, &green);
+    rm.registerVertex(&g2, &green);
+    rm.registerVertex(&g3, &green);
+    rm.registerVertex(&g4, &green);
+    rm.registerVertex(&g5, &green);
+    rm.registerVertex(&g6, &green);
+    g.createEdge(g0, g2 ,0);
+    g.createEdge(g1, g2 ,0);
+    g.createEdge(g2, g3 ,0);
+    g.createEdge(g3, g4 ,0);
+    g.createEdge(g4, g1 ,3);
+    g.createEdge(g4, g5 ,0);
+    g.createEdge(g4, g6 ,0);
+
+    ModuloQScheduler m(g,rm,{"Gurobi","CPLEX","LPSolve","SCIP"});
+    m.schedule();
+    auto result = m.getSchedule();
+
+    std::cout << "Tests::moduloQTest: finished scheduling - resulting control steps:" << std::endl;
+    for(auto it : result) {
+      std::cout << it.first->getName() << " - " << it.second << std::endl;
+    }
+
+    return true;
+#endif
   }
 }
