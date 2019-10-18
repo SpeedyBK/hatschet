@@ -235,7 +235,7 @@ IF (XERCESC_H AND XERCESC_LIB)
 target_link_libraries(hatschet-bin ${XERCESC_LIB})
 ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
-    target_link_libraries(hatschet-bin ${CADICAL_LIB})
+target_link_libraries(hatschet-bin ${CADICAL_LIB})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
 include_directories(src/)

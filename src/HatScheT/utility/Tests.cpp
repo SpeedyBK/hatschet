@@ -42,17 +42,12 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
-//****************************************************************************************
-//Cadical Testing:
-#include "/home/bkessler/dep/cadical/src/cadical.hpp"
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-#include <cassert>
-//****************************************************************************************
-
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <stdio.h>
+
+#ifdef USE_CADICAL
+#include "/opt/cadical/include/cadical.hpp"
+#endif
 
 
 namespace HatScheT {
@@ -986,6 +981,7 @@ bool Tests::compareModuloSchedulerTest() {
   }
 
   bool Tests::cadicalTest() {
+
     #ifdef USE_CADICAL
     cout << "CaDiCaL-Test started..." << endl;
 
@@ -995,7 +991,7 @@ bool Tests::compareModuloSchedulerTest() {
     list <int> expectedSolution = {-1, 2, 3, -4, -5};
     CaDiCaL::Solver solver;
 
-    solver.read_dimacs("/home/bkessler/Repositories/hatschet/SATTest/SATTest.cnf", vars, 1); //ToDO Path has to be changed.
+    solver.read_dimacs("SATTest/SATTest.cnf", vars, 1);
 
     solvable = solver.solve();
 
@@ -1034,7 +1030,7 @@ bool Tests::compareModuloSchedulerTest() {
     }
 
     #else
-    throw HatScheT::Exception("CaDiCaL not active! Test function disabled!");
+    cout << "CaDiCaL not active! Test function disabled!" << endl;
     return false;
     #endif
   }

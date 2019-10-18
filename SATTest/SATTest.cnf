@@ -1,0 +1,22 @@
+c Inputfile for SAT-Test.
+c Thankfully extracted from Digital Logic Exercise 2 Task 2.4.
+c The police arrested 5 suspects, and now it is time for the logicexperts to find the guys who committed the crime:
+c
+c x1 = Kippen-Ede
+c x2 = Zappel-Jup
+c x3 = Narben-Jonny
+c x4 = Messer-Fritze
+c x5 = Hinke-Heini
+c
+c The problem is satisfiable and has exactly one solution.
+c The solution is -1 2 3 -4 -5 which means Zappel-Jup and Narben-Jonny are the bad guys.
+p cnf 5 9
+-1  4 0
+ 3  5 0
+ 2 -3 0
+-2  3 0
+ 2  4 0
+-2 -4 0
+ 1  3 -5 0
+-1  3 -5 0
+ 1 -3 -5 0
