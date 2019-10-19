@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
+            Patrick Sittel (sittel@uni-kassel.de)
 
     Copyright (C) 2019
 
@@ -30,7 +31,7 @@
 namespace HatScheT {
 
   /*!
-  * Datatyp to classify the SCCs, more information at line 138ff..
+  * Datatyp to classify the SCCs, more information at line 140ff..
   */
   enum scctype {unknown, basic, complex, trivial};
 
@@ -141,8 +142,8 @@ namespace HatScheT {
      * Type of the SCC.
      * - unknown: Set by constructor, just for initialisation.
      * - trivial: SCCs which contain just 1 vertex.
-     * - basic: SCCs which contain multiple Vertices, but none of them has a ressource constraint.
-     * - complex: SCCs which contain multiple Vertices, and at least one vertex has a ressource constraint.
+     * - basic: SCCs which contain multiple Vertices, but none of them has a resource constraint.
+     * - complex: SCCs which contain multiple Vertices, and at least one vertex has a resource constraint.
      */
     scctype typeOfSCC;
 

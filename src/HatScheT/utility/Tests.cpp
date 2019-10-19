@@ -1113,7 +1113,7 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      auto &ld = rm.makeResource("Load", 2, 1, 1);
+      auto &ld = rm.makeResource("Load", 2, 3, 1);
       auto &add = rm.makeResource("Adder", -1, 1, 1);
       auto &st = rm.makeResource("Store", -1, 1, 1);
 
@@ -1145,6 +1145,8 @@ bool Tests::compareModuloSchedulerTest() {
       g.createEdge(E, F, 0);
 
       SDSScheduler sds(g, rm);
+      sds.setSilent(false);
+      sds.schedule();
 
       return false;
     #else

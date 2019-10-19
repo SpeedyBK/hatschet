@@ -1,6 +1,23 @@
-//
-// Created by bkessler on 18/10/19.
-//
+/*
+    This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
+    Author: Patrick Sittel (sittel@uni-kassel.de)
+            Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
+
+    Copyright (C) 2019
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #ifndef HATSCHET_SDSSCHEDULER_H
 #define HATSCHET_SDSSCHEDULER_H
@@ -12,6 +29,11 @@
 #include "/opt/cadical/include/cadical.hpp"
 
 namespace HatScheT {
+
+  /*
+   * Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
+   * SDC and SAT Formulation; FPGA 2018
+   */
 
   class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase {
 
@@ -37,7 +59,16 @@ namespace HatScheT {
     virtual void resetContainer(){/* unused */}
     virtual void constructProblem() {/* unused */}
 
+    //Setter Functions
+    void setSilent(bool quiet = true) {this -> silent = quiet;}
+
   private:
+
+    map < pair<const Vertex*,int> , bool> createBindingVariables();
+
+    bool silent;
+
+    map < pair<const Vertex*,int> , bool> bindingVariables;
 
   };
 
