@@ -37,6 +37,7 @@ namespace HatScheT {
 
   struct bindingVariable {
     Resource* resource;
+    int resourceID;
     const Vertex* vertex;
     int resourceInstance;
     bool binding;
@@ -81,6 +82,7 @@ namespace HatScheT {
     //Variables
     bool silent;
     list <bindingVariable> bindingVariables;
+    int numOfLimitedResources;
 
   };
 

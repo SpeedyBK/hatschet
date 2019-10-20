@@ -1114,7 +1114,7 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::ResourceModel rm;
 
       auto &ld = rm.makeResource("Load", 2, 3, 1);
-      auto &add = rm.makeResource("Adder", 3, 1, 1);
+      auto &add = rm.makeResource("Adder", -1, 1, 1);
       auto &st = rm.makeResource("Store", -1, 1, 1);
 
       //Load operations:
