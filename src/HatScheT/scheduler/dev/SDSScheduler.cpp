@@ -10,48 +10,66 @@
 namespace HatScheT {
 
   HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
-
+    this->silent = true;
   }
 
   void HatScheT::SDSScheduler::schedule() {
 
-    this -> bindingVariables = createBindingVariables();
+    if (!this->silent){
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Creating Binding Variables..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    createBindingVariables();
+
+    //Debug
+    if(!this -> silent){cout << "Resource / Vertex / Resource Instance / Boolean Binding Variable" << endl;}
+    for (auto &it : bindingVariables){
+      if (!this->silent) {
+        if (it.binding) {
+          cout << it.resource->getName() << " / " << it.vertex->getName() << " / " << it.resourceInstance << " / True" << endl;
+        }else {
+          cout << it.resource->getName() << " / " << it.vertex->getName() << " / " << it.resourceInstance << " / False" << endl;
+        }
+      }
+    }
 
   }
 
-  map<pair<const Vertex *, int>, bool> HatScheT::SDSScheduler::createBindingVariables() {
+  void HatScheT::SDSScheduler::createBindingVariables() {
 
-    list<Resource *> localResources;
+    list<Resource*> localResources;
     for (auto it = resourceModel.resourcesBegin(); it != resourceModel.resourcesEnd(); ++it) {
       if (!it.operator*()->isUnlimited()) {
         localResources.push_back(*it);
       }
     }
 
-    map<pair<const Vertex *, int>, bool> bindingsVariables;
+    bindingVariable bv;
+
     for (auto &it:localResources) {
-      if (!this->silent) { cout << it->getName() << " / " << it->getLimit() << "x" << endl; }
       set<const Vertex *> verticiesOfResource = resourceModel.getVerticesOfResource(it);
       for (auto &vORIt:verticiesOfResource) {
-        if (!this->silent) { cout << vORIt->getName() << endl; }
         for (int i = 0; i < it->getLimit(); i++) {
-          pair<const Vertex *, int> a = make_pair(vORIt, i);
-          bindingsVariables.emplace(a, false);
+          bv.resource = it;
+          bv.vertex = vORIt;
+          bv.resourceInstance = i;
+          bv.binding = false;
+          bv.isSet = false;
+          bindingVariables.push_back(bv);
         }
       }
     }
-
-    if (!this->silent) { cout << "Vertex / ResourceInstance / Binding Variable" << endl; }
-    for (auto &it:bindingsVariables) {
-      if (!this->silent) {
-        if (it.second) {
-          cout << it.first.first->getName() << " / " << it.first.second << " / " << "true" << endl;
-        } else {
-          cout << it.first.first->getName() << " / " << it.first.second << " / " << "false" << endl;
-        }
-      }
-    }
-
-    return bindingsVariables;
   }
+
+  void SDSScheduler::setBindingVariables() {
+
+    for (auto &it : bindingVariables){
+
+    }
+
+  }
+  
 }

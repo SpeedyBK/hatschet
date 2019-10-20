@@ -35,6 +35,15 @@ namespace HatScheT {
    * SDC and SAT Formulation; FPGA 2018
    */
 
+  struct bindingVariable {
+    Resource* resource;
+    const Vertex* vertex;
+    int resourceInstance;
+    bool binding;
+    bool isSet;
+  };
+
+
   class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase {
 
   public:
@@ -64,11 +73,14 @@ namespace HatScheT {
 
   private:
 
-    map < pair<const Vertex*,int> , bool> createBindingVariables();
+    //Functions
+    void createBindingVariables();
+    void setBindingVariables ();
 
+
+    //Variables
     bool silent;
-
-    map < pair<const Vertex*,int> , bool> bindingVariables;
+    list <bindingVariable> bindingVariables;
 
   };
 
