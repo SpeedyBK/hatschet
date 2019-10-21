@@ -70,22 +70,47 @@ namespace HatScheT {
     virtual void constructProblem() {/* unused */}
 
     //Setter Functions
+    /*!
+     * All cout statements can be supressed by setting "quiet" to true.
+     * @param quiet
+     */
     void setSilent(bool quiet = true) {this -> silent = quiet;}
 
   private:
 
     //Functions
+    /*!
+     * This function creates Binding Variables which map each operation to an instance of the limited ressources.
+     */
     void createBindingVariables();
+
+    /*!
+     * This function sets the binding variables, created by createBindingVariables, to the correct values. Such that
+     * each operation is mapped to exactly one resource. It tries to map the operation equaly to the resourceinstances.
+     */
     void setBindingVariables ();
+    /*!
+     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the Operations i and j
+     * are sharing the same resourceinstance.
+     */
+    void createSharingVariables();
 
 
     //Variables
+    /*!
+     * If true, cout statements are supressed.
+     */
     bool silent;
+    /*!
+     * Maps each operation which need a limited Resource to an instance of this ressource.
+     */
     list <bindingVariable> bindingVariables;
+    /*!
+     * Number of limited resources.
+     */
     int numOfLimitedResources;
 
   };
-
 
 }
 

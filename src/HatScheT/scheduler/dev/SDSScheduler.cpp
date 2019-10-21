@@ -111,4 +111,8 @@ namespace HatScheT {
     }
   }
 
+  void SDSScheduler::createSharingVariables() {
+
+  }
+
 }
