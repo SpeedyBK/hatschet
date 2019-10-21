@@ -36,12 +36,12 @@ namespace HatScheT {
    */
 
   struct bindingVariable {
+    int index;
     Resource* resource;
     int resourceID;
     const Vertex* vertex;
     int resourceInstance;
     bool binding;
-    bool isSet;
   };
 
 
@@ -93,7 +93,7 @@ namespace HatScheT {
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the Operations i and j
      * are sharing the same resourceinstance.
      */
-    void createSharingVariables();
+    map <pair<const Vertex*, const Vertex*>, bool> createSharingVariables();
 
 
     //Variables
@@ -102,13 +102,22 @@ namespace HatScheT {
      */
     bool silent;
     /*!
+     * Number of limited resources.
+     */
+    int numOfLimitedResources;
+    /*!
      * Maps each operation which need a limited Resource to an instance of this ressource.
      */
     list <bindingVariable> bindingVariables;
     /*!
-     * Number of limited resources.
+     * Marks if operations share the same resource instance
      */
-    int numOfLimitedResources;
+    map <pair<const Vertex*, const Vertex*>, bool> sharingVariables;
+    /*!
+     * If the Ordering Variable O(i->j) is true, it means that operation i is scheduled in an earlyer clock cycle than
+     * operation j
+     */
+    map <pair<const Vertex*, const Vertex*>, bool> orderingVariables;
 
   };
 
