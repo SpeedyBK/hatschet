@@ -5,12 +5,14 @@
 #include "ModuloQScheduler.h"
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/subgraphs/KosarajuSCC.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <cmath>
 
 namespace HatScheT {
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																							 std::list<std::string> solverWishlist) :
-		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), latencySequences()
+		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), latencySequence(),
+		solverWishlist(solverWishlist)
 	{
 
 		this->computeMinII(&this->g, &this->resourceModel);
@@ -37,32 +39,21 @@ namespace HatScheT {
 		std::cout << "M: " << this->M << std::endl;
 		std::cout << "S: " << this->S << std::endl;
 
-		// enumerate latency sequence
-		this->latencySequences = ModuloQScheduler::getAllLatencySequences(this->M,this->S);
+		// find SCCs
+		KosarajuSCC k(this->g);
+		k.setQuiet();
+		auto sccs = k.getSCCs();
 
-		std::cout << "latency sequences:" << std::endl;
-		for(auto it : this->latencySequences) {
-			for(auto it2 : it) {
-				std::cout << it2 << " ";
-			}
-			std::cout << endl;
-		}
+		// schedule SCCs
+		auto sccSchedule = this->getSCCSchedule(sccs);
 
-		bool foundSolution = false;
-		for(unsigned int i=0; (i<this->latencySequences.size()) and (!foundSolution); ++i) {
-			// find SCCs
-			KosarajuSCC k(this->g);
-			k.setQuiet();
-			auto sccs = k.getSCCs();
-
-			for(auto scc : sccs) {
-				cout << "vertices of scc:" << endl;
-				for(auto v : scc->getVerticesOfSCC()) {
-					cout << "  " << v->getName() << endl;
-				}
-			}
-
-			foundSolution = true;
+		// print schedule for debugging reasons
+		std::cout << "scc schedule:" << std::endl;
+		for(auto it : sccSchedule) {
+			auto v = it.first;
+			auto t = it.second.first;
+			auto id = it.second.second;
+			std::cout << "    " << v->getName() << ": " << t << ", " << id << std::endl;
 		}
 
 		throw HatScheT::Exception("ModuloQScheduler::schedule: I don't work yet :(");
@@ -105,6 +96,107 @@ namespace HatScheT {
 		}
 
 		return latencySequences;
+	}
+
+	std::map<Vertex *, pair<int, int>> ModuloQScheduler::getSCCSchedule(std::vector<SCC *> &sccs) {
+		map<Vertex *, pair<int, int>> sccSchedule;
+		////////////////////////////////////////////////////////
+		// generate new graph containing all non-trivial SCCs //
+		////////////////////////////////////////////////////////
+		Graph tempG;
+		std::map<Vertex*,Vertex*> originalVertexMap; // original vertex -> tempG vertex
+		std::map<Vertex*,Vertex*> tempGVertexMap; // tempG vertex -> original vertex
+		std::map<Vertex*,int> sccMap; // tempG vertex -> id of the scc it belongs to
+		for(auto scc : sccs) {
+			if(scc->getSccType(&this->resourceModel) == scctype::trivial) {
+				std::cout << "trivial" << std::endl;
+				for(auto v : scc->getVerticesOfSCC()) {
+					std::cout << "    " << v->getName() << std::endl;
+				}
+				continue;
+			}
+			else if(scc->getSccType(&this->resourceModel) == scctype::unknown) {
+				std::cout << "unknown" << std::endl;
+				for(auto v : scc->getVerticesOfSCC()) {
+					std::cout << "    " << v->getName() << std::endl;
+				}
+				continue;
+			}
+			else {
+				std::cout << "penis" << std::endl;
+				for(auto v : scc->getVerticesOfSCC()) {
+					std::cout << "    " << v->getName() << std::endl;
+				}
+			}
+			// insert scc into tempG
+			// insert vertices into tempG
+			for(auto v : scc->getVerticesOfSCC()) {
+				auto &newV = tempG.createVertex(v->getId());
+				originalVertexMap[v] = &newV;
+				tempGVertexMap[&newV] = v;
+				sccMap[&newV] = scc->getId();
+			}
+			// insert edges into tempG
+			for(auto e : scc->getSCCEdges()) {
+				auto src = originalVertexMap[&e->getVertexSrc()];
+				auto dst = originalVertexMap[&e->getVertexDst()];
+				auto &newE = tempG.createEdge(*src,*dst,e->getDistance(),e->getDependencyType());
+				newE.setDelay(e->getDelay());
+			}
+		}
+
+		/////////////////////////////
+		// generate resource model //
+		/////////////////////////////
+		ResourceModel rm;
+		for(auto v : this->g.Vertices()) {
+			// skip vertices that are only in trivial SCCs
+			if(originalVertexMap.find(v) == originalVertexMap.end()) continue;
+			auto res = this->resourceModel.getResource(v);
+			Resource* newRes;
+			// only create new resource if it does not already exist
+			try {
+				newRes = rm.getResource(res->getName());
+			}
+			catch(HatScheT::Exception&) {
+				newRes = &rm.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+			}
+			// register vertex of tempG to new resource
+			rm.registerVertex(originalVertexMap[v],newRes);
+		}
+
+		///////////////
+		// debugging //
+		///////////////
+		std::cout << "graph to be scheduled by ratII:" << std::endl;
+		std::cout << tempG;
+		std::cout << "corresponding resource model:" << std::endl;
+		std::cout << rm;
+
+		/////////////////////////////////////////
+		// schedule graph with ratII scheduler //
+		/////////////////////////////////////////
+		auto* ratII = new RationalIIScheduler(tempG,rm,this->solverWishlist);
+		ratII->setModulo(this->M);
+		ratII->setSamples(this->S);
+		ratII->schedule();
+
+		if(!ratII->getScheduleFound()) {
+			sccSchedule.clear(); // clear to be safe that it's empty
+			return sccSchedule; // return empty schedule
+		}
+
+		this->latencySequence = ratII->getInitIntervalls();
+
+		/////////////////////
+		// return solution //
+		/////////////////////
+		for(auto p : ratII->getSchedule()) {
+			auto v = p.first;
+			auto t = p.second;
+			sccSchedule[tempGVertexMap[v]] = std::make_pair(t,sccMap[v]);
+		}
+		return sccSchedule;
 	}
 }
 

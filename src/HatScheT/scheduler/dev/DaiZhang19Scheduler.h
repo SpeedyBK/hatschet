@@ -37,14 +37,6 @@ namespace HatScheT {
     virtual void constructProblem() {/* unused */}
 
     /*!
-     * determineType(SCC* scc) figures out, which type an SCC is, at first the number of Vertices will be checkt,
-     * if it is 1, the SCC is cassified as trivial. The next check is if there are resource constraints. In case there
-     * are constraints, the SCC is classified as complex, and in case there are no contraints the SCC is classified as
-     * basic.
-     */
-    scctype determineType(SCC* scc);
-
-    /*!
      * getSccIdbyVertex(Vertex* v) finds the SCC a vertex of the original graph is in and returns the ID of this SCC.
      */
     int getSccIdbyVertex(Vertex* v);

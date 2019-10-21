@@ -25,6 +25,7 @@
 #pragma once
 
 #include <HatScheT/Graph.h>
+#include <HatScheT/ResourceModel.h>
 #include <vector>
 
 
@@ -58,7 +59,7 @@ namespace HatScheT {
     /*!
      * @return The type of a SCC.
      */
-    scctype getSccType();
+    scctype getSccType(ResourceModel* rm);
 
     /*!
      * @return A list of the Vertices which belong to an SCC.
@@ -91,11 +92,6 @@ namespace HatScheT {
      * Can be used to set the ID of an SCC.
      */
     void setId (int id);
-
-    /*!
-     * Sets the type of a SCC.
-     */
-    void setSCCType(scctype sT);
 
     /*!
      * This function sets the Vertex V of Graph g as a part of the SCC.

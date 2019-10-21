@@ -22,7 +22,18 @@ HatScheT::SCC::SCC(Graph &g) {
 /*!
  * @return Type of the SCC
  */
-HatScheT::scctype HatScheT::SCC::getSccType() { return typeOfSCC; }
+HatScheT::scctype HatScheT::SCC::getSccType(ResourceModel* rm) {
+  if (this->getNumberOfVertices() == 1) {
+    return trivial;
+  }
+  list<Vertex*> VerticesOfSCC = this->getVerticesOfSCC();
+  for (auto &it:VerticesOfSCC) {
+    if (rm->getResource(it)->getLimit() != -1) {
+      return complex;
+    }
+  }
+  return basic;
+}
 
 /*!
  * @return ID of the SCC.
@@ -44,12 +55,6 @@ int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
  * @param newid
  */
 void HatScheT::SCC::setId(int newid) { this->id = newid; }
-
-/*!
- * Sets the type of an SCC to unknown, basic, trivial or complex
- * @param sT
- */
-void HatScheT::SCC::setSCCType(scctype sT) { this -> typeOfSCC = sT ;}
 
 /*!
  * If a vertex should be part of the SCC it can be passed to this function, which sets the value of vertexInSCC

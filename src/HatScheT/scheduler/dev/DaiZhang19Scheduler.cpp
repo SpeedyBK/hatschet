@@ -46,8 +46,8 @@ namespace HatScheT {
       cout << "Determine type of SCCs..." << endl;
       cout << "-----------------------------------------------------------------------------------------------" << endl;
       for (auto &it : sccs) {
-        it->setSCCType(determineType(it));
-        cout << it->getName() << "Type is: " << it->getSccType()
+        //it->setSCCType(determineType(it));
+        cout << it->getName() << "Type is: " << it->getSccType(&this->resourceModel)
              << " (0 = unknown, 1 = Basic, 2 = Complex, 3 = Trivial)" << endl;
       }
 
@@ -172,24 +172,6 @@ namespace HatScheT {
   }
 
 
-  scctype DaiZhang19Scheduler::determineType(HatScheT::SCC *scc){
-
-    if (scc->getNumberOfVertices() == 1) {
-      return trivial;
-    }
-
-    list<Vertex*> VerticesOfSCC = scc->getVerticesOfSCC();
-
-    for (auto &it:VerticesOfSCC) {
-      if (resourceModel.getResource(it)->getLimit() != -1) {
-        return complex;
-      }
-    }
-
-    return basic;
-  }
-
-
   int DaiZhang19Scheduler::getSccIdbyVertex(Vertex *v) {
 
     for (auto &it : sccs) {
@@ -208,11 +190,11 @@ namespace HatScheT {
 
   void DaiZhang19Scheduler::sortSCCs(SCC *scc) {
 
-    if (scc->getSccType() == basic) {
+    if (scc->getSccType(&this->resourceModel) == basic) {
       basicSCCs.push_back(scc);
-    } else if (scc->getSccType() == complex) {
+    } else if (scc->getSccType(&this->resourceModel) == complex) {
       complexSCCs.push_back(scc);
-    } else if (scc->getSccType() == trivial) {
+    } else if (scc->getSccType(&this->resourceModel) == trivial) {
       trivialSCCs.push_back(scc);
     } else {
       throw HatScheT::Exception("DaiZhang19Scheduler.sortSCCs: SCC with of type unknown, set SccType first.");
@@ -346,11 +328,6 @@ namespace HatScheT {
     for (auto &eIt : h.Edges()){
       cout << eIt->getId() << ": " << eIt->getVertexSrcName() << " -- " << eIt->getVertexDstName() << " -- " << eIt->getDistance() << endl;
     }
-
-    //Writing a Graphml ToDo: Remove and remove folder as well.
-    string path = "SuperGraphml/Supergraph"+to_string(SCCvec[0]->getId())+".graphml";
-    DotWriter dotW (path , &h, &rmTemp);
-    dotW.write();
 
     cout << endl;
     cout << "-----------------------------------------------------------------------------------------------" << endl;
