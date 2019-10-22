@@ -1146,6 +1146,7 @@ bool Tests::compareModuloSchedulerTest() {
 
       SDSScheduler sds(g, rm);
       sds.setSilent(false);
+      sds.setBindingType('R');
       sds.schedule();
 
       return false;

@@ -21,10 +21,12 @@
 
 #ifndef HATSCHET_SDSSCHEDULER_H
 #define HATSCHET_SDSSCHEDULER_H
+#ifdef USE_CADICAL
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
+
 
 #include "cadical.hpp"
 
@@ -76,6 +78,8 @@ namespace HatScheT {
      */
     void setSilent(bool quiet = true) {this -> silent = quiet;}
 
+    void setBindingType(char bType){this -> bindingType = bType;}
+
   private:
 
     //Functions
@@ -90,10 +94,12 @@ namespace HatScheT {
      */
     void setBindingVariables ();
     /*!
-     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the Operations i and j
-     * are sharing the same resourceinstance.
+     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
+     * are sharing the same resourceinstance. Tries to distribute the operation equally to the resource instances.
      */
     map <pair<const Vertex*, const Vertex*>, bool> createShVarsMaxSpeed();
+
+    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMinRes();
 
 
 
@@ -130,5 +136,7 @@ namespace HatScheT {
   };
 
 }
+
+#endif //USE_CADICAL
 
 #endif //HATSCHET_SDSSCHEDULER_H

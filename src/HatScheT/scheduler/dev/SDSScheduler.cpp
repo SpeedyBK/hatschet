@@ -64,7 +64,11 @@ namespace HatScheT {
       cout << endl;
     }
 
-    sharingVariables = createShVarsMaxSpeed();
+    if (bindingType == 'S') {
+      sharingVariables = createShVarsMaxSpeed();
+    }else if (bindingType == 'R'){
+      sharingVariables = createShVarsMinRes();
+    }
 
     if (!this->silent) {
       for (auto &it:sharingVariables) {
@@ -161,6 +165,40 @@ namespace HatScheT {
                 auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
                 shared.insert(make_pair(vpair, false));
               }
+            }
+          }
+        }
+        loops++;
+      }
+    }
+    return shared;
+  }
+
+  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMinRes() {
+
+    map <pair<const Vertex*, const Vertex*>, bool> shared;
+    list <bindingVariable*> tempBinVars;
+    list <list <bindingVariable*>>templists;
+
+    for (int i = 0; i < numOfLimitedResources; i++){
+      for (auto &it : bindingVariables){
+        if (it.resourceID == i){
+          tempBinVars.push_back(&it);
+        }
+      }
+      templists.push_back(tempBinVars);
+      tempBinVars.clear();
+    }
+
+    for (auto &lit : templists){
+      int loops = 1;
+      for (auto &ibvIt : lit){
+        if (ibvIt->binding) {
+          auto jbvIt = lit.begin();
+          for (advance(jbvIt, loops); jbvIt != lit.end(); ++jbvIt) {
+            if(ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() && (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)){
+                auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
+                shared.insert(make_pair(vpair, true));
             }
           }
         }
