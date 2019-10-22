@@ -26,7 +26,7 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
 
-#include "/opt/cadical/include/cadical.hpp"
+#include "cadical.hpp"
 
 namespace HatScheT {
 
@@ -93,7 +93,9 @@ namespace HatScheT {
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the Operations i and j
      * are sharing the same resourceinstance.
      */
-    map <pair<const Vertex*, const Vertex*>, bool> createSharingVariables();
+    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMaxSpeed();
+
+
 
 
     //Variables
@@ -101,6 +103,12 @@ namespace HatScheT {
      * If true, cout statements are supressed.
      */
     bool silent;
+    /*!
+     * BindingType is used as a switch for the resourcebinding:
+     * R -> Use minimun of resources: Starts with mapping all operations to 1 resource instance.
+     * S -> Get maximum Speed : Distributes the operations as equal as possible to the resource instances.
+     */
+    char bindingType;
     /*!
      * Number of limited resources.
      */

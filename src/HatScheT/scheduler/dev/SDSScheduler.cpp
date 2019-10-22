@@ -64,7 +64,7 @@ namespace HatScheT {
       cout << endl;
     }
 
-    sharingVariables = createSharingVariables();
+    sharingVariables = createShVarsMaxSpeed();
 
     if (!this->silent) {
       for (auto &it:sharingVariables) {
@@ -131,7 +131,7 @@ namespace HatScheT {
     }
   }
 
-  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createSharingVariables() {
+  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMaxSpeed() {
 
     map <pair<const Vertex*, const Vertex*>, bool> shared;
     list <bindingVariable*> tempBinVars;
@@ -167,7 +167,6 @@ namespace HatScheT {
         loops++;
       }
     }
-
     return shared;
   }
 }

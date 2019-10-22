@@ -49,7 +49,7 @@
 #include <stdio.h>
 
 #ifdef USE_CADICAL
-#include "/opt/cadical/include/cadical.hpp"
+#include "cadical.hpp"
 #endif
 
 
