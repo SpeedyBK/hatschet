@@ -19,9 +19,9 @@
 */
 
 #include "GraphMLGraphWriter.h"
-#include <xercesc/util/XMLString.hpp>
 
 #ifdef USE_XERCESC
+#include <xercesc/util/XMLString.hpp>
 
 namespace HatScheT {
 
