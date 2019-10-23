@@ -109,14 +109,22 @@ namespace HatScheT {
     map <pair<const Vertex*, const Vertex*>, bool> createShVarsMinRes();
 
     /*!
-     * This function passes the Resource Constraints and Conflict Clauses from SDC to the SAT-Solver and returns a
-     * solution for the given clauses.
+     * This function passes the Resource Constraints and Conflict Clauses from SDC to the SAT-Solver and gets the Solution
+     * from the SAT-Solver. The SAT Solution is than tranformed to a SDC formulation:
+     * (O(i->j) = true = S(i) - S(j) <= -1
+     *  O(i->j) = false = no SDC-constraints)
      * @param shareVars Sharing Variables.
      * @param confClauses conflict clauses determined by the SDC-Solver.
-     * @return
+     * @return Map of SDC-Formulations based on the SAT Solution.
      */
-    vector <int> passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses);
+    map<pair<const Vertex*, const Vertex*>, int> passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses);
 
+    /*!
+     * Swaps a pair.
+     * @param inPair Inputpair
+     * @return Swapped Version of InPair.
+     */
+    static pair<const Vertex*, const Vertex*> swapPair (pair<const Vertex*, const Vertex*> inPair);
 
     //Variables
     /*!
@@ -148,8 +156,9 @@ namespace HatScheT {
 
     /*!
      * Solution which the SAT-Solver return for the resource constraints given by the Sharing Variables.
+     * in an SDC Formulation.
      */
-    vector <int> satSolution;
+    map<pair<const Vertex*, const Vertex*>, int> resourceConstraintsSDC;
 
   };
 

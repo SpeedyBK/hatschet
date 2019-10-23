@@ -99,13 +99,13 @@ namespace HatScheT {
       cout << endl;
     }
 
-    satSolution = passToSATSolver(sharingVariables, {{}});
+    resourceConstraintsSDC = passToSATSolver(sharingVariables, {{}});
 
     if (!this->silent) {
       cout << endl;
-      cout << "Solution: " << endl;
-      for (auto &it : satSolution) {
-        cout << it << " ";
+      cout << "Resource SDC Constraints: " << endl;
+      for (auto &it : resourceConstraintsSDC) {
+        cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
       }
       cout << endl;
     }
@@ -242,7 +242,7 @@ namespace HatScheT {
   }
 
 
-  vector<int> SDSScheduler::passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
+  map<pair<const Vertex*, const Vertex*>, int> SDSScheduler::passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
                                             vector<vector<int>> confClauses) {
 
     /*!
@@ -305,18 +305,35 @@ namespace HatScheT {
     /*!
      * Getting Solution
      * Solver variable starts at 1, since negated variables are shown as negative numbers.
+     * The Solution from SAT is than mapped to an SDC-Format like (srcVertex - dstVertex <= -1)
      */
-    vector<int> solution;
+    map<pair<const Vertex*, const Vertex*>, int> solutionMap;
+    auto mIt = sharingVariables.begin();
     if (res == 10) {
       for (int i = 0; i < litCounter - 1; i++) {
-        solution.push_back(solver->val(i + 1));
+        cout << solver->val(i+1) << " ";
+        if (i % 2 == 0){
+          if(solver->val(i+1) > 0) {
+            solutionMap.insert(make_pair(mIt->first, -1));
+          }
+        }else {
+          if(solver->val(i+1) > 0) {
+            solutionMap.insert(make_pair(swapPair(mIt->first), -1));
+          }
+          ++mIt;
+        }
       }
+      cout << endl;
     }
 
     delete solver;
 
-    return solution;
+    return solutionMap;
 
+  }
+
+  pair<const Vertex *, const Vertex *> SDSScheduler::swapPair(pair<const Vertex *, const Vertex *> inPair) {
+    return make_pair(inPair.second, inPair.first);
   }
 }
 
