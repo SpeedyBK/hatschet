@@ -123,8 +123,8 @@ int main(int argc, char *args[]) {
 
   //variables for Rational II scheduling
   //experimental
-  int samples=2; //default
-  int modulo=2; //defaul
+  int samples=-1; //default
+  int modulo=-1; //default
 
   //flag to enable mux optimal binding
   //experimental
@@ -428,6 +428,7 @@ int main(int argc, char *args[]) {
     HatScheT::SchedulerBase *scheduler;
 
     bool isModuloScheduler=false;
+    bool isRationalIIScheduler=false;
     std::list<std::string> solverWishList;
     if(ilpSolver.empty()) {
       solverWishList = {"Gurobi","CPLEX","SCIP","LPSolve"};
@@ -518,6 +519,7 @@ int main(int argc, char *args[]) {
           ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
           break;
         case RATIONALII:
+          isRationalIIScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
@@ -534,6 +536,7 @@ int main(int argc, char *args[]) {
           ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
           break;
         case RATIONALIIMODULOQ:
+          isRationalIIScheduler=true;
           scheduler = new HatScheT::ModuloQScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::ModuloQScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::ModuloQScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
@@ -594,12 +597,15 @@ int main(int argc, char *args[]) {
         std::cout << "------------------------------------------------------------------------------------" << endl;
         std::cout << "latency = " << scheduler->getScheduleLength() << endl;
         HatScheT::Utility::printSchedule(scheduler->getSchedule());
-        std::map<const HatScheT::Vertex*,int> b = scheduler->getBindings();
-        HatScheT::Utility::printBinding(*&b,rm);
+        if(!isRationalIIScheduler) {
+          std::map<const HatScheT::Vertex*,int> b = scheduler->getBindings();
+          HatScheT::Utility::printBinding(*&b,rm);
 
-        if (htmlFile != "") {
-          scheduler->writeScheduleChart(htmlFile);
+          if (htmlFile != "") {
+            scheduler->writeScheduleChart(htmlFile);
+          }
         }
+
       }
       else cout << "No schedule found!" << endl;
 

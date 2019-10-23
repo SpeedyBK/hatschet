@@ -4,6 +4,7 @@
 
 #include "ModuloQScheduler.h"
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Verifier.h>
 #include <HatScheT/utility/subgraphs/KosarajuSCC.h>
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
@@ -242,9 +243,7 @@ namespace HatScheT {
 
 	std::map<Vertex *, pair<int, int>> ModuloQScheduler::getSCCSchedule(std::vector<SCC *> &sccs) {
 		map<Vertex *, pair<int, int>> sccSchedule;
-		////////////////////////////////////////////////////////
-		// generate new graph containing all non-trivial SCCs //
-		////////////////////////////////////////////////////////
+		// generate new graph containing all non-trivial SCCs
 		Graph tempG;
 		std::map<Vertex*,Vertex*> originalVertexMap; // original vertex -> tempG vertex
 		std::map<Vertex*,Vertex*> tempGVertexMap; // tempG vertex -> original vertex
@@ -269,9 +268,7 @@ namespace HatScheT {
 			}
 		}
 
-		/////////////////////////////
-		// generate resource model //
-		/////////////////////////////
+		// generate resource model
 		ResourceModel rm;
 		for(auto v : this->g.Vertices()) {
 			// skip vertices that are only in trivial SCCs
@@ -289,21 +286,14 @@ namespace HatScheT {
 			rm.registerVertex(originalVertexMap[v],newRes);
 		}
 
-		///////////////
-		// debugging //
-		///////////////
-		std::cout << "graph to be scheduled by ratII:" << std::endl;
-		std::cout << tempG;
-		std::cout << "corresponding resource model:" << std::endl;
-		std::cout << rm;
-
-		/////////////////////////////////////////
-		// schedule graph with ratII scheduler //
-		/////////////////////////////////////////
+		// schedule graph with ILP based rational II scheduler
 		auto* ratII = new RationalIIScheduler(tempG,rm,this->solverWishlist);
+		auto timeout = this->solver->timeout;
+		if(timeout>0) ratII->setSolverTimeout(timeout);
 		ratII->setModulo(this->M);
 		ratII->setSamples(this->S);
 		ratII->setMaxLatencyConstraint(this->getMaxLatencyConstraint());
+		ratII->setMaxRuns(1);
 		ratII->schedule();
 
 		if(!ratII->getScheduleFound()) {
@@ -311,18 +301,21 @@ namespace HatScheT {
 			return sccSchedule; // return empty schedule
 		}
 
+		// verify result from ratII
+		if(!verifyRationalIIModuloSchedule(tempG,rm,ratII->getStartTimeVector(),ratII->getInitIntervalls(),ratII->getScheduleLength())) {
+			sccSchedule.clear(); // clear to be safe that it's empty
+			return sccSchedule; // return empty schedule
+		}
+
 		this->initiationIntervals = ratII->getInitIntervalls();
-		// first entry might not be zero -> norm it
 		if(this->initiationIntervals.empty())
-			throw HatScheT::Exception("Latency sequence is empty after ratII schedule - this should never happen!");
+			throw HatScheT::Exception("Initiation intervals vector is empty after ratII schedule - this should never happen!");
 		this->latencySequence = {0};
 		for(unsigned int i=0; i<this->initiationIntervals.size()-1; ++i) {
 			this->latencySequence.emplace_back(this->latencySequence[this->latencySequence.size()-1]+this->initiationIntervals[i]);
 		}
 
-		/////////////////////
-		// return solution //
-		/////////////////////
+		// return solution
 		for(auto p : ratII->getSchedule()) {
 			auto v = p.first;
 			auto t = p.second;
@@ -643,6 +636,10 @@ namespace HatScheT {
 		}
 		if(startTimes.empty()) std::cout << "  *EMPTY*" << std::endl;
 		std::cout << "------------------------------------------------------" << std::endl;
+	}
+
+	std::pair<int, int> ModuloQScheduler::getSM() {
+		std::make_pair(this->S,this->M);
 	}
 }
 

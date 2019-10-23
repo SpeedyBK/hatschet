@@ -79,6 +79,11 @@ namespace HatScheT {
 		 */
 		double getII() override { return this->II;}
 		/*!
+		 *
+		 * @return S and M (samples and modulo)
+		 */
+		std::pair<int,int> getSM();
+		/*!
 		 * Main schedule function
 		 */
 		void schedule() override;
@@ -109,6 +114,17 @@ namespace HatScheT {
 		 * @return rat II start times
 		 */
 		std::vector<std::map<Vertex*,int> >& getStartTimeVector() { return this->startTimesVector; }
+		/*!
+   * dont use this function fo rational II modulo schedules
+   * @return
+   */
+		std::map<const Vertex*,int> getBindings() override { throw HatScheT::Exception("Use getRationalIIBindings for rational II schedulers"); }
+		/*!
+		 * generate a binding using the determined rational II schedule
+		 * TODO figure out the best binding method (ILP?)
+		 * @return
+		 */
+		vector<std::map<const Vertex*,int> > getRationalIIBindings() { throw HatScheT::Exception("getRationalIIBindings not yet supported"); }
 	protected:
 		/*!
 		 * not needed

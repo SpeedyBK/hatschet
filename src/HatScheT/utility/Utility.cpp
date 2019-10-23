@@ -134,6 +134,21 @@ int Utility::getCyclesOfLongestPath(HatScheT::Graph *g, HatScheT::ResourceModel 
     if(g->getPredecessors(v).size() == 0) inputs.push_back(v);
   }
 
+  // check if there are vertices, which only have input edges with distance>0
+  if(inputs.empty()) {
+    for(auto v : g->Vertices()) {
+      bool pushMeBack = true;
+      for(auto e : g->Edges()) {
+        if(&e->getVertexDst() != v) continue;
+        if(e->getDistance()<1) {
+          pushMeBack = false;
+          break;
+        }
+      }
+      if(pushMeBack) inputs.emplace_back(v);
+    }
+  }
+
   //find seed edges
   vector<const Edge*> seeds;
   //iterate over inputs

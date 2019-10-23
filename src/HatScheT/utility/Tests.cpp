@@ -1091,7 +1091,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(g4, g6, 0);
 
     ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
-    m.setMaxLatencyConstraint(100);
+    //m.setMaxLatencyConstraint(100);
     m.schedule();
     //auto result = m.getSchedule();
 

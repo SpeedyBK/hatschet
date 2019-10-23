@@ -484,6 +484,7 @@ void RationalIIScheduler::fillSolutionStructure() {
 
     if(i==II_vector.size()-1) this->initIntervals.push_back(this->modulo - this->r.values[svTemp2]);
   }
+  if(this->II_vector.size()==1) this->initIntervals = {this->modulo};
 }
 
 int RationalIIScheduler::getScheduleLength() {
