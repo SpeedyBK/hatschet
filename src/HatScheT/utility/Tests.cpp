@@ -1042,9 +1042,6 @@ bool Tests::compareModuloSchedulerTest() {
 
 
   bool Tests::rationalIIModuloQTest() {
-#ifndef USE_XERCESC
-    return true;
-#else
     HatScheT::Graph g;
     HatScheT::ResourceModel rm;
 
@@ -1117,7 +1114,6 @@ bool Tests::compareModuloSchedulerTest() {
       }
     }
     return true;
-#endif
   }
 
   bool Tests::sdsSchedulerTest() {
