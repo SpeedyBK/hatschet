@@ -97,18 +97,25 @@ namespace HatScheT {
     /*!
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
      * are sharing the same resourceinstance. Tries to distribute the operation equally to the resource instances.
+     * @return Sharing Variable <Vi, Vj>, true/false
      */
     map <pair<const Vertex*, const Vertex*>, bool> createShVarsMaxSpeed();
 
     /*!
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
      * are sharing the same resourceinstance. Tries to use the minimum of resource instances.
+     * @return Sharing Variable <Vi, Vj>, true/false
      */
     map <pair<const Vertex*, const Vertex*>, bool> createShVarsMinRes();
 
+    /*!
+     * This function passes the Resource Constraints and Conflict Clauses from SDC to the SAT-Solver and returns a
+     * solution for the given clauses.
+     * @param shareVars Sharing Variables.
+     * @param confClauses conflict clauses determined by the SDC-Solver.
+     * @return
+     */
     vector <int> passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses);
-
-
 
 
     //Variables
@@ -139,6 +146,9 @@ namespace HatScheT {
      */
     map <pair<const Vertex*, const Vertex*>, bool> sharingVariables;
 
+    /*!
+     * Solution which the SAT-Solver return for the resource constraints given by the Sharing Variables.
+     */
     vector <int> satSolution;
 
   };
