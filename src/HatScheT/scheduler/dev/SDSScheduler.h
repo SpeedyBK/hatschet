@@ -21,12 +21,14 @@
 
 #ifndef HATSCHET_SDSSCHEDULER_H
 #define HATSCHET_SDSSCHEDULER_H
+#ifdef USE_CADICAL
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
 
-#include "/opt/cadical/include/cadical.hpp"
+
+#include "cadical.hpp"
 
 namespace HatScheT {
 
@@ -76,6 +78,8 @@ namespace HatScheT {
      */
     void setSilent(bool quiet = true) {this -> silent = quiet;}
 
+    void setBindingType(char bType){this -> bindingType = bType;}
+
   private:
 
     //Functions
@@ -89,11 +93,22 @@ namespace HatScheT {
      * each operation is mapped to exactly one resource. It tries to map the operation equaly to the resourceinstances.
      */
     void setBindingVariables ();
+
     /*!
-     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the Operations i and j
-     * are sharing the same resourceinstance.
+     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
+     * are sharing the same resourceinstance. Tries to distribute the operation equally to the resource instances.
      */
-    map <pair<const Vertex*, const Vertex*>, bool> createSharingVariables();
+    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMaxSpeed();
+
+    /*!
+     * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
+     * are sharing the same resourceinstance. Tries to use the minimum of resource instances.
+     */
+    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMinRes();
+
+    vector <int> passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses);
+
+
 
 
     //Variables
@@ -101,26 +116,35 @@ namespace HatScheT {
      * If true, cout statements are supressed.
      */
     bool silent;
+
+    /*!
+     * BindingType is used as a switch for the resourcebinding:
+     * R -> Use minimun of resources: Starts with mapping all operations to 1 resource instance.
+     * S -> Get maximum Speed : Distributes the operations as equal as possible to the resource instances.
+     */
+    char bindingType;
+
     /*!
      * Number of limited resources.
      */
     int numOfLimitedResources;
+
     /*!
      * Maps each operation which need a limited Resource to an instance of this ressource.
      */
     list <bindingVariable> bindingVariables;
+
     /*!
      * Marks if operations share the same resource instance
      */
     map <pair<const Vertex*, const Vertex*>, bool> sharingVariables;
-    /*!
-     * If the Ordering Variable O(i->j) is true, it means that operation i is scheduled in an earlyer clock cycle than
-     * operation j
-     */
-    map <pair<const Vertex*, const Vertex*>, bool> orderingVariables;
+
+    vector <int> satSolution;
 
   };
 
 }
+
+#endif //USE_CADICAL
 
 #endif //HATSCHET_SDSSCHEDULER_H

@@ -4,8 +4,10 @@
 
 //UNDER DEVELOPEMENT
 
-
+#ifdef USE_CADICAL
 #include "SDSScheduler.h"
+#include <cassert>
+#include <iomanip>
 
 namespace HatScheT {
 
@@ -64,7 +66,11 @@ namespace HatScheT {
       cout << endl;
     }
 
-    sharingVariables = createSharingVariables();
+    if (bindingType == 'S') {
+      sharingVariables = createShVarsMaxSpeed();
+    }else if (bindingType == 'R'){
+      sharingVariables = createShVarsMinRes();
+    }
 
     if (!this->silent) {
       for (auto &it:sharingVariables) {
@@ -75,6 +81,26 @@ namespace HatScheT {
         }
       }
     }
+
+
+    if (!this->silent){
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Passing Sharing Variable to SAT..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    satSolution = passToSATSolver(sharingVariables, {{}});
+
+    if (!this->silent) {
+      cout << endl;
+      cout << "Solution: " << endl;
+      for (auto &it : satSolution){
+        cout << it << " ";
+      }
+      cout << endl;
+    }
+
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -131,7 +157,7 @@ namespace HatScheT {
     }
   }
 
-  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createSharingVariables() {
+  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMaxSpeed() {
 
     map <pair<const Vertex*, const Vertex*>, bool> shared;
     list <bindingVariable*> tempBinVars;
@@ -167,7 +193,113 @@ namespace HatScheT {
         loops++;
       }
     }
-
     return shared;
   }
+
+  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMinRes() {
+
+    map <pair<const Vertex*, const Vertex*>, bool> shared;
+    list <bindingVariable*> tempBinVars;
+    list <list <bindingVariable*>>templists;
+
+    for (int i = 0; i < numOfLimitedResources; i++){
+      for (auto &it : bindingVariables){
+        if (it.resourceID == i){
+          tempBinVars.push_back(&it);
+        }
+      }
+      templists.push_back(tempBinVars);
+      tempBinVars.clear();
+    }
+
+    for (auto &lit : templists){
+      int loops = 1;
+      for (auto &ibvIt : lit){
+        if (ibvIt->binding) {
+          auto jbvIt = lit.begin();
+          for (advance(jbvIt, loops); jbvIt != lit.end(); ++jbvIt) {
+            if(ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() && (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)){
+                auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
+                shared.insert(make_pair(vpair, true));
+            }
+          }
+        }
+        loops++;
+      }
+    }
+    return shared;
+  }
+
+
+  vector<int> SDSScheduler::passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses) {
+
+    /*!
+     * Instance of SAT-Solver
+     */
+    CaDiCaL::Solver * solver = new CaDiCaL::Solver;
+
+    /*!
+     * Converting Sharing Variables to SAT-Literals and pass to SAT-Solver.
+     */
+    int litCounter = 1;
+    if (!this -> silent) {
+      cout << "Problem: " << "p cnf " << shareVars.size() * 2 << " " << shareVars.size() * 2 + confClauses.size()
+           << endl << endl;
+    }
+    for (auto &It : shareVars){
+      if(It.second){
+         solver->add(litCounter); solver->add(litCounter+1); solver->add(0);
+         if (!this -> silent) {cout << setw(3) << litCounter << setw(3) << litCounter+1 << setw(3) << " 0" << endl;}
+         solver->add(litCounter*-1); solver->add((litCounter+1)*-1); solver->add(0);
+         if (!this -> silent) {cout << setw(3) << litCounter*-1 << setw(3) << (litCounter+1)*-1 << setw(3) << " 0" << endl;}
+         litCounter += 2;
+      }
+    }
+
+    /*!
+     * Adding Conflict Clauses
+     */
+    for (auto &It : confClauses){
+      for (auto &Itr : It){
+        solver->add(Itr);
+      }
+      if (!It.empty()) {
+        solver->add(0);
+      }
+    }
+
+    /*!
+     * Solve Problem
+     */
+    int res = solver->solve();
+
+    /*!
+     * Check if satisfiable:
+     */
+    if (res == 10){
+      cout << "CaDiCaL: Problem Satisfiable" << endl;
+    }else if (res == 0){
+      cout << "CaDiCaL: Problem Unsolved" << endl;
+    }else if (res == 20){
+      cout << "CaDiCaL: Problem Unsatisfiable" << endl;
+    }
+
+    /*!
+     * Getting Solution
+     * Solver variable starts at 1, since negated variables are shown as negative numbers.
+     */
+    vector <int> solution;
+    if (res == 10) {
+      for (int i = 0; i < litCounter - 1; i++) {
+        solution.push_back(solver->val(i + 1));
+      }
+    }
+
+    delete solver;
+
+    return solution;
+
+  }
 }
+
+#endif //USE_CADICAL

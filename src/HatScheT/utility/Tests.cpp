@@ -49,7 +49,7 @@
 #include <stdio.h>
 
 #ifdef USE_CADICAL
-#include "/opt/cadical/include/cadical.hpp"
+#include "cadical.hpp"
 #endif
 
 
@@ -1160,6 +1160,7 @@ bool Tests::compareModuloSchedulerTest() {
 
       SDSScheduler sds(g, rm);
       sds.setSilent(false);
+      sds.setBindingType('R');
       sds.schedule();
 
       return false;
