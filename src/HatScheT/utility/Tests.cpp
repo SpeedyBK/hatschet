@@ -1041,10 +1041,7 @@ bool Tests::compareModuloSchedulerTest() {
   }
 
 
-  bool Tests::moduloQTest() {
-#ifndef USE_XERCESC
-    return true;
-#else
+  bool Tests::rationalIIModuloQTest() {
     HatScheT::Graph g;
     HatScheT::ResourceModel rm;
 
@@ -1094,16 +1091,29 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(g4, g6, 0);
 
     ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    m.setMaxLatencyConstraint(100);
     m.schedule();
-    auto result = m.getSchedule();
+    //auto result = m.getSchedule();
 
     std::cout << "Tests::moduloQTest: finished scheduling - resulting control steps:" << std::endl;
-    for (auto it : result) {
-      std::cout << it.first->getName() << " - " << it.second << std::endl;
-    }
+    auto startTimesVector = m.getStartTimeVector();
+    auto initIntervals = m.getInitiationIntervals();
+    auto latencySequence = m.getLatencySequence();
 
+    auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, initIntervals, m.getScheduleLength());
+    if(!valid) {
+      std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
+      return false;
+    }
+    for(unsigned int i=0; i<latencySequence.size(); ++i) {
+      auto l = latencySequence[i];
+      auto startTimes = startTimesVector[i];
+      std::cout << "Tests::moduloQTest: start times for insertion time=" << l << std::endl;
+      for(auto it : startTimes) {
+        std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+      }
+    }
     return true;
-#endif
   }
 
   bool Tests::sdsSchedulerTest() {

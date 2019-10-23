@@ -52,6 +52,7 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -92,6 +93,7 @@ void print_short_help() {
   std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
+  std::cout << "                            RATIONALIIMODULOQ: Third experimental rational II scheduler (heuristic)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -130,7 +132,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIMODULOQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -255,6 +257,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "rationaliifimmel") {
             schedulerSelection = RATIONALIIFIMMEL;
         }
+        else if(schedulerSelectionStr == "rationaliimoduloq") {
+          schedulerSelection = RATIONALIIMODULOQ;
+        }
         else if(schedulerSelectionStr == "subgrreduction") {
           schedulerSelection = SUGRREDUCTION;
         }
@@ -283,8 +288,8 @@ int main(int argc, char *args[]) {
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
+        if(str=="RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
         if(str=="CADICAL" && HatScheT::Tests::cadicalTest() == false) exit(-1);
-        if(str=="MODULOQ" && HatScheT::Tests::moduloQTest() == false) exit(-1);
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
 
         #else
@@ -351,6 +356,9 @@ int main(int argc, char *args[]) {
       case RATIONALIIFIMMEL:
           cout << "RATIONALIIFIMMEL";
           break;
+      case RATIONALIIMODULOQ:
+        cout << "RATIONALIIMODULOQ";
+        break;
       case SUGRREDUCTION:
         cout << "SUGRREDUCTION";
         break;
@@ -518,13 +526,20 @@ int main(int argc, char *args[]) {
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
-          case RATIONALIIFIMMEL:
-              scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
-              if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
-              if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-              ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);
-              ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
-              break;
+        case RATIONALIIFIMMEL:
+          scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
+          if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setThreads(threads);
+          ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
+        case RATIONALIIMODULOQ:
+          scheduler = new HatScheT::ModuloQScheduler(g,rm,solverWishList);
+          if(timeout>0) ((HatScheT::ModuloQScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::ModuloQScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::ModuloQScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::ModuloQScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
         case SUGRREDUCTION:
         {
           isModuloScheduler = true;
@@ -544,6 +559,7 @@ int main(int argc, char *args[]) {
         case MODULOSDCFIEGE:
         case RATIONALII:
         case RATIONALIIFIMMEL:
+        case RATIONALIIMODULOQ:
         case ASAPRATIONALII:
           throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
           break;
