@@ -110,6 +110,23 @@ namespace HatScheT {
       cout << endl;
     }
 
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Getting Dependency Constraints..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    dependencyConstraintsSDC = createDependencyConstraints();
+
+    if (!this->silent) {
+      cout << "Data Dependency SDC Constraints: " << endl;
+      for (auto &it : dependencyConstraintsSDC) {
+        cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
+      }
+      cout << endl;
+    }
+
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -334,6 +351,24 @@ namespace HatScheT {
 
   pair<const Vertex *, const Vertex *> SDSScheduler::swapPair(pair<const Vertex *, const Vertex *> inPair) {
     return make_pair(inPair.second, inPair.first);
+  }
+
+  map<pair<const Vertex *, const Vertex *>, int> SDSScheduler::createDependencyConstraints() {
+
+    map < pair < const Vertex*, const Vertex* >, int > dependencyConstraints;
+
+    for (auto &it : this-> g.Edges()){
+      auto sVertex = &it->getVertexSrc();
+      auto dVertex = &it->getVertexDst();
+
+      auto constVertexPair = make_pair((const Vertex*) sVertex, (const Vertex*) dVertex);
+      int distance = it->getDistance();
+
+      dependencyConstraints.insert(make_pair(constVertexPair, distance));
+
+    }
+
+    return dependencyConstraints;
   }
 }
 

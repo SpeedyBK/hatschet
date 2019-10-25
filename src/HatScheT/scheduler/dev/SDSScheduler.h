@@ -126,6 +126,8 @@ namespace HatScheT {
      */
     static pair<const Vertex*, const Vertex*> swapPair (pair<const Vertex*, const Vertex*> inPair);
 
+    map <pair<const Vertex*, const Vertex*>, int> createDependencyConstraints();
+
     //Variables
     /*!
      * If true, cout statements are supressed.
@@ -159,6 +161,8 @@ namespace HatScheT {
      * in an SDC Formulation.
      */
     map<pair<const Vertex*, const Vertex*>, int> resourceConstraintsSDC;
+
+    map<pair<const Vertex*, const Vertex*>, int> dependencyConstraintsSDC;
 
   };
 
