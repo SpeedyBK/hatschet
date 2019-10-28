@@ -142,10 +142,11 @@ namespace HatScheT {
      */
     createBasicConstraintGraph();
 
+
     rceIt = resourceConstraintsSDC.begin();
 
     while (rceIt != resourceConstraintsSDC.end()){
-      addToConstraintGraph(rceIt->first, rceIt->second);
+      addToConstraintGraph(swapPair(rceIt->first), rceIt->second);
       //solveSDC();
       //if feasible:
         rceIt++;
@@ -154,10 +155,10 @@ namespace HatScheT {
         //rceIt = resourceConstraintsSDC.begin();
     }
 
+
     /*!
      * Display Graph:
      */
-
     if (!this->silent) {
       cout << "Vertices of Constraint Graph:" << endl;
       for (auto &it:this->constraintGraph.Vertices()){
@@ -403,7 +404,7 @@ namespace HatScheT {
       auto sVertex = &it->getVertexSrc();
       auto dVertex = &it->getVertexDst();
 
-      auto constVertexPair = make_pair((const Vertex*) sVertex, (const Vertex*) dVertex);
+      auto constVertexPair = make_pair((const Vertex*) dVertex, (const Vertex*) sVertex);
       int distance = it->getDistance();
 
       dependencyConstraints.insert(make_pair(constVertexPair, distance));
@@ -448,6 +449,20 @@ namespace HatScheT {
   }
 
   void SDSScheduler::solveSDC() {
+
+    /*!
+     * Detect Source- and Sinkvertices
+     */
+    set <Vertex*> sinks;
+    set <Vertex*> sources;
+    for (auto &it:this->g.Vertices()){
+      if (this->g.isSinkVertex(it)){
+        sinks.insert(it);
+      }
+      if (this->g.isSourceVertex(it)){
+        sources.insert(it);
+      }
+    }
 
 
   }

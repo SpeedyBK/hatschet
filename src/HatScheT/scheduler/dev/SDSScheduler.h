@@ -123,14 +123,26 @@ namespace HatScheT {
      * @param confClauses conflict clauses determined by the SDC-Solver.
      * @return Map of SDC-Formulations based on the SAT Solution.
      */
-    map<pair<const Vertex *, const Vertex *>, int>
+    map<pair<const Vertex *, const Vertex *>, int> passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
+                                                                   vector<vector<int>> confClauses);
 
-    passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars, vector<vector<int>> confClauses);
-
+    /*!
+     * Creates a SDC-Constraint-Graph based on Dependency and Timing-Constraints.
+     */
     void createBasicConstraintGraph();
 
+    /*!
+     * Addes Vertices and Edges to the SDC-Constraint Graph.
+     * @param constraintsSDCVer: The first element is the pointer to the Sourcevertex of and Edge,
+     *                           The second element is the pointer to the Destination of an Edge.
+     * @param weight: Distance of the Edge.
+     */
     void addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight);
 
+    /*!
+     * Detects if the SDC-Inequality-System is feasible, and if it is feasible,
+     * hopefully solves the SDC-Inequality-System.
+     */
     void solveSDC();
 
     /*!
