@@ -523,8 +523,8 @@ int main(int argc, char *args[]) {
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
+          if(samples>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
+					if(modulo>0) ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;

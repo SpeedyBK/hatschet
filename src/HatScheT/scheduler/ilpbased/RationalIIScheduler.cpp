@@ -214,6 +214,9 @@ void RationalIIScheduler::schedule()
   this->scheduleFound = false;
 
   //experimental
+  std::cout << "maxLatencyConstraint: " << maxLatencyConstraint << std::endl;
+  std::cout << "consideredTimeSteps: " << consideredTimeSteps << std::endl;
+  std::cout << "modulo: " << modulo << std::endl;
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
 
