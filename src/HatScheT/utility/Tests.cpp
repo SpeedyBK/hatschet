@@ -1124,8 +1124,11 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::ResourceModel rm;
 
       auto &ld = rm.makeResource("Load", 2, 3, 1);
+      ld.setPhysicalDelay(3);
       auto &add = rm.makeResource("Adder", -1, 1, 1);
+      add.setPhysicalDelay(1);
       auto &st = rm.makeResource("Store", -1, 1, 1);
+      st.setPhysicalDelay(1);
 
       //Load operations:
       Vertex &A = g.createVertex(0);

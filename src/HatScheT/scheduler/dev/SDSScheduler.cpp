@@ -11,13 +11,14 @@
 
 namespace HatScheT {
 
-  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
+  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g,
+                                                                                                                   resourceModel) {
     this->silent = true;
   }
 
   void HatScheT::SDSScheduler::schedule() {
 
-    if (!this->silent){
+    if (!this->silent) {
       cout << "--------------------------------------------------------" << endl;
       cout << "Creating Binding Variables..." << endl;
       cout << "--------------------------------------------------------" << endl;
@@ -27,18 +28,22 @@ namespace HatScheT {
     createBindingVariables();
 
     //Debug
-    if(!this -> silent){cout << "Index : Resource ID / Vertex / Resource Instance / Boolean Binding Variable" << endl;}
-    for (auto &it : bindingVariables){
+    if (!this->silent) {
+      cout << "Index : Resource ID / Vertex / Resource Instance / Boolean Binding Variable" << endl;
+    }
+    for (auto &it : bindingVariables) {
       if (!this->silent) {
         if (it.binding) {
-          cout << it.index << ": " << it.resourceID <<" / " << it.vertex->getName() << " / " << it.resourceInstance << " / True" << endl;
-        }else {
-          cout << it.index << ": " << it.resourceID <<" / " << it.vertex->getName() << " / " << it.resourceInstance << " / False" << endl;
+          cout << it.index << ": " << it.resourceID << " / " << it.vertex->getName() << " / " << it.resourceInstance
+               << " / True" << endl;
+        } else {
+          cout << it.index << ": " << it.resourceID << " / " << it.vertex->getName() << " / " << it.resourceInstance
+               << " / False" << endl;
         }
       }
     }
 
-    if (!this->silent){
+    if (!this->silent) {
       cout << "--------------------------------------------------------" << endl;
       cout << "Setting Binding Variables..." << endl;
       cout << "--------------------------------------------------------" << endl;
@@ -48,18 +53,22 @@ namespace HatScheT {
     setBindingVariables();
 
     //Debug
-    if(!this -> silent){cout << "Index : Resource ID / Vertex / Resource Instance / Boolean Binding Variable" << endl;}
-    for (auto &it : bindingVariables){
+    if (!this->silent) {
+      cout << "Index : Resource ID / Vertex / Resource Instance / Boolean Binding Variable" << endl;
+    }
+    for (auto &it : bindingVariables) {
       if (!this->silent) {
         if (it.binding) {
-          cout << it.index << ": " << it.resourceID <<" / " << it.vertex->getName() << " / " << it.resourceInstance << " / True" << endl;
-        }else {
-          cout << it.index << ": " << it.resourceID <<" / " << it.vertex->getName() << " / " << it.resourceInstance << " / False" << endl;
+          cout << it.index << ": " << it.resourceID << " / " << it.vertex->getName() << " / " << it.resourceInstance
+               << " / True" << endl;
+        } else {
+          cout << it.index << ": " << it.resourceID << " / " << it.vertex->getName() << " / " << it.resourceInstance
+               << " / False" << endl;
         }
       }
     }
 
-    if (!this->silent){
+    if (!this->silent) {
       cout << "--------------------------------------------------------" << endl;
       cout << "Creating and Setting Sharing Variables..." << endl;
       cout << "--------------------------------------------------------" << endl;
@@ -68,7 +77,7 @@ namespace HatScheT {
 
     if (bindingType == 'S') {
       sharingVariables = createShVarsMaxSpeed();
-    }else if (bindingType == 'R'){
+    } else if (bindingType == 'R') {
       sharingVariables = createShVarsMinRes();
     }
 
@@ -83,20 +92,20 @@ namespace HatScheT {
     }
 
 
-    if (!this->silent){
+    if (!this->silent) {
       cout << "--------------------------------------------------------" << endl;
       cout << "Passing Sharing Variable to SAT..." << endl;
       cout << "--------------------------------------------------------" << endl;
       cout << endl;
     }
 
-    satSolution = passToSATSolver(sharingVariables, {{}});
+    resourceConstraintsSDC = passToSATSolver(sharingVariables, {{}});
 
     if (!this->silent) {
       cout << endl;
-      cout << "Solution: " << endl;
-      for (auto &it : satSolution){
-        cout << it << " ";
+      cout << "Resource SDC Constraints: " << endl;
+      for (auto &it : resourceConstraintsSDC) {
+        cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
       }
       cout << endl;
     }
@@ -105,14 +114,14 @@ namespace HatScheT {
 
   void HatScheT::SDSScheduler::createBindingVariables() {
 
-    list<Resource*> localResources;
+    list<Resource *> localResources;
     for (auto it = resourceModel.resourcesBegin(); it != resourceModel.resourcesEnd(); ++it) {
       if (!(*it)->isUnlimited()) {
         localResources.push_back(*it);
       }
     }
 
-    this -> numOfLimitedResources = localResources.size();
+    this->numOfLimitedResources = localResources.size();
 
     bindingVariable bv;
     int idCount = 0;
@@ -138,17 +147,17 @@ namespace HatScheT {
 
   void SDSScheduler::setBindingVariables() {
 
-    int lastVertexId =-1;
+    int lastVertexId = -1;
     int count = 0;
 
-    for (int i = 0; i < numOfLimitedResources; i++){
-      for (auto &it : bindingVariables){
-        if (it.resourceID == i){
-          if(it.vertex->getId() != lastVertexId){
+    for (int i = 0; i < numOfLimitedResources; i++) {
+      for (auto &it : bindingVariables) {
+        if (it.resourceID == i) {
+          if (it.vertex->getId() != lastVertexId) {
             count++;
             lastVertexId = it.vertex->getId();
           }
-          if ((count % it.resource->getLimit()) == it.resourceInstance){
+          if ((count % it.resource->getLimit()) == it.resourceInstance) {
             it.binding = true;
           }
         }
@@ -157,15 +166,15 @@ namespace HatScheT {
     }
   }
 
-  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMaxSpeed() {
+  map<pair<const Vertex *, const Vertex *>, bool> SDSScheduler::createShVarsMaxSpeed() {
 
-    map <pair<const Vertex*, const Vertex*>, bool> shared;
-    list <bindingVariable*> tempBinVars;
-    list <list <bindingVariable*>>templists;
+    map<pair<const Vertex *, const Vertex *>, bool> shared;
+    list<bindingVariable *> tempBinVars;
+    list<list<bindingVariable *>> templists;
 
-    for (int i = 0; i < numOfLimitedResources; i++){
-      for (auto &it : bindingVariables){
-        if (it.resourceID == i){
+    for (int i = 0; i < numOfLimitedResources; i++) {
+      for (auto &it : bindingVariables) {
+        if (it.resourceID == i) {
           tempBinVars.push_back(&it);
         }
       }
@@ -173,17 +182,18 @@ namespace HatScheT {
       tempBinVars.clear();
     }
 
-    for (auto &lit : templists){
+    for (auto &lit : templists) {
       int loops = 1;
-      for (auto &ibvIt : lit){
+      for (auto &ibvIt : lit) {
         if (ibvIt->binding) {
           auto jbvIt = lit.begin();
           for (advance(jbvIt, loops); jbvIt != lit.end(); ++jbvIt) {
-            if(ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() && (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)){
+            if (ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() &&
+                (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)) {
               if (ibvIt->binding && (*jbvIt)->binding) {
                 auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
                 shared.insert(make_pair(vpair, true));
-              }else {
+              } else {
                 auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
                 shared.insert(make_pair(vpair, false));
               }
@@ -196,15 +206,15 @@ namespace HatScheT {
     return shared;
   }
 
-  map <pair<const Vertex*, const Vertex*>, bool> SDSScheduler::createShVarsMinRes() {
+  map<pair<const Vertex *, const Vertex *>, bool> SDSScheduler::createShVarsMinRes() {
 
-    map <pair<const Vertex*, const Vertex*>, bool> shared;
-    list <bindingVariable*> tempBinVars;
-    list <list <bindingVariable*>>templists;
+    map<pair<const Vertex *, const Vertex *>, bool> shared;
+    list<bindingVariable *> tempBinVars;
+    list<list<bindingVariable *>> templists;
 
-    for (int i = 0; i < numOfLimitedResources; i++){
-      for (auto &it : bindingVariables){
-        if (it.resourceID == i){
+    for (int i = 0; i < numOfLimitedResources; i++) {
+      for (auto &it : bindingVariables) {
+        if (it.resourceID == i) {
           tempBinVars.push_back(&it);
         }
       }
@@ -212,15 +222,16 @@ namespace HatScheT {
       tempBinVars.clear();
     }
 
-    for (auto &lit : templists){
+    for (auto &lit : templists) {
       int loops = 1;
-      for (auto &ibvIt : lit){
+      for (auto &ibvIt : lit) {
         if (ibvIt->binding) {
           auto jbvIt = lit.begin();
           for (advance(jbvIt, loops); jbvIt != lit.end(); ++jbvIt) {
-            if(ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() && (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)){
-                auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
-                shared.insert(make_pair(vpair, true));
+            if (ibvIt->vertex->getId() != (*jbvIt)->vertex->getId() &&
+                (ibvIt->resourceInstance == (*jbvIt)->resourceInstance)) {
+              auto vpair = make_pair(ibvIt->vertex, (*jbvIt)->vertex);
+              shared.insert(make_pair(vpair, true));
             }
           }
         }
@@ -231,36 +242,43 @@ namespace HatScheT {
   }
 
 
-  vector<int> SDSScheduler::passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses) {
+  map<pair<const Vertex*, const Vertex*>, int> SDSScheduler::passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
+                                            vector<vector<int>> confClauses) {
 
     /*!
      * Instance of SAT-Solver
      */
-    CaDiCaL::Solver * solver = new CaDiCaL::Solver;
+    CaDiCaL::Solver *solver = new CaDiCaL::Solver;
 
     /*!
      * Converting Sharing Variables to SAT-Literals and pass to SAT-Solver.
      */
     int litCounter = 1;
-    if (!this -> silent) {
+    if (!this->silent) {
       cout << "Problem: " << "p cnf " << shareVars.size() * 2 << " " << shareVars.size() * 2 + confClauses.size()
            << endl << endl;
     }
-    for (auto &It : shareVars){
-      if(It.second){
-         solver->add(litCounter); solver->add(litCounter+1); solver->add(0);
-         if (!this -> silent) {cout << setw(3) << litCounter << setw(3) << litCounter+1 << setw(3) << " 0" << endl;}
-         solver->add(litCounter*-1); solver->add((litCounter+1)*-1); solver->add(0);
-         if (!this -> silent) {cout << setw(3) << litCounter*-1 << setw(3) << (litCounter+1)*-1 << setw(3) << " 0" << endl;}
-         litCounter += 2;
+    for (auto &It : shareVars) {
+      if (It.second) {
+        solver->add(litCounter);
+        solver->add(litCounter + 1);
+        solver->add(0);
+        if (!this->silent) { cout << setw(3) << litCounter << setw(3) << litCounter + 1 << setw(3) << " 0" << endl; }
+        solver->add(litCounter * -1);
+        solver->add((litCounter + 1) * -1);
+        solver->add(0);
+        if (!this->silent) {
+          cout << setw(3) << litCounter * -1 << setw(3) << (litCounter + 1) * -1 << setw(3) << " 0" << endl;
+        }
+        litCounter += 2;
       }
     }
 
     /*!
      * Adding Conflict Clauses
      */
-    for (auto &It : confClauses){
-      for (auto &Itr : It){
+    for (auto &It : confClauses) {
+      for (auto &Itr : It) {
         solver->add(Itr);
       }
       if (!It.empty()) {
@@ -276,29 +294,46 @@ namespace HatScheT {
     /*!
      * Check if satisfiable:
      */
-    if (res == 10){
+    if (res == 10) {
       cout << "CaDiCaL: Problem Satisfiable" << endl;
-    }else if (res == 0){
+    } else if (res == 0) {
       cout << "CaDiCaL: Problem Unsolved" << endl;
-    }else if (res == 20){
+    } else if (res == 20) {
       cout << "CaDiCaL: Problem Unsatisfiable" << endl;
     }
 
     /*!
      * Getting Solution
      * Solver variable starts at 1, since negated variables are shown as negative numbers.
+     * The Solution from SAT is than mapped to an SDC-Format like (srcVertex - dstVertex <= -1)
      */
-    vector <int> solution;
+    map<pair<const Vertex*, const Vertex*>, int> solutionMap;
+    auto mIt = sharingVariables.begin();
     if (res == 10) {
       for (int i = 0; i < litCounter - 1; i++) {
-        solution.push_back(solver->val(i + 1));
+        cout << solver->val(i+1) << " ";
+        if (i % 2 == 0){
+          if(solver->val(i+1) > 0) {
+            solutionMap.insert(make_pair(mIt->first, -1));
+          }
+        }else {
+          if(solver->val(i+1) > 0) {
+            solutionMap.insert(make_pair(swapPair(mIt->first), -1));
+          }
+          ++mIt;
+        }
       }
+      cout << endl;
     }
 
     delete solver;
 
-    return solution;
+    return solutionMap;
 
+  }
+
+  pair<const Vertex *, const Vertex *> SDSScheduler::swapPair(pair<const Vertex *, const Vertex *> inPair) {
+    return make_pair(inPair.second, inPair.first);
   }
 }
 
