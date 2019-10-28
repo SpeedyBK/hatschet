@@ -39,9 +39,9 @@ namespace HatScheT {
 
   struct bindingVariable {
     int index;
-    Resource* resource;
+    Resource *resource;
     int resourceID;
-    const Vertex* vertex;
+    const Vertex *vertex;
     int resourceInstance;
     bool binding;
   };
@@ -57,18 +57,20 @@ namespace HatScheT {
 		 * @param g
 		 * @param resourceModel
 		 */
-    SDSScheduler(Graph& g, ResourceModel &resourceModel);
+    SDSScheduler(Graph &g, ResourceModel &resourceModel);
 
     /*!
      * main method to do the scheduling
      */
-    void schedule() override ;
+    void schedule() override;
 
     /*!
      * not needed
      */
     virtual void setObjective() {/* unused */}
-    virtual void resetContainer(){/* unused */}
+
+    virtual void resetContainer() {/* unused */}
+
     virtual void constructProblem() {/* unused */}
 
     //Setter Functions
@@ -76,9 +78,9 @@ namespace HatScheT {
      * All cout statements can be supressed by setting "quiet" to true.
      * @param quiet
      */
-    void setSilent(bool quiet = true) {this -> silent = quiet;}
+    void setSilent(bool quiet = true) { this->silent = quiet; }
 
-    void setBindingType(char bType){this -> bindingType = bType;}
+    void setBindingType(char bType) { this->bindingType = bType; }
 
   private:
 
@@ -92,21 +94,21 @@ namespace HatScheT {
      * This function sets the binding variables, created by createBindingVariables, to the correct values. Such that
      * each operation is mapped to exactly one resource. It tries to map the operation equaly to the resourceinstances.
      */
-    void setBindingVariables ();
+    void setBindingVariables();
 
     /*!
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
      * are sharing the same resourceinstance. Tries to distribute the operation equally to the resource instances.
      * @return Sharing Variable <Vi, Vj>, true/false
      */
-    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMaxSpeed();
+    map<pair<const Vertex *, const Vertex *>, bool> createShVarsMaxSpeed();
 
     /*!
      * Creates and sets a set of boolean Sharing Variables. If the a R(ij) is true, it means that the operations i and j
      * are sharing the same resourceinstance. Tries to use the minimum of resource instances.
      * @return Sharing Variable <Vi, Vj>, true/false
      */
-    map <pair<const Vertex*, const Vertex*>, bool> createShVarsMinRes();
+    map<pair<const Vertex *, const Vertex *>, bool> createShVarsMinRes();
 
     /*!
      * This function passes the Resource Constraints and Conflict Clauses from SDC to the SAT-Solver and gets the Solution
@@ -117,16 +119,30 @@ namespace HatScheT {
      * @param confClauses conflict clauses determined by the SDC-Solver.
      * @return Map of SDC-Formulations based on the SAT Solution.
      */
-    map<pair<const Vertex*, const Vertex*>, int> passToSATSolver(map <pair<const Vertex*, const Vertex*>, bool> &shareVars, vector<vector<int>> confClauses);
+    map<pair<const Vertex *, const Vertex *>, int>
+    passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars, vector<vector<int>> confClauses);
+
+    void addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight);
 
     /*!
      * Swaps a pair.
      * @param inPair Inputpair
      * @return Swapped Version of InPair.
      */
-    static pair<const Vertex*, const Vertex*> swapPair (pair<const Vertex*, const Vertex*> inPair);
+    static pair<const Vertex *, const Vertex *> swapPair(pair<const Vertex *, const Vertex *> inPair);
 
-    map <pair<const Vertex*, const Vertex*>, int> createDependencyConstraints();
+    /*!
+     * Creates Data Dependency and Tming Constraints from the Original Graph.
+     * @return Data Dependency and Timing Constraints in an SDC Formulation.
+     */
+    map<pair<const Vertex *, const Vertex *>, int> createDependencyConstraints();
+
+    /*!
+     * @param gr Pointer to Graph which should be checked.
+     * @param vertexID Id of the Vertex to search for.
+     * @return true, if Vertex exists : false if Vertex does not exist;
+     */
+    bool doesVertexExists(Graph *gr, int vertexID);
 
     //Variables
     /*!
@@ -149,20 +165,27 @@ namespace HatScheT {
     /*!
      * Maps each operation which need a limited Resource to an instance of this ressource.
      */
-    list <bindingVariable> bindingVariables;
+    list<bindingVariable> bindingVariables;
 
     /*!
      * Marks if operations share the same resource instance
      */
-    map <pair<const Vertex*, const Vertex*>, bool> sharingVariables;
+    map<pair<const Vertex *, const Vertex *>, bool> sharingVariables;
 
     /*!
      * Solution which the SAT-Solver return for the resource constraints given by the Sharing Variables.
      * in an SDC Formulation.
      */
-    map<pair<const Vertex*, const Vertex*>, int> resourceConstraintsSDC;
+    map<pair<const Vertex *, const Vertex *>, int> resourceConstraintsSDC;
+    /*!
+     * Data Dependency Constraints and Timing Constraints from the original Graph.
+     */
+    map<pair<const Vertex *, const Vertex *>, int> dependencyConstraintsSDC;
 
-    map<pair<const Vertex*, const Vertex*>, int> dependencyConstraintsSDC;
+    /*!
+     * This Constraint Graph represents the SDC inequality System
+     */
+    Graph constraintGraph;
 
   };
 

@@ -1123,6 +1123,8 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
+      int clockperiode = 5;
+
       auto &ld = rm.makeResource("Load", 2, 3, 1);
       ld.setPhysicalDelay(3);
       auto &add = rm.makeResource("Adder", -1, 1, 1);

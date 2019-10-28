@@ -127,6 +127,47 @@ namespace HatScheT {
       cout << endl;
     }
 
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Creating Constraint Graph..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    //Call SDC without Resource Constraints (always feasible);
+    /*!
+     * Create Constraint Graph
+     */
+    for (auto &it:dependencyConstraintsSDC) {
+      addToConstraintGraph(it.first, it.second);
+    }
+
+    if (!this->silent) {
+      cout << "Vertices of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Vertices()){
+        cout << it->getName() << endl;
+      }
+      cout << endl;
+      cout << "Edges of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Edges()){
+        cout << it->getVertexSrc().getName() << "--" << it->getDistance() << "--" << it->getVertexDst().getName() << endl;
+      }
+
+    }
+      //While Resource Constraints !EMPTY
+        //Put in first Resource Constraint;
+          //if feasible
+            //Put in next Resource Constraint
+            // ...
+          //else
+            //Report conflict clause to SAT
+            //Abort.
+          //end if;
+      //end while;
+    //return schedule;
+
+
+
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -370,6 +411,37 @@ namespace HatScheT {
 
     return dependencyConstraints;
   }
+
+  void SDSScheduler::addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight) {
+
+      /*!
+       * Create Verticies:
+       */
+      if(!doesVertexExists(&this->constraintGraph, constraintsSDCVer.first->getId())){
+        this->constraintGraph.createVertex(constraintsSDCVer.first->getId());
+      }
+      if(!doesVertexExists(&this->constraintGraph, constraintsSDCVer.second->getId())){
+        this->constraintGraph.createVertex(constraintsSDCVer.second->getId());
+      }
+      /*!
+       * Create Edges:
+       */
+      if(!this->constraintGraph.edgeExists(constraintsSDCVer.first, constraintsSDCVer.second)){
+        this->constraintGraph.createEdge(constraintGraph.getVertexById(constraintsSDCVer.first->getId()), constraintGraph.getVertexById(constraintsSDCVer.second->getId()), weight);
+      }
+  }
+
+  bool SDSScheduler::doesVertexExists(Graph *gr, int vertexID) {
+    for (auto &it : gr->Vertices()){
+      if(it->getId() == vertexID){
+        return true;
+      }
+    }
+    return false;
+  }
+
 }
+
+
 
 #endif //USE_CADICAL
