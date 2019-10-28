@@ -213,6 +213,30 @@ namespace HatScheT {
      */
     map<pair<const Vertex *, const Vertex *>, int>::iterator rceIt;
 
+
+    /*!
+     * All the Stuff for the Bellman-Ford Algorithm to solve SDC Constraint Graphs
+     */
+    class BellmanFord {
+
+    public:
+      explicit BellmanFord(Graph* golfRomeo);
+
+    private:
+
+      /*!
+       * Sets the cost for the start Vertex to 0 and the cost for all other Vertices to INT_MAX;
+       */
+      void bellmanFordAlgorithm(int startID);
+
+      Graph* g;
+
+      /*!
+       * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
+       */
+      map<Vertex *, int> vertexCosts;
+    };
+
   };
 
 }

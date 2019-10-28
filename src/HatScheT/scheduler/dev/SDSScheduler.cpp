@@ -8,6 +8,7 @@
 #include "SDSScheduler.h"
 #include <cassert>
 #include <iomanip>
+#include <climits>
 
 namespace HatScheT {
 
@@ -138,23 +139,28 @@ namespace HatScheT {
     /*!
      * Create Constraint Graph
      * Add Dependency Constraints: Done
-     * Add Timing (Chaining) Constraints: ToDo...
      */
     createBasicConstraintGraph();
 
+    /*!
+     * Add Timing (Chaining) Constraints: ToDo...
+     */
+
+    addToConstraintGraph(make_pair(&constraintGraph.getVertexById(5), &constraintGraph.getVertexById(1)), -1);
+    addToConstraintGraph(make_pair(&constraintGraph.getVertexById(5), &constraintGraph.getVertexById(2)), -1);
 
     rceIt = resourceConstraintsSDC.begin();
 
     while (rceIt != resourceConstraintsSDC.end()){
       addToConstraintGraph(swapPair(rceIt->first), rceIt->second);
-      //solveSDC();
+      solveSDC();
+      break;
       //if feasible:
         rceIt++;
       //else
         //Get new SAT
         //rceIt = resourceConstraintsSDC.begin();
     }
-
 
     /*!
      * Display Graph:
@@ -170,6 +176,7 @@ namespace HatScheT {
         cout << it->getVertexSrc().getName() << "--(" << it->getDistance() << ")--" << it->getVertexDst().getName() << endl;
       }
     }
+
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -453,18 +460,54 @@ namespace HatScheT {
     /*!
      * Detect Source- and Sinkvertices
      */
-    set <Vertex*> sinks;
-    set <Vertex*> sources;
+    list <Vertex*> sinks;
+    list <Vertex*> sources;
     for (auto &it:this->g.Vertices()){
       if (this->g.isSinkVertex(it)){
-        sinks.insert(it);
+        sinks.push_back(it);
       }
       if (this->g.isSourceVertex(it)){
-        sources.insert(it);
+        sources.push_back(it);
       }
     }
 
+    /*!
+     * Creating an Edge to limit the Shedule to x Clock Cycles.
+     */
+    addToConstraintGraph(make_pair(sources.front(), sinks.front()), maxLatencyConstraint);
 
+
+    /*!
+     * Bellman-Ford Algorithm to find shortest Paths in the Constraint-Graph
+     * If the Algorithm detects a negative cycle the Algorithm stopps and reports a conflict clause to the SAT-Solver
+     */
+    BellmanFord(&this->constraintGraph);
+
+
+  }
+
+  SDSScheduler::BellmanFord::BellmanFord(Graph *golfRomeo) {
+    this->g = golfRomeo;
+    bellmanFordAlgorithm(0);
+  }
+
+  void SDSScheduler::BellmanFord::bellmanFordAlgorithm(int startID) {
+    for (auto &it : this->g->Vertices()){
+      vertexCosts.insert(make_pair(it, INT_MAX));
+    }
+    vertexCosts[&this->g->getVertexById(startID)] = 0;
+
+    for (int i = 1; i < this->g->getNumberOfVertices(); i++){
+      for (auto &it : this -> g->Edges()){
+        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])
+          vertexCosts[&it->getVertexDst()] = vertexCosts[&it->getVertexSrc()] + it->getDistance();
+      }
+
+      //Debug:
+      for (auto &it:vertexCosts){
+        cout << it.first->getName() << " : " << it.second << endl;
+      }
+    }
   }
 
 }
