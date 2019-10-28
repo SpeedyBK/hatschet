@@ -80,6 +80,10 @@ namespace HatScheT {
      */
     void setSilent(bool quiet = true) { this->silent = quiet; }
 
+    /*!
+     * Switch for the Binding Type
+     * @param bType see below.
+     */
     void setBindingType(char bType) { this->bindingType = bType; }
 
   private:
@@ -120,9 +124,14 @@ namespace HatScheT {
      * @return Map of SDC-Formulations based on the SAT Solution.
      */
     map<pair<const Vertex *, const Vertex *>, int>
+
     passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars, vector<vector<int>> confClauses);
 
+    void createBasicConstraintGraph();
+
     void addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight);
+
+    void solveSDC();
 
     /*!
      * Swaps a pair.
@@ -142,7 +151,7 @@ namespace HatScheT {
      * @param vertexID Id of the Vertex to search for.
      * @return true, if Vertex exists : false if Vertex does not exist;
      */
-    bool doesVertexExists(Graph *gr, int vertexID);
+    static bool doesVertexExist(Graph *gr, int vertexID);
 
     //Variables
     /*!
@@ -186,6 +195,11 @@ namespace HatScheT {
      * This Constraint Graph represents the SDC inequality System
      */
     Graph constraintGraph;
+
+    /*!
+     * Iterator to resource constraint edges
+     */
+    map<pair<const Vertex *, const Vertex *>, int>::iterator rceIt;
 
   };
 

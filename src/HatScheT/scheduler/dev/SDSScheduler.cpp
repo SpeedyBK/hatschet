@@ -137,10 +137,26 @@ namespace HatScheT {
     //Call SDC without Resource Constraints (always feasible);
     /*!
      * Create Constraint Graph
+     * Add Dependency Constraints: Done
+     * Add Timing (Chaining) Constraints: ToDo...
      */
-    for (auto &it:dependencyConstraintsSDC) {
-      addToConstraintGraph(it.first, it.second);
+    createBasicConstraintGraph();
+
+    rceIt = resourceConstraintsSDC.begin();
+
+    while (rceIt != resourceConstraintsSDC.end()){
+      addToConstraintGraph(rceIt->first, rceIt->second);
+      //solveSDC();
+      //if feasible:
+        rceIt++;
+      //else
+        //Get new SAT
+        //rceIt = resourceConstraintsSDC.begin();
     }
+
+    /*!
+     * Display Graph:
+     */
 
     if (!this->silent) {
       cout << "Vertices of Constraint Graph:" << endl;
@@ -150,24 +166,9 @@ namespace HatScheT {
       cout << endl;
       cout << "Edges of Constraint Graph:" << endl;
       for (auto &it:this->constraintGraph.Edges()){
-        cout << it->getVertexSrc().getName() << "--" << it->getDistance() << "--" << it->getVertexDst().getName() << endl;
+        cout << it->getVertexSrc().getName() << "--(" << it->getDistance() << ")--" << it->getVertexDst().getName() << endl;
       }
-
     }
-      //While Resource Constraints !EMPTY
-        //Put in first Resource Constraint;
-          //if feasible
-            //Put in next Resource Constraint
-            // ...
-          //else
-            //Report conflict clause to SAT
-            //Abort.
-          //end if;
-      //end while;
-    //return schedule;
-
-
-
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -417,10 +418,10 @@ namespace HatScheT {
       /*!
        * Create Verticies:
        */
-      if(!doesVertexExists(&this->constraintGraph, constraintsSDCVer.first->getId())){
+      if(!doesVertexExist(&this->constraintGraph, constraintsSDCVer.first->getId())){
         this->constraintGraph.createVertex(constraintsSDCVer.first->getId());
       }
-      if(!doesVertexExists(&this->constraintGraph, constraintsSDCVer.second->getId())){
+      if(!doesVertexExist(&this->constraintGraph, constraintsSDCVer.second->getId())){
         this->constraintGraph.createVertex(constraintsSDCVer.second->getId());
       }
       /*!
@@ -431,13 +432,24 @@ namespace HatScheT {
       }
   }
 
-  bool SDSScheduler::doesVertexExists(Graph *gr, int vertexID) {
+  bool SDSScheduler::doesVertexExist(Graph *gr, int vertexID) {
     for (auto &it : gr->Vertices()){
       if(it->getId() == vertexID){
         return true;
       }
     }
     return false;
+  }
+
+  void SDSScheduler::createBasicConstraintGraph() {
+    for (auto &it:dependencyConstraintsSDC) {
+      addToConstraintGraph(it.first, it.second);
+    }
+  }
+
+  void SDSScheduler::solveSDC() {
+
+
   }
 
 }
