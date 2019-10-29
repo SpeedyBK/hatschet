@@ -15,6 +15,7 @@ namespace HatScheT {
   HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g,
                                                                                                                    resourceModel) {
     this->silent = true;
+    this->firstTime = true;
   }
 
   void HatScheT::SDSScheduler::schedule() {
@@ -151,18 +152,30 @@ namespace HatScheT {
 
     rceIt = resourceConstraintsSDC.begin();
 
+    int bums = 0;
     while (rceIt != resourceConstraintsSDC.end()){
       addToConstraintGraph(swapPair(rceIt->first), rceIt->second);
       isUnsolvableSolution = solveSDC();
-      displayGraph();
       displaySDCSolution();
-
-      break;
-      //if feasible:
+      if (!isUnsolvableSolution.second) {
         rceIt++;
-      //else
-        //Get new SAT
-        //rceIt = resourceConstraintsSDC.begin();
+      }else {
+        for (auto &it:constraintGraph.Edges()){
+          cout << it->getId() << "";
+        }
+        cout << endl;
+        constraintGraph.removeEdge((Vertex*)rceIt->first.second, (Vertex*)rceIt->first.first);
+        for (auto &it:constraintGraph.Edges()){
+          cout << it->getId() << "";
+        }
+        cout << endl;
+        resourceConstraintsSDC = passToSATSolver(sharingVariables, satfromSDC(rceIt->first));
+        rceIt = resourceConstraintsSDC.begin();
+      }
+      if (bums > 5){
+        break;
+      }
+      bums++;
     }
 
   }
@@ -335,6 +348,7 @@ namespace HatScheT {
     for (auto &It : confClauses) {
       for (auto &Itr : It) {
         solver->add(Itr);
+        cout << Itr;
       }
       if (!It.empty()) {
         solver->add(0);
@@ -370,10 +384,12 @@ namespace HatScheT {
         if (i % 2 == 0){
           if(solver->val(i+1) > 0) {
             solutionMap.insert(make_pair(mIt->first, -1));
+            sdcToSATMapping.insert(make_pair(mIt->first, i+1));
           }
         }else {
           if(solver->val(i+1) > 0) {
             solutionMap.insert(make_pair(swapPair(mIt->first), -1));
+            sdcToSATMapping.insert(make_pair(swapPair(mIt->first), i+1));
           }
           ++mIt;
         }
@@ -424,7 +440,7 @@ namespace HatScheT {
        * Create Edges:
        */
       if(!this->constraintGraph.edgeExists(constraintsSDCVer.first, constraintsSDCVer.second)){
-        this->constraintGraph.createEdge(constraintGraph.getVertexById(constraintsSDCVer.first->getId()), constraintGraph.getVertexById(constraintsSDCVer.second->getId()), weight);
+        this->constraintGraph.createEdgeSDS(constraintGraph.getVertexById(constraintsSDCVer.first->getId()), constraintGraph.getVertexById(constraintsSDCVer.second->getId()), weight);
       }
   }
 
@@ -462,7 +478,11 @@ namespace HatScheT {
     /*!
      * Creating an Edge to limit the Shedule to x Clock Cycles.
      */
-    addToConstraintGraph(make_pair(sources.front(), sinks.front()), maxLatencyConstraint);
+    if (firstTime) {
+      addToConstraintGraph(make_pair(sources.front(), sinks.front()), maxLatencyConstraint);
+      firstTime = false;
+    }
+    displayGraph();
 
     /*!
      * Bellman-Ford Algorithm to find shortest Paths in the Constraint-Graph
@@ -502,6 +522,22 @@ namespace HatScheT {
         cout << "SDC not solvable :( Reporting Konflikt-Klaus to SAT" << endl;
       }
     }
+  }
+
+  vector<vector<int>> SDSScheduler::satfromSDC(pair<const Vertex*, const Vertex*> sdctosat) {
+
+    vector<int> conflict;
+    vector<vector<int>> conflictClauses;
+
+    for (auto &it : this->sdcToSATMapping){
+      if (it.first.first->getId() == sdctosat.first->getId() && it.first.second->getId() == sdctosat.second->getId()){
+        conflict.push_back(sdcToSATMapping[sdctosat]*(-1));
+      }
+    }
+
+    conflictClauses.push_back(conflict);
+
+    return conflictClauses;
   }
 
   ////////////////////////////
@@ -558,6 +594,38 @@ namespace HatScheT {
     }
   }
 
+  ///////////////////////////////////////////////
+  // Additional functionallity for Graph Class //
+  ///////////////////////////////////////////////
+
+  void SDSScheduler::ConstraintGraph::removeEdge(Vertex *srcVertex, Vertex *dstVertex) {
+
+    for (auto &it : edges){
+      cout << "VSRC: " << it->getVertexSrc().getId() << " VDST: " << it->getVertexDst().getId() << " || " << srcVertex->getId() << " " << dstVertex->getId() << endl;
+      if (it->getVertexSrc().getId() == srcVertex->getId() && it->getVertexDst().getId() == dstVertex->getId()){
+        edges.erase(it);
+      }
+    }
+  }
+
+  Edge &SDSScheduler::ConstraintGraph::createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance,
+                                                  Edge::DependencyType dependencyType) {
+
+    bool idExists = false;
+    for (int i = 0; i <= edges.size(); i++) {
+      for (auto &it : edges) {
+        if (i == it->getId()) {
+          idExists = true;
+        }
+      }
+      if (!idExists) {
+        Edge *e = new Edge(Vsrc, Vdst, distance, dependencyType, i);
+        edges.insert(e);
+        return *e;
+      }
+      idExists = false;
+    }
+  }
 }
 
 

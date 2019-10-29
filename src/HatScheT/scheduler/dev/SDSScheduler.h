@@ -172,6 +172,11 @@ namespace HatScheT {
     static bool doesVertexExist(Graph *gr, int vertexID);
 
     /*!
+     * Function to get a SAT-Formulation from a SDC-Conflict.
+     */
+     vector<vector<int>> satfromSDC (pair<const Vertex*, const Vertex*>);
+
+    /*!
      * Debugging Shit
      */
     void displayGraph();
@@ -184,6 +189,8 @@ namespace HatScheT {
     /////////////////////////
     //      Variables      //
     /////////////////////////
+
+    bool firstTime;
 
     /*!
      * If true, cout statements are supressed.
@@ -223,11 +230,6 @@ namespace HatScheT {
     map<pair<const Vertex *, const Vertex *>, int> dependencyConstraintsSDC;
 
     /*!
-     * This Constraint Graph represents the SDC inequality System
-     */
-    Graph constraintGraph;
-
-    /*!
      * Iterator to resource constraint edges
      */
     map<pair<const Vertex *, const Vertex *>, int>::iterator rceIt;
@@ -236,6 +238,8 @@ namespace HatScheT {
      * Container for the return Values from Bellman-Ford.
      */
     pair<map <Vertex*, int>, bool> isUnsolvableSolution;
+
+    map<pair<const Vertex*, const Vertex*>, int> sdcToSATMapping;
 
     //////////////////////////////////////////////////////////////////////////////
     /*!
@@ -275,6 +279,26 @@ namespace HatScheT {
        */
       bool hasNegativeCycle;
     };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*!
+     * This Sheduler needs to remove Edges from the Constraint Graph. The original Graph Class does not support this,
+     * so we need to implement it here.
+     */
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    class ConstraintGraph : public Graph{
+
+    public:
+      void removeEdge(Vertex* srcVertex, Vertex* dstVertex);
+
+      Edge &createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance=0, Edge::DependencyType dependencyType=Edge::Data);
+
+    };
+
+    /*!
+     * This Constraint Graph represents the SDC inequality System
+     */
+    ConstraintGraph constraintGraph;
 
   };
 

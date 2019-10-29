@@ -1158,7 +1158,7 @@ bool Tests::compareModuloSchedulerTest() {
 
       SDSScheduler sds(g, rm);
       sds.setSilent(false);
-      sds.setMaxLatencyConstraint(1);
+      sds.setMaxLatencyConstraint(2);
       sds.setBindingType('R');
       sds.schedule();
 
