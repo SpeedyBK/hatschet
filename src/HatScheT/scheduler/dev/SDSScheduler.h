@@ -27,14 +27,17 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
 
-
 #include "cadical.hpp"
 
 namespace HatScheT {
 
   /*
+   * General Idea:
    * Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
    * SDC and SAT Formulation; FPGA 2018
+   *
+   * CaDiCaL Paper:
+   * http://fmv.jku.at/papers/Biere-SAT-Competition-2018-solvers.pdf
    */
 
   struct bindingVariable {
@@ -88,7 +91,10 @@ namespace HatScheT {
 
   private:
 
-    //Functions
+    /////////////////////////
+    //      Functions      //
+    /////////////////////////
+
     /*!
      * This function creates Binding Variables which map each operation to an instance of the limited ressources.
      */
@@ -143,7 +149,7 @@ namespace HatScheT {
      * Detects if the SDC-Inequality-System is feasible, and if it is feasible,
      * hopefully solves the SDC-Inequality-System.
      */
-    void solveSDC();
+    pair<map<Vertex*, int>, bool> solveSDC();
 
     /*!
      * Swaps a pair.
@@ -165,7 +171,20 @@ namespace HatScheT {
      */
     static bool doesVertexExist(Graph *gr, int vertexID);
 
-    //Variables
+    /*!
+     * Debugging Shit
+     */
+    void displayGraph();
+
+    /*!
+     * More Debugging Shit
+     */
+    void displaySDCSolution();
+
+    /////////////////////////
+    //      Variables      //
+    /////////////////////////
+
     /*!
      * If true, cout statements are supressed.
      */
@@ -213,14 +232,26 @@ namespace HatScheT {
      */
     map<pair<const Vertex *, const Vertex *>, int>::iterator rceIt;
 
+    /*!
+     * Container for the return Values from Bellman-Ford.
+     */
+    pair<map <Vertex*, int>, bool> isUnsolvableSolution;
 
+    //////////////////////////////////////////////////////////////////////////////
     /*!
      * All the Stuff for the Bellman-Ford Algorithm to solve SDC Constraint Graphs
      */
+    //////////////////////////////////////////////////////////////////////////////
     class BellmanFord {
 
     public:
       explicit BellmanFord(Graph* golfRomeo);
+
+      /*!
+       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
+       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
+       */
+      pair<map<Vertex*, int>, bool> getPath(int idofStartVertex);
 
     private:
 
@@ -229,12 +260,20 @@ namespace HatScheT {
        */
       void bellmanFordAlgorithm(int startID);
 
+      /*!
+       * Pointer to Graph for which shortest Paths will be searched
+       */
       Graph* g;
 
       /*!
        * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
        */
       map<Vertex *, int> vertexCosts;
+
+      /*!
+       * Tells if Graph g has negative cycles. If true, the SDC-System is unsolvable.
+       */
+      bool hasNegativeCycle;
     };
 
   };

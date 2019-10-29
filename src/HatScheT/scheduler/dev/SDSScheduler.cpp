@@ -153,28 +153,16 @@ namespace HatScheT {
 
     while (rceIt != resourceConstraintsSDC.end()){
       addToConstraintGraph(swapPair(rceIt->first), rceIt->second);
-      solveSDC();
+      isUnsolvableSolution = solveSDC();
+      displayGraph();
+      displaySDCSolution();
+
       break;
       //if feasible:
         rceIt++;
       //else
         //Get new SAT
         //rceIt = resourceConstraintsSDC.begin();
-    }
-
-    /*!
-     * Display Graph:
-     */
-    if (!this->silent) {
-      cout << "Vertices of Constraint Graph:" << endl;
-      for (auto &it:this->constraintGraph.Vertices()){
-        cout << it->getName() << endl;
-      }
-      cout << endl;
-      cout << "Edges of Constraint Graph:" << endl;
-      for (auto &it:this->constraintGraph.Edges()){
-        cout << it->getVertexSrc().getName() << "--(" << it->getDistance() << ")--" << it->getVertexDst().getName() << endl;
-      }
     }
 
   }
@@ -455,7 +443,7 @@ namespace HatScheT {
     }
   }
 
-  void SDSScheduler::solveSDC() {
+  pair<map<Vertex*, int>, bool> SDSScheduler::solveSDC() {
 
     /*!
      * Detect Source- and Sinkvertices
@@ -476,37 +464,97 @@ namespace HatScheT {
      */
     addToConstraintGraph(make_pair(sources.front(), sinks.front()), maxLatencyConstraint);
 
-
     /*!
      * Bellman-Ford Algorithm to find shortest Paths in the Constraint-Graph
      * If the Algorithm detects a negative cycle the Algorithm stopps and reports a conflict clause to the SAT-Solver
      */
-    BellmanFord(&this->constraintGraph);
-
-
+    BellmanFord bell = BellmanFord(&this->constraintGraph);
+    return bell.getPath(0);
   }
+
+  void SDSScheduler::displayGraph() {
+    /*!
+     * Display Graph:
+     */
+    if (!this->silent) {
+      cout << "Vertices of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Vertices()){
+        cout << it->getName() << endl;
+      }
+      cout << endl;
+      cout << "Edges of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Edges()){
+        cout << it->getVertexSrc().getName() << "--(" << it->getDistance() << ")--" << it->getVertexDst().getName() << endl;
+      }
+    }
+  }
+
+  void SDSScheduler::displaySDCSolution() {
+    if (!this->silent){
+      cout << endl;
+      if (!this->isUnsolvableSolution.second){
+        cout << "SDC-Solution found :) Returning Schedule:" << endl;
+        cout << "Vertex:  / Starttime:" << endl;
+        for (auto &it : this->isUnsolvableSolution.first){
+          cout << it.first->getName() << ": " << it.second << endl;
+        }
+      }else {
+        cout << "SDC not solvable :( Reporting Konflikt-Klaus to SAT" << endl;
+      }
+    }
+  }
+
+  ////////////////////////////
+  // Bellman-Ford Algorithm //
+  ////////////////////////////
 
   SDSScheduler::BellmanFord::BellmanFord(Graph *golfRomeo) {
     this->g = golfRomeo;
+    hasNegativeCycle = false;
     bellmanFordAlgorithm(0);
   }
 
   void SDSScheduler::BellmanFord::bellmanFordAlgorithm(int startID) {
+    /*!
+     * Initialisation of Algorithm
+     */
     for (auto &it : this->g->Vertices()){
       vertexCosts.insert(make_pair(it, INT_MAX));
     }
     vertexCosts[&this->g->getVertexById(startID)] = 0;
 
+    /*!
+     * Finding Shortest Paths
+     */
     for (int i = 1; i < this->g->getNumberOfVertices(); i++){
       for (auto &it : this -> g->Edges()){
-        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])
+        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()]))
           vertexCosts[&it->getVertexDst()] = vertexCosts[&it->getVertexSrc()] + it->getDistance();
       }
-
-      //Debug:
-      for (auto &it:vertexCosts){
-        cout << it.first->getName() << " : " << it.second << endl;
+    }
+    /*!
+     * Checking for negative Cycles
+     */
+    for (auto &it : this->g->Edges()){
+      if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])){
+        hasNegativeCycle = true;
+        break;
+      }else {
+        hasNegativeCycle = false;
       }
+    }
+  }
+
+  pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFord::getPath(int idofStartVertex) {
+
+    bellmanFordAlgorithm(idofStartVertex);
+
+    if (hasNegativeCycle){
+      cout << "SDC-System unsolvable" << endl;
+      map<Vertex*, int> emptyMap;
+      return make_pair(emptyMap, hasNegativeCycle);
+    }else {
+      return make_pair(vertexCosts, hasNegativeCycle);
     }
   }
 
