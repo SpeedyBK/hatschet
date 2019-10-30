@@ -122,9 +122,8 @@ int main(int argc, char *args[]) {
   int maxLatency=-1;
 
   //variables for Rational II scheduling
-  //experimental
-  int samples=2; //default
-  int modulo=2; //defaul
+  int samples=-1;
+  int modulo=-1;
 
   //flag to enable mux optimal binding
   //experimental
@@ -521,8 +520,8 @@ int main(int argc, char *args[]) {
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
-          ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
+          if(samples > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
+          if(modulo > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setModulo(modulo);
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
@@ -574,9 +573,9 @@ int main(int argc, char *args[]) {
       //experimental
       scheduler->setUseMuxOptBinding(optBinding);
 
-      cout << "Performing schedule" << endl;
+      cout << "HatScheT: Performing schedule" << endl;
       scheduler->schedule();
-      cout << "Finished schedule" << endl;
+      cout << "HatScheT: Finished schedule" << endl;
 
       if(isModuloScheduler) {
         if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), scheduler->getII())){
