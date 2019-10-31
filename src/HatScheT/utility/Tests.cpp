@@ -699,6 +699,7 @@ bool Tests::rationalIISchedulerTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  rii.setUniformScheduleFlag(true);
   rii.schedule();
 
   cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;

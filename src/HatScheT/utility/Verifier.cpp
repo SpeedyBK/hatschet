@@ -95,9 +95,9 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 }
 
 bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> IIs, int scheduleLength) {
+                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence, int scheduleLength) {
 
-    if (IIs.size() == 0) {
+    if (latencySequence.size() == 0) {
         cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!" << endl;
         return false;
     }
@@ -105,16 +105,16 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
         cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
         return false;
     }
-    if (schedule.size() != IIs.size()) {
+    if (schedule.size() != latencySequence.size()) {
         cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"
              << endl;
         return false;
     }
     cout << "Start verify rational II schedule: < ";
-    for (int i = 0; i < IIs.size(); i++) {
-        cout << IIs[i] << " ";
-        if (IIs[i] <= 0) {
-            cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong II provided: " << IIs[i] << endl;
+    for (int i = 0; i < latencySequence.size(); i++) {
+        cout << latencySequence[i] << " ";
+        if (latencySequence[i] <= 0) {
+            cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong latency between IIs provided: " << latencySequence[i] << endl;
             return false;
         }
     }
@@ -138,26 +138,26 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
 
                 while (stepsBack != 0) {
                     if (currIIPosition == 0) {
-                      currIIPosition=IIs.size()-1;
-                      II += IIs.back();
+                      currIIPosition=latencySequence.size()-1;
+                      II += latencySequence.back();
                     }
                     else if(currIIPosition > 0){
-                      II += IIs[currIIPosition-1];
+                      II += latencySequence[currIIPosition-1];
                       currIIPosition-=1;
                     }
 
                     stepsBack--;
                 }
 
-                cout << "Distance: " << e->getDistance() << " results in effective II of " << II << " cycles" << endl;
+                cout << "Distance: " << e->getDistance() << " results in a latency II sequnce of " << II << " cycles" << endl;
             }
 
-            ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
+            ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] +  II;
             if (!ok) {
                 cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
-                     << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+                     << " <= " << S[j] << " + " << II << endl;
                 cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
-                     << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+                     << " <= " << S[j] << " + " << II << endl;
                 return false;
             }
         }
