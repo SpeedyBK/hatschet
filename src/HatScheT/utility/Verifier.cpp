@@ -48,7 +48,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
   auto &S = schedule; // alias
   bool ok;
 
-  /* 1) precedence edges are obeyed */
+  /* 1) precedence edges */
   for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
     auto e = *it;
     auto i = &e->getVertexSrc();
@@ -62,7 +62,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
     }
   }
 
-  /* 2) modulo resource constraints are obeyed */
+  /* 2) modulo resource constraints */
   vector<map<const Resource *, vector<Vertex *>>> congruenceClassesByRes(II);
   for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
     auto v = *it;
@@ -163,7 +163,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
         }
     }
 
-    /* 2) TODO modulo resource constraints are obeyed */
+    /* 2)  modulo resource constraints*/
 
     for (auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it) {
         Resource *r = *it;
@@ -195,8 +195,6 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
             }
         }
     }
-
-    /* 3) TODO: cycle-time constraints are obeyed */
 
     return true;
 }
@@ -283,54 +281,10 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     }
 
 
-
-//    /* 1) precedence edges are obeyed */
-//    for (EdgeIter it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
-//        auto e = *it;
-//        auto i = &e->getVertexSrc();
-//        auto j = &e->getVertexDst();
-//
-//        ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
-//        if (! ok) {
-//            cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
-//            cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
-//            return false;
-//        }
-//    }
-
-//    /* 2) modulo resource constraints are obeyed */
-//    vector<map<const Resource *, vector<Vertex *>>> congruenceClassesByRes(II);
-//    for (VertexIter it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
-//        auto v = *it;
-//        congruenceClassesByRes[ /* modulo slot: */ S[v] % II         ]
-//        [ /* resource:    */ rm.getResource(v) ]
-//                .push_back(v);
-//    }
-//    for (int m = 0; m < II; ++m) {
-//        auto &cc = congruenceClassesByRes[m];
-//        for (auto &entry : cc) {
-//            auto  res = entry.first;
-//            auto &vs  = entry.second;
-//
-//            ok = res->getLimit() == UNLIMITED || vs.size() <= res->getLimit();
-//            if (! ok) {
-//                cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
-//                cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
-//                for (auto v : vs){
-//                    cout << *v << " (t=" << S[v] << ")" << endl;
-//                    cerr << *v << " (t=" << S[v] << ")" << endl;}
-//                return false;
-//            }
-//        }
-//    }
-
-
     /* 3) TODO: cycle-time constraints are obeyed */
 
     return true;
 }
-
-
 
 
 ///return numerator and denominator of a rational number stored in double
