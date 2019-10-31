@@ -171,6 +171,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
         if (r->getLimit() == -1) continue;
 
         //iterate over every timestep
+        //TODO resource limit in timestep mod m !!
         for (int timeStep = 0; timeStep <= scheduleLength; timeStep++) {
             int instancesUsed = 0;
             //iterate over schedules
@@ -250,7 +251,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
             }
         }
     }
-    //cout << "§§§" << endl;
+
     /* 2) modulo resource constraints are obeyed */
     map<pair<const Resource *,int>, vector<Vertex *>> ressourceSlotByCycle;
     for (int i = 0; i <= max_it; i++) {

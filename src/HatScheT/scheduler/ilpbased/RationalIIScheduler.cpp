@@ -40,13 +40,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
   this->s_found = -1;
   this->m_found = -1;
 
-  //experimental auto set function for the start values of modulo and sample
-  this->autoSetMAndS();
-  this->s_start = this->samples;
-  this->m_start = this->modulo;
-
-  cout << "RationalIIScheduler::RationalIIScheduler: recMinII is " << this->getRecMinII() << endl;
-  cout << "RationalIIScheduler::RationalIIScheduler: resMinII is " << this->getResMinII() << endl;
+  this->computeMinII(&this->g, &this->resourceModel);
 }
 
 void RationalIIScheduler::resetContainer() {
@@ -121,17 +115,8 @@ void RationalIIScheduler::setGeneralConstraints()
   //limit max latency
   for(auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it){
     Vertex* v = *it;
-
-    //if(this->uniformSchedule==true) {
       this->solver->addConstraint(t_matrix[0][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) <=
                                   this->maxLatencyConstraint);
-    //}
-    /*else{
-      for(int i = 0; i < t_matrix.size(); i++){
-        this->solver->addConstraint(t_matrix[i][this->tIndices.at(v)] + this->resourceModel.getVertexLatency(v) - II_vector[i] <=
-                                    this->maxLatencyConstraint);
-      }
-    }*/
   }
 
   //distinguish IIs
@@ -213,6 +198,11 @@ void RationalIIScheduler::schedule()
 {
   this->scheduleFound = false;
 
+  //experimental auto set function for the start values of modulo and sample
+  if(this->samples <= 0 or this->modulo <= 0) this->autoSetMAndS();
+  this->s_start = this->samples;
+  this->m_start = this->modulo;
+
   //experimental
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
@@ -236,11 +226,15 @@ void RationalIIScheduler::schedule()
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   }
 
+  cout << "------------------------" << endl;
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
   cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
   cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
   cout << "RationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
   cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
+  cout << "RationalIIScheduler::RationalIIScheduler: recMinII is " << this->getRecMinII() << endl;
+  cout << "RationalIIScheduler::RationalIIScheduler: resMinII is " << this->getResMinII() << endl;
+  cout << "------------------------" << endl;
 
   //count runs, set maxRuns
   int runs = 0;
@@ -292,6 +286,7 @@ void RationalIIScheduler::schedule()
       //determine whether rational minimum II was identified
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
+      cout << "------------------------" << endl;
       if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
       this->s_found = this->samples;
       this->m_found = this->modulo;
@@ -301,6 +296,7 @@ void RationalIIScheduler::schedule()
       cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
       this->II = (double)(this->modulo) / (double)(this->samples);
       this->getRationalIIBindings();
+      cout << "------------------------" << endl;
     }
 
     else{
@@ -331,16 +327,15 @@ void RationalIIScheduler::setModuloConstraints() {
 }
 
 void RationalIIScheduler::autoSetMAndS() {
-  this->computeMinII(&this->g, &this->resourceModel);
   double minII = this->getMinII();
   //ceiling
   this->integerMinII = ceil(minII);
   pair<int,int> frac =  Utility::splitRational(minII);
 
-  cout << "rational min II is " << minII << endl;
-  cout << "integer min II is " << this->integerMinII << endl;
-  cout << "auto setting samples to " << frac.second << endl;
-  cout << "auto setting modulo to " << frac.first << endl;
+  cout << "------------------------" << endl;
+  cout << "RationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
+  cout << "RationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
+  cout << "------------------------" << endl;
 
   this->samples = frac.second;
   this->modulo = frac.first;
