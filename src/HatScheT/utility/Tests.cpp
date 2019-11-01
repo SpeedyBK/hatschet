@@ -1117,6 +1117,44 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
   }
 
+  bool Tests::ratIIVerifierWrongMRTDetected() {
+
+#ifndef USE_XERCESC
+    cout << "Tests::rationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "cTest/exampleRatII_RM.xml";
+    string graphStr = "cTest/exampleRatII.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+    rii.setUniformScheduleFlag(true);
+    rii.schedule();
+
+    vector<std::map<Vertex*,int> > s = rii.getStartTimeVector();
+
+    for(auto it:g.Vertices()) {
+      Vertex* v = it;
+
+      if(v->getName() == "A5") {
+        s[0][v]++;
+      }
+    }
+
+    bool ok = verifyRationalIIModuloSchedule(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
+
+    if(ok == true) return false;
+    else return true;
+#endif
+  }
+
   bool Tests::sdsSchedulerTest() {
 
     #ifdef USE_CADICAL

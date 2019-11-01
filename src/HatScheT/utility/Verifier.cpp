@@ -118,6 +118,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
             return false;
         }
     }
+    cout << " >" << endl;
 
     int m = 0;
 

@@ -281,6 +281,7 @@ add_test("KosarajuSCC" "./hatschet" "--test=KOSARAJU")
 add_test("CompareMSAlgorithms" "./hatschet" "--test=COMPAREMSALGORITHMS")
 add_test("rationalIISchedulerTest" "./hatschet" "--test=RATIONALIISCHEDULER")
 add_test("rationalIISchedulerFimmelTest" "./hatschet" "--test=RATIONALIISCHEDULERFIMMEL")
+add_test("ratIIVerifierWrongMRTDetected" "./hatschet" "--test=ratIIVerifierWrongMRTDetected")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")

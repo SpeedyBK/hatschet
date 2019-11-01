@@ -237,7 +237,7 @@ private:
   /*!
    * the determined initIntervals of the rational II schedule after solving
    */
-  //vector<int> latencySequnce;
+  //vector<int> latencySequence;
   /*!
    * the minimum interger II that is possible
    */
