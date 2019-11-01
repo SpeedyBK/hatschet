@@ -31,7 +31,7 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->consideredTimeSteps = 0;
-  this->uniformSchedule = false;
+  this->uniformSchedule = true;
   this->integerMinII = -1;
   this->tpBuffer = 0.0f;
   this->minRatIIFound = false;
