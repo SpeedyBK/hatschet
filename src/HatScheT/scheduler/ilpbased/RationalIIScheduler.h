@@ -208,8 +208,9 @@ private:
    * @param startIndex
    * @return
    */
-  ScaLP::Term getSampleDistance(int d, int startIndex);
-  int getDeterminedSampleDistance(int d, int startIndex);
+  ScaLP::Term getSampleDistanceAsTerm(int d, int startIndex);
+  int getSampleDistanceAsInt(int d, int startIndex);
+  int getSampleIndexFromDistance(int d, int startSample);
   /*!
    * EXPERIMETAL: DONT USE THIS
    */
