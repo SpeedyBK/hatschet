@@ -8,6 +8,7 @@
 #include "SDSScheduler.h"
 #include <cassert>
 #include <iomanip>
+#include <climits>
 
 namespace HatScheT {
 
@@ -108,6 +109,60 @@ namespace HatScheT {
         cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
       }
       cout << endl;
+    }
+
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Getting Dependency Constraints..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    dependencyConstraintsSDC = createDependencyConstraints();
+
+    if (!this->silent) {
+      cout << "Data Dependency SDC Constraints: " << endl;
+      for (auto &it : dependencyConstraintsSDC) {
+        cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
+      }
+      cout << endl;
+    }
+
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Creating Constraint Graph..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    //Call SDC without Resource Constraints (always feasible);
+    /*!
+     * Create Constraint Graph
+     * Add Dependency Constraints: Done
+     */
+    createBasicConstraintGraph();
+
+    /*!
+     * Add Timing (Chaining) Constraints: ToDo...
+     */
+
+    addToConstraintGraph(make_pair(&constraintGraph.getVertexById(5), &constraintGraph.getVertexById(1)), -1);
+    addToConstraintGraph(make_pair(&constraintGraph.getVertexById(5), &constraintGraph.getVertexById(2)), -1);
+
+    rceIt = resourceConstraintsSDC.begin();
+
+    while (rceIt != resourceConstraintsSDC.end()){
+      addToConstraintGraph(swapPair(rceIt->first), rceIt->second);
+      isUnsolvableSolution = solveSDC();
+      displayGraph();
+      displaySDCSolution();
+
+      break;
+      //if feasible:
+        rceIt++;
+      //else
+        //Get new SAT
+        //rceIt = resourceConstraintsSDC.begin();
     }
 
   }
@@ -335,6 +390,176 @@ namespace HatScheT {
   pair<const Vertex *, const Vertex *> SDSScheduler::swapPair(pair<const Vertex *, const Vertex *> inPair) {
     return make_pair(inPair.second, inPair.first);
   }
+
+  map<pair<const Vertex *, const Vertex *>, int> SDSScheduler::createDependencyConstraints() {
+
+    map < pair < const Vertex*, const Vertex* >, int > dependencyConstraints;
+
+    for (auto &it : this-> g.Edges()){
+      auto sVertex = &it->getVertexSrc();
+      auto dVertex = &it->getVertexDst();
+
+      auto constVertexPair = make_pair((const Vertex*) dVertex, (const Vertex*) sVertex);
+      int distance = it->getDistance();
+
+      dependencyConstraints.insert(make_pair(constVertexPair, distance));
+
+    }
+
+    return dependencyConstraints;
+  }
+
+  void SDSScheduler::addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight) {
+
+      /*!
+       * Create Verticies:
+       */
+      if(!doesVertexExist(&this->constraintGraph, constraintsSDCVer.first->getId())){
+        this->constraintGraph.createVertex(constraintsSDCVer.first->getId());
+      }
+      if(!doesVertexExist(&this->constraintGraph, constraintsSDCVer.second->getId())){
+        this->constraintGraph.createVertex(constraintsSDCVer.second->getId());
+      }
+      /*!
+       * Create Edges:
+       */
+      if(!this->constraintGraph.edgeExists(constraintsSDCVer.first, constraintsSDCVer.second)){
+        this->constraintGraph.createEdge(constraintGraph.getVertexById(constraintsSDCVer.first->getId()), constraintGraph.getVertexById(constraintsSDCVer.second->getId()), weight);
+      }
+  }
+
+  bool SDSScheduler::doesVertexExist(Graph *gr, int vertexID) {
+    for (auto &it : gr->Vertices()){
+      if(it->getId() == vertexID){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void SDSScheduler::createBasicConstraintGraph() {
+    for (auto &it:dependencyConstraintsSDC) {
+      addToConstraintGraph(it.first, it.second);
+    }
+  }
+
+  pair<map<Vertex*, int>, bool> SDSScheduler::solveSDC() {
+
+    /*!
+     * Detect Source- and Sinkvertices
+     */
+    list <Vertex*> sinks;
+    list <Vertex*> sources;
+    for (auto &it:this->g.Vertices()){
+      if (this->g.isSinkVertex(it)){
+        sinks.push_back(it);
+      }
+      if (this->g.isSourceVertex(it)){
+        sources.push_back(it);
+      }
+    }
+
+    /*!
+     * Creating an Edge to limit the Shedule to x Clock Cycles.
+     */
+    addToConstraintGraph(make_pair(sources.front(), sinks.front()), maxLatencyConstraint);
+
+    /*!
+     * Bellman-Ford Algorithm to find shortest Paths in the Constraint-Graph
+     * If the Algorithm detects a negative cycle the Algorithm stopps and reports a conflict clause to the SAT-Solver
+     */
+    BellmanFord bell = BellmanFord(&this->constraintGraph);
+    return bell.getPath(0);
+  }
+
+  void SDSScheduler::displayGraph() {
+    /*!
+     * Display Graph:
+     */
+    if (!this->silent) {
+      cout << "Vertices of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Vertices()){
+        cout << it->getName() << endl;
+      }
+      cout << endl;
+      cout << "Edges of Constraint Graph:" << endl;
+      for (auto &it:this->constraintGraph.Edges()){
+        cout << it->getVertexSrc().getName() << "--(" << it->getDistance() << ")--" << it->getVertexDst().getName() << endl;
+      }
+    }
+  }
+
+  void SDSScheduler::displaySDCSolution() {
+    if (!this->silent){
+      cout << endl;
+      if (!this->isUnsolvableSolution.second){
+        cout << "SDC-Solution found :) Returning Schedule:" << endl;
+        cout << "Vertex:  / Starttime:" << endl;
+        for (auto &it : this->isUnsolvableSolution.first){
+          cout << it.first->getName() << ": " << it.second << endl;
+        }
+      }else {
+        cout << "SDC not solvable :( Reporting Konflikt-Klaus to SAT" << endl;
+      }
+    }
+  }
+
+  ////////////////////////////
+  // Bellman-Ford Algorithm //
+  ////////////////////////////
+
+  SDSScheduler::BellmanFord::BellmanFord(Graph *golfRomeo) {
+    this->g = golfRomeo;
+    hasNegativeCycle = false;
+    bellmanFordAlgorithm(0);
+  }
+
+  void SDSScheduler::BellmanFord::bellmanFordAlgorithm(int startID) {
+    /*!
+     * Initialisation of Algorithm
+     */
+    for (auto &it : this->g->Vertices()){
+      vertexCosts.insert(make_pair(it, INT_MAX));
+    }
+    vertexCosts[&this->g->getVertexById(startID)] = 0;
+
+    /*!
+     * Finding Shortest Paths
+     */
+    for (int i = 1; i < this->g->getNumberOfVertices(); i++){
+      for (auto &it : this -> g->Edges()){
+        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()]))
+          vertexCosts[&it->getVertexDst()] = vertexCosts[&it->getVertexSrc()] + it->getDistance();
+      }
+    }
+    /*!
+     * Checking for negative Cycles
+     */
+    for (auto &it : this->g->Edges()){
+      if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])){
+        hasNegativeCycle = true;
+        break;
+      }else {
+        hasNegativeCycle = false;
+      }
+    }
+  }
+
+  pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFord::getPath(int idofStartVertex) {
+
+    bellmanFordAlgorithm(idofStartVertex);
+
+    if (hasNegativeCycle){
+      cout << "SDC-System unsolvable" << endl;
+      map<Vertex*, int> emptyMap;
+      return make_pair(emptyMap, hasNegativeCycle);
+    }else {
+      return make_pair(vertexCosts, hasNegativeCycle);
+    }
+  }
+
 }
+
+
 
 #endif //USE_CADICAL

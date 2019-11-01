@@ -10,10 +10,12 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <cmath>
 
-namespace HatScheT {
-	ModuloQMRT::ModuloQMRT() : rm(nullptr), II(0), mrt() {}
 
-	ModuloQMRT::ModuloQMRT(ResourceModel &rm, unsigned int II) : rm(&rm), II(II) {
+
+namespace HatScheT {
+	ModuloQMRT::ModuloQMRT() : quiet(true), rm(nullptr), II(0), mrt() {}
+
+	ModuloQMRT::ModuloQMRT(ResourceModel &rm, unsigned int II) : quiet(true), rm(&rm), II(II) {
 		for(auto resIt = this->rm->resourcesBegin(); resIt != this->rm->resourcesEnd(); ++resIt) {
 			auto res = *resIt;
 			// insert matrix for each resource
@@ -29,11 +31,13 @@ namespace HatScheT {
 	bool ModuloQMRT::insertVertex(Vertex *v, unsigned int moduloSlot) {
 		if(moduloSlot>=this->II)
 			throw HatScheT::Exception("Invalid modulo slot requested: "+to_string(moduloSlot)+", II="+to_string(this->II));
-		if(this->mrt.find(this->rm->getResource(v)) == this->mrt.end())
+		auto *res = this->rm->getResource(v);
+		if(this->mrt.find(res) == this->mrt.end())
 			throw HatScheT::Exception("Invalid vertex provided, its resource type doesn't exist in MRT");
-		for(auto &it : this->mrt[this->rm->getResource(v)]) {
-			if(it[moduloSlot] == nullptr) {
-				it[moduloSlot] = v;
+		auto &column = this->mrt[res][moduloSlot];
+		for(auto &it : column) {
+			if(it == nullptr) {
+				it = v;
 				return true;
 			}
 		}
@@ -43,8 +47,8 @@ namespace HatScheT {
 	bool ModuloQMRT::removeVertex(Vertex *v) {
 		bool removed = false;
 		try {
-			for(auto &row : this->mrt.at(this->rm->getResource(v))) {
-				for(auto &it : row) {
+			for(auto &column : this->mrt.at(this->rm->getResource(v))) {
+				for(auto &it : column) {
 					if(it == v) {
 						removed = true;
 						it = nullptr;
@@ -64,14 +68,21 @@ namespace HatScheT {
 		std::cout << "MRT" << std::endl;
 		for(auto &it : this->mrt) {
 			std::cout << "  Resource " << it.first->getName() << std::endl;
+			unsigned int maxHeight = 0;
 			for(auto &it2 : it.second) {
-				std::cout << "    ";
-				for(auto &it3 : it2) {
-					if(it3==nullptr) {
-						std::cout << "           ";
+				if(it2.size() > maxHeight) maxHeight = (unsigned int)it2.size();
+			}
+			for(unsigned int row = 0; row<maxHeight; ++row) {
+				for(unsigned int column = 0; column < this->II; ++column) {
+					if(it.second[column].size()<=row) {
+						std::cout << "---------- ";
 						continue;
 					}
-					auto name = it3->getName();
+					if(it.second[column][row]==nullptr) {
+						std::cout << "0000000000 ";
+						continue;
+					}
+					auto name = it.second[column][row]->getName();
 					std::cout << name << " ";
 					for(auto i=0; i<(10-name.size()); ++i) {
 						std::cout << " ";
@@ -95,6 +106,549 @@ namespace HatScheT {
 		}
 		return slots;
 	}
+
+	int ModuloQMRT::getHeight(const Resource* res, int column) {
+		try {
+			return (int)this->mrt.at(res).at(column).size();
+		}
+		catch(...) {
+			throw HatScheT::Exception("Invalid resource or MRT column requested");
+		}
+	}
+
+	void ModuloQMRT::specifyColumnHeight(const Resource *res, unsigned int column, unsigned int height) {
+		if(this->mrt.find(res) == this->mrt.end())
+			throw HatScheT::Exception("Invalid resource provided - it does not exist in MRT");
+		if(column>=this->II)
+			throw HatScheT::Exception("Invalid column requested: "+to_string(column)+", II="+to_string(this->II));
+		this->mrt.at(res).at(column).resize(height);
+	}
+
+	void ModuloQMRT::setResourceModelAndII(ResourceModel &rm, unsigned int II) {
+		this->II = II;
+		this->rm = &rm;
+		this->mrt.clear();
+		for(auto resIt = this->rm->resourcesBegin(); resIt != this->rm->resourcesEnd(); ++resIt) {
+			auto res = *resIt;
+			auto limit = res->getLimit();
+			if(limit<0) continue;
+			this->rotations[res] = 0;
+			for(unsigned int i=0; i<II; ++i) {
+				this->mrt[res].emplace_back(std::vector<Vertex*>());
+			}
+		}
+	}
+
+	void ModuloQMRT::rotateLeft() {
+		bool newRotation = true;
+		for(auto &innerMrt : this->mrt) {
+			if(newRotation) {
+				// some resources in this MRT might have rectangular matrices that do not have to be rotated
+				auto rotatable = false;
+				auto height = innerMrt.second.front().size();
+				for(auto &column : innerMrt.second) {
+					if(column.size() != height) {
+						rotatable = true;
+						break;
+					}
+				}
+				if(!rotatable) {
+					if(!this->quiet) std::cout << "resource '" << innerMrt.first->getName() << "' is not rotatable - skip it" << std::endl;
+					continue;
+				}
+
+				// THE MATRIX OF THIS RESOURCE CAN BE ROTATED!
+				++this->rotations[innerMrt.first];
+				if(this->rotations[innerMrt.first] == this->II) {
+					this->rotations[innerMrt.first] = 0;
+				}
+				else {
+					newRotation = false;
+				}
+				if(!this->quiet) std::cout << "rotate resource '" << innerMrt.first->getName() << "'; rotation counter: " << this->rotations[innerMrt.first] << std::endl;
+				std::vector<Vertex*> backup = innerMrt.second[0];
+				for(unsigned int i=0; i<innerMrt.second.size()-1; ++i) {
+					innerMrt.second[i] = innerMrt.second[i+1];
+				}
+				innerMrt.second[innerMrt.second.size()-1] = backup;
+			}
+		}
+	}
+
+	unsigned long ModuloQMRT::getMaxNumberOfRotations() {
+		unsigned long rot = 1;
+		for(auto &it : this->mrt) {
+			auto matrix = it.second;
+			auto height = matrix.front().size();
+			for(auto &column : matrix) {
+				if(column.size() != height) {
+					rot *= this->II;
+					break;
+				}
+			}
+		}
+		return rot;
+	}
+
+
+	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
+																		 std::list<std::string> solverWishlist) :
+		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), quiet(true)
+	{
+
+		this->computeMinII(&this->g, &this->resourceModel);
+		double minII = this->getMinII();
+		//ceiling
+		this->integerMinII = (int)ceil(minII);
+		pair<int, int> frac = Utility::splitRational(minII);
+
+		if(!this->quiet) {
+			cout << "rational min II is " << minII << endl;
+			cout << "integer min II is " << this->integerMinII << endl;
+			cout << "auto setting samples to " << frac.second << endl;
+			cout << "auto setting modulo to " << frac.first << endl;
+		}
+
+		this->S = frac.second;
+		this->M = frac.first;
+	}
+
+	std::pair<int, int> ModuloQScheduler::getSM() {
+		std::make_pair(this->S,this->M);
+	}
+
+	void ModuloQScheduler::schedule() {
+		this->scheduleFound = false;
+		if(!this->quiet) {
+			std::cout << "graph: " << std::endl;
+			std::cout << this->g << std::endl;
+			std::cout << "resource model: " << std::endl;
+			std::cout << this->resourceModel << std::endl;
+			std::cout << "M: " << this->M << std::endl;
+			std::cout << "S: " << this->S << std::endl;
+		}
+
+		// clear containers
+		this->latencySequences.clear();
+		this->latencySequence.clear();
+		this->initiationIntervals.clear();
+
+		// compute all latency sequences
+		auto lat = getAllLatencySequences(this->M,this->S);
+		// sort latency sequences (latency sequences with low variance are scheduled first)
+		std::map<double, std::vector<std::vector<int>>> sortedLatencySequences;
+		for(auto &sequence : lat) {
+			auto initIntervals = getInitiationIntervalsFromLatencySequence(sequence,this->M);
+			int min = initIntervals.front();
+			for(auto i : initIntervals) {
+				if(i<min) min = i;
+			}
+			sortedLatencySequences[this->M-min].emplace_back(sequence);
+		}
+		for(auto &it : sortedLatencySequences) {
+			for(auto &it2 : it.second) {
+				this->latencySequences.emplace_back(it2);
+			}
+		}
+
+		// iterate through latency sequences and try to find a schedule for one of them
+		this->scheduleFound = false;
+		for(auto &latencySequence : this->latencySequences) {
+			this->latencySequence = latencySequence;
+			// determine initiation intervals from latency sequence
+			this->initiationIntervals = getInitiationIntervalsFromLatencySequence(this->latencySequence,this->M);
+			if(!this->quiet) {
+				std::cout << "New Scheduling Attempt!" << std::endl;
+				std::cout << "Latency Sequence: " << std::endl;
+				for (auto l : this->latencySequence) std::cout << l << " ";
+				std::cout << std::endl;
+				std::cout << "Initiation Intervals: " << std::endl;
+				for (auto i : this->initiationIntervals) std::cout << i << " ";
+				std::cout << std::endl;
+			}
+			// set a valid non-rectangular MRT for the given latency sequence
+			this->setMRT();
+			auto maxIterations = this->mrt.getMaxNumberOfRotations();
+			if(!this->quiet) std::cout << "Max iterations (based on MRT shape): " << maxIterations << std::endl;
+			for(unsigned long i=0; i<maxIterations; ++i) {
+				this->mrt.print();
+				this->scheduleFound = this->scheduleAttempt();
+				if(!this->scheduleFound) {
+					if(!this->quiet) std::cout << "Did not find feasible solution :(" << std::endl;
+					this->mrt.rotateLeft();
+				}
+				else {
+					// feasible solution found! Yay! :)
+					if(!this->quiet) std::cout << "Yay, found feasible solution!!" << std::endl;
+					// set start times
+					auto solution = this->solver->getResult().values;
+					for (auto *i : this->g.Vertices())
+						this->startTimes[i] = (int) std::lround(solution.find(this->time[i])->second);
+					for(auto &lat : this->latencySequence) {
+						std::map<Vertex*,int> additionalStartTimes;
+						for(auto startTime : this->startTimes) {
+							additionalStartTimes[startTime.first] = startTime.second + lat;
+						}
+						this->startTimesVector.emplace_back(additionalStartTimes);
+					}
+					break;
+				}
+			}
+			if(this->scheduleFound) {
+				this->II = this->minII;
+				bool valid = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->initiationIntervals,this->getScheduleLength());
+				if(!this->quiet) {
+					if (valid) {
+						std::cout << "Valid rational II modulo schedule found with:" << std::endl;
+						std::cout << "  II=" << this->II << std::endl;
+						std::cout << "  S=" << this->S << std::endl;
+						std::cout << "  M=" << this->M << std::endl;
+						std::cout << "  IIs=";
+						for (auto i : this->initiationIntervals) {
+							std::cout << i << " ";
+						}
+						std::cout << std::endl;
+						std::cout << "  Latency=" << this->getScheduleLength() << std::endl;
+					} else {
+						std::cout << "Invalid rational II modulo schedule found :(" << std::endl;
+					}
+				}
+
+				break;
+			}
+		}
+	}
+
+	std::vector<std::vector<int>> ModuloQScheduler::getAllLatencySequences(int M, int S) {
+		if(M<1 or S<1)
+			throw HatScheT::Exception("Invalid values for M and S given: "+to_string(M)+" and "+to_string(S));
+		vector<vector<int>> latencySequences;
+
+		vector<int> nextSequence = {0};
+		for(unsigned int i=0; i<S-1; ++i) {
+			nextSequence.emplace_back(nextSequence[i]+1);
+		}
+
+		bool finished = false;
+		while(!finished) {
+			// push latency sequence into list
+			latencySequences.emplace_back(nextSequence);
+
+			// calculate next sequence
+			for(unsigned int i=0; i<=S-1; ++i) {
+				unsigned int index = S - 1 - i;
+				++nextSequence[index];
+				auto diff = nextSequence.size()-index;
+				if(nextSequence[index]<M-diff+1) break;
+			}
+			for(unsigned int i=0; i<=S-1; ++i) {
+				unsigned int index = S - 1 - i;
+				auto diff = nextSequence.size()-index;
+				if(nextSequence[index]==M-diff+1) nextSequence[index] = index;
+			}
+			for(unsigned int i=0; i<S-1; ++i) {
+				unsigned int index = i;
+				while(nextSequence[index+1]<=nextSequence[index]) ++nextSequence[index+1];
+			}
+
+			// check if finished
+			if(nextSequence[0] != 0) finished = true;
+		}
+
+		return latencySequences;
+	}
+
+	void ModuloQScheduler::setMRT() {
+		if(!this->quiet) {
+			std::cout << "setting MRT for latency sequence '";
+			for (auto l : this->latencySequence) {
+				std::cout << l << " ";
+			}
+			std::cout << "'" << std::endl;
+		}
+		this->mrt.setResourceModelAndII(this->resourceModel,this->M);
+		if(this->S==1) {
+			// construct trivial MRT
+			for(auto resIt = this->resourceModel.resourcesBegin(); resIt != this->resourceModel.resourcesEnd(); ++resIt) {
+				auto res = *resIt;
+				auto limit = res->getLimit();
+				if(limit<0) continue;
+				for(int i=0; i<this->M; ++i) {
+					this->mrt.specifyColumnHeight(res,i,limit);
+				}
+			}
+			return;
+		}
+		// "copy" resource model (only relevant info)
+		ResourceModel rm;
+		std::map<const Resource*, const Resource*> resourceMap;
+		for(auto resIt = this->resourceModel.resourcesBegin(); resIt != this->resourceModel.resourcesEnd(); ++resIt) {
+			auto res = *resIt;
+			resourceMap[&rm.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime())] = res;
+		}
+		// construct rectangular dummy MRT
+		ModuloQMRT dummyMRT;
+		dummyMRT.setResourceModelAndII(rm,this->M);
+		for(auto resIt = rm.resourcesBegin(); resIt != rm.resourcesEnd(); ++resIt) {
+			auto res = *resIt;
+			auto limit = res->getLimit();
+			auto numberOfVertices = (unsigned int) this->resourceModel.getVerticesOfResource(resourceMap[res]).size();
+			if(limit<0) continue;
+			// handle case - vertices for the resource is leq the limit => build trivial MRT with height=limit
+			if(numberOfVertices<=res->getLimit()) {
+				if(!this->quiet) std::cout << "Found limited resource with only one vertex registered to it - build trivial MRT for this resource" << std::endl;
+				for(unsigned int i=0; i<this->M; ++i) {
+					this->mrt.specifyColumnHeight(resourceMap[res],i,resourceMap[res]->getLimit());
+					if(!this->quiet) std::cout << "specified MRT column height = " << this->mrt.getHeight(resourceMap[res],i) << " for resource " << resourceMap[res]->getName() << " at column " << i << std::endl;
+				}
+				continue;
+			}
+			// handle case - resource limit modulo #samples == 0 => build trivial MRT with height=limit/#samples
+			if(resourceMap[res]->getLimit() % this->S == 0) {
+				if(!this->quiet) std::cout << "Found limited resource with limit modulo #samples == 0 - build trivial MRT for this resource" << std::endl;
+				for(unsigned int i=0; i<this->M; ++i) {
+					this->mrt.specifyColumnHeight(resourceMap[res],i,resourceMap[res]->getLimit()/this->S);
+					if(!this->quiet) std::cout << "specified MRT column height = " << this->mrt.getHeight(resourceMap[res],i) << " for resource " << resourceMap[res]->getName() << " at column " << i << std::endl;
+				}
+				continue;
+			}
+			for(unsigned int i=0; i<this->M; ++i) {
+				if(!this->quiet) std::cout << "i=" << i << ", limit = " << limit << std::endl;
+				dummyMRT.specifyColumnHeight(res,i,(unsigned int)limit);
+				if(!this->quiet) std::cout << "specified dummy MRT column height = " << dummyMRT.getHeight(res,i) << " for resource " << res->getName() << " at column " << i << std::endl;
+			}
+			if(!this->quiet) std::cout << "created dummy MRT" << std::endl;
+			// create container with dummy vertices
+			std::vector<Vertex*> dummyVertices;
+			for(unsigned int i=0; i<this->M * limit; ++i) {
+				dummyVertices.emplace_back(new Vertex(i));
+				rm.registerVertex(dummyVertices[i],res);
+			}
+			if(!this->quiet) std::cout << "created dummy vertices" << std::endl;
+			// fill dummy MRT with dummy vertices and track MRT height
+			unsigned int counter=0;
+			unsigned int vertexCounter=0;
+			unsigned int failedAttempts=0;
+			std::vector<unsigned int> mrtHeights(this->M,0);
+			while(failedAttempts<this->M) {
+				if(!this->quiet) {
+					std::cout << "  counter=" << counter << std::endl;
+					std::cout << "  vertexCounter=" << vertexCounter << std::endl;
+				}
+				bool valid = true;
+				unsigned int firstModuloSlot = 0;
+				for(auto &latency : this->latencySequence) {
+					unsigned int moduloSlot = (counter+latency) % this->M;
+					if(latency==0) firstModuloSlot = moduloSlot;
+					if(!this->quiet) {
+						std::cout << "    latency = " << latency << std::endl;
+						std::cout << "    moduloSlot = " << latency << std::endl;
+					}
+					if(!dummyMRT.insertVertex(dummyVertices[vertexCounter],moduloSlot)) {
+						if(!this->quiet) std::cout << "    MRT at column " << moduloSlot << " is already full" << std::endl;
+						valid = false;
+						break;
+					}
+					else {
+						if(!this->quiet) std::cout << "    inserted vertex " << vertexCounter << " to modulo slot " << moduloSlot << std::endl;
+					}
+				}
+				if(valid) {
+					++mrtHeights[firstModuloSlot];
+					++vertexCounter;
+					failedAttempts = 0;
+					if(!this->quiet) {
+						std::cout << "    found MRT slot for vertex" << std::endl;
+						std::cout << "    MRT height: " << mrtHeights[counter % this->M] << std::endl;
+					}
+				}
+				else {
+					if(!this->quiet) std::cout << "    removing vertex from MRT" << std::endl;
+					dummyMRT.removeVertex(dummyVertices[vertexCounter]);
+					++failedAttempts;
+				}
+				++counter;
+			}
+			// free memory
+			for(auto it : dummyVertices) {
+				delete it;
+			}
+			// construct MRT based on mrtHeights
+			for(unsigned int i=0; i<mrtHeights.size(); ++i) {
+				this->mrt.specifyColumnHeight(resourceMap[res],i,mrtHeights[i]);
+				if(!this->quiet) std::cout << "specified MRT column height = " << this->mrt.getHeight(resourceMap[res],i) << " for resource " << resourceMap[res]->getName() << " at column " << i << std::endl;
+			}
+		}
+	}
+
+	void ModuloQScheduler::setObjective() {
+		// minimize sum of start times
+		ScaLP::Term sum;
+		for(auto v : this->g.Vertices()) {
+			sum.add(this->time[v],1);
+		}
+		this->solver->setObjective(ScaLP::minimize(sum));
+	}
+
+	void ModuloQScheduler::constructDecisionVariables() {
+		time.clear();
+		//row.clear();
+		a.clear();
+		a.resize(this->M);
+		k.clear();
+
+		for (auto *i : g.Vertices()) {
+			auto id = "_" + std::to_string(i->getId());
+			// (1)
+			for (int r = 0; r < this->M; ++r) a[r][i] = ScaLP::newBinaryVariable("a_" + std::to_string(r) + id);
+
+			// (2)
+			k[i]    = ScaLP::newIntegerVariable("k" + id);
+			//row[i]  = ScaLP::newIntegerVariable("row" + id, 0, this->M - 1);
+			time[i] = ScaLP::newIntegerVariable("time" + id);
+
+			solver->addConstraint(k[i] >= 0);
+			solver->addConstraint(time[i] >= 0);
+			if (maxLatencyConstraint >= 0) {
+				solver->addConstraint(k[i]    <= (int)floor(maxLatencyConstraint / (double)this->M));
+				solver->addConstraint(time[i] <= maxLatencyConstraint);
+			}
+		}
+	}
+
+	void ModuloQScheduler::constructConstraints() {
+		for (auto *i : g.Vertices()) {
+			// anchor source vertices, but only if they are not resource-limited
+			if (g.isSourceVertex(i) && resourceModel.getResource(i)->getLimit() == UNLIMITED) {
+				solver->addConstraint(k[i] == 0);
+				solver->addConstraint(a[0][i] == 1);
+			}
+
+			// bind result variables (2)
+			ScaLP::Term sumBind;
+			for (int r = 0; r < this->M; ++r) sumBind.add(a[r][i], r);
+			//solver->addConstraint(row[i] - sumBind == 0);
+			solver->addConstraint(time[i] - (this->M * k[i]) - sumBind == 0);
+
+			// assignment constraints (1)
+			ScaLP::Term sumAssign;
+			for (int r = 0; r < this->M; ++r) sumAssign.add(a[r][i], 1);
+			solver->addConstraint(sumAssign == 1);
+		}
+
+		// resource constraints (5)
+		// this could be extended to general reservation tables
+		for (auto qIt = resourceModel.resourcesBegin(), qEnd = resourceModel.resourcesEnd(); qIt != qEnd; ++qIt) {
+			auto *q = *qIt;
+			if (q->getLimit() == UNLIMITED)
+				continue;
+			if (q->isReservationTable())
+				throw HatScheT::Exception("ModuloQ currently handles only simple resources");
+
+			auto using_q = resourceModel.getVerticesOfResource(q);
+
+			for (int r = 0; r < this->M; ++r) {
+				ScaLP::Term sumRes;
+				for (auto *i : using_q)
+					for (int c = 0; c < q->getBlockingTime(); ++c)
+						sumRes.add(a[mod(r - c, this->M)][i], 1);
+				///////solver->addConstraint(sumRes <= q->getLimit());
+				solver->addConstraint(sumRes <= this->mrt.getHeight(q,r));
+			}
+		}
+		// "normal" dependence constraints (4)
+		for (auto *e : g.Edges()) {
+			auto *i = &e->getVertexSrc();
+			auto *j = &e->getVertexDst();
+			auto l_ij = resourceModel.getVertexLatency(i) + e->getDelay();
+			vector<int> omega_ij;
+			int omega_ij_min = 1000000; // "inifinity"
+			if(!this->quiet) std::cout << "Edge: " << i->getName() << " -> " << j->getName() << ", distance: " << e->getDistance() << std::endl;
+			if(e->getDistance() == 0) {
+				omega_ij_min = 0;
+			}
+			else {
+				for(unsigned int i=0; i<this->S; ++i) {
+					int omegaTemp = 0;
+					for(unsigned int j=0; j<e->getDistance(); ++j) {
+						int ind = (i+j)%this->S;
+						omegaTemp += this->initiationIntervals[ind];
+					}
+					omega_ij.emplace_back(omegaTemp);
+				}
+				for(auto omega : omega_ij) {
+					if(!this->quiet) {
+						std::cout << "  omega: " << omega << std::endl;
+						std::cout << "  omega_ij_min: " << omega_ij_min << std::endl;
+					}
+					if(omega < omega_ij_min) omega_ij_min = omega;
+				}
+			}
+			if(!this->quiet) std::cout << "  resulting omega_ij_min: " << omega_ij_min << std::endl;
+			ScaLP::Term weightedSum;
+			for(int r=1; r<this->M; ++r) {
+				weightedSum.add(this->a[r][j],r);
+				weightedSum.add(this->a[r][i],-r);
+			}
+			this->solver->addConstraint(weightedSum + this->M * this->k[j] - this->M * this->k[i] >= l_ij - omega_ij_min);
+		}
+	}
+
+	void ModuloQScheduler::setUpSolverSettings() {
+		this->solver->reset();
+		this->solver->quiet = this->solverQuiet;
+		this->solver->threads = this->threads;
+		this->solver->timeout = this->solverTimeout;
+	}
+
+	bool ModuloQScheduler::scheduleAttempt() {
+		this->setUpSolverSettings();
+		this->constructDecisionVariables();
+		this->constructConstraints();
+		this->setObjective();
+
+		//debug
+		if(!this->quiet) {
+			std::cout << "SOLVER INTERNAL" << std::endl;
+			std::cout << this->solver->showLP() << std::endl;
+		}
+
+		//timestamp
+		this->begin = clock();
+		//solve
+		stat = this->solver->solve();
+		//timestamp
+		this->end = clock();
+
+		//log time
+		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
+		if(!this->quiet) {
+			std::cout << "Time to solve: " << (double)(this->end - this->begin) / CLOCKS_PER_SEC << " sec" << std::endl;
+			std::cout << "ScaLP status:" << stat << std::endl;
+		}
+		return (stat == ScaLP::status::OPTIMAL) or (stat == ScaLP::status::FEASIBLE) or (stat == ScaLP::status::TIMEOUT_FEASIBLE);
+	}
+
+	std::vector<int> ModuloQScheduler::getInitiationIntervalsFromLatencySequence(std::vector<int> &latencySequence, int M) {
+		std::vector<int> initiationIntervals;
+		for(unsigned int i=0; i<latencySequence.size()-1; ++i) {
+			initiationIntervals.emplace_back(latencySequence[i + 1] - latencySequence[i]);
+		}
+		initiationIntervals.emplace_back(M - latencySequence.back());
+		return initiationIntervals;
+	}
+}
+
+
+
+
+
+
+#if 0
+namespace HatScheT {
+
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																							 std::list<std::string> solverWishlist) :
@@ -639,8 +1193,8 @@ namespace HatScheT {
 	}
 
 	std::pair<int, int> ModuloQScheduler::getSM() {
-		std::make_pair(this->S,this->M);
+		return std::make_pair(this->S,this->M);
 	}
 }
 
-
+#endif

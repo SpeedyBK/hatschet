@@ -699,6 +699,7 @@ bool Tests::rationalIISchedulerTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  rii.setUniformScheduleFlag(true);
   rii.schedule();
 
   cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
@@ -1124,11 +1125,10 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::ResourceModel rm;
 
       auto &ld = rm.makeResource("Load", 2, 3, 1);
-      ld.setPhysicalDelay(3);
+
       auto &add = rm.makeResource("Adder", -1, 1, 1);
-      add.setPhysicalDelay(1);
+
       auto &st = rm.makeResource("Store", -1, 1, 1);
-      st.setPhysicalDelay(1);
 
       //Load operations:
       Vertex &A = g.createVertex(0);
@@ -1159,6 +1159,7 @@ bool Tests::compareModuloSchedulerTest() {
 
       SDSScheduler sds(g, rm);
       sds.setSilent(false);
+      sds.setMaxLatencyConstraint(1);
       sds.setBindingType('R');
       sds.schedule();
 

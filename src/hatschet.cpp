@@ -577,9 +577,9 @@ int main(int argc, char *args[]) {
       //experimental
       scheduler->setUseMuxOptBinding(optBinding);
 
-      cout << "Performing schedule" << endl;
+      cout << "HatScheT: Performing schedule" << endl;
       scheduler->schedule();
-      cout << "Finished schedule" << endl;
+      cout << "HatScheT: Finished schedule" << endl;
 
       if(isModuloScheduler) {
         if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), scheduler->getII())){
