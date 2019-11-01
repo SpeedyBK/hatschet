@@ -370,6 +370,24 @@ public:
    * \return a set of vertices associated with `r`
    */
   set<const Vertex*> getVerticesOfResource(const Resource *r) const;
+  /*!
+   * @brief Resource iterator
+   */
+  class Resources
+  {
+  public:
+    Resources(const std::list<Resource*>::iterator& begin, const std::list<Resource*>::iterator& end) : b(begin), e(end) {}
+
+    std::list<Resource*>::iterator begin() { return b; }
+    std::list<Resource*>::iterator end() { return e; }
+    std::list<Resource*>::iterator b;
+    std::list<Resource*>::iterator e;
+  };
+
+  Resources Resources()
+  {
+    return {resources.begin(),resources.end()};
+  }
 private:
   /*!
    * \brief the mapping between vertices and resources

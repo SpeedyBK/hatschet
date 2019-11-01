@@ -137,6 +137,11 @@ public:
    * @return
    */
   static bool ratIIVerifierWrongMRTDetected();
+  /*!
+   * @brief his tests checks whether the ratII verifier is able to detect wrong causality
+   * @return
+   */
+  static bool ratIIVerifierWrongCausalityDetected();
 
 };
 }
