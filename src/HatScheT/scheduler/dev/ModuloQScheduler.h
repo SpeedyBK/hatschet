@@ -15,15 +15,32 @@ namespace HatScheT {
 	class ModuloQMRT {
 	public:
 		/*!
-		 * default constructor - should not be used
+		 * default constructor
 		 */
 		ModuloQMRT();
 		/*!
-		 *
+		 * Construct a rectangular MRT
 		 * @param rm resource model
 		 * @param II number of columns
 		 */
 		ModuloQMRT(ResourceModel &rm, unsigned int II);
+		/*!
+		 * enable/disable debug couts
+		 * @param q
+		 */
+		void setQuiet(bool q) { this->quiet = q; }
+		/*!
+		 * specify height of MRT at the given column number
+		 * @param res
+		 * @param column
+		 * @param height
+		 */
+		void specifyColumnHeight(const Resource* res, unsigned int column, unsigned int height);
+		/*!
+		 * set resource model for this MRT
+		 * @param rm
+		 */
+		void setResourceModelAndII(ResourceModel &rm, unsigned int II);
 		/*!
 		 * insert a vertex into this MRT
 		 * @param v address of the vertex
@@ -47,8 +64,28 @@ namespace HatScheT {
 		 * @return all modulo slots where v appears
 		 */
 		std::vector<int> getModuloSlots(Vertex* v);
+		/*!
+		 * get height of MRT in the given column
+		 * @param res resource
+		 * @param column
+		 * @return
+		 */
+		int getHeight(const Resource* res, int column);
+		/*!
+		 * rotate MRT left, i.e. column 0 <- column 1; column 1 <- column 2; ... ; column N-1 <- column 0
+		 */
+		void rotateLeft();
+		/*!
+		 *
+		 * @return maximum number of rotations for the given II and resource model
+		 */
+		unsigned long getMaxNumberOfRotations();
 
 	private:
+		/*!
+		 * no couts if this is true
+		 */
+		bool quiet;
 		/*!
 		 * this is where everything is stored
 		 */
@@ -61,10 +98,14 @@ namespace HatScheT {
 		 * number of columns
 		 */
 		unsigned int II;
+		/*!
+		 * track number of rotations from rotateLeft() function
+		 */
+		std::map<const Resource*,int> rotations;
 	};
 
 
-	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase {
+	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase /*, public RationalIISchedulerLayer add this! (Patrick)*/ {
 	public:
 		/*!
 		 *
@@ -74,10 +115,20 @@ namespace HatScheT {
 		 */
 		ModuloQScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 		/*!
+		 * enable/disable debug couts
+		 * @param q
+		 */
+		void setQuiet(bool q) { this->quiet = q; }
+		/*!
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
 		 */
 		double getII() override { return this->II;}
+		/*!
+		 *
+		 * @return S and M (samples and modulo)
+		 */
+		std::pair<int,int> getSM();
 		/*!
 		 * Main schedule function
 		 */
@@ -88,27 +139,40 @@ namespace HatScheT {
 		 * @param S
 		 * @return
 		 */
-		static std::vector<std::vector<unsigned int>> getAllLatencySequences(int M, int S);
+		static std::vector<std::vector<int>> getAllLatencySequences(int M, int S);
 		/*!
-		 *
-		 * @return initiation intervals
+		 * compute initiation intervals between samples for the given latency sequence
+		 * @param latencySequence
+		 * @param M modulo
+		 * @return
 		 */
-		std::vector<int> getInitiationIntervals() const { return this->initiationIntervals; }
+		static std::vector<int> getInitiationIntervalsFromLatencySequence(std::vector<int> &latencySequence, int M);
 		/*!
 		 *
-		 * @return latency sequence
+		 * @return valid latency sequence for the found rat II modulo schedule
 		 */
 		std::vector<int> getLatencySequence() const { return this->latencySequence; }
 		/*!
-		 * streams start times to cout
-		 * @param startTimes
-		 */
-		static void printStartTimes(std::map<Vertex*,int> startTimes);
-		/*!
 		 *
-		 * @return rat II start times
+		 * @return initiation intervals for the latency sequence
 		 */
-		std::vector<std::map<Vertex*,int> >& getStartTimeVector() { return this->startTimesVector; }
+		std::vector<int> getInitiationIntervals() const { return this->initiationIntervals; }
+		/*!
+		 * print the uneven spaced initiation times of data samples
+		 * those repeat every m cycles
+		 * @return
+		 */
+		vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
+		/*!
+		 * modulo operation with non-negative result
+		 * @param a
+		 * @param b
+		 * @return
+		 */
+		static inline int mod(int a, int b) {
+			int m = a % b;
+			return m >= 0 ? m : m + b;
+		}
 	protected:
 		/*!
 		 * not needed
@@ -117,48 +181,50 @@ namespace HatScheT {
 		/*!
 		 * not needed
 		 */
-		void setObjective() override {}
-		/*!
-		 * not needed
-		 */
 		void resetContainer() override {}
+		/*!
+		 *
+		 */
+		void setObjective() override;
+		/*!
+		 * reset solver
+		 */
+		void setUpSolverSettings();
+		/*!
+		 * create variables
+		 */
+		void constructDecisionVariables();
+		/*!
+		 * create constraints
+		 */
+		void constructConstraints();
 
 	private:
 		/*!
-		 * get scheduling queue based on topological sort of the DFG with SCCs
-		 * @param sccSchedule
-		 * @return pair of {queue = vector of SCC-IDs; graph used to generate queue}
+		 * no couts if this is true
 		 */
-		std::pair<std::list<int>,Graph*> getScheduleQueue(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
+		bool quiet;
 		/*!
-		 * fill start times vector based on MRT and DFG
-		 * @param sccSchedule see getSCCSchedule
+		 * try scheduling and report if a solution was found
+		 * @return
 		 */
-		void determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
+		bool scheduleAttempt();
 		/*!
-		 * determine MRT based on the scc schedule
-		 * @param sccs see getSCCSchedule
-		 * @param sccSchedule see getSCCSchedule
+		 * finds a valid non-rectangular MRT for this->latencySequence
 		 */
-		void determineMRT(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
+		void setMRT();
 		/*!
-		 * perform relative schedule of SCCs
-		 * @return map from Vertex* of the original graph to pair <relative start time, scc-ID>
-		 * (all SCCs must be offset by the same number of cycles)
+		 * all possible latency sequences for the given S/M
 		 */
-		std::map<Vertex*, pair<int,int>> getSCCSchedule(std::vector<SCC*> &sccs);
+		std::vector<std::vector<int>> latencySequences;
 		/*!
-		 * latency sequence found by ratII scheduler when scheduling SCCs
+		 * latency sequence for the found schedule
 		 */
 		std::vector<int> latencySequence;
 		/*!
-		 * initiation intervals resulting from latency sequence
+		 * initiation intervals for the found schedule
 		 */
 		std::vector<int> initiationIntervals;
-		/*!
-		 * the final rational II schedule
-		 */
-		vector<std::map<Vertex*,int> > startTimesVector;
 		/*!
 		 * the minimum interger II that is possible
 		 */
@@ -172,21 +238,22 @@ namespace HatScheT {
 		 */
 		int M;
 		/*!
-		 * solver wishlist needed for rat II scheduler to schedule SCCs
-		 */
-		std::list<std::string> solverWishlist;
-		/*!
-		 * the number of operations in the DFG of the resource type
-		 */
-		std::map<const Resource*,int> numberOperations;
-		/*!
 		 * complete modulo reservation table containing all samples
 		 */
-		ModuloQMRT completeMrt;
+		ModuloQMRT mrt;
 		/*!
-		 * MRT only for the first sample
+		 * start times of rat II schedule
 		 */
-		ModuloQMRT firstSampleMrt;
+		vector<std::map<Vertex*,int> > startTimesVector;
+		/*!
+		 * variables for resource constraints
+		 */
+		std::vector<std::map<const Vertex*, ScaLP::Variable>> a;
+		/*!
+		 * schedule time variables
+		 */
+		//std::map<const Vertex*, ScaLP::Variable> k, row, time;
+		std::map<const Vertex*, ScaLP::Variable> k, time;
 	};
 }
 

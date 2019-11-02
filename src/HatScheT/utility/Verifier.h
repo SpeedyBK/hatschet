@@ -74,11 +74,11 @@ bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &
  * @param g the problem instance's dependence graph
  * @param rm the problem instance's resource model
  * @param schedule the determined schedule for each sample
- * @param IIs the determined initiation intervals as vector of differences of II
+ * @param latencySequence the determined initiation intervals as vector of differences of II
  * @param scheduleLength the max Latency of the determined rational II modulo schedule
  * @return true iff the schedule is valid
  */
-bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int> > &schedule, vector<int> IIs, int scheduleLength);
+bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int> > &schedule, vector<int> latencySequence, int scheduleLength);
 
 /*!
  * \brief Verifies the given modulo schedule

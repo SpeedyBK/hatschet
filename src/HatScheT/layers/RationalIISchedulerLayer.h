@@ -35,7 +35,7 @@ public:
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
    */
-  std::vector<int> getInitIntervalls(){return this->initIntervals;}
+  std::vector<int> getLatencySequence(){return this->latencySequence;}
   /*!
    * \brief getModulo the modulo number determines the ratio in which the initiation of samples is repeated
    * \return
@@ -59,7 +59,7 @@ protected:
   /*!
    * \brief initIntervals
    */
-  std::vector<int> initIntervals;
+  std::vector<int> latencySequence;
   /*!
    * \brief modulo
    */

@@ -131,6 +131,17 @@ public:
    * @brief test functionality of the SDSScheduler (joined SDC and SAT)
    */
   static bool sdsSchedulerTest();
+  /*!
+   * @brief this tests checks whether the ratII verifier is able to detect a MRT that
+   * exceeds the resource limits
+   * @return
+   */
+  static bool ratIIVerifierWrongMRTDetected();
+  /*!
+   * @brief his tests checks whether the ratII verifier is able to detect wrong causality
+   * @return
+   */
+  static bool ratIIVerifierWrongCausalityDetected();
 
 };
 }

@@ -40,7 +40,7 @@ namespace HatScheT
  *
  * For the details see
  * Sittel, Wickerson, Kumm, Zipf: Modulo Scheduling with Rational Initiation Intervals in Custom Hardware Design,
- * Presented at the Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
+ * Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
  *
  */
 class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
@@ -208,8 +208,9 @@ private:
    * @param startIndex
    * @return
    */
-  ScaLP::Term getSampleDistance(int d, int startIndex);
-  int getDeterminedSampleDistance(int d, int startIndex);
+  ScaLP::Term getSampleDistanceAsTerm(int d, int startIndex);
+  int getSampleDistanceAsInt(int d, int startIndex);
+  int getSampleIndexFromDistance(int d, int startSample);
   /*!
    * EXPERIMETAL: DONT USE THIS
    */
@@ -237,7 +238,7 @@ private:
   /*!
    * the determined initIntervals of the rational II schedule after solving
    */
-  //vector<int> initIntervals;
+  //vector<int> latencySequence;
   /*!
    * the minimum interger II that is possible
    */

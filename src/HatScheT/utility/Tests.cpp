@@ -699,6 +699,7 @@ bool Tests::rationalIISchedulerTest() {
   readerGraph.readGraph(graphStr.c_str());
 
   HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+  rii.setUniformScheduleFlag(true);
   rii.schedule();
 
   cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
@@ -1091,7 +1092,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(g4, g6, 0);
 
     ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
-    m.setMaxLatencyConstraint(100);
+    //m.setMaxLatencyConstraint(100);
     m.schedule();
     //auto result = m.getSchedule();
 
@@ -1114,6 +1115,83 @@ bool Tests::compareModuloSchedulerTest() {
       }
     }
     return true;
+  }
+
+  bool Tests::ratIIVerifierWrongCausalityDetected() {
+
+#ifndef USE_XERCESC
+    cout << "Tests::rationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "cTest/exampleRatII_RM.xml";
+    string graphStr = "cTest/exampleRatII.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+    rii.setUniformScheduleFlag(true);
+    rii.schedule();
+
+    //making all resources unlimited to not trigger the resource MRT check
+    for(auto it : rm.Resources()) {
+      it->setLimit(-1);
+    }
+
+    //generating wrong latemcy sequence
+    //<1 1 3 > should not be allowed
+
+    vector<int> ls({1,1,3});
+
+
+    bool ok = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), ls, rii.getScheduleLength());
+
+    if(ok == true) return false;
+    else return true;
+#endif
+  }
+
+  bool Tests::ratIIVerifierWrongMRTDetected() {
+
+#ifndef USE_XERCESC
+    cout << "Tests::rationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+  return false;
+#else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "cTest/exampleRatII_RM.xml";
+    string graphStr = "cTest/exampleRatII.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::RationalIIScheduler rii{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
+    rii.setUniformScheduleFlag(true);
+    rii.schedule();
+
+    vector<std::map<Vertex*,int> > s = rii.getStartTimeVector();
+
+    for(auto it:g.Vertices()) {
+      Vertex* v = it;
+
+      if(v->getName() == "A5") {
+        s[0][v]++;
+      }
+    }
+
+    bool ok = verifyRationalIIModuloSchedule(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
+
+    if(ok == true) return false;
+    else return true;
+#endif
   }
 
   bool Tests::sdsSchedulerTest() {
