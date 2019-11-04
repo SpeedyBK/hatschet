@@ -120,6 +120,11 @@ namespace HatScheT {
 		 */
 		void setQuiet(bool q) { this->quiet = q; }
 		/*!
+		 *
+		 * @param maxIt
+		 */
+		void setMaxLatencySequenceIterations(int maxIt) { this->maxSequenceIterations = maxIt; }
+		/*!
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
 		 */
@@ -157,6 +162,11 @@ namespace HatScheT {
 		 * @return initiation intervals for the latency sequence
 		 */
 		std::vector<int> getInitiationIntervals() const { return this->initiationIntervals; }
+		/*!
+		 *
+		 * @return latency sequences for which no solution was found
+		 */
+		std::vector<std::vector<int>> getDiscardedLatencySequences() const { return this->discardedLatencySequences; }
 		/*!
 		 * print the uneven spaced initiation times of data samples
 		 * those repeat every m cycles
@@ -200,6 +210,14 @@ namespace HatScheT {
 		void constructConstraints();
 
 	private:
+		/*!
+		 * maximum number of latency sequences for which a solution is attempted to be found
+		 */
+		int maxSequenceIterations;
+		/*!
+		 * contains latency sequences for which no solution was found
+		 */
+		std::vector<std::vector<int>> discardedLatencySequences;
 		/*!
 		 * no couts if this is true
 		 */

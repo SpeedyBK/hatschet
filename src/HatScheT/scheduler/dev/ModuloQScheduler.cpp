@@ -193,7 +193,7 @@ namespace HatScheT {
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																		 std::list<std::string> solverWishlist) :
-		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), quiet(true)
+		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), quiet(true), maxSequenceIterations(1)
 	{
 
 		this->computeMinII(&this->g, &this->resourceModel);
@@ -232,6 +232,7 @@ namespace HatScheT {
 		this->latencySequences.clear();
 		this->latencySequence.clear();
 		this->initiationIntervals.clear();
+		this->discardedLatencySequences.clear();
 
 		// compute all latency sequences
 		auto lat = getAllLatencySequences(this->M,this->S);
@@ -253,12 +254,12 @@ namespace HatScheT {
 
 		// iterate through latency sequences and try to find a schedule for one of them
 		this->scheduleFound = false;
-		for(auto &latencySequence : this->latencySequences) {
-			this->latencySequence = latencySequence;
+		for(int i=0; i<this->latencySequences.size() and i<this->maxSequenceIterations; ++i) {
+			this->latencySequence = this->latencySequences[i];
 			// determine initiation intervals from latency sequence
 			this->initiationIntervals = getInitiationIntervalsFromLatencySequence(this->latencySequence,this->M);
 			if(!this->quiet) {
-				std::cout << "New Scheduling Attempt!" << std::endl;
+				std::cout << "Start scheduling Attempt!" << std::endl;
 				std::cout << "Latency Sequence: " << std::endl;
 				for (auto l : this->latencySequence) std::cout << l << " ";
 				std::cout << std::endl;
@@ -268,33 +269,22 @@ namespace HatScheT {
 			}
 			// set a valid non-rectangular MRT for the given latency sequence
 			this->setMRT();
-			auto maxIterations = this->mrt.getMaxNumberOfRotations();
-			if(!this->quiet) std::cout << "Max iterations (based on MRT shape): " << maxIterations << std::endl;
-			for(unsigned long i=0; i<maxIterations; ++i) {
-				this->mrt.print();
-				this->scheduleFound = this->scheduleAttempt();
-				if(!this->scheduleFound) {
-					if(!this->quiet) std::cout << "Did not find feasible solution :(" << std::endl;
-					this->mrt.rotateLeft();
-				}
-				else {
-					// feasible solution found! Yay! :)
-					if(!this->quiet) std::cout << "Yay, found feasible solution!!" << std::endl;
-					// set start times
-					auto solution = this->solver->getResult().values;
-					for (auto *i : this->g.Vertices())
-						this->startTimes[i] = (int) std::lround(solution.find(this->time[i])->second);
-					for(auto &lat : this->latencySequence) {
-						std::map<Vertex*,int> additionalStartTimes;
-						for(auto startTime : this->startTimes) {
-							additionalStartTimes[startTime.first] = startTime.second + lat;
-						}
-						this->startTimesVector.emplace_back(additionalStartTimes);
-					}
-					break;
-				}
-			}
+			if(!this->quiet) this->mrt.print();
+			// start scheduling
+			this->scheduleFound = this->scheduleAttempt();
 			if(this->scheduleFound) {
+				if(!this->quiet) std::cout << "Found feasible solution!" << std::endl;
+				// set start times
+				auto solution = this->solver->getResult().values;
+				for (auto *v : this->g.Vertices())
+					this->startTimes[v] = (int) std::lround(solution.find(this->time[v])->second);
+				for(auto &late : this->latencySequence) {
+					std::map<Vertex*,int> additionalStartTimes;
+					for(auto startTime : this->startTimes) {
+						additionalStartTimes[startTime.first] = startTime.second + late;
+					}
+					this->startTimesVector.emplace_back(additionalStartTimes);
+				}
 				this->II = this->minII;
 				bool valid = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->initiationIntervals,this->getScheduleLength());
 				if(!this->quiet) {
@@ -310,11 +300,14 @@ namespace HatScheT {
 						std::cout << std::endl;
 						std::cout << "  Latency=" << this->getScheduleLength() << std::endl;
 					} else {
-						std::cout << "Invalid rational II modulo schedule found :(" << std::endl;
+						std::cout << "Invalid rational II modulo schedule found - this should never happen" << std::endl;
 					}
 				}
-
 				break;
+			}
+			else {
+				if(!this->quiet) std::cout << "Did not find feasible solution :(" << std::endl;
+				this->discardedLatencySequences.emplace_back(this->latencySequence);
 			}
 		}
 	}
