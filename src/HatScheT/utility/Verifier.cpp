@@ -118,7 +118,13 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
             return false;
         }
     }
-    cout << "> schedule" << endl;
+    cout << " >" << endl;
+
+    int m = 0;
+
+    for(auto it:latencySequence) {
+      m += it;
+    }
 
     /* 1) precedence edges are obeyed */
     for (int iloop = 0; iloop < schedule.size(); iloop++) {
@@ -172,7 +178,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
 
         //iterate over every timestep
         //TODO resource limit in timestep mod m !!
-        for (int timeStep = 0; timeStep <= scheduleLength; timeStep++) {
+        for (int timeStep = 0; timeStep <= m; timeStep++) {
             int instancesUsed = 0;
             //iterate over schedules
             for (int iloop = 0; iloop < schedule.size(); iloop++) {
@@ -184,13 +190,13 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
                     //vertex of other resource
                     if (rm.getResource(v) != r) continue;
                     //other timestep assigned
-                    if (S[v] != timeStep) continue;
+                    if ((S[v] % m) != timeStep) continue;
                     else instancesUsed++;
                 }
             }
 
             if (instancesUsed > r->getLimit()) {
-                cout << "Resource Constraint violated for " << r->getName() << " in timestep " << timeStep << ": used "
+                cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << m << ": used "
                      << instancesUsed << " of " << r->getLimit() << endl;
                 return false;
             }

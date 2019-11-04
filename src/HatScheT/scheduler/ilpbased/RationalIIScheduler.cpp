@@ -105,9 +105,28 @@ void RationalIIScheduler::setGeneralConstraints()
         this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex]
                                     - e->getDelay() <= 0);
       } else {
-        ScaLP::Term distanceIIs = this->getSampleDistance(e->getDistance(), j);
-        this->solver->addConstraint(t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] +
-                                      distanceIIs  - e->getDelay() <= 0);
+        if(this->uniformSchedule == true) {
+          ScaLP::Term distanceIIs = this->getSampleDistanceAsTerm(e->getDistance(), j);
+          this->solver->addConstraint(
+            t_matrix[j][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex] +
+            distanceIIs - e->getDelay() <= 0);
+        }
+        else {
+          int sampleIndex = this->getSampleIndexFromDistance(e->getDistance(), j);
+
+          int buffer = 0;
+
+          // !hack! solve better
+          if(e->getDistance() >= this->samples) buffer = this->modulo;
+          if(j < e->getDistance()) buffer = this->modulo;
+          //--------
+
+          //cout << "distance " << e->getDistance() << ", start sample " << j << " found index " << sampleIndex << ", buffer " << buffer << endl;
+
+          this->solver->addConstraint(
+            t_matrix[sampleIndex][srcTVecIndex] + this->resourceModel.getVertexLatency(src) - t_matrix[j][dstTVecIndex]
+             - e->getDelay() - buffer <= 0);
+        }
       }
     }
   }
@@ -121,12 +140,12 @@ void RationalIIScheduler::setGeneralConstraints()
 
   //distinguish IIs
   for(unsigned int i = 0; i < II_vector.size()-1; i++) {
-    this->solver->addConstraint(II_vector[i] - II_vector[i+1]  + 1 <= 0);
+    if(this->uniformSchedule==true) this->solver->addConstraint(II_vector[i] - II_vector[i+1]  + 1 <= 0);
   }
 }
 
 void RationalIIScheduler::printBindingToConsole() {
-  Utility::printRationalIIMRT(this->startTimes, this->ratIIbindings, &this->resourceModel, this->modulo, this->latencySequnce);
+  Utility::printRationalIIMRT(this->startTimes, this->ratIIbindings, &this->resourceModel, this->modulo, this->latencySequence);
 }
 
 void RationalIIScheduler::printScheduleToConsole()
@@ -231,6 +250,7 @@ void RationalIIScheduler::schedule()
 
   cout << "------------------------" << endl;
   cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
+  cout << "RationalIIScheduler.schedule: uniform schedule is " << std::boolalpha << this->uniformSchedule << endl;
   cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
   cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
   cout << "RationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
@@ -260,7 +280,7 @@ void RationalIIScheduler::schedule()
 
     cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
     //solve the current problem
-    /*if(this->writeLPFile == true)*/ this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
+    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
 
     //timestamp
     this->begin = clock();
@@ -284,18 +304,24 @@ void RationalIIScheduler::schedule()
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
-      bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->latencySequnce, this->getScheduleLength());
+      bool ver = false;
+      if(this->uniformSchedule == true)
+        ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->latencySequence, this->getScheduleLength());
 
       //determine whether rational minimum II was identified
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
       cout << "------------------------" << endl;
-      if(ver==true) cout << "RationalIIScheduler.schedule: Result ist verified! " << endl;
+      if(ver==true) cout << "RationalIIScheduler.schedule: Result is verified! " << endl;
+      else if(ver==false and this->uniformSchedule==true) cout << "RationalIIScheduler.schedule: Result verification FAILED! " << endl;
+      else if(ver==false and this->uniformSchedule==false) cout << "RationalIIScheduler.schedule: Result verification for not uniform schedule is not yet implemented! " << endl;
+
       this->s_found = this->samples;
       this->m_found = this->modulo;
       cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
       cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
-      cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples) << " (integer minII " << this->integerMinII << ")" << endl;
+      cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples)
+      << " (integer minII " << ceil((double)(this->modulo) / (double)(this->samples)) << ")" << endl;
       cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
       this->II = (double)(this->modulo) / (double)(this->samples);
       this->getRationalIIBindings();
@@ -350,7 +376,7 @@ std::map<Edge*,int> RationalIIScheduler::getLifeTimes(){
 
 std::map<Edge*,vector<int> > RationalIIScheduler::getRatIILifeTimes(){
   if(this->startTimesVector.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
-  if(this->latencySequnce.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
+  if(this->latencySequence.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
   if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
 
   std::map<Edge*,vector<int> > allLifetimes;
@@ -362,9 +388,9 @@ std::map<Edge*,vector<int> > RationalIIScheduler::getRatIILifeTimes(){
 
     vector<int > lifetimes;
 
-    for(int i = 0; i < (int)(this->latencySequnce.size()); i++){
+    for(int i = 0; i < (int)(this->latencySequence.size()); i++){
       int lifetime = this->startTimes[vDst] - this->startTimes[vSrc]
-        - this->resourceModel.getVertexLatency(vSrc) + this->getDeterminedSampleDistance(e->getDistance(),i);
+        - this->resourceModel.getVertexLatency(vSrc) + this->getSampleDistanceAsInt(e->getDistance(), i);
 
       if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
       else lifetimes.push_back(lifetime);
@@ -400,8 +426,26 @@ void RationalIIScheduler::autoSetNextMAndS(){
   }
 }
 
-int RationalIIScheduler::getDeterminedSampleDistance(int d, int startIndex) {
-  if(startIndex > this->latencySequnce.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + to_string(startIndex));
+int RationalIIScheduler::getSampleIndexFromDistance(int d, int startSample) {
+  //immediately return startSample when requested distance was 0
+  if (d == 0) return startSample;
+
+  int sampleIndex = startSample;
+
+  while(d>0){
+    if(sampleIndex>0) {
+      sampleIndex-=1;
+    }
+    else sampleIndex = this->samples - 1;
+
+    d--;
+  }
+
+  return sampleIndex;
+}
+
+int RationalIIScheduler::getSampleDistanceAsInt(int d, int startIndex) {
+  if(startIndex > this->latencySequence.size()-1) throw Exception("RationalIIScheduler.getSampleDistanceAsTerm: out of range II_vector entry requested: " + to_string(startIndex));
 
   //immediately return 0 when requested distance was 0
   if(d==0) return 0;
@@ -411,17 +455,17 @@ int RationalIIScheduler::getDeterminedSampleDistance(int d, int startIndex) {
     if(startIndex>0) {
       startIndex-=1;
     }
-    else if(startIndex==0) startIndex=this->latencySequnce.size()-1;
+    else if(startIndex==0) startIndex=this->latencySequence.size()-1;
 
-    distance += this->latencySequnce[startIndex];
+    distance += this->latencySequence[startIndex];
     d--;
   }
 
   return distance;
 }
 
-ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
-  if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistance: out of range II_vector entry requested: " + to_string(startIndex));
+ScaLP::Term RationalIIScheduler::getSampleDistanceAsTerm(int d, int startIndex) {
+  if(startIndex > this->II_vector.size()-1) throw Exception("RationalIIScheduler.getSampleDistanceAsTerm: out of range II_vector entry requested: " + to_string(startIndex));
 
   ScaLP::Term w;
   while(d>0){
@@ -442,7 +486,7 @@ ScaLP::Term RationalIIScheduler::getSampleDistance(int d, int startIndex) {
 void RationalIIScheduler::fillSolutionStructure() {
   //reset possible old values
   this->startTimesVector.resize(0);
-  this->latencySequnce.resize(0);
+  this->latencySequence.resize(0);
 
   //store schedule using standard interface if uniform schedule is true
   if(this->uniformSchedule == true){
@@ -476,9 +520,9 @@ void RationalIIScheduler::fillSolutionStructure() {
     ScaLP::Variable svTemp1 = this->II_vector[i - 1];
     ScaLP::Variable svTemp2 = this->II_vector[i];
     int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
-    this->latencySequnce.push_back(IITimeDiff);
+    this->latencySequence.push_back(IITimeDiff);
 
-    if(i==II_vector.size()-1) this->latencySequnce.push_back(this->modulo - this->r.values[svTemp2]);
+    if(i==II_vector.size()-1) this->latencySequence.push_back(this->modulo - this->r.values[svTemp2]);
   }
 }
 
@@ -498,7 +542,7 @@ int RationalIIScheduler::getScheduleLength() {
 vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
   //generate new binding when no binding is available
   if(this->ratIIbindings.size() == 0)
-    this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequnce);
+    this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequence);
 
   //throw exception when no binding was generated
   if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
