@@ -109,6 +109,11 @@ void print_short_help() {
   std::cout << "--threads=[int]           Number of threads for the ILP solver (default: 1)" << std::endl;
   std::cout << "--show_ilp_solver_output  Shows the ILP solver output" << std::endl;
   std::cout << std::endl;
+  std::cout << "Options for ILP-based rational II scheduling:" << std::endl;
+  std::cout << "--samples=[int]           Demanded samples per modulo" << std::endl;
+  std::cout << "--modulo=[int]            Demanded clock cycles for the repeating schedule" << std::endl;
+  std::cout << "--uniform=[0/1]           Uniform(1) / Non-Uniform (0) schedule for samples in rational II modulo scheduling" << std::endl;
+  std::cout << std::endl;
 }
 
 int main(int argc, char *args[]) {
@@ -122,9 +127,9 @@ int main(int argc, char *args[]) {
   int maxLatency=-1;
 
   //variables for Rational II scheduling
-  //experimental
-  int samples=-1; //default
-  int modulo=-1; //default
+  int samples = -1; //default
+  int modulo = -1; //default
+  bool uniform = true; //default
 
   //flag to enable mux optimal binding
   //experimental
@@ -201,6 +206,10 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--modulo=",value)) {
         modulo = atol(value);
+      }
+      else if(getCmdParameter(args[i],"--uniform=",value)) {
+        if(atol(value) == 1) uniform = true;
+        else uniform = false;
       }
       else if(getCmdParameter(args[i],"--binding=",value)) {
           if(atol(value) == 1)
@@ -523,6 +532,7 @@ int main(int argc, char *args[]) {
         case RATIONALII:
           isRationalIIScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);
+          ((HatScheT::RationalIIScheduler*) scheduler)->setUniformScheduleFlag(uniform);
           if(timeout>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::RationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           if(samples>0) ((HatScheT::RationalIIScheduler*) scheduler)->setSamples(samples);
