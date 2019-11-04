@@ -177,6 +177,14 @@ namespace HatScheT {
 		 * @return
 		 */
 		vector<std::map<const Vertex*,int> > getRationalIIBindings() override { throw HatScheT::Exception("ModuloQScheduler::getRationalIIBindings not implemented yet"); }
+		/*!
+		 * sort initiation intervals by the variance from S/M
+		 * @param unsortedInitIntervals
+		 * @param S samples
+		 * @param M modulo
+		 * @return
+		 */
+		static std::vector<std::vector<int>> getInitIntervalQueue(std::vector<std::vector<int>>& unsortedInitIntervals, int S, int M);
 	protected:
 		/*!
 		 * not needed

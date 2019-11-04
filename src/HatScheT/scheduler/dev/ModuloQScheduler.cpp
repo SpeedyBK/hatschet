@@ -234,11 +234,12 @@ namespace HatScheT {
 		this->initiationIntervals.clear();
 		this->discardedInitiationIntervals.clear();
 
-		// compute all latency sequences
-		auto lat = getAllInitiationIntervals(this->M, this->S);
+		// compute all possible initiation intervals
+		auto allInitInts = getAllInitiationIntervals(this->M, this->S);
 		// sort latency sequences (latency sequences with low variance are scheduled first)
-		std::map<double, std::vector<std::vector<int>>> sortedInitIntervals;
-		for(auto &sequence : lat) {
+		std::vector<std::vector<int>> sortedInitIntervals = getInitIntervalQueue(allInitInts,this->S,this->M);
+		/*
+		for(auto &sequence : allInitInts) {
 			auto initIntervals = getLatencySequenceFromInitiationIntervals(sequence, this->M);
 			int min = initIntervals.front();
 			for(auto i : initIntervals) {
@@ -246,10 +247,9 @@ namespace HatScheT {
 			}
 			sortedInitIntervals[this->M-min].emplace_back(sequence);
 		}
+		 */
 		for(auto &it : sortedInitIntervals) {
-			for(auto &it2 : it.second) {
-				this->allInitiationIntervals.emplace_back(it2);
-			}
+			this->allInitiationIntervals.emplace_back(it);
 		}
 
 		// iterate through latency sequences and try to find a schedule for one of them
@@ -257,7 +257,7 @@ namespace HatScheT {
 		for(int i=0; i<this->allInitiationIntervals.size() and i<this->maxSequenceIterations; ++i) {
 			this->initiationIntervals = this->allInitiationIntervals[i];
 			// determine initiation intervals from latency sequence
-			this->latencySequence = getLatencySequenceFromInitiationIntervals(this->latencySequence, this->M);
+			this->latencySequence = getLatencySequenceFromInitiationIntervals(this->initiationIntervals, this->M);
 			if(!this->quiet) {
 				std::cout << "Start scheduling Attempt!" << std::endl;
 				std::cout << "Latency Sequence: " << std::endl;
@@ -631,6 +631,45 @@ namespace HatScheT {
 		}
 		latSeq.emplace_back(M - initIntervals.back());
 		return latSeq;
+	}
+
+	std::vector<std::vector<int>>
+	ModuloQScheduler::getInitIntervalQueue(std::vector<std::vector<int>> &unsortedInitIntervals, int S, int M) {
+		std::map<double,std::vector<std::vector<int>>> sortedInitIntervalMap;
+		std::vector<std::vector<int>> sortedInitIntervals;
+		double ms = double(M)/double(S);
+		for(auto &initIntervals : unsortedInitIntervals) {
+			auto sequence = getLatencySequenceFromInitiationIntervals(initIntervals, M);
+			/*
+			// sort by smallest II
+			int min = initIntervals.front();
+			for(auto i : initIntervals) {
+				if(i<min) min = i;
+			}
+			sortedInitIntervalMap[M-min].emplace_back(sequence);
+			 */
+			//sort by variance from S/M
+			double var = 0;
+			for(auto &II : sequence) {
+				var += ((ms-double(II))*(ms-double(II)));
+			}
+			var /= sequence.size();
+			std::cout << "M/S = " << M << "/" << S << " = " << ms << std::endl;
+			std::cout << "sequence: ";
+			for(auto &II : sequence) {
+				std::cout << II << " ";
+			}
+			std::cout << " - variance: " << var << std::endl;
+			sortedInitIntervalMap[var].emplace_back(initIntervals);
+		}
+
+		for(auto &it : sortedInitIntervalMap) {
+			for(auto &it2 : it.second) {
+				sortedInitIntervals.emplace_back(it2);
+			}
+		}
+
+		return sortedInitIntervals;
 	}
 }
 
