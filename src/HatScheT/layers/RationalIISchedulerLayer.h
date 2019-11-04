@@ -51,6 +51,12 @@ public:
    * @return
    */
   virtual vector<std::map<const Vertex*,int> > getRationalIIBindings() = 0;
+  /*!
+   * print the uneven spaced initiation times of data samples
+   * those repeat every m cycles
+   * @return
+   */
+  vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
 protected:
   /*!
    * the bindings of rational II schedule
@@ -68,6 +74,10 @@ protected:
    * \brief samples
    */
   int samples;
+  /*!
+   * the final rational II schedule
+   */
+  vector<std::map<Vertex*,int> > startTimesVector;
 
 
 };

@@ -112,12 +112,6 @@ public:
    * @brief print the MRTs of all resources after rational II scheduling and binding
    */
   void printBindingToConsole();
-  /*!
-   * print the uneven spaced initiation times of data samples
-   * those repeat every m cycles
-   * @return
-   */
-  vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
 
   /*!
    * EXPERIMENTAL: DONT USE THIS CURRENTLY
@@ -231,10 +225,6 @@ private:
    * container to find the correct ILP variables later on
    */
   map<const Vertex*,int> tIndices;
-  /*!
-   * the final rational II schedule
-   */
-  vector<std::map<Vertex*,int> > startTimesVector;
   /*!
    * the determined initIntervals of the rational II schedule after solving
    */

@@ -229,42 +229,42 @@ namespace HatScheT {
 		}
 
 		// clear containers
-		this->latencySequences.clear();
+		this->allInitiationIntervals.clear();
 		this->latencySequence.clear();
 		this->initiationIntervals.clear();
-		this->discardedLatencySequences.clear();
+		this->discardedInitiationIntervals.clear();
 
 		// compute all latency sequences
-		auto lat = getAllLatencySequences(this->M,this->S);
+		auto lat = getAllInitiationIntervals(this->M, this->S);
 		// sort latency sequences (latency sequences with low variance are scheduled first)
-		std::map<double, std::vector<std::vector<int>>> sortedLatencySequences;
+		std::map<double, std::vector<std::vector<int>>> sortedInitIntervals;
 		for(auto &sequence : lat) {
-			auto initIntervals = getInitiationIntervalsFromLatencySequence(sequence,this->M);
+			auto initIntervals = getLatencySequenceFromInitiationIntervals(sequence, this->M);
 			int min = initIntervals.front();
 			for(auto i : initIntervals) {
 				if(i<min) min = i;
 			}
-			sortedLatencySequences[this->M-min].emplace_back(sequence);
+			sortedInitIntervals[this->M-min].emplace_back(sequence);
 		}
-		for(auto &it : sortedLatencySequences) {
+		for(auto &it : sortedInitIntervals) {
 			for(auto &it2 : it.second) {
-				this->latencySequences.emplace_back(it2);
+				this->allInitiationIntervals.emplace_back(it2);
 			}
 		}
 
 		// iterate through latency sequences and try to find a schedule for one of them
 		this->scheduleFound = false;
-		for(int i=0; i<this->latencySequences.size() and i<this->maxSequenceIterations; ++i) {
-			this->latencySequence = this->latencySequences[i];
+		for(int i=0; i<this->allInitiationIntervals.size() and i<this->maxSequenceIterations; ++i) {
+			this->initiationIntervals = this->allInitiationIntervals[i];
 			// determine initiation intervals from latency sequence
-			this->initiationIntervals = getInitiationIntervalsFromLatencySequence(this->latencySequence,this->M);
+			this->latencySequence = getLatencySequenceFromInitiationIntervals(this->latencySequence, this->M);
 			if(!this->quiet) {
 				std::cout << "Start scheduling Attempt!" << std::endl;
 				std::cout << "Latency Sequence: " << std::endl;
-				for (auto l : this->latencySequence) std::cout << l << " ";
+				for (auto l : this->initiationIntervals) std::cout << l << " ";
 				std::cout << std::endl;
 				std::cout << "Initiation Intervals: " << std::endl;
-				for (auto i : this->initiationIntervals) std::cout << i << " ";
+				for (auto i : this->latencySequence) std::cout << i << " ";
 				std::cout << std::endl;
 			}
 			// set a valid non-rectangular MRT for the given latency sequence
@@ -278,7 +278,7 @@ namespace HatScheT {
 				auto solution = this->solver->getResult().values;
 				for (auto *v : this->g.Vertices())
 					this->startTimes[v] = (int) std::lround(solution.find(this->time[v])->second);
-				for(auto &late : this->latencySequence) {
+				for(auto &late : this->initiationIntervals) {
 					std::map<Vertex*,int> additionalStartTimes;
 					for(auto startTime : this->startTimes) {
 						additionalStartTimes[startTime.first] = startTime.second + late;
@@ -286,7 +286,7 @@ namespace HatScheT {
 					this->startTimesVector.emplace_back(additionalStartTimes);
 				}
 				this->II = this->minII;
-				bool valid = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->initiationIntervals,this->getScheduleLength());
+				bool valid = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->latencySequence,this->getScheduleLength());
 				if(!this->quiet) {
 					if (valid) {
 						std::cout << "Valid rational II modulo schedule found with:" << std::endl;
@@ -294,7 +294,7 @@ namespace HatScheT {
 						std::cout << "  S=" << this->S << std::endl;
 						std::cout << "  M=" << this->M << std::endl;
 						std::cout << "  IIs=";
-						for (auto i : this->initiationIntervals) {
+						for (auto i : this->latencySequence) {
 							std::cout << i << " ";
 						}
 						std::cout << std::endl;
@@ -307,15 +307,15 @@ namespace HatScheT {
 			}
 			else {
 				if(!this->quiet) std::cout << "Did not find feasible solution :(" << std::endl;
-				this->discardedLatencySequences.emplace_back(this->latencySequence);
+				this->discardedInitiationIntervals.emplace_back(this->initiationIntervals);
 			}
 		}
 	}
 
-	std::vector<std::vector<int>> ModuloQScheduler::getAllLatencySequences(int M, int S) {
+	std::vector<std::vector<int>> ModuloQScheduler::getAllInitiationIntervals(int M, int S) {
 		if(M<1 or S<1)
 			throw HatScheT::Exception("Invalid values for M and S given: "+to_string(M)+" and "+to_string(S));
-		vector<vector<int>> latencySequences;
+		vector<vector<int>> initIntervals;
 
 		vector<int> nextSequence = {0};
 		for(unsigned int i=0; i<S-1; ++i) {
@@ -325,7 +325,7 @@ namespace HatScheT {
 		bool finished = false;
 		while(!finished) {
 			// push latency sequence into list
-			latencySequences.emplace_back(nextSequence);
+			initIntervals.emplace_back(nextSequence);
 
 			// calculate next sequence
 			for(unsigned int i=0; i<=S-1; ++i) {
@@ -348,13 +348,13 @@ namespace HatScheT {
 			if(nextSequence[0] != 0) finished = true;
 		}
 
-		return latencySequences;
+		return initIntervals;
 	}
 
 	void ModuloQScheduler::setMRT() {
 		if(!this->quiet) {
 			std::cout << "setting MRT for latency sequence '";
-			for (auto l : this->latencySequence) {
+			for (auto l : this->initiationIntervals) {
 				std::cout << l << " ";
 			}
 			std::cout << "'" << std::endl;
@@ -430,7 +430,7 @@ namespace HatScheT {
 				}
 				bool valid = true;
 				unsigned int firstModuloSlot = 0;
-				for(auto &latency : this->latencySequence) {
+				for(auto &latency : this->initiationIntervals) {
 					unsigned int moduloSlot = (counter+latency) % this->M;
 					if(latency==0) firstModuloSlot = moduloSlot;
 					if(!this->quiet) {
@@ -565,7 +565,7 @@ namespace HatScheT {
 					int omegaTemp = 0;
 					for(unsigned int j=0; j<e->getDistance(); ++j) {
 						int ind = (i+j)%this->S;
-						omegaTemp += this->initiationIntervals[ind];
+						omegaTemp += this->latencySequence[ind];
 					}
 					omega_ij.emplace_back(omegaTemp);
 				}
@@ -624,13 +624,13 @@ namespace HatScheT {
 		return (stat == ScaLP::status::OPTIMAL) or (stat == ScaLP::status::FEASIBLE) or (stat == ScaLP::status::TIMEOUT_FEASIBLE);
 	}
 
-	std::vector<int> ModuloQScheduler::getInitiationIntervalsFromLatencySequence(std::vector<int> &latencySequence, int M) {
-		std::vector<int> initiationIntervals;
-		for(unsigned int i=0; i<latencySequence.size()-1; ++i) {
-			initiationIntervals.emplace_back(latencySequence[i + 1] - latencySequence[i]);
+	std::vector<int> ModuloQScheduler::getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M) {
+		std::vector<int> latSeq;
+		for(unsigned int i=0; i<initIntervals.size()-1; ++i) {
+			latSeq.emplace_back(initIntervals[i + 1] - initIntervals[i]);
 		}
-		initiationIntervals.emplace_back(M - latencySequence.back());
-		return initiationIntervals;
+		latSeq.emplace_back(M - initIntervals.back());
+		return latSeq;
 	}
 }
 

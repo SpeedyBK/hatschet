@@ -7,7 +7,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/subgraphs/SCC.h>
 #include <vector>
 
@@ -105,7 +105,7 @@ namespace HatScheT {
 	};
 
 
-	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase /*, public RationalIISchedulerLayer add this! (Patrick)*/ {
+	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer {
 	public:
 		/*!
 		 *
@@ -139,24 +139,19 @@ namespace HatScheT {
 		 */
 		void schedule() override;
 		/*!
-		 * Calculate all possible latency sequences for the given M and S values
+		 * Calculate all possible initiation intervals for the given M and S values
 		 * @param M
 		 * @param S
 		 * @return
 		 */
-		static std::vector<std::vector<int>> getAllLatencySequences(int M, int S);
+		static std::vector<std::vector<int>> getAllInitiationIntervals(int M, int S);
 		/*!
-		 * compute initiation intervals between samples for the given latency sequence
-		 * @param latencySequence
+		 * compute intervals between samples for the initiation intervals sequence
+		 * @param initIntervals
 		 * @param M modulo
 		 * @return
 		 */
-		static std::vector<int> getInitiationIntervalsFromLatencySequence(std::vector<int> &latencySequence, int M);
-		/*!
-		 *
-		 * @return valid latency sequence for the found rat II modulo schedule
-		 */
-		std::vector<int> getLatencySequence() const { return this->latencySequence; }
+		static std::vector<int> getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M);
 		/*!
 		 *
 		 * @return initiation intervals for the latency sequence
@@ -166,13 +161,7 @@ namespace HatScheT {
 		 *
 		 * @return latency sequences for which no solution was found
 		 */
-		std::vector<std::vector<int>> getDiscardedLatencySequences() const { return this->discardedLatencySequences; }
-		/*!
-		 * print the uneven spaced initiation times of data samples
-		 * those repeat every m cycles
-		 * @return
-		 */
-		vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
+		std::vector<std::vector<int>> getDiscardedInitiationIntervals() const { return this->discardedInitiationIntervals; }
 		/*!
 		 * modulo operation with non-negative result
 		 * @param a
@@ -183,6 +172,11 @@ namespace HatScheT {
 			int m = a % b;
 			return m >= 0 ? m : m + b;
 		}
+		/*!
+		 * binding function not implemented yet
+		 * @return
+		 */
+		vector<std::map<const Vertex*,int> > getRationalIIBindings() override { throw HatScheT::Exception("ModuloQScheduler::getRationalIIBindings not implemented yet"); }
 	protected:
 		/*!
 		 * not needed
@@ -217,7 +211,7 @@ namespace HatScheT {
 		/*!
 		 * contains latency sequences for which no solution was found
 		 */
-		std::vector<std::vector<int>> discardedLatencySequences;
+		std::vector<std::vector<int>> discardedInitiationIntervals;
 		/*!
 		 * no couts if this is true
 		 */
@@ -232,13 +226,9 @@ namespace HatScheT {
 		 */
 		void setMRT();
 		/*!
-		 * all possible latency sequences for the given S/M
+		 * all possible init interval sequences for the given S/M
 		 */
-		std::vector<std::vector<int>> latencySequences;
-		/*!
-		 * latency sequence for the found schedule
-		 */
-		std::vector<int> latencySequence;
+		std::vector<std::vector<int>> allInitiationIntervals;
 		/*!
 		 * initiation intervals for the found schedule
 		 */
@@ -259,10 +249,6 @@ namespace HatScheT {
 		 * complete modulo reservation table containing all samples
 		 */
 		ModuloQMRT mrt;
-		/*!
-		 * start times of rat II schedule
-		 */
-		vector<std::map<Vertex*,int> > startTimesVector;
 		/*!
 		 * variables for resource constraints
 		 */
