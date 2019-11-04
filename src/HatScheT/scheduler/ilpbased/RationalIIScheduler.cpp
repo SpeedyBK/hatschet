@@ -516,13 +516,18 @@ void RationalIIScheduler::fillSolutionStructure() {
   }
 
   //store differences (in clock cycles) between the scheduled samples
-  for(int i = 1; i < this->II_vector.size(); i++){
-    ScaLP::Variable svTemp1 = this->II_vector[i - 1];
-    ScaLP::Variable svTemp2 = this->II_vector[i];
-    int IITimeDiff = this->r.values[svTemp2] - this->r.values[svTemp1];
-    this->latencySequence.push_back(IITimeDiff);
+  for(int i = 0; i < this->II_vector.size(); i++){
+    //ScaLP::Variable svTemp1 = this->II_vector[i];
+    //ScaLP::Variable svTemp2 = this->II_vector[i+1];
+    int IITimeDiff;
 
-    if(i==II_vector.size()-1) this->latencySequence.push_back(this->modulo - this->r.values[svTemp2]);
+    //(unsigned int)(lround(r.values[II_vector[i]]))
+
+    if(i==II_vector.size()-1) IITimeDiff = this->modulo - (unsigned int)(lround(r.values[II_vector[i]]));
+    else IITimeDiff = (unsigned int)(lround(r.values[II_vector[i+1]])) - (unsigned int)(lround(r.values[II_vector[i]]));
+
+    cout << "pushing value to latency sequence " << IITimeDiff <<endl;
+    this->latencySequence.push_back(IITimeDiff);
   }
 }
 
