@@ -19,6 +19,23 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/*
+ * General Idea:
+ * Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
+ * SDC and SAT Formulation; FPGA 2018
+ *
+ * CaDiCaL SAT-Solver:
+ * Armin Biere; CADICAL, LINGELING,PLINGELING, TREENGELINGand YALSATEntering the SAT Competition; 2018
+ *
+ * SDC Solver:
+ * G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
+ * Algorithmica 1999
+ *
+ * Edge-Weight Transformation:
+ * Jack Edmonds, Richard M. Karp; Theoretical Improvements in Algorithmic Efficiency for Network Flow Problems;
+ * Journal of the ACM 1972
+ */
+
 #ifndef HATSCHET_SDSSCHEDULER_H
 #define HATSCHET_SDSSCHEDULER_H
 #ifdef USE_CADICAL
@@ -30,15 +47,6 @@
 #include "cadical.hpp"
 
 namespace HatScheT {
-
-  /*
-   * General Idea:
-   * Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
-   * SDC and SAT Formulation; FPGA 2018
-   *
-   * CaDiCaL Paper:
-   * http://fmv.jku.at/papers/Biere-SAT-Competition-2018-solvers.pdf
-   */
 
   struct bindingVariable {
     int index;
@@ -130,26 +138,7 @@ namespace HatScheT {
      * @return Map of SDC-Formulations based on the SAT Solution.
      */
     map<pair<const Vertex *, const Vertex *>, int> passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
-                                                                   vector<vector<int>> confClauses);
-
-    /*!
-     * Creates a SDC-Constraint-Graph based on Dependency and Timing-Constraints.
-     */
-    void createBasicConstraintGraph();
-
-    /*!
-     * Addes Vertices and Edges to the SDC-Constraint Graph.
-     * @param constraintsSDCVer: The first element is the pointer to the Sourcevertex of and Edge,
-     *                           The second element is the pointer to the Destination of an Edge.
-     * @param weight: Distance of the Edge.
-     */
-    void addToConstraintGraph(pair<const Vertex *, const Vertex *> constraintsSDCVer, int weight);
-
-    /*!
-     * Detects if the SDC-Inequality-System is feasible, and if it is feasible,
-     * hopefully solves the SDC-Inequality-System.
-     */
-    pair<map<Vertex*, int>, bool> solveSDC();
+                                                                   vector<vector<int>> &confClauses);
 
     /*!
      * Swaps a pair.
@@ -175,11 +164,6 @@ namespace HatScheT {
      * Function to get a SAT-Formulation from a SDC-Conflict.
      */
      vector<vector<int>> satfromSDC (pair<const Vertex*, const Vertex*>);
-
-    /*!
-     * Debugging Shit
-     */
-    void displayGraph();
 
     /*!
      * More Debugging Shit
@@ -239,46 +223,16 @@ namespace HatScheT {
      */
     pair<map <Vertex*, int>, bool> isUnsolvableSolution;
 
+    /*!
+     * Mapping from SAT to SDC (maybe someone picked a stupid name for this Variable!) ToDo needs te be changed
+     */
     map<pair<const Vertex*, const Vertex*>, int> sdcToSATMapping;
 
-    //////////////////////////////////////////////////////////////////////////////
     /*!
-     * All the Stuff for the Bellman-Ford Algorithm to solve SDC Constraint Graphs
+     * Conflict Clauses detected by SDC
      */
-    //////////////////////////////////////////////////////////////////////////////
-    class BellmanFord {
+    vector<vector<int>> conflictClauses;
 
-    public:
-      explicit BellmanFord(Graph* golfRomeo);
-
-      /*!
-       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
-       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
-       */
-      pair<map<Vertex*, int>, bool> getPath(int idofStartVertex);
-
-    private:
-
-      /*!
-       * Sets the cost for the start Vertex to 0 and the cost for all other Vertices to INT_MAX;
-       */
-      void bellmanFordAlgorithm(int startID);
-
-      /*!
-       * Pointer to Graph for which shortest Paths will be searched
-       */
-      Graph* g;
-
-      /*!
-       * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
-       */
-      map<Vertex *, int> vertexCosts;
-
-      /*!
-       * Tells if Graph g has negative cycles. If true, the SDC-System is unsolvable.
-       */
-      bool hasNegativeCycle;
-    };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
@@ -293,12 +247,56 @@ namespace HatScheT {
 
       Edge &createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance=0, Edge::DependencyType dependencyType=Edge::Data);
 
+      bool doesEdgeExistID(Vertex* src, Vertex* dst);
+
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
-     * This Constraint Graph represents the SDC inequality System
+     * Solver for SDC-Inequallity Systems
      */
-    ConstraintGraph constraintGraph;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    class SDCSolver{
+    public:
+      /*!
+       * If a Constraint Graph already exists, this Constructor can be used.
+       * @param cg a SDC Constraint Graph.
+       */
+      explicit SDCSolver(ConstraintGraph cg);
+
+      /*!
+       * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
+       * build it's constraint Graph by itself.
+       * @param constraints like "V1 - V2 <= C"
+       */
+      explicit SDCSolver(map<pair<const Vertex*, const Vertex*>, int> &constraints);
+
+      /*!
+       * Adds Vertices and Edges to the SDC-Constraint Graph.
+       * @param constraintsSDCVer: The first element is the pointer to the Sourcevertex of and Edge,
+       *                           The second element is the pointer to the Destination of an Edge.
+       * @param weight: Distance of the Edge.
+       */
+      void addConstrainttoGraph(pair<const Vertex*, const Vertex*>, int weight);
+
+      /*!
+       * Constraints which are incrementaly added to the Constraint Graph.
+       * @param constraints
+       */
+      void addConstraints (map<pair<const Vertex*, const Vertex*>, int> &constraints);
+
+      /*!
+       * Print Constraint Graph
+       */
+      void printConstraintGraph();
+
+    private:
+
+      ConstraintGraph cg;
+
+      map <pair<const Vertex*, const Vertex*>, int> additionalConstraints;
+
+    };
 
   };
 
