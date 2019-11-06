@@ -1101,13 +1101,13 @@ bool Tests::compareModuloSchedulerTest() {
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
-    auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, initIntervals, m.getScheduleLength());
+    auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
     if(!valid) {
       std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
       return false;
     }
-    for(unsigned int i=0; i<latencySequence.size(); ++i) {
-      auto l = latencySequence[i];
+    for(unsigned int i=0; i<initIntervals.size(); ++i) {
+      auto l = initIntervals[i];
       auto startTimes = startTimesVector[i];
       std::cout << "Tests::moduloQTest: start times for insertion time=" << l << std::endl;
       for(auto it : startTimes) {
