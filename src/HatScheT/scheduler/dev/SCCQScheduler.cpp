@@ -56,8 +56,19 @@ namespace HatScheT {
 		auto sccScheduleValid = p.first;
 		auto sccSchedule = p.second;
 
-		if(!sccScheduleValid)
-			throw HatScheT::Exception("SCC scheduling unsuccessful for S/M = "+to_string(this->samples)+"/"+to_string(this->modulo));
+		if(!sccScheduleValid) {
+			std::cout << "SCC scheduling unsuccessful for S/M = " << this->samples << "/" << this->modulo << std::endl;
+			this->II = -1;
+			this->modulo = -1;
+			this->samples = -1;
+			this->scheduleFound = false;
+			this->startTimes.clear();
+			this->startTimesVector.clear();
+			this->end = clock();
+			if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+			this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+			return;
+		}
 
 		if(!this->quiet) {
 			// print schedule for debugging reasons
@@ -95,12 +106,14 @@ namespace HatScheT {
 		}
 
 		// print ratII start times
-		std::cout << "Rat II Start times:" << std::endl;
-		for(unsigned int i=0; i<this->startTimesVector.size(); ++i) {
-			auto startT = this->startTimesVector[i];
-			std::cout << "  Start time vector " << i << ":" << std::endl;
-			for(auto it : startT) {
-				std::cout << "    " << it.first->getName() << " - " << it.second << std::endl;
+		if(!this->quiet) {
+			std::cout << "Rat II Start times:" << std::endl;
+			for (unsigned int i = 0; i < this->startTimesVector.size(); ++i) {
+				auto startT = this->startTimesVector[i];
+				std::cout << "  Start time vector " << i << ":" << std::endl;
+				for (auto it : startT) {
+					std::cout << "    " << it.first->getName() << " - " << it.second << std::endl;
+				}
 			}
 		}
 

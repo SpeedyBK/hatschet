@@ -95,7 +95,8 @@ void print_short_help() {
   std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
-  std::cout << "                            RATIONALIIMODULOQ: Third experimental rational II scheduler (heuristic)" << std::endl;
+	std::cout << "                            RATIONALIIMODULOQ: Third experimental rational II scheduler (heuristic)" << std::endl;
+	std::cout << "                            RATIONALIISCCQ: Fourth experimental rational II scheduler (SCC based heuristic)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -569,7 +570,7 @@ int main(int argc, char *args[]) {
         case RATIONALIISCCQ:
           isRationalIIScheduler=true;
           scheduler = new HatScheT::SCCQScheduler(g,rm,solverWishList);
-          //((HatScheT::SCCQScheduler*) scheduler)->setQuiet(false);
+          ((HatScheT::SCCQScheduler*) scheduler)->setQuiet(false);
           if(timeout>0) ((HatScheT::SCCQScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::SCCQScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::SCCQScheduler*) scheduler)->setThreads(threads);
