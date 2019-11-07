@@ -127,8 +127,8 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
     }
 
     /* 1) precedence edges are obeyed */
-    for (int iloop = 0; iloop < schedule.size(); iloop++) {
-        auto &S = schedule[iloop]; // alias
+    for (int s = 0; s < schedule.size(); s++) {
+        auto &S = schedule[s]; // alias
         bool ok;
 
         for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
@@ -140,7 +140,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
             //determine II based on the edges distance and rational II insertions, if distance==0 omit II for this check
             if (e->getDistance() > 0) {
                 int stepsBack = e->getDistance();
-                int currIIPosition = iloop;
+                int currIIPosition = s;
 
                 while (stepsBack != 0) {
                     if (currIIPosition == 0) {
@@ -155,15 +155,15 @@ bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::Reso
                     stepsBack--;
                 }
 
-                cout << "Distance: " << e->getDistance() << " results in a latency II sequnce of " << II << " cycles" << endl;
+                //cout << "Distance: " << e->getDistance() << " results in a latency II sequnce of " << II << " cycles" << endl;
             }
 
             ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] +  II;
             if (!ok) {
                 cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
-                     << " <= " << S[j] << " + " << II << endl;
+                     << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
                 cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
-                     << " <= " << S[j] << " + " << II << endl;
+                     << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
                 return false;
             }
         }
