@@ -117,6 +117,10 @@ public:
    */
   static bool rationalIIModuloQTest();
   /*!
+   * @brief test functionality of (rational II) ModuloQScheduler
+   */
+  static bool rationalIISCCQTest();
+  /*!
    * \brief A simpler test for the DaiZhang19Scheduler, with examples from the Paper "Improving Scalability of Exact
    * Modulo Scheduling with Specialized Conflict-Driven Learning"
    */

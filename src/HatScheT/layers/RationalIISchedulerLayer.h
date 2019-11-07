@@ -40,12 +40,22 @@ public:
    * \brief getModulo the modulo number determines the ratio in which the initiation of samples is repeated
    * \return
    */
-  int getModulo(){return this->modulo;}
+  int getModulo() const {return this->modulo;}
   /*!
    * \brief getSamples get the number of samples that can inserted every 'this->modulo' clock cycles
    * @return
    */
-  int getSamples(){return this->samples;}
+  int getSamples() const {return this->samples;}
+  /*!
+   * \brief setModulo manually set modulo
+   * \return
+   */
+  void setModulo(int m){this->modulo = m;}
+  /*!
+   * \brief setSamples manually set samples
+   * @return
+   */
+  void setSamples(int s){this->samples = s;}
   /*!
    * base function for rational II schedule bindings
    * @return

@@ -57,20 +57,20 @@ namespace HatScheT {
 		/*!
 		 * print contents of MRT
 		 */
-		void print();
+		void print() const;
 		/*!
 		 *
 		 * @param v vertex
 		 * @return all modulo slots where v appears
 		 */
-		std::vector<int> getModuloSlots(Vertex* v);
+		std::vector<int> getModuloSlots(Vertex* v) const;
 		/*!
 		 * get height of MRT in the given column
 		 * @param res resource
 		 * @param column
 		 * @return
 		 */
-		int getHeight(const Resource* res, int column);
+		int getHeight(const Resource* res, int column) const;
 		/*!
 		 * rotate MRT left, i.e. column 0 <- column 1; column 1 <- column 2; ... ; column N-1 <- column 0
 		 */
@@ -128,12 +128,12 @@ namespace HatScheT {
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
 		 */
-		double getII() override { return this->II;}
+		double getII() override { return this->II; }
 		/*!
-		 *
-		 * @return S and M (samples and modulo)
+		 * non-critical resources might have non-rectangular MRT shapes
+		 * @return vector with column heights
 		 */
-		std::pair<int,int> getSM();
+		std::map<Resource*,std::vector<int>> getMRTShape() const;
 		/*!
 		 * Main schedule function
 		 */
@@ -185,6 +185,10 @@ namespace HatScheT {
 		 * @return
 		 */
 		static std::vector<std::vector<int>> getInitIntervalQueue(std::vector<std::vector<int>>& unsortedInitIntervals, int S, int M);
+		/*!
+		 * finds a valid non-rectangular MRT for a given resource model and a initiation intervals
+		 */
+		static void setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet);
 	protected:
 		/*!
 		 * not needed
@@ -213,6 +217,10 @@ namespace HatScheT {
 
 	private:
 		/*!
+		 * compute and sort all initiation intervals
+		 */
+		void setInitiationIntervals();
+		/*!
 		 * maximum number of latency sequences for which a solution is attempted to be found
 		 */
 		int maxSequenceIterations;
@@ -230,10 +238,6 @@ namespace HatScheT {
 		 */
 		bool scheduleAttempt();
 		/*!
-		 * finds a valid non-rectangular MRT for this->latencySequence
-		 */
-		void setMRT();
-		/*!
 		 * all possible init interval sequences for the given S/M
 		 */
 		std::vector<std::vector<int>> allInitiationIntervals;
@@ -246,14 +250,6 @@ namespace HatScheT {
 		 */
 		int integerMinII;
 		/*!
- 		* @brief the s value for the iteration start
- 		*/
-		int S;
-		/*!
-		 * @brief the m value for the iteration start
-		 */
-		int M;
-		/*!
 		 * complete modulo reservation table containing all samples
 		 */
 		ModuloQMRT mrt;
@@ -264,7 +260,6 @@ namespace HatScheT {
 		/*!
 		 * schedule time variables
 		 */
-		//std::map<const Vertex*, ScaLP::Variable> k, row, time;
 		std::map<const Vertex*, ScaLP::Variable> k, time;
 	};
 }

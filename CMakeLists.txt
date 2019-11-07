@@ -181,6 +181,7 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
+src/HatScheT/scheduler/dev/SCCQScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/Exception.h
@@ -217,6 +218,7 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
+src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 )

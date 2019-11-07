@@ -45,6 +45,7 @@
 #endif
 
 #ifdef USE_SCALP
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
 #include <HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h>
@@ -53,6 +54,7 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
+#include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -132,7 +134,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIMODULOQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -260,6 +262,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "rationaliimoduloq") {
           schedulerSelection = RATIONALIIMODULOQ;
         }
+        else if(schedulerSelectionStr == "rationaliisccq") {
+          schedulerSelection = RATIONALIISCCQ;
+        }
         else if(schedulerSelectionStr == "subgrreduction") {
           schedulerSelection = SUGRREDUCTION;
         }
@@ -288,7 +293,8 @@ int main(int argc, char *args[]) {
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
-        if(str=="RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
+				if(str=="RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
+				if(str=="RATIONALIISCCQ" && HatScheT::Tests::rationalIISCCQTest() == false) exit(-1);
         if(str=="CADICAL" && HatScheT::Tests::cadicalTest() == false) exit(-1);
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
@@ -360,6 +366,9 @@ int main(int argc, char *args[]) {
           break;
       case RATIONALIIMODULOQ:
         cout << "RATIONALIIMODULOQ";
+        break;
+      case RATIONALIISCCQ:
+        cout << "RATIONALIISCCQ";
         break;
       case SUGRREDUCTION:
         cout << "SUGRREDUCTION";
@@ -544,6 +553,19 @@ int main(int argc, char *args[]) {
           if(maxLatency > 0) ((HatScheT::ModuloQScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
           ((HatScheT::ModuloQScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::ModuloQScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          if(samples>0) ((HatScheT::ModuloQScheduler *) scheduler)->setSamples(samples);
+          if(modulo>0) ((HatScheT::ModuloQScheduler *) scheduler)->setSamples(modulo);
+          break;
+        case RATIONALIISCCQ:
+          isRationalIIScheduler=true;
+          scheduler = new HatScheT::SCCQScheduler(g,rm,solverWishList);
+          //((HatScheT::SCCQScheduler*) scheduler)->setQuiet(false);
+          if(timeout>0) ((HatScheT::SCCQScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::SCCQScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          ((HatScheT::SCCQScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::SCCQScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          if(samples>0) ((HatScheT::SCCQScheduler *) scheduler)->setSamples(samples);
+          if(modulo>0) ((HatScheT::SCCQScheduler *) scheduler)->setSamples(modulo);
           break;
         case SUGRREDUCTION:
         {
@@ -588,9 +610,19 @@ int main(int argc, char *args[]) {
           cout << "Modulo schedule verified successfully" << endl;
           cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
         } else {
-          cout << ">>> Modulo schedule verifivation failed! <<<" << endl;
+          cout << ">>> Modulo schedule verification failed! <<<" << endl;
           exit(-1);
         }
+      }
+			auto *ratIILayer = dynamic_cast<HatScheT::RationalIISchedulerLayer*>(scheduler);
+			if(ratIILayer!=nullptr and isRationalIIScheduler) {
+				if (HatScheT::verifyRationalIIModuloSchedule(g, rm, ratIILayer->getStartTimeVector(), ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
+					cout << "Rational II Modulo schedule verified successfully" << endl;
+					cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
+				} else {
+					cout << ">>> Rational II Modulo schedule verification failed! <<<" << endl;
+					exit(-1);
+				}
       }
 
       if(scheduler->getScheduleFound() == true) {
