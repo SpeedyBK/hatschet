@@ -27,7 +27,7 @@
  * CaDiCaL SAT-Solver:
  * Armin Biere; CADICAL, LINGELING,PLINGELING, TREENGELINGand YALSATEntering the SAT Competition; 2018
  *
- * SDC Solver:
+ * SDC Incremental Solver:
  * G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
  * Algorithmica 1999
  *
@@ -280,10 +280,14 @@ namespace HatScheT {
       void addConstrainttoGraph(pair<const Vertex*, const Vertex*>, int weight);
 
       /*!
-       * Constraints which are incrementaly added to the Constraint Graph.
+       * Constraints which are incrementaly added to the Constraint Graph. (Resource Constraints)
        * @param constraints
        */
       void addConstraints (map<pair<const Vertex*, const Vertex*>, int> &constraints);
+
+      void dijkstra (Vertex* startVertex);
+
+      void dijkstraInit (Vertex* startVertex);
 
       /*!
        * Print Constraint Graph
@@ -295,6 +299,12 @@ namespace HatScheT {
       ConstraintGraph cg;
 
       map <pair<const Vertex*, const Vertex*>, int> additionalConstraints;
+
+      map <Vertex*, int> costofVertex;
+
+      map <Vertex*, Vertex*> predecessorInShortestPath;
+
+      list <Vertex*> queue;
 
     };
 

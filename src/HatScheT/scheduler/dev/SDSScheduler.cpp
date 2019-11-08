@@ -143,6 +143,7 @@ namespace HatScheT {
     SDCSolver sdc(dependencyConstraintsSDC);
     sdc.printConstraintGraph();
     cout << endl;
+    sdc.dijkstra(&g.getVertexById(0));
 
     /*!
      * Add Timing (Chaining) Constraints: ToDo...
@@ -158,6 +159,8 @@ namespace HatScheT {
      * Add Resource Constraints
      */
     sdc.addConstraints(resourceConstraintsSDC);
+    sdc.printConstraintGraph();
+
 
   }
 
@@ -524,17 +527,16 @@ namespace HatScheT {
     }
   }
 
-
+  /*!
+   * Adding a single Constraint to the Constraint Graph
+   */
   void SDSScheduler::SDCSolver::addConstrainttoGraph(pair<const Vertex *,const Vertex *> constraint, int weight) {
 
     /*!
-     * Create Verticies:
+     * Checking Constraint
      */
-    if(!doesVertexExist(&this->cg, constraint.first->getId())){
-      this->cg.createVertex(constraint.first->getId());
-    }
-    if(!doesVertexExist(&this->cg, constraint.second->getId())){
-      this->cg.createVertex(constraint.second->getId());
+    if(!doesVertexExist(&this->cg, constraint.first->getId()) || !doesVertexExist(&this->cg, constraint.second->getId())){
+      throw HatScheT::Exception ("Constraint does not fit in the current constraint Graph!");
     }
     /*!
      * Create Edges:
@@ -544,16 +546,81 @@ namespace HatScheT {
     }
   }
 
+  /*!
+   *
+   */
   void SDSScheduler::SDCSolver::addConstraints(map<pair<const Vertex *, const Vertex *>, int> &constraints) {
-    this->additionalConstraints = constraints;
+    for (auto &it : constraints) {
+      this->additionalConstraints.insert(it);
+    }
   }
 
+  void SDSScheduler::SDCSolver::dijkstra(Vertex *startVertex) {
+
+    /*!
+     * Initializing the Algorithm by setting the cost of all Vertices to infinity except the Start-Vertex
+     * and set all Vertices to uncheckt.
+     */
+    dijkstraInit(startVertex);
+
+    /*!
+     * Dijkstras Algorithm
+     */
+    while (!this->queue.empty()) {
+      int minCost = INT_MAX;
+      Vertex* minCostVertex = nullptr;
+      /*!
+       * Finding Vertex with the lowest costs.
+       */
+      for (auto &it : this->queue) {
+        if (this->costofVertex[it] < minCost) {
+          minCost = this->costofVertex[it];
+          minCostVertex = it;
+        }
+      }
+      /*!
+       * Remove Vertex with lowest cost from queue, because Shortest Path is computed.
+       */
+      this->queue.remove(minCostVertex);
+      set<Vertex*> neighbors = this->cg.getSuccessors(minCostVertex);
+      for (auto &it : neighbors){
+        for (auto &qIt : this->queue){
+          if (qIt == it){
+            updateDistance();
+          }
+        }
+      }
+
+    }
+
+  }
+
+  /*!
+   * Initializing the Dijkstra Algorithm
+   * @param startVertex
+   */
+  void SDSScheduler::SDCSolver::dijkstraInit(Vertex *startVertex) {
+    for (auto &it : cg.Vertices()){
+      this->costofVertex[it] = INT_MAX;
+      this->predecessorInShortestPath[it] = nullptr;
+    }
+    this->costofVertex[startVertex] = 0;
+
+    /*!
+     * Setting up the priority queue
+     */
+    for (auto &it : cg.Vertices()){
+      this->queue.push_back(it);
+    }
+  }
+
+
   void SDSScheduler::SDCSolver::printConstraintGraph() {
+    cout << endl;
     for (auto &it : cg.Edges()){
       cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
     }
   }
 }
-
 
 #endif //USE_CADICAL
