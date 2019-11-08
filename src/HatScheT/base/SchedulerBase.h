@@ -112,7 +112,16 @@ public:
   bool getUseMuxOptBinding(){
       return this->useOptimalBinding;
   }
+  /*!
+ * enable/disable debug couts
+ * @param q
+ */
+  void setQuiet(bool q) { this->quiet = q; }
 protected:
+  /*!
+ * no couts if this is true
+ */
+  bool quiet = true;
   /*!
    * \brief resourceModel
    */

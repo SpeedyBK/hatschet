@@ -324,7 +324,7 @@ void RationalIIScheduler::schedule()
       << " (integer minII " << ceil((double)(this->modulo) / (double)(this->samples)) << ")" << endl;
       cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
       this->II = (double)(this->modulo) / (double)(this->samples);
-      this->getRationalIIBindings();
+      if(this->uniformSchedule==true) this->getRationalIIBindings();
       cout << "------------------------" << endl;
     }
 
@@ -488,8 +488,8 @@ void RationalIIScheduler::fillSolutionStructure() {
   this->startTimesVector.resize(0);
   this->latencySequence.resize(0);
 
-  //store schedule using standard interface if uniform schedule is true
-  if(this->uniformSchedule == true){
+  //store schedule using standard interface if uniform schedule is true (TODO how to calc latency for non uniform)
+  //if(this->uniformSchedule == true){
     for (std::set<Vertex *>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
       Vertex* v = *it;
       unsigned int index =this->tIndices.at(v);
@@ -498,7 +498,7 @@ void RationalIIScheduler::fillSolutionStructure() {
       int startTime = this->r.values[svTemp];
       this->startTimes.insert(make_pair(v,startTime));
     }
-  }
+  //}
 
   //store start times of the scheduled samples
   for(int i = 0; i < this->t_matrix.size(); i++) {

@@ -29,11 +29,6 @@ namespace HatScheT {
 		 */
 		void schedule() override;
 		/*!
-		 * enable/disable debug couts
-		 * @param q
-		 */
-		void setQuiet(bool q) { this->quiet = q; }
-		/*!
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
 		 */
@@ -106,10 +101,6 @@ namespace HatScheT {
 		 * @param sccSchedule
 		 */
 		void determineMRT(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
-		/*!
-		 * no couts if this is true
-		 */
-		bool quiet;
 		/*!
 		 * the minimum interger II that is possible
 		 */

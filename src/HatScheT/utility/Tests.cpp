@@ -415,7 +415,7 @@ bool Tests::moduloSDCTest()
 
     HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
     m.setSolverQuiet(true);
-    m.setVerbose(true);
+    m.setQuiet(false);
     m.schedule();
 
     auto sch = m.getSchedule();

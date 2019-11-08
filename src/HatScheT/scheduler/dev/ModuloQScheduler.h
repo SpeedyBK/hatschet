@@ -25,11 +25,6 @@ namespace HatScheT {
 		 */
 		ModuloQMRT(ResourceModel &rm, unsigned int II);
 		/*!
-		 * enable/disable debug couts
-		 * @param q
-		 */
-		void setQuiet(bool q) { this->quiet = q; }
-		/*!
 		 * specify height of MRT at the given column number
 		 * @param res
 		 * @param column
