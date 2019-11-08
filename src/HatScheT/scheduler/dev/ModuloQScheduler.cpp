@@ -118,7 +118,7 @@ namespace HatScheT {
 
 	void ModuloQMRT::specifyColumnHeight(const Resource *res, unsigned int column, unsigned int height) {
 		if(this->mrt.find(res) == this->mrt.end())
-			throw HatScheT::Exception("Invalid resource provided - it does not exist in MRT");
+			throw HatScheT::Exception("Invalid resource '"+res->getName()+"' provided - it does not exist in MRT");
 		if(column>=this->II)
 			throw HatScheT::Exception("Invalid column requested: "+to_string(column)+", II="+to_string(this->II));
 		this->mrt.at(res).at(column).resize(height);
@@ -369,6 +369,9 @@ namespace HatScheT {
 			}
 		}
 		// construct rectangular dummy MRT
+		if(!quiet) {
+			std::cout << "Constructing dummy MRT now" << std::endl;
+		}
 		ModuloQMRT dummyMRT;
 		dummyMRT.setResourceModelAndII(rm,modulo);
 		for(auto res : rm.Resources()) {
@@ -377,11 +380,14 @@ namespace HatScheT {
 			if(limit<0) {
 				auto noOfVertices = resourceModel.getVerticesOfResource(res).size();
 				for(int i=0; i<modulo; ++i) {
-					mrt.specifyColumnHeight(res, i, noOfVertices * samples);
+					mrt.specifyColumnHeight(resourceMap[res], i, noOfVertices * samples);
 				}
 				continue;
 			}
-			// handle case - vertices for the resource is leq the limit => build trivial MRT with height=limit
+			if(!quiet) {
+				std::cout << "Finished constructing dummy MRT now" << std::endl;
+			}
+			// handle case - vertices for the resource is 1 => build trivial MRT with height=limit
 			if(numberOfVertices==1) {
 				if(!quiet) std::cout << "Found limited resource (" << res->getName() << ") with only one vertex registered to it - build trivial MRT for this resource" << std::endl;
 				for(unsigned int i=0; i<modulo; ++i) {
