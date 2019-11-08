@@ -106,19 +106,22 @@ void MoovacScheduler::schedule()
   if(this->maxRuns > 0){
     int runs = this->maxII - this->minII;
     if(runs >= this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
-    std::cout << "Moovac: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
-    std::cout << "Moovac: min/maxII = " << minII << " " << maxII << std::endl;
+    if(this->quiet == false) std::cout << "Moovac: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
+    if(this->quiet == false) std::cout << "Moovac: min/maxII = " << minII << " " << maxII << std::endl;
   }
 
   bool timeoutOccured=false;
 
-  cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
-  if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
-  else cout << "Unlimited MaxLatency" << endl;
-  cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
+  if(this->quiet == false) {
+    cout << "Starting Moovac ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII
+         << endl;
+    if (this->maxLatencyConstraint != -1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
+    else cout << "Unlimited MaxLatency" << endl;
+    cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
+  }
 
   while(this->II <= this->maxII) {
-    cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
+    if(this->quiet == false) cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
     this->resetContainer();
     this->setUpSolverSettings();
     this->constructProblem();
@@ -151,11 +154,13 @@ void MoovacScheduler::schedule()
     this->r = this->solver->getResult();
     this->fillSolutionStructure();
 
-    if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
-    else cout << "Found feasible solution for II: " << this->II << endl;
+    if(this->quiet == false) {
+      if (this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
+      else cout << "Found feasible solution for II: " << this->II << endl;
+    }
   }
   else{
-    cout << "Moovac: Passed maxII boundary! No modulo schedule identified!" << endl;
+    if(this->quiet == false)  cout << "Moovac: Passed maxII boundary! No modulo schedule identified!" << endl;
     this->II = -1;
   }
 }

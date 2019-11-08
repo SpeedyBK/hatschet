@@ -16,7 +16,6 @@ namespace HatScheT {
 	SCCQScheduler::SCCQScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist) :
 		SchedulerBase(g, resourceModel), solverWishlist(solverWishlist), ILPSchedulerBase(solverWishlist)
 	{
-
 		this->computeMinII(&this->g, &this->resourceModel);
 		double minII = this->getMinII();
 		this->integerMinII = (int)ceil(minII);
@@ -57,7 +56,7 @@ namespace HatScheT {
 		auto sccSchedule = p.second;
 
 		if(!sccScheduleValid) {
-			std::cout << "SCC scheduling unsuccessful for S/M = " << this->samples << "/" << this->modulo << std::endl;
+			if(!this->quiet) std::cout << "SCC scheduling unsuccessful for S/M = " << this->samples << "/" << this->modulo << std::endl;
 			this->II = -1;
 			this->modulo = -1;
 			this->samples = -1;

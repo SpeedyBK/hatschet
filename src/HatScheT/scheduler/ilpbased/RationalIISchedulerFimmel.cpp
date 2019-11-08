@@ -240,28 +240,25 @@ namespace HatScheT {
     double lambdaValue = variableMap[Lambda];
     map<Vertex *, double> vertexValues;
 
-    if(this->quiet==false) {
-      cout << "Start times: " << endl;
-      for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
-        Vertex *v = *it;
-        vertexValues[v] = variableMap[C[v]];
-        this->startTimes.insert(make_pair(v, variableMap[C[v]]));
-        cout.precision(16);
-        cout << "C[" << v->getName() << "] = " << vertexValues[v] << endl;
-      }
+    if(this->quiet==false)  cout << "Start times: " << endl;
+
+    for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
+      Vertex *v = *it;
+      vertexValues[v] = variableMap[C[v]];
+      this->startTimes.insert(make_pair(v, variableMap[C[v]]));
+      if(this->quiet==false) cout.precision(16);
+      if(this->quiet==false) cout << "C[" << v->getName() << "] = " << vertexValues[v] << endl;
     }
 
     this->II = lambdaValue;
 
-    bool ok = verifyModuleScheduleRational(g, resourceModel, vertexValues, lambdaValue);
-    if (ok) {
-      if(this->quiet==false) cout << "Schedule is correct" << endl;
+    if(this->II > 0) {
       this->scheduleFound = true;
     } else {
-      if(this->quiet==false) cout << "Schedule is faulty" << endl;
       this->II = -1;
-      this->startTimes.clear();
+      if (this->quiet == false) cout << "No Schedule found!" << endl;
     }
+
     this->stat = r;
     if(this->quiet==false) cout << "##############" << endl;
   }

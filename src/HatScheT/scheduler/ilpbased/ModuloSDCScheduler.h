@@ -204,10 +204,6 @@ namespace HatScheT
      * \return
      */
     bool solveBasicWithConstraint(ScaLP::Constraint&& c);
-    /*!
-     * \brief verbose default false
-     */
-    bool quiet;
 
     int userdef_budget;
     int timesOutOfBudget;
