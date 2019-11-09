@@ -25,7 +25,7 @@
  * SDC and SAT Formulation; FPGA 2018
  *
  * CaDiCaL SAT-Solver:
- * Armin Biere; CADICAL, LINGELING,PLINGELING, TREENGELINGand YALSATEntering the SAT Competition; 2018
+ * Armin Biere; CADICAL, LINGELING, PLINGELING, TREENGELING and YALSAT Entering the SAT Competition; 2018
  *
  * SDC Incremental Solver:
  * G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
@@ -34,6 +34,10 @@
  * Edge-Weight Transformation:
  * Jack Edmonds, Richard M. Karp; Theoretical Improvements in Algorithmic Efficiency for Network Flow Problems;
  * Journal of the ACM 1972
+ *
+ * Fibonacci Heap:
+ * Michael L. Fredman, Robert E. Tarjan; Fibonacci Heaps and Their Uses in Improved Network Optimization Algorithms
+ * Journal of the Association for Computing Machinery 1987
  */
 
 #ifndef HATSCHET_SDSSCHEDULER_H
@@ -43,6 +47,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <vector>
+#include <cstdlib>
 
 #include "cadical.hpp"
 
@@ -249,7 +254,53 @@ namespace HatScheT {
 
       bool doesEdgeExistID(Vertex* src, Vertex* dst);
 
+      Edge& getEdge(const Vertex *srcV, const Vertex *dstV);
+
     };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*!
+     * Implementation of a Fibonacci Heap
+     */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    class FibonacciHeap{
+
+    public:
+
+      FibonacciHeap();
+
+      void insert (Vertex* V, int key);
+
+      void find_min();
+
+      void display();
+
+    private:
+
+      /*!
+       * Node Datatype
+       */
+      struct node{
+        node* parent;
+        node* child;
+        node* left;
+        node* right;
+        int key;
+        Vertex* storedVertex;
+      };
+
+      /*!
+       *
+       */
+      node* mini;
+
+      /*!
+       * Number of Nodes in the Heap
+       */
+      int numberofNodes;
+
+    };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
@@ -285,9 +336,28 @@ namespace HatScheT {
        */
       void addConstraints (map<pair<const Vertex*, const Vertex*>, int> &constraints);
 
+      /*!
+       * The original Dijkstra Algorithm is used to find the first feasible solution for an SDC-System without
+       * resourceconstraints. (System always feasible)
+       * @param startVertex Vertex where the algorithm Starts.
+       */
       void dijkstra (Vertex* startVertex);
 
+      /*!
+       * Sets the cost of all Vertices to INT_MAX and the cost of the StartVertex to 0. Inintialises the Priority Queue.
+       * @param startVertex Vertex where the algorithm Starts.
+       */
       void dijkstraInit (Vertex* startVertex);
+
+      /*!
+       * Updates the cost of Vertex V if a new shortest path to V has been found. And marks U as a predecessor of V
+       * in the shortest path.
+       * @param u
+       * @param v
+       */
+      void updateCost(Vertex* u, Vertex* v);
+
+      bool addToFeasible(pair<pair<const Vertex*, const Vertex*>, int> additionalConstraint);
 
       /*!
        * Print Constraint Graph

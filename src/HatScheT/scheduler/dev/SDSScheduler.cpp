@@ -141,6 +141,7 @@ namespace HatScheT {
      * Call SDC without Resource Constraints (always feasible);
      */
     SDCSolver sdc(dependencyConstraintsSDC);
+    sdc.addConstrainttoGraph(make_pair((const Vertex*)&g.getVertexById(0), (const Vertex*)&g.getVertexById(5)), 1);
     sdc.printConstraintGraph();
     cout << endl;
     sdc.dijkstra(&g.getVertexById(0));
@@ -497,6 +498,14 @@ namespace HatScheT {
     return false;
   }
 
+  Edge& SDSScheduler::ConstraintGraph::getEdge(const Vertex *srcV, const Vertex *dstV){
+    for(auto e:this->edges){
+      if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
+    }
+
+    throw HatScheT::Exception("Graph::getEdge: Edge not found!");
+  }
+
 
 
   ////////////////////////
@@ -558,26 +567,33 @@ namespace HatScheT {
   void SDSScheduler::SDCSolver::dijkstra(Vertex *startVertex) {
 
     /*!
-     * Initializing the Algorithm by setting the cost of all Vertices to infinity except the Start-Vertex
-     * and set all Vertices to uncheckt.
+     * Initializing the Algorithm by setting the cost of all Vertices to infinity except the Start-Vertex.
      */
     dijkstraInit(startVertex);
 
     /*!
      * Dijkstras Algorithm
      */
+    int i = 0;
     while (!this->queue.empty()) {
+      i++;
+      if (i > 100){
+        break;
+      }
       int minCost = INT_MAX;
       Vertex* minCostVertex = nullptr;
       /*!
        * Finding Vertex with the lowest costs.
        */
       for (auto &it : this->queue) {
+        cout << costofVertex[it] << endl;
         if (this->costofVertex[it] < minCost) {
           minCost = this->costofVertex[it];
           minCostVertex = it;
         }
       }
+
+      cout << "Size of queue: " << queue.size() << endl;
       /*!
        * Remove Vertex with lowest cost from queue, because Shortest Path is computed.
        */
@@ -586,12 +602,20 @@ namespace HatScheT {
       for (auto &it : neighbors){
         for (auto &qIt : this->queue){
           if (qIt == it){
-            updateDistance();
+            updateCost(minCostVertex, it);
           }
         }
       }
-
     }
+    FibonacciHeap fh;
+    int j = 0;
+    for (auto &it : costofVertex){
+      fh.insert(it.first, j);
+      cout << it.first->getName() << ": " << it.second << endl;
+      j++;
+    }
+    fh.display();
+    fh.find_min();
 
   }
 
@@ -604,13 +628,22 @@ namespace HatScheT {
       this->costofVertex[it] = INT_MAX;
       this->predecessorInShortestPath[it] = nullptr;
     }
-    this->costofVertex[startVertex] = 0;
+    this->costofVertex[&cg.getVertexById(startVertex->getId())] = 0;
 
     /*!
      * Setting up the priority queue
      */
     for (auto &it : cg.Vertices()){
+      cout << "--" << costofVertex[it] << endl;
       this->queue.push_back(it);
+    }
+  }
+
+  void SDSScheduler::SDCSolver::updateCost(Vertex* u, Vertex* v) {
+    int alternative = costofVertex[u] + cg.getEdge(u, v).getDistance();
+    if (alternative < costofVertex[v]){
+      costofVertex[v] = alternative;
+      predecessorInShortestPath[v] = u;
     }
   }
 
@@ -621,6 +654,83 @@ namespace HatScheT {
       cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
     }
   }
+
+  bool SDSScheduler::SDCSolver::addToFeasible(pair<pair<const Vertex *, const Vertex *>, int> additionalConstraint) {
+
+    /*!
+     * Adding new Constraint to the Constraint-Graph
+     */
+    this->cg.createEdgeSDS (this->cg.getVertexById(additionalConstraint.first.first->getId()),
+                            this->cg.getVertexById(additionalConstraint.first.second->getId()),
+                            additionalConstraint.second);
+
+    /*!
+     * Saving old costs and init. of the Fibonacci Heap
+     */
+    auto oldCostofVertex = costofVertex;
+    FibonacciHeap priorityQueue;
+
+
+
+    return true;
+  }
+
+  ///////////////////////////////
+  // Fibonacci Heap functions  //
+  ///////////////////////////////
+
+  SDSScheduler::FibonacciHeap::FibonacciHeap() {
+    mini = nullptr;
+    numberofNodes = 0;
+  }
+
+  void SDSScheduler::FibonacciHeap::insert(Vertex *V, int key) {
+
+    auto new_node = (struct node*)malloc(sizeof(struct node));
+    numberofNodes++;
+
+    new_node->key = key;
+    new_node->parent = nullptr;
+    new_node->child = nullptr;
+    new_node->left = new_node;
+    new_node->right = new_node;
+    new_node->storedVertex = V;
+
+    if (mini != nullptr) {
+      (mini->left)->right = new_node;
+      new_node->right = mini;
+      new_node->left = mini->left;
+      mini->left = new_node;
+      if (new_node->key < mini->key)
+        mini = new_node;
+    }
+    else {
+      mini = new_node;
+    }
+  }
+
+  void SDSScheduler::FibonacciHeap::display(){
+    node* ptr = mini;
+    if (ptr == nullptr)
+      cout << "The Heap is Empty" << endl;
+
+    else {
+      cout << "The root nodes of Heap are: " << endl;
+      do {
+        cout << ptr->key;
+        ptr = ptr->right;
+        if (ptr != mini) {
+          cout << "-->";
+        }
+      } while (ptr != mini && ptr->right != nullptr);
+      cout << endl << "The heap has " << numberofNodes << " nodes" << endl;
+    }
+  }
+
+  void SDSScheduler::FibonacciHeap::find_min() {
+    cout << "min of heap is: " << mini->key << endl;
+  }
+
 }
 
 #endif //USE_CADICAL
