@@ -9,6 +9,7 @@
 #include <cassert>
 #include <iomanip>
 #include <climits>
+#include <cmath>
 
 namespace HatScheT {
 
@@ -610,12 +611,32 @@ namespace HatScheT {
     FibonacciHeap fh;
     int j = 0;
     for (auto &it : costofVertex){
-      fh.insert(it.first, j);
       cout << it.first->getName() << ": " << it.second << endl;
       j++;
     }
+    // We will create a heap and insert 3 nodes into it
+    cout << "Creating an initial heap" << endl;
+    fh.insert(nullptr, 5);
+    fh.insert(nullptr, 2);
+    fh.insert(nullptr, 8);
+
+    // Now we will display the root list of the heap
     fh.display();
-    fh.find_min();
+
+    // Now we will extract the minimum value node from the heap
+    cout << "Extracting min" << endl;
+    fh.extract_min();
+    fh.display();
+
+    // Now we will decrease the value of node '8' to '7'
+    cout << "Decrease value of 8 to 7" << endl;
+    fh.find(fh.getmini(), 8, 7);
+    fh.display();
+
+    // Now we will delete the node '7'
+    cout << "Delete the node 7" << endl;
+    fh.deletion(7);
+    fh.display();
 
   }
 
@@ -680,20 +701,21 @@ namespace HatScheT {
   ///////////////////////////////
 
   SDSScheduler::FibonacciHeap::FibonacciHeap() {
-    mini = nullptr;
-    numberofNodes = 0;
+    this -> mini = nullptr;
+    this -> numberofNodes = 0;
   }
 
   void SDSScheduler::FibonacciHeap::insert(Vertex *V, int key) {
 
     auto new_node = (struct node*)malloc(sizeof(struct node));
-    numberofNodes++;
 
     new_node->key = key;
     new_node->parent = nullptr;
     new_node->child = nullptr;
     new_node->left = new_node;
     new_node->right = new_node;
+    new_node->mark = false;
+    new_node->flag = false;
     new_node->storedVertex = V;
 
     if (mini != nullptr) {
@@ -706,6 +728,208 @@ namespace HatScheT {
     }
     else {
       mini = new_node;
+    }
+    this -> numberofNodes++;
+  }
+
+  void SDSScheduler::FibonacciHeap::fibonacci_link(struct node* ptr2, struct node* ptr1){
+    (ptr2->left)->right = ptr2->right;
+    (ptr2->right)->left = ptr2->left;
+    if (ptr1->right == ptr1) {
+      mini = ptr1;
+    }
+    ptr2->left = ptr2;
+    ptr2->right = ptr2;
+    ptr2->parent = ptr1;
+    if (ptr1->child == nullptr) {
+      ptr1->child = ptr2;
+    }
+    ptr2->right = ptr1->child;
+    ptr2->left = (ptr1->child)->left;
+    ((ptr1->child)->left)->right = ptr2;
+    (ptr1->child)->left = ptr2;
+    if (ptr2->key < (ptr1->child)->key) {
+      ptr1->child = ptr2;
+    }
+    ptr1->degree++;
+  }
+
+  void SDSScheduler::FibonacciHeap::consolidate(){
+    int temp1;
+    float temp2 = (log(numberofNodes)) / (log(2));
+    int temp3 = (int) temp2;
+    struct node* arr[temp3];
+    for (int i = 0; i <= temp3; i++)
+      arr[i] = nullptr;
+    node* ptr1 = mini;
+    node* ptr2;
+    node* ptr3;
+    node* ptr4 = ptr1;
+    do {
+      ptr4 = ptr4->right;
+      temp1 = ptr1->degree;
+      while (arr[temp1] != nullptr) {
+        ptr2 = arr[temp1];
+        if (ptr1->key > ptr2->key) {
+          ptr3 = ptr1;
+          ptr1 = ptr2;
+          ptr2 = ptr3;
+        }
+        if (ptr2 == mini)
+          mini = ptr1;
+        fibonacci_link(ptr2, ptr1);
+        if (ptr1->right == ptr1)
+          mini = ptr1;
+        arr[temp1] = nullptr;
+        temp1++;
+      }
+      arr[temp1] = ptr1;
+      ptr1 = ptr1->right;
+    } while (ptr1 != mini);
+    mini = nullptr;
+    for (int j = 0; j <= temp3; j++) {
+      if (arr[j] != nullptr) {
+        arr[j]->left = arr[j];
+        arr[j]->right = arr[j];
+        if (mini != nullptr) {
+          (mini->left)->right = arr[j];
+          arr[j]->right = mini;
+          arr[j]->left = mini->left;
+          mini->left = arr[j];
+          if (arr[j]->key < mini->key)
+            mini = arr[j];
+        }
+        else {
+          mini = arr[j];
+        }
+        if (mini == nullptr)
+          mini = arr[j];
+        else if (arr[j]->key < mini->key)
+          mini = arr[j];
+      }
+    }
+  }
+
+  void SDSScheduler::FibonacciHeap::extract_min(){
+    if (mini == nullptr)
+      cout << "The heap is empty" << endl;
+    else {
+      node* temp = mini;
+      node* pntr;
+      pntr = temp;
+      node* x = nullptr;
+      if (temp->child != nullptr) {
+
+        x = temp->child;
+        do {
+          pntr = x->right;
+          (mini->left)->right = x;
+          x->right = mini;
+          x->left = mini->left;
+          mini->left = x;
+          if (x->key < mini->key)
+            mini = x;
+          x->parent = nullptr;
+          x = pntr;
+        } while (pntr != temp->child);
+      }
+      (temp->left)->right = temp->right;
+      (temp->right)->left = temp->left;
+      mini = temp->right;
+      if (temp == temp->right && temp->child == nullptr)
+        mini = nullptr;
+      else {
+        mini = temp->right;
+        consolidate();
+      }
+      numberofNodes--;
+    }
+  }
+
+  void SDSScheduler::FibonacciHeap::cut(struct node* found, struct node* temp){
+    if (found == found->right)
+      temp->child = nullptr;
+
+    (found->left)->right = found->right;
+    (found->right)->left = found->left;
+    if (found == temp->child)
+      temp->child = found->right;
+
+    temp->degree = temp->degree - 1;
+    found->right = found;
+    found->left = found;
+    (mini->left)->right = found;
+    found->right = mini;
+    found->left = mini->left;
+    mini->left = found;
+    found->parent = nullptr;
+    found->mark = true;
+  }
+
+  void SDSScheduler::FibonacciHeap::cascase_cut(struct node* temp){
+    node* ptr5 = temp->parent;
+    if (ptr5 != nullptr) {
+      if (!temp->mark) {
+        temp->mark = true;
+      }
+      else {
+        cut(temp, ptr5);
+        cascase_cut(ptr5);
+      }
+    }
+  }
+
+  void SDSScheduler::FibonacciHeap::decrease_key(struct node* found, int val){
+    if (mini == nullptr)
+      cout << "The Heap is Empty" << endl;
+
+    if (found == nullptr)
+      cout << "Node not found in the Heap" << endl;
+
+    found->key = val;
+
+    struct node* temp = found->parent;
+    if (temp != nullptr && found->key < temp->key) {
+      cut(found, temp);
+      cascase_cut(temp);
+    }
+    if (found->key < mini->key)
+      mini = found;
+  }
+
+  void SDSScheduler::FibonacciHeap::find(struct node* _mini, int old_val, int val){
+    struct node* found = nullptr;
+    node* temp5 = _mini;
+    temp5->flag = true;
+    node* found_ptr = nullptr;
+    if (temp5->key == old_val) {
+      found_ptr = temp5;
+      temp5->flag = false;
+      found = found_ptr;
+      decrease_key(found, val);
+    }
+    if (found_ptr == nullptr) {
+      if (temp5->child != nullptr)
+        find(temp5->child, old_val, val);
+      if (!(temp5->right)->flag)
+        find(temp5->right, old_val, val);
+    }
+    temp5->flag = false;
+    found = found_ptr;
+  }
+
+  void SDSScheduler::FibonacciHeap::deletion(int val){
+    if (mini == nullptr)
+      cout << "The heap is empty" << endl;
+    else {
+
+      // Decreasing the value of the node to 0
+      find(mini, val, 0);
+
+      // Calling Extract_min function to
+      // delete minimum value node, which is 0
+      extract_min();
+      cout << "Key Deleted" << endl;
     }
   }
 

@@ -267,16 +267,6 @@ namespace HatScheT {
 
     public:
 
-      FibonacciHeap();
-
-      void insert (Vertex* V, int key);
-
-      void find_min();
-
-      void display();
-
-    private:
-
       /*!
        * Node Datatype
        */
@@ -286,8 +276,39 @@ namespace HatScheT {
         node* left;
         node* right;
         int key;
+        int degree;
+        bool mark;
+        bool flag;
         Vertex* storedVertex;
       };
+
+      FibonacciHeap();
+
+      void insert (Vertex* V, int key);
+
+      void find_min();
+
+      void extract_min();
+
+      void display();
+
+      void find(struct node* _mini, int old_val, int val);
+
+      void deletion(int val);
+
+      struct node* getmini(){return mini;};
+
+    private:
+
+      void consolidate();
+
+      void cut(struct node* found, struct node* temp);
+
+      void cascase_cut(struct node* temp);
+
+      void decrease_key(struct node* found, int val);
+
+      void fibonacci_link(struct node* ptr2, struct node* ptr1);
 
       /*!
        *
