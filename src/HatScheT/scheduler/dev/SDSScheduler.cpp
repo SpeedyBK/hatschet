@@ -163,7 +163,6 @@ namespace HatScheT {
     sdc.addConstraints(resourceConstraintsSDC);
     sdc.printConstraintGraph();
 
-
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -608,35 +607,12 @@ namespace HatScheT {
         }
       }
     }
-    FibonacciHeap fh;
+
     int j = 0;
     for (auto &it : costofVertex){
       cout << it.first->getName() << ": " << it.second << endl;
       j++;
     }
-    // We will create a heap and insert 3 nodes into it
-    cout << "Creating an initial heap" << endl;
-    fh.insert(nullptr, 5);
-    fh.insert(nullptr, 2);
-    fh.insert(nullptr, 8);
-
-    // Now we will display the root list of the heap
-    fh.display();
-
-    // Now we will extract the minimum value node from the heap
-    cout << "Extracting min" << endl;
-    fh.extract_min();
-    fh.display();
-
-    // Now we will decrease the value of node '8' to '7'
-    cout << "Decrease value of 8 to 7" << endl;
-    fh.find(fh.getmini(), 8, 7);
-    fh.display();
-
-    // Now we will delete the node '7'
-    cout << "Delete the node 7" << endl;
-    fh.deletion(7);
-    fh.display();
 
   }
 
@@ -690,6 +666,12 @@ namespace HatScheT {
      */
     auto oldCostofVertex = costofVertex;
     FibonacciHeap priorityQueue;
+
+    for (auto &it : costofVertex){
+      priorityQueue.insert(it.first, it.second);
+    }
+
+    priorityQueue.display();
 
 
 
@@ -758,7 +740,7 @@ namespace HatScheT {
     int temp1;
     float temp2 = (log(numberofNodes)) / (log(2));
     int temp3 = (int) temp2;
-    struct node* arr[temp3];
+    struct node* arr[temp3+1];
     for (int i = 0; i <= temp3; i++)
       arr[i] = nullptr;
     node* ptr1 = mini;
