@@ -332,10 +332,11 @@ namespace HatScheT {
 			if(inputStartTimes.empty()) {
 				if(vertices.size()==1) {
 					// trivial SCC schedule ASAP while respecting MRT
+					// they were not scheduled in SCC supergraph so we must determine their starting times manually
 					auto vertex = vertices.front();
 					int offset = 0;
 					bool scheduled = false;
-					bool limited = this->resourceModel.getResource(vertex)->getLimit()>1;
+					bool limited = this->resourceModel.getResource(vertex)->getLimit()>0;
 					while(!scheduled and limited) {
 						if(!this->quiet)
 							std::cout << "Try scheduling vertex '" << vertex->getName() << "' at time slot " << offset << std::endl;
@@ -345,23 +346,13 @@ namespace HatScheT {
 							throw HatScheT::Exception("Could not determine time slot for vertex '"+vertex->getName()+"' - this should never happen");
 					}
 					this->startTimes[vertex] = offset;
-					if(!this->quiet) std::cout << "SCHEDULED VERTEX '" << vertex->getName() << "' IN TIME SLOT '" << this->startTimes[vertex] << "' (NO INPUTS)" << std::endl;
+					if(!this->quiet) std::cout << "SCHEDULED VERTEX '" << vertex->getName() << "' FROM TRIVIAL SCC IN TIME SLOT '" << this->startTimes[vertex] << "' (NO INPUTS)" << std::endl;
 				}
 				else {
 					// non-trivial SCC
 					for(auto vertex : vertices) {
-						bool limited = this->resourceModel.getResource(vertex)->getLimit()>1;
-						if(limited) {
-							auto slots = this->mrt.getModuloSlots(vertex);
-							if(slots.size() != 1)
-								throw HatScheT::Exception("MRT for one sample is buggy - vertex '"+vertex->getName()+"' was scheduled "+to_string(slots.size())+" times");
-							this->startTimes[vertex] = slots[0];
-							if(!this->quiet) std::cout << "SCHEDULED VERTEX '" << vertex->getName() << "' IN TIME SLOT '" << this->startTimes[vertex] << "' (NO INPUTS)" << std::endl;
-						}
-						else {
-							auto slots = this->mrt.getModuloSlots(vertex);
-							this->startTimes[vertex] = slots.size()==1?slots[0]:0;
-						}
+						// just use SCC schedule time since it does not depend on other SCCs
+						this->startTimes[vertex] = sccSchedule[vertex].first;
 					}
 				}
 				// debugging
@@ -420,8 +411,15 @@ namespace HatScheT {
 
 				auto ok = srcStart + this->resourceModel.getVertexLatency(src) + edge->getDelay() <= vertexStartTime + minimumOffset + minDelta;
 				if(!this->quiet) std::cout << "    determining minimum offset while respecting MRT" << std::endl;
-				if(vertices.size()==1 and this->resourceModel.getResource(vertices.front())->getLimit()>0)
-					ok &= this->mrt.insertVertex(vertices.front(),(vertexStartTime+minimumOffset)%this->modulo);
+				// insert trivial SCCs into MRT
+				if(vertices.size()==1 and this->resourceModel.getResource(vertices.front())->getLimit()>0) {
+					// only insert them if they were not already inserted from a previous iteration when checking dependency of another edge
+					if (this->mrt.getModuloSlots(vertices.front()).empty()) {
+						if(!this->quiet) std::cout << "    try inserting vertex '" << vertices.front()->getName() << "' from trivial SCC into MRT" << std::endl;
+						ok &= this->mrt.insertVertex(vertices.front(), (vertexStartTime + minimumOffset) % this->modulo);
+					}
+				}
+
 				while(!ok) {
 					if(vertices.size()==1) {
 						vertexStartTime = minimumOffset;
@@ -471,7 +469,6 @@ namespace HatScheT {
 					if(!this->quiet) std::cout << "SCHEDULED VERTEX '" << vertex->getName() << "' IN TIME SLOT '" << this->startTimes[vertex] << "'" << std::endl;
 				}
 			}
-
 
 			// debugging
 			if(!this->quiet) {
