@@ -46,14 +46,14 @@ EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, Resou
 
 void EichenbergerDavidson97Scheduler::schedule()
 {
-  std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
+  if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
     int runs = this->maxII - this->minII;
     if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
-    std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
-    std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
+    if(this->quiet==false) std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
+    if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
   }
 
   if (minII > maxII)
@@ -71,11 +71,11 @@ void EichenbergerDavidson97Scheduler::schedule()
       for (auto *i : g.Vertices())
         startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
-      std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
-      std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
+      if(this->quiet==false) std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
+      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
       break;
     }
-    if(!feasible) cout << "  II" << candII << " : " << this->stat << endl;
+    if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
   }
   if(scheduleFound == false) this->II = -1;
 }
@@ -89,7 +89,7 @@ void EichenbergerDavidson97Scheduler::setUpSolverSettings()
 
 void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible, bool &proven)
 {
-  std::cout << "ED97: attempt II=" << candII << std::endl;
+  if(this->quiet==false) std::cout << "ED97: attempt II=" << candII << std::endl;
   solver->reset();
 
   constructDecisionVariables(candII);

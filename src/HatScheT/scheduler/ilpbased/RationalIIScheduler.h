@@ -91,20 +91,6 @@ public:
    */
   virtual int getScheduleLength();
   /*!
-   * the number of clock cycles after which the schedule repeats itself
-   * @param m
-   */
-  void setModulo(int m) {
-    this->modulo=m;
-  }
-  /*!
-   * the number of samples that are inserted every m clock cycles
-   * @param s
-   */
-  void setSamples(int s){
-    this->samples=s;
-  }
-  /*!
    * print the rational II modulo schedule
    */
   void printScheduleToConsole();

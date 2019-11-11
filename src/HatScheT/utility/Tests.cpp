@@ -46,6 +46,7 @@
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
+#include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <stdio.h>
 
 #ifdef USE_CADICAL
@@ -414,7 +415,7 @@ bool Tests::moduloSDCTest()
 
     HatScheT::ModuloSDCScheduler m{g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"}};
     m.setSolverQuiet(true);
-    m.setVerbose(true);
+    m.setQuiet(false);
     m.schedule();
 
     auto sch = m.getSchedule();
@@ -1047,7 +1048,7 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::ResourceModel rm;
 
     auto &red = rm.makeResource("red", 2, 2, 1);
-    auto &green = rm.makeResource("green", 3, 1, 1);
+    auto &green = rm.makeResource("green", 4, 1, 1);
 
     // critical resource (#vertices=5, limit=2)
     // loop: latency=6, distance=4
@@ -1067,7 +1068,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(r3, r4, 0);
     g.createEdge(r3, r0, 4);
 
-    // non-critical resource (#vertices=7, limit=3)
+    // non-critical resource (#vertices=9, limit=4)
     // loop: latency=4, distance=2
     Vertex &g0 = g.createVertex(5);
     Vertex &g1 = g.createVertex(6);
@@ -1076,6 +1077,8 @@ bool Tests::compareModuloSchedulerTest() {
     Vertex &g4 = g.createVertex(9);
     Vertex &g5 = g.createVertex(10);
     Vertex &g6 = g.createVertex(11);
+    Vertex &g7 = g.createVertex(12);
+    Vertex &g8 = g.createVertex(13);
     rm.registerVertex(&g0, &green);
     rm.registerVertex(&g1, &green);
     rm.registerVertex(&g2, &green);
@@ -1083,7 +1086,11 @@ bool Tests::compareModuloSchedulerTest() {
     rm.registerVertex(&g4, &green);
     rm.registerVertex(&g5, &green);
     rm.registerVertex(&g6, &green);
+    rm.registerVertex(&g7, &green);
+    rm.registerVertex(&g8, &green);
     g.createEdge(g0, g2, 0);
+    g.createEdge(g7, g2, 0);
+    g.createEdge(g8, g2, 0);
     g.createEdge(g1, g2, 0);
     g.createEdge(g2, g3, 0);
     g.createEdge(g3, g4, 0);
@@ -1092,6 +1099,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(g4, g6, 0);
 
     ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    m.setQuiet(false);
     //m.setMaxLatencyConstraint(100);
     m.schedule();
     //auto result = m.getSchedule();
@@ -1114,6 +1122,8 @@ bool Tests::compareModuloSchedulerTest() {
         std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
       }
     }
+    auto mrtShape = m.getMRTShape();
+
     return true;
   }
 
@@ -1246,6 +1256,115 @@ bool Tests::compareModuloSchedulerTest() {
       return true;
     #endif
   }
+
+	bool Tests::rationalIISCCQTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &red = rm.makeResource("red", 3, 2, 1);
+		auto &green = rm.makeResource("green", 5, 1, 1);
+
+		// critical resource (#vertices=5, limit=3)
+		// loop: latency=6, distance=5
+		Vertex &r0 = g.createVertex(0);
+		Vertex &r1 = g.createVertex(1);
+		Vertex &r2 = g.createVertex(2);
+		Vertex &r3 = g.createVertex(3);
+    Vertex &r4 = g.createVertex(4);
+		rm.registerVertex(&r0, &red);
+		rm.registerVertex(&r1, &red);
+		rm.registerVertex(&r2, &red);
+		rm.registerVertex(&r3, &red);
+    rm.registerVertex(&r4, &red);
+    g.createEdge(r0, r2, 0);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r2, r3, 0);
+		g.createEdge(r3, r4, 0);
+		g.createEdge(r3, r0, 5);
+
+		// non-critical resource (#vertices=22, limit=5)
+		// loop: latency=4, distance=3
+		Vertex &g0 = g.createVertex(5);
+		Vertex &g1 = g.createVertex(6);
+		Vertex &g2 = g.createVertex(7);
+		Vertex &g3 = g.createVertex(8);
+		Vertex &g4 = g.createVertex(9);
+    Vertex &g5 = g.createVertex(10);
+    Vertex &g6 = g.createVertex(11);
+    Vertex &g7 = g.createVertex(12);
+    Vertex &g8 = g.createVertex(13);
+    Vertex &g9 = g.createVertex(14);
+    Vertex &g10 = g.createVertex(15);
+    Vertex &g11 = g.createVertex(16);
+    Vertex &g12 = g.createVertex(17);
+    Vertex &g13 = g.createVertex(18);
+    Vertex &g14 = g.createVertex(19);
+    Vertex &g15 = g.createVertex(20);
+    Vertex &g16 = g.createVertex(21);
+    Vertex &g17 = g.createVertex(22);
+    Vertex &g18 = g.createVertex(23);
+    Vertex &g19 = g.createVertex(24);
+    Vertex &g20 = g.createVertex(25);
+    Vertex &g21 = g.createVertex(26);
+    rm.registerVertex(&g0, &green);
+		rm.registerVertex(&g1, &green);
+		rm.registerVertex(&g2, &green);
+		rm.registerVertex(&g3, &green);
+		rm.registerVertex(&g4, &green);
+		rm.registerVertex(&g5, &green);
+    rm.registerVertex(&g6, &green);
+    rm.registerVertex(&g7, &green);
+    rm.registerVertex(&g8, &green);
+    rm.registerVertex(&g9, &green);
+    rm.registerVertex(&g10, &green);
+    rm.registerVertex(&g11, &green);
+    rm.registerVertex(&g12, &green);
+    rm.registerVertex(&g13, &green);
+    rm.registerVertex(&g14, &green);
+    rm.registerVertex(&g15, &green);
+    rm.registerVertex(&g16, &green);
+    rm.registerVertex(&g17, &green);
+    rm.registerVertex(&g18, &green);
+    rm.registerVertex(&g19, &green);
+    rm.registerVertex(&g20, &green);
+    rm.registerVertex(&g21, &green);
+    g.createEdge(g0, g2, 0);
+    g.createEdge(g7, g2, 0);
+    g.createEdge(g8, g2, 0);
+    g.createEdge(g9, g2, 0);
+		g.createEdge(g1, g2, 0);
+		g.createEdge(g2, g3, 0);
+		g.createEdge(g3, g4, 0);
+		g.createEdge(g4, g1, 3);
+		g.createEdge(g4, g5, 0);
+		g.createEdge(g4, g6, 0);
+
+		SCCQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+		m.setQuiet(false);
+		m.setSolverTimeout(1);
+		m.schedule();
+
+		std::cout << "Tests::moduloQTest: finished scheduling - resulting control steps:" << std::endl;
+		auto startTimesVector = m.getStartTimeVector();
+		auto initIntervals = m.getInitiationIntervals();
+		auto latencySequence = m.getLatencySequence();
+
+		auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+		if(!valid) {
+			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
+			return false;
+		}
+		for(unsigned int i=0; i<initIntervals.size(); ++i) {
+			auto l = initIntervals[i];
+			auto startTimes = startTimesVector[i];
+			std::cout << "Tests::moduloQTest: start times for insertion time=" << l << std::endl;
+			for(auto it : startTimes) {
+				std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+			}
+		}
+
+		return true;
+	}
 
 
 }

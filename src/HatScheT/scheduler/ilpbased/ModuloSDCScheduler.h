@@ -119,13 +119,6 @@ namespace HatScheT
     virtual void schedule();
 
     /*!
-     * \brief setVerbose manage a level of verbosity (default off)
-     * \param b
-     */
-    void setVerbose(bool b){
-      this->verbose=b;
-    }
-    /*!
      * @brief define the budget (see paper)
      * if not user defined, the proposed value is set on default
      * @param b
@@ -211,10 +204,6 @@ namespace HatScheT
      * \return
      */
     bool solveBasicWithConstraint(ScaLP::Constraint&& c);
-    /*!
-     * \brief verbose default false
-     */
-    bool verbose;
 
     int userdef_budget;
     int timesOutOfBudget;

@@ -19,154 +19,6 @@ namespace HatScheT {
   void RationalIISchedulerFimmel::generateTestSetup() {
     cout << "Generating Test Graph" << endl;
 
-
-    /*
-    cout << "§§§§§§§§§§§§§§§§§§§§§§§§§§§§" << endl;
-    ScaLP::Solver s{"CPLEX", "Gurobi", "SCIP"};
-
-    int lambda_max = 100;
-    int p_max = 1;
-
-    ScaLP::Variable Lambda = ScaLP::newRealVariable("Lambda", 1, ScaLP::INF());
-
-    s.setObjective(ScaLP::minimize(Lambda));
-
-//S1
-
-    ScaLP::Variable C1 = ScaLP::newRealVariable("C1", 0, ScaLP::INF());
-    ScaLP::Variable C_1 = ScaLP::newRealVariable("C_1", 0, ScaLP::INF());
-    ScaLP::Variable c1 = ScaLP::newRealVariable("c1", 0, ScaLP::INF());
-
-    s << (C_1 + c1 - C1 == 0);
-
-    ScaLP::Variable beta10 = ScaLP::newBinaryVariable("beta10", 0, 1);
-    ScaLP::Variable beta11 = ScaLP::newBinaryVariable("beta11", 0, 1);
-
-    s << (0*Lambda - (1 - beta10)*0*lambda_max - C_1 <= 0);
-    s << (1*Lambda - (1 - beta11)*1*lambda_max - C_1 <= 0);
-
-    s << (0*Lambda + (1-beta10)*(p_max - 0)*lambda_max - C_1 >= 0);
-    s << (1*Lambda + (1-beta11)*(p_max - 1)*lambda_max - C_1 >= 0);
-
-    s << (beta10 + beta11 == 1);
-
-    ScaLP::Variable kappa1A1 = ScaLP::newBinaryVariable("kappa1A1", 0, 1);
-    ScaLP::Variable kappa1B1 = ScaLP::newBinaryVariable("kappa1B1", 0, 1);
-    ScaLP::Variable kappa2B1 = ScaLP::newBinaryVariable("kappa2B1", 0, 1);
-
-    s << (kappa1A1 + kappa1B1 + kappa2B1 == 1);
-
-
-//S2
-
-    ScaLP::Variable C2 = ScaLP::newRealVariable("C2", 0, ScaLP::INF());
-    ScaLP::Variable C_2 = ScaLP::newRealVariable("C_2", 0, ScaLP::INF());
-    ScaLP::Variable c2 = ScaLP::newRealVariable("c2", 0, ScaLP::INF());
-
-    s << (C_2 + c2 - C2 == 0);
-
-    ScaLP::Variable beta20 = ScaLP::newBinaryVariable("beta20", 0, 1);
-    ScaLP::Variable beta21 = ScaLP::newBinaryVariable("beta21", 0, 1);
-
-    s << (0*Lambda - (1 - beta20)*0*lambda_max - C_2 <= 0);
-    s << (1*Lambda - (1 - beta21)*1*lambda_max - C_2 <= 0);
-
-    s << (0*Lambda + (1-beta20)*(p_max - 0)*lambda_max - C_2 >= 0);
-    s << (1*Lambda + (1-beta21)*(p_max - 1)*lambda_max - C_2 >= 0);
-
-    s << (beta20 + beta21 == 1);
-
-    ScaLP::Variable kappa1A2 = ScaLP::newBinaryVariable("kappa1A2", 0, 1);
-    ScaLP::Variable kappa1B2 = ScaLP::newBinaryVariable("kappa1B2", 0, 1);
-    ScaLP::Variable kappa2B2 = ScaLP::newBinaryVariable("kappa2B2", 0, 1);
-
-    s << (kappa1A2 + kappa1B2 + kappa2B2 == 1);
-
-//S3
-
-    ScaLP::Variable C3 = ScaLP::newRealVariable("C3", 0, ScaLP::INF());
-    ScaLP::Variable C_3 = ScaLP::newRealVariable("C_3", 0, ScaLP::INF());
-    ScaLP::Variable c3 = ScaLP::newRealVariable("c3", 0, ScaLP::INF());
-
-    s << (C_3 + c3 - C3 == 0);
-
-    ScaLP::Variable beta30 = ScaLP::newBinaryVariable("beta30", 0, 1);
-    ScaLP::Variable beta31 = ScaLP::newBinaryVariable("beta31", 0, 1);
-
-    s << (0*Lambda - (1 - beta30)*0*lambda_max - C_3 <= 0);
-    s << (1*Lambda - (1 - beta31)*1*lambda_max - C_3 <= 0);
-
-    s << (0*Lambda + (1-beta30)*(p_max - 0)*lambda_max - C_3 >= 0);
-    s << (1*Lambda + (1-beta31)*(p_max - 1)*lambda_max - C_3 >= 0);
-
-    s << (beta30 + beta31 == 1);
-
-    ScaLP::Variable kappa1A3 = ScaLP::newBinaryVariable("kappa1A3", 0, 1);
-    ScaLP::Variable kappa1B3 = ScaLP::newBinaryVariable("kappa1B3", 0, 1);
-    ScaLP::Variable kappa2B3 = ScaLP::newBinaryVariable("kappa2B3", 0, 1);
-
-    s << (kappa1A3 + kappa1B3 + kappa2B3 == 1);
-
-
-//edges
-
-    s << (Lambda*0 + C3 - C1  - (kappa1A1 * 1 + kappa1B1 * 0 + kappa2B1 * 0) >= 0);
-
-    s << (Lambda*0 + C3 - C2  - (kappa1A2 * 1 + kappa1B2 * 0 + kappa2B2 * 0) >= 0);
-
-    s << (Lambda*1 + C1 - C3  - (kappa1A3 * 1 + kappa1B3 * 0 + kappa2B3 * 0) >= 0);
-
-    s << (Lambda*1 + C2 - C3  - (kappa1A3 * 1 + kappa1B3 * 0 + kappa2B3 * 0) >= 0);
-
-
-//Ressource, only for pairs <S1,S2> and <S2,S1>
-
-    ScaLP::Variable Schlange12 = ScaLP::newBinaryVariable("Schlange12", 0, 1);
-    ScaLP::Variable Schlange21 = ScaLP::newBinaryVariable("Schlange21", 0, 1);
-
-//s=1 s'=2
-
-    s << (1 - (Schlange12 + 2 - kappa1A1 - kappa1A2)*2*lambda_max - (c1 - c2) <= 0);
-    s << (1 - (2 - kappa1A1 - kappa1A2)*1 - (Lambda + c2 - c1) <= 0);
-    s << (1 - (2 - kappa1A1 - kappa1A2)*1 - (Lambda + c1 - c2) <= 0);
-    s << (1 - (1 - Schlange12 + 2 - kappa1A1 - kappa1A2)*2*lambda_max - (c2 - c1) <= 0);
-
-//s=2 s'=1
-
-    s << (1 - (Schlange21 + 2 - kappa1A2 - kappa1A1)*2*lambda_max - (c2 - c1) <= 0);
-    s << (1 - (2 - kappa1A2 - kappa1A1)*1 - (Lambda + c1 - c2) <= 0);
-    s << (1 - (2 - kappa1A2 - kappa1A1)*1 - (Lambda + c2 - c1) <= 0);
-    s << (1 - (1 - Schlange21 + 2 - kappa1A2 - kappa1A1)*2*lambda_max - (c1 - c2) <= 0);
-
-    s.writeLP("example2.lp");
-    ScaLP::status r = s.solve();
-    ScaLP::Result res = s.getResult();
-
-    cout << "Solver finished" << endl;
-    cout << "Found II = " << res.values[Lambda] << endl;
-    cout << "##############" << endl;
-
-    cout << res << endl;
-    cout << r << endl;
-
-
-    cout << "§§§§§§§§§§§§§§§§§§§§§§§§§§§§" << endl;
-    */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     HatScheT::Graph *testGraph = new HatScheT::Graph();
     Vertex *S[11];
     for (int i = 1; i <= 10; i++) {
@@ -200,36 +52,6 @@ namespace HatScheT {
     }
     resourceModel = *testResource;
 
-    /*
-    HatScheT::Graph* testGraph = new  HatScheT::Graph();
-    Vertex* S[6];
-    for (int i = 1; i <= 5; i++) {
-        if (i == 4 || i == 3) continue;
-        Vertex* v = &testGraph->createVertex(i);
-        v->setName("S" + to_string(i));
-        S[i] = v;
-
-    }
-
-    testGraph->createEdge(*S[1], *S[5], 0);
-    testGraph->createEdge(*S[2], *S[5], 0);
-    //testGraph->createEdge(*S[3], *S[5], 0);
-    //testGraph->createEdge(*S[4], *S[5], 0);
-    testGraph->createEdge(*S[5], *S[1], 1);
-    testGraph->createEdge(*S[5], *S[2], 1);
-    g = *testGraph;
-
-    HatScheT::ResourceModel *testResource = new HatScheT::ResourceModel();
-    Resource* a = &testResource->makeResource("A", 1, 1);
-    //Resource* b = &testResource->makeResource("B", 1, 1);
-    Resource* c = &testResource->makeResource("C", 2, 0);
-    testResource->registerVertex(S[1], a);
-    testResource->registerVertex(S[2], a);
-    //testResource->registerVertex(S[3], b);
-    //testResource->registerVertex(S[4], b);
-    testResource->registerVertex(S[5], c);
-    resourceModel = *testResource;
-    */
     this->computeMinII(&g, &resourceModel);
     this->minII = ceil(this->minII);
     cout << "minII: " << this->minII << endl;
@@ -279,7 +101,7 @@ namespace HatScheT {
       pmax = p_max;
     }
 
-    cout << "Starting Fimmel Scheduler of " << g.getName() << " with pmax = " << pmax << " and maxII = " << maxII
+    if(this->quiet==false) cout << "Starting Fimmel Scheduler of " << g.getName() << " with pmax = " << pmax << " and maxII = " << maxII
          << endl;
 
     int Lambda_max = maxII;
@@ -295,7 +117,7 @@ namespace HatScheT {
     //6.1
     for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
       Vertex *v = *it;
-      //cout << *v << endl;
+
       int id = v->getId();
       ScaLP::Variable curr_C = ScaLP::newRealVariable("C[" + to_string(id) + "]", 0, ScaLP::INF());
       ScaLP::Variable curr_C_ = ScaLP::newRealVariable("C_[" + to_string(id) + "]", 0, ScaLP::INF());
@@ -319,16 +141,12 @@ namespace HatScheT {
         s->addConstraint(k * Lambda - (1 - curr_beta) * k * Lambda_max - curr_C_ <= 0);
         s->addConstraint(k * Lambda + (1 - curr_beta) * (p_max - k) * Lambda_max - curr_C_ >= 0);
         term = term + curr_beta;
-        //ScaLP::Variable curr_beta
       }
       s->addConstraint(term == 1);
 
-
-
-
       //6.2
       const Resource *r = this->resourceModel.getResource(v);
-      //cout << "$" << v->getName() << " " << r->getName() << " " << r->getLimit() << " " << r->getLatency() << endl;
+
       term = 0;
       for (int i = 1; i <= r->getLimit(); i++) {
         ScaLP::Variable curr_kappa = ScaLP::newBinaryVariable(
@@ -373,7 +191,7 @@ namespace HatScheT {
           ScaLP::Variable curr_Schlange = ScaLP::newBinaryVariable(
             "Schlange[" + to_string(v->getId()) + "][" + to_string(w->getId()) + "]", 0, 1);
           for (int i = 1; i <= res->getLimit(); i++) {
-            int curr_OuS = 1;       //TODO: Dont hardcode this!!!
+            int curr_OuS = 1;
 
             int lat = resourceModel.getVertexLatency(w);
             if (lat == 0) curr_OuS = 1;
@@ -393,8 +211,10 @@ namespace HatScheT {
       }
     }
 
-    cout << "##############" << endl;
-    cout << "Solver start, timeout = " << this->solverTimeout << endl;
+    if(this->quiet==false) {
+      cout << "##############" << endl;
+      cout << "Solver start, timeout = " << this->solverTimeout << endl;
+    }
 
     //timestamp
     this->begin = clock();
@@ -408,36 +228,39 @@ namespace HatScheT {
     this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
 
     ScaLP::Result res = s->getResult();
-    cout.precision(17);
-    cout << "Solver finished" << endl;
-    cout << "Found II = " << res.values[Lambda] << endl;
-    cout << "##############" << endl;
+    if(this->quiet==false) {
+      cout.precision(17);
+      cout << "Solver finished" << endl;
+      cout << "Found II = " << res.values[Lambda] << endl;
+      cout << "##############" << endl;
+    }
 
 
     map<ScaLP::Variable, double> variableMap = res.values;
     double lambdaValue = variableMap[Lambda];
     map<Vertex *, double> vertexValues;
-    cout << "Start times: " << endl;
+
+    if(this->quiet==false)  cout << "Start times: " << endl;
+
     for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
       Vertex *v = *it;
       vertexValues[v] = variableMap[C[v]];
       this->startTimes.insert(make_pair(v, variableMap[C[v]]));
-      cout.precision(16);
-      cout << "C[" << v->getName() << "] = " << vertexValues[v] << endl;
+      if(this->quiet==false) cout.precision(16);
+      if(this->quiet==false) cout << "C[" << v->getName() << "] = " << vertexValues[v] << endl;
     }
+
     this->II = lambdaValue;
 
-    bool ok = verifyModuleScheduleRational(g, resourceModel, vertexValues, lambdaValue);
-    if (ok) {
-      cout << "Schedule is correct" << endl;
+    if(this->II > 0) {
       this->scheduleFound = true;
     } else {
-      cout << "Schedule is faulty" << endl;
       this->II = -1;
-      this->startTimes.clear();
+      if (this->quiet == false) cout << "No Schedule found!" << endl;
     }
+
     this->stat = r;
-    cout << "##############" << endl;
+    if(this->quiet==false) cout << "##############" << endl;
   }
 
 }

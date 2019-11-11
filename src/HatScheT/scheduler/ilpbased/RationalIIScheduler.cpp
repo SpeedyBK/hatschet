@@ -76,7 +76,7 @@ void RationalIIScheduler::constructProblem()
   //case unlimited
   if(this->maxLatencyConstraint == -1){
     this->maxLatencyConstraint = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
-    cout << "maxLatencyConstraint automatically set to " << this->maxLatencyConstraint << endl;
+    if(this->quiet==false) cout << "maxLatencyConstraint automatically set to " << this->maxLatencyConstraint << endl;
   }
   //correct limit
   else if(this->maxLatencyConstraint > 0) {
@@ -223,9 +223,11 @@ void RationalIIScheduler::schedule()
   this->m_start = this->modulo;
 
   //experimental
-  std::cout << "maxLatencyConstraint: " << maxLatencyConstraint << std::endl;
-  std::cout << "consideredTimeSteps: " << consideredTimeSteps << std::endl;
-  std::cout << "modulo: " << modulo << std::endl;
+  if(this->quiet==false) {
+    std::cout << "maxLatencyConstraint: " << maxLatencyConstraint << std::endl;
+    std::cout << "consideredTimeSteps: " << consideredTimeSteps << std::endl;
+    std::cout << "modulo: " << modulo << std::endl;
+  }
   if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   else this->consideredTimeSteps = 2*this->modulo + 2;
 
@@ -248,16 +250,18 @@ void RationalIIScheduler::schedule()
     this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
   }
 
-  cout << "------------------------" << endl;
-  cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
-  cout << "RationalIIScheduler.schedule: uniform schedule is " << std::boolalpha << this->uniformSchedule << endl;
-  cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
-  cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
-  cout << "RationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
-  cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
-  cout << "RationalIIScheduler::RationalIIScheduler: recMinII is " << this->getRecMinII() << endl;
-  cout << "RationalIIScheduler::RationalIIScheduler: resMinII is " << this->getResMinII() << endl;
-  cout << "------------------------" << endl;
+  if(this->quiet==false) {
+    cout << "------------------------" << endl;
+    cout << "RationalIIScheduler.schedule: start for " << this->g.getName() << endl;
+    cout << "RationalIIScheduler.schedule: uniform schedule is " << std::boolalpha << this->uniformSchedule << endl;
+    cout << "RationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
+    cout << "RationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
+    cout << "RationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
+    cout << "RationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
+    cout << "RationalIIScheduler::RationalIIScheduler: recMinII is " << this->getRecMinII() << endl;
+    cout << "RationalIIScheduler::RationalIIScheduler: resMinII is " << this->getResMinII() << endl;
+    cout << "------------------------" << endl;
+  }
 
   //count runs, set maxRuns
   int runs = 0;
@@ -265,7 +269,7 @@ void RationalIIScheduler::schedule()
   if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
 
   while(runs < maxRuns){
-    cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
     //clear up and reset
     this->solver->reset();
     this->resetContainer();
@@ -278,7 +282,7 @@ void RationalIIScheduler::schedule()
     //set up objective, currently asap using supersink
     this->setObjective();
 
-    cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
     //solve the current problem
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
 
@@ -293,14 +297,13 @@ void RationalIIScheduler::schedule()
     if(this->solvingTime == -1.0) this->solvingTime = 0.0;
     this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
-    cout << "Finished solving: " << stat << endl;
+    if(this->quiet==false) cout << "Finished solving: " << stat << endl;
 
     //check result and act accordingly
     if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
       this->r = this->solver->getResult();
       this->tpBuffer = (double)(this->samples) / (double)(this->modulo);
 
-      this->printScheduleToConsole();
       this->scheduleFound = true;
       this->fillSolutionStructure();
 
@@ -311,25 +314,32 @@ void RationalIIScheduler::schedule()
       //determine whether rational minimum II was identified
       if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 
-      cout << "------------------------" << endl;
-      if(ver==true) cout << "RationalIIScheduler.schedule: Result is verified! " << endl;
-      else if(ver==false and this->uniformSchedule==true) cout << "RationalIIScheduler.schedule: Result verification FAILED! " << endl;
-      else if(ver==false and this->uniformSchedule==false) cout << "RationalIIScheduler.schedule: Result verification for not uniform schedule is not yet implemented! " << endl;
-
       this->s_found = this->samples;
       this->m_found = this->modulo;
-      cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
-      cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo << endl;
-      cout << "RationalIIScheduler.schedule: II: " << (double)(this->modulo) / (double)(this->samples)
-      << " (integer minII " << ceil((double)(this->modulo) / (double)(this->samples)) << ")" << endl;
-      cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
       this->II = (double)(this->modulo) / (double)(this->samples);
-      this->getRationalIIBindings();
-      cout << "------------------------" << endl;
+      if(this->uniformSchedule==true) this->getRationalIIBindings();
+
+      if(this->quiet==false) {
+        cout << "------------------------" << endl;
+        if (ver == true) cout << "RationalIIScheduler.schedule: Result is verified! " << endl;
+        else if (ver == false and this->uniformSchedule == true)
+          cout << "RationalIIScheduler.schedule: Result verification FAILED! " << endl;
+        else if (ver == false and this->uniformSchedule == false)
+          cout << "RationalIIScheduler.schedule: Result verification for not uniform schedule is not yet implemented! "
+               << endl;
+        cout << "RationalIIScheduler.schedule: Found result is " << stat << endl;
+        cout << "RationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
+             << endl;
+        cout << "RationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
+             << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
+        cout << "RationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
+        cout << "------------------------" << endl;
+        this->printScheduleToConsole();
+      }
     }
 
     else{
-      cout << "RationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << stat << " )" << endl;
+      if(this->quiet==false) cout << "RationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << stat << " )" << endl;
       this->scheduleFound = false;
     }
 
@@ -361,10 +371,12 @@ void RationalIIScheduler::autoSetMAndS() {
   this->integerMinII = ceil(minII);
   pair<int,int> frac =  Utility::splitRational(minII);
 
-  cout << "------------------------" << endl;
-  cout << "RationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
-  cout << "RationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
-  cout << "------------------------" << endl;
+  if(this->quiet==false) {
+    cout << "------------------------" << endl;
+    cout << "RationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
+    cout << "RationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
+    cout << "------------------------" << endl;
+  }
 
   this->samples = frac.second;
   this->modulo = frac.first;
@@ -488,8 +500,8 @@ void RationalIIScheduler::fillSolutionStructure() {
   this->startTimesVector.resize(0);
   this->latencySequence.resize(0);
 
-  //store schedule using standard interface if uniform schedule is true
-  if(this->uniformSchedule == true){
+  //store schedule using standard interface if uniform schedule is true (TODO how to calc latency for non uniform)
+  //if(this->uniformSchedule == true){
     for (std::set<Vertex *>::iterator it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
       Vertex* v = *it;
       unsigned int index =this->tIndices.at(v);
@@ -498,7 +510,7 @@ void RationalIIScheduler::fillSolutionStructure() {
       int startTime = this->r.values[svTemp];
       this->startTimes.insert(make_pair(v,startTime));
     }
-  }
+  //}
 
   //store start times of the scheduled samples
   for(int i = 0; i < this->t_matrix.size(); i++) {

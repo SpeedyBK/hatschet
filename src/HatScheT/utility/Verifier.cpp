@@ -235,11 +235,11 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     if (fabs(II - (round(II))) < 0.001) { II = round(II);}
     pair<int,int> split = splitRational(II);
     if (split.second == 0) {
-        cout << "HatScheT.verifyModuloScheduleRational Error couldn't deduce rational number from: " + to_string(II) << endl;
+        //cout << "HatScheT.verifyModuloScheduleRational Error couldn't deduce rational number from: " + to_string(II) << endl;
         return false;
     }
     int max_it = latest/II + split.second;
-    /* 1) precedence edges are obeyed */
+    /* 1) precedence edges */
     for (int i = 0; i <= max_it; i++) {
         for (auto it = g.edgesBegin(), end = g.edgesEnd(); it != end; it++) {
             auto e = *it;
