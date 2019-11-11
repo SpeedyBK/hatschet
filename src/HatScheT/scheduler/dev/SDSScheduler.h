@@ -288,7 +288,7 @@ namespace HatScheT {
 
       void find_min();
 
-      void extract_min();
+      pair<Vertex*, int> extract_min();
 
       void display();
 
@@ -297,6 +297,8 @@ namespace HatScheT {
       void deletion(int val);
 
       struct node* getmini(){return mini;};
+
+      bool isempty();
 
     private:
 
@@ -380,6 +382,7 @@ namespace HatScheT {
 
       bool addToFeasible(pair<pair<const Vertex*, const Vertex*>, int> additionalConstraint);
 
+      void setSilent(bool _silent){this->silent = _silent;}
       /*!
        * Print Constraint Graph
        */
@@ -397,6 +400,7 @@ namespace HatScheT {
 
       list <Vertex*> queue;
 
+      bool silent;
     };
 
   };

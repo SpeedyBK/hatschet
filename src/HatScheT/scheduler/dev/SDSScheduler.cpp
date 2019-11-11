@@ -142,6 +142,7 @@ namespace HatScheT {
      * Call SDC without Resource Constraints (always feasible);
      */
     SDCSolver sdc(dependencyConstraintsSDC);
+    sdc.setSilent(this->silent);
     sdc.addConstrainttoGraph(make_pair((const Vertex*)&g.getVertexById(0), (const Vertex*)&g.getVertexById(5)), 1);
     sdc.printConstraintGraph();
     cout << endl;
@@ -160,8 +161,11 @@ namespace HatScheT {
     /*!
      * Add Resource Constraints
      */
-    sdc.addConstraints(resourceConstraintsSDC);
-    sdc.printConstraintGraph();
+
+    for (auto &it : resourceConstraintsSDC) {
+      sdc.addToFeasible(make_pair(it.first, it.second));
+      break;
+    }
 
   }
 
@@ -513,9 +517,11 @@ namespace HatScheT {
   ////////////////////////
   SDSScheduler::SDCSolver::SDCSolver(SDSScheduler::ConstraintGraph cg) {
     this -> cg = cg;
+    this->silent = true;
   }
 
   SDSScheduler::SDCSolver::SDCSolver(map<pair<const Vertex *, const Vertex *>, int> &constraints) {
+    this->silent = true;
     /*!
      * Create Verticies:
      */
@@ -586,14 +592,12 @@ namespace HatScheT {
        * Finding Vertex with the lowest costs.
        */
       for (auto &it : this->queue) {
-        cout << costofVertex[it] << endl;
         if (this->costofVertex[it] < minCost) {
           minCost = this->costofVertex[it];
           minCostVertex = it;
         }
       }
 
-      cout << "Size of queue: " << queue.size() << endl;
       /*!
        * Remove Vertex with lowest cost from queue, because Shortest Path is computed.
        */
@@ -607,13 +611,6 @@ namespace HatScheT {
         }
       }
     }
-
-    int j = 0;
-    for (auto &it : costofVertex){
-      cout << it.first->getName() << ": " << it.second << endl;
-      j++;
-    }
-
   }
 
   /*!
@@ -631,7 +628,6 @@ namespace HatScheT {
      * Setting up the priority queue
      */
     for (auto &it : cg.Vertices()){
-      cout << "--" << costofVertex[it] << endl;
       this->queue.push_back(it);
     }
   }
@@ -670,10 +666,17 @@ namespace HatScheT {
     for (auto &it : costofVertex){
       priorityQueue.insert(it.first, it.second);
     }
+    if (!this->silent) {
+      priorityQueue.display();
+    }
 
-    priorityQueue.display();
+    /*!
+     * Dijkstras Algorithm with EdgeTransformation.
+     */
+    while (!priorityQueue.isempty()){
+      auto minpair = priorityQueue.extract_min();
 
-
+    }
 
     return true;
   }
@@ -792,11 +795,13 @@ namespace HatScheT {
     }
   }
 
-  void SDSScheduler::FibonacciHeap::extract_min(){
+  pair<Vertex*, int> SDSScheduler::FibonacciHeap::extract_min(){
+    pair<Vertex*, int> returnValues{nullptr, INT_MAX};
     if (mini == nullptr)
       cout << "The heap is empty" << endl;
     else {
       node* temp = mini;
+      returnValues = make_pair(mini->storedVertex, mini->key);
       node* pntr;
       pntr = temp;
       node* x = nullptr;
@@ -826,6 +831,7 @@ namespace HatScheT {
       }
       numberofNodes--;
     }
+    return returnValues;
   }
 
   void SDSScheduler::FibonacciHeap::cut(struct node* found, struct node* temp){
@@ -919,7 +925,6 @@ namespace HatScheT {
     node* ptr = mini;
     if (ptr == nullptr)
       cout << "The Heap is Empty" << endl;
-
     else {
       cout << "The root nodes of Heap are: " << endl;
       do {
@@ -935,6 +940,15 @@ namespace HatScheT {
 
   void SDSScheduler::FibonacciHeap::find_min() {
     cout << "min of heap is: " << mini->key << endl;
+  }
+
+  bool SDSScheduler::FibonacciHeap::isempty() {
+    node* ptr = mini;
+    if (ptr == nullptr) {
+      return true;
+    }else {
+      return false;
+    }
   }
 
 }
