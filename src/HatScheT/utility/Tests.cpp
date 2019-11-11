@@ -1211,7 +1211,7 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      auto &ld = rm.makeResource("Load", 2, 3, 1);
+      auto &ld = rm.makeResource("Load", 2, 1, 1);
 
       auto &add = rm.makeResource("Adder", -1, 1, 1);
 

@@ -131,42 +131,23 @@ namespace HatScheT {
       cout << endl;
     }
 
-    if (!this->silent) {
-      cout << "--------------------------------------------------------" << endl;
-      cout << "Creating Constraint Graph..." << endl;
-      cout << "--------------------------------------------------------" << endl;
-      cout << endl;
-    }
+    BellmanFordSDC bfsdc(dependencyConstraintsSDC, &g);
+    bfsdc.setSilent(this->silent);
+    auto times = bfsdc.getfirstPath();
 
-    /*!
-     * Call SDC without Resource Constraints (always feasible);
-     */
-    SDCSolver sdc(dependencyConstraintsSDC);
-    sdc.setSilent(this->silent);
-    sdc.addConstrainttoGraph(make_pair((const Vertex*)&g.getVertexById(0), (const Vertex*)&g.getVertexById(5)), 1);
-    sdc.printConstraintGraph();
+    //Start:
+    //Add Resource Constraints
+
+    //Call Solver again
+
+    //If feasible return Schedule, else report conflicts to SAT remove Edges, go to Start.
+
+
+
     cout << endl;
-    sdc.dijkstra(&g.getVertexById(0));
-
-    /*!
-     * Add Timing (Chaining) Constraints: ToDo...
-     */
-
-    //(5) - (1) <= -1
-    //(5) - (2) <= -1
-
-    sdc.addConstrainttoGraph(make_pair((const Vertex*)&g.getVertexById(5), (const Vertex*)&g.getVertexById(1)), -1);
-    sdc.addConstrainttoGraph(make_pair((const Vertex*)&g.getVertexById(5), (const Vertex*)&g.getVertexById(2)), -1);
-    sdc.printConstraintGraph();
-    /*!
-     * Add Resource Constraints
-     */
-
-    for (auto &it : resourceConstraintsSDC) {
-      sdc.addToFeasible(make_pair(it.first, it.second));
-      break;
+    for (auto &it : times.first){
+      cout << it.first->getName() << ": " << it.second << endl;
     }
-
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -410,7 +391,7 @@ namespace HatScheT {
       auto dVertex = &it->getVertexDst();
 
       auto constVertexPair = make_pair((const Vertex*) dVertex, (const Vertex*) sVertex);
-      int distance = it->getDistance();
+      int distance = (it->getDistance() + resourceModel.getVertexLatency(&it->getVertexSrc())) * -1;
 
       dependencyConstraints.insert(make_pair(constVertexPair, distance));
 
@@ -428,20 +409,6 @@ namespace HatScheT {
     return false;
   }
 
-  void SDSScheduler::displaySDCSolution() {
-    if (!this->silent){
-      cout << endl;
-      if (!this->isUnsolvableSolution.second){
-        cout << "SDC-Solution found :) Returning Schedule:" << endl;
-        cout << "Vertex:  / Starttime:" << endl;
-        for (auto &it : this->isUnsolvableSolution.first){
-          cout << it.first->getName() << ": " << it.second << endl;
-        }
-      }else {
-        cout << "SDC not solvable :( Reporting Konflikt-Klaus to SAT" << endl;
-      }
-    }
-  }
 
   vector<vector<int>> SDSScheduler::satfromSDC(pair<const Vertex*, const Vertex*> sdctosat) {
 
@@ -510,6 +477,170 @@ namespace HatScheT {
     throw HatScheT::Exception("Graph::getEdge: Edge not found!");
   }
 
+  ////////////////////////////
+  // BellmanFord SDC-Solver //
+  ////////////////////////////
+
+  SDSScheduler::BellmanFordSDC::BellmanFordSDC(SDSScheduler::ConstraintGraph cg, Graph* originalGraph) {
+    this -> cg = cg;
+    this->silent = true;
+    this->hasNegativeCycle = false;
+    this->origGraph = originalGraph;
+  }
+
+  SDSScheduler::BellmanFordSDC::BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph* originalGraph) {
+    this->silent = true;
+    this->hasNegativeCycle = false;
+    this->origGraph = originalGraph;
+    /*!
+     * Create Verticies:
+     */
+    for (auto &it: constraints) {
+      if (!doesVertexExist(&this->cg, it.first.first->getId())) {
+        this->cg.createVertex(it.first.first->getId());
+      }
+      if (!doesVertexExist(&this->cg, it.first.second->getId())) {
+        this->cg.createVertex(it.first.second->getId());
+      }
+      /*!
+       * Create Edges:
+       */
+      if (!this->cg.doesEdgeExistID((Vertex *) it.first.first, (Vertex *) it.first.second)) {
+        this->cg.createEdgeSDS(this->cg.getVertexById(it.first.first->getId()),
+                               this->cg.getVertexById(it.first.second->getId()), it.second);
+      }
+    }
+  }
+
+  void SDSScheduler::BellmanFordSDC::bellmanFordAlgorithm() {
+    /*!
+     * Initialisation of Algorithm
+     */
+    for (auto &it : this->cg.Vertices()){
+      vertexCosts.insert(make_pair(it, INT_MAX));
+    }
+    vertexCosts[&this->cg.getVertexById(this->startID)] = 0;
+
+    /*!
+     * Finding Shortest Paths
+     */
+    for (int i = 1; i < this->cg.getNumberOfVertices(); i++){
+      for (auto &it : this -> cg.Edges()){
+        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()]))
+          vertexCosts[&it->getVertexDst()] = vertexCosts[&it->getVertexSrc()] + it->getDistance();
+      }
+    }
+    /*!
+     * Checking for negative Cycles
+     */
+    for (auto &it : this->cg.Edges()){
+      if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])){
+        hasNegativeCycle = true;
+        break;
+      }else {
+        hasNegativeCycle = false;
+      }
+    }
+  }
+
+  pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFordSDC::getfirstPath() {
+
+    this->startID = determineStartVertex();
+    bellmanFordAlgorithm();
+
+    if (hasNegativeCycle){
+      if (!this->silent) {
+        cout << "SDC-System unsolvable" << endl;
+      }
+      map<Vertex*, int> emptyMap;
+      return make_pair(emptyMap, hasNegativeCycle);
+    }else {
+      int minimum = 0;
+      for (auto &it : vertexCosts){
+        if (it.second < minimum){
+          minimum = it.second;
+        }
+      }
+      for (auto &it : vertexCosts){
+        it.second += abs(minimum);
+      }
+      return make_pair(vertexCosts, hasNegativeCycle);
+    }
+  }
+
+  int SDSScheduler::BellmanFordSDC::determineStartVertex() {
+
+    struct longestpath{
+      map<Vertex*, int> costs;
+      Vertex* startvertex = nullptr;
+      int minimum = 0;
+      list <Vertex*> minimumVertices;
+
+      void find_minimum(){
+        for (auto &it : this->costs){
+          if (it.second < minimum){
+            minimum = it.second;
+          }
+        }
+      }
+
+      void find_minimum_vertices(){
+        for (auto &it : costs){
+          if (it.second == minimum){
+            minimumVertices.push_back(it.first);
+          }
+        }
+      }
+    };
+
+    list <struct longestpath> longestpaths;
+    struct longestpath startpoint;
+
+    if (this->silent) {
+      cout << "Start:" << endl;
+    }
+    for (auto &it : cg.Vertices()) {
+      if (this->silent) {
+        cout << endl << it->getName() << ": " << endl;
+      }
+      this->startID = it->getId();
+      bellmanFordAlgorithm();
+      struct longestpath lp;
+      lp.costs = vertexCosts;
+      lp.startvertex = it;
+      lp.find_minimum();
+      longestpaths.push_back(lp);
+      vertexCosts.clear();
+    }
+
+    int min = 0;
+    for (auto &it : longestpaths){
+      if (it.minimum < min){
+        min = it.minimum;
+      }
+    }
+
+    for (auto &it : longestpaths){
+      if (it.minimum == min){
+        startpoint = it;
+      }
+    }
+
+    startpoint.find_minimum_vertices();
+
+    for (auto &it : startpoint.minimumVertices) {
+      this->minLatEdges.push_back(&cg.createEdge(*it, *startpoint.startvertex, abs(startpoint.minimum)));
+    }
+
+    if (!this->silent){
+      cout << "Constraint Graph after adding a min Latency Constraint." << endl;
+      for (auto &it : cg.Edges()){
+        cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
+       }
+    }
+
+    return startpoint.startvertex->getId();
+  }
 
 
   ////////////////////////
@@ -650,6 +781,10 @@ namespace HatScheT {
 
   bool SDSScheduler::SDCSolver::addToFeasible(pair<pair<const Vertex *, const Vertex *>, int> additionalConstraint) {
 
+    if (!silent){
+      cout << "Additional Constraint: " << additionalConstraint.first.first->getName() << " -- " << additionalConstraint.second << " -- " << additionalConstraint.first.second->getName() << endl;
+    }
+
     /*!
      * Adding new Constraint to the Constraint-Graph
      */
@@ -663,9 +798,8 @@ namespace HatScheT {
     auto oldCostofVertex = costofVertex;
     FibonacciHeap priorityQueue;
 
-    for (auto &it : costofVertex){
-      priorityQueue.insert(it.first, it.second);
-    }
+    priorityQueue.insert((Vertex*)additionalConstraint.first.first, 0);
+
     if (!this->silent) {
       priorityQueue.display();
     }
@@ -675,9 +809,26 @@ namespace HatScheT {
      */
     while (!priorityQueue.isempty()){
       auto minpair = priorityQueue.extract_min();
+      if (costofVertex[(Vertex*)additionalConstraint.first.second]+additionalConstraint.second + (costofVertex[minpair.first]+additionalConstraint.second - costofVertex[(Vertex*)additionalConstraint.first.first]) < costofVertex[minpair.first]){
+        if (minpair.first->getId() == additionalConstraint.first.second->getId()){
+          /*!
+           * Infeasible System: Reject Constraint, Return false
+           */
+           auto vSrc = &this->cg.getVertexById(additionalConstraint.first.first->getId());
+           auto vDst = &this->cg.getVertexById(additionalConstraint.first.first->getId());
+           cg.removeEdge(vSrc, vDst);
+           return false;
+        } else{
+          oldCostofVertex[minpair.first] = costofVertex[(Vertex*)additionalConstraint.first.second] + additionalConstraint.second + (costofVertex[minpair.first]+minpair.second - costofVertex[(Vertex*)additionalConstraint.first.first]);
+        }
+      }
 
     }
 
+    /*!
+     * Feasible System
+     */
+    costofVertex = oldCostofVertex;
     return true;
   }
 

@@ -170,10 +170,6 @@ namespace HatScheT {
      */
      vector<vector<int>> satfromSDC (pair<const Vertex*, const Vertex*>);
 
-    /*!
-     * More Debugging Shit
-     */
-    void displaySDCSolution();
 
     /////////////////////////
     //      Variables      //
@@ -219,16 +215,6 @@ namespace HatScheT {
     map<pair<const Vertex *, const Vertex *>, int> dependencyConstraintsSDC;
 
     /*!
-     * Iterator to resource constraint edges
-     */
-    map<pair<const Vertex *, const Vertex *>, int>::iterator rceIt;
-
-    /*!
-     * Container for the return Values from Bellman-Ford.
-     */
-    pair<map <Vertex*, int>, bool> isUnsolvableSolution;
-
-    /*!
      * Mapping from SAT to SDC (maybe someone picked a stupid name for this Variable!) ToDo needs te be changed
      */
     map<pair<const Vertex*, const Vertex*>, int> sdcToSATMapping;
@@ -257,6 +243,95 @@ namespace HatScheT {
       Edge& getEdge(const Vertex *srcV, const Vertex *dstV);
 
     };
+
+    class BellmanFordSDC {
+
+    public:
+
+      BellmanFordSDC(ConstraintGraph cg, Graph* originalGraph);
+
+      /*!
+       * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
+       * build it's constraint Graph by itself.
+       * @param constraints like "V1 - V2 <= C"
+       */
+      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* originalGraph);
+
+      /*!
+       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
+       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
+       */
+      pair<map<Vertex*, int>, bool> getfirstPath();
+
+      /*!
+       * Sets the Silent variable;
+       */
+       void setSilent(bool quiet) {this -> silent = quiet;}
+
+    private:
+
+      /*!
+       * Sets the cost for the start Vertex to 0 and the cost for all other Vertices to INT_MAX;
+       */
+      void bellmanFordAlgorithm();
+
+      /*!
+       * Method to find the startvertex for the single source shortes path problem.
+       * @return ID of the startvertex
+       */
+      int determineStartVertex();
+
+      /*!
+       * Constraint Graph for which shortest Paths will be searched
+       */
+      ConstraintGraph cg;
+
+      /*!
+       * Pointer to the original Graph.
+       */
+      Graph* origGraph;
+
+      /*!
+       * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
+       */
+      map<Vertex *, int> vertexCosts;
+
+      /*!
+       * Tells if Graph cg has negative cycles. If true, the SDC-System is unsolvable.
+       */
+      bool hasNegativeCycle;
+
+      /*!
+       * Tells the class to shut up.
+       */
+      bool silent;
+
+      /*!
+       * Id of the Vertex which is Startpoint for Bellman Ford Algorithm
+       */
+      int startID;
+
+      /*!
+       * Min latency edges.
+       */
+      list<Edge*> minLatEdges;
+
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
