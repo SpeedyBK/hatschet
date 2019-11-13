@@ -1211,7 +1211,7 @@ bool Tests::compareModuloSchedulerTest() {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      auto &ld = rm.makeResource("Load", 2, 1, 1);
+      auto &ld = rm.makeResource("Load", 1, 1, 1);
 
       auto &add = rm.makeResource("Adder", -1, 1, 1);
 
@@ -1246,8 +1246,7 @@ bool Tests::compareModuloSchedulerTest() {
 
       SDSScheduler sds(g, rm);
       sds.setSilent(false);
-      sds.setMaxLatencyConstraint(2);
-      sds.setBindingType('R');
+      sds.setBindingType('S');
       sds.schedule();
 
       return false;

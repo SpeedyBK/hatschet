@@ -264,9 +264,21 @@ namespace HatScheT {
       pair<map<Vertex*, int>, bool> getfirstPath();
 
       /*!
+       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
+       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
+       */
+      pair<map<Vertex*, int>, bool> getPathIncremental();
+
+      void addConstraints(map<pair<const Vertex*, const Vertex*>, int> &constraints);
+
+      map<pair<Vertex*, Vertex*>, int> getConflicts();
+
+      /*!
        * Sets the Silent variable;
        */
-       void setSilent(bool quiet) {this -> silent = quiet;}
+      void setSilent(bool quiet) {this -> silent = quiet;}
+
+
 
     private:
 
@@ -316,166 +328,16 @@ namespace HatScheT {
        */
       list<Edge*> minLatEdges;
 
-    };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /*!
-     * Implementation of a Fibonacci Heap
-     */
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    class FibonacciHeap{
-
-    public:
+      /*!
+       * Ressource Constraints
+       */
+      map<pair<Vertex*, Vertex*>, int> additionalConstraints;
 
       /*!
-       * Node Datatype
+       * Conflict clauses found by SDC
        */
-      struct node{
-        node* parent;
-        node* child;
-        node* left;
-        node* right;
-        int key;
-        int degree;
-        bool mark;
-        bool flag;
-        Vertex* storedVertex;
-      };
+      map<pair<Vertex*, Vertex*>, int> conflicts;
 
-      FibonacciHeap();
-
-      void insert (Vertex* V, int key);
-
-      void find_min();
-
-      pair<Vertex*, int> extract_min();
-
-      void display();
-
-      void find(struct node* _mini, int old_val, int val);
-
-      void deletion(int val);
-
-      struct node* getmini(){return mini;};
-
-      bool isempty();
-
-    private:
-
-      void consolidate();
-
-      void cut(struct node* found, struct node* temp);
-
-      void cascase_cut(struct node* temp);
-
-      void decrease_key(struct node* found, int val);
-
-      void fibonacci_link(struct node* ptr2, struct node* ptr1);
-
-      /*!
-       *
-       */
-      node* mini;
-
-      /*!
-       * Number of Nodes in the Heap
-       */
-      int numberofNodes;
-
-    };
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /*!
-     * Solver for SDC-Inequallity Systems
-     */
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    class SDCSolver{
-    public:
-      /*!
-       * If a Constraint Graph already exists, this Constructor can be used.
-       * @param cg a SDC Constraint Graph.
-       */
-      explicit SDCSolver(ConstraintGraph cg);
-
-      /*!
-       * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
-       * build it's constraint Graph by itself.
-       * @param constraints like "V1 - V2 <= C"
-       */
-      explicit SDCSolver(map<pair<const Vertex*, const Vertex*>, int> &constraints);
-
-      /*!
-       * Adds Vertices and Edges to the SDC-Constraint Graph.
-       * @param constraintsSDCVer: The first element is the pointer to the Sourcevertex of and Edge,
-       *                           The second element is the pointer to the Destination of an Edge.
-       * @param weight: Distance of the Edge.
-       */
-      void addConstrainttoGraph(pair<const Vertex*, const Vertex*>, int weight);
-
-      /*!
-       * Constraints which are incrementaly added to the Constraint Graph. (Resource Constraints)
-       * @param constraints
-       */
-      void addConstraints (map<pair<const Vertex*, const Vertex*>, int> &constraints);
-
-      /*!
-       * The original Dijkstra Algorithm is used to find the first feasible solution for an SDC-System without
-       * resourceconstraints. (System always feasible)
-       * @param startVertex Vertex where the algorithm Starts.
-       */
-      void dijkstra (Vertex* startVertex);
-
-      /*!
-       * Sets the cost of all Vertices to INT_MAX and the cost of the StartVertex to 0. Inintialises the Priority Queue.
-       * @param startVertex Vertex where the algorithm Starts.
-       */
-      void dijkstraInit (Vertex* startVertex);
-
-      /*!
-       * Updates the cost of Vertex V if a new shortest path to V has been found. And marks U as a predecessor of V
-       * in the shortest path.
-       * @param u
-       * @param v
-       */
-      void updateCost(Vertex* u, Vertex* v);
-
-      bool addToFeasible(pair<pair<const Vertex*, const Vertex*>, int> additionalConstraint);
-
-      void setSilent(bool _silent){this->silent = _silent;}
-      /*!
-       * Print Constraint Graph
-       */
-      void printConstraintGraph();
-
-    private:
-
-      ConstraintGraph cg;
-
-      map <pair<const Vertex*, const Vertex*>, int> additionalConstraints;
-
-      map <Vertex*, int> costofVertex;
-
-      map <Vertex*, Vertex*> predecessorInShortestPath;
-
-      list <Vertex*> queue;
-
-      bool silent;
     };
 
   };
