@@ -193,7 +193,7 @@ namespace HatScheT {
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																		 std::list<std::string> solverWishlist) :
-		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), quiet(true), maxSequenceIterations(1)
+		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), maxSequenceIterations(1)
 	{
 
 		this->computeMinII(&this->g, &this->resourceModel);
@@ -671,23 +671,27 @@ namespace HatScheT {
 	}
 
 	void ModuloQScheduler::setInitiationIntervals() {
-		if(!this->quiet) std::cout << "Creating 'optimal' latency sequence" << std::endl;
+		if(!this->quiet) std::cout << "Creating 'optimal' initiation interval sequence" << std::endl;
 		if(this->samples==1) {
 			this->allInitiationIntervals = {{0}};
 			return;
 		}
 
-		std::vector<int> initIntervalTemp = {};
-		auto lowerII = int(floor(double(this->modulo)/double(this->samples)));
-		auto upperII = int(ceil(double(this->modulo)/double(this->samples)));
+		this->allInitiationIntervals = {ModuloQScheduler::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet)};
+	}
 
-		auto noLowerIIs = (upperII * this->samples) - this->modulo;
-		auto noUpperIIs = this->modulo - (lowerII * this->samples);
-		if(noLowerIIs + noUpperIIs != this->samples) {
+	std::vector<int> ModuloQScheduler::getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet) {
+		std::vector<int> initIntervalTemp = {};
+		auto lowerII = int(floor(double(modulo)/double(samples)));
+		auto upperII = int(ceil(double(modulo)/double(samples)));
+
+		auto noLowerIIs = (upperII * samples) - modulo;
+		auto noUpperIIs = modulo - (lowerII * samples);
+		if(noLowerIIs + noUpperIIs != samples) {
 			std::cout << "number of lower IIs: " << noLowerIIs << std::endl;
 			std::cout << "number of upper IIs: " << noUpperIIs << std::endl;
-			std::cout << "#samples: " << this->samples << std::endl;
-			std::cout << noLowerIIs << " + " << noUpperIIs << " != " << this->samples << std::endl;
+			std::cout << "#samples: " << samples << std::endl;
+			std::cout << noLowerIIs << " + " << noUpperIIs << " != " << samples << std::endl;
 			throw HatScheT::Exception("Something went wrong while calculating optimal latency sequence - that should never happen");
 		}
 		bool lowerDom = false;
@@ -704,7 +708,7 @@ namespace HatScheT {
 		if(lowerDom) latencyCounter -= lowerII;
 		else latencyCounter -= upperII;
 
-		if(!this->quiet) {
+		if(!quiet) {
 			std::cout << "  Lower II: " << lowerII << std::endl;
 			std::cout << "  Upper II: " << upperII << std::endl;
 			std::cout << "  number of lower IIs: " << noLowerIIs << std::endl;
@@ -721,7 +725,7 @@ namespace HatScheT {
 			}
 			initIntervalTemp.emplace_back(latencyCounter);
 			errAccumulator += minNo;
-			if(!this->quiet) {
+			if(!quiet) {
 				std::cout << "    errAccumulator: " << errAccumulator << std::endl;
 			}
 			if(errAccumulator >= maxNo) {
@@ -736,7 +740,7 @@ namespace HatScheT {
 			}
 		}
 
-		if(!this->quiet) {
+		if(!quiet) {
 			std::cout << "IIs: < ";
 			for(auto II : initIntervalTemp) {
 				std::cout << II << " ";
@@ -744,6 +748,6 @@ namespace HatScheT {
 			std::cout << ">" << std::endl;
 		}
 
-		this->allInitiationIntervals = {initIntervalTemp};
+		return initIntervalTemp;
 	}
 }

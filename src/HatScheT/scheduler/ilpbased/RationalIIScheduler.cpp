@@ -539,6 +539,8 @@ void RationalIIScheduler::fillSolutionStructure() {
 }
 
 int RationalIIScheduler::getScheduleLength() {
+  if(this->scheduleFound== false) return -1;
+
   int maxTime=-1;
 
   for (std::pair<Vertex *, int> vtPair : this->startTimesVector[0]) {

@@ -55,6 +55,7 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
+#include <HatScheT/scheduler/dev/UniformRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -94,9 +95,10 @@ void print_short_help() {
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
-  std::cout << "                            RATIONALIIFIMMEL: Second experimental rational II scheduler" << std::endl;
-	std::cout << "                            RATIONALIIMODULOQ: Third experimental rational II scheduler (heuristic)" << std::endl;
-	std::cout << "                            RATIONALIISCCQ: Fourth experimental rational II scheduler (SCC based heuristic)" << std::endl;
+  std::cout << "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules" << std::endl;
+  std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
+	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)" << std::endl;
+	std::cout << "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -140,7 +142,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -266,6 +268,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "rationalii") {
           schedulerSelection = RATIONALII;
         }
+        else if(schedulerSelectionStr == "uniformrationalii") {
+          schedulerSelection = UNIFORMRATIONALII;
+        }
         else if(schedulerSelectionStr == "rationaliifimmel") {
             schedulerSelection = RATIONALIIFIMMEL;
         }
@@ -302,6 +307,7 @@ int main(int argc, char *args[]) {
         if(str=="DAIZHANGTWO" && HatScheT::Tests::DaiZhangTestTwo() == false) exit(-1);
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
+        if(str=="UNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::uniformRationalIISchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
 				if(str=="RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
 				if(str=="RATIONALIISCCQ" && HatScheT::Tests::rationalIISCCQTest() == false) exit(-1);
@@ -370,6 +376,9 @@ int main(int argc, char *args[]) {
             break;
       case RATIONALII:
         cout << "RATIONALII";
+        break;
+      case UNIFORMRATIONALII:
+        cout << "UNIFORMRATIONALII";
         break;
       case RATIONALIIFIMMEL:
           cout << "RATIONALIIFIMMEL";
@@ -550,6 +559,16 @@ int main(int argc, char *args[]) {
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
+        case UNIFORMRATIONALII:
+          isRationalIIScheduler=true;
+          scheduler = new HatScheT::UniformRationalIIScheduler(g,rm,solverWishList);
+          if(timeout>0) ((HatScheT::UniformRationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::UniformRationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          if(samples>0) ((HatScheT::UniformRationalIIScheduler*) scheduler)->setSamples(samples);
+          if(modulo>0) ((HatScheT::UniformRationalIIScheduler*) scheduler)->setModulo(modulo);
+          ((HatScheT::UniformRationalIIScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::UniformRationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
         case RATIONALIIFIMMEL:
           scheduler = new HatScheT::RationalIISchedulerFimmel(g,rm,solverWishList);
           if(timeout>0) ((HatScheT::RationalIISchedulerFimmel*) scheduler)->setSolverTimeout(timeout);
@@ -596,8 +615,10 @@ int main(int argc, char *args[]) {
         case MODULOSDC:
         case MODULOSDCFIEGE:
         case RATIONALII:
+        case UNIFORMRATIONALII:
         case RATIONALIIFIMMEL:
         case RATIONALIIMODULOQ:
+        case RATIONALIISCCQ:
         case ASAPRATIONALII:
           throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
           break;
