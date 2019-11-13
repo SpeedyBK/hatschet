@@ -110,11 +110,6 @@ namespace HatScheT {
 		 */
 		ModuloQScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 		/*!
-		 * enable/disable debug couts
-		 * @param q
-		 */
-		void setQuiet(bool q) { this->quiet = q; }
-		/*!
 		 *
 		 * @param maxIt
 		 */
@@ -184,6 +179,14 @@ namespace HatScheT {
 		 * finds a valid non-rectangular MRT for a given resource model and a initiation intervals
 		 */
 		static void setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet);
+		/*!
+		 * calculates initiation interval sequence, which is as uniformly distributed as possible
+		 * @param samples
+		 * @param modulo
+		 * @param quiet
+		 * @return
+		 */
+		static std::vector<int> getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet);
 	protected:
 		/*!
 		 * not needed
@@ -223,10 +226,6 @@ namespace HatScheT {
 		 * contains latency sequences for which no solution was found
 		 */
 		std::vector<std::vector<int>> discardedInitiationIntervals;
-		/*!
-		 * no couts if this is true
-		 */
-		bool quiet;
 		/*!
 		 * try scheduling and report if a solution was found
 		 * @return

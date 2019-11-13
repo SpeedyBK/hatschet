@@ -107,6 +107,13 @@ public:
   static bool rationalIISchedulerTest();
   /*!
    * @brief a test for functionallity of the rational II scheduler
+   * by Sittel et. al.
+   * this test tries to solve the example problem from their paper
+   * @return
+   */
+  static bool uniformRationalIISchedulerTest();
+  /*!
+   * @brief a test for functionallity of the rational II scheduler
    * by Fimmel & Müller
    * this test tries to solve the example problem from their paper (vanDongen)
    * @return
