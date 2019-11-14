@@ -17,6 +17,9 @@ namespace HatScheT {
                                                                                                                    resourceModel) {
     this->silent = true;
     this->firstTime = true;
+    this->unsatisiable = false;
+
+    cout << "Graph generated with " << g.getNumberOfVertices() << " Vertices." << endl;
   }
 
   void HatScheT::SDSScheduler::schedule() {
@@ -162,11 +165,16 @@ namespace HatScheT {
             cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
           }
           cout << endl;
+          if (unsatisiable){
+            bfsdc.increaseMinLatency();
+            conflictClauses.clear();
+            unsatisiable = false;
+          }
         }
       } else {
         cout << endl << "Schedule:" << endl;
         for (auto &it : sdcSolution.first) {
-          cout << it.first->getName() << "; " << it.first << ": " << it.second << endl;
+          cout << it.first->getName() << " : " << it.second << endl;
         }
         break;
       }
@@ -367,7 +375,7 @@ namespace HatScheT {
       cout << "CaDiCaL: Problem Unsolved" << endl;
     } else if (res == 20) {
       cout << "CaDiCaL: Problem Unsatisfiable" << endl;
-      //ToDo Set a Flag to tell the Scheduler to increase the min Latency Constraint.
+      unsatisiable = true;
     }
 
     /*!
@@ -523,9 +531,11 @@ namespace HatScheT {
     for (auto &it: constraints) {
       if (!doesVertexExist(&this->cg, it.first.first->getId())) {
         this->cg.createVertex(it.first.first->getId());
+        this->cg.getVertexById(it.first.first->getId()).setName(it.first.first->getName());
       }
       if (!doesVertexExist(&this->cg, it.first.second->getId())) {
         this->cg.createVertex(it.first.second->getId());
+        this->cg.getVertexById(it.first.second->getId()).setName(it.first.second->getName());
       }
       /*!
        * Create Edges:
@@ -535,6 +545,7 @@ namespace HatScheT {
                                this->cg.getVertexById(it.first.second->getId()), it.second);
       }
     }
+    cout << "Constraint Graph generated with " << cg.getNumberOfVertices() << " Vertices." << endl;
   }
 
   void SDSScheduler::BellmanFordSDC::bellmanFordAlgorithm() {
@@ -625,6 +636,7 @@ namespace HatScheT {
       }
     }
     auto ptr = *minLatEdges.begin();
+    cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< -- " << ptr->getDistance() << " -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     for (auto &it : vertexCosts){
       it.second += ptr->getDistance();
     }
@@ -725,6 +737,12 @@ namespace HatScheT {
     }
 
     return tempConflicts;
+  }
+
+  void SDSScheduler::BellmanFordSDC::increaseMinLatency() {
+    for (auto &it : minLatEdges){
+      it->setDistance(it->getDistance()+1);
+    }
   }
 
 }

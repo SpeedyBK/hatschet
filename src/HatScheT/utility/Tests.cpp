@@ -1208,54 +1208,78 @@ bool Tests::compareModuloSchedulerTest() {
 
   bool Tests::sdsSchedulerTest() {
 
-    #ifdef USE_CADICAL
+  #ifdef USE_CADICAL
 
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
 
-      auto &ld = rm.makeResource("Load", 1, 1, 1);
+    string resStr = "benchmarks/origami/fir_gen_RM.xml";
+    string graphStr = "benchmarks/origami/fir_gen.graphml";
+    readerRes.readResourceModel(resStr.c_str());
 
-      auto &add = rm.makeResource("Adder", -1, 1, 1);
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
 
-      auto &st = rm.makeResource("Store", -1, 1, 1);
+    /*
+    HatScheT::Graph g;
+    HatScheT::ResourceModel rm;
 
-      //Load operations:
-      Vertex &A = g.createVertex(0);
-      Vertex &B = g.createVertex(1);
-      Vertex &C = g.createVertex(2);
-      //Add operations:
-      Vertex &D = g.createVertex(3);
-      Vertex &E = g.createVertex(4);
-      //Store operations:
-      Vertex &F = g.createVertex(5);
+    auto &ld = rm.makeResource("Load", 1, 1, 1);
 
-      //Load operations:
-      rm.registerVertex(&A, &ld);
-      rm.registerVertex(&B, &ld);
-      rm.registerVertex(&C, &ld);
-      //Add operations:
-      rm.registerVertex(&D, &add);
-      rm.registerVertex(&E, &add);
-      //Store operations:
-      rm.registerVertex(&F, &st);
+    auto &add = rm.makeResource("Adder", -1, 1, 1);
 
-      //Edges:
-      g.createEdge(B, D, 0);
-      g.createEdge(C, D, 0);
-      g.createEdge(A, E, 0);
-      g.createEdge(D, E, 0);
-      g.createEdge(E, F, 0);
+    auto &st = rm.makeResource("Store", -1, 1, 1);
 
-      SDSScheduler sds(g, rm);
-      sds.setSilent(false);
-      sds.setBindingType('S');
-      sds.schedule();
+    //Load operations:
+    Vertex &A = g.createVertex(0);
+    Vertex &B = g.createVertex(1);
+    Vertex &C = g.createVertex(2);
+    //Add operations:
+    Vertex &D = g.createVertex(3);
+    Vertex &E = g.createVertex(4);
+    //Store operations:
+    Vertex &F = g.createVertex(5);
 
-      return false;
-    #else
-      //CaDiCaL not active! Test function disabled!
-      return true;
-    #endif
+    //Load operations:
+    rm.registerVertex(&A, &ld);
+    rm.registerVertex(&B, &ld);
+    rm.registerVertex(&C, &ld);
+    //Add operations:
+    rm.registerVertex(&D, &add);
+    rm.registerVertex(&E, &add);
+    //Store operations:
+    rm.registerVertex(&F, &st);
+
+    //Edges:
+    g.createEdge(B, D, 0);
+    g.createEdge(C, D, 0);
+    g.createEdge(A, E, 0);
+    g.createEdge(D, E, 0);
+    g.createEdge(E, F, 0);
+    */
+
+    cout << "SDS:" << endl;
+    SDSScheduler sds(g, rm);
+    sds.setSilent(false);
+    sds.setBindingType('S');
+    sds.schedule();
+
+    cout << endl << endl;
+
+    cout << "MODSDC:" << endl;
+    ModSDC ASAP (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
+    ASAP.schedule();
+    auto sched = ASAP.getSchedule();
+
+    for (auto &it : sched){
+      cout << it.first->getName() << " : " << it.second << endl;
+    }
+    return false;
+  #else
+    //CaDiCaL not active! Test function disabled!
+    return true;
+  #endif
   }
 
 	bool Tests::rationalIISCCQTest() {

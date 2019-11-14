@@ -221,6 +221,11 @@ namespace HatScheT {
      */
     vector<vector<int>> conflictClauses;
 
+    /*!
+     * Flag from SAT-Solver, if problem is not satisfiable
+     */
+    bool unsatisiable;
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
@@ -241,6 +246,11 @@ namespace HatScheT {
 
     };
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*!
+     * Bellman Ford Algorithm so solve SDC-Problems.
+     */
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class BellmanFordSDC {
 
     public:
@@ -275,7 +285,7 @@ namespace HatScheT {
        */
       void setSilent(bool quiet) {this -> silent = quiet;}
 
-
+      void increaseMinLatency();
 
     private:
 
