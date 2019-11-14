@@ -334,6 +334,14 @@ public:
   */
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
+    /*!
+		 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
+     * this is needed for data dependency constraints
+		 * @param distance
+		 * @param sample
+		 * @return
+		 */
+    static std::pair<int, int> getSampleIndexAndOffset(int distance, int sample, int samples, int modulo);
  /*!
   * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
   * @param g is the graph to transpose

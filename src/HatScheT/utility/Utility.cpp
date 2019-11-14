@@ -1003,6 +1003,23 @@ std::map<const Vertex *, int> Utility::getSimpleBinding(map<Vertex *, int> sched
   }
   return binding;
 }
+
+  std::pair<int, int> Utility::getSampleIndexAndOffset(int distance, int sample, int samples, int modulo) {
+    int sampleIndex = sample;
+    int offset = 0;
+    while(distance>0) {
+      if(sampleIndex==0) {
+        sampleIndex = samples-1;
+        offset += modulo;
+      }
+      else {
+        --sampleIndex;
+      }
+      --distance;
+    }
+    return std::make_pair(sampleIndex,offset);
+  }
+
 #ifdef USE_SCALP
 std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, std::list<std::string> sw, int timeout) {
 

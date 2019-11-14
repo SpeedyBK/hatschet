@@ -268,7 +268,13 @@ namespace HatScheT {
 				bool emptyGraph = this->g.isEmpty();
 				bool valid = true;
 				if(!emptyGraph) {
-					valid = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->latencySequence,this->getScheduleLength());
+					valid = verifyRationalIIModuloSchedule2(this->g, this->resourceModel, this->startTimesVector,
+																									this->latencySequence, this->getScheduleLength());
+					bool valid2 = verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->samples,
+																										 this->modulo);
+					if(valid != valid2) {
+						std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+					}
 				}
 
 				if(!this->quiet) {

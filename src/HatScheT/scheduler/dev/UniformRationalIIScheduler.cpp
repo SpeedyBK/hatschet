@@ -287,7 +287,13 @@ namespace HatScheT
 				this->scheduleFound = true;
 				this->fillSolutionStructure();
 
-				bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->latencySequence, this->getScheduleLength());
+				bool ver = HatScheT::verifyRationalIIModuloSchedule2(this->g, this->resourceModel, this->startTimesVector,
+																														 this->latencySequence, this->getScheduleLength());
+				bool ver2 = verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->samples,
+																									 this->modulo);
+				if(ver!=ver2) {
+					std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+				}
 
 				//determine whether rational minimum II was identified
 				if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;

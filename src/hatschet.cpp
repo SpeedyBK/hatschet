@@ -668,7 +668,8 @@ int main(int argc, char *args[]) {
       }
 			auto *ratIILayer = dynamic_cast<HatScheT::RationalIISchedulerLayer*>(scheduler);
 			if(ratIILayer!=nullptr and isRationalIIScheduler) {
-				if (HatScheT::verifyRationalIIModuloSchedule(g, rm, ratIILayer->getStartTimeVector(), ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
+				if (HatScheT::verifyRationalIIModuloSchedule2(g, rm, ratIILayer->getStartTimeVector(),
+																											ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
 					cout << "Rational II Modulo schedule verified successfully" << endl;
 					cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
 				} else {

@@ -1111,7 +1111,11 @@ bool Tests::compareModuloSchedulerTest() {
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
-    auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
     if(!valid) {
       std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
       return false;
@@ -1161,7 +1165,7 @@ bool Tests::compareModuloSchedulerTest() {
     vector<int> ls({1,1,3});
 
 
-    bool ok = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), ls, rii.getScheduleLength());
+    bool ok = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), ls, rii.getScheduleLength());
 
     if(ok == true) return false;
     else return true;
@@ -1199,7 +1203,7 @@ bool Tests::compareModuloSchedulerTest() {
       }
     }
 
-    bool ok = verifyRationalIIModuloSchedule(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
+    bool ok = verifyRationalIIModuloSchedule2(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
 
     if(ok == true) return false;
     else return true;
@@ -1351,7 +1355,11 @@ bool Tests::compareModuloSchedulerTest() {
 		auto initIntervals = m.getInitiationIntervals();
 		auto latencySequence = m.getLatencySequence();
 
-		auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+		auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
 		if(!valid) {
 			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
 			return false;
@@ -1388,6 +1396,15 @@ bool Tests::compareModuloSchedulerTest() {
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
+    auto valid = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), rii.getLatencySequence(), rii.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
+    if(!valid) {
+    	std::cout << "Scheduler found invalid solution" << std::endl;
+    	return false;
+    }
 
     cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
     cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
@@ -1416,6 +1433,11 @@ bool Tests::compareModuloSchedulerTest() {
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
+    auto valid = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
+    if(!valid) {
+      std::cout << "Scheduler found invalid solution" << std::endl;
+      return false;
+    }
 
     cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
     cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
