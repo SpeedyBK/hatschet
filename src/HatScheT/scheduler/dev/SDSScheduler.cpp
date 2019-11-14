@@ -155,8 +155,13 @@ namespace HatScheT {
         }
         getSATClausesFromSDCConflicts(conflicts);
         resourceConstraintsSDC = passToSATSolver(sharingVariables, conflictClauses);
-        for (auto &it : resourceConstraintsSDC){
-          cout << it.first.first->getName() << " -- " << it.first.second->getName() << endl;
+        if (!this->silent) {
+          cout << endl;
+          cout << "Resource SDC Constraints: " << endl;
+          for (auto &it : resourceConstraintsSDC) {
+            cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
+          }
+          cout << endl;
         }
       } else {
         cout << endl << "Schedule:" << endl;
@@ -362,6 +367,7 @@ namespace HatScheT {
       cout << "CaDiCaL: Problem Unsolved" << endl;
     } else if (res == 20) {
       cout << "CaDiCaL: Problem Unsatisfiable" << endl;
+      //ToDo Set a Flag to tell the Scheduler to increase the min Latency Constraint.
     }
 
     /*!
@@ -592,10 +598,7 @@ namespace HatScheT {
 
   pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFordSDC::getPathIncremental(){
 
-    int i = 0;
     for (auto &it : additionalConstraints) {
-
-      cout << i++ << endl;
       //Add Constraint to Graph.
       if (!this->cg.doesEdgeExistID((Vertex *) it.first.first, (Vertex *) it.first.second)) {
         this->cg.createEdgeSDS(this->cg.getVertexById(it.first.first->getId()),
@@ -703,6 +706,7 @@ namespace HatScheT {
   }
 
   void SDSScheduler::BellmanFordSDC::addConstraints(map<pair<const Vertex *, const Vertex *>, int> &constraints) {
+    additionalConstraints.clear();
     for (auto &it : constraints) {
       this->additionalConstraints.insert(
           make_pair(make_pair((Vertex *) it.first.first, (Vertex *) it.first.second), it.second));
