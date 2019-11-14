@@ -28,6 +28,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UniformRationalIIScheduler.h"
+#include "HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
@@ -1383,6 +1384,34 @@ bool Tests::compareModuloSchedulerTest() {
     readerGraph.readGraph(graphStr.c_str());
 
     HatScheT::UniformRationalIIScheduler rii(g,rm,{"CPLEX","Gurobi","SCIP","LPSolve"});
+    rii.setQuiet(false);
+    rii.setWriteLPFile(true);
+    rii.schedule();
+
+    cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
+    cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+    return (rii.getM_Found() == 5 and rii.getS_Found() == 3);
+#endif
+  }
+
+	bool Tests::nonUniformRationalIISchedulerTest() {
+#ifndef USE_XERCESC
+    cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+    return false;
+#else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "cTest/exampleRatII_RM.xml";
+    string graphStr = "cTest/exampleRatII.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"CPLEX","Gurobi","SCIP","LPSolve"});
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
