@@ -136,26 +136,34 @@ namespace HatScheT {
     auto times = bfsdc.getfirstPath();
 
     cout << endl;
-    for (auto &it : times.first){
+    for (auto &it : times.first) {
       cout << it.first->getName() << ": " << it.second << endl;
     }
 
-
-    //Start:
-    //Add Resource Constraints
-    bfsdc.addConstraints(resourceConstraintsSDC);
-    //Call Solver again
-    auto sdcSolution = bfsdc.getPathIncremental();
-    if (sdcSolution.second){
-      auto conflicts = bfsdc.getConflicts();
-      cout << "Conflicts: " << endl;
-      for (auto &it : conflicts){
-        cout << it.first.first->getName() << " -- " << it.second << " -- " << it.first.second->getName() << endl;
-      }
-    }else {
-      cout << endl << "Schedule:" << endl;
-      for (auto &it : sdcSolution.first){
-        cout << it.first->getName() << "; " <<it.first << ": " << it.second << endl;
+    for (int i = 0; i < 50; i++) {
+      //Start:
+      //Add Resource Constraints
+      bfsdc.addConstraints(resourceConstraintsSDC);
+      //Call Solver again
+      auto sdcSolution = bfsdc.getPathIncremental();
+      if (sdcSolution.second) {
+        auto conflicts = bfsdc.getConflicts();
+        cout << "Conflicts: " << endl;
+        for (auto &it : conflicts) {
+          cout << "Conflict: ";
+          cout << it.first.first->getName() << " -- " << it.second << " -- " << it.first.second->getName() << endl;
+        }
+        getSATClausesFromSDCConflicts(conflicts);
+        resourceConstraintsSDC = passToSATSolver(sharingVariables, conflictClauses);
+        for (auto &it : resourceConstraintsSDC){
+          cout << it.first.first->getName() << " -- " << it.first.second->getName() << endl;
+        }
+      } else {
+        cout << endl << "Schedule:" << endl;
+        for (auto &it : sdcSolution.first) {
+          cout << it.first->getName() << "; " << it.first << ": " << it.second << endl;
+        }
+        break;
       }
     }
 
@@ -422,20 +430,18 @@ namespace HatScheT {
     return false;
   }
 
-
-  vector<vector<int>> SDSScheduler::satfromSDC(pair<const Vertex*, const Vertex*> sdctosat) {
-
-    vector<int> conflict;
-
-    for (auto &it : this->sdcToSATMapping){
-      if (it.first.first->getId() == sdctosat.first->getId() && it.first.second->getId() == sdctosat.second->getId()){
-        conflict.push_back(sdcToSATMapping[sdctosat]*(-1));
-      }
+  void SDSScheduler::getSATClausesFromSDCConflicts(map<pair<Vertex*, Vertex*>, int> &conflicts) {
+    vector <int> conflictSAT;
+    for (auto &it : conflicts) {
+      conflictSAT.push_back(sdcToSATMapping[it.first]*-1);
     }
-
-    conflictClauses.push_back(conflict);
-
-    return conflictClauses;
+    conflictClauses.push_back(conflictSAT);
+    for (auto &it :conflictClauses){
+      for (auto &itr : it){
+        cout << itr << " ";
+      }
+      cout << endl;
+    }
   }
 
 
@@ -586,8 +592,10 @@ namespace HatScheT {
 
   pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFordSDC::getPathIncremental(){
 
+    int i = 0;
     for (auto &it : additionalConstraints) {
 
+      cout << i++ << endl;
       //Add Constraint to Graph.
       if (!this->cg.doesEdgeExistID((Vertex *) it.first.first, (Vertex *) it.first.second)) {
         this->cg.createEdgeSDS(this->cg.getVertexById(it.first.first->getId()),
@@ -646,7 +654,7 @@ namespace HatScheT {
     };
 
     list <struct longestpath> longestpaths;
-    struct longestpath startpoint;
+    longestpath startpoint;
 
     if (this->silent) {
       cout << "Start:" << endl;
@@ -707,6 +715,11 @@ namespace HatScheT {
       cg.removeEdge(it.first.first, it.first.second);
     }
     conflicts.clear();
+
+    for (auto &it : cg.Edges()){
+      cout << it->getVertexSrc().getName() << " -- " << it->getVertexDst().getName() << endl;
+    }
+
     return tempConflicts;
   }
 

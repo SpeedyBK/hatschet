@@ -165,11 +165,7 @@ namespace HatScheT {
      */
     static bool doesVertexExist(Graph *gr, int vertexID);
 
-    /*!
-     * Function to get a SAT-Formulation from a SDC-Conflict.
-     */
-     vector<vector<int>> satfromSDC (pair<const Vertex*, const Vertex*>);
-
+    void getSATClausesFromSDCConflicts(map<pair<Vertex*, Vertex*>, int> &conflicts);
 
     /////////////////////////
     //      Variables      //
@@ -209,13 +205,14 @@ namespace HatScheT {
      * in an SDC Formulation.
      */
     map<pair<const Vertex *, const Vertex *>, int> resourceConstraintsSDC;
+
     /*!
      * Data Dependency Constraints and Timing Constraints from the original Graph.
      */
     map<pair<const Vertex *, const Vertex *>, int> dependencyConstraintsSDC;
 
     /*!
-     * Mapping from SAT to SDC (maybe someone picked a stupid name for this Variable!) ToDo needs te be changed
+     * Mapping from SDC to SAT
      */
     map<pair<const Vertex*, const Vertex*>, int> sdcToSATMapping;
 
