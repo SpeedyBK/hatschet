@@ -160,6 +160,11 @@ public:
    * @return
    */
   static bool ratIIVerifierWrongCausalityDetected();
+  /*!
+   * @brief tests iteration function in Utility
+   * @return
+   */
+  static bool ratIIOptimalIterationTest();
 
 };
 }

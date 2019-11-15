@@ -321,6 +321,7 @@ int main(int argc, char *args[]) {
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
+        if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

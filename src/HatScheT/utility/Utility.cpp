@@ -1230,5 +1230,73 @@ std::map<const Vertex *, int> Utility::getILPMinRegBinding(map<Vertex *, int> sc
 
   }
 
+	std::list<pair<int, int>>
+	Utility::iterateModuloOverSamples(int sMinII, int mMinII, int integerII, int sMax, int maxListSize) {
+
+    std::cout << "sMinII = " << sMinII << std::endl;
+    std::cout << "mMinII = " << sMinII << std::endl;
+    std::cout << "integerII = " << integerII << std::endl;
+    std::cout << "sMax = " << sMax << std::endl;
+    std::cout << "maxListSize = " << maxListSize << std::endl;
+
+    std::list<std::pair<int,int>> sorted = {std::make_pair(mMinII,sMinII)}; // list of sorted M/S pairs
+		if(maxListSize==1) return sorted;
+
+    // II=4/3=8/6=12/9=... since 4/3 is the easiest to get a schedule for, all other fractions can be skipped!
+    std::list<std::pair<int,int>> skipMe;
+
+    if(sMax<0) sMax = sMinII;
+    if(maxListSize<0) maxListSize = sMinII * mMinII;
+
+    double rationalMinII = double(mMinII) / double(sMinII);
+
+    std::cout << "sMax = " << sMax << std::endl;
+    for(int s=2; s<sMax; ++s) {
+      auto mMin = (int)ceil(rationalMinII * s);
+      std::cout << "  mMin = " << mMin << std::endl;
+      std::cout << "  mMax = " << integerII*s << std::endl;
+      for(int m=mMin; m<integerII*s; ++m) {
+
+        std::cout << "    M/S = " << m << "/" << s << std::endl;
+
+        // check if M/S pair can be skipped
+        bool skip = false;
+        for(auto it : skipMe) {
+          if(it.first == m and it.second == s) {
+            skip = true;
+            std::cout << "      SKIP " << m << "/" << s << std::endl;
+            break;
+          }
+        }
+        if(skip) continue;
+
+        // insert all reducable fractions into skipMe
+        for(int ss=s; ss<sMax; ss+=s) {
+          auto mm = m * (ss/s);
+          skipMe.emplace_back(std::make_pair(mm,ss));
+        }
+
+        // insert m/s into sorted list
+        bool inserted = false;
+        for(auto it=sorted.begin(); it!=sorted.end(); ++it) {
+          auto mTemp = it->first;
+          auto stemp = it->second;
+          if(double(m) / double(s) < double(mTemp) / double(stemp)) {
+            sorted.insert(it,std::make_pair(m,s));
+            inserted = true;
+            break;
+          }
+        }
+        if(!inserted) sorted.emplace_back(std::make_pair(m,s));
+      }
+    }
+
+    if(sorted.size() > maxListSize) {
+      sorted.resize((unsigned int)maxListSize);
+    }
+
+    return sorted;
+	}
+
 #endif
 }

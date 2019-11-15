@@ -50,6 +50,7 @@
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -1443,6 +1444,31 @@ bool Tests::compareModuloSchedulerTest() {
 
     return (rii.getM_Found() == 5 and rii.getS_Found() == 3);
 #endif
+  }
+
+  bool Tests::ratIIOptimalIterationTest() {
+#ifndef USE_SCALP
+    cout << "Tests::ratIIOptimalIterationTest: need ScaLP to test" << endl;
+    return true;
+#endif
+
+    int mMinII = 178;
+    int sMinII = 25;
+    double minII = double(mMinII)/double(sMinII);
+    auto integerII = (int)ceil(double(mMinII)/double(sMinII));
+    int sMax = -1;
+    auto maxListSize = -1;
+    // pair<int,int> iterateModuloOverSamples(int mMinII, int sMinII, int mLastII, int sLastII, int integerII, std::list<std::string> solverWishlist = {"Gurobi"}, int sStop=-1);
+    auto solutions = Utility::iterateModuloOverSamples(sMinII,mMinII,integerII,sMax,maxListSize);
+    /*
+    std::cout << "mMinII = " << mMinII << std::endl;
+    std::cout << "sMinII = " << sMinII << std::endl;
+    std::cout << "minII = " << minII << std::endl;
+    std::cout << "integerII = " << integerII << std::endl;
+     */
+    for(auto it : solutions) {
+      std::cout << "M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
+    }
   }
 
 
