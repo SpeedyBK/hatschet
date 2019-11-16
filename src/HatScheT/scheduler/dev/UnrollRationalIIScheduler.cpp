@@ -6,13 +6,18 @@
 #include "HatScheT/utility/Utility.h"
 #include "math.h"
 
+#include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 
 namespace HatScheT {
 
   UnrollRationalIIScheduler::UnrollRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
   : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
 
-    throw Exception("UnrollRationalIIScheduler::UnrollRationalIIScheduler: scheduler not finished yet!");
+    this->s_start = -1;
+    this->m_start = -1;
+    this->solverWishlist = solverWishlist;
 
     this->scheduleFound = false;
     this->scheduler = ED97;
@@ -26,11 +31,81 @@ namespace HatScheT {
 
   void UnrollRationalIIScheduler::schedule(){
     this->scheduleFound = false;
+
+    //check if start values ar set, if not auto set to minRatII
+    if(m_start == -1 or s_start == -1) {
+      throw Exception("UnrollRationalIIScheduler::schedule: S or M not set, not supported yet!");
+    }
+
+    int attempts = 1;
+
+    while(attempts <= this->maxRuns and this->scheduleFound == false) {
+      Graph g_unrolled;
+      ResourceModel rm_unrolled;
+
+      //unroll the input graph according to s and m
+      this->unroll(g_unrolled, rm_unrolled, this->s_start);
+
+      HatScheT::SchedulerBase *scheduler;
+
+      switch (this->scheduler) {
+        case SchedulerType::MOOVAC:
+          scheduler = new HatScheT::MoovacScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+          if(this->solverTimeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+          if(this->maxLatencyConstraint > 0)
+            ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+          ((HatScheT::MoovacScheduler*) scheduler)->setThreads(this->threads);
+          ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+          break;
+         case SchedulerType::MODULOSDC:
+          scheduler = new HatScheT::ModuloSDCScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+          if(this->solverTimeout > 0) ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+          if(this->maxLatencyConstraint > 0)
+            ((HatScheT::ModuloSDCScheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+          ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(this->threads);
+          ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+          break;
+        case SchedulerType::ED97:
+          scheduler = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+          if(this->solverTimeout > 0) ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+          if(this->maxLatencyConstraint > 0)
+            ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+          ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setThreads(this->threads);
+          ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+          break;
+      }
+
+      scheduler->schedule();
+
+      if(scheduler->getScheduleFound() == true) {
+        this->II = scheduler->getII();
+
+        switch(this->scheduler) {
+          case SchedulerType::MOOVAC:
+            this->stat = ((HatScheT::MoovacScheduler*) scheduler)->getScaLPStatus();
+            this->solvingTime = ((HatScheT::MoovacScheduler*) scheduler)->getSolvingTime();
+            break;
+          case SchedulerType::MODULOSDC:
+            this->stat = ((HatScheT::ModuloSDCScheduler*) scheduler)->getScaLPStatus();
+            this->solvingTime = ((HatScheT::ModuloSDCScheduler*) scheduler)->getSolvingTime();
+            break;
+          case SchedulerType::ED97:
+            this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getScaLPStatus();
+            this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getSolvingTime();
+            break;
+        }
+
+
+        this->scheduleFound = true;
+      }
+      attempts++;
+    }
+
   }
 
-  void UnrollRationalIIScheduler::unroll(int s) {
-    Graph *new_g = new Graph();
-    ResourceModel *new_rm = new ResourceModel();
+  void UnrollRationalIIScheduler::unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s) {
+    Graph *new_g = &g_unrolled;
+    ResourceModel *new_rm = &rm_unrolled;
 
     map<Vertex *, vector<Vertex *> > mappings;
 
