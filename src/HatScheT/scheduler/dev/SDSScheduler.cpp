@@ -13,16 +13,54 @@
 
 namespace HatScheT {
 
-  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g,
-                                                                                                                   resourceModel) {
+  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g,resourceModel) {
+
     this->silent = true;
     this->firstTime = true;
     this->unsatisiable = false;
+    this->computeMinII(&this->g, &resourceModel);
+    this->minII = ceil(this->minII);
+    this->computeMaxII(&g, &resourceModel);
+    if (minII >= maxII) maxII = (int) minII + 1;
+    this->II = minII;
 
+    cout << "Constructor SDS:" << endl;
     cout << "Graph generated with " << g.getNumberOfVertices() << " Vertices." << endl;
+    cout << "MinII is: " << minII << endl;
+    cout << "MaxII is: " << maxII << endl;
+    cout << "II is: " << II << endl;
   }
 
   void HatScheT::SDSScheduler::schedule() {
+
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Getting Dependency Constraints..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    dependencyConstraintsSDC = createDependencyConstraints();
+
+    if (!this->silent) {
+      cout << "Data Dependency SDC Constraints: " << endl;
+      for (auto &it : dependencyConstraintsSDC) {
+        cout << it.first.first->getName() << " - " << it.first.second->getName() << " <= " << it.second << endl;
+      }
+      cout << endl;
+    }
+
+    if (!this->silent) {
+      cout << "--------------------------------------------------------" << endl;
+      cout << "Creating Constraint Graph with Dependency Constraints..." << endl;
+      cout << "--------------------------------------------------------" << endl;
+      cout << endl;
+    }
+
+    BellmanFordSDC bfsdc(dependencyConstraintsSDC, &g);
+    bfsdc.setSilent(this->silent);
+    bfsdc.printConstraintGraph();
+
 
     if (!this->silent) {
       cout << "--------------------------------------------------------" << endl;
@@ -117,25 +155,7 @@ namespace HatScheT {
       cout << endl;
     }
 
-    if (!this->silent) {
-      cout << "--------------------------------------------------------" << endl;
-      cout << "Getting Dependency Constraints..." << endl;
-      cout << "--------------------------------------------------------" << endl;
-      cout << endl;
-    }
 
-    dependencyConstraintsSDC = createDependencyConstraints();
-
-    if (!this->silent) {
-      cout << "Data Dependency SDC Constraints: " << endl;
-      for (auto &it : dependencyConstraintsSDC) {
-        cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
-      }
-      cout << endl;
-    }
-
-    BellmanFordSDC bfsdc(dependencyConstraintsSDC, &g);
-    bfsdc.setSilent(this->silent);
     auto times = bfsdc.getfirstPath();
 
     cout << endl;
@@ -151,10 +171,12 @@ namespace HatScheT {
       auto sdcSolution = bfsdc.getPathIncremental();
       if (sdcSolution.second) {
         auto conflicts = bfsdc.getConflicts();
-        cout << "Conflicts: " << endl;
-        for (auto &it : conflicts) {
-          cout << "Conflict: ";
-          cout << it.first.first->getName() << " -- " << it.second << " -- " << it.first.second->getName() << endl;
+        if (!this->silent) {
+          cout << "Conflicts: " << endl;
+          for (auto &it : conflicts) {
+            cout << "Conflict: ";
+            cout << it.first.first->getName() << " -- " << it.second << " -- " << it.first.second->getName() << endl;
+          }
         }
         getSATClausesFromSDCConflicts(conflicts);
         resourceConstraintsSDC = passToSATSolver(sharingVariables, conflictClauses);
@@ -162,19 +184,18 @@ namespace HatScheT {
           cout << endl;
           cout << "Resource SDC Constraints: " << endl;
           for (auto &it : resourceConstraintsSDC) {
-            cout << "S" << it.first.first->getId() << " - S" << it.first.second->getId() << " <= " << it.second << endl;
+            cout << it.first.first->getName() << " - S" << it.first.second->getName() << " <= " << it.second << endl;
           }
           cout << endl;
-          if (unsatisiable){
-            bfsdc.increaseMinLatency();
-            conflictClauses.clear();
-            unsatisiable = false;
-          }
+        }
+        if (unsatisiable){
+          bfsdc.increaseMinLatency();
+          conflictClauses.clear();
+          unsatisiable = false;
         }
       } else {
-        cout << endl << "Schedule:" << endl;
         for (auto &it : sdcSolution.first) {
-          cout << it.first->getName() << " : " << it.second << endl;
+          startTimes.insert(make_pair(&this->g.getVertexById(it.first->getId()), it.second));
         }
         break;
       }
@@ -352,13 +373,19 @@ namespace HatScheT {
     for (auto &It : confClauses) {
       for (auto &Itr : It) {
         solver->add(Itr);
-        cout << setw(3) << Itr;
+        if (!this->silent) {
+          cout << setw(3) << Itr;
+        }
       }
       if (!It.empty()) {
         solver->add(0);
-        cout << setw(3) << "0";
+        if (!this->silent) {
+          cout << setw(3) << "0";
+        }
       }
-      cout << endl;
+      if (!this->silent) {
+        cout << endl;
+      }
     }
 
     /*!
@@ -387,7 +414,9 @@ namespace HatScheT {
     auto mIt = sharingVariables.begin();
     if (res == 10) {
       for (int i = 0; i < litCounter - 1; i++) {
-        cout << solver->val(i+1) << " ";
+        if (!this->silent) {
+          cout << solver->val(i + 1) << " ";
+        }
         if (i % 2 == 0){
           if(solver->val(i+1) > 0) {
             solutionMap.insert(make_pair(mIt->first, -1));
@@ -401,7 +430,9 @@ namespace HatScheT {
           ++mIt;
         }
       }
-      cout << endl;
+      if (!this->silent) {
+        cout << endl;
+      }
     }
 
     /*!
@@ -425,8 +456,8 @@ namespace HatScheT {
       auto sVertex = &it->getVertexSrc();
       auto dVertex = &it->getVertexDst();
 
-      auto constVertexPair = make_pair((const Vertex*) dVertex, (const Vertex*) sVertex);
-      int distance = (it->getDistance() + resourceModel.getVertexLatency(&it->getVertexSrc())) * -1;
+      auto constVertexPair = make_pair((const Vertex*) sVertex, (const Vertex*) dVertex);
+      int distance = ((int)this->II*it->getDistance() - this->resourceModel.getVertexLatency(&it->getVertexSrc()));
 
       dependencyConstraints.insert(make_pair(constVertexPair, distance));
 
@@ -451,10 +482,12 @@ namespace HatScheT {
     }
     conflictClauses.push_back(conflictSAT);
     for (auto &it :conflictClauses){
-      for (auto &itr : it){
-        cout << itr << " ";
+      if (!this->silent) {
+        for (auto &itr : it) {
+          cout << itr << " ";
+        }
+        cout << endl;
       }
-      cout << endl;
     }
   }
 
@@ -466,7 +499,10 @@ namespace HatScheT {
   void SDSScheduler::ConstraintGraph::removeEdge(Vertex *srcVertex, Vertex *dstVertex) {
 
     for (auto &it : edges){
-      cout << "VSRC: " << it->getVertexSrc().getId() << " VDST: " << it->getVertexDst().getId() << " || " << srcVertex->getId() << " " << dstVertex->getId() << endl;
+      if (!this->silent) {
+        cout << "VSRC: " << it->getVertexSrc().getId() << " VDST: " << it->getVertexDst().getId() << " || "
+             << srcVertex->getId() << " " << dstVertex->getId() << endl;
+      }
       if (it->getVertexSrc().getId() == srcVertex->getId() && it->getVertexDst().getId() == dstVertex->getId()){
         edges.erase(it);
       }
@@ -541,11 +577,13 @@ namespace HatScheT {
        * Create Edges:
        */
       if (!this->cg.doesEdgeExistID((Vertex *) it.first.first, (Vertex *) it.first.second)) {
-        this->cg.createEdgeSDS(this->cg.getVertexById(it.first.first->getId()),
-                               this->cg.getVertexById(it.first.second->getId()), it.second);
+        this->cg.createEdgeSDS(this->cg.getVertexById(it.first.second->getId()),
+                               this->cg.getVertexById(it.first.first->getId()), it.second);
       }
     }
-    cout << "Constraint Graph generated with " << cg.getNumberOfVertices() << " Vertices." << endl;
+    if (!this->silent) {
+      cout << "Constraint Graph generated with " << cg.getNumberOfVertices() << " Vertices." << endl;
+    }
   }
 
   void SDSScheduler::BellmanFordSDC::bellmanFordAlgorithm() {
@@ -615,10 +653,12 @@ namespace HatScheT {
         this->cg.createEdgeSDS(this->cg.getVertexById(it.first.first->getId()),
                                this->cg.getVertexById(it.first.second->getId()), it.second);
       }
-
-      cout << endl << "Graph: " << endl;
-      for (auto &itr : cg.Edges()){
-        cout << itr->getVertexSrc().getName() << " -- " << itr->getDistance() << " -- " << itr->getVertexDst().getName() << endl;
+      if (!this->silent) {
+        cout << endl << "Graph: " << endl;
+        for (auto &itr : cg.Edges()) {
+          cout << itr->getVertexSrc().getName() << " -- " << itr->getDistance() << " -- "
+               << itr->getVertexDst().getName() << endl;
+        }
       }
       //Add Constraint to potential Conflicts.
       conflicts.insert(it);
@@ -636,7 +676,10 @@ namespace HatScheT {
       }
     }
     auto ptr = *minLatEdges.begin();
-    cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< -- " << ptr->getDistance() << " -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    if (!this->silent) {
+      cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< -- " << ptr->getDistance()
+           << " -- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    }
     for (auto &it : vertexCosts){
       it.second += ptr->getDistance();
     }
@@ -732,8 +775,10 @@ namespace HatScheT {
     }
     conflicts.clear();
 
-    for (auto &it : cg.Edges()){
-      cout << it->getVertexSrc().getName() << " -- " << it->getVertexDst().getName() << endl;
+    if (!this->silent) {
+      for (auto &it : cg.Edges()) {
+        cout << it->getVertexSrc().getName() << " -- " << it->getVertexDst().getName() << endl;
+      }
     }
 
     return tempConflicts;
@@ -742,6 +787,14 @@ namespace HatScheT {
   void SDSScheduler::BellmanFordSDC::increaseMinLatency() {
     for (auto &it : minLatEdges){
       it->setDistance(it->getDistance()+1);
+    }
+  }
+
+  void SDSScheduler::BellmanFordSDC::printConstraintGraph() {
+    if (!this->silent) {
+      for (auto &it : this->cg.Edges()) {
+        cout << it->getVertexSrcName() << " -- " << it->getDistance() << " -- " << it->getVertexDstName() << endl;
+      }
     }
   }
 

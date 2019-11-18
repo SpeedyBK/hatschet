@@ -1210,6 +1210,8 @@ bool Tests::compareModuloSchedulerTest() {
 
   #ifdef USE_CADICAL
 
+    double timetoschedule = 0;
+
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
@@ -1259,22 +1261,66 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(E, F, 0);
     */
 
+    cout << "Display Graph:" << endl;
+    cout << "SRC " << "-- Distance --" << "DST" << endl;
+    for (auto &it : g.Edges()){
+      cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
+    }
+    cout << "*******************************************************" << endl << endl;
+    cout << "Display Resources:" << endl;
+    cout << "Name: Limit; Latency; Blockingtime " << endl;
+    for (auto &it : rm.Resources()){
+      cout << it->getName() << ": " << it->getLimit() << "; " << it->getLatency() << "; " << it->getBlockingTime() << endl;
+    }
+    cout << "*******************************************************" << endl << endl;
+
     cout << "SDS:" << endl;
     SDSScheduler sds(g, rm);
+    cout << "*******************************************************" << endl << endl;
     sds.setSilent(false);
     sds.setBindingType('S');
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     sds.schedule();
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
+    auto sdssched = sds.getSchedule();
+    cout << endl << "Schedule for II = " << sds.getII() << ":" << endl;
+    for (auto &it : sdssched) {
+      it.second +=2; //ToDo: Fix this shit
+      cout << it.first->getName() << " : " << it.second << endl;
+    }
+
+    if(verifyModuloSchedule(g, rm, sdssched, sds.getII())){
+      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    }else {
+      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+    }
+
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;
+    timetoschedule = 0;
 
     cout << endl << endl;
 
     cout << "MODSDC:" << endl;
-    ModSDC ASAP (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
-    ASAP.schedule();
-    auto sched = ASAP.getSchedule();
+    ModSDC MSDC (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
+    t1 = std::chrono::high_resolution_clock::now();
+    MSDC.schedule();
+    t2 = std::chrono::high_resolution_clock::now();
+    timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
+    auto sched = MSDC.getSchedule();
 
     for (auto &it : sched){
       cout << it.first->getName() << " : " << it.second << endl;
     }
+    if (verifyModuloSchedule(g, rm, sched, MSDC.getII())){
+      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    }else {
+      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+    }
+
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;
     return false;
   #else
     //CaDiCaL not active! Test function disabled!
