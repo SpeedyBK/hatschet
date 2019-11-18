@@ -132,7 +132,7 @@ namespace HatScheT
 			vector<int > lifetimes;
 
 			for(int i = 0; i < this->samples; i++){
-				auto so = this->getSampleIndexAndOffset(e->getDistance(),i);
+				auto so = Utility::getSampleIndexAndOffset(e->getDistance(),i,this->samples,this->modulo);
 				auto sampleIndex = so.first;
 				auto offset = so.second;
 				int lifetime = this->startTimesVector[i][vDst] - this->startTimesVector[sampleIndex][vSrc]
@@ -270,8 +270,9 @@ namespace HatScheT
 				this->scheduleFound = true;
 				this->fillSolutionStructure();
 
-				// verification not yet possible
-				//bool ver = HatScheT::verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->latencySequence, this->getScheduleLength());
+				// verification
+				bool ver = verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->samples,
+																									this->modulo);
 
 				//determine whether rational minimum II was identified
 				if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
@@ -279,8 +280,8 @@ namespace HatScheT
 
 				if(!this->quiet) {
 					cout << "------------------------" << endl;
-					//if (ver) cout << "NonUniformRationalIIScheduler.schedule: Result is verified! " << endl;
-					//else cout << "NonUniformRationalIIScheduler.schedule: Result verification FAILED! " << endl;
+					if (ver) cout << "NonUniformRationalIIScheduler.schedule: Result is verified! " << endl;
+					else cout << "NonUniformRationalIIScheduler.schedule: Result verification FAILED! " << endl;
 					cout << "NonUniformRationalIIScheduler.schedule: Found result is " << stat << endl;
 					cout << "NonUniformRationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
 							 << endl;
@@ -336,7 +337,7 @@ namespace HatScheT
 			auto *src = &e->getVertexSrc();
 			auto *dst = &e->getVertexDst();
 			for(auto i=0; i<this->samples; ++i) {
-				auto sampleIndexOffset = this->getSampleIndexAndOffset(e->getDistance(),i);
+				auto sampleIndexOffset = Utility::getSampleIndexAndOffset(e->getDistance(),i,this->samples,this->modulo);
 				auto index = sampleIndexOffset.first;
 				auto offset = sampleIndexOffset.second;
 				this->solver->addConstraint(this->tVariables[src][index]-this->tVariables[dst][i]<=offset-this->resourceModel.getVertexLatency(src)-e->getDelay());
@@ -413,19 +414,5 @@ namespace HatScheT
 		this->minRatIIFound = (this->II == this->minII);
 	}
 
-	std::pair<int, int> NonUniformRationalIIScheduler::getSampleIndexAndOffset(int distance, int sample) {
-		int sampleIndex = sample;
-		int offset = 0;
-		while(distance>0) {
-			if(sampleIndex==0) {
-				sampleIndex = this->samples-1;
-				offset += this->modulo;
-			}
-			else {
-				--sampleIndex;
-			}
-			--distance;
-		}
-		return std::make_pair(sampleIndex,offset);
-	}
+
 }

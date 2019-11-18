@@ -78,7 +78,10 @@ bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &
  * @param scheduleLength the max Latency of the determined rational II modulo schedule
  * @return true iff the schedule is valid
  */
-bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int> > &schedule, vector<int> latencySequence, int scheduleLength);
+bool verifyRationalIIModuloSchedule2(Graph &g, ResourceModel &rm, vector <std::map<Vertex *, int>> &schedule,
+																		 vector<int> latencySequence, int scheduleLength);
+bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector <std::map<Vertex *, int>> &schedule,
+																		int samples, int modulo);
 
 /*!
  * \brief Verifies the given modulo schedule

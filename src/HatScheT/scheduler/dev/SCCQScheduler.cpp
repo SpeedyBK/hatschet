@@ -187,7 +187,8 @@ namespace HatScheT {
 			}
 
 			// verify result from modulo q scheduler
-			if(!verifyRationalIIModuloSchedule(tempG,rm,mq.getStartTimeVector(),mq.getLatencySequence(),mq.getScheduleLength())) {
+			if(!verifyRationalIIModuloSchedule2(tempG, rm, mq.getStartTimeVector(), mq.getLatencySequence(),
+																					mq.getScheduleLength())) {
 				sccSchedule.clear(); // clear to be safe that it's empty
 				return std::make_pair(false,sccSchedule); // return empty schedule
 			}

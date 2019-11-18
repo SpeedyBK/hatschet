@@ -50,6 +50,7 @@
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <stdio.h>
+#include <math.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -1111,7 +1112,11 @@ bool Tests::compareModuloSchedulerTest() {
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
-    auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
     if(!valid) {
       std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
       return false;
@@ -1161,7 +1166,7 @@ bool Tests::compareModuloSchedulerTest() {
     vector<int> ls({1,1,3});
 
 
-    bool ok = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), ls, rii.getScheduleLength());
+    bool ok = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), ls, rii.getScheduleLength());
 
     if(ok == true) return false;
     else return true;
@@ -1199,7 +1204,7 @@ bool Tests::compareModuloSchedulerTest() {
       }
     }
 
-    bool ok = verifyRationalIIModuloSchedule(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
+    bool ok = verifyRationalIIModuloSchedule2(g, rm, s, rii.getLatencySequence(), rii.getScheduleLength());
 
     if(ok == true) return false;
     else return true;
@@ -1420,7 +1425,11 @@ bool Tests::compareModuloSchedulerTest() {
 		auto initIntervals = m.getInitiationIntervals();
 		auto latencySequence = m.getLatencySequence();
 
-		auto valid = verifyRationalIIModuloSchedule(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+		auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
 		if(!valid) {
 			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
 			return false;
@@ -1457,6 +1466,15 @@ bool Tests::compareModuloSchedulerTest() {
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
+    auto valid = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), rii.getLatencySequence(), rii.getScheduleLength());
+    auto valid2 = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
+    if(valid!=valid2) {
+      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+    }
+    if(!valid) {
+    	std::cout << "Scheduler found invalid solution" << std::endl;
+    	return false;
+    }
 
     cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
     cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
@@ -1485,12 +1503,42 @@ bool Tests::compareModuloSchedulerTest() {
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
+    auto valid = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
+    if(!valid) {
+      std::cout << "Scheduler found invalid solution" << std::endl;
+      return false;
+    }
 
     cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
     cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
 
     return (rii.getM_Found() == 5 and rii.getS_Found() == 3);
 #endif
+  }
+
+  bool Tests::ratIIOptimalIterationTest() {
+#ifndef USE_SCALP
+    cout << "Tests::ratIIOptimalIterationTest: need ScaLP to test" << endl;
+    return true;
+#endif
+
+    int mMinII = 178;
+    int sMinII = 25;
+    double minII = double(mMinII)/double(sMinII);
+    auto integerII = (int)ceil(double(mMinII)/double(sMinII));
+    int sMax = -1;
+    auto maxListSize = -1;
+    // pair<int,int> iterateModuloOverSamples(int mMinII, int sMinII, int mLastII, int sLastII, int integerII, std::list<std::string> solverWishlist = {"Gurobi"}, int sStop=-1);
+    auto solutions = Utility::iterateModuloOverSamples(sMinII,mMinII,integerII,sMax,maxListSize);
+    /*
+    std::cout << "mMinII = " << mMinII << std::endl;
+    std::cout << "sMinII = " << sMinII << std::endl;
+    std::cout << "minII = " << minII << std::endl;
+    std::cout << "integerII = " << integerII << std::endl;
+     */
+    for(auto it : solutions) {
+      std::cout << "M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
+    }
   }
 
 

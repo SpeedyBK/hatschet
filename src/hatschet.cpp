@@ -321,6 +321,7 @@ int main(int argc, char *args[]) {
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
+        if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -668,7 +669,8 @@ int main(int argc, char *args[]) {
       }
 			auto *ratIILayer = dynamic_cast<HatScheT::RationalIISchedulerLayer*>(scheduler);
 			if(ratIILayer!=nullptr and isRationalIIScheduler) {
-				if (HatScheT::verifyRationalIIModuloSchedule(g, rm, ratIILayer->getStartTimeVector(), ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
+				if (HatScheT::verifyRationalIIModuloSchedule2(g, rm, ratIILayer->getStartTimeVector(),
+																											ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
 					cout << "Rational II Modulo schedule verified successfully" << endl;
 					cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
 				} else {

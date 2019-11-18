@@ -133,6 +133,7 @@ src/HatScheT/ResourceModel.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
+src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
@@ -155,7 +156,7 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-        src/HatScheT/scheduler/dev/SDSScheduler.cpp src/HatScheT/scheduler/dev/SDSScheduler.h)
+src/HatScheT/scheduler/dev/SDSScheduler.cpp)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -183,6 +184,7 @@ src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h
+src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/scheduler/dev/ModSDC.cpp
@@ -205,6 +207,7 @@ src/HatScheT/utility/writer/XMLResourceWriter.h
 src/HatScheT/utility/subgraphs/SCC.h
 src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
+src/HatScheT/scheduler/dev/SDSScheduler.h
 )
 
 IF (SCALP_H AND SCALP_LIB)

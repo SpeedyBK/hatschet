@@ -262,6 +262,23 @@ public:
   * @return
   */
  static pair<int,int> splitRational(double x);
+#ifdef USE_SCALP
+ /*!
+  * This algorithm finds the smallest fractional number M/S between mLastII/sLastII and mMax/sMax where M<mMin and S<sMin
+  * if sStop > 1: there is the additional constraint S<sStop+1
+  * minII_Q = mMinII / sMinII
+  * the last II for which no solution was found: mLastII / sLastII
+  * @param mMinII
+  * @param sMinII
+  * @param mLastII
+  * @param sLastII
+  * @param integerII minimum integer II - M/S will always be strictly smaller than integerII!
+  * (otherwise you would not need rational II scheduling...)
+  * @param sStop iteration limit => if sStop = -1: sStop = sMinII-1
+  * @return
+  */
+ static std::list<pair<int, int>> iterateModuloOverSamples(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
+#endif
 
  /*! Safely rounds a double down to the next integer, taking precision issues into account
  * Inputing 3.9999999999999968 will return 4
@@ -334,6 +351,14 @@ public:
   */
  static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
+    /*!
+		 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
+     * this is needed for data dependency constraints
+		 * @param distance
+		 * @param sample
+		 * @return
+		 */
+    static std::pair<int, int> getSampleIndexAndOffset(int distance, int sample, int samples, int modulo);
  /*!
   * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
   * @param g is the graph to transpose

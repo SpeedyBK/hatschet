@@ -95,13 +95,6 @@ namespace HatScheT {
 		int getM_Found(){return this->m_found;}
 	private:
 		/*!
-		 *
-		 * @param distance
-		 * @param sample
-		 * @return
-		 */
-		std::pair<int, int> getSampleIndexAndOffset(int distance, int sample);
-		/*!
 		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
 		 */
 		void constructProblem() override;

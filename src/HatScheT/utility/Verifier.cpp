@@ -19,6 +19,7 @@
 */
 
 #include <HatScheT/utility/Verifier.h>
+#include <HatScheT/utility/Utility.h>
 
 #include <vector>
 #include <map>
@@ -94,7 +95,7 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
   return true;
 }
 
-bool HatScheT::verifyRationalIIModuloSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
+bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
                                               vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence, int scheduleLength) {
 
     if (latencySequence.size() == 0) {
@@ -291,6 +292,66 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     /* 3) TODO: cycle-time constraints are obeyed */
 
     return true;
+}
+
+bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int>> &schedule, int samples, int modulo) {
+  if (schedule.empty()) {
+    cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
+    return false;
+  }
+
+  /* 1) precedence edges are obeyed */
+  for (auto *e : g.Edges()) {
+    Vertex *vSrc = &e->getVertexSrc();
+    Vertex *vDst = &e->getVertexDst();
+
+    for (int i = 0; i < samples; i++) {
+      auto so = Utility::getSampleIndexAndOffset(e->getDistance(), i, samples, modulo);
+      auto sampleIndex = so.first;
+      auto offset = so.second;
+      if (schedule[i][vDst] - schedule[sampleIndex][vSrc] - rm.getVertexLatency(vSrc) + offset < 0) {
+        cout << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
+             << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
+        cerr << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
+             << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
+        return false;
+      }
+    }
+  }
+
+  /* 2)  modulo resource constraints*/
+  for (auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it) {
+    Resource *r = *it;
+    //unlimited
+    if (r->getLimit() == -1) continue;
+
+    //iterate over every timestep
+    //TODO resource limit in timestep mod m !!
+    for (int timeStep = 0; timeStep <= modulo; timeStep++) {
+      int instancesUsed = 0;
+      //iterate over schedules
+      for (auto S : schedule) {
+
+        //iterate over vertices
+        for (auto it2 = g.verticesBegin(); it2 != g.verticesEnd(); ++it2) {
+          Vertex *v = *it2;
+          //vertex of other resource
+          if (rm.getResource(v) != r) continue;
+          //other timestep assigned
+          if ((S[v] % modulo) != timeStep) continue;
+          else instancesUsed++;
+        }
+      }
+
+      if (instancesUsed > r->getLimit()) {
+        cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << modulo << ": used "
+             << instancesUsed << " of " << r->getLimit() << endl;
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 
