@@ -101,6 +101,8 @@ namespace HatScheT {
 
         this->scheduleFound = true;
       }
+
+      delete scheduler;
       attempts++;
     }
 
