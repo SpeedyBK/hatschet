@@ -504,5 +504,4 @@ namespace HatScheT
 		return verifyUnrolled and verifyOriginal;
 	}
 
-
 }

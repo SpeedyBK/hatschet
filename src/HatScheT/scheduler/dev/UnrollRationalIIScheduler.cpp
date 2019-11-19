@@ -203,7 +203,7 @@ namespace HatScheT {
     // verify rational II modulo schedule with original graph and resource model
     bool verify2 = HatScheT::verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
     if(verify1 != verify2) {
-      throw HatScheT::Exception("UnrollRationalIIScheduler::fillSolutionStructure: verifier for integer II modulo schedule != verifier for rational II modulo schedule -> one of them is buggy!");
+      std::cout << "UnrollRationalIIScheduler::fillSolutionStructure: verifier for integer II modulo schedule != verifier for rational II modulo schedule -> one of them is buggy!" << std::endl;
     }
     if(!verify1) {
       if(!this->quiet) {
