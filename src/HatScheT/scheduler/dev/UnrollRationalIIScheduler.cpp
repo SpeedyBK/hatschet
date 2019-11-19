@@ -99,9 +99,13 @@ namespace HatScheT {
             break;
         }
 
-
         this->scheduleFound = true;
 
+        //TODO change this when iteration is implemented!!!
+        this->modulo = this->m_start;
+        this->samples = this->s_start;
+
+        this->fillSolutionStructure(scheduler,&g_unrolled,&rm_unrolled);
       }
 
       delete scheduler;

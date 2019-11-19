@@ -272,6 +272,7 @@ namespace HatScheT
 
 				// verification
 				bool ver = this->verifySchedule();
+				if (ver == false) cout << "ATTENTION NonUniformRationalIIScheduler.schedule: Result is not verified! " << endl;
 
 				//determine whether rational minimum II was identified
 				if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
@@ -488,10 +489,12 @@ namespace HatScheT
 			}
 		}
 
-		std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED GRAPH:" << std::endl;
-		std::cout << g_unroll << std::endl;
-		std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
-		std::cout << rm_unroll << std::endl;
+		if(this->quiet == false) {
+      std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED GRAPH:" << std::endl;
+      std::cout << g_unroll << std::endl;
+      std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
+      std::cout << rm_unroll << std::endl;
+    }
 
 		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
 
