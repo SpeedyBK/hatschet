@@ -1522,8 +1522,8 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
 #endif
 
-    int mMinII = 178;
-    int sMinII = 25;
+    int mMinII = 11;
+    int sMinII = 10;
     double minII = double(mMinII)/double(sMinII);
     auto integerII = (int)ceil(double(mMinII)/double(sMinII));
     int sMax = -1;
@@ -1535,6 +1535,7 @@ bool Tests::compareModuloSchedulerTest() {
     std::cout << "sMinII = " << sMinII << std::endl;
     std::cout << "minII = " << minII << std::endl;
     std::cout << "integerII = " << integerII << std::endl;
+    std::cout << "Queue size:" << solutions.size() << std::endl;
 	 	std::cout << "M/S Queue:" << std::endl;
     for(auto it : solutions) {
       std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
