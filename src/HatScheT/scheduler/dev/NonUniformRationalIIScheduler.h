@@ -144,10 +144,6 @@ namespace HatScheT {
 		 */
 		void autoSetMAndS();
 		/*!
-		 * dito
-		 */
-		void autoSetNextMAndS();
-		/*!
 		 * container for ILP variables
 		 */
 		std::map<Vertex*,std::vector<ScaLP::Variable>> tVariables;
@@ -162,10 +158,6 @@ namespace HatScheT {
 		 * the minimum interger II that is possible
 		 */
 		int integerMinII;
-		/*!
-		 * buffer
-		 */
-		double tpBuffer;
 		/*!
 		 * flag
 		 */

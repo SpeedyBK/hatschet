@@ -18,7 +18,6 @@ namespace HatScheT
 		: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 	{
 		this->integerMinII = -1;
-		this->tpBuffer = 0.0f;
 		this->minRatIIFound = false;
 		this->maxLatencyConstraint = -1;
 		this->maxRuns = 1;
@@ -30,20 +29,19 @@ namespace HatScheT
 	}
 
 	void NonUniformRationalIIScheduler::resetContainer() {
-		this->latencySequence.clear();
 		this->tVariables.clear();
 		this->bVariables.clear();
 	}
 
-	void NonUniformRationalIIScheduler::setObjective()
-	{
+	void NonUniformRationalIIScheduler::setObjective() {
 		//supersink latency objective
 		ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink");
 
-		// it is enough to only consider the last insertion
-		// Todo: ask patrick if this is true
-		for(auto &v : this->g.Vertices())
-			this->solver->addConstraint(supersink - this->tVariables[v].back() >= 0);
+		for(auto &v : this->g.Vertices()) {
+			for (int s = 0; s < this->samples; ++s) {
+				this->solver->addConstraint(supersink - this->tVariables[v][s] >= 0);
+			}
+		}
 
 		this->solver->addConstraint(supersink>=0);
 		if(this->maxLatencyConstraint>0)
@@ -52,8 +50,7 @@ namespace HatScheT
 		this->solver->setObjective(ScaLP::minimize(supersink));
 	}
 
-	void NonUniformRationalIIScheduler::constructProblem()
-	{
+	void NonUniformRationalIIScheduler::constructProblem() {
 		if(this->maxLatencyConstraint == 0) {
 			throw HatScheT::Exception("NonUniformRationalIIScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
 		}
@@ -67,8 +64,7 @@ namespace HatScheT
 		Utility::printRationalIIMRT(this->startTimes, this->ratIIbindings, &this->resourceModel, this->modulo, this->latencySequence);
 	}
 
-	void NonUniformRationalIIScheduler::printScheduleToConsole()
-	{
+	void NonUniformRationalIIScheduler::printScheduleToConsole() {
 		cout << "----" << "Samples: " << this->samples << " mod: "
 				 << this->modulo << " maxLat: " << this->maxLatencyConstraint << endl;
 
@@ -146,33 +142,7 @@ namespace HatScheT
 		return allLifetimes;
 	}
 
-	void NonUniformRationalIIScheduler::autoSetNextMAndS(){
-		int currS = this->samples;
-		int currM = this->modulo;
-
-		//check whether it is useful to reduce the samples by 1 on this modulo
-		if(currS > 2){
-			double t = (double)(currS-1) / (double)currM ;
-			if(t >= this->tpBuffer and t >= ((double)1.0 / this->integerMinII)){
-				//in this case, it is still usefull to reduce s
-				//reduce s and schedule again
-				this->samples--;
-				return;
-			}
-		}
-
-		//when its not useful to reduce s anymore
-		//increase m and set s on the maximum possible value for this problem
-		this->modulo++;
-		this->samples = this->modulo-1;
-		double t = (double)this->samples / (double)(this->modulo);
-		while(t > (double)1/this->getMinII()){
-			this->samples--;
-			t = (double)this->samples / (double)(this->modulo);
-		}
-	}
-
-	vector<std::map<const Vertex *, int> > NonUniformRationalIIScheduler::getRationalIIBindings(){
+	vector<std::map<const Vertex *, int> > NonUniformRationalIIScheduler::getRationalIIBindings() {
 		//generate new binding when no binding is available
 		if(this->ratIIbindings.empty())
 			this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequence);
@@ -222,12 +192,14 @@ namespace HatScheT
 			cout << "------------------------" << endl;
 		}
 
-		//count runs, set maxRuns
-		int runs = 0;
-		int maxRuns = this->maxRuns;
-		if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
+		auto msQueue = getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		if(msQueue.empty()) {
+			throw HatScheT::Exception("NonUniformRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
+		}
 
-		while(runs < maxRuns){
+		for(auto it : msQueue) {
+			this->modulo = it.first;
+			this->samples = it.second;
 			if(!this->quiet) cout << "NonUniformRationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
 			//clear up and reset
 			this->solver->reset();
@@ -243,7 +215,7 @@ namespace HatScheT
 
 			if(!this->quiet) cout << "NonUniformRationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
 			//solve the current problem
-			if(this->writeLPFile) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
+			if(this->writeLPFile) this->solver->writeLP("NonUniformRationalIIScheduler_" + to_string(this->samples) + "_" + to_string(this->modulo) + ".lp");
 
 			//timestamp
 			this->begin = clock();
@@ -261,7 +233,6 @@ namespace HatScheT
 			//check result and act accordingly
 			if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
 				this->r = this->solver->getResult();
-				this->tpBuffer = (double)(this->samples) / (double)(this->modulo);
 
 				this->s_found = this->samples;
 				this->m_found = this->modulo;
@@ -273,8 +244,6 @@ namespace HatScheT
 				// verification
 				bool ver = this->verifySchedule();
 
-				//determine whether rational minimum II was identified
-				if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
 				//this->getRationalIIBindings();
 
 				if(!this->quiet) {
@@ -286,7 +255,7 @@ namespace HatScheT
 							 << endl;
 					cout << "NonUniformRationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
 							 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
-					cout << "NonUniformRationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
+					cout << "NonUniformRationalIIScheduler.schedule: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
 					cout << "------------------------" << endl;
 					this->printScheduleToConsole();
 				}
@@ -300,9 +269,6 @@ namespace HatScheT
 			if(this->scheduleFound) break;
 			else {
 				this->timeouts++;
-				this->tpBuffer = (double)this->modulo / (double)this->samples;
-				this->autoSetNextMAndS();
-				runs++;
 			}
 		}
 	}
@@ -487,11 +453,6 @@ namespace HatScheT
 				unrolledSchedule[v] = it.second;
 			}
 		}
-
-		std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED GRAPH:" << std::endl;
-		std::cout << g_unroll << std::endl;
-		std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
-		std::cout << rm_unroll << std::endl;
 
 		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
 
