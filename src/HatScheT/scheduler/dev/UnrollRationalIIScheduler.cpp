@@ -4,6 +4,7 @@
 
 #include "UnrollRationalIIScheduler.h"
 #include "HatScheT/utility/Utility.h"
+#include "HatScheT/utility/Verifier.h"
 #include "math.h"
 
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
@@ -100,6 +101,7 @@ namespace HatScheT {
 
 
         this->scheduleFound = true;
+
       }
 
       delete scheduler;
@@ -162,6 +164,50 @@ namespace HatScheT {
             new_g->createEdge(*v_src_mappings[i - distance], *v_dst_mappings[i], 0, e->getDependencyType());
           }
         }
+      }
+    }
+  }
+
+  void UnrollRationalIIScheduler::fillSolutionStructure(SchedulerBase* scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled) {
+    auto schedUnrolled =  scheduler->getSchedule();
+
+    // create a map for each sample insertion
+    this->startTimesVector.clear();
+    for(int s=0; s<this->samples; ++s) {
+      this->startTimesVector.emplace_back(std::map<Vertex*, int>());
+    }
+
+    // names of vertices in unrolled graph correspond to vertices in original graph as
+    // "*original_name*_0" ... "*original_name*_N" where N = #samples-1
+    for(auto v : this->g.Vertices()) {
+      for(int s=0; s<this->samples; ++s) {
+        auto vertexName = v->getName()+"_"+to_string(s);
+        Vertex* vertexUnrolled = nullptr;
+
+        // find vertex in unrolled graph - there is NO function getVertexByName :(
+        for(auto v2 : g_unrolled->Vertices()) {
+          if(v2->getName() == vertexName) {
+            vertexUnrolled = v2;
+            break;
+          }
+        }
+
+        // insert schedule time into startTimesVector
+        this->startTimesVector[s][v] = schedUnrolled[vertexUnrolled];
+      }
+    }
+
+    // verify schedules
+    // verify "normal" modulo schedule with unrolled graph and resource model
+    bool verify1 = HatScheT::verifyModuloSchedule(*g_unrolled,*rm_unrolled,schedUnrolled,this->modulo);
+    // verify rational II modulo schedule with original graph and resource model
+    bool verify2 = HatScheT::verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
+    if(verify1 != verify2) {
+      throw HatScheT::Exception("UnrollRationalIIScheduler::fillSolutionStructure: verifier for integer II modulo schedule != verifier for rational II modulo schedule -> one of them is buggy!");
+    }
+    if(!verify1) {
+      if(!this->quiet) {
+        std::cout << "UnrollRationalIIScheduler::fillSolutionStructure: Attention! Invalid schedule detected!" << std::endl;
       }
     }
   }

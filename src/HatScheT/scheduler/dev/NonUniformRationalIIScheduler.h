@@ -95,6 +95,14 @@ namespace HatScheT {
 		int getM_Found(){return this->m_found;}
 	private:
 		/*!
+		 * verify the found schedule (stored in startTimesVector)
+		 * 	1) based on rational II verifier
+		 * 	2) based on integer II verifier of unrolled graph
+		 * throw error if the verifiers lead to different results!
+		 * @return if the schedule is valid
+		 */
+		bool verifySchedule();
+		/*!
 		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
 		 */
 		void constructProblem() override;
