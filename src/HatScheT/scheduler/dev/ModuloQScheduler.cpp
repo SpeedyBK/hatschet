@@ -193,7 +193,7 @@ namespace HatScheT {
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																		 std::list<std::string> solverWishlist) :
-		SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist), maxSequenceIterations(1)
+		RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist), maxSequenceIterations(1)
 	{
 
 		this->computeMinII(&this->g, &this->resourceModel);

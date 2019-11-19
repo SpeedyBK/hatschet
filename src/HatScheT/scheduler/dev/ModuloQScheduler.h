@@ -100,7 +100,7 @@ namespace HatScheT {
 	};
 
 
-	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer {
+	class ModuloQScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer {
 	public:
 		/*!
 		 *

@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class UniformRationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+	class UniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
 	public:
 		/*!
 		 * Constructor

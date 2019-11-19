@@ -15,7 +15,7 @@
 namespace HatScheT
 {
 	NonUniformRationalIIScheduler::NonUniformRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-		: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 	{
 		this->integerMinII = -1;
 		this->minRatIIFound = false;
@@ -461,7 +461,7 @@ namespace HatScheT
       std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
       std::cout << rm_unroll << std::endl;
     }
-		
+
 		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
 
 		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);

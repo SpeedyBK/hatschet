@@ -25,7 +25,7 @@
 namespace HatScheT
 {
 
-RationalIISchedulerLayer::RationalIISchedulerLayer()
+RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel)
 {
   this->modulo = -1;
   this->samples = -1;

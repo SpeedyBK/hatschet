@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class NonUniformRationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
 	public:
 		/*!
 		 * Constructor

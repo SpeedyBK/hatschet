@@ -18,7 +18,7 @@ namespace HatScheT {
    */
   enum SchedulerType {MOOVAC, MODULOSDC, ED97};
 
-  class UnrollRationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+  class UnrollRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
   public:
     UnrollRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 

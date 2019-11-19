@@ -43,7 +43,7 @@ namespace HatScheT
  * Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
  *
  */
-class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
+class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
 {
 public:
   /*!

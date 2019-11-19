@@ -28,7 +28,7 @@
 namespace HatScheT
 {
 RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->consideredTimeSteps = 0;
   this->uniformSchedule = true;

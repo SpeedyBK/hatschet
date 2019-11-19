@@ -14,7 +14,7 @@
 namespace HatScheT {
 
   UnrollRationalIIScheduler::UnrollRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-  : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+  : RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist) {
 
     this->s_start = -1;
     this->m_start = -1;

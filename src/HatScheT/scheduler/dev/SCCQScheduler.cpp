@@ -14,7 +14,7 @@ namespace HatScheT {
 
 
 	SCCQScheduler::SCCQScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist) :
-		SchedulerBase(g, resourceModel), solverWishlist(solverWishlist), ILPSchedulerBase(solverWishlist)
+		RationalIISchedulerLayer(g, resourceModel), solverWishlist(solverWishlist), ILPSchedulerBase(solverWishlist)
 	{
 		this->computeMinII(&this->g, &this->resourceModel);
 		double minII = this->getMinII();

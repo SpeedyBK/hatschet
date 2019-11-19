@@ -20,6 +20,7 @@
 #pragma once
 
 #include <vector>
+#include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/base/ModuloSchedulerBase.h"
 
 namespace HatScheT
@@ -27,10 +28,10 @@ namespace HatScheT
 /*!
  * \brief The RationalIISchedulerLayer class providing information that is needed implement rational II modulo schedules
  */
-class RationalIISchedulerLayer : public ModuloSchedulerBase
+class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBase
 {
 public:
-  RationalIISchedulerLayer();
+  RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel);
   /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
