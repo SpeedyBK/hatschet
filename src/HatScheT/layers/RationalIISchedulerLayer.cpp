@@ -20,6 +20,7 @@
 
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/Utility.h>
+#include <cmath>
 
 namespace HatScheT
 {
@@ -29,5 +30,60 @@ RationalIISchedulerLayer::RationalIISchedulerLayer()
   this->modulo = -1;
   this->samples = -1;
 }
-	
+
+	std::list<pair<int, int>>
+	RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax, int maxListSize) {
+
+		std::list<std::pair<int,int>> moduloSamplePairs = {std::make_pair(mMinII,sMinII)}; // list of sorted M/S pairs
+		if(maxListSize==1) return moduloSamplePairs;
+
+		// II=4/3=8/6=12/9=... since 4/3 is the easiest to get a schedule for, all other fractions can be skipped!
+		std::list<std::pair<int,int>> skipMe;
+
+		if(sMax<0) sMax = sMinII;
+		if(maxListSize<0) maxListSize = sMinII * mMinII;
+
+		double rationalMinII = double(mMinII) / double(sMinII);
+
+		for(int s=2; s<sMax; ++s) {
+			auto mMin = (int)ceil(rationalMinII * s);
+			for(int m=mMin; m<integerII*s; ++m) {
+				// check if M/S pair can be skipped
+				bool skip = false;
+				for(auto it : skipMe) {
+					if(it.first == m and it.second == s) {
+						skip = true;
+						break;
+					}
+				}
+				if(skip) continue;
+
+				// insert all reducable fractions into skipMe
+				for(int ss=s; ss<sMax; ss+=s) {
+					auto mm = m * (ss/s);
+					skipMe.emplace_back(std::make_pair(mm,ss));
+				}
+
+				// insert m/s into sorted list
+				bool inserted = false;
+				for(auto it=moduloSamplePairs.begin(); it!=moduloSamplePairs.end(); ++it) {
+					auto mTemp = it->first;
+					auto stemp = it->second;
+					if(double(m) / double(s) < double(mTemp) / double(stemp)) {
+						moduloSamplePairs.insert(it,std::make_pair(m,s));
+						inserted = true;
+						break;
+					}
+				}
+				if(!inserted) moduloSamplePairs.emplace_back(std::make_pair(m,s));
+			}
+		}
+
+		if(moduloSamplePairs.size() > maxListSize) {
+			moduloSamplePairs.resize((unsigned int)maxListSize);
+		}
+
+		return moduloSamplePairs;
+	}
+
 }

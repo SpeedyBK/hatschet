@@ -1529,16 +1529,18 @@ bool Tests::compareModuloSchedulerTest() {
     int sMax = -1;
     auto maxListSize = -1;
     // pair<int,int> iterateModuloOverSamples(int mMinII, int sMinII, int mLastII, int sLastII, int integerII, std::list<std::string> solverWishlist = {"Gurobi"}, int sStop=-1);
-    auto solutions = Utility::iterateModuloOverSamples(sMinII,mMinII,integerII,sMax,maxListSize);
-    /*
+    auto solutions = RationalIISchedulerLayer::getRationalIIQueue(sMinII,mMinII,integerII,sMax,maxListSize);
+
     std::cout << "mMinII = " << mMinII << std::endl;
     std::cout << "sMinII = " << sMinII << std::endl;
     std::cout << "minII = " << minII << std::endl;
     std::cout << "integerII = " << integerII << std::endl;
-     */
+	 	std::cout << "M/S Queue:" << std::endl;
     for(auto it : solutions) {
-      std::cout << "M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
+      std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
     }
+
+    return true;
   }
 
 
