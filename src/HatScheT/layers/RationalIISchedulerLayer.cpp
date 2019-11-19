@@ -38,14 +38,14 @@ RationalIISchedulerLayer::RationalIISchedulerLayer()
 		if(maxListSize==1) return moduloSamplePairs;
 
 		// II=4/3=8/6=12/9=... since 4/3 is the easiest to get a schedule for, all other fractions can be skipped!
-		std::list<std::pair<int,int>> skipMe;
+		std::list<std::pair<int,int>> skipMe = {std::make_pair(mMinII,sMinII)};
 
 		if(sMax<0) sMax = sMinII;
 		if(maxListSize<0) maxListSize = sMinII * mMinII;
 
 		double rationalMinII = double(mMinII) / double(sMinII);
 
-		for(int s=2; s<sMax; ++s) {
+		for(int s=2; s<=sMax; ++s) {
 			auto mMin = (int)ceil(rationalMinII * s);
 			for(int m=mMin; m<integerII*s; ++m) {
 				// check if M/S pair can be skipped
@@ -59,7 +59,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer()
 				if(skip) continue;
 
 				// insert all reducable fractions into skipMe
-				for(int ss=s; ss<sMax; ss+=s) {
+				for(int ss=2*s; ss<=sMax; ss+=s) {
 					auto mm = m * (ss/s);
 					skipMe.emplace_back(std::make_pair(mm,ss));
 				}
