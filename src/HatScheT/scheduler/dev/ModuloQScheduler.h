@@ -197,7 +197,7 @@ namespace HatScheT {
 		 */
 		void resetContainer() override {}
 		/*!
-		 *
+		 * set ILP objective
 		 */
 		void setObjective() override;
 		/*!
