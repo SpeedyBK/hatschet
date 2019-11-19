@@ -39,6 +39,7 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
 
 ILPSchedulerBase::~ILPSchedulerBase()
 {
+  solver->reset();
   delete solver;
 }
 

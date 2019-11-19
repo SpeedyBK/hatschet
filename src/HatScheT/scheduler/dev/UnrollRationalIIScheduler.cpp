@@ -33,7 +33,7 @@ namespace HatScheT {
     this->scheduleFound = false;
 
     //check if start values ar set, if not auto set to minRatII
-    if(m_start == -1 or s_start == -1) {
+    if(this->m_start == -1 or this->s_start == -1) {
       throw Exception("UnrollRationalIIScheduler::schedule: S or M not set, not supported yet!");
     }
 
