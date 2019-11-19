@@ -33,6 +33,11 @@ class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBas
 public:
   RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel);
   /*!
+   * @brief
+   * @return
+   */
+  virtual int getLatency() final;
+  /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
    */
