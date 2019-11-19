@@ -1213,54 +1213,124 @@ bool Tests::compareModuloSchedulerTest() {
 
   bool Tests::sdsSchedulerTest() {
 
-    #ifdef USE_CADICAL
+  #ifdef USE_CADICAL
 
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
+    double timetoschedule = 0;
 
-      auto &ld = rm.makeResource("Load", 1, 1, 1);
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
 
-      auto &add = rm.makeResource("Adder", -1, 1, 1);
+    string resStr = "benchmarks/origami/fir_gen_RM.xml";
+    string graphStr = "benchmarks/origami/fir_gen.graphml";
+    readerRes.readResourceModel(resStr.c_str());
 
-      auto &st = rm.makeResource("Store", -1, 1, 1);
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
 
-      //Load operations:
-      Vertex &A = g.createVertex(0);
-      Vertex &B = g.createVertex(1);
-      Vertex &C = g.createVertex(2);
-      //Add operations:
-      Vertex &D = g.createVertex(3);
-      Vertex &E = g.createVertex(4);
-      //Store operations:
-      Vertex &F = g.createVertex(5);
+    /*
+    HatScheT::Graph g;
+    HatScheT::ResourceModel rm;
 
-      //Load operations:
-      rm.registerVertex(&A, &ld);
-      rm.registerVertex(&B, &ld);
-      rm.registerVertex(&C, &ld);
-      //Add operations:
-      rm.registerVertex(&D, &add);
-      rm.registerVertex(&E, &add);
-      //Store operations:
-      rm.registerVertex(&F, &st);
+    auto &ld = rm.makeResource("Load", 1, 1, 1);
 
-      //Edges:
-      g.createEdge(B, D, 0);
-      g.createEdge(C, D, 0);
-      g.createEdge(A, E, 0);
-      g.createEdge(D, E, 0);
-      g.createEdge(E, F, 0);
+    auto &add = rm.makeResource("Adder", -1, 1, 1);
 
-      SDSScheduler sds(g, rm);
-      sds.setSilent(false);
-      sds.setBindingType('S');
-      sds.schedule();
+    auto &st = rm.makeResource("Store", -1, 1, 1);
 
-      return false;
-    #else
-      //CaDiCaL not active! Test function disabled!
-      return true;
-    #endif
+    //Load operations:
+    Vertex &A = g.createVertex(0);
+    Vertex &B = g.createVertex(1);
+    Vertex &C = g.createVertex(2);
+    //Add operations:
+    Vertex &D = g.createVertex(3);
+    Vertex &E = g.createVertex(4);
+    //Store operations:
+    Vertex &F = g.createVertex(5);
+
+    //Load operations:
+    rm.registerVertex(&A, &ld);
+    rm.registerVertex(&B, &ld);
+    rm.registerVertex(&C, &ld);
+    //Add operations:
+    rm.registerVertex(&D, &add);
+    rm.registerVertex(&E, &add);
+    //Store operations:
+    rm.registerVertex(&F, &st);
+
+    //Edges:
+    g.createEdge(B, D, 0);
+    g.createEdge(C, D, 0);
+    g.createEdge(A, E, 0);
+    g.createEdge(D, E, 0);
+    g.createEdge(E, F, 0);
+    */
+
+    cout << "Display Graph:" << endl;
+    cout << "SRC " << "-- Distance --" << "DST" << endl;
+    for (auto &it : g.Edges()){
+      cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
+    }
+    cout << "*******************************************************" << endl << endl;
+    cout << "Display Resources:" << endl;
+    cout << "Name: Limit; Latency; Blockingtime " << endl;
+    for (auto &it : rm.Resources()){
+      cout << it->getName() << ": " << it->getLimit() << "; " << it->getLatency() << "; " << it->getBlockingTime() << endl;
+    }
+    cout << "*******************************************************" << endl << endl;
+
+    cout << "SDS:" << endl;
+    SDSScheduler sds(g, rm);
+    cout << "*******************************************************" << endl << endl;
+    sds.setSilent(false);
+    sds.setBindingType('S');
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    sds.schedule();
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
+    auto sdssched = sds.getSchedule();
+    cout << endl << "Schedule for II = " << sds.getII() << ":" << endl;
+    for (auto &it : sdssched) {
+      it.second +=2; //ToDo: Fix this shit
+      cout << it.first->getName() << " : " << it.second << endl;
+    }
+
+    if(verifyModuloSchedule(g, rm, sdssched, sds.getII())){
+      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    }else {
+      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+    }
+
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;
+    timetoschedule = 0;
+
+    cout << endl << endl;
+
+    cout << "MODSDC:" << endl;
+    ModSDC MSDC (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
+    t1 = std::chrono::high_resolution_clock::now();
+    MSDC.schedule();
+    t2 = std::chrono::high_resolution_clock::now();
+    timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+    timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
+    auto sched = MSDC.getSchedule();
+
+    for (auto &it : sched){
+      cout << it.first->getName() << " : " << it.second << endl;
+    }
+    if (verifyModuloSchedule(g, rm, sched, MSDC.getII())){
+      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    }else {
+      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+    }
+
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;
+    return false;
+  #else
+    //CaDiCaL not active! Test function disabled!
+    return true;
+  #endif
   }
 
 	bool Tests::rationalIISCCQTest() {
@@ -1459,16 +1529,18 @@ bool Tests::compareModuloSchedulerTest() {
     int sMax = -1;
     auto maxListSize = -1;
     // pair<int,int> iterateModuloOverSamples(int mMinII, int sMinII, int mLastII, int sLastII, int integerII, std::list<std::string> solverWishlist = {"Gurobi"}, int sStop=-1);
-    auto solutions = Utility::iterateModuloOverSamples(sMinII,mMinII,integerII,sMax,maxListSize);
-    /*
+    auto solutions = RationalIISchedulerLayer::getRationalIIQueue(sMinII,mMinII,integerII,sMax,maxListSize);
+
     std::cout << "mMinII = " << mMinII << std::endl;
     std::cout << "sMinII = " << sMinII << std::endl;
     std::cout << "minII = " << minII << std::endl;
     std::cout << "integerII = " << integerII << std::endl;
-     */
+	 	std::cout << "M/S Queue:" << std::endl;
     for(auto it : solutions) {
-      std::cout << "M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
+      std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
     }
+
+    return true;
   }
 
 

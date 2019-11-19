@@ -67,6 +67,19 @@ public:
    * @return
    */
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
+  /*!
+   * this algorithm creates a sorted queue with M/S pairs in the interval [minII_Q, minII_N)
+   * list is sorted by the values of M/S
+   * first list element is always mMinII/sMinII which corresponds to II = minII_Q
+   * the list contains only non-reducable fractions! So if e.g. M/S = 3/2 is in the list, 6/4, 9/6, ... will NOT be!
+   * @param sMinII samples for minII_Q
+   * @param mMinII modulo for minII_Q
+   * @param integerII minimum integer II (minII_N)
+   * @param sMax maximum number of samples => all M/S pairs have S leq sMax -> -1: sMax = sMinII
+   * @param maxListSize only return the best maxListSize M/S pairs -> -1: return all found M/S pairs
+   * @return first pair element: M, second pair element: S
+   */
+  static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
 protected:
   /*!
    * the bindings of rational II schedule

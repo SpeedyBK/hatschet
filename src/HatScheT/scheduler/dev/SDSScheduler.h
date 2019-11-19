@@ -31,10 +31,6 @@
  * G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
  * Algorithmica 1999
  *
- * Edge-Weight Transformation:
- * Jack Edmonds, Richard M. Karp; Theoretical Improvements in Algorithmic Efficiency for Network Flow Problems;
- * Journal of the ACM 1972
- *
  * Fibonacci Heap:
  * Michael L. Fredman, Robert E. Tarjan; Fibonacci Heaps and Their Uses in Improved Network Optimization Algorithms
  * Journal of the Association for Computing Machinery 1987
@@ -50,6 +46,7 @@
 #include <cstdlib>
 
 #include "cadical.hpp"
+#include "HatScheT/utility/Verifier.h"
 
 namespace HatScheT {
 
@@ -221,6 +218,11 @@ namespace HatScheT {
      */
     vector<vector<int>> conflictClauses;
 
+    /*!
+     * Flag from SAT-Solver, if problem is not satisfiable
+     */
+    bool unsatisiable;
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
@@ -239,8 +241,19 @@ namespace HatScheT {
 
       Edge& getEdge(const Vertex *srcV, const Vertex *dstV);
 
+      void setSilent(bool quiet = true) { this->silent = quiet; }
+
+    private:
+
+      bool silent = true;
+
     };
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*!
+     * Bellman Ford Algorithm so solve SDC-Problems.
+     */
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class BellmanFordSDC {
 
     public:
@@ -275,7 +288,9 @@ namespace HatScheT {
        */
       void setSilent(bool quiet) {this -> silent = quiet;}
 
+      void increaseMinLatency();
 
+      void printConstraintGraph();
 
     private:
 

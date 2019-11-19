@@ -77,6 +77,10 @@ namespace HatScheT {
     virtual void constructProblem() override {};
     virtual void setObjective() override {};
     virtual void resetContainer() override {};
+    /*!
+		 * fill interface to pass values to next step in the tool flow after solving
+		 */
+    void fillSolutionStructure(SchedulerBase * scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled);
 
   };
 }
