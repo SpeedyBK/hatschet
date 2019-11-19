@@ -86,11 +86,6 @@ public:
    */
    virtual vector<std::map<const Vertex*,int> > getRationalIIBindings();
   /*!
-   *
-   * @return the schedule length / sample latency of the determined rational II modulo schedule
-   */
-  virtual int getScheduleLength();
-  /*!
    * print the rational II modulo schedule
    */
   void printScheduleToConsole();

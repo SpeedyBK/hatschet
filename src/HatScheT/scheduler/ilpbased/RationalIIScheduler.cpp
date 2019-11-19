@@ -547,21 +547,6 @@ void RationalIIScheduler::fillSolutionStructure() {
   }
 }
 
-int RationalIIScheduler::getScheduleLength() {
-  if(this->scheduleFound== false) return -1;
-
-  int maxTime=-1;
-
-  for (std::pair<Vertex *, int> vtPair : this->startTimesVector[0]) {
-    Vertex *v = vtPair.first;
-
-    if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
-      maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
-  }
-
-  return maxTime;
-}
-
 vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
   //generate new binding when no binding is available
   if(this->ratIIbindings.size() == 0)

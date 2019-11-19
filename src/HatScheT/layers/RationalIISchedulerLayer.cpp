@@ -30,7 +30,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
   this->samples = -1;
 }
 
-int RationalIISchedulerLayer::getLatency() {
+int RationalIISchedulerLayer::getScheduleLength() {
 	int latency = 0;
 
 	for(auto it : this->startTimesVector) {

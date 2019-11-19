@@ -61,9 +61,6 @@ namespace HatScheT {
     virtual vector<std::map<const Vertex*,int> > getRationalIIBindings() override {
       throw Exception("UnrollRationalIIScheduler.getRationalIIBindings: not implemented yet!");
     };
-    virtual int getScheduleLength()override {
-      throw Exception("UnrollRationalIIScheduler.getScheduleLength: not implemented yet!");
-    };
 
   private:
     SchedulerType scheduler;

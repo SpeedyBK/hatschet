@@ -36,7 +36,7 @@ public:
    * @brief
    * @return
    */
-  virtual int getLatency() final;
+  int getScheduleLength() final;
   /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
