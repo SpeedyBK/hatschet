@@ -1215,6 +1215,8 @@ bool Tests::compareModuloSchedulerTest() {
 
   #ifdef USE_CADICAL
 
+    //ToDo Problems for: fir6dlms, fir_GM, fir_hilb, fir_lms, fir_SAM, fir_SHI, fir_srg, iir4
+
     double timetoschedule = 0;
 
     HatScheT::ResourceModel rm;
@@ -1275,6 +1277,9 @@ bool Tests::compareModuloSchedulerTest() {
     cout << "Display Resources:" << endl;
     cout << "Name: Limit; Latency; Blockingtime " << endl;
     for (auto &it : rm.Resources()){
+      /*if (it->getLimit() != -1){
+        it->setLimit(-1);
+      }*/
       cout << it->getName() << ": " << it->getLimit() << "; " << it->getLatency() << "; " << it->getBlockingTime() << endl;
     }
     cout << "*******************************************************" << endl << endl;
@@ -1292,7 +1297,6 @@ bool Tests::compareModuloSchedulerTest() {
     auto sdssched = sds.getSchedule();
     cout << endl << "Schedule for II = " << sds.getII() << ":" << endl;
     for (auto &it : sdssched) {
-      it.second +=2; //ToDo: Fix this shit
       cout << it.first->getName() << " : " << it.second << endl;
     }
 

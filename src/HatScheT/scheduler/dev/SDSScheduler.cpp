@@ -189,13 +189,21 @@ namespace HatScheT {
           cout << endl;
         }
         if (unsatisiable){
+          cout << "UnSAT detected!" << endl;
           bfsdc.increaseMinLatency();
           conflictClauses.clear();
           unsatisiable = false;
         }
       } else {
+        cout << "SAT detected!" << endl;
+        int minimum = INT_MAX;
+        for (auto &it : sdcSolution.first){
+          if(it.second < minimum){
+            minimum = it.second;
+          }
+        }
         for (auto &it : sdcSolution.first) {
-          startTimes.insert(make_pair(&this->g.getVertexById(it.first->getId()), it.second));
+          startTimes.insert(make_pair(&this->g.getVertexById(it.first->getId()), it.second-minimum));
         }
         break;
       }
