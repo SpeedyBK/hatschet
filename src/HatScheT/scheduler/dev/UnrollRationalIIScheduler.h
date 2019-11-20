@@ -39,12 +39,6 @@ namespace HatScheT {
       this->s_start = s;
       this->m_start = m;
     };
-    int getS_Start(){
-      return this->s_start;
-    }
-    int getM_Start() {
-      return this->m_start;
-    }
 
     void setIntIIScheduler(SchedulerType t) {
       this->scheduler = t;
@@ -67,8 +61,6 @@ namespace HatScheT {
     std::list<std::string> solverWishlist;
 
     void unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s);
-    int s_start;
-    int m_start;
 
 
     virtual void constructProblem() override {};

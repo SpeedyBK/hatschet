@@ -107,6 +107,11 @@ public:
    */
   static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
 protected:
+	/*!
+	 * this function sets the s and m values in a way that not needed values are skipped
+	 * and the rational II becomes as small as possible
+	 */
+	void autoSetMAndS();
   /*!
    * the bindings of rational II schedule
    */
@@ -139,6 +144,10 @@ protected:
 	 * @brief the identified s value
 	 */
 	int m_found;
+	/*!
+	 * the minimum interger II that is possible
+	 */
+	int integerMinII;
   /*!
    * the final rational II schedule
    */

@@ -34,90 +34,108 @@ namespace HatScheT {
 
 	void SCCQScheduler::schedule() {
 		this->scheduleFound = false;
-		if(!this->quiet) {
-			std::cout << "SCC Q SCHEDULER graph: " << std::endl;
-			std::cout << this->g << std::endl;
-			std::cout << "SCC Q SCHEDULER resource model: " << std::endl;
-			std::cout << this->resourceModel << std::endl;
-			std::cout << "M: " << this->modulo << std::endl;
-			std::cout << "S: " << this->samples << std::endl;
+
+		// set s_start and m_start
+		this->autoSetMAndS();
+		this->s_start = samples;
+		this->m_start = modulo;
+
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		if(msQueue.empty()) {
+			throw HatScheT::Exception("UnrollRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
 		}
 
-		//timestamp
-		this->begin = clock();
-		// find SCCs
-		KosarajuSCC k(this->g);
-		k.setQuiet();
-		auto sccs = k.getSCCs();
+		for(auto it : msQueue) {
+			this->modulo = it.first;
+			this->samples = it.second;
 
-		// schedule SCCs
-		auto p = this->getSCCSchedule(sccs);
-		auto sccScheduleValid = p.first;
-		auto sccSchedule = p.second;
+			if (!this->quiet) {
+				std::cout << "SCC Q SCHEDULER graph: " << std::endl;
+				std::cout << this->g << std::endl;
+				std::cout << "SCC Q SCHEDULER resource model: " << std::endl;
+				std::cout << this->resourceModel << std::endl;
+				std::cout << "M: " << this->modulo << std::endl;
+				std::cout << "S: " << this->samples << std::endl;
+			}
 
-		if(!sccScheduleValid) {
-			if(!this->quiet) std::cout << "SCC scheduling unsuccessful for S/M = " << this->samples << "/" << this->modulo << std::endl;
-			this->II = -1;
-			this->modulo = -1;
-			this->samples = -1;
-			this->scheduleFound = false;
-			this->startTimes.clear();
-			this->startTimesVector.clear();
+			//timestamp
+			this->begin = clock();
+			// find SCCs
+			KosarajuSCC k(this->g);
+			k.setQuiet();
+			auto sccs = k.getSCCs();
+
+			// schedule SCCs
+			auto p = this->getSCCSchedule(sccs);
+			auto sccScheduleValid = p.first;
+			auto sccSchedule = p.second;
+
+			if (!sccScheduleValid) {
+				if (!this->quiet)
+					std::cout << "SCC scheduling unsuccessful for S/M = " << this->samples << "/" << this->modulo << std::endl;
+				this->II = -1;
+				this->modulo = -1;
+				this->samples = -1;
+				this->scheduleFound = false;
+				this->startTimes.clear();
+				this->startTimesVector.clear();
+				this->end = clock();
+				if (this->solvingTime == -1.0) this->solvingTime = 0.0;
+				this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+				continue;
+			}
+
+			if (!this->quiet) {
+				// print schedule for debugging reasons
+				std::cout << "scc schedule:" << std::endl;
+				for (auto it2 : sccSchedule) {
+					auto v = it2.first;
+					auto t = it2.second.first;
+					auto id = it2.second.second;
+					std::cout << "    " << v->getName() << ": " << t << ", " << id << std::endl;
+				}
+				// print MRT shape with already inserted SCCs
+				this->mrt.print();
+			}
+
+			// determine start times based on MRT and DFG
+			determineStartTimes(sccs, sccSchedule);
+
+			// optimize start times if possible
+			this->optimizeStartTimes();
+			//timestamp
 			this->end = clock();
-			if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-			this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
-			return;
-		}
+			//log time
+			if (this->solvingTime == -1.0) this->solvingTime = 0.0;
+			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
 
-		if(!this->quiet) {
-			// print schedule for debugging reasons
-			std::cout << "scc schedule:" << std::endl;
-			for(auto it : sccSchedule) {
-				auto v = it.first;
-				auto t = it.second.first;
-				auto id = it.second.second;
-				std::cout << "    " << v->getName() << ": " << t << ", " << id << std::endl;
+			// fill ratII start times vector
+			for (auto II : this->initiationIntervals) {
+				std::map<Vertex *, int> tempStartTimes;
+				for (auto it2 : this->startTimes) {
+					auto v = it2.first;
+					auto t = it2.second;
+					tempStartTimes[v] = t + II;
+				}
+				this->startTimesVector.emplace_back(tempStartTimes);
 			}
-			// print MRT shape with already inserted SCCs
-			this->mrt.print();
-		}
 
-		// determine start times based on MRT and DFG
-		determineStartTimes(sccs, sccSchedule);
-
-		// optimize start times if possible
-		this->optimizeStartTimes();
-		//timestamp
-		this->end = clock();
-		//log time
-		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
-
-		// fill ratII start times vector
-		for(auto II : this->initiationIntervals) {
-			std::map<Vertex*,int> tempStartTimes;
-			for(auto it : this->startTimes) {
-				auto v = it.first;
-				auto t = it.second;
-				tempStartTimes[v] = t+II;
-			}
-			this->startTimesVector.emplace_back(tempStartTimes);
-		}
-
-		// print ratII start times
-		if(!this->quiet) {
-			std::cout << "Rat II Start times:" << std::endl;
-			for (unsigned int i = 0; i < this->startTimesVector.size(); ++i) {
-				auto startT = this->startTimesVector[i];
-				std::cout << "  Start time vector " << i << ":" << std::endl;
-				for (auto it : startT) {
-					std::cout << "    " << it.first->getName() << " - " << it.second << std::endl;
+			// print ratII start times
+			if (!this->quiet) {
+				std::cout << "Rat II Start times:" << std::endl;
+				for (unsigned int i = 0; i < this->startTimesVector.size(); ++i) {
+					auto startT = this->startTimesVector[i];
+					std::cout << "  Start time vector " << i << ":" << std::endl;
+					for (auto it : startT) {
+						std::cout << "    " << it.first->getName() << " - " << it.second << std::endl;
+					}
 				}
 			}
-		}
 
-		this->scheduleFound = true;
-		this->II = (double)(this->modulo) / (double)(this->samples);
+			this->scheduleFound = true;
+			this->II = (double) (this->modulo) / (double) (this->samples);
+			break;
+		}
 	}
 
 	std::pair<bool,std::map<Vertex *, pair<int, int>>> SCCQScheduler::getSCCSchedule(std::vector<SCC *> &sccs) {
@@ -175,7 +193,6 @@ namespace HatScheT {
 		mq.setSamples(this->samples);
 		mq.setModulo(this->modulo);
 		mq.setMaxLatencyConstraint(this->getMaxLatencyConstraint());
-		mq.setMaxLatencySequenceIterations(1);
 		mq.schedule();
 
 		if(!tempG.isEmpty()) {

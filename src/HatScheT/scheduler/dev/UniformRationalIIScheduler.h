@@ -61,17 +61,6 @@ namespace HatScheT {
 		 * @brief print the MRTs of all resources after rational II scheduling and binding
 		 */
 		void printBindingToConsole();
-		/*!
-		 * @brief the edgePortMapping can be used to optmize the binding in order
-		 * to minimize the effort for MUX hardware
-		 * @param epm
-		 */
-		void setedgePortMapping(map<Edge*, pair<int, int> > epm){
-			this->edgePortMapping = epm;
-		}
-		map<Edge*, pair<int, int> > getedgePortMapping(){
-			return this->edgePortMapping;
-		}
 	private:
 		/*!
 		 * initiation intervals for the found schedule
@@ -122,21 +111,12 @@ namespace HatScheT {
 		 */
 		void fillSolutionStructure();
 		/*!
-		 * this function sets the s and m values in a way that not needed values are skipped
-		 * and the rational II becomes as small as possible
-		 */
-		void autoSetMAndS();
-		/*!
 		 * calc distance between two samples in clock cycles
 		 * @param d edge distance
 		 * @param startIndex sample index
 		 * @return
 		 */
 		int getSampleDistanceAsInt(int d, int startIndex);
-		/*!
-		 * dito
-		 */
-		void autoSetNextMAndS();
 		/*!
 		 * container for ILP variables
 		 */
@@ -148,10 +128,6 @@ namespace HatScheT {
 		 * second index of b-Matrix: modulo slot
 		 */
 		std::map<const Vertex*,std::vector<std::vector<ScaLP::Variable>>> bVariables;
-		/*!
-		 * the minimum interger II that is possible
-		 */
-		int integerMinII;
 		/*!
 		 * buffer
 		 */

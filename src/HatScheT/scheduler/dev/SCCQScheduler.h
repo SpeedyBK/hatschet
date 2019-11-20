@@ -8,6 +8,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/subgraphs/SCC.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -15,7 +16,7 @@
 
 namespace HatScheT {
 
-	class SCCQScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
+	class SCCQScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
 	public:
 		/*!
 		 *

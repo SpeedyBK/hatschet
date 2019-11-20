@@ -4,7 +4,7 @@
 
 #include "NonUniformRationalIIScheduler.h"
 #include <iomanip>
-#include <math.h>
+#include <cmath>
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
@@ -92,23 +92,6 @@ namespace HatScheT
 		cout << "-------" << endl;
 	}
 
-	void NonUniformRationalIIScheduler::autoSetMAndS() {
-		double minII = this->getMinII();
-		//ceiling
-		this->integerMinII = (int)ceil(minII);
-		pair<int,int> frac =  Utility::splitRational(minII);
-
-		if(!this->quiet) {
-			cout << "------------------------" << endl;
-			cout << "NonUniformRationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
-			cout << "NonUniformRationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
-			cout << "------------------------" << endl;
-		}
-
-		this->samples = frac.second;
-		this->modulo = frac.first;
-	}
-
 	std::map<Edge*,int> NonUniformRationalIIScheduler::getLifeTimes(){
 		throw HatScheT::Exception("NonUniformRationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
 	}
@@ -163,7 +146,7 @@ namespace HatScheT
 		this->scheduleFound = false;
 
 		//experimental auto set function for the start values of modulo and sample
-		if(this->samples <= 0 or this->modulo <= 0) this->autoSetMAndS();
+		this->autoSetMAndS();
 		this->s_start = this->samples;
 		this->m_start = this->modulo;
 
@@ -192,7 +175,7 @@ namespace HatScheT
 			cout << "------------------------" << endl;
 		}
 
-		auto msQueue = getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
 		if(msQueue.empty()) {
 			throw HatScheT::Exception("NonUniformRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
 		}
@@ -228,7 +211,10 @@ namespace HatScheT
 			if(this->solvingTime == -1.0) this->solvingTime = 0.0;
 			this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
-			if(!this->quiet) cout << "Finished solving: " << stat << endl;
+			if(!this->quiet) {
+				cout << "Finished solving: " << stat << endl;
+				cout << "ScaLP results: " << this->solver->getResult() << endl;
+			}
 
 			//check result and act accordingly
 			if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
@@ -368,14 +354,14 @@ namespace HatScheT
 
 		// set start times to the start times of the first sample to not leave it empty
 		for(auto &v : this->g.Vertices()) {
-			this->startTimes[v] = (int)this->r.values[this->tVariables[v][0]];
+			this->startTimes[v] = (int)std::round(this->r.values[this->tVariables[v][0]]);
 		}
 
 		// set start times vector
 		for(int i=0; i<this->samples; ++i) {
 			std::map<Vertex*,int> startTimesTemp;
 			for(auto &v : this->g.Vertices()) {
-				startTimesTemp[v] = (int)this->r.values[this->tVariables[v][i]];
+				startTimesTemp[v] = (int)std::round(this->r.values[this->tVariables[v][i]]);
 			}
 			this->startTimesVector.emplace_back(startTimesTemp);
 		}

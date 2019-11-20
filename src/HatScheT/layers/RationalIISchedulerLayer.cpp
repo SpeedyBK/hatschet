@@ -110,4 +110,21 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	return moduloSamplePairs;
 }
 
+	void RationalIISchedulerLayer::autoSetMAndS() {
+		double minII = this->getMinII();
+		this->integerMinII = (int)ceil(minII);
+
+		if(this->samples<1 or this->modulo<1) {
+			pair<int,int> frac =  Utility::splitRational(minII);
+			if(!this->quiet) {
+				cout << "------------------------" << endl;
+				cout << "RationalIISchedulerLayer.autoSetMAndS: auto setting samples to " << frac.second << endl;
+				cout << "RationalIISchedulerLayer.autoSetMAndS:auto setting modulo to " << frac.first << endl;
+				cout << "------------------------" << endl;
+			}
+			this->samples = frac.second;
+			this->modulo = frac.first;
+		}
+	}
+
 }

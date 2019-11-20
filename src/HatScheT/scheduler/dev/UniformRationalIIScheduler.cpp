@@ -110,23 +110,6 @@ namespace HatScheT
 		cout << "-------" << endl;
 	}
 
-	void UniformRationalIIScheduler::autoSetMAndS() {
-		double minII = this->getMinII();
-		//ceiling
-		this->integerMinII = (int)ceil(minII);
-		pair<int,int> frac =  Utility::splitRational(minII);
-
-		if(!this->quiet) {
-			cout << "------------------------" << endl;
-			cout << "UniformRationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
-			cout << "UniformRationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
-			cout << "------------------------" << endl;
-		}
-
-		this->samples = frac.second;
-		this->modulo = frac.first;
-	}
-
 	std::map<Edge*,int> UniformRationalIIScheduler::getLifeTimes(){
 		throw HatScheT::Exception("UniformRationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
 	}
@@ -157,32 +140,6 @@ namespace HatScheT
 		return allLifetimes;
 	}
 
-	void UniformRationalIIScheduler::autoSetNextMAndS(){
-		int currS = this->samples;
-		int currM = this->modulo;
-
-		//check whether it is useful to reduce the samples by 1 on this modulo
-		if(currS > 2){
-			double t = (double)(currS-1) / (double)currM ;
-			if(t >= this->tpBuffer and t >= ((double)1.0 / this->integerMinII)){
-				//in this case, it is still usefull to reduce s
-				//reduce s and schedule again
-				this->samples--;
-				return;
-			}
-		}
-
-		//when its not useful to reduce s anymore
-		//increase m and set s on the maximum possible value for this problem
-		this->modulo++;
-		this->samples = this->modulo-1;
-		double t = (double)this->samples / (double)(this->modulo);
-		while(t > (double)1/this->getMinII()){
-			this->samples--;
-			t = (double)this->samples / (double)(this->modulo);
-		}
-	}
-
 	vector<std::map<const Vertex *, int> > UniformRationalIIScheduler::getRationalIIBindings(){
 		//generate new binding when no binding is available
 		if(this->ratIIbindings.empty())
@@ -204,7 +161,7 @@ namespace HatScheT
 		this->scheduleFound = false;
 
 		//experimental auto set function for the start values of modulo and sample
-		if(this->samples <= 0 or this->modulo <= 0) this->autoSetMAndS();
+		this->autoSetMAndS();
 		this->s_start = this->samples;
 		this->m_start = this->modulo;
 
@@ -234,12 +191,14 @@ namespace HatScheT
 			cout << "------------------------" << endl;
 		}
 
-		//count runs, set maxRuns
-		int runs = 0;
-		int maxRuns = this->maxRuns;
-		if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		if(msQueue.empty()) {
+			throw HatScheT::Exception("NonUniformRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
+		}
 
-		while(runs < maxRuns){
+		for(auto it : msQueue) {
+			this->modulo = it.first;
+			this->samples = it.second;
 			if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
 			//clear up and reset
 			this->solver->reset();
@@ -318,13 +277,11 @@ namespace HatScheT
 				this->scheduleFound = false;
 			}
 
-			//break while loop when a schedule was found
+			//break for loop when a schedule was found
 			if(this->scheduleFound) break;
 			else {
 				this->timeouts++;
 				this->tpBuffer = (double)this->modulo / (double)this->samples;
-				this->autoSetNextMAndS();
-				runs++;
 			}
 		}
 	}

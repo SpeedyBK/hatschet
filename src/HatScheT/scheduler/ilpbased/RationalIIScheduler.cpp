@@ -218,7 +218,7 @@ void RationalIIScheduler::schedule()
   this->scheduleFound = false;
 
   //experimental auto set function for the start values of modulo and sample
-  if(this->samples <= 0 or this->modulo <= 0) this->autoSetMAndS();
+  this->autoSetMAndS();
   this->s_start = this->samples;
   this->m_start = this->modulo;
 
@@ -264,11 +264,14 @@ void RationalIIScheduler::schedule()
   }
 
   //count runs, set maxRuns
-  int runs = 0;
-  int maxRuns = this->maxRuns;
-  if(maxRuns == -1) maxRuns = 1000000; // 'infinity'
+  auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+  if(msQueue.empty()) {
+    throw HatScheT::Exception("UnrollRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
+  }
 
-  while(runs < maxRuns){
+  for(auto it : msQueue) {
+    this->modulo = it.first;
+    this->samples = it.second;
     if(this->quiet==false) cout << "RationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
     //clear up and reset
     this->solver->reset();
@@ -357,8 +360,6 @@ void RationalIIScheduler::schedule()
     else {
       this->timeouts++;
       this->tpBuffer = (double)this->modulo / (double)this->samples;
-      this->autoSetNextMAndS();
-      runs++;
     }
   }
 }
@@ -372,23 +373,6 @@ void RationalIIScheduler::setModuloConstraints() {
       }
     }
   }
-}
-
-void RationalIIScheduler::autoSetMAndS() {
-  double minII = this->getMinII();
-  //ceiling
-  this->integerMinII = ceil(minII);
-  pair<int,int> frac =  Utility::splitRational(minII);
-
-  if(this->quiet==false) {
-    cout << "------------------------" << endl;
-    cout << "RationalIIScheduler.autoSetMAndS: auto setting samples to " << frac.second << endl;
-    cout << "RationalIIScheduler.autoSetMAndS:auto setting modulo to " << frac.first << endl;
-    cout << "------------------------" << endl;
-  }
-
-  this->samples = frac.second;
-  this->modulo = frac.first;
 }
 
 std::map<Edge*,int> RationalIIScheduler::getLifeTimes(){

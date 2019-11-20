@@ -35,18 +35,23 @@ namespace HatScheT {
     this->scheduleFound = false;
 
     //check if start values ar set, if not auto set to minRatII
-    if(this->m_start == -1 or this->s_start == -1) {
-      throw Exception("UnrollRationalIIScheduler::schedule: S or M not set, not supported yet!");
+    this->autoSetMAndS();
+    this->s_start = this->samples;
+    this->m_start = this->modulo;
+
+    auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+    if(msQueue.empty()) {
+      throw HatScheT::Exception("UnrollRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
     }
 
-    int attempts = 1;
-
-    while(attempts <= this->maxRuns and this->scheduleFound == false) {
+    for(auto it : msQueue) {
+      this->modulo = it.first;
+      this->samples = it.second;
       Graph g_unrolled;
       ResourceModel rm_unrolled;
 
       //unroll the input graph according to s and m
-      this->unroll(g_unrolled, rm_unrolled, this->s_start);
+      this->unroll(g_unrolled, rm_unrolled, this->samples);
 
       HatScheT::SchedulerBase *scheduler;
 
@@ -102,15 +107,14 @@ namespace HatScheT {
 
         this->scheduleFound = true;
 
-        //TODO change this when iteration is implemented!!!
-        this->modulo = this->m_start;
-        this->samples = this->s_start;
+        this->m_found = this->modulo;
+        this->s_found = this->samples;
 
         this->fillSolutionStructure(scheduler,&g_unrolled,&rm_unrolled);
+        break;
       }
 
       delete scheduler;
-      attempts++;
     }
 
   }

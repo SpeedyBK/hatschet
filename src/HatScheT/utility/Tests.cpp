@@ -1116,6 +1116,7 @@ bool Tests::compareModuloSchedulerTest() {
     auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
     if(valid!=valid2) {
       std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+      return false;
     }
     if(!valid) {
       std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
@@ -1129,7 +1130,6 @@ bool Tests::compareModuloSchedulerTest() {
         std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
       }
     }
-    auto mrtShape = m.getMRTShape();
 
     return true;
   }
@@ -1429,6 +1429,7 @@ bool Tests::compareModuloSchedulerTest() {
     auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
     if(valid!=valid2) {
       std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+      return false;
     }
 		if(!valid) {
 			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
@@ -1464,12 +1465,12 @@ bool Tests::compareModuloSchedulerTest() {
 
     HatScheT::UniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
     rii.setQuiet(false);
-    rii.setWriteLPFile(true);
     rii.schedule();
     auto valid = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), rii.getLatencySequence(), rii.getScheduleLength());
     auto valid2 = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
     if(valid!=valid2) {
       std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
+      return false;
     }
     if(!valid) {
     	std::cout << "Scheduler found invalid solution" << std::endl;
@@ -1499,9 +1500,8 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
+    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"CPLEX","SCIP","LPSolve"}); // "Gurobi",
     rii.setQuiet(false);
-    rii.setWriteLPFile(true);
     rii.schedule();
     auto valid = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
     if(!valid) {
@@ -1517,18 +1517,13 @@ bool Tests::compareModuloSchedulerTest() {
   }
 
   bool Tests::ratIIOptimalIterationTest() {
-#ifndef USE_SCALP
-    cout << "Tests::ratIIOptimalIterationTest: need ScaLP to test" << endl;
-    return true;
-#endif
-
     int mMinII = 11;
     int sMinII = 10;
     double minII = double(mMinII)/double(sMinII);
     auto integerII = (int)ceil(double(mMinII)/double(sMinII));
     int sMax = -1;
     auto maxListSize = -1;
-    // pair<int,int> iterateModuloOverSamples(int mMinII, int sMinII, int mLastII, int sLastII, int integerII, std::list<std::string> solverWishlist = {"Gurobi"}, int sStop=-1);
+
     auto solutions = RationalIISchedulerLayer::getRationalIIQueue(sMinII,mMinII,integerII,sMax,maxListSize);
 
     std::cout << "mMinII = " << mMinII << std::endl;
@@ -1541,7 +1536,7 @@ bool Tests::compareModuloSchedulerTest() {
       std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
     }
 
-    return true;
+    return solutions.size()==31;
   }
 
 
