@@ -50,6 +50,15 @@ namespace HatScheT {
     this->timeTracker = std::chrono::high_resolution_clock::now();
 
     bool failed = false;
+
+    //set maxRuns, e.g., maxII - minII, iff value if not -1
+    if(this->maxRuns > 0){
+      int runs = this->maxII - this->minII;
+      if(runs >= this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
+      if(this->quiet == false) std::cout << "ModSDC: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
+      if(this->quiet == false) std::cout << "ModSDC: min/maxII = " << minII << " " << maxII << std::endl;
+    }
+
     for (this->II = this->minII; this->II <= this->maxII; this->II++) {
       if(this->quiet == false) cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
       bool foundSolution = this->modSDCIteration((int) this->II, this->budget);
