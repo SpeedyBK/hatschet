@@ -38,7 +38,8 @@ namespace HatScheT {
 
   void ModSDC::schedule() {
     time_t t = time(nullptr);
-    cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
+    if(this->quiet == false)
+      cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
     this->calculatePriorities(); // calculate priorities for scheduling queue
     t = time(nullptr);
     this->mrt = std::map<Vertex *, int>(); // create empty mrt
@@ -49,23 +50,45 @@ namespace HatScheT {
     this->timeTracker = std::chrono::high_resolution_clock::now();
 
     bool failed = false;
+
+    //set maxRuns, e.g., maxII - minII, iff value if not -1
+    if(this->maxRuns > 0){
+      int runs = this->maxII - this->minII;
+      if(runs >= this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
+      if(this->quiet == false) std::cout << "ModSDC: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
+      if(this->quiet == false) std::cout << "ModSDC: min/maxII = " << minII << " " << maxII << std::endl;
+    }
+
     for (this->II = this->minII; this->II <= this->maxII; this->II++) {
-      cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
+      if(this->quiet == false) cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
+
+      //timestamp
+      this->begin = clock();
       bool foundSolution = this->modSDCIteration((int) this->II, this->budget);
+      //timestamp
+      this->end = clock();
+      //log time
+      if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+      this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
       if (foundSolution) {
         t = time(nullptr);
-        cout << "ModSDC::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
-        cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
+        if(this->quiet == false) {
+          cout << "ModSDC::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
+          cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
+        }
 
         this->startTimes = this->sdcTimes; // last result from ILP solver is a valid schedule!
         this->scheduleFound = true;
         break;
       } else {
-        cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
+        if(this->quiet == false) cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
         if (this->II == this->maxII) {
-          cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
-          cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName()
-               << "', consider a higher budget or another priority function" << endl;
+          if(this->quiet == false) {
+            cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
+            cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName()
+                 << "', consider a higher budget or another priority function" << endl;
+          }
           failed = true;
         }
       }
@@ -229,8 +252,10 @@ namespace HatScheT {
     ///////////////////////
     if (this->schedQueue.empty() == false) {
       this->budgedEmptyCounter++;
-      cout << "ModSDC::modSDCIteration: empty budged for II " << this->II << endl;
-      cout << "ModSDC::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
+      if(this->quiet == false) {
+        cout << "ModSDC::modSDCIteration: empty budged for II " << this->II << endl;
+        cout << "ModSDC::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
+      }
     }
     return this->schedQueue.empty();
   }
@@ -340,7 +365,7 @@ namespace HatScheT {
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     this->setUpScalp();
     if (!this->manageTimeBudgetSuccess()) {
-      cout << "Timeout!" << endl;
+      if(this->quiet == false) cout << "Timeout!" << endl;
       this->timeouts++;
       throw HatScheT::TimeoutException("Time budget empty when trying to find solution for II=" + to_string(this->II));
     }
@@ -352,7 +377,7 @@ namespace HatScheT {
     this->timeInILPSolvers += (((double) timeSpan.count()) / 1000000000.0);
 
     if (s == ScaLP::status::TIMEOUT_INFEASIBLE) {
-      cout << "Timeout!" << endl;
+      if(this->quiet == false) cout << "Timeout!" << endl;
       this->timeouts++;
       throw HatScheT::TimeoutException("Solver timeout when trying to find solution for II=" + to_string(this->II));
     }
@@ -398,9 +423,11 @@ namespace HatScheT {
       this->clearConstraintForVertex(I);
       if (foundSolution) break;
       if (minTime == time) {
-        cout << "ERROR: backtracking algorithm (" << I->getName() << "," << time
-             << ") can't find time slot for instruction " << I->getName() << endl;
-        cout << "Additional constraints: " << endl;
+        if(this->quiet == false) {
+          cout << "ERROR: backtracking algorithm (" << I->getName() << "," << time
+               << ") can't find time slot for instruction " << I->getName() << endl;
+          cout << "Additional constraints: " << endl;
+        }
         for (auto it : this->additionalConstraints) {
           cout << "    " << *it.second << endl;
         }
@@ -468,11 +495,14 @@ namespace HatScheT {
     this->setUpScalp();
     ScaLP::status s = this->solver->solve(); // solver should never timeout here...
     if ((s != ScaLP::status::FEASIBLE) && (s != ScaLP::status::OPTIMAL) && (s != ScaLP::status::TIMEOUT_FEASIBLE)) {
-      cout << "ScaLP Backend: " << this->solver->getBackendName() << endl;
-      cout << "ScaLP Status: " << s << endl;
-      cout << "Additional constraints: " << endl;
+      if(this->quiet == false) {
+        cout << "ScaLP Backend: " << this->solver->getBackendName() << endl;
+        cout << "ScaLP Status: " << s << endl;
+        cout << "Additional constraints: " << endl;
+      }
       this->printAdditionalSolverConstraints();
-      cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
+      if(this->quiet == false)
+        cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
       throw HatScheT::Exception("ModSDC::createInitialSchedule: failed to find schedule without resource constraints");
     }
 
@@ -735,7 +765,7 @@ namespace HatScheT {
 
   void ModSDC::printAdditionalSolverConstraints() {
     for (auto it : this->additionalConstraints) {
-      cout << (*it.second) << endl;
+      if(this->quiet == false) cout << (*it.second) << endl;
     }
   }
 

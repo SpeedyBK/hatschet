@@ -15,7 +15,7 @@
 namespace HatScheT
 {
 	UniformRationalIIScheduler::UniformRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-		: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 	{
 		this->integerMinII = -1;
 		this->tpBuffer = 0.0f;

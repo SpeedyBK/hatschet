@@ -15,7 +15,7 @@
 
 namespace HatScheT {
 
-	class SCCQScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer {
+	class SCCQScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
 		 *

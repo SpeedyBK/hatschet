@@ -262,24 +262,6 @@ public:
   * @return
   */
  static pair<int,int> splitRational(double x);
-#ifdef USE_SCALP
- /*!
-  * This algorithm finds the smallest fractional number M/S between mLastII/sLastII and mMax/sMax where M<mMin and S<sMin
-  * if sStop > 1: there is the additional constraint S<sStop+1
-  * minII_Q = mMinII / sMinII
-  * the last II for which no solution was found: mLastII / sLastII
-  * @param mMinII
-  * @param sMinII
-  * @param mLastII
-  * @param sLastII
-  * @param integerII minimum integer II - M/S will always be strictly smaller than integerII!
-  * (otherwise you would not need rational II scheduling...)
-  * @param sStop iteration limit => if sStop = -1: sStop = sMinII-1
-  * @return
-  */
- static std::list<pair<int, int>> iterateModuloOverSamples(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
-#endif
-
  /*! Safely rounds a double down to the next integer, taking precision issues into account
  * Inputing 3.9999999999999968 will return 4
  * @param x

@@ -100,7 +100,7 @@ namespace HatScheT {
 	};
 
 
-	class ModuloQScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer {
+	class ModuloQScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer {
 	public:
 		/*!
 		 *
@@ -197,7 +197,7 @@ namespace HatScheT {
 		 */
 		void resetContainer() override {}
 		/*!
-		 *
+		 * set ILP objective
 		 */
 		void setObjective() override;
 		/*!

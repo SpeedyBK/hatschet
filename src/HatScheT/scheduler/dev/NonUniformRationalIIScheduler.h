@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class NonUniformRationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
 	public:
 		/*!
 		 * Constructor
@@ -73,27 +73,15 @@ namespace HatScheT {
 		map<Edge*, pair<int, int> > getedgePortMapping(){
 			return this->edgePortMapping;
 		}
-		/*!
-		 * @brief iteration start of s
-		 * @return
-		 */
-		int getS_Start(){return this->s_start;}
-		/*!
-		 * @brief iteration start of m
-		 * @return
-		 */
-		int getM_Start(){return this->m_start;}
-		/*!
-		 * @brief found value for s (-1 if no schedule was found)
-		 * @return
-		 */
-		int getS_Found(){return this->s_found;}
-		/*!
-		 * @brief found value for m (-1 if no schedule was found)
-		 * @return
-		 */
-		int getM_Found(){return this->m_found;}
 	private:
+		/*!
+		 * verify the found schedule (stored in startTimesVector)
+		 * 	1) based on rational II verifier
+		 * 	2) based on integer II verifier of unrolled graph
+		 * throw error if the verifiers lead to different results!
+		 * @return if the schedule is valid
+		 */
+		bool verifySchedule();
 		/*!
 		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
 		 */
@@ -136,10 +124,6 @@ namespace HatScheT {
 		 */
 		void autoSetMAndS();
 		/*!
-		 * dito
-		 */
-		void autoSetNextMAndS();
-		/*!
 		 * container for ILP variables
 		 */
 		std::map<Vertex*,std::vector<ScaLP::Variable>> tVariables;
@@ -155,10 +139,6 @@ namespace HatScheT {
 		 */
 		int integerMinII;
 		/*!
-		 * buffer
-		 */
-		double tpBuffer;
-		/*!
 		 * flag
 		 */
 		bool minRatIIFound;
@@ -167,22 +147,6 @@ namespace HatScheT {
 		 * to minimize the effort for MUX hardware
 		 */
 		map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
-		/*!
-		 * @brief the s value for the iteration start
-		 */
-		int s_start;
-		/*!
-		 * @brief the m value for the iteration start
-		 */
-		int m_start;
-		/*!
-		 * @brief the identified s value
-		 */
-		int s_found;
-		/*!
-		 * @brief the identified s value
-		 */
-		int m_found;
 	};
 }
 

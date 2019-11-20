@@ -43,7 +43,7 @@ namespace HatScheT
  * Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
  *
  */
-class RationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
+class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
 {
 public:
   /*!
@@ -85,11 +85,6 @@ public:
    * @return
    */
    virtual vector<std::map<const Vertex*,int> > getRationalIIBindings();
-  /*!
-   *
-   * @return the schedule length / sample latency of the determined rational II modulo schedule
-   */
-  virtual int getScheduleLength();
   /*!
    * print the rational II modulo schedule
    */

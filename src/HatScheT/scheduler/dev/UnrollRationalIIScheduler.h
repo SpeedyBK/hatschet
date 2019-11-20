@@ -18,7 +18,7 @@ namespace HatScheT {
    */
   enum SchedulerType {MOOVAC, MODULOSDC, ED97};
 
-  class UnrollRationalIIScheduler : public SchedulerBase, public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+  class UnrollRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
   public:
     UnrollRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 
@@ -61,9 +61,6 @@ namespace HatScheT {
     virtual vector<std::map<const Vertex*,int> > getRationalIIBindings() override {
       throw Exception("UnrollRationalIIScheduler.getRationalIIBindings: not implemented yet!");
     };
-    virtual int getScheduleLength()override {
-      throw Exception("UnrollRationalIIScheduler.getScheduleLength: not implemented yet!");
-    };
 
   private:
     SchedulerType scheduler;
@@ -77,6 +74,10 @@ namespace HatScheT {
     virtual void constructProblem() override {};
     virtual void setObjective() override {};
     virtual void resetContainer() override {};
+    /*!
+		 * fill interface to pass values to next step in the tool flow after solving
+		 */
+    void fillSolutionStructure(SchedulerBase * scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled);
 
   };
 }

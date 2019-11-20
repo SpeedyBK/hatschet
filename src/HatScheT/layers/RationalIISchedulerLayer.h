@@ -20,6 +20,7 @@
 #pragma once
 
 #include <vector>
+#include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/base/ModuloSchedulerBase.h"
 
 namespace HatScheT
@@ -27,10 +28,15 @@ namespace HatScheT
 /*!
  * \brief The RationalIISchedulerLayer class providing information that is needed implement rational II modulo schedules
  */
-class RationalIISchedulerLayer : public ModuloSchedulerBase
+class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBase
 {
 public:
-  RationalIISchedulerLayer();
+  RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel);
+  /*!
+   * @brief
+   * @return
+   */
+  int getScheduleLength() final;
   /*!
    * \brief getInitIntervalls specific timeslots for initiation of samples into the schedule
    * \return
@@ -67,6 +73,39 @@ public:
    * @return
    */
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
+	/*!
+	 * @brief iteration start of s
+	 * @return
+	 */
+	int getS_Start(){return this->s_start;}
+	/*!
+	 * @brief iteration start of m
+	 * @return
+	 */
+	int getM_Start(){return this->m_start;}
+	/*!
+	 * @brief found value for s (-1 if no schedule was found)
+	 * @return
+	 */
+	int getS_Found(){return this->s_found;}
+	/*!
+	 * @brief found value for m (-1 if no schedule was found)
+	 * @return
+	 */
+	int getM_Found(){return this->m_found;}
+  /*!
+   * this algorithm creates a sorted queue with M/S pairs in the interval [minII_Q, minII_N)
+   * list is sorted by the values of M/S
+   * first list element is always mMinII/sMinII which corresponds to II = minII_Q
+   * the list contains only non-reducable fractions! So if e.g. M/S = 3/2 is in the list, 6/4, 9/6, ... will NOT be!
+   * @param sMinII samples for minII_Q
+   * @param mMinII modulo for minII_Q
+   * @param integerII minimum integer II (minII_N)
+   * @param sMax maximum number of samples => all M/S pairs have S leq sMax -> -1: sMax = sMinII
+   * @param maxListSize only return the best maxListSize M/S pairs -> -1: return all found M/S pairs
+   * @return first pair element: M, second pair element: S
+   */
+  static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
 protected:
   /*!
    * the bindings of rational II schedule
@@ -84,6 +123,22 @@ protected:
    * \brief samples
    */
   int samples;
+	/*!
+	 * @brief the s value for the iteration start
+	 */
+	int s_start;
+	/*!
+	 * @brief the m value for the iteration start
+	 */
+	int m_start;
+	/*!
+	 * @brief the identified s value
+	 */
+	int s_found;
+	/*!
+	 * @brief the identified s value
+	 */
+	int m_found;
   /*!
    * the final rational II schedule
    */

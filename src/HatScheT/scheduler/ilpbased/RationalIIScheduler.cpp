@@ -28,7 +28,7 @@
 namespace HatScheT
 {
 RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
   this->consideredTimeSteps = 0;
   this->uniformSchedule = true;
@@ -545,21 +545,6 @@ void RationalIIScheduler::fillSolutionStructure() {
 
     this->latencySequence.push_back(IITimeDiff);
   }
-}
-
-int RationalIIScheduler::getScheduleLength() {
-  if(this->scheduleFound== false) return -1;
-
-  int maxTime=-1;
-
-  for (std::pair<Vertex *, int> vtPair : this->startTimesVector[0]) {
-    Vertex *v = vtPair.first;
-
-    if ((vtPair.second + resourceModel.getVertexLatency(v)) > maxTime)
-      maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
-  }
-
-  return maxTime;
 }
 
 vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
