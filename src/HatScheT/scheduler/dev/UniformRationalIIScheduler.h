@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class UniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
+	class UniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
 		 * Constructor
@@ -22,11 +22,6 @@ namespace HatScheT {
 		 * @param solverWishlist
 		 */
 		UniformRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		/*!
-		 * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-		 * the theoretical min II boundary. For this the variables s / m are used
-		 */
-		void schedule() override;
 		/*!
 		 * \brief getLifeTimes using the determined rational II
 		 * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -61,6 +56,27 @@ namespace HatScheT {
 		 * @brief print the MRTs of all resources after rational II scheduling and binding
 		 */
 		void printBindingToConsole();
+
+	protected:
+		/*!
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
+		 */
+		void scheduleIteration() override;
+		/*!
+		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
+		 */
+		void constructProblem() override;
+		/*!
+		 * setObjective currently asap
+		 */
+		void setObjective() override;
+		/*!
+		 * reset containers
+		 */
+		void resetContainer() override;
+
 	private:
 		/*!
 		 * initiation intervals for the found schedule
@@ -74,18 +90,6 @@ namespace HatScheT {
 		 * for each distance in the graph, calculate the minimum delta according to the latency sequence
 		 */
 		void calcDeltaMins();
-		/*!
-		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
-		 */
-		void constructProblem() override;
-		/*!
-		 * setObjective currently asap
-		 */
-		void setObjective() override;
-		/*!
-		 * reset containers
-		 */
-		void resetContainer() override;
 		/*!
 		 * set the resource constranints / often referred to as modulo reservation table (MRT)
 		 */
@@ -128,19 +132,6 @@ namespace HatScheT {
 		 * second index of b-Matrix: modulo slot
 		 */
 		std::map<const Vertex*,std::vector<std::vector<ScaLP::Variable>>> bVariables;
-		/*!
-		 * buffer
-		 */
-		double tpBuffer;
-		/*!
-		 * flag
-		 */
-		bool minRatIIFound;
-		/*!
-		 * @brief the edgePortMapping can be used to optmize the binding in order
-		 * to minimize the effort for MUX hardware
-		 */
-		map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
 	};
 }
 

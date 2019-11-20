@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
+	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
 		 * Constructor
@@ -23,11 +23,6 @@ namespace HatScheT {
 		 * @param solverWishlist
 		 */
 		NonUniformRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		/*!
-		 * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-		 * the theoretical min II boundary. For this the variables s / m are used
-		 */
-		void schedule() override;
 		/*!
 		 * \brief getLifeTimes using the determined rational II
 		 * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -62,15 +57,13 @@ namespace HatScheT {
 		 * @brief print the MRTs of all resources after rational II scheduling and binding
 		 */
 		void printBindingToConsole();
-	private:
+	protected:
 		/*!
-		 * verify the found schedule (stored in startTimesVector)
-		 * 	1) based on rational II verifier
-		 * 	2) based on integer II verifier of unrolled graph
-		 * throw error if the verifiers lead to different results!
-		 * @return if the schedule is valid
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
 		 */
-		bool verifySchedule();
+		void scheduleIteration() override;
 		/*!
 		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
 		 */
@@ -83,6 +76,7 @@ namespace HatScheT {
 		 * reset containers
 		 */
 		void resetContainer() override;
+	private:
 		/*!
 		 * set the resource constranints / often referred to as modulo reservation table (MRT)
 		 */
@@ -118,10 +112,6 @@ namespace HatScheT {
 		 * second index of b-Matrix: modulo slot
 		 */
 		std::map<const Vertex*,std::vector<std::vector<ScaLP::Variable>>> bVariables;
-		/*!
-		 * flag
-		 */
-		bool minRatIIFound;
 	};
 }
 

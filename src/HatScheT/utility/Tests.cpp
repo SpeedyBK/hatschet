@@ -29,6 +29,7 @@
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UniformRationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h"
+#include "HatScheT/scheduler/dev/UnrollRationalIIScheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/utility/writer/DotWriter.h"
@@ -1112,16 +1113,12 @@ bool Tests::compareModuloSchedulerTest() {
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
-    auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
-    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
-    if(valid!=valid2) {
-      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
-      return false;
-    }
+    auto valid = m.getScheduleValid();
     if(!valid) {
       std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
       return false;
     }
+
     for(unsigned int i=0; i<initIntervals.size(); ++i) {
       auto l = initIntervals[i];
       auto startTimes = startTimesVector[i];
@@ -1425,12 +1422,7 @@ bool Tests::compareModuloSchedulerTest() {
 		auto initIntervals = m.getInitiationIntervals();
 		auto latencySequence = m.getLatencySequence();
 
-		auto valid = verifyRationalIIModuloSchedule2(g, rm, startTimesVector, latencySequence, m.getScheduleLength());
-    auto valid2 = verifyRationalIIModuloSchedule(g, rm, startTimesVector, m.getSamples(), m.getModulo());
-    if(valid!=valid2) {
-      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
-      return false;
-    }
+    auto valid = m.getScheduleValid();
 		if(!valid) {
 			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
 			return false;
@@ -1466,12 +1458,7 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::UniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
     rii.setQuiet(false);
     rii.schedule();
-    auto valid = verifyRationalIIModuloSchedule2(g, rm, rii.getStartTimeVector(), rii.getLatencySequence(), rii.getScheduleLength());
-    auto valid2 = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
-    if(valid!=valid2) {
-      std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
-      return false;
-    }
+    auto valid = rii.getScheduleValid();
     if(!valid) {
     	std::cout << "Scheduler found invalid solution" << std::endl;
     	return false;
@@ -1500,10 +1487,10 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"CPLEX","SCIP","LPSolve"}); // "Gurobi",
+    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
     rii.setQuiet(false);
     rii.schedule();
-    auto valid = verifyRationalIIModuloSchedule(g, rm, rii.getStartTimeVector(), rii.getSamples(), rii.getModulo());
+    auto valid = rii.getScheduleValid();
     if(!valid) {
       std::cout << "Scheduler found invalid solution" << std::endl;
       return false;
@@ -1537,6 +1524,38 @@ bool Tests::compareModuloSchedulerTest() {
     }
 
     return solutions.size()==31;
+  }
+
+  bool Tests::ratIIUnrollSchedulerTest() {
+#ifndef USE_XERCESC
+    cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+    return false;
+#else
+    HatScheT::ResourceModel rm;
+    HatScheT::Graph g;
+    HatScheT::XMLResourceReader readerRes(&rm);
+
+    string resStr = "benchmarks/Programs/vanDongen/vanDongenRM.xml";
+    string graphStr = "benchmarks/Programs/vanDongen/vanDongen.graphml";
+    readerRes.readResourceModel(resStr.c_str());
+
+    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+    readerGraph.readGraph(graphStr.c_str());
+
+    HatScheT::UnrollRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
+    rii.setQuiet(false);
+    rii.schedule();
+    auto valid = rii.getScheduleValid();
+    if(!valid) {
+      std::cout << "Scheduler found invalid solution" << std::endl;
+      return false;
+    }
+
+    cout << "Tests::uniformRationalIISchedulerTest: expected II is 16/3" << endl;
+    cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+    return (rii.getM_Found() == 16 and rii.getS_Found() == 3);
+#endif
   }
 
 

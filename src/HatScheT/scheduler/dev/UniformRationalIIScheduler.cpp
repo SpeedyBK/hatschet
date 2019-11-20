@@ -8,26 +8,14 @@
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
-#include <HatScheT/utility/Verifier.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 
 
 namespace HatScheT
 {
 	UniformRationalIIScheduler::UniformRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
-		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
+		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist), initiationIntervals()
 	{
-		this->integerMinII = -1;
-		this->tpBuffer = 0.0f;
-		this->minRatIIFound = false;
-		this->maxLatencyConstraint = -1;
-		this->maxRuns = 1;
-		this->s_found = -1;
-		this->m_found = -1;
-		this->latencySequence.clear();
-		this->initiationIntervals.clear();
-
-		this->computeMinII(&this->g, &this->resourceModel);
 	}
 
 	void UniformRationalIIScheduler::resetContainer() {
@@ -157,135 +145,6 @@ namespace HatScheT
 		throw Exception("UniformRationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 	}
 
-	void UniformRationalIIScheduler::schedule() {
-		this->scheduleFound = false;
-
-		//experimental auto set function for the start values of modulo and sample
-		this->autoSetMAndS();
-		this->s_start = this->samples;
-		this->m_start = this->modulo;
-
-		//experimental
-		if(!this->quiet) {
-			std::cout << "maxLatencyConstraint: " << maxLatencyConstraint << std::endl;
-			std::cout << "modulo: " << modulo << std::endl;
-		}
-
-		if(this->samples <= 0) {
-			throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses <= 0! Scheduling not possible!");
-		}
-
-		if(this->modulo <= 0) {
-			throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle <= 0! Scheduling not possible!");
-		}
-
-		if(!this->quiet) {
-			cout << "------------------------" << endl;
-			cout << "UniformRationalIIScheduler.schedule: start for " << this->g.getName() << endl;
-			cout << "UniformRationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
-			cout << "UniformRationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
-			cout << "UniformRationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
-			cout << "UniformRationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
-			cout << "UniformRationalIIScheduler::schedule: recMinII is " << this->getRecMinII() << endl;
-			cout << "UniformRationalIIScheduler::schedule: resMinII is " << this->getResMinII() << endl;
-			cout << "------------------------" << endl;
-		}
-
-		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
-		if(msQueue.empty()) {
-			throw HatScheT::Exception("NonUniformRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
-		}
-
-		for(auto it : msQueue) {
-			this->modulo = it.first;
-			this->samples = it.second;
-			if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
-			//clear up and reset
-			this->solver->reset();
-			this->resetContainer();
-
-			//init latency sequence, init intervals, deltaMin containers
-			this->initiationIntervals = ModuloQScheduler::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
-			this->latencySequence = ModuloQScheduler::getLatencySequenceFromInitiationIntervals(this->initiationIntervals,this->modulo);
-			this->calcDeltaMins();
-
-			//set up new variables and constraints
-			this->fillTContainer();
-			this->fillBContainer();
-			this->constructProblem();
-
-			//set up objective, currently asap using supersink
-			this->setObjective();
-
-			if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
-			//solve the current problem
-			if(this->writeLPFile) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
-
-			//timestamp
-			this->begin = clock();
-			//solve
-			stat = this->solver->solve();
-			//timestamp
-			this->end = clock();
-
-			//log time
-			if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-			this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
-
-			if(!this->quiet) cout << "Finished solving: " << stat << endl;
-
-			//check result and act accordingly
-			if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
-				this->r = this->solver->getResult();
-				this->tpBuffer = (double)(this->samples) / (double)(this->modulo);
-
-				this->s_found = this->samples;
-				this->m_found = this->modulo;
-				this->II = (double)(this->modulo) / (double)(this->samples);
-
-				this->scheduleFound = true;
-				this->fillSolutionStructure();
-
-				bool ver = HatScheT::verifyRationalIIModuloSchedule2(this->g, this->resourceModel, this->startTimesVector,
-																														 this->latencySequence, this->getScheduleLength());
-				bool ver2 = verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector, this->samples,
-																									 this->modulo);
-				if(ver!=ver2) {
-					std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!" << std::endl;
-				}
-
-				//determine whether rational minimum II was identified
-				if(((double)this->modulo / (double)this->samples) == this->getMinII()) this->minRatIIFound = true;
-				this->getRationalIIBindings();
-
-				if(!this->quiet) {
-					cout << "------------------------" << endl;
-					if (ver) cout << "UniformRationalIIScheduler.schedule: Result is verified! " << endl;
-					else cout << "UniformRationalIIScheduler.schedule: Result verification FAILED! " << endl;
-					cout << "UniformRationalIIScheduler.schedule: Found result is " << stat << endl;
-					cout << "UniformRationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
-							 << endl;
-					cout << "UniformRationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
-							 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
-					cout << "UniformRationalIIScheduler.schedule: throughput: " << this->tpBuffer << endl;
-					cout << "------------------------" << endl;
-					this->printScheduleToConsole();
-				}
-			}
-			else {
-				if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << stat << " )" << endl;
-				this->scheduleFound = false;
-			}
-
-			//break for loop when a schedule was found
-			if(this->scheduleFound) break;
-			else {
-				this->timeouts++;
-				this->tpBuffer = (double)this->modulo / (double)this->samples;
-			}
-		}
-	}
-
 	void UniformRationalIIScheduler::calcDeltaMins() {
 		if(this->initiationIntervals.empty() or this->latencySequence.empty())
 			throw HatScheT::Exception("UniformRationalIIScheduler::calcDeltaMins: need to specify initiation intervals/latency sequence");
@@ -408,9 +267,6 @@ namespace HatScheT
 			}
 			this->startTimesVector.emplace_back(startTimesTemp);
 		}
-
-		// check if minII was found
-		this->minRatIIFound = (this->II == this->minII);
 	}
 
 	int UniformRationalIIScheduler::getSampleDistanceAsInt(int d, int startIndex) {
@@ -431,5 +287,67 @@ namespace HatScheT
 		}
 
 		return distance;
+	}
+
+	void UniformRationalIIScheduler::scheduleIteration() {
+		//clear up and reset
+		this->solver->reset();
+		this->resetContainer();
+
+		//init latency sequence, init intervals, deltaMin containers
+		this->initiationIntervals = ModuloQScheduler::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
+		this->latencySequence = ModuloQScheduler::getLatencySequenceFromInitiationIntervals(this->initiationIntervals,this->modulo);
+		this->calcDeltaMins();
+
+		//set up new variables and constraints
+		this->fillTContainer();
+		this->fillBContainer();
+		this->constructProblem();
+
+		//set up objective, currently asap using supersink
+		this->setObjective();
+
+		if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
+		//solve the current problem
+		if(this->writeLPFile) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
+
+		//timestamp
+		this->begin = clock();
+		//solve
+		stat = this->solver->solve();
+		//timestamp
+		this->end = clock();
+
+		//log time
+		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
+		if(!this->quiet) cout << "Finished solving: " << stat << endl;
+
+		//check result and act accordingly
+		if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
+			this->r = this->solver->getResult();
+
+			this->scheduleFound = true;
+			this->fillSolutionStructure();
+
+			//this->getRationalIIBindings();
+
+			if(!this->quiet) {
+				cout << "------------------------" << endl;
+				cout << "UniformRationalIIScheduler.schedule: Found result is " << stat << endl;
+				cout << "UniformRationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
+						 << endl;
+				cout << "UniformRationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
+						 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
+				cout << "UniformRationalIIScheduler.schedule: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
+				cout << "------------------------" << endl;
+				this->printScheduleToConsole();
+			}
+		}
+		else {
+			if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
+			this->scheduleFound = false;
+		}
 	}
 }

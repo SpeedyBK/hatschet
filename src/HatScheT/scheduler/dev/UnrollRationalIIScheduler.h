@@ -18,17 +18,9 @@ namespace HatScheT {
    */
   enum SchedulerType {MOOVAC, MODULOSDC, ED97};
 
-  class UnrollRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
+  class UnrollRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
   public:
     UnrollRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-
-    /*!
-    * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-    * the theoretical min II boundary. For this the variables s / m are used
-     * Then the graph is unrolled s times and a standard integer II scheduler is chosen
-     * default scheduler: EichenbergerDavidson97
-    */
-    virtual void schedule();
 
     /*!
      * @brief get and set the values for s and m
@@ -56,16 +48,23 @@ namespace HatScheT {
       throw Exception("UnrollRationalIIScheduler.getRationalIIBindings: not implemented yet!");
     };
 
+  protected:
+    virtual void constructProblem() override {};
+    virtual void setObjective() override {};
+    virtual void resetContainer() override {};
+    /*!
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
+		 */
+    void scheduleIteration() override;
+
   private:
     SchedulerType scheduler;
     std::list<std::string> solverWishlist;
 
     void unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s);
 
-
-    virtual void constructProblem() override {};
-    virtual void setObjective() override {};
-    virtual void resetContainer() override {};
     /*!
 		 * fill interface to pass values to next step in the tool flow after solving
 		 */

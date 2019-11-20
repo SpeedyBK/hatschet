@@ -195,123 +195,6 @@ namespace HatScheT {
 																		 std::list<std::string> solverWishlist) :
 		RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 	{
-
-		this->computeMinII(&this->g, &this->resourceModel);
-		double minII = this->getMinII();
-		this->integerMinII = (int)ceil(minII);
-		pair<int, int> frac = Utility::splitRational(minII);
-
-		if(!this->quiet) {
-			cout << "rational min II is " << minII << endl;
-			cout << "integer min II is " << this->integerMinII << endl;
-			cout << "auto setting samples to " << frac.second << endl;
-			cout << "auto setting modulo to " << frac.first << endl;
-		}
-
-		this->samples = frac.second;
-		this->modulo = frac.first;
-	}
-
-	void ModuloQScheduler::schedule() {
-		this->scheduleFound = false;
-
-		// set s_start and m_start
-		if(this->samples<0 or this->modulo<0) this->autoSetMAndS();
-		this->s_start = samples;
-		this->m_start = modulo;
-
-		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
-		if(msQueue.empty()) {
-			throw HatScheT::Exception("UnrollRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
-		}
-
-		for(auto it : msQueue) {
-			this->modulo = it.first;
-			this->samples = it.second;
-
-			if (!this->quiet) {
-				std::cout << "MODULO Q SCHEDULER graph: " << std::endl;
-				std::cout << this->g << std::endl;
-				std::cout << "MODULO Q SCHEDULER resource model: " << std::endl;
-				std::cout << this->resourceModel << std::endl;
-				std::cout << "M: " << this->modulo << std::endl;
-				std::cout << "S: " << this->samples << std::endl;
-			}
-
-			// clear containers
-			this->latencySequence.clear();
-			this->initiationIntervals.clear();
-
-			this->setInitiationIntervals();
-
-			// iterate through latency sequences and try to find a schedule for one of them
-			this->scheduleFound = false;
-			// determine initiation intervals from latency sequence
-			this->latencySequence = getLatencySequenceFromInitiationIntervals(this->initiationIntervals, this->modulo);
-			if (!this->quiet) {
-				std::cout << "Start scheduling Attempt!" << std::endl;
-				std::cout << "Latency Sequence: " << std::endl;
-				for (auto l : this->initiationIntervals) std::cout << l << " ";
-				std::cout << std::endl;
-				std::cout << "Initiation Intervals: " << std::endl;
-				for (auto j : this->latencySequence) std::cout << j << " ";
-				std::cout << std::endl;
-			}
-			// set a valid non-rectangular MRT for the given latency sequence
-			ModuloQScheduler::setMRT(this->mrt, this->resourceModel, this->initiationIntervals, this->samples, this->modulo,
-															 this->quiet);
-			if (!this->quiet) this->mrt.print();
-			// start scheduling
-			this->scheduleFound = this->scheduleAttempt();
-			if (this->scheduleFound) {
-				if (!this->quiet) std::cout << "Found feasible solution!" << std::endl;
-				// set start times
-				auto solution = this->solver->getResult().values;
-				for (auto *v : this->g.Vertices())
-					this->startTimes[v] = (int) std::lround(solution.find(this->time[v])->second);
-				for (auto &late : this->initiationIntervals) {
-					std::map<Vertex *, int> additionalStartTimes;
-					for (auto startTime : this->startTimes) {
-						additionalStartTimes[startTime.first] = startTime.second + late;
-					}
-					this->startTimesVector.emplace_back(additionalStartTimes);
-				}
-				this->II = this->minII;
-				bool emptyGraph = this->g.isEmpty();
-				bool valid = true;
-				if (!emptyGraph) {
-					valid = verifyRationalIIModuloSchedule2(this->g, this->resourceModel, this->startTimesVector,
-																									this->latencySequence, this->getScheduleLength());
-					bool valid2 = verifyRationalIIModuloSchedule(this->g, this->resourceModel, this->startTimesVector,
-																											 this->samples,
-																											 this->modulo);
-					if (valid != valid2) {
-						std::cout << "ATTENTION!!!! Rational II verifiers do not lead to the same result! One of them is buggy!!!"
-											<< std::endl;
-					}
-				}
-
-				if (!this->quiet) {
-					if (valid or emptyGraph) {
-						std::cout << "Valid rational II modulo schedule found with:" << std::endl;
-						std::cout << "  II=" << this->II << std::endl;
-						std::cout << "  S=" << this->samples << std::endl;
-						std::cout << "  M=" << this->modulo << std::endl;
-						std::cout << "  IIs=";
-						for (auto i : this->latencySequence) {
-							std::cout << i << " ";
-						}
-						std::cout << std::endl;
-						std::cout << "  Latency=" << this->getScheduleLength() << std::endl;
-					} else {
-						std::cout << "Invalid rational II modulo schedule found - this should never happen" << std::endl;
-					}
-				}
-				break;
-			} else {
-				if (!this->quiet) std::cout << "Did not find feasible solution :(" << std::endl;
-			}
-		}
 	}
 
 	void ModuloQScheduler::setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet) {
@@ -703,5 +586,73 @@ namespace HatScheT {
 		}
 
 		return initIntervalTemp;
+	}
+
+	void ModuloQScheduler::scheduleIteration() {
+		if (!this->quiet) {
+			std::cout << "MODULO Q SCHEDULER graph: " << std::endl;
+			std::cout << this->g << std::endl;
+			std::cout << "MODULO Q SCHEDULER resource model: " << std::endl;
+			std::cout << this->resourceModel << std::endl;
+			std::cout << "M: " << this->modulo << std::endl;
+			std::cout << "S: " << this->samples << std::endl;
+		}
+
+		// clear containers
+		this->latencySequence.clear();
+		this->initiationIntervals.clear();
+
+		this->setInitiationIntervals();
+
+		// iterate through latency sequences and try to find a schedule for one of them
+		this->scheduleFound = false;
+		// determine initiation intervals from latency sequence
+		this->latencySequence = getLatencySequenceFromInitiationIntervals(this->initiationIntervals, this->modulo);
+		if (!this->quiet) {
+			std::cout << "Start scheduling Attempt!" << std::endl;
+			std::cout << "Latency Sequence: " << std::endl;
+			for (auto l : this->initiationIntervals) std::cout << l << " ";
+			std::cout << std::endl;
+			std::cout << "Initiation Intervals: " << std::endl;
+			for (auto j : this->latencySequence) std::cout << j << " ";
+			std::cout << std::endl;
+		}
+		// set a valid non-rectangular MRT for the given latency sequence
+		ModuloQScheduler::setMRT(this->mrt, this->resourceModel, this->initiationIntervals, this->samples, this->modulo,
+														 this->quiet);
+		if (!this->quiet) this->mrt.print();
+		// start scheduling
+		this->scheduleFound = this->scheduleAttempt();
+
+		// stop function if no schedule was found
+		if(!this->scheduleFound) return;
+
+		// looks like we found a schedule! :)
+		if (!this->quiet) std::cout << "Found feasible solution!" << std::endl;
+		// set start times
+		auto solution = this->solver->getResult().values;
+		for (auto *v : this->g.Vertices())
+			this->startTimes[v] = (int) std::lround(solution.find(this->time[v])->second);
+		for (auto &late : this->initiationIntervals) {
+			std::map<Vertex *, int> additionalStartTimes;
+			for (auto startTime : this->startTimes) {
+				additionalStartTimes[startTime.first] = startTime.second + late;
+			}
+			this->startTimesVector.emplace_back(additionalStartTimes);
+		}
+		this->II = this->minII;
+		bool emptyGraph = this->g.isEmpty();
+
+		if (!this->quiet) {
+			std::cout << "Rational II modulo schedule found with:" << std::endl;
+			std::cout << "  S=" << this->samples << std::endl;
+			std::cout << "  M=" << this->modulo << std::endl;
+			std::cout << "  IIs=";
+			for (auto i : this->latencySequence) {
+				std::cout << i << " ";
+			}
+			std::cout << std::endl;
+			std::cout << "  Latency=" << this->getScheduleLength() << std::endl;
+		}
 	}
 }

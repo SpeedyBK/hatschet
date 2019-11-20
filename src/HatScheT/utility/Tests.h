@@ -165,6 +165,11 @@ public:
    * @return
    */
   static bool ratIIOptimalIterationTest();
+  /*!
+   * @brief tests rational II modulo scheduler based on unrolling and integer II modulo scheduling
+   * @return
+   */
+  static bool ratIIUnrollSchedulerTest();
 
 };
 }

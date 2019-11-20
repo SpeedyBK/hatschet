@@ -101,7 +101,7 @@ namespace HatScheT {
 	};
 
 
-	class ModuloQScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase {
+	class ModuloQScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer {
 	public:
 		/*!
 		 *
@@ -120,10 +120,6 @@ namespace HatScheT {
 		 * @return vector with column heights
 		 */
 		std::map<Resource*,std::vector<int>> getMRTShape() const;
-		/*!
-		 * Main schedule function
-		 */
-		void schedule() override;
 		/*!
 		 * compute intervals between samples for the initiation intervals sequence
 		 * @param initIntervals
@@ -164,6 +160,12 @@ namespace HatScheT {
 		 */
 		static std::vector<int> getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet);
 	protected:
+		/*!
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
+		 */
+		void scheduleIteration() override;
 		/*!
 		 * not needed
 		 */

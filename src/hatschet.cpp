@@ -57,6 +57,7 @@
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <HatScheT/scheduler/dev/UniformRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -96,6 +97,7 @@ void print_short_help() {
   std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
   std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)" << std::endl;
   std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
+  std::cout << "                            UNROLLRATIONALII: Experimental rational II scheduler which finds a rational II modulo schedule based on graph unrolling and integer II scheduling" << std::endl;
   std::cout << "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules" << std::endl;
 	std::cout << "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules" << std::endl;
   std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
@@ -144,7 +146,7 @@ int main(int argc, char *args[]) {
   bool printSCC = false;
   bool solverQuiet=true;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -270,6 +272,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "rationalii") {
           schedulerSelection = RATIONALII;
         }
+        else if(schedulerSelectionStr == "unrollrationalii") {
+          schedulerSelection = UNROLLRATIONALII;
+        }
         else if(schedulerSelectionStr == "uniformrationalii") {
           schedulerSelection = UNIFORMRATIONALII;
         }
@@ -314,6 +319,7 @@ int main(int argc, char *args[]) {
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
         if(str=="UNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::uniformRationalIISchedulerTest() == false) exit(-1);
         if(str=="NONUNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::nonUniformRationalIISchedulerTest() == false) exit(-1);
+        if(str=="UNROLLSCHEDULER" && HatScheT::Tests::ratIIUnrollSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
 				if(str=="RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
 				if(str=="RATIONALIISCCQ" && HatScheT::Tests::rationalIISCCQTest() == false) exit(-1);
@@ -383,6 +389,9 @@ int main(int argc, char *args[]) {
             break;
       case RATIONALII:
         cout << "RATIONALII";
+        break;
+      case UNROLLRATIONALII:
+        cout << "UNROLLRATIONALII";
         break;
       case UNIFORMRATIONALII:
         cout << "UNIFORMRATIONALII";
@@ -569,6 +578,16 @@ int main(int argc, char *args[]) {
           ((HatScheT::RationalIIScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::RationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
+        case UNROLLRATIONALII:
+          isRationalIIScheduler=true;
+          scheduler = new HatScheT::UnrollRationalIIScheduler(g,rm,solverWishList);
+          if(timeout>0) ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setSolverTimeout(timeout);
+          if(maxLatency > 0) ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+          if(samples>0) ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setSamples(samples);
+          if(modulo>0) ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setModulo(modulo);
+          ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setThreads(threads);
+          ((HatScheT::UnrollRationalIIScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+          break;
         case UNIFORMRATIONALII:
           isRationalIIScheduler=true;
           scheduler = new HatScheT::UniformRationalIIScheduler(g,rm,solverWishList);
@@ -636,7 +655,9 @@ int main(int argc, char *args[]) {
         case MODULOSDC:
         case MODULOSDCFIEGE:
         case RATIONALII:
+        case UNROLLRATIONALII:
         case UNIFORMRATIONALII:
+        case NONUNIFORMRATIONALII:
         case RATIONALIIFIMMEL:
         case RATIONALIIMODULOQ:
         case RATIONALIISCCQ:
@@ -669,8 +690,7 @@ int main(int argc, char *args[]) {
       }
 			auto *ratIILayer = dynamic_cast<HatScheT::RationalIISchedulerLayer*>(scheduler);
 			if(ratIILayer!=nullptr and isRationalIIScheduler) {
-				if (HatScheT::verifyRationalIIModuloSchedule2(g, rm, ratIILayer->getStartTimeVector(),
-																											ratIILayer->getLatencySequence(), scheduler->getScheduleLength())){
+				if (ratIILayer->getScheduleValid()){
 					cout << "Rational II Modulo schedule verified successfully" << endl;
 					cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
 				} else {

@@ -17,15 +17,6 @@ namespace HatScheT
 	NonUniformRationalIIScheduler::NonUniformRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
 		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
 	{
-		this->integerMinII = -1;
-		this->minRatIIFound = false;
-		this->maxLatencyConstraint = -1;
-		this->maxRuns = 1;
-		this->s_found = -1;
-		this->m_found = -1;
-		this->latencySequence.clear();
-
-		this->computeMinII(&this->g, &this->resourceModel);
 	}
 
 	void NonUniformRationalIIScheduler::resetContainer() {
@@ -142,128 +133,6 @@ namespace HatScheT
 		throw Exception("NonUniformRationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 	}
 
-	void NonUniformRationalIIScheduler::schedule() {
-		this->scheduleFound = false;
-
-		//experimental auto set function for the start values of modulo and sample
-		this->autoSetMAndS();
-		this->s_start = this->samples;
-		this->m_start = this->modulo;
-
-		if(!this->quiet) {
-			std::cout << "maxLatencyConstraint: " << maxLatencyConstraint << std::endl;
-			std::cout << "modulo: " << modulo << std::endl;
-		}
-
-		if(this->samples <= 0) {
-			throw HatScheT::Exception("RationalIIScheduler.schedule : moduloClasses <= 0! Scheduling not possible!");
-		}
-
-		if(this->modulo <= 0) {
-			throw HatScheT::Exception("RationalIIScheduler.schedule : consideredModuloCycle <= 0! Scheduling not possible!");
-		}
-
-		if(!this->quiet) {
-			cout << "------------------------" << endl;
-			cout << "NonUniformRationalIIScheduler.schedule: start for " << this->g.getName() << endl;
-			cout << "NonUniformRationalIIScheduler.schedule: solver timeout (s): " << this->getSolverTimeout() << endl;
-			cout << "NonUniformRationalIIScheduler.schedule: ILP solver: " << this->solver->getBackendName() << endl;
-			cout << "NonUniformRationalIIScheduler.schedule: max runs for rat ii scheduling " << this->getMaxRuns() << endl;
-			cout << "NonUniformRationalIIScheduler.schedule: maxLatency " << this->maxLatencyConstraint << endl;
-			cout << "NonUniformRationalIIScheduler::schedule: recMinII is " << this->getRecMinII() << endl;
-			cout << "NonUniformRationalIIScheduler::schedule: resMinII is " << this->getResMinII() << endl;
-			cout << "------------------------" << endl;
-		}
-
-		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
-		if(msQueue.empty()) {
-			throw HatScheT::Exception("NonUniformRationalIIScheduler::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
-		}
-
-		for(auto it : msQueue) {
-			this->modulo = it.first;
-			this->samples = it.second;
-			if(!this->quiet) cout << "NonUniformRationalIIScheduler.schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
-			//clear up and reset
-			this->solver->reset();
-			this->resetContainer();
-
-			//set up new variables and constraints
-			this->fillTContainer();
-			this->fillBContainer();
-			this->constructProblem();
-
-			//set up objective, currently asap using supersink
-			this->setObjective();
-
-			if(!this->quiet) cout << "NonUniformRationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
-			//solve the current problem
-			if(this->writeLPFile) this->solver->writeLP("NonUniformRationalIIScheduler_" + to_string(this->samples) + "_" + to_string(this->modulo) + ".lp");
-
-			//timestamp
-			this->begin = clock();
-			//solve
-			stat = this->solver->solve();
-			//timestamp
-			this->end = clock();
-
-			//log time
-			if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-			this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
-
-			if(!this->quiet) {
-				cout << "Finished solving: " << stat << endl;
-				cout << "ScaLP results: " << this->solver->getResult() << endl;
-			}
-
-			//check result and act accordingly
-			if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
-				this->r = this->solver->getResult();
-
-				this->s_found = this->samples;
-				this->m_found = this->modulo;
-				this->II = (double)(this->modulo) / (double)(this->samples);
-
-				this->scheduleFound = true;
-				this->fillSolutionStructure();
-
-				// verification
-				bool ver = this->verifySchedule();
-				if (ver == false) {
-					cout << "ATTENTION NonUniformRationalIIScheduler.schedule: Result is not verified! " << endl;
-					cout << "ILP solver:" << endl;
-					cout << this->solver->showLP() << endl;
-				}
-
-				//this->getRationalIIBindings();
-
-				if(!this->quiet) {
-					cout << "------------------------" << endl;
-					if (ver) cout << "NonUniformRationalIIScheduler.schedule: Result is verified! " << endl;
-					else cout << "NonUniformRationalIIScheduler.schedule: Result verification FAILED! " << endl;
-					cout << "NonUniformRationalIIScheduler.schedule: Found result is " << stat << endl;
-					cout << "NonUniformRationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
-							 << endl;
-					cout << "NonUniformRationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
-							 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
-					cout << "NonUniformRationalIIScheduler.schedule: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
-					cout << "------------------------" << endl;
-					this->printScheduleToConsole();
-				}
-			}
-			else {
-				if(!this->quiet) cout << "NonUniformRationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << stat << " )" << endl;
-				this->scheduleFound = false;
-			}
-
-			//break while loop when a schedule was found
-			if(this->scheduleFound) break;
-			else {
-				this->timeouts++;
-			}
-		}
-	}
-
 	void NonUniformRationalIIScheduler::fillTContainer() {
 		// create one time variable for each vertex in the graph
 		for(auto &v : this->g.Vertices()) {
@@ -370,97 +239,63 @@ namespace HatScheT
 		this->minRatIIFound = (this->II == this->minII);
 	}
 
-	bool NonUniformRationalIIScheduler::verifySchedule() {
-		////////////////////////////////////////////////////////////////////
-		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //
-		////////////////////////////////////////////////////////////////////
+	void NonUniformRationalIIScheduler::scheduleIteration() {
+		//clear up and reset
+		this->solver->reset();
+		this->resetContainer();
 
-		// unroll graph and create corresponding resource model
-		Graph g_unroll;
-		ResourceModel rm_unroll;
+		//set up new variables and constraints
+		this->fillTContainer();
+		this->fillBContainer();
+		this->constructProblem();
 
-		for(auto res : this->resourceModel.Resources()) {
-			rm_unroll.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+		//set up objective, currently asap using supersink
+		this->setObjective();
+
+		if(!this->quiet) cout << "NonUniformRationalIIScheduler.scheduleIteration: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
+		//solve the current problem
+		if(this->writeLPFile) this->solver->writeLP("NonUniformRationalIIScheduler_" + to_string(this->samples) + "_" + to_string(this->modulo) + ".lp");
+
+		//timestamp
+		this->begin = clock();
+		//solve
+		stat = this->solver->solve();
+		//timestamp
+		this->end = clock();
+
+		//log time
+		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
+		if(!this->quiet) {
+			cout << "Finished solving: " << stat << endl;
+			cout << "ScaLP results: " << this->solver->getResult() << endl;
 		}
 
-		for(auto v : this->g.Vertices()) {
-			for(int s=0; s<this->samples; ++s) {
-				auto& newVertex = g_unroll.createVertex();
-				newVertex.setName(v->getName()+"_"+to_string(s));
-				auto originalResource = this->resourceModel.getResource(v);
-				rm_unroll.registerVertex(&newVertex,rm_unroll.getResource(originalResource->getName()));
+		//check result and act accordingly
+		if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
+			this->r = this->solver->getResult();
+
+			this->scheduleFound = true;
+
+			this->fillSolutionStructure();
+
+			if(!this->quiet) {
+				cout << "------------------------" << endl;
+				cout << "NonUniformRationalIIScheduler.scheduleIteration: Found result is " << this->stat << endl;
+				cout << "NonUniformRationalIIScheduler.scheduleIteration: this solution is s / m : " << this->samples << " / " << this->modulo
+						 << endl;
+				cout << "NonUniformRationalIIScheduler.scheduleIteration: II: " << (double) (this->modulo) / (double) (this->samples)
+						 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
+				cout << "NonUniformRationalIIScheduler.scheduleIteration: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
+				cout << "------------------------" << endl;
+				this->printScheduleToConsole();
 			}
 		}
-
-		for(auto e : this->g.Edges()) {
-			auto srcName = e->getVertexSrc().getName();
-			auto dstName = e->getVertexDst().getName();
-
-			int distance = e->getDistance();
-			int offset = 0;
-
-			// adjust distance/offset so distance < this->samples
-			while(distance>this->samples) {
-				distance -= this->samples;
-				++offset;
-			}
-
-			for(int s=0; s<this->samples; ++s) {
-				// adjust distance again (only once)
-				int sourceSampleNumber = s - distance;
-				int edgeOffset = offset;
-				if(sourceSampleNumber < 0) {
-					sourceSampleNumber += this->samples;
-					++edgeOffset;
-				}
-
-				// create edge
-				Vertex* srcVertex = nullptr;
-				Vertex* dstVertex = nullptr;
-
-				for(auto v : g_unroll.Vertices()) {
-					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
-						srcVertex = v;
-					if(v->getName() == dstName + "_" + to_string(s))
-						dstVertex = v;
-				}
-
-				g_unroll.createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
-			}
+		else {
+			if(!this->quiet) cout << "NonUniformRationalIIScheduler.scheduleIteration: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
+			this->scheduleFound = false;
 		}
-
-		std::map<Vertex*, int> unrolledSchedule;
-
-		for(unsigned int s=0; s<this->samples; ++s) {
-			for(auto it : this->startTimesVector[s]) {
-
-				Vertex* v = nullptr;
-
-				for(auto vIt : g_unroll.Vertices()) {
-					if(vIt->getName() == it.first->getName() + "_" + to_string(s))
-						v = vIt;
-				}
-
-				unrolledSchedule[v] = it.second;
-			}
-		}
-
-		if(this->quiet == false) {
-      std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED GRAPH:" << std::endl;
-      std::cout << g_unroll << std::endl;
-      std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
-      std::cout << rm_unroll << std::endl;
-    }
-
-		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
-
-		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
-
-		if(verifyOriginal != verifyUnrolled) {
-			std::cout << "NonUniformRationalIIScheduler::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
-		}
-
-		return verifyUnrolled and verifyOriginal;
 	}
 
 }

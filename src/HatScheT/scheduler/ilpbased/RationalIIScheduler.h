@@ -43,7 +43,7 @@ namespace HatScheT
  * Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
  *
  */
-class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
+class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer
 {
 public:
   /*!
@@ -54,11 +54,6 @@ public:
    * @param solverWishlist
    */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-  /*!
-   * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-   * the theoretical min II boundary. For this the variables s / m are used
-   */
-  virtual void schedule();
     /*!
  * \brief getLifeTimes using the determined rational II
  * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -111,7 +106,14 @@ public:
   map<Edge*, pair<int, int> > getedgePortMapping(){
     return this->edgePortMapping;
   }
-private:
+
+protected:
+  /*!
+	 * each scheduler should overload this function for one schedule iteration
+	 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+	 *
+	 */
+  void scheduleIteration() override;
   /*!
    * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
    */
@@ -124,6 +126,8 @@ private:
    *
    */
   virtual void resetContainer();
+
+private:
   /*!
    * set the resource constranints / often referred to as modulo reservation table (MRT)
    */
@@ -189,10 +193,6 @@ private:
    * buffer
    */
   double tpBuffer;
-  /*!
-   * flag
-   */
-  bool minRatIIFound;
   /*!
    * @brief the edgePortMapping can be used to optmize the binding in order
    * to minimize the effort for MUX hardware

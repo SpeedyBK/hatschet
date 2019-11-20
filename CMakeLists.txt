@@ -297,6 +297,7 @@ add_test("uniformRatII" "./hatschet" "--test=UNIFORMRATIONALIISCHEDULER")
 add_test("nonUniformRatII" "./hatschet" "--test=NONUNIFORMRATIONALIISCHEDULER")
 add_test("ratIIModuloQ" "./hatschet" "--test=RATIONALIIMODULOQ")
 add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")
+add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
