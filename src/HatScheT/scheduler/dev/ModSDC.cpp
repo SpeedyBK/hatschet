@@ -61,7 +61,16 @@ namespace HatScheT {
 
     for (this->II = this->minII; this->II <= this->maxII; this->II++) {
       if(this->quiet == false) cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
+
+      //timestamp
+      this->begin = clock();
       bool foundSolution = this->modSDCIteration((int) this->II, this->budget);
+      //timestamp
+      this->end = clock();
+      //log time
+      if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+      this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
       if (foundSolution) {
         t = time(nullptr);
         if(this->quiet == false) {

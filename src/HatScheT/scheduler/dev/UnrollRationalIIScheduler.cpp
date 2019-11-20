@@ -82,23 +82,23 @@ namespace HatScheT {
 
       scheduler->schedule();
 
+      switch(this->scheduler) {
+        case SchedulerType::MOOVAC:
+          this->stat = ((HatScheT::MoovacScheduler*) scheduler)->getScaLPStatus();
+          this->solvingTime = ((HatScheT::MoovacScheduler*) scheduler)->getSolvingTime();
+          break;
+        case SchedulerType::MODULOSDC:
+          this->stat = ((HatScheT::ModSDC*) scheduler)->getScaLPStatus();
+          this->solvingTime = ((HatScheT::ModSDC*) scheduler)->getSolvingTime();
+          break;
+        case SchedulerType::ED97:
+          this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getScaLPStatus();
+          this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getSolvingTime();
+          break;
+      }
+
       if(scheduler->getScheduleFound() == true) {
         this->II = scheduler->getII();
-
-        switch(this->scheduler) {
-          case SchedulerType::MOOVAC:
-            this->stat = ((HatScheT::MoovacScheduler*) scheduler)->getScaLPStatus();
-            this->solvingTime = ((HatScheT::MoovacScheduler*) scheduler)->getSolvingTime();
-            break;
-          case SchedulerType::MODULOSDC:
-            this->stat = ((HatScheT::ModSDC*) scheduler)->getScaLPStatus();
-            this->solvingTime = ((HatScheT::ModSDC*) scheduler)->getSolvingTime();
-            break;
-          case SchedulerType::ED97:
-            this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getScaLPStatus();
-            this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getSolvingTime();
-            break;
-        }
 
         this->scheduleFound = true;
 
