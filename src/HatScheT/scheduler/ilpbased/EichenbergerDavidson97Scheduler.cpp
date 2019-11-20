@@ -52,7 +52,7 @@ void EichenbergerDavidson97Scheduler::schedule()
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
     int runs = this->maxII - this->minII;
-    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
+    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
     if(this->quiet==false) std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
     if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
   }
@@ -61,7 +61,7 @@ void EichenbergerDavidson97Scheduler::schedule()
     throw HatScheT::Exception("Inconsistent II bounds");
 
   bool feasible = false;
-  for (int candII = minII; candII < maxII; ++candII) {
+  for (int candII = minII; candII <= maxII; ++candII) {
     bool proven = false;
     scheduleAttempt(candII, feasible, proven);
     scheduleFound |= feasible;
@@ -73,24 +73,23 @@ void EichenbergerDavidson97Scheduler::schedule()
         startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
       if(this->quiet==false) std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
-      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
       break;
     }
     if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
   }
   if(scheduleFound == false) this->II = -1;
+  if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
 }
 
 void EichenbergerDavidson97Scheduler::setUpSolverSettings()
 {
-  solver->quiet   = solverQuiet;
-  solver->timeout = solverTimeout;
-  solver->threads = threads;
+  this->solver->quiet   = this->solverQuiet;
+  this->solver->timeout = this->solverTimeout;
+  this->solver->threads = this->threads;
 }
 
 void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible, bool &proven)
 {
-  if(this->quiet==false) std::cout << "ED97: attempt II=" << candII << std::endl;
   solver->reset();
 
   constructDecisionVariables(candII);
@@ -98,10 +97,15 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   constructConstraints(candII);
   setUpSolverSettings();
 
+  if(this->quiet==false) {
+    std::cout << "ED97: attempt II=" << candII << std::endl;
+    std::cout << "ED97: solver timeout = " << this->solver->timeout << " (sec)" << endl;
+  }
+
   //timestamp
   this->begin = clock();
   //solve
-  stat = this->solver->solve();
+  this->stat = this->solver->solve();
   //timestamp
   this->end = clock();
 
