@@ -44,9 +44,10 @@ EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, Resou
 
 void EichenbergerDavidson97Scheduler::schedule()
 {
-  setUpSolverSettings();
-
-  if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
+  if(this->quiet==false){
+    std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
+    std::cout << "ED97: solver timeout = " << this->solverTimeout << " (sec)" << endl;
+  }
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
   if(this->maxRuns > 0){
@@ -60,7 +61,7 @@ void EichenbergerDavidson97Scheduler::schedule()
     throw HatScheT::Exception("Inconsistent II bounds");
 
   bool feasible = false;
-  for (int candII = minII; candII <= maxII; ++candII) {
+  for (int candII = minII; candII < maxII; ++candII) {
     bool proven = false;
     scheduleAttempt(candII, feasible, proven);
     scheduleFound |= feasible;
@@ -95,6 +96,7 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   constructDecisionVariables(candII);
   setObjective();
   constructConstraints(candII);
+  setUpSolverSettings();
 
   //timestamp
   this->begin = clock();

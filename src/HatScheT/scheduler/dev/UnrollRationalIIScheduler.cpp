@@ -57,7 +57,7 @@ namespace HatScheT {
           if(this->maxLatencyConstraint > 0)
             ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
           ((HatScheT::MoovacScheduler*) scheduler)->setThreads(this->threads);
-          ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+          ((HatScheT::MoovacScheduler*) scheduler)->setQuiet(this->quiet);
           ((HatScheT::MoovacScheduler*) scheduler)->setMaxRuns(1);
           break;
          case SchedulerType::MODULOSDC:
@@ -66,7 +66,7 @@ namespace HatScheT {
           if(this->maxLatencyConstraint > 0)
             ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
           ((HatScheT::ModSDC*) scheduler)->setThreads(this->threads);
-          ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(this->solverQuiet);
+          ((HatScheT::ModSDC*) scheduler)->setQuiet(this->quiet);
           ((HatScheT::ModSDC*) scheduler)->setMaxRuns(1);
           break;
         case SchedulerType::ED97:
@@ -75,7 +75,7 @@ namespace HatScheT {
           if(this->maxLatencyConstraint > 0)
             ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
           ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setThreads(this->threads);
-          ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+          ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setQuiet(this->quiet);
           ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxRuns(1);
           break;
       }
