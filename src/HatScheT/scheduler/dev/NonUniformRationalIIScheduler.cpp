@@ -243,7 +243,11 @@ namespace HatScheT
 
 				// verification
 				bool ver = this->verifySchedule();
-				if (ver == false) cout << "ATTENTION NonUniformRationalIIScheduler.schedule: Result is not verified! " << endl;
+				if (ver == false) {
+					cout << "ATTENTION NonUniformRationalIIScheduler.schedule: Result is not verified! " << endl;
+					cout << "ILP solver:" << endl;
+					cout << this->solver->showLP() << endl;
+				}
 
 				//this->getRationalIIBindings();
 

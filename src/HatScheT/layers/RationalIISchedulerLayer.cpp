@@ -41,8 +41,10 @@ int RationalIISchedulerLayer::getScheduleLength() {
 		  //init
 			if(min == -1) min = it2.second;
 
-			if(it2.second < min) min = it2.second;
-			if(it2.second > max) max = it2.second;
+			if(it2.second < min)
+				min = it2.second;
+			if(it2.second + this->resourceModel.getVertexLatency(it2.first) > max)
+				max = it2.second + this->resourceModel.getVertexLatency(it2.first);
 		}
 
 		int l = max - min;

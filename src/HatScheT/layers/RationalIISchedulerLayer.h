@@ -73,6 +73,26 @@ public:
    * @return
    */
   vector<std::map<Vertex*,int> >& getStartTimeVector(){return this->startTimesVector;}
+	/*!
+	 * @brief iteration start of s
+	 * @return
+	 */
+	int getS_Start(){return this->s_start;}
+	/*!
+	 * @brief iteration start of m
+	 * @return
+	 */
+	int getM_Start(){return this->m_start;}
+	/*!
+	 * @brief found value for s (-1 if no schedule was found)
+	 * @return
+	 */
+	int getS_Found(){return this->s_found;}
+	/*!
+	 * @brief found value for m (-1 if no schedule was found)
+	 * @return
+	 */
+	int getM_Found(){return this->m_found;}
   /*!
    * this algorithm creates a sorted queue with M/S pairs in the interval [minII_Q, minII_N)
    * list is sorted by the values of M/S
@@ -103,6 +123,22 @@ protected:
    * \brief samples
    */
   int samples;
+	/*!
+	 * @brief the s value for the iteration start
+	 */
+	int s_start;
+	/*!
+	 * @brief the m value for the iteration start
+	 */
+	int m_start;
+	/*!
+	 * @brief the identified s value
+	 */
+	int s_found;
+	/*!
+	 * @brief the identified s value
+	 */
+	int m_found;
   /*!
    * the final rational II schedule
    */

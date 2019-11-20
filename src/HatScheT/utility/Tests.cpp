@@ -1462,7 +1462,7 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-    HatScheT::UniformRationalIIScheduler rii(g,rm,{"CPLEX","Gurobi","SCIP","LPSolve"});
+    HatScheT::UniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
@@ -1499,7 +1499,7 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"CPLEX","Gurobi","SCIP","LPSolve"});
+    HatScheT::NonUniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
     rii.setQuiet(false);
     rii.setWriteLPFile(true);
     rii.schedule();
