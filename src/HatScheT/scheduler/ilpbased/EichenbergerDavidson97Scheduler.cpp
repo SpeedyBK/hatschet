@@ -40,12 +40,12 @@ EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, Resou
   computeMinII(&g, &resourceModel);
   minII = ceil(minII);
   computeMaxII(&g, &resourceModel);
-
-  setUpSolverSettings();
 }
 
 void EichenbergerDavidson97Scheduler::schedule()
 {
+  setUpSolverSettings();
+
   if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 
   //set maxRuns, e.g., maxII - minII, iff value if not -1
