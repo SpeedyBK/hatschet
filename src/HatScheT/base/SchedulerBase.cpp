@@ -38,6 +38,7 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceM
   Utility::everyVertexisRegistered(g,resourceModel);
   this->scheduleFound = false;
   this->useOptimalBinding = false;
+  this->quiet = true;
 }
 
 SchedulerBase::~SchedulerBase()

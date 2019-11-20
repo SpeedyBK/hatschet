@@ -18,6 +18,19 @@ namespace HatScheT {
   : RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist), solverWishlist(solverWishlist),
     scheduler(ED97)
   {
+
+    this->s_start = -1;
+    this->m_start = -1;
+    this->solverWishlist = solverWishlist;
+
+    this->scheduleFound = false;
+    this->scheduler = ED97;
+
+    this->computeMinII(&g,&resourceModel);
+    this->minII = ceil(this->minII);
+    this->computeMaxII(&g,&resourceModel);
+    if (this->minII >= this->maxII) this->maxII = this->minII+1;
+
   }
 
   void UnrollRationalIIScheduler::unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s) {

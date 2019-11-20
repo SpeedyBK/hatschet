@@ -121,7 +121,7 @@ protected:
   /*!
  * no couts if this is true
  */
-  bool quiet = true;
+  bool quiet;
   /*!
    * \brief resourceModel
    */
