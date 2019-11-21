@@ -25,7 +25,7 @@ namespace HatScheT {
     priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
     pType(PriorityHandler::priorityType::SUBSEQUALAP), budget(-1), uniqueVariableName(""),
     budgetMultiplier(6), outputsEqualScheduleLength(false), vertexHasOutgoingEdges(),
-    scheduleLength(-1) {
+    scheduleLength(-1), scalpStatus(ScaLP::status::UNKNOWN) {
 
     this->solverQuiet = true;
     this->computeMinII(&this->g, &resourceModel);
@@ -740,6 +740,7 @@ namespace HatScheT {
     double elapsedTime = ((double) timeSpan.count()) / 1000.0;
     this->timeTracker = tp;
     this->timeBudget -= elapsedTime;
+    if(this->timeBudget<0) this->scalpStatus = ScaLP::status::TIMEOUT_INFEASIBLE;
     return this->timeBudget >= 0.0;
   }
 

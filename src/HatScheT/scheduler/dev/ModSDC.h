@@ -116,7 +116,7 @@ namespace HatScheT {
      * solved for MRTs
      * @return the unknown status
      */
-    ScaLP::status getScaLPStatus() override { return ScaLP::status::UNKNOWN; }
+    ScaLP::status getScaLPStatus() override { return this->scalpStatus; }
 
     /*!
      * @brief defines a new budget
@@ -178,6 +178,14 @@ namespace HatScheT {
     }
 
   private:
+    /*!
+     * status is timeout_infeasible for a timeout where no solution was found
+     * in all other cases it is unknown
+     */
+    ScaLP::status scalpStatus;
+    /*!
+     * schedule length
+     */
     int scheduleLength;
     /*!
      * @brief schedule times of all vertices without outgoing edges are equal to the schedule length
