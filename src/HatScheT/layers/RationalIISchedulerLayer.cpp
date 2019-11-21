@@ -213,6 +213,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	}
 
 	bool RationalIISchedulerLayer::verifySchedule() {
+		if(this->g.isEmpty()) return true;
 		////////////////////////////////////////////////////////////////////
 		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //
 		////////////////////////////////////////////////////////////////////
@@ -288,9 +289,9 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		}
 
 		if(!this->quiet) {
-			std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED GRAPH:" << std::endl;
+			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED GRAPH:" << std::endl;
 			std::cout << g_unroll << std::endl;
-			std::cout << "NonUniformRationalIIScheduler::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
+			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
 			std::cout << rm_unroll << std::endl;
 		}
 
@@ -311,7 +312,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		}
 
 		if(verifyOriginal != verifyUnrolled) {
-			std::cout << "NonUniformRationalIIScheduler::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
+			std::cout << "RationalIISchedulerLayer::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
 		}
 
 		return verifyUnrolled and verifyOriginal;
