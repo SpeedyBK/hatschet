@@ -143,6 +143,8 @@ namespace HatScheT {
 
   bool ModSDC::modSDCIteration(const int &II, int budget) {
 
+    // reset ScaLP status
+    this->scalpStatus = ScaLP::status::UNKNOWN;
     // delete scheduling constraints from previous iteration
     this->clearAllAdditionalConstraints();
     //////////////////////
