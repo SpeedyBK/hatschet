@@ -13,16 +13,20 @@
 
 namespace HatScheT {
 
-  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) : SchedulerBase(g,resourceModel) {
+  HatScheT::SDSScheduler::SDSScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, std::list<std::string> &sw) : SchedulerBase(g,resourceModel), ILPSchedulerBase(sw) {
 
     this->silent = true;
     this->firstTime = true;
     this->unsatisiable = false;
-    this->computeMinII(&this->g, &resourceModel);
+    computeMinII(&this->g, &resourceModel);
     this->minII = ceil(this->minII);
-    this->computeMaxII(&g, &resourceModel);
+    computeMaxII(&g, &resourceModel);
     if (minII >= maxII) maxII = (int) minII + 1;
     this->II = minII;
+    this->swishlist = sw;
+    this->bindingType = 'S';
+    this->numOfLimitedResources = 0;
+
 
     cout << "Constructor SDS:" << endl;
     cout << "Graph generated with " << g.getNumberOfVertices() << " Vertices." << endl;
@@ -57,7 +61,7 @@ namespace HatScheT {
       cout << endl;
     }
 
-    BellmanFordSDC bfsdc(dependencyConstraintsSDC, &g);
+    BellmanFordSDC bfsdc(dependencyConstraintsSDC, &g, this->II);
     bfsdc.setSilent(this->silent);
     bfsdc.printConstraintGraph();
 
@@ -485,6 +489,7 @@ namespace HatScheT {
 
   void SDSScheduler::getSATClausesFromSDCConflicts(map<pair<Vertex*, Vertex*>, int> &conflicts) {
     vector <int> conflictSAT;
+    conflictSAT.reserve(conflicts.size());
     for (auto &it : conflicts) {
       conflictSAT.push_back(sdcToSATMapping[it.first]*-1);
     }
@@ -497,6 +502,18 @@ namespace HatScheT {
         cout << endl;
       }
     }
+  }
+
+  void SDSScheduler::scalpsolver() {
+
+    try {
+      ScaLP::Solver solv{swishlist};
+      solv.quiet=false;
+
+      //TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    }catch (ScaLP::Exception &e)  {std:: cout  << e << std::endl;}
+
   }
 
 
@@ -558,17 +575,21 @@ namespace HatScheT {
   // BellmanFord SDC-Solver //
   ////////////////////////////
 
-  SDSScheduler::BellmanFordSDC::BellmanFordSDC(SDSScheduler::ConstraintGraph cg, Graph* originalGraph) {
+  SDSScheduler::BellmanFordSDC::BellmanFordSDC(SDSScheduler::ConstraintGraph cg, Graph* originalGraph, double II) {
     this -> cg = cg;
     this->silent = true;
     this->hasNegativeCycle = false;
     this->origGraph = originalGraph;
+    this->II = II;
+    this->startID = 0;
   }
 
-  SDSScheduler::BellmanFordSDC::BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph* originalGraph) {
+  SDSScheduler::BellmanFordSDC::BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph* originalGraph, double II) {
     this->silent = true;
     this->hasNegativeCycle = false;
     this->origGraph = originalGraph;
+    this->II = II;
+    this->startID = 0;
     /*!
      * Create Verticies:
      */
@@ -629,7 +650,7 @@ namespace HatScheT {
 
   pair<map<Vertex *, int>, bool> SDSScheduler::BellmanFordSDC::getfirstPath() {
 
-    this->startID = determineStartVertex();
+    this->startID = determineStartVertex(II);
     bellmanFordAlgorithm();
 
     if (hasNegativeCycle){
@@ -694,7 +715,7 @@ namespace HatScheT {
     return make_pair(vertexCosts, hasNegativeCycle);
   }
 
-  int SDSScheduler::BellmanFordSDC::determineStartVertex() {
+  int SDSScheduler::BellmanFordSDC::determineStartVertex(double II_Int) {
 
     struct longestpath{
       map<Vertex*, int> costs;
@@ -755,7 +776,8 @@ namespace HatScheT {
     startpoint.find_minimum_vertices();
 
     for (auto &it : startpoint.minimumVertices) {
-      this->minLatEdges.push_back(&cg.createEdge(*it, *startpoint.startvertex, abs(startpoint.minimum)));
+      //this->minLatEdges.push_back(&cg.createEdge(*it, *startpoint.startvertex, abs(startpoint.minimum)));
+      this->minLatEdges.push_back(&cg.createEdge(*it, *startpoint.startvertex, (int) II-1));
     }
 
     if (!this->silent){

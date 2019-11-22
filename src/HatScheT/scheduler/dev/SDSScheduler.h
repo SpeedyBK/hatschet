@@ -42,6 +42,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/ILPSchedulerBase.h>
 #include <vector>
 #include <cstdlib>
 
@@ -60,7 +61,7 @@ namespace HatScheT {
   };
 
 
-  class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase {
+  class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase, public ILPSchedulerBase{
 
   public:
 
@@ -70,7 +71,7 @@ namespace HatScheT {
 		 * @param g
 		 * @param resourceModel
 		 */
-    SDSScheduler(Graph &g, ResourceModel &resourceModel);
+    SDSScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> &sw);
 
     /*!
      * main method to do the scheduling
@@ -164,6 +165,8 @@ namespace HatScheT {
 
     void getSATClausesFromSDCConflicts(map<pair<Vertex*, Vertex*>, int> &conflicts);
 
+    void scalpsolver();
+
     /////////////////////////
     //      Variables      //
     /////////////////////////
@@ -223,6 +226,11 @@ namespace HatScheT {
      */
     bool unsatisiable;
 
+    /*!
+     * Solver Wishlist for Scalp.
+     */
+    std::list<std::string> swishlist;
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /*!
@@ -258,14 +266,14 @@ namespace HatScheT {
 
     public:
 
-      BellmanFordSDC(ConstraintGraph cg, Graph* originalGraph);
+      BellmanFordSDC(ConstraintGraph cg, Graph* originalGraph, double II);
 
       /*!
        * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
        * build it's constraint Graph by itself.
        * @param constraints like "V1 - V2 <= C"
        */
-      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* originalGraph);
+      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* originalGraph, double II);
 
       /*!
        * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
@@ -303,7 +311,7 @@ namespace HatScheT {
        * Method to find the startvertex for the single source shortes path problem.
        * @return ID of the startvertex
        */
-      int determineStartVertex();
+      int determineStartVertex(double II);
 
       /*!
        * Constraint Graph for which shortest Paths will be searched
@@ -350,6 +358,10 @@ namespace HatScheT {
        */
       map<pair<Vertex*, Vertex*>, int> conflicts;
 
+      /*!
+       * II from Sheduler Base
+       */
+       double II;
     };
 
   };

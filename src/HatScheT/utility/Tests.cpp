@@ -1223,8 +1223,8 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "benchmarks/origami/fir_gen_RM.xml";
-    string graphStr = "benchmarks/origami/fir_gen.graphml";
+    string resStr = "benchmarks/origami/fir_srg_RM.xml";
+    string graphStr = "benchmarks/origami/fir_srg.graphml";
     readerRes.readResourceModel(resStr.c_str());
 
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -1285,7 +1285,8 @@ bool Tests::compareModuloSchedulerTest() {
     cout << "*******************************************************" << endl << endl;
 
     cout << "SDS:" << endl;
-    SDSScheduler sds(g, rm);
+    list <string> sw = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
+    SDSScheduler sds(g, rm, sw);
     cout << "*******************************************************" << endl << endl;
     sds.setSilent(false);
     sds.setBindingType('S');
