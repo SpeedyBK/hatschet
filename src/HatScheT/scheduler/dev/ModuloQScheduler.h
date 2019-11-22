@@ -7,6 +7,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/subgraphs/SCC.h>
 #include <vector>
@@ -110,11 +111,6 @@ namespace HatScheT {
 		 */
 		ModuloQScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 		/*!
-		 *
-		 * @param maxIt
-		 */
-		void setMaxLatencySequenceIterations(int maxIt) { this->maxSequenceIterations = maxIt; }
-		/*!
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
 		 */
@@ -124,17 +120,6 @@ namespace HatScheT {
 		 * @return vector with column heights
 		 */
 		std::map<Resource*,std::vector<int>> getMRTShape() const;
-		/*!
-		 * Main schedule function
-		 */
-		void schedule() override;
-		/*!
-		 * Calculate all possible initiation intervals for the given M and S values
-		 * @param M
-		 * @param S
-		 * @return
-		 */
-		static std::vector<std::vector<int>> getAllInitiationIntervals(int M, int S);
 		/*!
 		 * compute intervals between samples for the initiation intervals sequence
 		 * @param initIntervals
@@ -147,11 +132,6 @@ namespace HatScheT {
 		 * @return initiation intervals for the latency sequence
 		 */
 		std::vector<int> getInitiationIntervals() const { return this->initiationIntervals; }
-		/*!
-		 *
-		 * @return latency sequences for which no solution was found
-		 */
-		std::vector<std::vector<int>> getDiscardedInitiationIntervals() const { return this->discardedInitiationIntervals; }
 		/*!
 		 * modulo operation with non-negative result
 		 * @param a
@@ -168,14 +148,6 @@ namespace HatScheT {
 		 */
 		vector<std::map<const Vertex*,int> > getRationalIIBindings() override { throw HatScheT::Exception("ModuloQScheduler::getRationalIIBindings not implemented yet"); }
 		/*!
-		 * sort initiation intervals by the variance from S/M
-		 * @param unsortedInitIntervals
-		 * @param S samples
-		 * @param M modulo
-		 * @return
-		 */
-		static std::vector<std::vector<int>> getInitIntervalQueue(std::vector<std::vector<int>>& unsortedInitIntervals, int S, int M);
-		/*!
 		 * finds a valid non-rectangular MRT for a given resource model and a initiation intervals
 		 */
 		static void setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet);
@@ -188,6 +160,12 @@ namespace HatScheT {
 		 */
 		static std::vector<int> getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet);
 	protected:
+		/*!
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
+		 */
+		void scheduleIteration() override;
 		/*!
 		 * not needed
 		 */
@@ -219,30 +197,14 @@ namespace HatScheT {
 		 */
 		void setInitiationIntervals();
 		/*!
-		 * maximum number of latency sequences for which a solution is attempted to be found
-		 */
-		int maxSequenceIterations;
-		/*!
-		 * contains latency sequences for which no solution was found
-		 */
-		std::vector<std::vector<int>> discardedInitiationIntervals;
-		/*!
 		 * try scheduling and report if a solution was found
 		 * @return
 		 */
 		bool scheduleAttempt();
 		/*!
-		 * all possible init interval sequences for the given S/M
-		 */
-		std::vector<std::vector<int>> allInitiationIntervals;
-		/*!
 		 * initiation intervals for the found schedule
 		 */
 		std::vector<int> initiationIntervals;
-		/*!
-		 * the minimum interger II that is possible
-		 */
-		int integerMinII;
 		/*!
 		 * complete modulo reservation table containing all samples
 		 */

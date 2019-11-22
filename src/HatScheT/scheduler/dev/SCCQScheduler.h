@@ -8,6 +8,7 @@
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
+#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/subgraphs/SCC.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -24,10 +25,6 @@ namespace HatScheT {
 		 * @param solverWishlist
 		 */
 		SCCQScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		/*!
-		 * main schedule method
-		 */
-		void schedule() override;
 		/*!
 		 * To Be Updated: II has to be rational or a vector for this scheduler to work
 		 * @return
@@ -57,6 +54,12 @@ namespace HatScheT {
 		ScaLP::status getScaLPStatus() override { return ScaLP::status::UNKNOWN; }
 
 	protected:
+		/*!
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
+		 */
+		void scheduleIteration() override;
 		/*!
 		 * not needed
 		 */

@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase, public IterativeSchedulerBase {
+	class NonUniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
 		 * Constructor
@@ -23,11 +23,6 @@ namespace HatScheT {
 		 * @param solverWishlist
 		 */
 		NonUniformRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		/*!
-		 * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-		 * the theoretical min II boundary. For this the variables s / m are used
-		 */
-		void schedule() override;
 		/*!
 		 * \brief getLifeTimes using the determined rational II
 		 * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -62,26 +57,13 @@ namespace HatScheT {
 		 * @brief print the MRTs of all resources after rational II scheduling and binding
 		 */
 		void printBindingToConsole();
+	protected:
 		/*!
-		 * @brief the edgePortMapping can be used to optmize the binding in order
-		 * to minimize the effort for MUX hardware
-		 * @param epm
+		 * each scheduler should overload this function for one schedule iteration
+		 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+		 *
 		 */
-		void setedgePortMapping(map<Edge*, pair<int, int> > epm){
-			this->edgePortMapping = epm;
-		}
-		map<Edge*, pair<int, int> > getedgePortMapping(){
-			return this->edgePortMapping;
-		}
-	private:
-		/*!
-		 * verify the found schedule (stored in startTimesVector)
-		 * 	1) based on rational II verifier
-		 * 	2) based on integer II verifier of unrolled graph
-		 * throw error if the verifiers lead to different results!
-		 * @return if the schedule is valid
-		 */
-		bool verifySchedule();
+		void scheduleIteration() override;
 		/*!
 		 * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
 		 */
@@ -94,6 +76,7 @@ namespace HatScheT {
 		 * reset containers
 		 */
 		void resetContainer() override;
+	private:
 		/*!
 		 * set the resource constranints / often referred to as modulo reservation table (MRT)
 		 */
@@ -119,11 +102,6 @@ namespace HatScheT {
 		 */
 		void fillSolutionStructure();
 		/*!
-		 * this function sets the s and m values in a way that not needed values are skipped
-		 * and the rational II becomes as small as possible
-		 */
-		void autoSetMAndS();
-		/*!
 		 * container for ILP variables
 		 */
 		std::map<Vertex*,std::vector<ScaLP::Variable>> tVariables;
@@ -134,19 +112,6 @@ namespace HatScheT {
 		 * second index of b-Matrix: modulo slot
 		 */
 		std::map<const Vertex*,std::vector<std::vector<ScaLP::Variable>>> bVariables;
-		/*!
-		 * the minimum interger II that is possible
-		 */
-		int integerMinII;
-		/*!
-		 * flag
-		 */
-		bool minRatIIFound;
-		/*!
-		 * @brief the edgePortMapping can be used to optmize the binding in order
-		 * to minimize the effort for MUX hardware
-		 */
-		map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
 	};
 }
 

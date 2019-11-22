@@ -22,16 +22,23 @@
 #include <vector>
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/base/ModuloSchedulerBase.h"
+#include "HatScheT/base/IterativeSchedulerBase.h"
 
 namespace HatScheT
 {
 /*!
  * \brief The RationalIISchedulerLayer class providing information that is needed implement rational II modulo schedules
  */
-class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBase
+class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
   RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel);
+  /*!
+   * schedule function - since the core of this function is the same for all rational II schedulers,
+   * this is only implemented once! All schedulers must only overload scheduleIteration,
+   * where the loop body is implemented
+   */
+  void schedule() final;
   /*!
    * @brief
    * @return
@@ -106,7 +113,23 @@ public:
    * @return first pair element: M, second pair element: S
    */
   static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
+  /*!
+   *
+   * @return if the found schedule is valid
+   */
+  bool getScheduleValid() const {return this->scheduleValid;}
 protected:
+	/*!
+	 * each scheduler should overload this function for one schedule iteration
+	 * M/S are already set automatically by this class
+	 *
+	 */
+	virtual void scheduleIteration() {throw HatScheT::Exception("RationalIISchedulerLayer::scheduleIteration should never be called!");}
+	/*!
+	 * this function sets the s and m values in a way that not needed values are skipped
+	 * and the rational II becomes as small as possible
+	 */
+	void autoSetMAndS();
   /*!
    * the bindings of rational II schedule
    */
@@ -139,12 +162,32 @@ protected:
 	 * @brief the identified s value
 	 */
 	int m_found;
+	/*!
+	 * the minimum interger II that is possible
+	 */
+	int integerMinII;
   /*!
    * the final rational II schedule
    */
   vector<std::map<Vertex*,int> > startTimesVector;
+	/*!
+	 * flag if the minimum rational II was found
+	 */
+	bool minRatIIFound;
 
-
+private:
+	/*!
+	 * verify the found schedule (stored in startTimesVector)
+	 * 	1) based on rational II verifier
+	 * 	2) based on integer II verifier of unrolled graph
+	 * throw error if the verifiers lead to different results!
+	 * @return if the schedule is valid
+	 */
+	bool verifySchedule();
+	/*!
+	 * flag if the found schedule is valid
+	 */
+	bool scheduleValid;
 };
 
 }

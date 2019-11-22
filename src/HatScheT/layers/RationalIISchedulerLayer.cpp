@@ -20,14 +20,40 @@
 
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Verifier.h>
 #include <cmath>
 
 namespace HatScheT
 {
 
-RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
+RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel) :
+	SchedulerBase(g, resourceModel), latencySequence() {
   this->modulo = -1;
   this->samples = -1;
+	this->m_start = -1;
+	this->s_start = -1;
+	this->m_found = -1;
+	this->s_found = -1;
+
+	this->maxLatencyConstraint = -1;
+	this->maxRuns = 1;
+	this->minRatIIFound = false;
+	this->scheduleValid = false;
+
+	this->computeMinII(&this->g, &this->resourceModel);
+	this->integerMinII = (int)ceil(this->minII);
+
+	pair<int, int> frac = Utility::splitRational(this->minII);
+
+	if(!this->quiet) {
+		cout << "rational min II is " << this->minII << endl;
+		cout << "integer min II is " << this->integerMinII << endl;
+		cout << "auto setting samples to " << frac.second << endl;
+		cout << "auto setting modulo to " << frac.first << endl;
+	}
+
+	this->samples = frac.second;
+	this->modulo = frac.first;
 }
 
 int RationalIISchedulerLayer::getScheduleLength() {
@@ -109,5 +135,187 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 
 	return moduloSamplePairs;
 }
+
+	void RationalIISchedulerLayer::autoSetMAndS() {
+		double minII = this->getMinII();
+		this->integerMinII = (int)ceil(minII);
+
+		if(this->samples<1 or this->modulo<1) {
+			pair<int,int> frac =  Utility::splitRational(minII);
+			if(!this->quiet) {
+				cout << "------------------------" << endl;
+				cout << "RationalIISchedulerLayer.autoSetMAndS: auto setting samples to " << frac.second << endl;
+				cout << "RationalIISchedulerLayer.autoSetMAndS:auto setting modulo to " << frac.first << endl;
+				cout << "------------------------" << endl;
+			}
+			this->samples = frac.second;
+			this->modulo = frac.first;
+		}
+	}
+
+	void RationalIISchedulerLayer::schedule() {
+		this->scheduleFound = false;
+		this->minRatIIFound = false;
+		this->scheduleValid = false;
+
+		//experimental auto set function for the start values of modulo and sample
+		this->autoSetMAndS();
+		this->s_start = this->samples;
+		this->m_start = this->modulo;
+
+		if(!this->quiet) {
+			std::cout << "RationalIISchedulerLayer::schedule: maxLatencyConstraint: " << this->maxLatencyConstraint << std::endl;
+			std::cout << "RationalIISchedulerLayer::schedule: modulo: " << this->modulo << std::endl;
+			std::cout << "RationalIISchedulerLayer::schedule: samples: " << this->samples << std::endl;
+		}
+
+		if(this->samples <= 0) {
+			throw HatScheT::Exception("RationalIISchedulerLayer.schedule : moduloClasses <= 0! Scheduling not possible!");
+		}
+
+		if(this->modulo <= 0) {
+			throw HatScheT::Exception("RationalIISchedulerLayer.schedule : consideredModuloCycle <= 0! Scheduling not possible!");
+		}
+
+		if(!this->quiet) {
+			cout << "------------------------" << endl;
+			cout << "RationalIISchedulerLayer:schedule: start for " << this->g.getName() << endl;
+			cout << "RationalIISchedulerLayer:schedule: maxLatency " << this->maxLatencyConstraint << endl;
+			cout << "RationalIISchedulerLayer::schedule: recMinII is " << this->getRecMinII() << endl;
+			cout << "RationalIISchedulerLayer::schedule: resMinII is " << this->getResMinII() << endl;
+			cout << "------------------------" << endl;
+		}
+
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		if(msQueue.empty()) {
+			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
+		}
+
+		for(auto it : msQueue) {
+			this->modulo = it.first;
+			this->samples = it.second;
+			if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
+			this->scheduleIteration();
+
+			if(this->scheduleFound) {
+				this->m_found = this->modulo;
+				this->s_found = this->samples;
+				this->II = (double)(this->modulo) / (double)(this->samples);
+				this->minRatIIFound = this->II == this->minII;
+				this->scheduleValid = this->verifySchedule();
+				if(!this->scheduleValid) {
+					std::cout << "RationalIISchedulerLayer::schedule: Scheduler found invalid schedule!" << std::endl;
+				}
+				break;
+			}
+			else ++this->timeouts;
+		}
+	}
+
+	bool RationalIISchedulerLayer::verifySchedule() {
+		if(this->g.isEmpty()) return true;
+		////////////////////////////////////////////////////////////////////
+		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //
+		////////////////////////////////////////////////////////////////////
+
+		// unroll graph and create corresponding resource model
+		Graph g_unroll;
+		ResourceModel rm_unroll;
+
+		for(auto res : this->resourceModel.Resources()) {
+			rm_unroll.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+		}
+
+		for(auto v : this->g.Vertices()) {
+			for(int s=0; s<this->samples; ++s) {
+				auto& newVertex = g_unroll.createVertex();
+				newVertex.setName(v->getName()+"_"+to_string(s));
+				auto originalResource = this->resourceModel.getResource(v);
+				rm_unroll.registerVertex(&newVertex,rm_unroll.getResource(originalResource->getName()));
+			}
+		}
+
+		for(auto e : this->g.Edges()) {
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+
+			int distance = e->getDistance();
+			int offset = 0;
+
+			// adjust distance/offset so distance < this->samples
+			while(distance>this->samples) {
+				distance -= this->samples;
+				++offset;
+			}
+
+			for(int s=0; s<this->samples; ++s) {
+				// adjust distance again (only once)
+				int sourceSampleNumber = s - distance;
+				int edgeOffset = offset;
+				if(sourceSampleNumber < 0) {
+					sourceSampleNumber += this->samples;
+					++edgeOffset;
+				}
+
+				// create edge
+				Vertex* srcVertex = nullptr;
+				Vertex* dstVertex = nullptr;
+
+				for(auto v : g_unroll.Vertices()) {
+					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
+						srcVertex = v;
+					if(v->getName() == dstName + "_" + to_string(s))
+						dstVertex = v;
+				}
+
+				g_unroll.createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
+			}
+		}
+
+		std::map<Vertex*, int> unrolledSchedule;
+
+		for(unsigned int s=0; s<this->samples; ++s) {
+			for(auto it : this->startTimesVector[s]) {
+
+				Vertex* v = nullptr;
+
+				for(auto vIt : g_unroll.Vertices()) {
+					if(vIt->getName() == it.first->getName() + "_" + to_string(s))
+						v = vIt;
+				}
+
+				unrolledSchedule[v] = it.second;
+			}
+		}
+
+		if(!this->quiet) {
+			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED GRAPH:" << std::endl;
+			std::cout << g_unroll << std::endl;
+			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
+			std::cout << rm_unroll << std::endl;
+		}
+
+		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
+
+		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
+
+		if(!this->quiet) {
+			if(verifyUnrolled)
+				std::cout << "Integer II schedule for unrolled graph is verified" << std::endl;
+			else
+				std::cout << "Integer II schedule for unrolled graph is NOT verified" << std::endl;
+
+			if(verifyOriginal)
+				std::cout << "Rational II schedule for original graph is verified" << std::endl;
+			else
+				std::cout << "Rational II schedule for original graph is NOT verified" << std::endl;
+		}
+
+		if(verifyOriginal != verifyUnrolled) {
+			std::cout << "RationalIISchedulerLayer::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
+		}
+
+		return verifyUnrolled and verifyOriginal;
+	}
 
 }

@@ -43,7 +43,7 @@ namespace HatScheT
  * Proceedings of the 25th Asia and South Pacific Design Automation Conference (ASP-DAC), Beijing 2020
  *
  */
-class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer, public IterativeSchedulerBase
+class RationalIIScheduler : public ILPSchedulerBase, public RationalIISchedulerLayer
 {
 public:
   /*!
@@ -54,11 +54,6 @@ public:
    * @param solverWishlist
    */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-  /*!
-   * the main function of the scheduler. The rational II scheduler tries to identify high throughput schedules on
-   * the theoretical min II boundary. For this the variables s / m are used
-   */
-  virtual void schedule();
     /*!
  * \brief getLifeTimes using the determined rational II
  * lifetimes in rational II schedules are determined using the initiation intervall vector
@@ -111,27 +106,14 @@ public:
   map<Edge*, pair<int, int> > getedgePortMapping(){
     return this->edgePortMapping;
   }
+
+protected:
   /*!
-   * @brief iteration start of s
-   * @return
-   */
-  int getS_Start(){return this->s_start;}
-  /*!
-   * @brief iteration start of m
-   * @return
-   */
-  int getM_Start(){return this->m_start;}
-  /*!
-   * @brief found value for s (-1 if no schedule was found)
-   * @return
-   */
-  int getS_Found(){return this->s_found;}
-  /*!
-   * @brief found value for m (-1 if no schedule was found)
-   * @return
-   */
-  int getM_Found(){return this->m_found;}
-private:
+	 * each scheduler should overload this function for one schedule iteration
+	 * M/S are already set automatically by RationalIISchedulerLayer::schedule
+	 *
+	 */
+  void scheduleIteration() override;
   /*!
    * constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
    */
@@ -144,6 +126,8 @@ private:
    *
    */
   virtual void resetContainer();
+
+private:
   /*!
    * set the resource constranints / often referred to as modulo reservation table (MRT)
    */
@@ -168,11 +152,6 @@ private:
    * fill interface to pass values to next step in the tool flow after solving
    */
   void fillSolutionStructure();
-  /*!
-   * this function sets the s and m values in a way that not needed values are skipped
-   * and the rational II becomes as small as possible
-   */
-  void autoSetMAndS();
   /*!
    * dito
    */
@@ -211,37 +190,13 @@ private:
    */
   //vector<int> latencySequence;
   /*!
-   * the minimum interger II that is possible
-   */
-  int integerMinII;
-  /*!
    * buffer
    */
   double tpBuffer;
-  /*!
-   * flag
-   */
-  bool minRatIIFound;
   /*!
    * @brief the edgePortMapping can be used to optmize the binding in order
    * to minimize the effort for MUX hardware
    */
   map<HatScheT::Edge*, pair<int,int> > edgePortMapping;
-  /*!
-   * @brief the s value for the iteration start
-   */
-  int s_start;
-  /*!
-   * @brief the m value for the iteration start
-   */
-  int m_start;
-  /*!
-   * @brief the identified s value
-   */
-  int s_found;
-  /*!
-   * @brief the identified s value
-   */
-  int m_found;
 };
 }
