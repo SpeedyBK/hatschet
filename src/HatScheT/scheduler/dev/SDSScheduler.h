@@ -60,6 +60,23 @@ namespace HatScheT {
     bool binding;
   };
 
+  struct orderingVariabletoSDCMapping{
+
+    int satVariable;
+    pair<const Vertex*, const Vertex*> constraintOneVertices;
+    int constraintOne;
+    pair<const Vertex*, const Vertex*> constraintTwoVertices;
+    int constraintTwo;
+
+    void createConstraintTwo(int II){
+      constraintTwoVertices = make_pair(constraintOneVertices.second, constraintOneVertices.first);
+      constraintTwo = II-1;
+    }
+  };
+
+  enum sdcSolver {ScaLP, BellmanFord};
+
+  enum sdcStatus {unfeasible, feasible};
 
   class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase, public ILPSchedulerBase{
 
@@ -87,12 +104,7 @@ namespace HatScheT {
 
     virtual void constructProblem() {/* unused */}
 
-    //Setter Functions
-    /*!
-     * All cout statements can be supressed by setting "quiet" to true.
-     * @param quiet
-     */
-    void setSilent(bool quiet = true) { this->silent = quiet; }
+    //Setter Functions:
 
     /*!
      * Switch for the Binding Type
@@ -154,7 +166,7 @@ namespace HatScheT {
      * Creates Data Dependency and Tming Constraints from the Original Graph.
      * @return Data Dependency and Timing Constraints in an SDC Formulation.
      */
-    map<pair<const Vertex *, const Vertex *>, int> createDependencyConstraints();
+    void createDependencyConstraints();
 
     /*!
      * @param gr Pointer to Graph which should be checked.
@@ -163,20 +175,24 @@ namespace HatScheT {
      */
     static bool doesVertexExist(Graph *gr, int vertexID);
 
-    void getSATClausesFromSDCConflicts(map<pair<Vertex*, Vertex*>, int> &conflicts);
+    void createScaLPVariables();
 
-    void scalpsolver();
+    pair <ScaLP::Constraint, ScaLP::Constraint> createadditionalScaLPConstraits(orderingVariabletoSDCMapping order);
 
+    bool checkfeasibilityScaLP(vector<pair<ScaLP::Constraint, ScaLP::Constraint>> scstr, int maxLatConstr);
+
+    map<Vertex*, int> findstarttimes(ScaLP::Result &r);
+
+    const Vertex* getVertexFromVariable(const ScaLP::Variable &sv);
+
+    vector<int> getSATClausesfromScaLP(list<orderingVariabletoSDCMapping> &conflicts);
+
+    map <Vertex*, int> getFirstSDCSolution();
     /////////////////////////
     //      Variables      //
     /////////////////////////
 
-    bool firstTime;
-
-    /*!
-     * If true, cout statements are supressed.
-     */
-    bool silent;
+    sdcSolver sdcS = BellmanFord;
 
     /*!
      * BindingType is used as a switch for the resourcebinding:
@@ -204,7 +220,7 @@ namespace HatScheT {
      * Solution which the SAT-Solver return for the resource constraints given by the Sharing Variables.
      * in an SDC Formulation.
      */
-    map<pair<const Vertex *, const Vertex *>, int> resourceConstraintsSDC;
+    list<orderingVariabletoSDCMapping> resourceConstraints;
 
     /*!
      * Data Dependency Constraints and Timing Constraints from the original Graph.
@@ -230,6 +246,13 @@ namespace HatScheT {
      * Solver Wishlist for Scalp.
      */
     std::list<std::string> swishlist;
+
+    /*!
+     * @brief this map stores the scalp variables associated to each vertex inside the graph
+     */
+    std::map<const Vertex *, ScaLP::Variable> scalpVariables;
+
+    ScaLP::Variable newVar = ScaLP::newIntegerVariable("SuperINGO", 0, ScaLP::INF());
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,62 +289,41 @@ namespace HatScheT {
 
     public:
 
-      BellmanFordSDC(ConstraintGraph cg, Graph* originalGraph, double II);
+      BellmanFordSDC(ConstraintGraph cg, Graph* g, map<Vertex*, int> &initsolution);
 
       /*!
        * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
        * build it's constraint Graph by itself.
        * @param constraints like "V1 - V2 <= C"
        */
-      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* originalGraph, double II);
-
-      /*!
-       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
-       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
-       */
-      pair<map<Vertex*, int>, bool> getfirstPath();
-
-      /*!
-       * If Bellman-Ford finds a feasable solution, it returns the solution and a boolean which says, that a solution is
-       * found. If there is no solution, it returns an empty map and a boolean which says, that no solution is found.
-       */
-      pair<map<Vertex*, int>, bool> getPathIncremental();
-
-      void addConstraints(map<pair<const Vertex*, const Vertex*>, int> &constraints);
-
-      map<pair<Vertex*, Vertex*>, int> getConflicts();
-
-      /*!
-       * Sets the Silent variable;
-       */
-      void setSilent(bool quiet) {this -> silent = quiet;}
-
-      void increaseMinLatency();
+      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* g, map<Vertex*, int> &initsolution);
 
       void printConstraintGraph();
 
+      void setquiet(bool silence);
+
+      sdcStatus solveSDC();
+
+      map <Vertex*, int> getVertexCosts();
+
+      void setadditionlaConstraints(list<orderingVariabletoSDCMapping> &constraints);
+
+      vector<vector<int>> getConflicts();
+
+      void increaseLatency();
+
     private:
 
-      /*!
-       * Sets the cost for the start Vertex to 0 and the cost for all other Vertices to INT_MAX;
-       */
       void bellmanFordAlgorithm();
 
-      /*!
-       * Method to find the startvertex for the single source shortes path problem.
-       * @return ID of the startvertex
-       */
-      int determineStartVertex(double II);
+      void ajustConstraintGraph();
 
       /*!
        * Constraint Graph for which shortest Paths will be searched
        */
       ConstraintGraph cg;
 
-      /*!
-       * Pointer to the original Graph.
-       */
-      Graph* origGraph;
+      Graph* g;
 
       /*!
        * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
@@ -333,35 +335,17 @@ namespace HatScheT {
        */
       bool hasNegativeCycle;
 
-      /*!
-       * Tells the class to shut up.
-       */
-      bool silent;
+      bool quiet = true;
 
-      /*!
-       * Id of the Vertex which is Startpoint for Bellman Ford Algorithm
-       */
+      vector<vector<int>> conflictClauses;
+
+      list<orderingVariabletoSDCMapping> additionalConstraints;
+
       int startID;
 
-      /*!
-       * Min latency edges.
-       */
-      list<Edge*> minLatEdges;
+      map <Vertex*, int> initsol;
 
-      /*!
-       * Ressource Constraints
-       */
-      map<pair<Vertex*, Vertex*>, int> additionalConstraints;
-
-      /*!
-       * Conflict clauses found by SDC
-       */
-      map<pair<Vertex*, Vertex*>, int> conflicts;
-
-      /*!
-       * II from Sheduler Base
-       */
-       double II;
+      set<Edge*> latencyEdges;
     };
 
   };

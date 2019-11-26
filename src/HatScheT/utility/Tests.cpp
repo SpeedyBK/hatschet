@@ -1216,22 +1216,34 @@ bool Tests::compareModuloSchedulerTest() {
 
     double timetoschedule = 0;
 
+
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "benchmarks/origami/fir_srg_RM.xml";
-    string graphStr = "benchmarks/origami/fir_srg.graphml";
+    string resStr = "benchmarks/origami/iir_biqu_RM.xml";
+    string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
 
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
+
+    int DarkwingDuck = 0;
+    for(auto &it : rm.Resources()){
+      if (DarkwingDuck == 1){
+        // Chill mal deine Base...
+      }else{
+        it->setLimit(-1);
+      }
+      DarkwingDuck++;
+    }
+
     /*
     HatScheT::Graph g;
     HatScheT::ResourceModel rm;
 
-    auto &ld = rm.makeResource("Load", 1, 1, 1);
+    auto &ld = rm.makeResource("Load", 2, 1, 1);
 
     auto &add = rm.makeResource("Adder", -1, 1, 1);
 
@@ -1246,6 +1258,7 @@ bool Tests::compareModuloSchedulerTest() {
     Vertex &E = g.createVertex(4);
     //Store operations:
     Vertex &F = g.createVertex(5);
+    //Vertex &G = g.createVertex(6);
 
     //Load operations:
     rm.registerVertex(&A, &ld);
@@ -1256,6 +1269,7 @@ bool Tests::compareModuloSchedulerTest() {
     rm.registerVertex(&E, &add);
     //Store operations:
     rm.registerVertex(&F, &st);
+    //rm.registerVertex(&G, &st);
 
     //Edges:
     g.createEdge(B, D, 0);
@@ -1263,6 +1277,8 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(A, E, 0);
     g.createEdge(D, E, 0);
     g.createEdge(E, F, 0);
+    g.createEdge(F, A, 1);
+    //g.createEdge(D, G, 0);
     */
 
     cout << "Display Graph:" << endl;
@@ -1285,7 +1301,7 @@ bool Tests::compareModuloSchedulerTest() {
     list <string> sw = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
     SDSScheduler sds(g, rm, sw);
     cout << "*******************************************************" << endl << endl;
-    sds.setSilent(false);
+    sds.setQuiet(false);
     sds.setBindingType('S');
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     sds.schedule();
@@ -1297,8 +1313,7 @@ bool Tests::compareModuloSchedulerTest() {
     for (auto &it : sdssched) {
       cout << it.first->getName() << " : " << it.second << endl;
     }
-
-    if(verifyModuloSchedule(g, rm, sdssched, sds.getII())){
+    if(verifyModuloSchedule(g, rm, sdssched, sds.getScheduleLength())){
       cout << endl << "SDSScheduler: Schedule is valid" << endl;
     }else {
       cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
@@ -1309,22 +1324,23 @@ bool Tests::compareModuloSchedulerTest() {
 
     cout << endl << endl;
 
-    cout << "MODSDC:" << endl;
-    ModSDC MSDC (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
+    cout << "ALAP:" << endl;
+    ALAPScheduler asa (g,rm);
+    asa.setQuiet(false);
     t1 = std::chrono::high_resolution_clock::now();
-    MSDC.schedule();
+    asa.schedule();
     t2 = std::chrono::high_resolution_clock::now();
     timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
     timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
-    auto sched = MSDC.getSchedule();
+    auto sched = asa.getSchedule();
 
     for (auto &it : sched){
       cout << it.first->getName() << " : " << it.second << endl;
     }
-    if (verifyModuloSchedule(g, rm, sched, MSDC.getII())){
-      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    if (verifyModuloSchedule(g, rm, sched, asa.getScheduleLength())){
+      cout << endl << "ASAP: Schedule is valid" << endl;
     }else {
-      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+      cout << endl << "ASAP: Schedule is NOT valid" << endl;
     }
 
     cout << endl << "Time to get shedule: " << timetoschedule << endl;

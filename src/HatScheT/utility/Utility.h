@@ -173,12 +173,13 @@ public:
   */
  static bool edgeIsInGraph(Graph* g, const Edge* e);
  /*!
-  * \brief isInput returns true if this vertex is no inputs or only inputs of edges with a distance
+  * \brief isInput returns true if this vertex has no inputs or only inputs of edges with a distance
   * \param g
   * \param v
   * \return
   */
  static bool isInput(Graph* g, Vertex* v);
+
  /*!
   * \brief occurrencesAreConflictFree
   * \param occ1
@@ -348,19 +349,7 @@ public:
   */
   static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
 
-  /*!
-   * Checks if graph g has cycles. https://www.geeksforgeeks.org/detect-cycle-in-a-graph/
-   * @param Graph g
-   * @return true if graph is cyclic, false if graph is acyclic.
-   */
-  static bool iscyclic (Graph *g);
-
   private:
-
-  /*!
-   * Helperfunction for iscyclic(), basicly a variation of a DFS.
-   */
-  static bool iscyclicHelper(Graph* g, Vertex *V, map <Vertex*, bool> &visited, map <Vertex*, bool> &recStack);
 
   static void cycle(const Edge* e, vector<Vertex*>& visited, int& currLength, Graph* g, ResourceModel* rm, double II);
 
