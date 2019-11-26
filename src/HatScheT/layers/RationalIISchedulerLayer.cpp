@@ -84,14 +84,16 @@ int RationalIISchedulerLayer::getScheduleLength() {
 std::list<pair<int, int>>
 RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax, int maxListSize) {
 
-	std::list<std::pair<int,int>> moduloSamplePairs = {std::make_pair(mMinII,sMinII)}; // list of sorted M/S pairs
+	std::list<std::pair<int,int>> moduloSamplePairs; // list of sorted M/S pairs
+
+	if(sMax<0) sMax = sMinII;
+	if(maxListSize<0) maxListSize = sMinII * mMinII;
+	if(sMinII<=sMax) moduloSamplePairs.emplace_back(std::make_pair(mMinII,sMinII));
+
 	if(maxListSize==1) return moduloSamplePairs;
 
 	// II=4/3=8/6=12/9=... since 4/3 is the easiest to get a schedule for, all other fractions can be skipped!
 	std::list<std::pair<int,int>> skipMe = {std::make_pair(mMinII,sMinII)};
-
-	if(sMax<0) sMax = sMinII;
-	if(maxListSize<0) maxListSize = sMinII * mMinII;
 
 	double rationalMinII = double(mMinII) / double(sMinII);
 

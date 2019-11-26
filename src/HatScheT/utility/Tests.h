@@ -131,9 +131,13 @@ public:
    */
   static bool rationalIIModuloQTest();
   /*!
-   * @brief test functionality of (rational II) ModuloQScheduler
+   * @brief test functionality of (rational II) SCCQScheduler
    */
   static bool rationalIISCCQTest();
+  /*!
+   * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
+   */
+  static bool tcadExampleTest();
   /*!
    * \brief A simpler test for the DaiZhang19Scheduler, with examples from the Paper "Improving Scalability of Exact
    * Modulo Scheduling with Specialized Conflict-Driven Learning"

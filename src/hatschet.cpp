@@ -110,6 +110,7 @@ void print_short_help() {
   std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)" << std::endl;
   std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
+	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
   std::cout << std::endl;
@@ -134,6 +135,7 @@ int main(int argc, char *args[]) {
   int threads=1;
   int timeout=-1; //default -1 means no timeout
   int maxLatency=-1;
+  bool quiet=true;
 
   //variables for Rational II scheduling
   int samples = -1; //default
@@ -221,8 +223,7 @@ int main(int argc, char *args[]) {
         else uniform = false;
       }
       else if(getCmdParameter(args[i],"--binding=",value)) {
-          if(atol(value) == 1)
-        optBinding = true;
+          if(atol(value) == 1) optBinding = true;
       }
       else if(getCmdParameter(args[i],"--maxlatency=",value)) {
         maxLatency = atol(value);
@@ -230,6 +231,10 @@ int main(int argc, char *args[]) {
       else if(getCmdParameter(args[i],"--html=",value)) {
         htmlFile = value;
       }
+			else if(getCmdParameter(args[i],"--quiet=",value)) {
+				if(value=="0" or value=="false" or value=="False" or value=="FALSE" or value=="zero" or value=="Zero" or value=="ZERO")
+					quiet = false;
+			}
       else if(getCmdParameter(args[i],"--scheduler=",value)) {
         std::string valueStr = std::string(value);
 
@@ -328,6 +333,7 @@ int main(int argc, char *args[]) {
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
         if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
+        if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -670,6 +676,9 @@ int main(int argc, char *args[]) {
         default:
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
+
+      // set quiet or loud
+			scheduler->setQuiet(quiet);
 
       //chossing binding
       //experimental
