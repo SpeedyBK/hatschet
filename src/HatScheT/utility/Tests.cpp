@@ -1228,7 +1228,7 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-
+    /*
     int DarkwingDuck = 0;
     for(auto &it : rm.Resources()){
       if (DarkwingDuck == 1){
@@ -1237,7 +1237,7 @@ bool Tests::compareModuloSchedulerTest() {
         it->setLimit(-1);
       }
       DarkwingDuck++;
-    }
+    }*/
 
     /*
     HatScheT::Graph g;
@@ -1324,8 +1324,8 @@ bool Tests::compareModuloSchedulerTest() {
 
     cout << endl << endl;
 
-    cout << "ALAP:" << endl;
-    ALAPScheduler asa (g,rm);
+    cout << "ASAP:" << endl;
+    ASAPScheduler asa (g,rm);
     asa.setQuiet(false);
     t1 = std::chrono::high_resolution_clock::now();
     asa.schedule();

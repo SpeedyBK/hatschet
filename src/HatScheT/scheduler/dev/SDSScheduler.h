@@ -78,7 +78,7 @@ namespace HatScheT {
 
   enum sdcStatus {unfeasible, feasible};
 
-  class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase, public ILPSchedulerBase{
+  class SDSScheduler : public SchedulerBase, public ModuloSchedulerBase, public ILPSchedulerBase {
 
   public:
 
@@ -152,8 +152,9 @@ namespace HatScheT {
      * @param confClauses conflict clauses determined by the SDC-Solver.
      * @return Map of SDC-Formulations based on the SAT Solution.
      */
-    map<pair<const Vertex *, const Vertex *>, int> passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
-                                                                   vector<vector<int>> &confClauses);
+    map<pair<const Vertex *, const Vertex *>, int>
+    passToSATSolver(map<pair<const Vertex *, const Vertex *>, bool> &shareVars,
+                    vector<vector<int>> &confClauses);
 
     /*!
      * Swaps a pair.
@@ -177,17 +178,18 @@ namespace HatScheT {
 
     void createScaLPVariables();
 
-    pair <ScaLP::Constraint, ScaLP::Constraint> createadditionalScaLPConstraits(orderingVariabletoSDCMapping order);
+    pair<ScaLP::Constraint, ScaLP::Constraint> createadditionalScaLPConstraits(orderingVariabletoSDCMapping order);
 
     bool checkfeasibilityScaLP(vector<pair<ScaLP::Constraint, ScaLP::Constraint>> scstr, int maxLatConstr);
 
-    map<Vertex*, int> findstarttimes(ScaLP::Result &r);
+    map<Vertex *, int> findstarttimes(ScaLP::Result &r);
 
-    const Vertex* getVertexFromVariable(const ScaLP::Variable &sv);
+    const Vertex *getVertexFromVariable(const ScaLP::Variable &sv);
 
     vector<int> getSATClausesfromScaLP(list<orderingVariabletoSDCMapping> &conflicts);
 
-    map <Vertex*, int> getFirstSDCSolution();
+    map<Vertex *, int> getFirstSDCSolution();
+
     /////////////////////////
     //      Variables      //
     /////////////////////////
@@ -230,7 +232,7 @@ namespace HatScheT {
     /*!
      * Mapping from SDC to SAT
      */
-    map<pair<const Vertex*, const Vertex*>, int> sdcToSATMapping;
+    map<pair<const Vertex *, const Vertex *>, int> sdcToSATMapping;
 
     /*!
      * Conflict Clauses detected by SDC
@@ -241,6 +243,8 @@ namespace HatScheT {
      * Flag from SAT-Solver, if problem is not satisfiable
      */
     bool unsatisiable;
+
+    int initScheduleLength;
 
     /*!
      * Solver Wishlist for Scalp.
@@ -261,16 +265,17 @@ namespace HatScheT {
      * so we need to implement it here.
      */
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    class ConstraintGraph : public Graph{
+    class ConstraintGraph : public Graph {
 
     public:
-      void removeEdge(Vertex* srcVertex, Vertex* dstVertex);
+      void removeEdge(Vertex *srcVertex, Vertex *dstVertex);
 
-      Edge &createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance=0, Edge::DependencyType dependencyType=Edge::Data);
+      Edge &
+      createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance = 0, Edge::DependencyType dependencyType = Edge::Data);
 
-      bool doesEdgeExistID(Vertex* src, Vertex* dst);
+      bool doesEdgeExistID(Vertex *src, Vertex *dst);
 
-      Edge& getEdge(const Vertex *srcV, const Vertex *dstV);
+      Edge &getEdge(const Vertex *srcV, const Vertex *dstV);
 
       void setSilent(bool quiet = true) { this->silent = quiet; }
 
@@ -289,14 +294,15 @@ namespace HatScheT {
 
     public:
 
-      BellmanFordSDC(ConstraintGraph cg, Graph* g, map<Vertex*, int> &initsolution);
+      BellmanFordSDC(ConstraintGraph cg, Graph *g, map<Vertex *, int> &initsolution);
 
       /*!
        * The Solver can also be constructed by passing in a map of constraints like "V1 - V2 <= C" in this case it will
        * build it's constraint Graph by itself.
        * @param constraints like "V1 - V2 <= C"
        */
-      BellmanFordSDC(map<pair<const Vertex*, const Vertex*>, int> &constraints, Graph* g, map<Vertex*, int> &initsolution);
+      BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph *g,
+                     map<Vertex *, int> &initsolution);
 
       void printConstraintGraph();
 
@@ -304,7 +310,7 @@ namespace HatScheT {
 
       sdcStatus solveSDC();
 
-      map <Vertex*, int> getVertexCosts();
+      map<Vertex *, int> getVertexCosts();
 
       void setadditionlaConstraints(list<orderingVariabletoSDCMapping> &constraints);
 
@@ -312,18 +318,18 @@ namespace HatScheT {
 
       void increaseLatency();
 
+      void ajustConstraintGraph(int asaplength);
+
     private:
 
       void bellmanFordAlgorithm();
-
-      void ajustConstraintGraph();
 
       /*!
        * Constraint Graph for which shortest Paths will be searched
        */
       ConstraintGraph cg;
 
-      Graph* g;
+      Graph *g;
 
       /*!
        * Map with Vertices of the Constraint Graph and the Cost to reach each Vertex
@@ -343,13 +349,24 @@ namespace HatScheT {
 
       int startID;
 
-      map <Vertex*, int> initsol;
+      map<Vertex *, int> initsol;
 
-      set<Edge*> latencyEdges;
+      set<Edge *> latencyEdges;
     };
 
-  };
+   /*!
+    * Runs the schedule loop in a
+    */
+    void findBestSchedule(BellmanFordSDC &sdcsol);
 
+   /*!
+    * Does trys to find a schedule.
+    * @param sdcsol Reference to the SDC-Solver
+    * @param latency constraint for the schedule;
+    * @return
+    */
+    bool checkSchedule(BellmanFordSDC &sdcsol, int latency);
+  };
 }
 
 #endif //USE_CADICAL

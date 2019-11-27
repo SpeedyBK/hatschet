@@ -116,17 +116,28 @@ namespace HatScheT {
         sharingVariables = createShVarsMinRes();
       }
 
-      //Setup SDC and check if feasible without Resource Constraints.
       createDependencyConstraints();
+      //Do an ASAP Shedule, to find Initial Latency Constraint.
       auto initialSolution = getFirstSDCSolution();
+
+      if(!quiet){
+        cout << "Initial Shedule:" << endl;
+        for (auto &it: initialSolution){
+          cout << it.first->getName() << ": " << it.second << endl;
+        }
+      }
+      //Check schedule against resource constraints.
       BellmanFordSDC bfsdc(this->dependencyConstraintsSDC, &g, initialSolution);
       bfsdc.setquiet(this->quiet);
-      bfsdc.printConstraintGraph();
+      bfsdc.ajustConstraintGraph(this->initScheduleLength);
+      //bfsdc.printConstraintGraph();
       if (bfsdc.solveSDC()==unfeasible){
         throw HatScheT::Exception ("SDSScheduler: Can't find an initial schedule for unlimited Resources.");
       }
 
-      //If Initial Schedule found, get Resource Constraints via SAT, and check Schedule against Resource Constraints.
+      //Start SDC-SAT LOOP
+      //findBestSchedule();
+
 
       //ToDo Ab hier While Schleife.
       vector<vector<int>> conflict;
@@ -142,7 +153,7 @@ namespace HatScheT {
           cout << "********************************************************************" << endl;
           passToSATSolver(this->sharingVariables, conflict);
           cout << "********************************************************************" << endl;
-          bfsdc.increaseLatency();
+          //Binary Search to find best Latency
           bfsdc.setadditionlaConstraints(resourceConstraints);
           if (bfsdc.solveSDC()==feasible){
             break;
@@ -158,6 +169,33 @@ namespace HatScheT {
       startTimes = bfsdc.getVertexCosts();
     }
 
+  }
+
+  void SDSScheduler::findBestSchedule(BellmanFordSDC &sdcsol) {
+
+    int upperBound = this->initScheduleLength * 2 ;
+    int lowerBound = this->initScheduleLength;
+    bool increaseFlag = true;
+    /*
+    while (lowerBound <= upperBound){
+      int mid = floor((upperBound + lowerBound) / 2);
+        if (checkSchedule(sdcsol, mid) {
+          upperBound = mid;
+          mid = floor((upperBound + lowerBound) / 2)
+          increaseFlag = false; //do no increase upperBound anymore!
+        }else{
+          lowerBound = mid;
+          if (increaseFlag){
+            upperBound *= 2;
+          }
+          mid = floor ((upperBound + lowerBound) / 2)
+        }
+    }*/
+    //startTimes = schedule;
+  }
+
+  bool SDSScheduler::checkSchedule(BellmanFordSDC &sdcsol, int latency) {
+    return false;
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -352,11 +390,17 @@ namespace HatScheT {
      * Check if satisfiable:
      */
     if (res == 10) {
-      cout << "CaDiCaL: Problem Satisfiable" << endl;
+      if (!quiet) {
+        cout << "CaDiCaL: Problem Satisfiable" << endl;
+      }
     } else if (res == 0) {
-      cout << "CaDiCaL: Problem Unsolved" << endl;
+        if (!quiet) {
+          cout << "CaDiCaL: Problem Unsolved" << endl;
+        }
     } else if (res == 20) {
-      cout << "CaDiCaL: Problem Unsatisfiable" << endl;
+        if (!quiet) {
+          cout << "CaDiCaL: Problem Unsatisfiable" << endl;
+        }
       unsatisiable = true;
     }
 
@@ -548,9 +592,9 @@ namespace HatScheT {
 
     ASAPScheduler asa (this->g, rmTemp);
     asa.schedule();
+    this->initScheduleLength = asa.getScheduleLength();
     return asa.getSchedule();
   }
-
 
 
   ///////////////////////////////////////////////
@@ -616,7 +660,6 @@ namespace HatScheT {
     this-> g = g;
     this-> hasNegativeCycle = false;
     this-> initsol = initsolution;
-    ajustConstraintGraph();
   }
 
   SDSScheduler::BellmanFordSDC::BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph* g, map<Vertex*, int> &initsolution) {
@@ -626,26 +669,18 @@ namespace HatScheT {
     /*!
      * Create Vertices:
      */
-    for (auto &it: constraints) {
-      if (!doesVertexExist(&this->cg, it.first.first->getId())) {
-        this->cg.createVertex(it.first.first->getId());
-        this->cg.getVertexById(it.first.first->getId()).setName(it.first.first->getName());
-      }
-      if (!doesVertexExist(&this->cg, it.first.second->getId())) {
-        this->cg.createVertex(it.first.second->getId());
-        this->cg.getVertexById(it.first.second->getId()).setName(it.first.second->getName());
-      }
-      /*!
-       * Create Edges:
-       */
-      if (!this->cg.doesEdgeExistID((Vertex *) it.first.first, (Vertex *) it.first.second)) {
-        this->cg.createEdgeSDS(this->cg.getVertexById(it.first.second->getId()),
-                               this->cg.getVertexById(it.first.first->getId()), it.second);
-      }
+    for (auto &it: this->g->Vertices()) {
+      int vertexID = it->getId();
+      this->cg.createVertex(vertexID);
+      this->cg.getVertexById(vertexID).setName(it->getName());
     }
-    cout << "Blubb" << endl;
-    ajustConstraintGraph();
-    cout << "Blubber" << endl;
+    /*!
+     * Create Edges:
+     */
+    for (auto &it : constraints){
+      this->cg.createEdgeSDS(this->cg.getVertexById(it.first.second->getId()),
+                             this->cg.getVertexById(it.first.first->getId()), it.second);
+    }
   }
 
   void SDSScheduler::BellmanFordSDC::bellmanFordAlgorithm() {
@@ -657,15 +692,6 @@ namespace HatScheT {
     }
     vertexCosts[&this->cg.getVertexById(this->startID)] = 0;
 
-    /*
-    if(!quiet){
-      cout << "Vertexcosts 1: " << endl;
-      for (auto &it : vertexCosts){
-        cout << it.first->getId() << ": " << it.second << endl;
-      }
-    }
-     */
-
     /*!
      * Finding Shortest Paths
      */
@@ -676,7 +702,6 @@ namespace HatScheT {
         }
       }
     }
-
 
     if(!quiet){
       cout << "Vertexcosts 2: " << endl;
@@ -690,14 +715,18 @@ namespace HatScheT {
      */
     for (auto &it : this->cg.Edges()){
       if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])){
-        cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance() << " < Cost DST: " <<  vertexCosts[&it->getVertexDst()] << " : ";
+        if (!quiet) {
+          cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance()
+               << " < Cost DST: " << vertexCosts[&it->getVertexDst()] << " : infeasible" << endl;
+        }
         hasNegativeCycle = true;
-        cout << "infeasible" << endl;
         break;
       }else {
-        cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance() << " < Cost DST: " <<  vertexCosts[&it->getVertexDst()] << " : ";
+        if (!quiet) {
+          cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance()
+               << " < Cost DST: " << vertexCosts[&it->getVertexDst()] << " : feasible" << endl;
+        }
         hasNegativeCycle = false;
-        cout << "feasible" << endl;
       }
     }
   }
@@ -715,17 +744,20 @@ namespace HatScheT {
     this->quiet = silence;
   }
 
-  void SDSScheduler::BellmanFordSDC::ajustConstraintGraph() {
+  void SDSScheduler::BellmanFordSDC::ajustConstraintGraph(int asaplength) {
 
     list <pair<Vertex*, int>> outputVertices;
     auto gT = Utility::transposeGraph(g);
-    cout << "Pandabär" << endl;
+
+    for (auto &it : cg.Vertices()){
+      cout << it->getName() << " -- " << it->getId() << endl;
+    }
+
     for (auto &it : gT.first->Vertices()){
       if (Utility::isInput(gT.first, it)){
         outputVertices.emplace_back(make_pair(&cg.getVertexById(it->getId()),this->initsol[&g->getVertexById(it->getId())]));
       }
     }
-    cout << "Pampelmuse" << endl;
 
     if(!quiet) {
       cout << "Outputvertices: " << endl;
@@ -734,7 +766,6 @@ namespace HatScheT {
       if(!quiet) {
         cout << it.first->getName() << ": " << it.second << endl;
       }
-      startID = it.first->getId();
     }
 
     list<Vertex*> inputVertices;
@@ -743,6 +774,8 @@ namespace HatScheT {
         inputVertices.push_back(it);
       }
     }
+    auto startVertex = inputVertices.front();
+    startID = startVertex->getId();
 
     if(!quiet) {
       cout << "Inputvertices: " << endl;
@@ -750,15 +783,15 @@ namespace HatScheT {
         cout << it->getName() << endl;
       }
     }
-    /*
+
     for (auto &oIt : outputVertices){
       for (auto &iIt : inputVertices){
         if(!cg.doesEdgeExistID(iIt, oIt.first)) {
-          this -> latencyEdges.insert(&cg.createEdge(cg.getVertexById(iIt->getId()), cg.getVertexById(oIt.first->getId()), oIt.second));
+          this -> latencyEdges.insert(&cg.createEdge(cg.getVertexById(iIt->getId()), cg.getVertexById(oIt.first->getId()), asaplength));
         }
       }
     }
-     */
+
   }
 
   map<Vertex *, int> SDSScheduler::BellmanFordSDC::getVertexCosts() {
@@ -794,7 +827,10 @@ namespace HatScheT {
       vector<Edge*> newEdges;
       newEdges.reserve(additionalConstraints.size());
       for (auto &it : additionalConstraints){
-        cout << "Adding: " << it.constraintOneVertices.second->getName() << " - " << it.constraintOneVertices.first->getName() << " <= " << it.constraintOne << endl;
+        if(!quiet) {
+          cout << "Adding: " << it.constraintOneVertices.second->getName() << " - "
+               << it.constraintOneVertices.first->getName() << " <= " << it.constraintOne << endl;
+        }
         newEdges.emplace_back(&cg.createEdgeSDS(cg.getVertexById(it.constraintOneVertices.second->getId()), cg.getVertexById(it.constraintOneVertices.first->getId()), it.constraintOne));
         //newEdges.emplace_back(&cg.createEdgeSDS(cg.getVertexById(it.constraintTwoVertices.first->getId()), cg.getVertexById(it.constraintTwoVertices.second->getId()), it.constraintTwo));
         potentialConflicts.emplace_back(it.satVariable * (-1));
