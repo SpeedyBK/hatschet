@@ -156,6 +156,9 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	}
 
 	void RationalIISchedulerLayer::schedule() {
+		if(!this->quiet) {
+			std::cout << "RationalIISchedulerLayer::schedule: start scheduling" << std::endl;
+		}
 		this->scheduleFound = false;
 		this->minRatIIFound = false;
 		this->scheduleValid = false;

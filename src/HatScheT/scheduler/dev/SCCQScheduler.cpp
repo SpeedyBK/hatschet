@@ -514,7 +514,7 @@ namespace HatScheT {
 		this->begin = clock();
 		// find SCCs
 		KosarajuSCC k(this->g);
-		k.setQuiet();
+		k.setQuiet(this->quiet);
 		auto sccs = k.getSCCs();
 
 		// schedule SCCs
@@ -534,6 +534,10 @@ namespace HatScheT {
 			this->end = clock();
 			if (this->solvingTime == -1.0) this->solvingTime = 0.0;
 			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			// free memory
+			for(auto scc : sccs) {
+				delete scc;
+			}
 			return;
 		}
 
@@ -585,5 +589,10 @@ namespace HatScheT {
 		}
 
 		this->scheduleFound = true;
+
+		// free memory
+		for(auto scc : sccs) {
+			delete scc;
+		}
 	}
 }
