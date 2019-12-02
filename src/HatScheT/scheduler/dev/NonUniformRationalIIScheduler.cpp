@@ -30,11 +30,10 @@ namespace HatScheT
 
 		for(auto &v : this->g.Vertices()) {
 			for (int s = 0; s < this->samples; ++s) {
-				this->solver->addConstraint(supersink - this->tVariables[v][s] >= 0);
+				this->solver->addConstraint(supersink - this->tVariables[v][s] - this->resourceModel.getVertexLatency(v) >= 0);
 			}
 		}
 
-		this->solver->addConstraint(supersink>=0);
 		if(this->maxLatencyConstraint>0)
 			this->solver->addConstraint(supersink<=this->maxLatencyConstraint);
 

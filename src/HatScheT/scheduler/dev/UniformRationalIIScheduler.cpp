@@ -31,9 +31,8 @@ namespace HatScheT
 		ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink");
 
 		for(auto &v : this->g.Vertices())
-			this->solver->addConstraint(supersink - this->tVariables[v] >= 0);
+			this->solver->addConstraint(supersink - this->tVariables[v] - this->resourceModel.getVertexLatency(v) >= 0);
 
-		this->solver->addConstraint(supersink>=0);
 		if(this->maxLatencyConstraint>0)
 			this->solver->addConstraint(supersink<=this->maxLatencyConstraint);
 
