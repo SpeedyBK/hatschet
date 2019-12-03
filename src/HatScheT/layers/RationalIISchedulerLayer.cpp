@@ -197,10 +197,14 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
 		}
 
+		cout << "RationalIISchedulerLayer::schedule: Found " << msQueue.size() << " valid rat II iteration values using SMax=" << this->s_max << endl;
+
 		for(auto it : msQueue) {
 			this->modulo = it.first;
 			this->samples = it.second;
-			if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
+			/*if(!this->quiet)*/ cout << "RationalIISchedulerLayer::schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
+			/*if(!this->quiet)*/ cout << "RationalIISchedulerLayer::schedule: max. no. of iterations " << this->maxRuns << endl;
+			
 			this->scheduleIteration();
 
 			if(this->scheduleFound) {
