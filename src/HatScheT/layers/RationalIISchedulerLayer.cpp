@@ -122,7 +122,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			for(auto it=moduloSamplePairs.begin(); it!=moduloSamplePairs.end(); ++it) {
 				auto mTemp = it->first;
 				auto stemp = it->second;
-				if((double(m) / double(s)) < (double(mTemp) / double(stemp))) {
+				if(((double)(m) / (double)(s)) < ((double)(mTemp) / (double)(stemp))) {
 					moduloSamplePairs.insert(it,std::make_pair(m,s));
 					inserted = true;
 					break;
@@ -204,7 +204,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			this->samples = it.second;
 			/*if(!this->quiet)*/ cout << "RationalIISchedulerLayer::schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
 			/*if(!this->quiet)*/ cout << "RationalIISchedulerLayer::schedule: max. no. of iterations " << this->maxRuns << endl;
-			
+
 			this->scheduleIteration();
 
 			if(this->scheduleFound) {

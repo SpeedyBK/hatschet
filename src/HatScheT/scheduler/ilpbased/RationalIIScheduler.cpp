@@ -484,11 +484,16 @@ void RationalIIScheduler::fillTMaxtrix()
     }
 
     if(this->maxLatencyConstraint <= 0) {
+      if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency not set, start identification of L"  << endl;
       //experimental
-      this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples) + 1;
+      this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, ((double)this->modulo)/((double)this->samples)) + 1;
 
       this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+      if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency not set, finished identification of L"  << endl;
     }
+
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency Constraint is  " << this->maxLatencyConstraint  << endl;
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: Considered time steps " << this->consideredTimeSteps  << endl;
 
     //clear up and reset
     this->solver->reset();
