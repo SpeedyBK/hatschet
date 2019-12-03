@@ -34,6 +34,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->s_start = -1;
 	this->m_found = -1;
 	this->s_found = -1;
+	this->s_max = -1;
 
 	this->maxLatencyConstraint = -1;
 	this->maxRuns = 1;
@@ -121,7 +122,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			for(auto it=moduloSamplePairs.begin(); it!=moduloSamplePairs.end(); ++it) {
 				auto mTemp = it->first;
 				auto stemp = it->second;
-				if(double(m) / double(s) < double(mTemp) / double(stemp)) {
+				if((double(m) / double(s)) < (double(mTemp) / double(stemp))) {
 					moduloSamplePairs.insert(it,std::make_pair(m,s));
 					inserted = true;
 					break;
@@ -191,7 +192,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			cout << "------------------------" << endl;
 		}
 
-		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),this->s_max,this->maxRuns);
 		if(msQueue.empty()) {
 			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
 		}

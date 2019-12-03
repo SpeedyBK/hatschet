@@ -112,12 +112,25 @@ public:
    * @param maxListSize only return the best maxListSize M/S pairs -> -1: return all found M/S pairs
    * @return first pair element: M, second pair element: S
    */
-  static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax=-1, int maxListSize=-1);
+  static std::list<pair<int, int>> getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax, int maxListSize=-1);
   /*!
    *
    * @return if the found schedule is valid
    */
   bool getScheduleValid() const {return this->scheduleValid;}
+  /*!
+   * @brief the s_max value is used to obtain smaller ILP problem formulations
+   * the smaller s_max, the easier the problems should be solveable
+   * default value -1 (unlimited)
+   * use this value only when you have knowledge regarding the rat II iteration process
+   * @param s
+   */
+  void setSMax(int s) {
+  	this->s_max = s;
+  }
+  int getSMax() {
+  	return this->s_max;
+  }
 protected:
 	/*!
 	 * each scheduler should overload this function for one schedule iteration
@@ -162,6 +175,10 @@ protected:
 	 * @brief the identified s value
 	 */
 	int m_found;
+	/*!
+	 * @brief used for iteration
+	 */
+	int s_max;
 	/*!
 	 * the minimum interger II that is possible
 	 */
