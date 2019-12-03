@@ -36,17 +36,7 @@ namespace HatScheT {
       this->scheduler = t;
     }
 
-    //TODO finish those functions
     ScaLP::status getScaLPStatus() override { return this->stat; }
-    virtual std::map<Edge*,int> getLifeTimes() override {
-      throw Exception("UnrollRationalIIScheduler.getLifeTimes: not implemented yet!");
-    };
-    virtual std::map<const Vertex*,int> getBindings() override {
-      throw Exception("UnrollRationalIIScheduler.getBindings: not implemented yet!");
-    };
-    virtual vector<std::map<const Vertex*,int> > getRationalIIBindings() override {
-      throw Exception("UnrollRationalIIScheduler.getRationalIIBindings: not implemented yet!");
-    };
 
   protected:
     virtual void constructProblem() override {};

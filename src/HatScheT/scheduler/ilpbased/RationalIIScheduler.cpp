@@ -216,36 +216,6 @@ void RationalIIScheduler::setModuloConstraints() {
   }
 }
 
-std::map<Edge*,int> RationalIIScheduler::getLifeTimes(){
-  throw HatScheT::Exception("RationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
-}
-
-std::map<Edge*,vector<int> > RationalIIScheduler::getRatIILifeTimes(){
-  if(this->startTimesVector.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
-  if(this->latencySequence.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
-  if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
-
-  std::map<Edge*,vector<int> > allLifetimes;
-
-  for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
-    Edge* e = *it;
-    Vertex* vSrc = &e->getVertexSrc();
-    Vertex* vDst = &e->getVertexDst();
-
-    vector<int > lifetimes;
-
-    for(int i = 0; i < (int)(this->latencySequence.size()); i++){
-      int lifetime = this->startTimes[vDst] - this->startTimes[vSrc]
-        - this->resourceModel.getVertexLatency(vSrc) + this->getSampleDistanceAsInt(e->getDistance(), i);
-
-      if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
-      else lifetimes.push_back(lifetime);
-    }
-    allLifetimes.insert(make_pair(e, lifetimes));
-  }
-  return allLifetimes;
-}
-
 void RationalIIScheduler::autoSetNextMAndS(){
   int currS = this->samples;
   int currM = this->modulo;
@@ -370,22 +340,6 @@ void RationalIIScheduler::fillSolutionStructure() {
 
     this->latencySequence.push_back(IITimeDiff);
   }
-}
-
-vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
-  //generate new binding when no binding is available
-  if(this->ratIIbindings.size() == 0)
-    this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequence);
-
-  //throw exception when no binding was generated
-  if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
-
-  //return the stored binding
-  return this->ratIIbindings;
-}
-
-std::map<const Vertex *, int> RationalIIScheduler::getBindings() {
-    throw Exception("RationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 }
 
 void RationalIIScheduler::setResourceConstraints() {

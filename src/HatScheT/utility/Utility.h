@@ -268,32 +268,6 @@ public:
  * @return
  */
  static int safeRoundDown(double x);
-/*!
- * @brief create simple binding that just assignes resources as vertices appear in the schedule
- * @param sched
- * @param rm
- * @param II
- * @return
- */
- static std::map<const Vertex*,int> getSimpleBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
-/*!
- * UNDER CONSTRUCTION: this function is meant to determine MUX optimal FU bindings after modulo scheduling
- * @param sched
- * @param rm
- * @param II
- * @return
- */
- static std::map<const Vertex*,int> getMUXOptimalBinding(map<Vertex*, int> sched, ResourceModel* rm, int II);
- /*!
-  * create a simple binding for a rational II schedule
-  * NOTE the binding might result in a bad register and MUX allocation for lifetime variables as it is a very simple utility function
-  * @param sched
-  * @param rm
-  * @param II
-  * @param initIntervalls
-  * @return
-  */
- static vector<std::map<const Vertex*,int> > getSimpleRatIIBinding(map<Vertex*, int> sched, ResourceModel* rm, int modulo, vector<int> initIntervalls);
  /*!
   * @brief print the modulo reservation tables of rational II schedule and binding
   * @param sched
@@ -303,36 +277,6 @@ public:
   */
  static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings,
    ResourceModel* rm, int modulo, vector<int> initIntervalls);
-#ifdef USE_SCALP
-    static vector<std::map<const Vertex*,int> > getBruteForceRatIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
-      int modulo, vector<int> initIntervalls, map<Edge*, pair<int, int> > edgePortMappings);
-   /*!
-   * @brief create an ilp-based binding for a rational II schedule
-   * the goal is to minimize MUX and register allocation
-   * if you try to understand this: good luck, may the force be with you :-) for questions ask sittel@uni-kassel.de
-   * rational II enhancement of 'Simultaneous FU and Register Binding Based on Network Flow Method'
-   * Jason Cong and Junjuan Xu
-   * DATE 2008
-   * @param sched
-   * @param rm
-   * @param modulo
-   * @param initIntervalls
-   * @return
-   */
-   static vector<std::map<const Vertex*,int> > getILPBasedRatIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
-     int modulo, vector<int> initIntervalls, std::list<std::string> sw = {}, int timeout=300);
- /*!
-  * @brief getILPMinRegBinding create a binding with minimal number of lifetime registers (assuming register sharing!)
-  * @param sched schedule times
-  * @param g graph
-  * @param rm resource model
-  * @param II
-  * @param sw solver wishlist
-  * @param timeout timeout for ilp solver
-  * @return binding
-  */
- static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
-#endif
     /*!
 		 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
      * this is needed for data dependency constraints

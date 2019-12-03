@@ -22,6 +22,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/utility/Verifier.h>
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Binding.h>
 
 #include <iostream>
 #include <fstream>
@@ -161,14 +162,8 @@ void SchedulerBase::writeScheduleChart(string filename)
 std::map<const Vertex *, int> SchedulerBase::getBindings()
 {
   //generate new binding when no binding is available
-  if(this->binding.size() == 0 && this->useOptimalBinding==false)
-    this->binding = Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-  else if(this->binding.size() == 0 && this->useOptimalBinding==true)
-#ifdef USE_SCALP
-      this->binding = Utility::getMUXOptimalBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-#else
-    throw Exception("SchedulerBase.getBindings: MUX optimal binding algorithm requires the ScaLP ILP wraper!");
-#endif
+  if(this->binding.size() == 0)
+    this->binding = Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
 
   //throw exception when no binding was generated
   if(this->binding.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");

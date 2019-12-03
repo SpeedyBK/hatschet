@@ -682,7 +682,7 @@ int main(int argc, char *args[]) {
 
       //chossing binding
       //experimental
-      scheduler->setUseMuxOptBinding(optBinding);
+			scheduler->setUseOptBinding(optBinding);
 
       cout << "HatScheT: Performing schedule" << endl;
       scheduler->schedule();

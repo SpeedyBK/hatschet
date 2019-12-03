@@ -24,32 +24,6 @@ namespace HatScheT {
 		 */
 		NonUniformRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 		/*!
-		 * \brief getLifeTimes using the determined rational II
-		 * lifetimes in rational II schedules are determined using the initiation intervall vector
-		 * this is crucial because samples are inserted in not evenly spaced intervalls
-		 * remark: overloaded function from the scheduler base class
-		 * \return
-		 */
-		std::map<Edge*,vector<int> > getRatIILifeTimes();
-		/*!
-		 * dont use this function for rational II modulo schedules
-		 * this function will throw an exception
-		 * use getRatIILifeTimes()
-		 * @return
-		 */
-		std::map<Edge*,int> getLifeTimes() override;
-		/*!
-		 * dont use this function fo rational II modulo schedules
-		 * @return
-		 */
-		std::map<const Vertex*,int> getBindings() override;
-		/*!
-		 * generate a binding using the determined rational II schedule
-		 * TODO figure out the best binding method (ILP?)
-		 * @return
-		 */
-		vector<std::map<const Vertex*,int> > getRationalIIBindings() override;
-		/*!
 		 * print the rational II modulo schedule
 		 */
 		void printScheduleToConsole();

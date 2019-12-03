@@ -143,11 +143,6 @@ namespace HatScheT {
 			return m >= 0 ? m : m + b;
 		}
 		/*!
-		 * binding function not implemented yet
-		 * @return
-		 */
-		vector<std::map<const Vertex*,int> > getRationalIIBindings() override { throw HatScheT::Exception("ModuloQScheduler::getRationalIIBindings not implemented yet"); }
-		/*!
 		 * finds a valid non-rectangular MRT for a given resource model and a initiation intervals
 		 */
 		static void setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet);

@@ -328,4 +328,39 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		return verifyUnrolled and verifyOriginal;
 	}
 
+	std::map<Edge *, vector<int> > RationalIISchedulerLayer::getRatIILifeTimes() {
+		if(this->startTimesVector.empty()) throw HatScheT::Exception("RationalIISchedulerLayer::getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
+		if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
+
+		std::map<Edge*,vector<int> > allLifetimes;
+
+		for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
+			Edge* e = *it;
+			Vertex* vSrc = &e->getVertexSrc();
+			Vertex* vDst = &e->getVertexDst();
+
+			vector<int > lifetimes;
+
+			for(int s = 0; s < this->samples; s++){
+				auto sAndO = Utility::getSampleIndexAndOffset(e->getDistance(),s,this->samples,this->modulo);
+
+				int lifetime = this->startTimesVector[s][vDst] - this->startTimesVector[sAndO.first][vSrc]
+											 - this->resourceModel.getVertexLatency(vSrc) + sAndO.second;
+
+				if(lifetime < 0) throw HatScheT::Exception("RationalIISchedulerLayer::getRatIILifeTimes: negative lifetime detected!");
+				else lifetimes.push_back(lifetime);
+			}
+
+			allLifetimes.insert(make_pair(e, lifetimes));
+		}
+		return allLifetimes;
+	}
+
+	vector<std::map<const Vertex *, int> > &RationalIISchedulerLayer::getRationalIIBindings() {
+		if(this->ratIIbindings.empty()) {
+			this->ratIIbindings = Binding::getSimpleRationalIIBinding(this->startTimesVector,&this->resourceModel,this->modulo,this->samples);
+		}
+		return this->ratIIbindings;
+	}
+
 }
