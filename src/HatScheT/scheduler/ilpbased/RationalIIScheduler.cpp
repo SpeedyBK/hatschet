@@ -388,8 +388,8 @@ void RationalIIScheduler::fillTMaxtrix()
 
   void RationalIIScheduler::scheduleIteration() {
 
-    if(this->g.getNumberOfVertices() > 150 and this->modulo  > 100) {
-      cout << "RationalIIScheduler.schedule: WARNING skipped this iteration cause M=" << this->modulo << " ( > 100)" << endl;
+    if(this->g.getNumberOfVertices() > 150 and this->modulo  > 75) {
+      cout << "RationalIIScheduler.schedule: WARNING skipped this iteration cause M=" << this->modulo << " ( > 75)" << endl;
       cout << "RationalIIScheduler.schedule: WARNING this scheduling formulation is not suited for large M in large graphs!" << endl;
       this->II = -1;
       this->scheduleFound=false;
