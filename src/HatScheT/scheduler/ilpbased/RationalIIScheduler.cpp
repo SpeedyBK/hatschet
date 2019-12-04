@@ -36,14 +36,20 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 }
 
 void RationalIIScheduler::resetContainer() {
+  cout << "RationalIIScheduler::resetContainer: start " << endl;
   this->t_matrix.clear();
+  this->t_matrix.resize(0);
+
+  this->II_vector.clear();
+  this->II_vector.resize(0);
+
   this->tIndices.clear();
+
+  cout << "RationalIIScheduler::resetContainer: finished " << endl;
 }
 
 void RationalIIScheduler::fillIIVector()
 {
-  this->II_vector.clear();
-
   for(unsigned int i = 0; i < this->samples; i++) {
     if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),0,0));
     else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),i,this->modulo-1));
@@ -408,8 +414,6 @@ void RationalIIScheduler::setResourceConstraints() {
 
 void RationalIIScheduler::fillTMaxtrix()
 {
-  this->t_matrix.clear();
-
   //i modulo classes considered
   for(unsigned int i = 0; i < this->samples; i++) {
     vector<ScaLP::Variable> t_vector;
