@@ -127,17 +127,12 @@ private:
    */
   void fillSolutionStructure();
   /*!
-   * dito
-   */
-  void autoSetNextMAndS();
-  /*!
    * this method is used to determine the distances in clock cycles
    * @param d
    * @param startIndex
    * @return
    */
   ScaLP::Term getSampleDistanceAsTerm(int d, int startIndex);
-  int getSampleDistanceAsInt(int d, int startIndex);
   int getSampleIndexFromDistance(int d, int startSample);
   /*!
    * EXPERIMETAL: DONT USE THIS
