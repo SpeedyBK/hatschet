@@ -36,6 +36,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
@@ -109,6 +110,7 @@ void print_short_help() {
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)" << std::endl;
   std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)" << std::endl;
+	std::cout << "--writeschedule=[string]  Optional path to csv file to write the found schedule and bindings (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
 	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
   std::cout << std::endl;
@@ -159,6 +161,7 @@ int main(int argc, char *args[]) {
   std::string targetFile="";
   std::string dotFile="";
   std::string htmlFile="";
+  std::string scheduleFile="";
 
   if(argc <= 1) {
       print_short_help();
@@ -199,6 +202,9 @@ int main(int argc, char *args[]) {
       }
       else if(getCmdParameter(args[i],"--scc=",value)) {
         if(atol(value) == 1) printSCC = true;
+      }
+      else if(getCmdParameter(args[i],"--writeschedule=",value)) {
+        scheduleFile=std::string(value);
       }
       else if(getCmdParameter(args[i],"--target=",value)) {
         targetFile = std::string(value);
@@ -725,6 +731,25 @@ int main(int argc, char *args[]) {
 
       }
       else cout << "No schedule found!" << endl;
+
+			// write schedule to csv file if requested
+      if(!scheduleFile.empty() and scheduler->getScheduleFound()) {
+        if(ratIILayer == nullptr) {
+          // integer II modulo scheduler
+          auto bindings = scheduler->getBindings();
+          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
+          sBWriter.setRMPath(resourceModelFile);
+          sBWriter.setGraphPath(graphMLFile);
+          sBWriter.write();
+        }
+        else {
+          // rational II modulo scheduler
+          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,ratIILayer->getStartTimeVector(),ratIILayer->getRationalIIBindings(),ratIILayer->getS_Found(),ratIILayer->getM_Found());
+          sBWriter.setRMPath(resourceModelFile);
+          sBWriter.setGraphPath(graphMLFile);
+          sBWriter.write();
+        }
+      }
 
       delete scheduler;
     }
