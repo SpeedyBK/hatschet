@@ -113,6 +113,7 @@ void print_short_help() {
 	std::cout << "--writeschedule=[string]  Optional path to csv file to write the found schedule and bindings (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
 	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
+	std::cout << "--writeLPFile=[0/1]       Write LP file (only available for some schedulers; default: 0)" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
   std::cout << std::endl;
@@ -149,6 +150,7 @@ int main(int argc, char *args[]) {
   bool optBinding = false;
   bool printSCC = false;
   bool solverQuiet=true;
+  bool writeLPFile=false;
 
   enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
@@ -238,8 +240,16 @@ int main(int argc, char *args[]) {
         htmlFile = value;
       }
 			else if(getCmdParameter(args[i],"--quiet=",value)) {
-				if(value=="0" or value=="false" or value=="False" or value=="FALSE" or value=="zero" or value=="Zero" or value=="ZERO")
+      	string v = string(value);
+				if(v=="0" or v=="false" or v=="False" or v=="FALSE" or v=="zero" or v=="Zero" or v=="ZERO") {
 					quiet = false;
+				}
+			}
+			else if(getCmdParameter(args[i],"--writeLPFile=",value)) {
+				string v = string(value);
+				if(v=="1" or v=="true" or v=="True" or v=="TRUE" or v=="one" or v=="One" or v=="ONE") {
+					writeLPFile = true;
+				}
 			}
       else if(getCmdParameter(args[i],"--scheduler=",value)) {
         std::string valueStr = std::string(value);
@@ -364,6 +374,8 @@ int main(int argc, char *args[]) {
     std::cout << "target=" << targetFile << endl;
     std::cout << "timeout=" << timeout << std::endl;
     std::cout << "threads=" << threads << std::endl;
+		std::cout << "quiet=" << quiet << std::endl;
+		std::cout << "writeLPFile=" << writeLPFile << std::endl;
     std::cout << "scheduler=";
     switch(schedulerSelection) {
       case ASAP:
@@ -681,6 +693,12 @@ int main(int argc, char *args[]) {
           throw HatScheT::Exception("No scheduler given, please select a scheduler using --scheduler=...");
         default:
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
+      }
+
+      // set writeILPFile
+			auto ilpSchedulerBase = dynamic_cast<HatScheT::ILPSchedulerBase*>(scheduler);
+      if(ilpSchedulerBase != nullptr) {
+      	ilpSchedulerBase->setWriteLPFile(writeLPFile);
       }
 
       // set quiet or loud
