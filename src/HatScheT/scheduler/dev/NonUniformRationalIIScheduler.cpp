@@ -154,6 +154,7 @@ namespace HatScheT
 		for(auto &res : this->resourceModel.Resources()) {
 			auto vertices = this->resourceModel.getVerticesOfResource(res);
 			auto limit = res->getLimit();
+			if(limit==UNLIMITED) continue;
 			for(auto m=0; m<this->modulo; ++m) {
 				ScaLP::Term bSum;
 				for(auto &v : vertices) {
