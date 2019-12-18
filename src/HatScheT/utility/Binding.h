@@ -1,0 +1,63 @@
+//
+// Created by nfiege on 03/12/19.
+//
+
+#ifndef HATSCHET_BINDING_H
+#define HATSCHET_BINDING_H
+
+#include <HatScheT/Vertex.h>
+#include <HatScheT/ResourceModel.h>
+#include <vector>
+
+namespace HatScheT {
+	class Binding {
+	public:
+		/*!
+		 * @brief create simple binding that just assignes resources as vertices appear in the schedule
+		 * @param sched
+		 * @param rm
+		 * @param II
+		 * @return
+		 */
+		static std::map<const Vertex*,int> getSimpleBinding(std::map<Vertex*, int> sched, ResourceModel* rm, int II);
+		/*!
+		 * @brief create simple rational II binding that just assignes resources as vertices appear in the schedule
+		 * @param sched
+		 * @param rm
+		 * @param M
+		 * @param S
+		 * @return
+		 */
+		static std::vector<std::map<const Vertex*,int>> getSimpleRationalIIBinding(std::vector<std::map<Vertex*, int>> sched, ResourceModel* rm, int M, int S);
+#ifdef USE_SCALP
+		/*!
+		* @brief create an ilp-based binding for a rational II schedule
+		* the goal is to minimize MUX and register allocation
+		* if you try to understand this: good luck, may the force be with you :-) for questions ask sittel@uni-kassel.de
+		* rational II enhancement of 'Simultaneous FU and Register Binding Based on Network Flow Method'
+		* Jason Cong and Junjuan Xu
+		* DATE 2008
+		* @param sched
+		* @param rm
+		* @param modulo
+		* @param initIntervalls
+		* @return
+		*/
+		static vector<std::map<const Vertex*,int> > getILPBasedRatIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+																																				int modulo, vector<int> initIntervalls, std::list<std::string> sw = {}, int timeout=300);
+		/*!
+		 * @brief getILPMinRegBinding create a binding with minimal number of lifetime registers (assuming register sharing!)
+		 * @param sched schedule times
+		 * @param g graph
+		 * @param rm resource model
+		 * @param II
+		 * @param sw solver wishlist
+		 * @param timeout timeout for ilp solver
+		 * @return binding
+		 */
+		static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
+#endif
+	};
+}
+
+#endif //HATSCHET_BINDING_H

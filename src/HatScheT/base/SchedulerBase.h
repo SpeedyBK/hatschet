@@ -106,10 +106,10 @@ public:
    * NOTE: EXPERIMENTAL
    * @param b
    */
-  void setUseMuxOptBinding(bool b){
+  void setUseOptBinding(bool b){
       this->useOptimalBinding = b;
   }
-  bool getUseMuxOptBinding(){
+  bool getUseOptBinding(){
       return this->useOptimalBinding;
   }
   /*!

@@ -56,19 +56,19 @@
     </node>
     <node id="14">
       <data key="name">Subtract3</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="15">
       <data key="name">Sum4</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="16">
       <data key="name">Sum5</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="17">
       <data key="name">Sum7</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="18">
       <data key="name">Out_R</data>
@@ -84,11 +84,11 @@
     </node>
     <node id="21">
       <data key="name">Sum6Tree0</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="22">
       <data key="name">Sum6Tree1</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <edge id="4_10" source="4" target="10">
       <data key="distance">0</data>

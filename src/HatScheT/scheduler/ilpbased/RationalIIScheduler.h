@@ -54,32 +54,6 @@ public:
    * @param solverWishlist
    */
   RationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-    /*!
- * \brief getLifeTimes using the determined rational II
- * lifetimes in rational II schedules are determined using the initiation intervall vector
- * this is crucial because samples are inserted in not evenly spaced intervalls
- * remark: overloaded function from the scheduler base class
- * \return
- */
-  virtual std::map<Edge*,vector<int> > getRatIILifeTimes();
-  /*!
-   * dont use this function for rational II modulo schedules
-   * this function will throw an exception
-   * use getRatIILifeTimes()
-   * @return
-   */
-  virtual std::map<Edge*,int> getLifeTimes();
-  /*!
-   * dont use this function fo rational II modulo schedules
-   * @return
-   */
-  virtual std::map<const Vertex*,int> getBindings();
-  /*!
-   * generate a binding using the determined rational II schedule
-   * TODO figure out the best binding method (ILP?)
-   * @return
-   */
-   virtual vector<std::map<const Vertex*,int> > getRationalIIBindings();
   /*!
    * print the rational II modulo schedule
    */
@@ -153,17 +127,12 @@ private:
    */
   void fillSolutionStructure();
   /*!
-   * dito
-   */
-  void autoSetNextMAndS();
-  /*!
    * this method is used to determine the distances in clock cycles
    * @param d
    * @param startIndex
    * @return
    */
   ScaLP::Term getSampleDistanceAsTerm(int d, int startIndex);
-  int getSampleDistanceAsInt(int d, int startIndex);
   int getSampleIndexFromDistance(int d, int startSample);
   /*!
    * EXPERIMETAL: DONT USE THIS

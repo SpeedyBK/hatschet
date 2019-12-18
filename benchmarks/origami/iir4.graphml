@@ -2,6 +2,14 @@
 <graphml>
 
   <graph edgedefault="directed" id="">
+    <node id="4">
+      <data key="name">Constant2</data>
+      <data key="uses_resource">Constant143/256_93</data>
+    </node>
+    <node id="5">
+      <data key="name">Constant3</data>
+      <data key="uses_resource">Constant-474/256_95</data>
+    </node>
     <node id="1">
       <data key="name">In1</data>
       <data key="uses_resource">In1</data>
@@ -13,14 +21,6 @@
     <node id="3">
       <data key="name">Constant1</data>
       <data key="uses_resource">Constant-273/256_90</data>
-    </node>
-    <node id="4">
-      <data key="name">Constant2</data>
-      <data key="uses_resource">Constant143/256_93</data>
-    </node>
-    <node id="5">
-      <data key="name">Constant3</data>
-      <data key="uses_resource">Constant-474/256_95</data>
     </node>
     <node id="6">
       <data key="name">Constant4</data>
@@ -72,19 +72,19 @@
     </node>
     <node id="18">
       <data key="name">SumA1</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="19">
       <data key="name">SumA2</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="20">
       <data key="name">SumA3</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="21">
       <data key="name">SumA31</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="22">
       <data key="name">Out1</data>
@@ -92,19 +92,19 @@
     </node>
     <node id="23">
       <data key="name">SumB1Tree0</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="24">
       <data key="name">SumB1Tree1</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="25">
       <data key="name">SumB31Tree0</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="26">
       <data key="name">SumB31Tree1</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <edge id="2_10" source="2" target="10">
       <data key="distance">0</data>

@@ -12,15 +12,15 @@
     </node>
     <node id="3">
       <data key="name">e=d-y</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="4">
       <data key="name">f(0)</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="5">
       <data key="name">f(1)</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="6">
       <data key="name">mu</data>
@@ -48,7 +48,7 @@
     </node>
     <node id="12">
       <data key="name">y=p(0)+p(1)</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="13">
       <data key="name">Out_f(0)</data>

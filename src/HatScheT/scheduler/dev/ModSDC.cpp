@@ -10,6 +10,7 @@
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
+#include "HatScheT/utility/Binding.h"
 
 namespace HatScheT {
   const char *TimeoutException::what() const noexcept {
@@ -858,9 +859,9 @@ namespace HatScheT {
   }
 
   std::map<const Vertex *, int> ModSDC::getBindings() {
-    //return Utility::Utility::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-    return Utility::Utility::getILPMinRegBinding(this->getSchedule(), &this->g, &this->resourceModel, (int) this->II,
-                                                 {"CPLEX"});
+    //return Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
+    return Binding::getILPMinRegBinding(this->getSchedule(), &this->g, &this->resourceModel, (int) this->II,
+                                                 {"Gurobi"});
   }
 
   std::map<Edge *, int> ModSDC::getLifeTimes() {

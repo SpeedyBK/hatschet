@@ -36,11 +36,6 @@ namespace HatScheT {
 		 */
 		std::vector<int> getInitiationIntervals() const { return this->initiationIntervals; }
 		/*!
-		 * binding function not implemented yet
-		 * @return
-		 */
-		vector<std::map<const Vertex*,int> > getRationalIIBindings() override { throw HatScheT::Exception("ModuloQScheduler::getRationalIIBindings not implemented yet"); }
-		/*!
 		 * print start times
 		 * @param startTimes
 		 */

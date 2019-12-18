@@ -30,11 +30,10 @@ namespace HatScheT
 
 		for(auto &v : this->g.Vertices()) {
 			for (int s = 0; s < this->samples; ++s) {
-				this->solver->addConstraint(supersink - this->tVariables[v][s] >= 0);
+				this->solver->addConstraint(supersink - this->tVariables[v][s] - this->resourceModel.getVertexLatency(v) >= 0);
 			}
 		}
 
-		this->solver->addConstraint(supersink>=0);
 		if(this->maxLatencyConstraint>0)
 			this->solver->addConstraint(supersink<=this->maxLatencyConstraint);
 
@@ -81,56 +80,6 @@ namespace HatScheT
 			}
 		}
 		cout << "-------" << endl;
-	}
-
-	std::map<Edge*,int> NonUniformRationalIIScheduler::getLifeTimes(){
-		throw HatScheT::Exception("NonUniformRationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
-	}
-
-	std::map<Edge*,vector<int> > NonUniformRationalIIScheduler::getRatIILifeTimes(){
-		if(this->startTimesVector.empty()) throw HatScheT::Exception("NonUniformRationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
-		if(this->latencySequence.empty()) throw HatScheT::Exception("NonUniformRationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
-		if(this->II <= 0) throw HatScheT::Exception("NonUniformRationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
-
-		std::map<Edge*,vector<int> > allLifetimes;
-
-		for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
-			Edge* e = *it;
-			Vertex* vSrc = &e->getVertexSrc();
-			Vertex* vDst = &e->getVertexDst();
-
-			vector<int > lifetimes;
-
-			for(int i = 0; i < this->samples; i++){
-				auto so = Utility::getSampleIndexAndOffset(e->getDistance(),i,this->samples,this->modulo);
-				auto sampleIndex = so.first;
-				auto offset = so.second;
-				int lifetime = this->startTimesVector[i][vDst] - this->startTimesVector[sampleIndex][vSrc]
-											 - this->resourceModel.getVertexLatency(vSrc) + offset;
-
-				if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
-				else lifetimes.push_back(lifetime);
-			}
-			allLifetimes.insert(make_pair(e, lifetimes));
-		}
-		return allLifetimes;
-	}
-
-	vector<std::map<const Vertex *, int> > NonUniformRationalIIScheduler::getRationalIIBindings() {
-		//generate new binding when no binding is available
-		if(this->ratIIbindings.empty())
-			this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequence);
-
-		//throw exception when no binding was generated
-		if(this->ratIIbindings.empty())
-			throw Exception("NonUniformRationalIIScheduler.getBindings: Error no binding could be generated! No schedule available?");
-
-		//return the stored binding
-		return this->ratIIbindings;
-	}
-
-	std::map<const Vertex *, int> NonUniformRationalIIScheduler::getBindings() {
-		throw Exception("NonUniformRationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 	}
 
 	void NonUniformRationalIIScheduler::fillTContainer() {
@@ -205,6 +154,7 @@ namespace HatScheT
 		for(auto &res : this->resourceModel.Resources()) {
 			auto vertices = this->resourceModel.getVerticesOfResource(res);
 			auto limit = res->getLimit();
+			if(limit==UNLIMITED) continue;
 			for(auto m=0; m<this->modulo; ++m) {
 				ScaLP::Term bSum;
 				for(auto &v : vertices) {

@@ -2,13 +2,13 @@
 <graphml>
 
   <graph edgedefault="directed" id="">
-    <node id="2">
-      <data key="name">In_G</data>
-      <data key="uses_resource">In_G</data>
-    </node>
     <node id="1">
       <data key="name">In_R</data>
       <data key="uses_resource">In_R</data>
+    </node>
+    <node id="2">
+      <data key="name">In_G</data>
+      <data key="uses_resource">In_G</data>
     </node>
     <node id="3">
       <data key="name">In_B</data>
@@ -56,27 +56,27 @@
     </node>
     <node id="14">
       <data key="name">Subtract</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="15">
       <data key="name">Subtract1</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="16">
       <data key="name">Subtract2</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="17">
       <data key="name">Sum1</data>
-      <data key="uses_resource">AddSub</data>
+      <data key="uses_resource">AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="18">
       <data key="name">Sum2</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="19">
       <data key="name">Sum3</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="20">
       <data key="name">Out_CR</data>
@@ -92,11 +92,11 @@
     </node>
     <node id="23">
       <data key="name">SumTree0</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <node id="24">
       <data key="name">SumTree1</data>
-      <data key="uses_resource">AddAdd</data>
+      <data key="uses_resource">AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O</data>
     </node>
     <edge id="15_10" source="15" target="10">
       <data key="distance">0</data>

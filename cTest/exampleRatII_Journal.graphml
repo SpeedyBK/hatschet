@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml>
+    <graph>
+        <node id="1">
+            <data key="name">o0</data>
+            <data key="uses_resource">adder</data>
+        </node>
+        <node id="2">
+            <data key="name">o1</data>
+            <data key="uses_resource">adder</data>
+        </node>
+        <node id="3">
+            <data key="name">o2</data>
+            <data key="uses_resource">adder</data>
+        </node>
+         <node id="4">
+            <data key="name">o3</data>
+            <data key="uses_resource">adder</data>
+        </node>
+         <node id="5">
+            <data key="name">o4</data>
+            <data key="uses_resource">adder</data>
+        </node>
+        
+        <edge id="1_2" source="1" target="2">
+            <data key="delay">0</data>
+            <data key="distance">0</data>
+            <data key="deptype">Data</data>
+        </edge>
+        <edge id="2_3" source="2" target="3">
+            <data key="delay">0</data>
+            <data key="distance">0</data>
+            <data key="deptype">Data</data>
+        </edge>
+        <edge id="3_1" source="3" target="1">
+            <data key="delay">0</data>
+            <data key="distance">2</data>
+            <data key="deptype">Data</data>
+        </edge>
+        <edge id="3_4" source="3" target="4">
+            <data key="delay">0</data>
+            <data key="distance">0</data>
+            <data key="deptype">Data</data>
+        </edge>
+        <edge id="4_5" source="4" target="5">
+            <data key="delay">0</data>
+            <data key="distance">0</data>
+            <data key="deptype">Data</data>
+        </edge>
+    </graph>
+</graphml>

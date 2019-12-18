@@ -1544,6 +1544,9 @@ bool Tests::compareModuloSchedulerTest() {
       std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first)/double(it.second) << std::endl;
     }
 
+    if(solutions.size() != 31) {
+      std::cout << "Expected queue size of 31 but got queue size of " << solutions.size() << std::endl;
+    }
     return solutions.size()==31;
   }
 
@@ -1578,6 +1581,67 @@ bool Tests::compareModuloSchedulerTest() {
     return (rii.getM_Found() == 16 and rii.getS_Found() == 3);
 #endif
   }
+
+	bool Tests::tcadExampleTest() {
+    HatScheT::Graph g;
+    HatScheT::ResourceModel rm;
+
+    auto &red = rm.makeResource("red", 5, 1, 1);
+
+    // non-critical resource (#vertices=7, limit=5) => resMinII = 7/5 = 1.4
+    // loop: latency=3, distance=2 => recMinII = 3/2 = 1.5
+    Vertex &r1 = g.createVertex(1);
+    Vertex &r2 = g.createVertex(2);
+    Vertex &r3 = g.createVertex(3);
+    Vertex &r4 = g.createVertex(4);
+    Vertex &r5 = g.createVertex(5);
+    Vertex &r6 = g.createVertex(6);
+    Vertex &r7 = g.createVertex(7);
+    rm.registerVertex(&r1, &red);
+    rm.registerVertex(&r2, &red);
+    rm.registerVertex(&r3, &red);
+    rm.registerVertex(&r4, &red);
+    rm.registerVertex(&r5, &red);
+    rm.registerVertex(&r6, &red);
+    rm.registerVertex(&r7, &red);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r1, r5, 0);
+		g.createEdge(r7, r2, 0);
+		g.createEdge(r7, r5, 0);
+    g.createEdge(r2, r3, 0);
+    g.createEdge(r5, r6, 0);
+    g.createEdge(r3, r4, 0);
+    g.createEdge(r6, r4, 0);
+    g.createEdge(r4, r2, 2);
+    g.createEdge(r6, r5, 2);
+
+    SCCQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    m.setQuiet(false);
+    m.setSolverTimeout(1);
+    m.schedule();
+
+    std::cout << "Tests::tcadExampleTest: finished scheduling - resulting control steps:" << std::endl;
+    auto startTimesVector = m.getStartTimeVector();
+    auto initIntervals = m.getInitiationIntervals();
+    auto latencySequence = m.getLatencySequence();
+
+    auto valid = m.getScheduleValid();
+    if(!valid) {
+      std::cout << "Tests::tcadExampleTest: invalid rational II modulo schedule found" << std::endl;
+      return false;
+    }
+    for(unsigned int i=0; i<initIntervals.size(); ++i) {
+      auto l = initIntervals[i];
+      auto startTimes = startTimesVector[i];
+      std::cout << "Tests::tcadExampleTest: start times for insertion time=" << l << std::endl;
+      for(auto it : startTimes) {
+        std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+      }
+    }
+
+    std::cout << "Tests::tcadExampleTest: Test passed" << std::endl;
+    return true;
+	}
 
 
 }

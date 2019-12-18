@@ -34,6 +34,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->s_start = -1;
 	this->m_found = -1;
 	this->s_found = -1;
+	this->s_max = -1;
 
 	this->maxLatencyConstraint = -1;
 	this->maxRuns = 1;
@@ -84,14 +85,16 @@ int RationalIISchedulerLayer::getScheduleLength() {
 std::list<pair<int, int>>
 RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax, int maxListSize) {
 
-	std::list<std::pair<int,int>> moduloSamplePairs = {std::make_pair(mMinII,sMinII)}; // list of sorted M/S pairs
+	std::list<std::pair<int,int>> moduloSamplePairs; // list of sorted M/S pairs
+
+	if(sMax<0) sMax = sMinII;
+	if(maxListSize<0) maxListSize = sMinII * mMinII;
+	/*if(sMinII<=sMax)*/ moduloSamplePairs.emplace_back(std::make_pair(mMinII,sMinII));
+
 	if(maxListSize==1) return moduloSamplePairs;
 
 	// II=4/3=8/6=12/9=... since 4/3 is the easiest to get a schedule for, all other fractions can be skipped!
 	std::list<std::pair<int,int>> skipMe = {std::make_pair(mMinII,sMinII)};
-
-	if(sMax<0) sMax = sMinII;
-	if(maxListSize<0) maxListSize = sMinII * mMinII;
 
 	double rationalMinII = double(mMinII) / double(sMinII);
 
@@ -119,7 +122,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			for(auto it=moduloSamplePairs.begin(); it!=moduloSamplePairs.end(); ++it) {
 				auto mTemp = it->first;
 				auto stemp = it->second;
-				if(double(m) / double(s) < double(mTemp) / double(stemp)) {
+				if(((double)(m) / (double)(s)) < ((double)(mTemp) / (double)(stemp))) {
 					moduloSamplePairs.insert(it,std::make_pair(m,s));
 					inserted = true;
 					break;
@@ -154,6 +157,9 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	}
 
 	void RationalIISchedulerLayer::schedule() {
+		if(!this->quiet) {
+			std::cout << "RationalIISchedulerLayer::schedule: start scheduling" << std::endl;
+		}
 		this->scheduleFound = false;
 		this->minRatIIFound = false;
 		this->scheduleValid = false;
@@ -186,15 +192,19 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			cout << "------------------------" << endl;
 		}
 
-		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),-1,this->maxRuns);
+		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),this->s_max,this->maxRuns);
 		if(msQueue.empty()) {
 			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
 		}
+
+		if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: Found " << msQueue.size() << " valid rat II iteration values using SMax=" << this->s_max << endl;
 
 		for(auto it : msQueue) {
 			this->modulo = it.first;
 			this->samples = it.second;
 			if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: building ilp problem for s / m : " << this->samples << " / " << this->modulo << endl;
+			if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: max. no. of iterations " << this->maxRuns << endl;
+
 			this->scheduleIteration();
 
 			if(this->scheduleFound) {
@@ -316,6 +326,41 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		}
 
 		return verifyUnrolled and verifyOriginal;
+	}
+
+	std::map<Edge *, vector<int> > RationalIISchedulerLayer::getRatIILifeTimes() {
+		if(this->startTimesVector.empty()) throw HatScheT::Exception("RationalIISchedulerLayer::getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
+		if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
+
+		std::map<Edge*,vector<int> > allLifetimes;
+
+		for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
+			Edge* e = *it;
+			Vertex* vSrc = &e->getVertexSrc();
+			Vertex* vDst = &e->getVertexDst();
+
+			vector<int > lifetimes;
+
+			for(int s = 0; s < this->samples; s++){
+				auto sAndO = Utility::getSampleIndexAndOffset(e->getDistance(),s,this->samples,this->modulo);
+
+				int lifetime = this->startTimesVector[s][vDst] - this->startTimesVector[sAndO.first][vSrc]
+											 - this->resourceModel.getVertexLatency(vSrc) + sAndO.second;
+
+				if(lifetime < 0) throw HatScheT::Exception("RationalIISchedulerLayer::getRatIILifeTimes: negative lifetime detected!");
+				else lifetimes.push_back(lifetime);
+			}
+
+			allLifetimes.insert(make_pair(e, lifetimes));
+		}
+		return allLifetimes;
+	}
+
+	vector<std::map<const Vertex *, int> > &RationalIISchedulerLayer::getRationalIIBindings() {
+		if(this->ratIIbindings.empty()) {
+			this->ratIIbindings = Binding::getSimpleRationalIIBinding(this->startTimesVector,&this->resourceModel,this->modulo,this->samples);
+		}
+		return this->ratIIbindings;
 	}
 
 }

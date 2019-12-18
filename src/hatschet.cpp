@@ -36,6 +36,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
+#include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
@@ -109,7 +110,10 @@ void print_short_help() {
   std::cout << "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
   std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)" << std::endl;
   std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)" << std::endl;
+	std::cout << "--writeschedule=[string]  Optional path to csv file to write the found schedule and bindings (default: none)" << std::endl;
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
+	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
+	std::cout << "--writeLPFile=[0/1]       Write LP file (only available for some schedulers; default: 0)" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
   std::cout << std::endl;
@@ -134,6 +138,7 @@ int main(int argc, char *args[]) {
   int threads=1;
   int timeout=-1; //default -1 means no timeout
   int maxLatency=-1;
+  bool quiet=true;
 
   //variables for Rational II scheduling
   int samples = -1; //default
@@ -145,6 +150,7 @@ int main(int argc, char *args[]) {
   bool optBinding = false;
   bool printSCC = false;
   bool solverQuiet=true;
+  bool writeLPFile=false;
 
   enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
   SchedulersSelection schedulerSelection = NONE;
@@ -157,6 +163,7 @@ int main(int argc, char *args[]) {
   std::string targetFile="";
   std::string dotFile="";
   std::string htmlFile="";
+  std::string scheduleFile="";
 
   if(argc <= 1) {
       print_short_help();
@@ -198,6 +205,9 @@ int main(int argc, char *args[]) {
       else if(getCmdParameter(args[i],"--scc=",value)) {
         if(atol(value) == 1) printSCC = true;
       }
+      else if(getCmdParameter(args[i],"--writeschedule=",value)) {
+        scheduleFile=std::string(value);
+      }
       else if(getCmdParameter(args[i],"--target=",value)) {
         targetFile = std::string(value);
       }
@@ -221,8 +231,7 @@ int main(int argc, char *args[]) {
         else uniform = false;
       }
       else if(getCmdParameter(args[i],"--binding=",value)) {
-          if(atol(value) == 1)
-        optBinding = true;
+          if(atol(value) == 1) optBinding = true;
       }
       else if(getCmdParameter(args[i],"--maxlatency=",value)) {
         maxLatency = atol(value);
@@ -230,6 +239,18 @@ int main(int argc, char *args[]) {
       else if(getCmdParameter(args[i],"--html=",value)) {
         htmlFile = value;
       }
+			else if(getCmdParameter(args[i],"--quiet=",value)) {
+      	string v = string(value);
+				if(v=="0" or v=="false" or v=="False" or v=="FALSE" or v=="zero" or v=="Zero" or v=="ZERO") {
+					quiet = false;
+				}
+			}
+			else if(getCmdParameter(args[i],"--writeLPFile=",value)) {
+				string v = string(value);
+				if(v=="1" or v=="true" or v=="True" or v=="TRUE" or v=="one" or v=="One" or v=="ONE") {
+					writeLPFile = true;
+				}
+			}
       else if(getCmdParameter(args[i],"--scheduler=",value)) {
         std::string valueStr = std::string(value);
 
@@ -328,6 +349,7 @@ int main(int argc, char *args[]) {
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
         if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
+        if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -352,6 +374,8 @@ int main(int argc, char *args[]) {
     std::cout << "target=" << targetFile << endl;
     std::cout << "timeout=" << timeout << std::endl;
     std::cout << "threads=" << threads << std::endl;
+		std::cout << "quiet=" << quiet << std::endl;
+		std::cout << "writeLPFile=" << writeLPFile << std::endl;
     std::cout << "scheduler=";
     switch(schedulerSelection) {
       case ASAP:
@@ -671,9 +695,18 @@ int main(int argc, char *args[]) {
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
 
+      // set writeILPFile
+			auto ilpSchedulerBase = dynamic_cast<HatScheT::ILPSchedulerBase*>(scheduler);
+      if(ilpSchedulerBase != nullptr) {
+      	ilpSchedulerBase->setWriteLPFile(writeLPFile);
+      }
+
+      // set quiet or loud
+			scheduler->setQuiet(quiet);
+
       //chossing binding
       //experimental
-      scheduler->setUseMuxOptBinding(optBinding);
+			scheduler->setUseOptBinding(optBinding);
 
       cout << "HatScheT: Performing schedule" << endl;
       scheduler->schedule();
@@ -716,6 +749,25 @@ int main(int argc, char *args[]) {
 
       }
       else cout << "No schedule found!" << endl;
+
+			// write schedule to csv file if requested
+      if(!scheduleFile.empty() and scheduler->getScheduleFound()) {
+        if(ratIILayer == nullptr) {
+          // integer II modulo scheduler
+          auto bindings = scheduler->getBindings();
+          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
+          sBWriter.setRMPath(resourceModelFile);
+          sBWriter.setGraphPath(graphMLFile);
+          sBWriter.write();
+        }
+        else {
+          // rational II modulo scheduler
+          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,ratIILayer->getStartTimeVector(),ratIILayer->getRationalIIBindings(),ratIILayer->getS_Found(),ratIILayer->getM_Found());
+          sBWriter.setRMPath(resourceModelFile);
+          sBWriter.setGraphPath(graphMLFile);
+          sBWriter.write();
+        }
+      }
 
       delete scheduler;
     }

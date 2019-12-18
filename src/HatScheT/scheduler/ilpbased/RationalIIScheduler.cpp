@@ -36,14 +36,20 @@ RationalIIScheduler::RationalIIScheduler(Graph &g, ResourceModel &resourceModel,
 }
 
 void RationalIIScheduler::resetContainer() {
+  cout << "RationalIIScheduler::resetContainer: start " << endl;
   this->t_matrix.clear();
+  this->t_matrix.resize(0);
+
+  this->II_vector.clear();
+  this->II_vector.resize(0);
+
   this->tIndices.clear();
+
+  cout << "RationalIIScheduler::resetContainer: finished " << endl;
 }
 
 void RationalIIScheduler::fillIIVector()
 {
-  this->II_vector.clear();
-
   for(unsigned int i = 0; i < this->samples; i++) {
     if(i==0) II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),0,0));
     else II_vector.push_back(ScaLP::newIntegerVariable("II_" + std::to_string(i),i,this->modulo-1));
@@ -216,62 +222,6 @@ void RationalIIScheduler::setModuloConstraints() {
   }
 }
 
-std::map<Edge*,int> RationalIIScheduler::getLifeTimes(){
-  throw HatScheT::Exception("RationalIIScheduler.getLifeTimes: Rational II Lifetimes are more complicated! Don't use this function! Use getRatIILifeTimes() instead!");
-}
-
-std::map<Edge*,vector<int> > RationalIIScheduler::getRatIILifeTimes(){
-  if(this->startTimesVector.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no startTimes determined!");
-  if(this->latencySequence.size()==0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: No initIntervalls determined by the scheduler yet!");
-  if(this->II <= 0) throw HatScheT::Exception("RationalIIScheduler.getRatIILifeTimes: cant return lifetimes! no II determined!");
-
-  std::map<Edge*,vector<int> > allLifetimes;
-
-  for(auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it){
-    Edge* e = *it;
-    Vertex* vSrc = &e->getVertexSrc();
-    Vertex* vDst = &e->getVertexDst();
-
-    vector<int > lifetimes;
-
-    for(int i = 0; i < (int)(this->latencySequence.size()); i++){
-      int lifetime = this->startTimes[vDst] - this->startTimes[vSrc]
-        - this->resourceModel.getVertexLatency(vSrc) + this->getSampleDistanceAsInt(e->getDistance(), i);
-
-      if(lifetime < 0) throw HatScheT::Exception("SchedulerBase.getLifeTimes: negative lifetime detected!");
-      else lifetimes.push_back(lifetime);
-    }
-    allLifetimes.insert(make_pair(e, lifetimes));
-  }
-  return allLifetimes;
-}
-
-void RationalIIScheduler::autoSetNextMAndS(){
-  int currS = this->samples;
-  int currM = this->modulo;
-
-  //check whether it is useful to reduce the samples by 1 on this modulo
-  if(currS > 2){
-    double t = (double)(currS-1) / (double)currM ;
-    if(t >= this->tpBuffer and t >= ((double)1.0 / this->integerMinII)){
-      //in this case, it is still usefull to reduce s
-      //reduce s and schedule again
-      this->samples--;
-      return;
-    }
-  }
-
-  //when its not useful to reduce s anymore
-  //increase m and set s on the maximum possible value for this problem
-  this->modulo++;
-  this->samples = this->modulo-1;
-  double t = (double)this->samples / (double)(this->modulo);
-  while(t > (double)1/this->getMinII()){
-    this->samples--;
-    t = (double)this->samples / (double)(this->modulo);
-  }
-}
-
 int RationalIIScheduler::getSampleIndexFromDistance(int d, int startSample) {
   //immediately return startSample when requested distance was 0
   if (d == 0) return startSample;
@@ -288,26 +238,6 @@ int RationalIIScheduler::getSampleIndexFromDistance(int d, int startSample) {
   }
 
   return sampleIndex;
-}
-
-int RationalIIScheduler::getSampleDistanceAsInt(int d, int startIndex) {
-  if(startIndex > this->latencySequence.size()-1) throw Exception("RationalIIScheduler.getSampleDistanceAsTerm: out of range II_vector entry requested: " + to_string(startIndex));
-
-  //immediately return 0 when requested distance was 0
-  if(d==0) return 0;
-
-  int distance;
-  while(d>0){
-    if(startIndex>0) {
-      startIndex-=1;
-    }
-    else if(startIndex==0) startIndex=this->latencySequence.size()-1;
-
-    distance += this->latencySequence[startIndex];
-    d--;
-  }
-
-  return distance;
 }
 
 ScaLP::Term RationalIIScheduler::getSampleDistanceAsTerm(int d, int startIndex) {
@@ -370,22 +300,6 @@ void RationalIIScheduler::fillSolutionStructure() {
 
     this->latencySequence.push_back(IITimeDiff);
   }
-}
-
-vector<std::map<const Vertex *, int> > RationalIIScheduler::getRationalIIBindings(){
-  //generate new binding when no binding is available
-  if(this->ratIIbindings.size() == 0)
-    this->ratIIbindings = Utility::getSimpleRatIIBinding(this->getSchedule(),&this->resourceModel,this->modulo, this->latencySequence);
-
-  //throw exception when no binding was generated
-  if(this->ratIIbindings.size() == 0) throw Exception("SchedulerBase.getBindings: Error no binding could be generated! No schedule available?");
-
-  //return the stored binding
-  return this->ratIIbindings;
-}
-
-std::map<const Vertex *, int> RationalIIScheduler::getBindings() {
-    throw Exception("RationalIIScheduler.getBindings: Dont use this function for rational II schedules! Use getRationalIIBinding!");
 }
 
 void RationalIIScheduler::setResourceConstraints() {
@@ -454,8 +368,6 @@ void RationalIIScheduler::setResourceConstraints() {
 
 void RationalIIScheduler::fillTMaxtrix()
 {
-  this->t_matrix.clear();
-
   //i modulo classes considered
   for(unsigned int i = 0; i < this->samples; i++) {
     vector<ScaLP::Variable> t_vector;
@@ -476,6 +388,14 @@ void RationalIIScheduler::fillTMaxtrix()
 
   void RationalIIScheduler::scheduleIteration() {
 
+    if(this->g.getNumberOfVertices() > 150 and this->modulo  > 75) {
+      cout << "RationalIIScheduler.schedule: WARNING skipped this iteration cause M=" << this->modulo << " ( > 75)" << endl;
+      cout << "RationalIIScheduler.schedule: WARNING this scheduling formulation is not suited for large M in large graphs!" << endl;
+      this->II = -1;
+      this->scheduleFound=false;
+      return;
+    }
+
     if(this->maxLatencyConstraint > this->modulo) this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
     else this->consideredTimeSteps = 2*this->modulo + 2;
 
@@ -484,11 +404,16 @@ void RationalIIScheduler::fillTMaxtrix()
     }
 
     if(this->maxLatencyConstraint <= 0) {
+      if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency not set, start identification of L"  << endl;
       //experimental
-      this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, this->modulo/this->samples) + 1;
+      this->maxLatencyConstraint = Utility::getCyclesOfLongestPath(&this->g,&this->resourceModel, ((double)this->modulo)/((double)this->samples)) + 1;
 
       this->consideredTimeSteps = 2*this->maxLatencyConstraint + 2;
+      if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency not set, finished identification of L"  << endl;
     }
+
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: maxLatency Constraint is  " << this->maxLatencyConstraint  << endl;
+    if(this->quiet==false) cout << "RationalIIScheduler.schedule: Considered time steps " << this->consideredTimeSteps  << endl;
 
     //clear up and reset
     this->solver->reset();
