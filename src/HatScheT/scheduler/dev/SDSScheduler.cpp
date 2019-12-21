@@ -131,14 +131,11 @@ namespace HatScheT {
       bfsdc.setquiet(this->quiet);
       bfsdc.ajustConstraintGraph(this->initScheduleLength);
       //bfsdc.printConstraintGraph();
-      if (bfsdc.solveSDC()==unfeasible){
-        throw HatScheT::Exception ("SDSScheduler: Can't find an initial schedule for unlimited Resources.");
-      }
 
       //Start SDC-SAT LOOP
-      //findBestSchedule();
+      findBestSchedule(bfsdc);
 
-
+      /*
       //ToDo Ab hier While Schleife.
       vector<vector<int>> conflict;
       passToSATSolver(this->sharingVariables, conflict);
@@ -167,8 +164,8 @@ namespace HatScheT {
         }
       }
       startTimes = bfsdc.getVertexCosts();
+      */
     }
-
   }
 
   void SDSScheduler::findBestSchedule(BellmanFordSDC &sdcsol) {
@@ -176,26 +173,58 @@ namespace HatScheT {
     int upperBound = this->initScheduleLength * 2 ;
     int lowerBound = this->initScheduleLength;
     bool increaseFlag = true;
-    /*
-    while (lowerBound <= upperBound){
-      int mid = floor((upperBound + lowerBound) / 2);
-        if (checkSchedule(sdcsol, mid) {
-          upperBound = mid;
-          mid = floor((upperBound + lowerBound) / 2)
-          increaseFlag = false; //do no increase upperBound anymore!
-        }else{
-          lowerBound = mid;
-          if (increaseFlag){
-            upperBound *= 2;
-          }
-          mid = floor ((upperBound + lowerBound) / 2)
+    int mid = floor((upperBound + lowerBound) / 2);
+    int i = 0;
+
+    while (lowerBound < upperBound && i < 1000) {
+      cout << "LowerBound: " << lowerBound << " UpperBound: " << upperBound << endl;
+      if (checkSchedule(sdcsol, mid) && !this->unsatisiable) {
+        cout << "SDC: Feasible, SAT: satisfiable. " << endl;
+        upperBound = mid;
+        mid = floor((upperBound + lowerBound) / 2);
+        increaseFlag = false; //do no increase upperBound anymore!
+        i++;
+        cout << "LowerBound: " << lowerBound << " -- UpperBound: " << upperBound << endl;
+      } else if (checkSchedule(sdcsol, mid) && this->unsatisiable) {
+        cout << "SDC: Feasible, SAT: unsatisfiable. " << endl;
+        conflictClauses.clear();
+        lowerBound = mid;
+        if (increaseFlag) {
+          upperBound *= 2;
         }
-    }*/
-    //startTimes = schedule;
+        mid = floor((upperBound + lowerBound) / 2);
+        i++;
+      } else if(!checkSchedule(sdcsol, mid) && this->unsatisiable) {
+        cout << "SDC: infeasible, SAT: unsatisfiable. " << endl;
+        conflictClauses.clear();
+        lowerBound = mid;
+        if (increaseFlag) {
+          upperBound *= 2;
+        }
+        mid = floor((upperBound + lowerBound) / 2);
+        i++;
+      }else {
+        i++;
+        cout << "ELSE Case Break:" << endl;
+      }
+    }
+
+    startTimes = sdcsol.getVertexCosts();
   }
 
   bool SDSScheduler::checkSchedule(BellmanFordSDC &sdcsol, int latency) {
-    return false;
+    cout << "<<<<<<<<<<<<<<<<<<<<<<<<< Latency : " << latency << " >>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    passToSATSolver(sharingVariables, conflictClauses);
+    //this->conflictClauses.clear();
+    sdcsol.setLatency(latency);
+    sdcsol.setadditionlaConstraints(resourceConstraints);
+    //sdcsol.printConstraintGraph();
+    if (sdcsol.solveSDC() == feasible) {
+      return true;
+    } else {
+      conflictClauses = sdcsol.getConflicts();
+      return false;
+    }
   }
 
   void HatScheT::SDSScheduler::createBindingVariables() {
@@ -733,10 +762,7 @@ namespace HatScheT {
 
   void SDSScheduler::BellmanFordSDC::printConstraintGraph() {
     if (!this->quiet) {
-      cout << "Constraint Graph with " << cg.getNumberOfVertices() << " Vertices and " << cg.getNumberOfEdges() << " Edges found." << endl;
-      for (auto &it : this->cg.Edges()) {
-        cout << it->getVertexSrcName() << " -- " << it->getDistance() << " -- " << it->getVertexDstName() << endl;
-      }
+      cout << this->cg << endl;
     }
   }
 
@@ -847,6 +873,7 @@ namespace HatScheT {
           return unfeasible;
         }
       }
+      cout << cg << endl;
       return feasible;
     }
   }
@@ -855,12 +882,12 @@ namespace HatScheT {
     return this->conflictClauses;
   }
 
-  void SDSScheduler::BellmanFordSDC::increaseLatency() {
+  void SDSScheduler::BellmanFordSDC::setLatency(int latency) {
 
     for (auto &eIt : cg.Edges()){
       for (auto &it : latencyEdges){
         if (it->getVertexSrc().getId() == eIt->getVertexSrc().getId() && it->getVertexDst().getId() == eIt->getVertexDst().getId()){
-        eIt->setDistance(eIt->getDistance() + 1);
+        eIt->setDistance(latency);
         }
       }
     }

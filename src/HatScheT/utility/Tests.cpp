@@ -46,6 +46,7 @@
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 #include "HatScheT/scheduler/dev/SDSScheduler.h"
+#include "HatScheT/utility/FibonacciHeap.h"
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -1221,23 +1222,23 @@ bool Tests::compareModuloSchedulerTest() {
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "benchmarks/origami/iir_biqu_RM.xml";
+    string resStr = "benchmarks/origami/iir_biquRM.xml";
     string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
 
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
 
-    /*
+
     int DarkwingDuck = 0;
     for(auto &it : rm.Resources()){
-      if (DarkwingDuck == 1){
+      if (DarkwingDuck != -1){
         // Chill mal deine Base...
       }else{
         it->setLimit(-1);
       }
       DarkwingDuck++;
-    }*/
+    }
 
     /*
     HatScheT::Graph g;
@@ -1643,6 +1644,82 @@ bool Tests::compareModuloSchedulerTest() {
     return true;
 	}
 
+  bool Tests::fibonacciTest() {
 
+    cout << "FIBONACCI HEAP TEST:" << endl << endl;
+
+    int numbers[7] = {4, 3, 7, 5, 2, 1, 10};
+    int smallestnumber = INT_MAX;
+
+    /////// Insert Test Begin ///////
+    auto* fib1 = new FibonacciHeap;
+
+    for (int it : numbers){
+      fib1->insert_node(it, nullptr);
+      if (it < smallestnumber){
+        smallestnumber = it;
+      }
+    }
+
+    fib1->display_heap();
+
+    if (fib1->get_minimum_Key() != smallestnumber){
+      cout << endl << "Insertion-Test... failed!" << endl;
+      cout << "................................." << endl;
+      return false;
+    }
+    cout << endl << "Insertion-Test... passed!" << endl;
+    cout << "................................." << endl;
+
+    delete fib1;
+    /////// Insert Test End ///////
+
+    int numbers2[7] = {5, 2, 8, 3, 7, 6, 9};
+    /////// Extraction Test Begin ///////
+    auto* fib2 = new FibonacciHeap;
+
+    cout << "Input: " << endl;
+    for (int it : numbers2) {
+      cout << it << " ";
+      fib2->insert_node(it, nullptr);
+    }
+
+    int sorted_numbers_from_heap [7];
+    int i = 0;
+    while (!fib2->is_empty()){
+      sorted_numbers_from_heap[i]=fib2->extract_Minimum();
+      i++;
+    }
+
+    for (int k = 7; k > 1; --k){
+      for (int j = 0; j < k-1; ++j){
+        if (numbers2[j] > numbers2[j+1]){
+          int temp = numbers2[j];
+          numbers2[j] = numbers2[j+1];
+          numbers2[j+1] = temp;
+        }
+      }
+    }
+    cout <<endl << "Sorted array by F-Heap:" << endl;
+    for (int it : sorted_numbers_from_heap){
+      cout << it << " ";
+    }
+    cout << endl << "Sorted array by Bubble Sort:" << endl;
+    for (int it : numbers2){
+      cout << it << " ";
+    }
+
+    if (0 != memcmp(sorted_numbers_from_heap, numbers2, sizeof(sorted_numbers_from_heap))) {
+      cout << endl << "Extraction-Test... failed!" << endl;
+      cout << ".............................,...." << endl;
+      return false;
+    }
+    cout << endl << "Extraction-Test... passed!" << endl;
+    cout << "................................." << endl;
+
+    /////// Extraction Test End ///////
+    cout << "Test passed!" << endl;
+    return true;
+  }
 }
 

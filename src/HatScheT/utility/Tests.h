@@ -175,5 +175,7 @@ public:
    */
   static bool ratIIUnrollSchedulerTest();
 
+  static bool fibonacciTest();
+
 };
 }

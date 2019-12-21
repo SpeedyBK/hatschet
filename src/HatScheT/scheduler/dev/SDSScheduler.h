@@ -316,7 +316,7 @@ namespace HatScheT {
 
       vector<vector<int>> getConflicts();
 
-      void increaseLatency();
+      void setLatency(int latency);
 
       void ajustConstraintGraph(int asaplength);
 
@@ -355,7 +355,7 @@ namespace HatScheT {
     };
 
    /*!
-    * Runs the schedule loop in a
+    * Runs the schedule loop.
     */
     void findBestSchedule(BellmanFordSDC &sdcsol);
 
