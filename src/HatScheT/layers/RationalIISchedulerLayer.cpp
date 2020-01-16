@@ -89,7 +89,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 
 	if(sMax<0) sMax = sMinII;
 	if(maxListSize<0) maxListSize = sMinII * mMinII;
-	/*if(sMinII<=sMax)*/ moduloSamplePairs.emplace_back(std::make_pair(mMinII,sMinII));
+	if(sMinII<=sMax) moduloSamplePairs.emplace_back(std::make_pair(mMinII,sMinII));
 
 	if(maxListSize==1) return moduloSamplePairs;
 
