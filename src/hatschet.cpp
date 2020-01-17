@@ -351,6 +351,7 @@ int main(int argc, char *args[]) {
         if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
         if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
         if(str=="FIBONACCI" && HatScheT::Tests::fibonacciTest() == false) exit(-1);
+        if(str=="SDCSOLVE" && HatScheT::Tests::sdcSolverTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

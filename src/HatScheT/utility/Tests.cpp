@@ -47,6 +47,7 @@
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 #include "HatScheT/scheduler/dev/SDSScheduler.h"
 #include "HatScheT/utility/FibonacciHeap.h"
+#include "HatScheT/utility/SDCSolver.h"
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -1646,80 +1647,154 @@ bool Tests::compareModuloSchedulerTest() {
 
   bool Tests::fibonacciTest() {
 
-    cout << "FIBONACCI HEAP TEST:" << endl << endl;
+    cout << "INSERT AND EXTRACT_MIN TEST:" << endl << endl;
 
-    int numbers[7] = {4, 3, 7, 5, 2, 1, 10};
-    int smallestnumber = INT_MAX;
+    const int arraysize = 20; //should be an even number
+    int numbers[arraysize];
+    int sorted_numbers_from_heap[arraysize];
 
-    /////// Insert Test Begin ///////
-    auto* fib1 = new FibonacciHeap;
-
-    for (int it : numbers){
-      fib1->insert_node(it, nullptr);
-      if (it < smallestnumber){
-        smallestnumber = it;
-      }
+    srand(time(nullptr));
+    for (int i = 0; i < arraysize; i++){
+      numbers[i] = rand() % 100;
+    }
+    cout << "Numbers generates..." << endl;
+    for (int i : numbers){
+      cout << i << " ";
     }
 
-    fib1->display_heap();
+    /////// Insert and Extract_min Test Begin ///////
 
-    if (fib1->get_minimum_Key() != smallestnumber){
-      cout << endl << "Insertion-Test... failed!" << endl;
-      cout << "................................." << endl;
-      return false;
-    }
-    cout << endl << "Insertion-Test... passed!" << endl;
-    cout << "................................." << endl;
-
-    delete fib1;
-    /////// Insert Test End ///////
-
-    int numbers2[7] = {5, 2, 8, 3, 7, 6, 9};
-    /////// Extraction Test Begin ///////
-    auto* fib2 = new FibonacciHeap;
-
-    cout << "Input: " << endl;
-    for (int it : numbers2) {
-      cout << it << " ";
-      fib2->insert_node(it, nullptr);
+    //Creating a new Heap and fill it with numbers-Arrays content.
+    auto *FIB = new FibonacciHeap <int>;
+    for (int i : numbers) {
+      FIB->push(i);
     }
 
-    int sorted_numbers_from_heap [7];
-    int i = 0;
-    while (!fib2->is_empty()){
-      sorted_numbers_from_heap[i]=fib2->extract_Minimum();
-      i++;
+    //Extracting the values from the heap again.
+    int j = 0;
+    while (!FIB->empty()){
+      sorted_numbers_from_heap[j] = FIB->get_extract_min();
+      j++;
     }
 
-    for (int k = 7; k > 1; --k){
+    cout << endl << "Heap done..." << endl;
+
+    //Sort the numbers Array with a simple Bubble Sort
+    for (int k = arraysize; k > 1; --k){
       for (int j = 0; j < k-1; ++j){
-        if (numbers2[j] > numbers2[j+1]){
-          int temp = numbers2[j];
-          numbers2[j] = numbers2[j+1];
-          numbers2[j+1] = temp;
+        if (numbers[j] > numbers[j+1]){
+          int temp = numbers[j];
+          numbers[j] = numbers[j+1];
+          numbers[j+1] = temp;
         }
       }
     }
+
+    cout << "Bubble Sort done..." << endl;
+
+    //Display Results:
     cout <<endl << "Sorted array by F-Heap:" << endl;
     for (int it : sorted_numbers_from_heap){
       cout << it << " ";
     }
     cout << endl << "Sorted array by Bubble Sort:" << endl;
-    for (int it : numbers2){
+    for (int it : numbers){
       cout << it << " ";
     }
 
-    if (0 != memcmp(sorted_numbers_from_heap, numbers2, sizeof(sorted_numbers_from_heap))) {
-      cout << endl << "Extraction-Test... failed!" << endl;
-      cout << ".............................,...." << endl;
+    if (0 != memcmp(sorted_numbers_from_heap, numbers, sizeof(numbers))){
+      cout << endl << "Test failed!" << endl;
       return false;
     }
-    cout << endl << "Extraction-Test... passed!" << endl;
-    cout << "................................." << endl;
 
-    /////// Extraction Test End ///////
-    cout << "Test passed!" << endl;
+    delete FIB;
+
+    cout << endl << "Insert and Extract_min Test passed ... " << endl;
+
+    /////// Insert and Extract_min Test End ///////
+
+    cout << endl << "Test passed!" << endl;
     return true;
+  }
+
+  bool Tests::sdcSolverTest() {
+
+    //Creating an instance of the solver.
+    auto *solver = new SDCSolver();
+
+    //Create a system of Single Difference Constraints.
+    Vertex A(0);
+    A.setName("Rolf");
+    Vertex B(1);
+    B.setName("Horst");
+    Vertex C(2);
+    C.setName("Gunter");
+    Vertex D(3);
+    D.setName("Otto");
+    Vertex E(4);
+    E.setName("Paul");
+    Vertex F(5);
+    F.setName("Julia");
+
+    //Example SDC-System
+    list <SDCConstraint> constr;
+    //Horst - Otto <= 1
+    constr.push_back(solver->create_sdc_constraint(&D, &B, 1));
+    //Rolf - Horst <= 3
+    constr.push_back(solver->create_sdc_constraint(&B, &A, 3));
+    //Gunter - Otto <= 4
+    constr.push_back(solver->create_sdc_constraint(&D, &C, 4));
+    //Paul - Gunter <= 3
+    constr.push_back(solver->create_sdc_constraint(&C, &E, 3));
+    //Rolf - Otto <= 42
+    constr.push_back(solver->create_sdc_constraint(&D, &A, 42));
+    //Paul - Rolf <= 2
+    constr.push_back(solver->create_sdc_constraint(&A, &E, 2));
+    //Julia - Rolf <= 21
+    constr.push_back(solver->create_sdc_constraint(&A, &F, 21));
+    //Julia - Paul <= 12
+    constr.push_back(solver->create_sdc_constraint(&E, &F, 12));
+    //And the last one which should be ignored.
+    constr.push_back(solver->create_sdc_constraint(&E, &F, 42*2));
+
+    //Adding the constraints to the solver
+    for (auto &it : constr){
+      solver->add_sdc_constraint(it);
+    }
+
+    //Printing the system
+    solver->print_Constraint_Graph();
+
+    //Compute an initial solution for the given SDC-System.
+    solver->set_start_vertex(&D);
+    solver->compute_inital_solution();
+    if (solver->get_solver_status() == 11){
+      cout << endl << "System is not feasible." << endl;
+    }else if (solver->get_solver_status() == 10){
+      cout << endl << "System is feasible." << endl;
+      auto spath = solver->get_solution();
+      for (auto &it : spath){
+        cout << it.first->getName() << ": " << it.second << endl;
+      }
+    }
+    cout << endl;
+
+    //Adding a constraint
+    SDCConstraint c = solver->create_sdc_constraint(&F, &B, -3);
+
+    //Using the incremental Algorithm to solve the new system.
+    solver->add_to_feasible(c);
+    //solver->print_Constraint_Graph();
+
+    //Removing a constraint from the solver.
+    //solver->remove_sdc_constraint(D, A);
+
+    //Printing the system again.
+    //solver->print_Constraint_Graph();
+
+    delete solver;
+
+    return false;
   }
 }
 

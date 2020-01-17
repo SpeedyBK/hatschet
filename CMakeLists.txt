@@ -158,7 +158,7 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/scheduler/dev/SDSScheduler.cpp src/HatScheT/utility/FibonacciHeap.cpp src/HatScheT/utility/FibonacciHeap.h)
+src/HatScheT/scheduler/dev/SDSScheduler.cpp src/HatScheT/utility/FibonacciHeap.h src/HatScheT/utility/SDCSolver.cpp src/HatScheT/utility/SDCSolver.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h

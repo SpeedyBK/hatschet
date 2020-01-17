@@ -2,4 +2,185 @@
 // Created by bkessler on 14/01/20.
 //
 
+#include <vector>
+#include <climits>
 #include "SDCSolver.h"
+#include "HatScheT/utility/FibonacciHeap.h"
+
+////////////////////////////////
+/// Constraint Graph related ///
+////////////////////////////////
+void HatScheT::SDCSolver::ConstraintGraph::removeEdge(HatScheT::Vertex &srcVertex, HatScheT::Vertex &dstVertex) {
+  for (auto &it : this->edges){
+    if (it->getVertexSrc().getId() == srcVertex.getId() && it->getVertexDst().getId() == dstVertex.getId()){
+      edges.erase(it);
+      return;
+    }
+  }
+  cerr << "SDCSolver::ConstraintGraph: Trying to remove a non-existing Edge!" << endl;
+}
+
+bool HatScheT::SDCSolver::ConstraintGraph::doesEdgeExistID(HatScheT::Vertex *src, HatScheT::Vertex *dst) {
+  for(auto &it : this->edges){
+    if (it->getVertexSrc().getId() == src->getId() && it->getVertexDst().getId() == dst->getId()){
+      return true;
+    }
+  }
+  return false;
+}
+
+HatScheT::Edge &
+HatScheT::SDCSolver::ConstraintGraph::createEdgeSDC(Vertex &Vsrc, Vertex &Vdst, int distance, HatScheT::Edge::DependencyType dependencyType) {
+
+  bool idExists = false;
+  for (int i = 0; i <= edges.size(); i++) {
+    for (auto &it : Edges()) {
+      if (i == it->getId()) {
+        idExists = true;
+      }
+      if (it->getVertexDst().getId() == Vdst.getId() && it->getVertexSrc().getId() == Vsrc.getId()){
+        if (it->getDistance() > distance){
+          it->setDistance(distance);
+        }
+        return *it;
+      }
+    }
+    if (!idExists) {
+      Edge *e = new Edge(Vsrc, Vdst, distance, dependencyType, i);
+      edges.insert(e);
+      return *e;
+    }
+    idExists = false;
+  }
+}
+
+//////////////
+/// Solver ///
+//////////////
+
+HatScheT::SDCSolver::SDCSolver() {
+  this->solver_status = 0;
+  this->startvertex = nullptr;
+}
+
+
+void HatScheT::SDCSolver::add_sdc_constraint(SDCConstraint constr) {
+  bool vsrc_exist = false;
+  bool vdst_exist = false;
+
+  for (auto &it : this->cg.Vertices()){
+    if (it->getId() == constr.VSrc->getId()){
+      vsrc_exist = true;
+    }
+    if (it->getId() == constr.VDst->getId()){
+      vdst_exist = true;
+    }
+  }
+  if (!vsrc_exist) {
+    Vertex &V = this->cg.createVertex(constr.VSrc->getId());
+    V.setName(constr.VSrc->getName());
+  }
+  if (!vdst_exist) {
+    Vertex &V = this->cg.createVertex(constr.VDst->getId());
+    V.setName(constr.VDst->getName());
+  }
+  this->cg.createEdgeSDC(cg.getVertexById(constr.VSrc->getId()), cg.getVertexById(constr.VDst->getId()), constr.constraint, HatScheT::Edge::Data);
+}
+
+
+void HatScheT::SDCSolver::remove_sdc_constraint(Vertex &Vsrc, Vertex &Vdst) {
+  this->cg.removeEdge(Vsrc, Vdst);
+}
+
+void HatScheT::SDCSolver::set_start_vertex(HatScheT::Vertex *start) {
+  this->startvertex = start;
+}
+
+void HatScheT::SDCSolver::compute_inital_solution() {
+  /*!
+   * Check if a startvertex is set. If not, throw an error.
+   */
+  if (this->startvertex == nullptr){
+    throw HatScheT::Exception("SDCSolver::compute_initial_solution(): No startvertex specified!");
+  }
+
+  /*!
+   * Initialisation of Bellman-Ford-Algorithm
+   */
+  for (auto &it : this->cg.Vertices()){
+    this->solution[it] = INT_MAX;
+  }
+  this->solution[&this->cg.getVertexById(startvertex->getId())] = 0;
+
+  /*!
+   * Finding Shortest Paths
+   */
+  for (int i = 1; i < this->cg.getNumberOfVertices(); i++){
+    for (auto &it : this -> cg.Edges()){
+      if ((this->solution[&it->getVertexSrc()] < INT_MAX) && (this->solution[&it->getVertexSrc()] + it->getDistance() < this->solution[&it->getVertexDst()])) {
+        this->solution[&it->getVertexDst()] = this->solution[&it->getVertexSrc()] + it->getDistance();
+      }
+    }
+  }
+
+  /*!
+   * Checking for negative Cycles
+   */
+  for (auto &it : this->cg.Edges()){
+    if ((this->solution[&it->getVertexSrc()] < INT_MAX) && (this->solution[&it->getVertexSrc()] + it->getDistance() < this->solution[&it->getVertexDst()])){
+      solver_status = 11;
+      return;
+    }
+  }
+  solver_status = 10;
+}
+
+
+map<HatScheT::Vertex *, int> HatScheT::SDCSolver::get_solution() {
+  return this->solution;
+}
+
+HatScheT::SDCConstraint
+HatScheT::SDCSolver::create_sdc_constraint(HatScheT::Vertex *src, HatScheT::Vertex *dst, int c) {
+  SDCConstraint C = {.VSrc = src, .VDst= dst, .constraint = c};
+  return C;
+}
+
+void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
+  /*!
+   * Local Variables
+   */
+  auto pQueue = new FibonacciHeap<int>;
+  map <Vertex*, int> loc_solution;
+
+  /*!
+   * Begin of the Algorithm
+   */
+   // 1
+   add_sdc_constraint(constraint);
+   // 3
+   loc_solution = solution;
+   // 5
+   pQueue->push(0, &this->cg.getVertexById(constraint.VDst->getId()));
+   // 6
+   while (!pQueue->empty()){
+     // 7
+     auto x = fetch_from_heap(*pQueue);
+     // 8
+     if (solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]) < solution[x.first]){
+       // 9
+       if (x.first->getId() == constraint.VSrc->getId()){
+         cout << "Infeasible System!" << endl;
+       }
+     }
+   }
+}
+
+pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> &H) {
+  auto v = (Vertex*) H.topNode()->payload;
+  auto k = H.topNode()->key;
+  H.pop();
+  return make_pair(v, k);
+}
+
+
