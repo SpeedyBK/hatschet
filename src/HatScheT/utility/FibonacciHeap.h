@@ -36,6 +36,8 @@
 #include <math.h>
 #include <limits>
 #include <iostream>
+#include <unordered_map>
+#include <algorithm>
 
 
 namespace HatScheT {
@@ -73,6 +75,8 @@ namespace HatScheT {
       void *payload;
     };
 
+    using KeyNodeIter = typename std::unordered_map<T, FibNode*>::iterator;
+    std::unordered_multimap<T, FibNode*> fstore;
 
     ////////////////////////////////////
     /// Constructors and Destructors ///
@@ -532,6 +536,18 @@ namespace HatScheT {
 
     FibNode *push(T k) {
       return push(std::move(k), nullptr);
+    }
+
+    KeyNodeIter find(const T& k)
+    {
+      KeyNodeIter mit = fstore.find(k);
+      return mit;
+    }
+
+    FibNode* findNode(const T& k)
+    {
+      KeyNodeIter mit = find(k);
+      return mit->second;
     }
 
     unsigned int size() {

@@ -62,6 +62,16 @@ namespace HatScheT {
     };
 
     /*!
+     * Funtion so set the source vertex for the single source shortest path problem.
+     * And creates edges from the start_vertex to all other vertices.
+     */
+    void set_start_vertex();
+
+    void adjust_Heap(FibonacciHeap<int> H, Vertex* v, int k);
+
+    int key_of(FibonacciHeap<int> H, Vertex *v);
+
+    /*!
      * Graphbased Representation of the SDC-System.
      */
     ConstraintGraph cg;
@@ -71,8 +81,9 @@ namespace HatScheT {
      * 0  = Ready;
      * 10 = Inital Solution computed, feasible.
      * 11 = Inital Solution computed, infeasible.
-     * 20 = ...
-     * 30 = ...
+     * 20 = System feasible after adding a constraint.
+     * 21 = System infeasible after adding a constraint.
+     * .. = ...
      */
     int solver_status;
 
@@ -114,12 +125,6 @@ namespace HatScheT {
      * @return solver_status.
      */
     int get_solver_status(){ return solver_status; };
-
-    /*!
-     * Funtion so set the source vertex for the single source shortest path problem.
-     * @param Start Startvertex.
-     */
-    void set_start_vertex(Vertex* start);
 
     /*!
      * This computes an initial solution of the SDC-System by applying the Bellman-Ford-Algorithm on the system and checks
@@ -186,7 +191,7 @@ namespace HatScheT {
      * @param H Reference to the Fibonacci Heap used in the solver.
      * @return Returns the Vertex and the saved costs for this Vertex.
      */
-    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> &H);
+    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> H);
   };
 
 }

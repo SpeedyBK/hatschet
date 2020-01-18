@@ -60,7 +60,9 @@ HatScheT::SDCSolver::ConstraintGraph::createEdgeSDC(Vertex &Vsrc, Vertex &Vdst, 
 
 HatScheT::SDCSolver::SDCSolver() {
   this->solver_status = 0;
-  this->startvertex = nullptr;
+  auto &v = cg.createVertex(-1);
+  v.setName("Startvertex");
+  startvertex = &v;
 }
 
 
@@ -92,18 +94,19 @@ void HatScheT::SDCSolver::remove_sdc_constraint(Vertex &Vsrc, Vertex &Vdst) {
   this->cg.removeEdge(Vsrc, Vdst);
 }
 
-void HatScheT::SDCSolver::set_start_vertex(HatScheT::Vertex *start) {
-  this->startvertex = start;
+void HatScheT::SDCSolver::set_start_vertex() {
+  for (auto &it: cg.Vertices()){
+    if (it->getId() != -1) {
+      cg.createEdgeSDC(*startvertex, *it, 0, HatScheT::Edge::Data);
+    }
+  }
 }
 
 void HatScheT::SDCSolver::compute_inital_solution() {
   /*!
-   * Check if a startvertex is set. If not, throw an error.
+   * Setup a Startvertex and create edges from this startvertex to all other vertices.
    */
-  if (this->startvertex == nullptr){
-    throw HatScheT::Exception("SDCSolver::compute_initial_solution(): No startvertex specified!");
-  }
-
+  set_start_vertex();
   /*!
    * Initialisation of Bellman-Ford-Algorithm
    */
@@ -156,31 +159,71 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
   /*!
    * Begin of the Algorithm
    */
-   // 1
-   add_sdc_constraint(constraint);
-   // 3
-   loc_solution = solution;
-   // 5
-   pQueue->push(0, &this->cg.getVertexById(constraint.VDst->getId()));
-   // 6
-   while (!pQueue->empty()){
-     // 7
-     auto x = fetch_from_heap(*pQueue);
-     // 8
-     if (solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]) < solution[x.first]){
-       // 9
-       if (x.first->getId() == constraint.VSrc->getId()){
-         cout << "Infeasible System!" << endl;
-       }
-     }
-   }
+  // 1
+  add_sdc_constraint(constraint);
+  // 3
+  loc_solution = solution;
+  // 5
+  pQueue->push(0, &this->cg.getVertexById(constraint.VDst->getId()));
+  // 6
+  while (!pQueue->empty()){
+    // 7
+    auto x = fetch_from_heap(*pQueue);
+    // 8
+    if (solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]) < solution[x.first]){
+      // 9
+      if (x.first->getId() == constraint.VSrc->getId()){
+        cout << "Infeasible System!" << endl;
+        // 11
+        remove_sdc_constraint(*constraint.VSrc, *constraint.VDst);
+        // 12
+        solver_status = 21;
+        return;
+        // 13
+      }else{
+        // 14
+        loc_solution[x.first] = solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]);
+        // 15
+        for (auto &it : cg.getSuccessors(x.first)){
+          // 16
+          int scaled_path_length = x.second + (solution[x.first] + constraint.constraint - solution[constraint.VDst]);
+          // 17
+          if (scaled_path_length < key_of(*pQueue, it)){
+            // 18
+            adjust_Heap(*pQueue, it, scaled_path_length);
+          }
+        }
+      }
+    }
+  }
+  // 24
+  cout << "Feasible System" << endl;
+  // 25
+  solution = loc_solution;
+  // 26
+  solver_status = 20;
+  return;
 }
 
-pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> &H) {
+pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> H) {
   auto v = (Vertex*) H.topNode()->payload;
   auto k = H.topNode()->key;
   H.pop();
   return make_pair(v, k);
+}
+
+void HatScheT::SDCSolver::adjust_Heap(HatScheT::FibonacciHeap<int> H, HatScheT::Vertex *v, int k) {
+  //If v is in the Heap
+  //  set key of v to k;
+  //else
+  //  insert v in Heap
+}
+
+int HatScheT::SDCSolver::key_of(HatScheT::FibonacciHeap<int> H, HatScheT::Vertex *v) {
+  //if v is in the Heap
+  //  return key of v;
+  //else
+  //  return int_max;
 }
 
 

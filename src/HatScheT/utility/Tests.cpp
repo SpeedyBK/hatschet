@@ -1723,39 +1723,31 @@ bool Tests::compareModuloSchedulerTest() {
     auto *solver = new SDCSolver();
 
     //Create a system of Single Difference Constraints.
-    Vertex A(0);
-    A.setName("Rolf");
-    Vertex B(1);
-    B.setName("Horst");
-    Vertex C(2);
-    C.setName("Gunter");
-    Vertex D(3);
-    D.setName("Otto");
-    Vertex E(4);
-    E.setName("Paul");
-    Vertex F(5);
-    F.setName("Julia");
+    Vertex R(0);
+    R.setName("Rolf");
+    Vertex H(1);
+    H.setName("Horst");
+    Vertex G(2);
+    G.setName("Gunter");
+    Vertex E(3);
+    E.setName("Emma");
+    Vertex P(4);
+    P.setName("Paul");
 
     //Example SDC-System
     list <SDCConstraint> constr;
-    //Horst - Otto <= 1
-    constr.push_back(solver->create_sdc_constraint(&D, &B, 1));
     //Rolf - Horst <= 3
-    constr.push_back(solver->create_sdc_constraint(&B, &A, 3));
-    //Gunter - Otto <= 4
-    constr.push_back(solver->create_sdc_constraint(&D, &C, 4));
-    //Paul - Gunter <= 3
-    constr.push_back(solver->create_sdc_constraint(&C, &E, 3));
-    //Rolf - Otto <= 42
-    constr.push_back(solver->create_sdc_constraint(&D, &A, 42));
-    //Paul - Rolf <= 2
-    constr.push_back(solver->create_sdc_constraint(&A, &E, 2));
-    //Julia - Rolf <= 21
-    constr.push_back(solver->create_sdc_constraint(&A, &F, 21));
-    //Julia - Paul <= 12
-    constr.push_back(solver->create_sdc_constraint(&E, &F, 12));
-    //And the last one which should be ignored.
-    constr.push_back(solver->create_sdc_constraint(&E, &F, 42*2));
+    constr.push_back(solver->create_sdc_constraint(&H, &R, 3));
+    //Gunter - Horst <= -2
+    constr.push_back(solver->create_sdc_constraint(&H, &G, -2));
+    //Rolf - Gunter <= 3
+    constr.push_back(solver->create_sdc_constraint(&G, &R, 3));
+    //Gunter - Rolf <= 3
+    constr.push_back(solver->create_sdc_constraint(&R, &G, -3));
+    //Emma - Gunter <= 42
+    constr.push_back(solver->create_sdc_constraint(&G, &E, -1));
+    //Paul - Emma <= 2
+    constr.push_back(solver->create_sdc_constraint(&E, &P, 4));
 
     //Adding the constraints to the solver
     for (auto &it : constr){
@@ -1766,7 +1758,6 @@ bool Tests::compareModuloSchedulerTest() {
     solver->print_Constraint_Graph();
 
     //Compute an initial solution for the given SDC-System.
-    solver->set_start_vertex(&D);
     solver->compute_inital_solution();
     if (solver->get_solver_status() == 11){
       cout << endl << "System is not feasible." << endl;
@@ -1780,10 +1771,10 @@ bool Tests::compareModuloSchedulerTest() {
     cout << endl;
 
     //Adding a constraint
-    SDCConstraint c = solver->create_sdc_constraint(&F, &B, -3);
+    //SDCConstraint c = solver->create_sdc_constraint(&F, &B, -3);
 
     //Using the incremental Algorithm to solve the new system.
-    solver->add_to_feasible(c);
+    //solver->add_to_feasible(c);
     //solver->print_Constraint_Graph();
 
     //Removing a constraint from the solver.
