@@ -77,6 +77,8 @@ namespace HatScheT {
 
     using KeyNodeIter = typename std::unordered_map<T, FibNode*>::iterator;
     std::unordered_multimap<T, FibNode*> fstore;
+    using PayNodeIter = typename std::unordered_map<void*, FibNode*>::iterator;
+    std::unordered_multimap<void*, FibNode*> plstore;
 
     ////////////////////////////////////
     /// Constructors and Destructors ///
@@ -531,6 +533,7 @@ namespace HatScheT {
     FibNode *push(T k, void *pl) {
       auto *x = new FibNode(std::move(k), pl);
       insert(x);
+      plstore.insert({pl, x});
       return x;
     }
 
@@ -538,16 +541,28 @@ namespace HatScheT {
       return push(std::move(k), nullptr);
     }
 
-    KeyNodeIter find(const T& k)
+    KeyNodeIter find_by_key(const T& k)
     {
       KeyNodeIter mit = fstore.find(k);
       return mit;
     }
 
-    FibNode* findNode(const T& k)
+    FibNode* findNode_by_Key(const T& k)
     {
-      KeyNodeIter mit = find(k);
+      KeyNodeIter mit = find_by_key(k);
       return mit->second;
+    }
+
+    PayNodeIter find_by_payload(const void* pl)
+    {
+      PayNodeIter plit = plstore.find(pl);
+      return plit;
+    }
+
+    FibNode* findNode_by_payload(const void* pl)
+    {
+      PayNodeIter plit = find_by_payload(pl);
+      return plit->second;
     }
 
     unsigned int size() {

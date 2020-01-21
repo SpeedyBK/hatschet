@@ -127,13 +127,13 @@ namespace HatScheT {
         }
       }
       //Check schedule against resource constraints.
-      BellmanFordSDC bfsdc(this->dependencyConstraintsSDC, &g, initialSolution);
-      bfsdc.setquiet(this->quiet);
-      bfsdc.ajustConstraintGraph(this->initScheduleLength);
+      //BellmanFordSDC bfsdc(this->dependencyConstraintsSDC, &g, initialSolution);
+      //bfsdc.setquiet(this->quiet);
+      //bfsdc.ajustConstraintGraph(this->initScheduleLength);
       //bfsdc.printConstraintGraph();
 
       //Start SDC-SAT LOOP
-      findBestSchedule(bfsdc);
+      //findBestSchedule(bfsdc);
 
       /*
       //ToDo Ab hier While Schleife.
@@ -168,7 +168,7 @@ namespace HatScheT {
     }
   }
 
-  void SDSScheduler::findBestSchedule(BellmanFordSDC &sdcsol) {
+  /*void SDSScheduler::findBestSchedule(BellmanFordSDC &sdcsol) {
 
     int upperBound = this->initScheduleLength * 2 ;
     int lowerBound = this->initScheduleLength;
@@ -225,7 +225,7 @@ namespace HatScheT {
       conflictClauses = sdcsol.getConflicts();
       return false;
     }
-  }
+  }*/
 
   void HatScheT::SDSScheduler::createBindingVariables() {
 
@@ -623,274 +623,6 @@ namespace HatScheT {
     asa.schedule();
     this->initScheduleLength = asa.getScheduleLength();
     return asa.getSchedule();
-  }
-
-
-  ///////////////////////////////////////////////
-  // Additional functionallity for Graph Class //
-  ///////////////////////////////////////////////
-
-  void SDSScheduler::ConstraintGraph::removeEdge(Vertex *srcVertex, Vertex *dstVertex) {
-
-    for (auto &it : edges){
-      if (!this->silent) {
-        cout << "VSRC: " << it->getVertexSrc().getId() << " VDST: " << it->getVertexDst().getId() << " || "
-             << srcVertex->getId() << " " << dstVertex->getId() << endl;
-      }
-      if (it->getVertexSrc().getId() == srcVertex->getId() && it->getVertexDst().getId() == dstVertex->getId()){
-        edges.erase(it);
-      }
-    }
-  }
-
-  Edge &SDSScheduler::ConstraintGraph::createEdgeSDS(Vertex &Vsrc, Vertex &Vdst, int distance,
-                                                  Edge::DependencyType dependencyType) {
-
-    bool idExists = false;
-    for (int i = 0; i <= edges.size(); i++) {
-      for (auto &it : edges) {
-        if (i == it->getId()) {
-          idExists = true;
-        }
-      }
-      if (!idExists) {
-        Edge *e = new Edge(Vsrc, Vdst, distance, dependencyType, i);
-        edges.insert(e);
-        return *e;
-      }
-      idExists = false;
-    }
-  }
-
-  bool SDSScheduler::ConstraintGraph::doesEdgeExistID(Vertex *src, Vertex *dst) {
-
-    for(auto &it : Edges()){
-      if (it->getVertexSrc().getId() == src->getId() && it->getVertexDst().getId() == dst->getId()){
-        return true;
-      }
-    }
-    return false;
-  }
-
-  Edge& SDSScheduler::ConstraintGraph::getEdge(const Vertex *srcV, const Vertex *dstV){
-    for(auto e:this->edges){
-      if(&e->getVertexSrc()==srcV && &e->getVertexDst()==dstV) return *e;
-    }
-
-    throw HatScheT::Exception("Graph::getEdge: Edge not found!");
-  }
-
-  ////////////////////////////
-  // BellmanFord SDC-Solver //
-  ////////////////////////////
-
-  SDSScheduler::BellmanFordSDC::BellmanFordSDC(SDSScheduler::ConstraintGraph cg, Graph* g, map<Vertex*, int> &initsolution) {
-    this -> cg = cg;
-    this-> g = g;
-    this-> hasNegativeCycle = false;
-    this-> initsol = initsolution;
-  }
-
-  SDSScheduler::BellmanFordSDC::BellmanFordSDC(map<pair<const Vertex *, const Vertex *>, int> &constraints, Graph* g, map<Vertex*, int> &initsolution) {
-    this-> hasNegativeCycle = false;
-    this-> g = g;
-    this-> initsol = initsolution;
-    /*!
-     * Create Vertices:
-     */
-    for (auto &it: this->g->Vertices()) {
-      int vertexID = it->getId();
-      this->cg.createVertex(vertexID);
-      this->cg.getVertexById(vertexID).setName(it->getName());
-    }
-    /*!
-     * Create Edges:
-     */
-    for (auto &it : constraints){
-      this->cg.createEdgeSDS(this->cg.getVertexById(it.first.second->getId()),
-                             this->cg.getVertexById(it.first.first->getId()), it.second);
-    }
-  }
-
-  void SDSScheduler::BellmanFordSDC::bellmanFordAlgorithm() {
-    /*!
-     * Initialisation of Algorithm
-     */
-    for (auto &it : this->cg.Vertices()){
-      vertexCosts[it] = INT_MAX;
-    }
-    vertexCosts[&this->cg.getVertexById(this->startID)] = 0;
-
-    /*!
-     * Finding Shortest Paths
-     */
-    for (int i = 1; i < this->cg.getNumberOfVertices(); i++){
-      for (auto &it : this -> cg.Edges()){
-        if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])) {
-          vertexCosts[&it->getVertexDst()] = vertexCosts[&it->getVertexSrc()] + it->getDistance();
-        }
-      }
-    }
-
-    if(!quiet){
-      cout << "Vertexcosts 2: " << endl;
-      for (auto &it : vertexCosts){
-        cout << it.first->getName() << ": " << it.second << endl;
-      }
-    }
-
-    /*!
-     * Checking for negative Cycles
-     */
-    for (auto &it : this->cg.Edges()){
-      if ((vertexCosts[&it->getVertexSrc()] < INT_MAX) && (vertexCosts[&it->getVertexSrc()] + it->getDistance() < vertexCosts[&it->getVertexDst()])){
-        if (!quiet) {
-          cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance()
-               << " < Cost DST: " << vertexCosts[&it->getVertexDst()] << " : infeasible" << endl;
-        }
-        hasNegativeCycle = true;
-        break;
-      }else {
-        if (!quiet) {
-          cout << "Cost SRC: " << vertexCosts[&it->getVertexSrc()] << " + Distance: " << it->getDistance()
-               << " < Cost DST: " << vertexCosts[&it->getVertexDst()] << " : feasible" << endl;
-        }
-        hasNegativeCycle = false;
-      }
-    }
-  }
-
-  void SDSScheduler::BellmanFordSDC::printConstraintGraph() {
-    if (!this->quiet) {
-      cout << this->cg << endl;
-    }
-  }
-
-  void SDSScheduler::BellmanFordSDC::setquiet(bool silence) {
-    this->quiet = silence;
-  }
-
-  void SDSScheduler::BellmanFordSDC::ajustConstraintGraph(int asaplength) {
-
-    list <pair<Vertex*, int>> outputVertices;
-    auto gT = Utility::transposeGraph(g);
-
-    for (auto &it : cg.Vertices()){
-      cout << it->getName() << " -- " << it->getId() << endl;
-    }
-
-    for (auto &it : gT.first->Vertices()){
-      if (Utility::isInput(gT.first, it)){
-        outputVertices.emplace_back(make_pair(&cg.getVertexById(it->getId()),this->initsol[&g->getVertexById(it->getId())]));
-      }
-    }
-
-    if(!quiet) {
-      cout << "Outputvertices: " << endl;
-    }
-    for (auto &it : outputVertices){
-      if(!quiet) {
-        cout << it.first->getName() << ": " << it.second << endl;
-      }
-    }
-
-    list<Vertex*> inputVertices;
-    for (auto &it : g->Vertices()){
-      if (Utility::isInput(g, it)){
-        inputVertices.push_back(it);
-      }
-    }
-    auto startVertex = inputVertices.front();
-    startID = startVertex->getId();
-
-    if(!quiet) {
-      cout << "Inputvertices: " << endl;
-      for (auto &it : inputVertices) {
-        cout << it->getName() << endl;
-      }
-    }
-
-    for (auto &oIt : outputVertices){
-      for (auto &iIt : inputVertices){
-        if(!cg.doesEdgeExistID(iIt, oIt.first)) {
-          this -> latencyEdges.insert(&cg.createEdge(cg.getVertexById(iIt->getId()), cg.getVertexById(oIt.first->getId()), asaplength));
-        }
-      }
-    }
-
-  }
-
-  map<Vertex *, int> SDSScheduler::BellmanFordSDC::getVertexCosts() {
-    map <Vertex*, int> schedule;
-    int min = INT_MAX;
-    for (auto &it : vertexCosts){
-      if (it.second < min){
-        min = it.second;
-      }
-    }
-    for (auto &it : vertexCosts){
-      schedule.insert(make_pair(&g->getVertexById(it.first->getId()), it.second-min));
-    }
-    return schedule;
-  }
-
-  void SDSScheduler::BellmanFordSDC::setadditionlaConstraints(list<orderingVariabletoSDCMapping> &constraints) {
-    this -> additionalConstraints = constraints;
-  }
-
-  sdcStatus SDSScheduler::BellmanFordSDC::solveSDC() {
-
-    vector <int> potentialConflicts;
-
-    if(additionalConstraints.empty()){
-      bellmanFordAlgorithm();
-      if (this -> hasNegativeCycle) {
-        return unfeasible;
-      }else {
-        return feasible;
-      }
-    }else{
-      vector<Edge*> newEdges;
-      newEdges.reserve(additionalConstraints.size());
-      for (auto &it : additionalConstraints){
-        if(!quiet) {
-          cout << "Adding: " << it.constraintOneVertices.second->getName() << " - "
-               << it.constraintOneVertices.first->getName() << " <= " << it.constraintOne << endl;
-        }
-        newEdges.emplace_back(&cg.createEdgeSDS(cg.getVertexById(it.constraintOneVertices.second->getId()), cg.getVertexById(it.constraintOneVertices.first->getId()), it.constraintOne));
-        //newEdges.emplace_back(&cg.createEdgeSDS(cg.getVertexById(it.constraintTwoVertices.first->getId()), cg.getVertexById(it.constraintTwoVertices.second->getId()), it.constraintTwo));
-        potentialConflicts.emplace_back(it.satVariable * (-1));
-        printConstraintGraph();
-        bellmanFordAlgorithm();
-        //printConstraintGraph();
-        if(this -> hasNegativeCycle){
-          this->conflictClauses.push_back(potentialConflicts);
-          for(auto &eIt : newEdges){
-            cg.removeEdge(&eIt->getVertexSrc(), &eIt->getVertexDst());
-          }
-          newEdges.clear();
-          this->additionalConstraints.clear();
-          return unfeasible;
-        }
-      }
-      cout << cg << endl;
-      return feasible;
-    }
-  }
-
-  vector<vector<int>> SDSScheduler::BellmanFordSDC::getConflicts() {
-    return this->conflictClauses;
-  }
-
-  void SDSScheduler::BellmanFordSDC::setLatency(int latency) {
-
-    for (auto &eIt : cg.Edges()){
-      for (auto &it : latencyEdges){
-        if (it->getVertexSrc().getId() == eIt->getVertexSrc().getId() && it->getVertexDst().getId() == eIt->getVertexDst().getId()){
-        eIt->setDistance(latency);
-        }
-      }
-    }
   }
 
 }
