@@ -103,6 +103,8 @@ namespace HatScheT {
       delete_fibnodes(min);
       min = nullptr;
       n = 0;
+      fstore.clear();
+      plstore.clear();
     }
 
     /*!
@@ -406,8 +408,15 @@ namespace HatScheT {
      * 6. 	CASCADING-CUT(H,y)
      * 7. if the key of y is smaller than the minkey
      * 8. 	update H.min to x
+     * 9. Managing the faststore Map
      */
     void decrease_key(FibNode *x, T k) {
+
+      // 9
+      KeyNodeIter mit = find(x->key);
+      fstore.erase(mit);
+      fstore.insert({k, x});
+
       FibNode *y;
 
       // 1
@@ -496,6 +505,8 @@ namespace HatScheT {
      * remove_fibnode(x) sets to the minimum so that it hits the top of the heap, then easily remove.
      */
     void remove_fibnode(FibNode *x) {
+      KeyNodeIter mit = find(x->key);
+      fstore.erase(mit);
       decrease_key(x, std::numeric_limits<T>::min());
       FibNode *fn = extract_min();
       delete fn;
@@ -517,11 +528,15 @@ namespace HatScheT {
     }
 
     void pop() {
-      if (empty())
+      if (empty()) {
         return;
+      }
       FibNode *x = extract_min();
-      if (x)
-        delete x;
+      if (!x) {
+        return;
+      }
+
+      delete x;
     }
 
     T get_extract_min(){
@@ -534,6 +549,7 @@ namespace HatScheT {
       auto *x = new FibNode(std::move(k), pl);
       insert(x);
       plstore.insert({pl, x});
+      fstore.insert({k, x});
       return x;
     }
 
@@ -543,23 +559,29 @@ namespace HatScheT {
 
     KeyNodeIter find_by_key(const T& k)
     {
+      if (empty()){
+       //  throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+      }
       KeyNodeIter mit = fstore.find(k);
       return mit;
     }
 
-    FibNode* findNode_by_Key(const T& k)
+    FibNode* findNode_by_key(const T& k)
     {
       KeyNodeIter mit = find_by_key(k);
       return mit->second;
     }
 
-    PayNodeIter find_by_payload(const void* pl)
+    PayNodeIter find_by_payload(void* pl)
     {
+      if (empty()){
+       // throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+      }
       PayNodeIter plit = plstore.find(pl);
       return plit;
     }
 
-    FibNode* findNode_by_payload(const void* pl)
+    FibNode* findNode_by_payload(void* pl)
     {
       PayNodeIter plit = find_by_payload(pl);
       return plit->second;

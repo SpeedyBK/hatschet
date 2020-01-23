@@ -54,13 +54,40 @@ HatScheT::SDCSolver::ConstraintGraph::createEdgeSDC(Vertex &Vsrc, Vertex &Vdst, 
   }
 }
 
+HatScheT::Vertex &HatScheT::SDCSolver::ConstraintGraph::createVertexSDC() {
+  return createVertexSDC(++maxVertexId);
+}
+
+HatScheT::Vertex &HatScheT::SDCSolver::ConstraintGraph::createVertexSDC(int id) {
+  for(auto &it : vertices){
+    Vertex* v = it;
+    if(v->getId()==id) throw HatScheT::Exception("ConstraintGraph.createVertexSDC: Error! This id is already occupied: " + to_string(id) + "( " + v->getName() +" )");
+  }
+
+  auto *v = new Vertex(id);
+  vertices.insert(v);
+  vertex_index[id] = v;
+
+  //keep maxVertexId consistent
+  if(this->maxVertexId < v->getId()) this->maxVertexId = this->getMaxVertexId()+1;
+
+  return *v;
+}
+
+HatScheT::Vertex &HatScheT::SDCSolver::ConstraintGraph::getVertexbyIdSDC(int id){
+  auto *v = vertex_index[id];
+  return *v;
+}
+
+
+
 //////////////
 /// Solver ///
 //////////////
 
 HatScheT::SDCSolver::SDCSolver() {
   this->solver_status = 0;
-  auto &v = cg.createVertex(-1);
+  auto &v = cg.createVertexSDC(-1);
   v.setName("Startvertex");
   startvertex = &v;
 }
@@ -79,14 +106,14 @@ void HatScheT::SDCSolver::add_sdc_constraint(SDCConstraint constr) {
     }
   }
   if (!vsrc_exist) {
-    Vertex &V = this->cg.createVertex(constr.VSrc->getId());
+    Vertex &V = this->cg.createVertexSDC(constr.VSrc->getId());
     V.setName(constr.VSrc->getName());
   }
   if (!vdst_exist) {
-    Vertex &V = this->cg.createVertex(constr.VDst->getId());
+    Vertex &V = this->cg.createVertexSDC(constr.VDst->getId());
     V.setName(constr.VDst->getName());
   }
-  this->cg.createEdgeSDC(cg.getVertexById(constr.VSrc->getId()), cg.getVertexById(constr.VDst->getId()), constr.constraint, HatScheT::Edge::Data);
+  this->cg.createEdgeSDC(cg.getVertexbyIdSDC(constr.VSrc->getId()), cg.getVertexbyIdSDC(constr.VDst->getId()), constr.constraint, HatScheT::Edge::Data);
 }
 
 
@@ -113,7 +140,7 @@ void HatScheT::SDCSolver::compute_inital_solution() {
   for (auto &it : this->cg.Vertices()){
     this->solution[it] = INT_MAX;
   }
-  this->solution[&this->cg.getVertexById(startvertex->getId())] = 0;
+  this->solution[&this->cg.getVertexbyIdSDC(startvertex->getId())] = 0;
 
   /*!
    * Finding Shortest Paths

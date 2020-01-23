@@ -1707,13 +1707,55 @@ bool Tests::compareModuloSchedulerTest() {
       return false;
     }
 
-    delete FIB;
-
-    cout << endl << "Insert and Extract_min Test passed ... " << endl;
-
     /////// Insert and Extract_min Test End ///////
 
+    /////// Find Element by Key Test Begin ////////
+
+    for (int i : numbers){
+      FIB->push(i);
+    }
+
+    int ind = rand() % arraysize;
+    auto foundNode = FIB->findNode_by_key(numbers[ind]);
+    cout << endl << endl << "Value from Heap: " << foundNode->key << " Reference Value: " << numbers[ind] << endl << endl;
+    if (foundNode->key != numbers[ind]){
+      cout << "Found Element by Key Test failes!" << endl;
+      return false;
+    }
+
+    delete FIB;
+    /////// Find Element by Key Test End //////////
+
+    /////// Inserting Elements with Payload ///////
+    auto *FIBO = new FibonacciHeap <int>;
+    Vertex* vp = nullptr;
+    for (int i = 0; i < 10; i++){
+      auto *v = new Vertex(9 - i);
+      if (i == 5){
+        vp = v;
+      }
+      FIBO->push(i, v);
+    }
+
+    ///// Find and Element with known Payload /////
+    auto fNode = FIBO->findNode_by_payload(vp);
+    auto fv = (Vertex*)fNode->payload;
+    cout << "Key: " << fNode->key << " Name: " << fv->getName() << endl << endl;
+
+    /////// Removing Elements from the Heap ///////
+    do {
+      auto v = (Vertex*) FIBO->topNode()->payload;
+      auto k = FIBO->topNode()->key;
+      FIBO->pop();
+      cout << "Key: " << k << " Name: "<< v->getName() << endl;
+    }while (!FIBO->empty());
+
+    delete FIBO;
+
+    /////////////// Payload Test End //////////////
+
     cout << endl << "Test passed!" << endl;
+
     return true;
   }
 

@@ -59,6 +59,27 @@ namespace HatScheT {
        * @return Returns the Constraintedge.
        */
       Edge& createEdgeSDC (Vertex &Vsrc, Vertex &Vdst, int distance, Edge::DependencyType dependencyType);
+
+      /*!
+       * Creates a vertex, assigns a non-existing id and inserts it in the graph G and in the index of vertices.
+       * \return The vertex
+       */
+      Vertex& createVertexSDC();
+
+      /*!
+       * Creates a vertex, inserts it in the graph G in the Index of Vertices.
+       * \param The id of the vertex
+       * \return The vertex
+       */
+      Vertex& createVertexSDC(int id);
+
+      Vertex& getVertexbyIdSDC(int id);
+
+      /////////////////
+      /// Variables ///
+      /////////////////
+
+      map <int, Vertex*> vertex_index;
     };
 
     /*!
