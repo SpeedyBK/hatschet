@@ -10,6 +10,7 @@
 ////////////////////////////////
 /// Constraint Graph related ///
 ////////////////////////////////
+
 void HatScheT::SDCSolver::ConstraintGraph::removeEdge(HatScheT::Vertex &srcVertex, HatScheT::Vertex &dstVertex) {
   for (auto &it : this->edges){
     if (it->getVertexSrc().getId() == srcVertex.getId() && it->getVertexDst().getId() == dstVertex.getId()){
@@ -232,25 +233,32 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
   return;
 }
 
-pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> H) {
+pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> &H) {
   auto v = (Vertex*) H.topNode()->payload;
   auto k = H.topNode()->key;
   H.pop();
   return make_pair(v, k);
 }
 
-void HatScheT::SDCSolver::adjust_Heap(HatScheT::FibonacciHeap<int> H, HatScheT::Vertex *v, int k) {
+void HatScheT::SDCSolver::adjust_Heap(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v, int k) {
   //If v is in the Heap
   //  set key of v to k;
   //else
   //  insert v in Heap
 }
 
-int HatScheT::SDCSolver::key_of(HatScheT::FibonacciHeap<int> H, HatScheT::Vertex *v) {
+int HatScheT::SDCSolver::key_of(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v) {
   //if v is in the Heap
   //  return key of v;
   //else
   //  return int_max;
+}
+
+void HatScheT::SDCSolver::set_initial_solution(map<HatScheT::Vertex *, int> &known_solution) {
+  solution.clear();
+  for (auto &it : known_solution){
+    this -> solution[&this -> cg.getVertexbyIdSDC(it.first->getId())] = it.second;
+  }
 }
 
 

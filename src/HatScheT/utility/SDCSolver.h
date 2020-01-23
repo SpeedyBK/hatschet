@@ -73,6 +73,11 @@ namespace HatScheT {
        */
       Vertex& createVertexSDC(int id);
 
+      /*!
+       * Uses the map "vertex_index" to return the vertex with id you looked for.
+       * @param id of the Vertex you look for.
+       * @return the Vertex with ID id.
+       */
       Vertex& getVertexbyIdSDC(int id);
 
       /////////////////
@@ -88,9 +93,21 @@ namespace HatScheT {
      */
     void set_start_vertex();
 
-    void adjust_Heap(FibonacciHeap<int> H, Vertex* v, int k);
+    /*!
+     * If v is in the Heap, it sets key of v to k. If v is not in the heap, it inserts v with key k into the heap.
+     * @param H: Fibonacci Heap.
+     * @param v: Vertex which key should be changed.
+     * @param k: Value the key of v is changed to.
+     */
+    void adjust_Heap(FibonacciHeap<int> &H, Vertex* v, int k);
 
-    int key_of(FibonacciHeap<int> H, Vertex *v);
+    /*!
+     * If v is in the Heap the funtion returns the key of v, else it returns INT_MAX;
+     * @param H: Fibonacci Heap.
+     * @param v: Vertex which key should be changed.
+     * @return if v is in the heap the key of v. If v is not in the heap it returns INT_MAX.
+     */
+    int key_of(FibonacciHeap<int> &H, Vertex *v);
 
     /*!
      * Graphbased Representation of the SDC-System.
@@ -154,6 +171,12 @@ namespace HatScheT {
     void compute_inital_solution();
 
     /*!
+     * This Function allows to pass a solution of an SDC-System into the solver, which can be used to start an incremental solving.
+     * @param known_solution Known Solution for an existing SDC-System.
+     */
+    void set_initial_solution(map <Vertex*, int> &known_solution);
+
+    /*!
      * This function returns the computed solution if the system is feasible. If the system is infeasible, it will
      * throw an error.
      * @return The solution of the SDC-System.
@@ -212,7 +235,7 @@ namespace HatScheT {
      * @param H Reference to the Fibonacci Heap used in the solver.
      * @return Returns the Vertex and the saved costs for this Vertex.
      */
-    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> H);
+    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> &H);
   };
 
 }

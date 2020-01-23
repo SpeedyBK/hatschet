@@ -75,10 +75,10 @@ namespace HatScheT {
       void *payload;
     };
 
-    using KeyNodeIter = typename std::unordered_map<T, FibNode*>::iterator;
     std::unordered_multimap<T, FibNode*> fstore;
-    using PayNodeIter = typename std::unordered_map<void*, FibNode*>::iterator;
+    using KeyNodeIter = typename std::unordered_map<T, FibNode*>::iterator;
     std::unordered_multimap<void*, FibNode*> plstore;
+    using PayNodeIter = typename std::unordered_map<void*, FibNode*>::iterator;
 
     ////////////////////////////////////
     /// Constructors and Destructors ///
@@ -560,31 +560,39 @@ namespace HatScheT {
     KeyNodeIter find_by_key(const T& k)
     {
       if (empty()){
-       //  throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+         throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
       }
       KeyNodeIter mit = fstore.find(k);
       return mit;
     }
 
-    FibNode* findNode_by_key(const T& k)
+    pair <bool, FibNode*> findNode_by_key(const T& k)
     {
       KeyNodeIter mit = find_by_key(k);
-      return mit->second;
+      if (mit == fstore.end()){
+        return {false, nullptr};
+      }else {
+        return {true, mit->second};
+      }
     }
 
     PayNodeIter find_by_payload(void* pl)
     {
       if (empty()){
-       // throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+        throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
       }
       PayNodeIter plit = plstore.find(pl);
       return plit;
     }
 
-    FibNode* findNode_by_payload(void* pl)
+    pair <bool, FibNode*> findNode_by_payload(void* pl)
     {
       PayNodeIter plit = find_by_payload(pl);
-      return plit->second;
+      if (plit == plstore.end()){
+        return {false, nullptr};
+      }else {
+        return {true, plit->second};
+      }
     }
 
     unsigned int size() {
@@ -594,7 +602,6 @@ namespace HatScheT {
     int n;
     FibNode *min;
     Comp comp;
-
   };
 }
 

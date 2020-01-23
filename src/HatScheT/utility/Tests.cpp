@@ -1717,9 +1717,14 @@ bool Tests::compareModuloSchedulerTest() {
 
     int ind = rand() % arraysize;
     auto foundNode = FIB->findNode_by_key(numbers[ind]);
-    cout << endl << endl << "Value from Heap: " << foundNode->key << " Reference Value: " << numbers[ind] << endl << endl;
-    if (foundNode->key != numbers[ind]){
-      cout << "Found Element by Key Test failes!" << endl;
+    if (foundNode.first) {
+      cout << endl << endl << "Value from Heap: " << foundNode.second->key << " Reference Value: " << numbers[ind] << endl << endl;
+      if (foundNode.second->key != numbers[ind]) {
+        cout << "Found Element by Key Test failes!" << endl;
+        return false;
+      }
+    }else {
+      cout << endl << "Element does not exists in the heap, or can't be found! This should not happen!" << endl;
       return false;
     }
 
@@ -1739,8 +1744,13 @@ bool Tests::compareModuloSchedulerTest() {
 
     ///// Find and Element with known Payload /////
     auto fNode = FIBO->findNode_by_payload(vp);
-    auto fv = (Vertex*)fNode->payload;
-    cout << "Key: " << fNode->key << " Name: " << fv->getName() << endl << endl;
+    if (fNode.first) {
+      auto fv = (Vertex *) fNode.second->payload;
+      cout << "Key: " << fNode.second->key << " Name: " << fv->getName() << endl << endl;
+    }else{
+      cout << "Element not found, this should not happen" << endl;
+      return false;
+    }
 
     /////// Removing Elements from the Heap ///////
     do {
