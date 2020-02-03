@@ -8,10 +8,12 @@
 #include "SDSScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
+#include "HatScheT/utility/SDCSolver.h"
 #include <cassert>
 #include <iomanip>
 #include <climits>
 #include <cmath>
+#include <chrono>
 
 namespace HatScheT {
 
@@ -37,195 +39,127 @@ namespace HatScheT {
 
   void HatScheT::SDSScheduler::schedule() {
 
-    if (sdcS == ScaLP) {
-      createScaLPVariables();
-
-      createBindingVariables();
-
-      setBindingVariables();
-
-      if (bindingType == 'S') {
-        sharingVariables = createShVarsMaxSpeed();
-      } else if (bindingType == 'R') {
-        sharingVariables = createShVarsMinRes();
-      }
-
-      checkfeasibilityScaLP({}, -1);
-
-      this -> r = this -> solver->getResult();
-      int maxLatConst = (int) r.values[newVar];
-      if (!this->quiet) {
-        cout << "Max LAT Const: " << maxLatConst << endl;
-      }
-      bool feasible = false;
-      vector<vector<int>> conflict;
-      int i = 0;
-      while (!feasible) {
-        if (i > 1000){
-          break;
-        }
-        i++;
-        passToSATSolver(sharingVariables, conflict);
-        if(unsatisiable){
-          conflict.clear();
-          //this->II++;
-          maxLatConst++;
-          passToSATSolver(sharingVariables, conflict);
-          unsatisiable = false;
-        }
-        std::vector<pair<ScaLP::Constraint, ScaLP::Constraint>> cstr;
-        list <orderingVariabletoSDCMapping> possibleConflicts;
-        if (!resourceConstraints.empty()) {
-          for (auto &it : resourceConstraints) {
-            cstr.emplace_back(createadditionalScaLPConstraits(it));
-            possibleConflicts.push_back(it);
-            feasible = checkfeasibilityScaLP(cstr, maxLatConst);
-            if (!feasible) {
-              for (auto &itr : possibleConflicts) {
-                cout << "SAT-Variable:" << itr.satVariable << endl;
-              }
-              conflict.push_back(getSATClausesfromScaLP(possibleConflicts));
-              possibleConflicts.clear();
-              break;
-            }
-          }
-        }else {
-          feasible = checkfeasibilityScaLP(cstr, maxLatConst);
-          if (!feasible) {
-            this -> II++;
-          }
-        }
-      }
-
-      this-> r = this->solver->getResult();
-      cout <<"Objektive Value: " << r.objectiveValue << endl;
-      startTimes = findstarttimes(r);
-
-    }
-
-
     if (sdcS == BellmanFord) {
 
+      double timer = 0;
+      std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+      /*!
+       * Setup of Variables. (1)
+       */
+      //Create Binding Variables.
       createBindingVariables();
 
+      //Set Values for Binding Variables.
       setBindingVariables();
 
+      //Create Sharing Variables.
       if (bindingType == 'S') {
         sharingVariables = createShVarsMaxSpeed();
       } else if (bindingType == 'R') {
         sharingVariables = createShVarsMinRes();
       }
 
+      //Create Data Dependency Constraints.
       createDependencyConstraints();
-      //Do an ASAP Shedule, to find Initial Latency Constraint.
-      auto initialSolution = getFirstSDCSolution();
 
-      if(!quiet){
-        cout << "Initial Shedule:" << endl;
-        for (auto &it: initialSolution){
-          cout << it.first->getName() << ": " << it.second << endl;
-        }
+      //Print Depandency Constraints for Debugging.
+      cout << "Data Dependency Constraints:" << endl;
+      for (auto &it : dependencyConstraintsSDC){
+        static int i = 0;
+        cout << ++i << ". " << it.first.first->getName() << " - " << it.first.second->getName() << " < " << it.second << endl;
       }
-      //Check schedule against resource constraints.
-      //BellmanFordSDC bfsdc(this->dependencyConstraintsSDC, &g, initialSolution);
-      //bfsdc.setquiet(this->quiet);
-      //bfsdc.ajustConstraintGraph(this->initScheduleLength);
-      //bfsdc.printConstraintGraph();
+      cout << endl;
 
-      //Start SDC-SAT LOOP
-      //findBestSchedule(bfsdc);
+      std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+      std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
+      timer += (((double) timeSpan.count()) / 1000000000.0);
+      cout  << "Creating Variables Done after " << timer << " Seconds" << endl << endl;
 
-      /*
-      //ToDo Ab hier While Schleife.
-      vector<vector<int>> conflict;
-      passToSATSolver(this->sharingVariables, conflict);
+      /*!
+       * Calculate a Solution for the SDC-Problem without Ressource Constraints. (2)
+       */
+      //Setup an SDC-Solver
+      auto *s = new SDCSolver;
 
-      bfsdc.setadditionlaConstraints(resourceConstraints);
-      while (bfsdc.solveSDC()==unfeasible){
-        conflict = bfsdc.getConflicts();
-        passToSATSolver(this->sharingVariables, conflict);
-        if(unsatisiable){
-          //Do some shit...
-          conflict.clear();
-          cout << "********************************************************************" << endl;
-          passToSATSolver(this->sharingVariables, conflict);
-          cout << "********************************************************************" << endl;
-          //Binary Search to find best Latency
-          bfsdc.setadditionlaConstraints(resourceConstraints);
-          if (bfsdc.solveSDC()==feasible){
-            break;
-          }else{
-            unsatisiable = false;
-            conflict = bfsdc.getConflicts();
-            passToSATSolver(this->sharingVariables, conflict);
-          }
-        }else{
-          bfsdc.setadditionlaConstraints(resourceConstraints);
-        }
+      //Add Dependency Constraints to the SDC-Solver
+      for (auto &it : dependencyConstraintsSDC) {
+        s->add_sdc_constraint(
+            s->create_sdc_constraint((Vertex *) it.first.second, (Vertex *) it.first.first, it.second));
       }
-      startTimes = bfsdc.getVertexCosts();
-      */
+
+      //Calculate a Shedule with Data Dependencys only.
+      s->compute_inital_solution();
+
+      //Check is SDC-System is feasible. (3)
+      if (s->get_solver_status() == 10) {
+        //If feasible save it.
+        startTimes = map_SDC_solution_to_Graph(s->get_solution());
+      } else {
+        //Else terminate with error.
+        throw HatScheT::Exception("1. System of Constraints not feasible.");
+      }
+      //Delete SDC-Solver
+      delete s;
+
+      std::chrono::high_resolution_clock::time_point t3 = std::chrono::high_resolution_clock::now();
+      timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2);
+      timer += (((double) timeSpan.count()) / 1000000000.0);
+      cout << "Initial SDC-Problem solved after " << timer << " Seconds" << endl;
+
+      //Calculate Rssource Constraints with SAT, from Sharing Variable, conflictClauses is an empty Vector for now.
+      passToSATSolver(sharingVariables, conflictClauses);
+
+      //Print Resource Constraints for Debugging.
+      cout << endl << "Resource Constraints: " << endl;
+      for (auto &it : resourceConstraints){
+        static int i = 0;
+        cout << ++i << ". " << it.constraintOneVertices.first->getName() << " - " << it.constraintOneVertices.second->getName() << " < " << it.constraintOne << endl;
+      }
+      cout << endl;
+
+      std::chrono::high_resolution_clock::time_point t4= std::chrono::high_resolution_clock::now();
+      timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t4 - t3);
+      timer += (((double) timeSpan.count()) / 1000000000.0);
+      cout << "Initial SAT-Problem solved after " << timer << " Seconds" << endl;
+
+      //Add Dependency Constraints to an SDC-Solver.
+      s = new SDCSolver;
+      for (auto &it : dependencyConstraintsSDC) {
+        s->add_sdc_constraint(s->create_sdc_constraint((Vertex *) it.first.second, (Vertex *) it.first.first, it.second));
+      }
+      //Add Resource Constraints to SDC-Solver
+      for (auto &it : resourceConstraints){
+        static int counter = 0;
+        s->add_sdc_constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
+        s->compute_inital_solution();
+        if (s->get_solver_status() != 10){
+          cout << counter << endl;
+          //terminate with error.
+          std::chrono::high_resolution_clock::time_point t6= std::chrono::high_resolution_clock::now();
+          timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t6 - t4);
+          timer += (((double) timeSpan.count()) / 1000000000.0);
+          cout << "SDC-Problem with Resource Constraints done after " << timer << " Seconds" << endl;
+          throw HatScheT::Exception("2. System of Constraints not feasible.");
+        }else {
+          startTimes = map_SDC_solution_to_Graph(s->get_solution());
+        }
+        counter++;
+      }
+
+      std::chrono::high_resolution_clock::time_point t5 = std::chrono::high_resolution_clock::now();
+      timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t5 - t4);
+      timer += (((double) timeSpan.count()) / 1000000000.0);
+      cout << "SDC-Problem with Resource Constraints solved after " << timer << " Seconds" << endl;
+
+      //Print Constraint Graph for Debugging.
+      cout << "Constraint Graph: " << endl;
+      s->print_Constraint_Graph();
+
+      //Delete SDC-Solver
+      delete s;
     }
   }
-
-  /*void SDSScheduler::findBestSchedule(BellmanFordSDC &sdcsol) {
-
-    int upperBound = this->initScheduleLength * 2 ;
-    int lowerBound = this->initScheduleLength;
-    bool increaseFlag = true;
-    int mid = floor((upperBound + lowerBound) / 2);
-    int i = 0;
-
-    while (lowerBound < upperBound && i < 1000) {
-      cout << "LowerBound: " << lowerBound << " UpperBound: " << upperBound << endl;
-      if (checkSchedule(sdcsol, mid) && !this->unsatisiable) {
-        cout << "SDC: Feasible, SAT: satisfiable. " << endl;
-        upperBound = mid;
-        mid = floor((upperBound + lowerBound) / 2);
-        increaseFlag = false; //do no increase upperBound anymore!
-        i++;
-        cout << "LowerBound: " << lowerBound << " -- UpperBound: " << upperBound << endl;
-      } else if (checkSchedule(sdcsol, mid) && this->unsatisiable) {
-        cout << "SDC: Feasible, SAT: unsatisfiable. " << endl;
-        conflictClauses.clear();
-        lowerBound = mid;
-        if (increaseFlag) {
-          upperBound *= 2;
-        }
-        mid = floor((upperBound + lowerBound) / 2);
-        i++;
-      } else if(!checkSchedule(sdcsol, mid) && this->unsatisiable) {
-        cout << "SDC: infeasible, SAT: unsatisfiable. " << endl;
-        conflictClauses.clear();
-        lowerBound = mid;
-        if (increaseFlag) {
-          upperBound *= 2;
-        }
-        mid = floor((upperBound + lowerBound) / 2);
-        i++;
-      }else {
-        i++;
-        cout << "ELSE Case Break:" << endl;
-      }
-    }
-
-    startTimes = sdcsol.getVertexCosts();
-  }
-
-  bool SDSScheduler::checkSchedule(BellmanFordSDC &sdcsol, int latency) {
-    cout << "<<<<<<<<<<<<<<<<<<<<<<<<< Latency : " << latency << " >>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-    passToSATSolver(sharingVariables, conflictClauses);
-    //this->conflictClauses.clear();
-    sdcsol.setLatency(latency);
-    sdcsol.setadditionlaConstraints(resourceConstraints);
-    //sdcsol.printConstraintGraph();
-    if (sdcsol.solveSDC() == feasible) {
-      return true;
-    } else {
-      conflictClauses = sdcsol.getConflicts();
-      return false;
-    }
-  }*/
 
   void HatScheT::SDSScheduler::createBindingVariables() {
 
@@ -370,8 +304,7 @@ namespace HatScheT {
      */
     int litCounter = 1;
     if (!this->quiet) {
-      cout << "Problem: " << "p cnf " << shareVars.size() * 2 << " " << shareVars.size() * 2 + confClauses.size()
-           << endl << endl;
+      cout << "CaDiCaL: Problem: " << "p cnf " << shareVars.size() * 2 << " " << shareVars.size() * 2 + confClauses.size() << endl;
     }
     for (auto &It : shareVars) {
       if (It.second) {
@@ -420,15 +353,15 @@ namespace HatScheT {
      */
     if (res == 10) {
       if (!quiet) {
-        cout << "CaDiCaL: Problem Satisfiable" << endl;
+        cout << endl << "CaDiCaL: Problem Satisfiable" << endl;
       }
     } else if (res == 0) {
         if (!quiet) {
-          cout << "CaDiCaL: Problem Unsolved" << endl;
+          cout << endl << "CaDiCaL: Problem Unsolved" << endl;
         }
     } else if (res == 20) {
         if (!quiet) {
-          cout << "CaDiCaL: Problem Unsatisfiable" << endl;
+          cout << endl << "CaDiCaL: Problem Unsatisfiable" << endl;
         }
       unsatisiable = true;
     }
@@ -443,9 +376,9 @@ namespace HatScheT {
     auto mIt = sharingVariables.begin();
     if (res == 10) {
       for (int i = 0; i < litCounter - 1; i++) {
-        if (!this->quiet) {
-          cout << solver->val(i + 1) << " ";
-        }
+        //if (!this->quiet) {
+          //cout << solver->val(i + 1) << " ";
+        //}
         if (i % 2 == 0){
           if(solver->val(i+1) > 0) {
             orderingVariabletoSDCMapping mapping;
@@ -461,20 +394,11 @@ namespace HatScheT {
             mapping.satVariable = i+1;
             mapping.constraintOneVertices = swapPair(mIt->first);
             mapping.constraintOne = - resourceModel.getResource(mIt->first.first)->getBlockingTime();
-            mapping.createConstraintTwo((int) this->II);
+            //mapping.createConstraintTwo((int) this->II);
             resourceConstraints.push_back(mapping);
           }
           ++mIt;
         }
-      }
-      if (!this->quiet) {
-        cout << endl;
-        for (auto &it : resourceConstraints){
-          cout << "Sat-Variable " << it.satVariable << endl;
-          cout << it.constraintOneVertices.first->getName() << " - " << it.constraintOneVertices.second->getName() << " <= " << it.constraintOne << endl;
-          //cout << it.constraintTwoVertices.first->getName() << " - " << it.constraintTwoVertices.second->getName() << " <= " << it.constraintTwo << endl << endl;
-        }
-        cout << endl;
       }
     }
 
@@ -625,6 +549,21 @@ namespace HatScheT {
     return asa.getSchedule();
   }
 
+  map<Vertex*, int> SDSScheduler::map_SDC_solution_to_Graph(map<Vertex *, int> solution) {
+
+    int min = INT_MAX;
+    for (auto &it : solution){
+      it.second < min ? min = it.second : min = min;
+    }
+
+    map<Vertex*, int> mapped_solution;
+    for (auto &it : solution){
+      if (it.first->getId() != -1){
+        mapped_solution[&g.getVertexById(it.first->getId())] = it.second + abs(min);
+      }
+    }
+    return mapped_solution;
+  }
 }
 
 #endif //USE_CADICAL

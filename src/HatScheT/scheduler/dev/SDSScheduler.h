@@ -190,6 +190,8 @@ namespace HatScheT {
 
     map<Vertex *, int> getFirstSDCSolution();
 
+    map<Vertex*, int> map_SDC_solution_to_Graph (map<Vertex*, int> solution);
+
     /////////////////////////
     //      Variables      //
     /////////////////////////
@@ -219,7 +221,7 @@ namespace HatScheT {
     map<pair<const Vertex *, const Vertex *>, bool> sharingVariables;
 
     /*!
-     * Solution which the SAT-Solver return for the resource constraints given by the Sharing Variables.
+     * Solution which the SAT-Solver returns for the resource constraints given by the Sharing Variables.
      * in an SDC Formulation.
      */
     list<orderingVariabletoSDCMapping> resourceConstraints;

@@ -24,6 +24,7 @@
  * -- insert(): O(1);
  * -- get_Minimum: O(1);
  * -- extract_Minimum: O(log n);
+ * --
  *
  * [1] Michael L. Fredman, Robert E. Tarjan; Fibonacci Heaps and Their Uses in Improved Network Optimization Algorithms
  * Journal of the Association for Computing Machinery 1987
@@ -38,7 +39,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <algorithm>
-
 
 namespace HatScheT {
 
@@ -75,10 +75,13 @@ namespace HatScheT {
       void *payload;
     };
 
-    std::unordered_multimap<T, FibNode*> fstore;
-    using KeyNodeIter = typename std::unordered_map<T, FibNode*>::iterator;
+    /////////////////////////////////////////////////
+    /// Maps to access nodes that are not the min ///
+    /////////////////////////////////////////////////
+    std::unordered_multimap<T, FibNode*> kstore;
+    using KeyIter = typename std::unordered_map<T, FibNode*>::iterator;
     std::unordered_multimap<void*, FibNode*> plstore;
-    using PayNodeIter = typename std::unordered_map<void*, FibNode*>::iterator;
+    using PayIter = typename std::unordered_map<void*, FibNode*>::iterator;
 
     ////////////////////////////////////
     /// Constructors and Destructors ///
@@ -103,7 +106,7 @@ namespace HatScheT {
       delete_fibnodes(min);
       min = nullptr;
       n = 0;
-      fstore.clear();
+      kstore.clear();
       plstore.clear();
     }
 
@@ -412,10 +415,23 @@ namespace HatScheT {
      */
     void decrease_key(FibNode *x, T k) {
 
+      cout << "Elements in the heap: " << n << endl;
+      cout << "-------------------" << endl;
+      for (auto &it : kstore){
+        auto secondv = (Vertex*) it.second->payload;
+        cout << it.first << " : " << secondv->getName() << endl;
+      }
+      cout << "-------------------" << endl;
+
+      cout << "Bums42" << endl;
       // 9
-      KeyNodeIter mit = find(x->key);
-      fstore.erase(mit);
-      fstore.insert({k, x});
+      cout << x->key << " : ";
+      KeyIter mit = kstore.find(x->key);
+      cout << "Bums43" << endl;
+      kstore.erase(mit);
+      cout << "Bums44" << endl;
+      kstore.insert({k, x});
+      cout << "Bums45" << endl;
 
       FibNode *y;
 
@@ -467,7 +483,7 @@ namespace HatScheT {
       min->right = x;
       x->left = min;
       // 3
-      x->p = nullptr;
+      x->parent = nullptr;
       // 4
       x->mark = false;
     }
@@ -505,8 +521,8 @@ namespace HatScheT {
      * remove_fibnode(x) sets to the minimum so that it hits the top of the heap, then easily remove.
      */
     void remove_fibnode(FibNode *x) {
-      KeyNodeIter mit = find(x->key);
-      fstore.erase(mit);
+      KeyIter mit = find(x->key);
+      kstore.erase(mit);
       decrease_key(x, std::numeric_limits<T>::min());
       FibNode *fn = extract_min();
       delete fn;
@@ -546,10 +562,15 @@ namespace HatScheT {
     }
 
     FibNode *push(T k, void *pl) {
+      cout << "***************************" << endl;
       auto *x = new FibNode(std::move(k), pl);
       insert(x);
       plstore.insert({pl, x});
-      fstore.insert({k, x});
+      kstore.insert({k, x});
+      for (auto &it : kstore){
+        auto plm = (Vertex*) it.second->payload;
+        cout << "--" << plm->getName() << ": " << it.first << endl;
+      }
       return x;
     }
 
@@ -557,37 +578,35 @@ namespace HatScheT {
       return push(std::move(k), nullptr);
     }
 
-    KeyNodeIter find_by_key(const T& k)
+    KeyIter find_by_key(const T& k)
     {
       if (empty()){
-         throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+         return kstore.end();
       }
-      KeyNodeIter mit = fstore.find(k);
-      return mit;
+      return kstore.find(k);
     }
 
     pair <bool, FibNode*> findNode_by_key(const T& k)
     {
-      KeyNodeIter mit = find_by_key(k);
-      if (mit == fstore.end()){
+      KeyIter mit = find_by_key(k);
+      if (mit == kstore.end()){
         return {false, nullptr};
       }else {
         return {true, mit->second};
       }
     }
 
-    PayNodeIter find_by_payload(void* pl)
+    PayIter find_by_payload(void* pl)
     {
       if (empty()){
-        throw HatScheT::Exception("Fibonacci Heap: Trying to find a value in an empty Heap!");
+        return plstore.end();
       }
-      PayNodeIter plit = plstore.find(pl);
-      return plit;
+      return plstore.find(pl);
     }
 
     pair <bool, FibNode*> findNode_by_payload(void* pl)
     {
-      PayNodeIter plit = find_by_payload(pl);
+      PayIter plit = find_by_payload(pl);
       if (plit == plstore.end()){
         return {false, nullptr};
       }else {

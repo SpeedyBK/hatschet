@@ -1218,34 +1218,33 @@ bool Tests::compareModuloSchedulerTest() {
 
     double timetoschedule = 0;
 
-
+    /*
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
+    //string resStr = "benchmarks/MachSuite/fft_strided/graph2_RM.xml";
+    //string graphStr = "benchmarks/MachSuite/fft_strided/graph2.graphml";
+    //string resStr = "benchmarks/MachSuite/sort_radix/graph14_RM.xml";
+    //string graphStr = "benchmarks/MachSuite/sort_radix/graph14.graphml";
+    //string resStr = "benchmarks/origami/fir_SAMRM.xml";
+    //string graphStr = "benchmarks/origami/fir_SAM.graphml";
     string resStr = "benchmarks/origami/iir_biquRM.xml";
     string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
-
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
-
-
-    int DarkwingDuck = 0;
-    for(auto &it : rm.Resources()){
-      if (DarkwingDuck != -1){
-        // Chill mal deine Base...
-      }else{
-        it->setLimit(-1);
-      }
-      DarkwingDuck++;
-    }
-
+    */
     /*
+    for(auto &it : rm.Resources()){
+        it->setLimit(-1);
+    }*/
+
+
     HatScheT::Graph g;
     HatScheT::ResourceModel rm;
 
-    auto &ld = rm.makeResource("Load", 2, 1, 1);
+    auto &ld = rm.makeResource("Load", 1, 1, 1);
 
     auto &add = rm.makeResource("Adder", -1, 1, 1);
 
@@ -1280,23 +1279,11 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(D, E, 0);
     g.createEdge(E, F, 0);
     g.createEdge(F, A, 1);
-    //g.createEdge(D, G, 0);
-    */
 
-    cout << "Display Graph:" << endl;
-    cout << "SRC " << "-- Distance --" << "DST" << endl;
-    for (auto &it : g.Edges()){
-      cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
-    }
-    cout << "*******************************************************" << endl << endl;
-    cout << "Display Resources:" << endl;
-    cout << "Name: Limit; Latency; Blockingtime " << endl;
-    for (auto &it : rm.Resources()){
-      /*if (it->getLimit() != -1){
-        it->setLimit(-1);
-      }*/
-      cout << it->getName() << ": " << it->getLimit() << "; " << it->getLatency() << "; " << it->getBlockingTime() << endl;
-    }
+    cout << g << endl;
+    cout << rm << endl;
+
+    cout << "Number of Vertices:" << g.getNumberOfVertices() << ", Number of Edges: " << g.getNumberOfEdges() << endl;
     cout << "*******************************************************" << endl << endl;
 
     cout << "SDS:" << endl;
@@ -1311,7 +1298,7 @@ bool Tests::compareModuloSchedulerTest() {
     std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
     timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
     auto sdssched = sds.getSchedule();
-    cout << endl << "Schedule for II = " << sds.getII() << ":" << endl;
+    cout << endl << endl << "Shedule: " << endl;
     for (auto &it : sdssched) {
       cout << it.first->getName() << " : " << it.second << endl;
     }
@@ -1323,7 +1310,7 @@ bool Tests::compareModuloSchedulerTest() {
 
     cout << endl << "Time to get shedule: " << timetoschedule << endl;
     timetoschedule = 0;
-
+    /*
     cout << endl << endl;
 
     cout << "ASAP:" << endl;
@@ -1345,7 +1332,7 @@ bool Tests::compareModuloSchedulerTest() {
       cout << endl << "ASAP: Schedule is NOT valid" << endl;
     }
 
-    cout << endl << "Time to get shedule: " << timetoschedule << endl;
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;*/
     return false;
   #else
     //CaDiCaL not active! Test function disabled!
@@ -1823,11 +1810,26 @@ bool Tests::compareModuloSchedulerTest() {
     cout << endl;
 
     //Adding a constraint
-    //SDCConstraint c = solver->create_sdc_constraint(&F, &B, -3);
+    SDCConstraint c = solver->create_sdc_constraint(&G, &P, -3);
+    SDCConstraint d = solver->create_sdc_constraint(&P, &G, -4);
 
     //Using the incremental Algorithm to solve the new system.
-    //solver->add_to_feasible(c);
-    //solver->print_Constraint_Graph();
+    solver->add_to_feasible(c);
+    cout << "Test" << endl;
+    solver->add_to_feasible(d);
+
+    //Checking the Solver Status and Print the Solution if feasible.
+    if (solver->get_solver_status() == 21){
+      cout << endl << "System is not feasible." << endl;
+    }else if (solver->get_solver_status() == 20){
+      cout << endl << "System is feasible." << endl;
+      auto spath = solver->get_solution();
+      for (auto &it : spath){
+        cout << it.first->getName() << ": " << it.second << endl;
+      }
+    }
+    cout << endl;
+
 
     //Removing a constraint from the solver.
     //solver->remove_sdc_constraint(D, A);

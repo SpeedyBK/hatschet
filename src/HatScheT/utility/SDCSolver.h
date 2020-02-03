@@ -94,6 +94,14 @@ namespace HatScheT {
     void set_start_vertex();
 
     /*!
+     * Since the SDC-Solver uses a Fibonacci Heap to implement Dijkstras Algorithm, this function is used to get
+     * stuff back from this heap and putting it in a pair <Vertex*, int>
+     * @param H Reference to the Fibonacci Heap used in the solver.
+     * @return Returns the Vertex and the saved costs for this Vertex.
+     */
+    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> &H);
+
+    /*!
      * If v is in the Heap, it sets key of v to k. If v is not in the heap, it inserts v with key k into the heap.
      * @param H: Fibonacci Heap.
      * @param v: Vertex which key should be changed.
@@ -229,13 +237,6 @@ namespace HatScheT {
      */
     void add_to_feasible(SDCConstraint constr);
 
-    /*!
-     * Since the SDC-Solver uses a Fibonacci Heap to implement Dijkstras Algorithm, this function is used to get
-     * stuff back from this heap and putting it in a pair <Vertex*, int>
-     * @param H Reference to the Fibonacci Heap used in the solver.
-     * @return Returns the Vertex and the saved costs for this Vertex.
-     */
-    pair <Vertex*, int> fetch_from_heap(FibonacciHeap<int> &H);
   };
 
 }

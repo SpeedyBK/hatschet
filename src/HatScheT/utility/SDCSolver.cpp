@@ -192,7 +192,7 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
   // 3
   loc_solution = solution;
   // 5
-  pQueue->push(0, &this->cg.getVertexById(constraint.VDst->getId()));
+  pQueue->push(0, &this->cg.getVertexbyIdSDC(constraint.VDst->getId()));
   // 6
   while (!pQueue->empty()){
     // 7
@@ -201,7 +201,7 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
     if (solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]) < solution[x.first]){
       // 9
       if (x.first->getId() == constraint.VSrc->getId()){
-        cout << "Infeasible System!" << endl;
+        //cout << "Infeasible System!" << endl;
         // 11
         remove_sdc_constraint(*constraint.VSrc, *constraint.VDst);
         // 12
@@ -225,12 +225,11 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
     }
   }
   // 24
-  cout << "Feasible System" << endl;
+  //cout << "Feasible System" << endl;
   // 25
   solution = loc_solution;
   // 26
   solver_status = 20;
-  return;
 }
 
 pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> &H) {
@@ -241,17 +240,26 @@ pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap
 }
 
 void HatScheT::SDCSolver::adjust_Heap(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v, int k) {
-  //If v is in the Heap
-  //  set key of v to k;
-  //else
-  //  insert v in Heap
+
+  auto val_from_heap = H.findNode_by_payload(v);
+  if (val_from_heap.first){
+    auto v = (Vertex*) val_from_heap.second->payload;
+    cout << "val_from_heap: " << v->getName() << ", " << val_from_heap.second->key << endl;
+    H.decrease_key(val_from_heap.second, k);
+  }else {
+    H.push(k, v);
+  }
 }
 
 int HatScheT::SDCSolver::key_of(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v) {
-  //if v is in the Heap
-  //  return key of v;
-  //else
-  //  return int_max;
+
+  auto val_from_heap = H.findNode_by_payload(v);
+
+  if (val_from_heap.first){
+    return val_from_heap.second->key;
+  }else {
+    return INT_MAX;
+  }
 }
 
 void HatScheT::SDCSolver::set_initial_solution(map<HatScheT::Vertex *, int> &known_solution) {
