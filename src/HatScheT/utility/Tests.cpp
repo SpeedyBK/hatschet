@@ -1229,8 +1229,8 @@ bool Tests::compareModuloSchedulerTest() {
     //string graphStr = "benchmarks/MachSuite/sort_radix/graph14.graphml";
     //string resStr = "benchmarks/origami/fir_SAMRM.xml";
     //string graphStr = "benchmarks/origami/fir_SAM.graphml";
-    string resStr = "benchmarks/origami/iir_biquRM.xml";
-    string graphStr = "benchmarks/origami/iir_biqu.graphml";
+    //string resStr = "benchmarks/origami/iir_biquRM.xml";
+    //string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
@@ -1280,6 +1280,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(E, F, 0);
     g.createEdge(F, A, 1);
 
+
     cout << g << endl;
     cout << rm << endl;
 
@@ -1309,30 +1310,6 @@ bool Tests::compareModuloSchedulerTest() {
     }
 
     cout << endl << "Time to get shedule: " << timetoschedule << endl;
-    timetoschedule = 0;
-    /*
-    cout << endl << endl;
-
-    cout << "ASAP:" << endl;
-    ASAPScheduler asa (g,rm);
-    asa.setQuiet(false);
-    t1 = std::chrono::high_resolution_clock::now();
-    asa.schedule();
-    t2 = std::chrono::high_resolution_clock::now();
-    timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
-    timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
-    auto sched = asa.getSchedule();
-
-    for (auto &it : sched){
-      cout << it.first->getName() << " : " << it.second << endl;
-    }
-    if (verifyModuloSchedule(g, rm, sched, asa.getScheduleLength())){
-      cout << endl << "ASAP: Schedule is valid" << endl;
-    }else {
-      cout << endl << "ASAP: Schedule is NOT valid" << endl;
-    }
-
-    cout << endl << "Time to get shedule: " << timetoschedule << endl;*/
     return false;
   #else
     //CaDiCaL not active! Test function disabled!
@@ -1644,7 +1621,7 @@ bool Tests::compareModuloSchedulerTest() {
     for (int i = 0; i < arraysize; i++){
       numbers[i] = rand() % 100;
     }
-    cout << "Numbers generates..." << endl;
+    cout << "Numbers generated..." << endl;
     for (int i : numbers){
       cout << i << " ";
     }
@@ -1688,6 +1665,7 @@ bool Tests::compareModuloSchedulerTest() {
     for (int it : numbers){
       cout << it << " ";
     }
+    cout << endl << endl;
 
     if (0 != memcmp(sorted_numbers_from_heap, numbers, sizeof(numbers))){
       cout << endl << "Test failed!" << endl;
@@ -1696,55 +1674,25 @@ bool Tests::compareModuloSchedulerTest() {
 
     /////// Insert and Extract_min Test End ///////
 
-    /////// Find Element by Key Test Begin ////////
-
-    for (int i : numbers){
-      FIB->push(i);
-    }
-
-    int ind = rand() % arraysize;
-    auto foundNode = FIB->findNode_by_key(numbers[ind]);
-    if (foundNode.first) {
-      cout << endl << endl << "Value from Heap: " << foundNode.second->key << " Reference Value: " << numbers[ind] << endl << endl;
-      if (foundNode.second->key != numbers[ind]) {
-        cout << "Found Element by Key Test failes!" << endl;
-        return false;
-      }
-    }else {
-      cout << endl << "Element does not exists in the heap, or can't be found! This should not happen!" << endl;
-      return false;
-    }
-
-    delete FIB;
-    /////// Find Element by Key Test End //////////
-
     /////// Inserting Elements with Payload ///////
     auto *FIBO = new FibonacciHeap <int>;
-    Vertex* vp = nullptr;
+    vector<FibonacciHeap<int>::FibNode*> FibNodeVec;
     for (int i = 0; i < 10; i++){
       auto *v = new Vertex(9 - i);
-      if (i == 5){
-        vp = v;
-      }
-      FIBO->push(i, v);
-    }
-
-    ///// Find and Element with known Payload /////
-    auto fNode = FIBO->findNode_by_payload(vp);
-    if (fNode.first) {
-      auto fv = (Vertex *) fNode.second->payload;
-      cout << "Key: " << fNode.second->key << " Name: " << fv->getName() << endl << endl;
-    }else{
-      cout << "Element not found, this should not happen" << endl;
-      return false;
+      FibNodeVec.push_back(FIBO->push(i, v));
     }
 
     /////// Removing Elements from the Heap ///////
+    int i = 0;
     do {
       auto v = (Vertex*) FIBO->topNode()->payload;
       auto k = FIBO->topNode()->key;
       FIBO->pop();
       cout << "Key: " << k << " Name: "<< v->getName() << endl;
+      if (i == 3){
+        FIBO->decrease_key(FibNodeVec[i+3], -9);
+      }
+      i++;
     }while (!FIBO->empty());
 
     delete FIBO;
@@ -1758,35 +1706,38 @@ bool Tests::compareModuloSchedulerTest() {
 
   bool Tests::sdcSolverTest() {
 
+    cout << "This test should find a solution for the following System " << endl;
+    cout << "of difference constraints: " << endl;
+    cout << " S1 - S2 <= 3 " << endl;
+    cout << " S3 - S2 <= -2 " << endl;
+    cout << " S1 - S3 <= 3 " << endl;
+    cout << " S3 - S1 <= -3 " << endl;
+    cout << " S4 - S3 <= -1 " << endl;
+    cout << " S5 - S4 <= 4 " << endl << endl;
+
     //Creating an instance of the solver.
     auto *solver = new SDCSolver();
 
     //Create a system of Single Difference Constraints.
-    Vertex R(0);
-    R.setName("Rolf");
-    Vertex H(1);
-    H.setName("Horst");
-    Vertex G(2);
-    G.setName("Gunter");
-    Vertex E(3);
-    E.setName("Emma");
-    Vertex P(4);
-    P.setName("Paul");
+    Vertex S1(0);
+    S1.setName("S1");
+    Vertex S2(1);
+    S2.setName("S2");
+    Vertex S3(2);
+    S3.setName("S3");
+    Vertex S4(3);
+    S4.setName("S4");
+    Vertex S5(4);
+    S5.setName("S5");
 
     //Example SDC-System
     list <SDCConstraint> constr;
-    //Rolf - Horst <= 3
-    constr.push_back(solver->create_sdc_constraint(&H, &R, 3));
-    //Gunter - Horst <= -2
-    constr.push_back(solver->create_sdc_constraint(&H, &G, -2));
-    //Rolf - Gunter <= 3
-    constr.push_back(solver->create_sdc_constraint(&G, &R, 3));
-    //Gunter - Rolf <= 3
-    constr.push_back(solver->create_sdc_constraint(&R, &G, -3));
-    //Emma - Gunter <= 42
-    constr.push_back(solver->create_sdc_constraint(&G, &E, -1));
-    //Paul - Emma <= 2
-    constr.push_back(solver->create_sdc_constraint(&E, &P, 4));
+    constr.push_back(solver->create_sdc_constraint(&S2, &S1, 3));
+    constr.push_back(solver->create_sdc_constraint(&S2, &S3, -2));
+    constr.push_back(solver->create_sdc_constraint(&S3, &S1, 3));
+    constr.push_back(solver->create_sdc_constraint(&S1, &S3, -3));
+    constr.push_back(solver->create_sdc_constraint(&S3, &S4, -1));
+    constr.push_back(solver->create_sdc_constraint(&S4, &S5, 4));
 
     //Adding the constraints to the solver
     for (auto &it : constr){
@@ -1809,14 +1760,12 @@ bool Tests::compareModuloSchedulerTest() {
     }
     cout << endl;
 
-    //Adding a constraint
-    SDCConstraint c = solver->create_sdc_constraint(&G, &P, -3);
-    SDCConstraint d = solver->create_sdc_constraint(&P, &G, -4);
+    //Adding constraints
 
-    //Using the incremental Algorithm to solve the new system.
+    cout << "Adding S2-S1 <= -1"<< endl;
+    SDCConstraint c = solver->create_sdc_constraint(&S1, &S2, -1);
+
     solver->add_to_feasible(c);
-    cout << "Test" << endl;
-    solver->add_to_feasible(d);
 
     //Checking the Solver Status and Print the Solution if feasible.
     if (solver->get_solver_status() == 21){
@@ -1829,7 +1778,6 @@ bool Tests::compareModuloSchedulerTest() {
       }
     }
     cout << endl;
-
 
     //Removing a constraint from the solver.
     //solver->remove_sdc_constraint(D, A);

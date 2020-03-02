@@ -75,14 +75,6 @@ namespace HatScheT {
       void *payload;
     };
 
-    /////////////////////////////////////////////////
-    /// Maps to access nodes that are not the min ///
-    /////////////////////////////////////////////////
-    std::unordered_multimap<T, FibNode*> kstore;
-    using KeyIter = typename std::unordered_map<T, FibNode*>::iterator;
-    std::unordered_multimap<void*, FibNode*> plstore;
-    using PayIter = typename std::unordered_map<void*, FibNode*>::iterator;
-
     ////////////////////////////////////
     /// Constructors and Destructors ///
     ////////////////////////////////////
@@ -106,8 +98,6 @@ namespace HatScheT {
       delete_fibnodes(min);
       min = nullptr;
       n = 0;
-      kstore.clear();
-      plstore.clear();
     }
 
     /*!
@@ -162,7 +152,7 @@ namespace HatScheT {
       x->mark = false;
       // 2
       if (min == nullptr) {
-        // Since x is all alone :( , it can just be linked to itself to establisch the double-circular linking.
+        // Since x is all alone :( , it can just be linked to itself to establish the double-circular linking.
         min = x->left = x->right = x;
       }
       // 3
@@ -279,7 +269,7 @@ namespace HatScheT {
           log(static_cast<double>(n)) / log(static_cast<double>(1 + sqrt(static_cast<double>(5))) / 2)));
 
       // 1
-      A = new FibNode *[max_degree + 2]; // plus two both for indexing to max degree and so A[max_degree+1] == NIL
+      A = new FibNode *[max_degree + 2]; // plus two both for indexing to max degree and A[max_degree+1] == NIL
       std::fill_n(A, max_degree + 2, nullptr);
       // 2
       w = min;
@@ -411,27 +401,8 @@ namespace HatScheT {
      * 6. 	CASCADING-CUT(H,y)
      * 7. if the key of y is smaller than the minkey
      * 8. 	update H.min to x
-     * 9. Managing the faststore Map
      */
     void decrease_key(FibNode *x, T k) {
-
-      cout << "Elements in the heap: " << n << endl;
-      cout << "-------------------" << endl;
-      for (auto &it : kstore){
-        auto secondv = (Vertex*) it.second->payload;
-        cout << it.first << " : " << secondv->getName() << endl;
-      }
-      cout << "-------------------" << endl;
-
-      cout << "Bums42" << endl;
-      // 9
-      cout << x->key << " : ";
-      KeyIter mit = kstore.find(x->key);
-      cout << "Bums43" << endl;
-      kstore.erase(mit);
-      cout << "Bums44" << endl;
-      kstore.insert({k, x});
-      cout << "Bums45" << endl;
 
       FibNode *y;
 
@@ -471,6 +442,7 @@ namespace HatScheT {
         y->child = nullptr;
       } else {
         x->right->left = x->left;
+        //Segmentation Fault here:
         x->left->right = x->right;
         if (y->child == x) {
           y->child = x->right;
@@ -521,8 +493,6 @@ namespace HatScheT {
      * remove_fibnode(x) sets to the minimum so that it hits the top of the heap, then easily remove.
      */
     void remove_fibnode(FibNode *x) {
-      KeyIter mit = find(x->key);
-      kstore.erase(mit);
       decrease_key(x, std::numeric_limits<T>::min());
       FibNode *fn = extract_min();
       delete fn;
@@ -562,56 +532,13 @@ namespace HatScheT {
     }
 
     FibNode *push(T k, void *pl) {
-      cout << "***************************" << endl;
-      auto *x = new FibNode(std::move(k), pl);
+      auto x = new FibNode(std::move(k), pl);
       insert(x);
-      plstore.insert({pl, x});
-      kstore.insert({k, x});
-      for (auto &it : kstore){
-        auto plm = (Vertex*) it.second->payload;
-        cout << "--" << plm->getName() << ": " << it.first << endl;
-      }
       return x;
     }
 
     FibNode *push(T k) {
       return push(std::move(k), nullptr);
-    }
-
-    KeyIter find_by_key(const T& k)
-    {
-      if (empty()){
-         return kstore.end();
-      }
-      return kstore.find(k);
-    }
-
-    pair <bool, FibNode*> findNode_by_key(const T& k)
-    {
-      KeyIter mit = find_by_key(k);
-      if (mit == kstore.end()){
-        return {false, nullptr};
-      }else {
-        return {true, mit->second};
-      }
-    }
-
-    PayIter find_by_payload(void* pl)
-    {
-      if (empty()){
-        return plstore.end();
-      }
-      return plstore.find(pl);
-    }
-
-    pair <bool, FibNode*> findNode_by_payload(void* pl)
-    {
-      PayIter plit = find_by_payload(pl);
-      if (plit == plstore.end()){
-        return {false, nullptr};
-      }else {
-        return {true, plit->second};
-      }
     }
 
     unsigned int size() {

@@ -181,31 +181,43 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
   /*!
    * Local Variables
    */
-  auto pQueue = new FibonacciHeap<int>;
+  FibonacciHeap<int> pQueue;
   map <Vertex*, int> loc_solution;
+
+  for (auto &it : cg.Vertices()){
+    vertex_to_FibNode_Map[it] = nullptr;
+  }
+
+  int j = 0;
 
   /*!
    * Begin of the Algorithm
    */
   // 1
   add_sdc_constraint(constraint);
+  print_Constraint_Graph();
   // 3
   loc_solution = solution;
   // 5
-  pQueue->push(0, &this->cg.getVertexbyIdSDC(constraint.VDst->getId()));
+  auto vptr = &this->cg.getVertexbyIdSDC(constraint.VDst->getId());
+  vertex_to_FibNode_Map[vptr] = pQueue.push(0, vptr);
+  cout << vptr->getName() << ": " << vertex_to_FibNode_Map[vptr]->key << endl;
   // 6
-  while (!pQueue->empty()){
+  while (!pQueue.empty()){
     // 7
-    auto x = fetch_from_heap(*pQueue);
+    auto x = fetch_from_heap(pQueue);
+    vertex_to_FibNode_Map[x.first] = nullptr;
     // 8
     if (solution[constraint.VSrc] + constraint.constraint + (solution[x.first] + x.second - solution[constraint.VDst]) < solution[x.first]){
       // 9
+      //cout << x.first->getName() << " : " << constraint.VSrc->getName() << endl;
       if (x.first->getId() == constraint.VSrc->getId()){
-        //cout << "Infeasible System!" << endl;
+        // cout << "Infeasible System!" << endl;
         // 11
         remove_sdc_constraint(*constraint.VSrc, *constraint.VDst);
         // 12
         solver_status = 21;
+        vertex_to_FibNode_Map.clear();
         return;
         // 13
       }else{
@@ -214,22 +226,30 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
         // 15
         for (auto &it : cg.getSuccessors(x.first)){
           // 16
+          //Hier ist was faul!
           int scaled_path_length = x.second + (solution[x.first] + constraint.constraint - solution[constraint.VDst]);
+          cout << "Scaled Path Length = " << x.second << " + " << solution[x.first] << " + " << constraint.constraint << " - " << solution[constraint.VDst] << endl;
           // 17
-          if (scaled_path_length < key_of(*pQueue, it)){
+          if (scaled_path_length < key_of(pQueue, it)){
             // 18
-            adjust_Heap(*pQueue, it, scaled_path_length);
+            adjust_Heap(pQueue, it, scaled_path_length);
+            cout << it->getName() << ": " << scaled_path_length << endl;
+            j++;
+            if (j > 10){
+              throw HatScheT::Exception("Intentional Error!");
+            }
           }
         }
       }
     }
   }
   // 24
-  //cout << "Feasible System" << endl;
+  // << "Feasible System" << endl;
   // 25
   solution = loc_solution;
   // 26
   solver_status = 20;
+  vertex_to_FibNode_Map.clear();
 }
 
 pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap<int> &H) {
@@ -241,25 +261,32 @@ pair<HatScheT::Vertex *, int> HatScheT::SDCSolver::fetch_from_heap(FibonacciHeap
 
 void HatScheT::SDCSolver::adjust_Heap(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v, int k) {
 
-  auto val_from_heap = H.findNode_by_payload(v);
-  if (val_from_heap.first){
-    auto v = (Vertex*) val_from_heap.second->payload;
-    cout << "val_from_heap: " << v->getName() << ", " << val_from_heap.second->key << endl;
-    H.decrease_key(val_from_heap.second, k);
+  //If v is not in the heap, it inserts v with key k into the heap. If v is in the Heap, it sets key of v to k.
+
+  if (vertex_to_FibNode_Map[v] == nullptr){
+    vertex_to_FibNode_Map[v] = H.push(k, v);
   }else {
-    H.push(k, v);
+    //cout << "Else-Case: " << endl;
+    //cout << "Old Key: " << key_of(H, v) << " New Key: " << k << endl;
+    //cout << ((Vertex*)vertex_to_FibNode_Map[v]->payload)->getName() << endl;
+    //cout << "Size of Heap: " << H.size() << endl;
+    /*while (!H.empty()){
+      cout << "From Heap: " << ((Vertex*)H.topNode()->payload)->getName() << " - " << H.topNode()->degree << " - " << H.topNode()->key << endl;
+      if (H.topNode()->child != nullptr){
+        cout << ((Vertex*)H.topNode()->child->payload)->getName() << endl;
+      }
+      H.pop();
+    }*/
+    //throw HatScheT::Exception ("Intentional Error!");
+    H.decrease_key(vertex_to_FibNode_Map[v], k);
   }
 }
 
 int HatScheT::SDCSolver::key_of(HatScheT::FibonacciHeap<int> &H, HatScheT::Vertex *v) {
-
-  auto val_from_heap = H.findNode_by_payload(v);
-
-  if (val_from_heap.first){
-    return val_from_heap.second->key;
-  }else {
+  if (vertex_to_FibNode_Map[v] == nullptr) {
     return INT_MAX;
-  }
+  }else
+    return vertex_to_FibNode_Map[v]->key;
 }
 
 void HatScheT::SDCSolver::set_initial_solution(map<HatScheT::Vertex *, int> &known_solution) {

@@ -143,6 +143,8 @@ namespace HatScheT {
      */
     Vertex* startvertex;
 
+    unordered_map <Vertex*, FibonacciHeap<int>::FibNode*> vertex_to_FibNode_Map;
+
   public:
 
     SDCSolver();
