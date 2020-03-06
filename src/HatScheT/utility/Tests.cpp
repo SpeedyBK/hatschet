@@ -1218,7 +1218,7 @@ bool Tests::compareModuloSchedulerTest() {
 
     double timetoschedule = 0;
 
-    /*
+
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
@@ -1227,18 +1227,18 @@ bool Tests::compareModuloSchedulerTest() {
     //string graphStr = "benchmarks/MachSuite/fft_strided/graph2.graphml";
     //string resStr = "benchmarks/MachSuite/sort_radix/graph14_RM.xml";
     //string graphStr = "benchmarks/MachSuite/sort_radix/graph14.graphml";
-    //string resStr = "benchmarks/origami/fir_SAMRM.xml";
-    //string graphStr = "benchmarks/origami/fir_SAM.graphml";
+    string resStr = "benchmarks/origami/fir_SAMRM.xml";
+    string graphStr = "benchmarks/origami/fir_SAM.graphml";
     //string resStr = "benchmarks/origami/iir_biquRM.xml";
     //string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
-    */
+
     /*
     for(auto &it : rm.Resources()){
         it->setLimit(-1);
-    }*/
+    }
 
 
     HatScheT::Graph g;
@@ -1279,7 +1279,7 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(D, E, 0);
     g.createEdge(E, F, 0);
     g.createEdge(F, A, 1);
-
+    */
 
     cout << g << endl;
     cout << rm << endl;
@@ -1762,15 +1762,16 @@ bool Tests::compareModuloSchedulerTest() {
 
     //Adding constraints
 
-    cout << "Adding S2-S1 <= -1"<< endl;
-    SDCConstraint c = solver->create_sdc_constraint(&S1, &S2, -1);
+    int ivar = -2;
+    cout << "Adding S2-S1 <= " << ivar << endl;
+    SDCConstraint c = solver->create_sdc_constraint(&S1, &S2, ivar);
 
-    solver->add_to_feasible(c);
+    solver->add_Constraint(c);
 
     //Checking the Solver Status and Print the Solution if feasible.
-    if (solver->get_solver_status() == 21){
+    if (solver->get_solver_status() == 31){
       cout << endl << "System is not feasible." << endl;
-    }else if (solver->get_solver_status() == 20){
+    }else if (solver->get_solver_status() == 30){
       cout << endl << "System is feasible." << endl;
       auto spath = solver->get_solution();
       for (auto &it : spath){
@@ -1779,11 +1780,19 @@ bool Tests::compareModuloSchedulerTest() {
     }
     cout << endl;
 
-    //Removing a constraint from the solver.
-    //solver->remove_sdc_constraint(D, A);
+    cout << "Removing S2-S1 <= " << ivar << endl;
+    solver->delete_Constraint(c);
 
-    //Printing the system again.
-    //solver->print_Constraint_Graph();
+    //Checking the Solver Status and Print the Solution if feasible.
+    if (solver->get_solver_status() == 31){
+      cout << endl << "System is not feasible." << endl;
+    }else if (solver->get_solver_status() == 30){
+      cout << endl << "System is feasible." << endl;
+      auto spath = solver->get_solution();
+      for (auto &it : spath){
+        cout << it.first->getName() << ": " << it.second << endl;
+      }
+    }
 
     delete solver;
 

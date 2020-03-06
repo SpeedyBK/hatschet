@@ -18,7 +18,7 @@ void HatScheT::SDCSolver::ConstraintGraph::removeEdge(HatScheT::Vertex &srcVerte
       return;
     }
   }
-  cerr << "SDCSolver::ConstraintGraph: Trying to remove a non-existing Edge!" << endl;
+  cerr << "SDCSolver::ConstraintGraph: Trying to remove a non-existing Edge!" << endl; //ToDo: Replace with "throw"...
 }
 
 bool HatScheT::SDCSolver::ConstraintGraph::doesEdgeExistID(HatScheT::Vertex *src, HatScheT::Vertex *dst) {
@@ -173,7 +173,7 @@ map<HatScheT::Vertex *, int> HatScheT::SDCSolver::get_solution() {
 
 HatScheT::SDCConstraint
 HatScheT::SDCSolver::create_sdc_constraint(HatScheT::Vertex *src, HatScheT::Vertex *dst, int c) {
-  SDCConstraint C = {.VSrc = src, .VDst= dst, .constraint = c};
+  SDCConstraint C = { .VSrc = src, .VDst= dst, .constraint = c};
   return C;
 }
 
@@ -226,9 +226,7 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
         // 15
         for (auto &it : cg.getSuccessors(x.first)){
           // 16
-          //Hier ist was faul!
-          int scaled_path_length = x.second + (solution[x.first] + constraint.constraint - solution[constraint.VDst]);
-          cout << "Scaled Path Length = " << x.second << " + " << solution[x.first] << " + " << constraint.constraint << " - " << solution[constraint.VDst] << endl;
+          int scaled_path_length = x.second + (solution[x.first] + cg.getEdges(x.first, it).front()->getDistance() - solution[it]);
           // 17
           if (scaled_path_length < key_of(pQueue, it)){
             // 18
@@ -236,7 +234,7 @@ void HatScheT::SDCSolver::add_to_feasible(SDCConstraint constraint) {
             cout << it->getName() << ": " << scaled_path_length << endl;
             j++;
             if (j > 10){
-              throw HatScheT::Exception("Intentional Error!");
+              //throw HatScheT::Exception("Intentional Error!");
             }
           }
         }
@@ -293,6 +291,76 @@ void HatScheT::SDCSolver::set_initial_solution(map<HatScheT::Vertex *, int> &kno
   solution.clear();
   for (auto &it : known_solution){
     this -> solution[&this -> cg.getVertexbyIdSDC(it.first->getId())] = it.second;
+  }
+}
+
+void HatScheT::SDCSolver::add_Constraint(SDCConstraint constr) {
+  // 1
+  if (this->unProcessed.empty()){
+    // 2
+    add_to_feasible(constr);
+    if (this->solver_status == 21){
+      // 3
+      this->unProcessed.insert(constr);
+      this->solver_status = 31;
+    }
+    else {
+      this->solver_status = 30;
+    }
+  }//5
+  else{
+    this->unProcessed.insert(constr);
+  }
+}
+
+/*!
+  * Declade:
+  * - C : Constraint to be added to the system
+  * - unProcessed : a set of constraints
+  * 1.  if (C is in unProcessed) then
+  * 2.    Remove C from unProcessed
+  * 3.  else
+  * 4.    Remove C from the constraint Graph
+  * 5.    while (unProcessed != empty) do
+  * 6.        select a constraint C1 from unProcessed
+  * 7.        if (add_to_feasible(C1) then
+  * 8.            remove C1 from unProcessed
+  * 9.        else
+  * 10.           exit loop
+  * 11.       end if
+  * 12.   end while
+  * 13. end if
+  */
+void HatScheT::SDCSolver::delete_Constraint(SDCConstraint constr) {
+
+  for (auto &it : this->unProcessed){
+    cout << it.VDst->getName() << " - " << it.VSrc->getName() << " <= " << it.constraint << endl;
+    cout << constr.VDst->getName() << " - " << constr.VSrc->getName() << " <= " << constr.constraint << endl;
+  }
+
+  if (this->unProcessed.count(constr) != 0){
+    cout << "Bums" << endl;
+    this->unProcessed.erase(constr);
+    if (!this->unProcessed.empty()){
+      this->solver_status = 31;
+    }else {
+      this->solver_status = 30;
+    }
+  }
+  else{
+    this->remove_sdc_constraint(*constr.VDst, *constr.VSrc);
+    while (!this->unProcessed.empty()){
+      auto it = this->unProcessed.begin();
+      add_to_feasible(*it);
+      if (this->solver_status == 20){
+        this->unProcessed.erase(it);
+      }
+      else{
+        this->solver_status = 31;
+        return;
+      }
+    }
+    this->solver_status = 30;
   }
 }
 

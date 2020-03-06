@@ -131,10 +131,11 @@ namespace HatScheT {
       //Add Resource Constraints to SDC-Solver
       for (auto &it : resourceConstraints){
         static int counter = 0;
-        s->add_sdc_constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
-        s->compute_inital_solution();
-        if (s->get_solver_status() != 10){
-
+        //s->add_sdc_constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
+        //s->compute_inital_solution();
+        s->add_Constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
+        //if (s->get_solver_status() != 10){
+        if (s->get_solver_status() != 30){
           cout << counter << endl;
           std::chrono::high_resolution_clock::time_point t6= std::chrono::high_resolution_clock::now();
           timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t6 - t4);

@@ -5,9 +5,13 @@
 //
 //
 
+//ToDo: Sort Public and Private stuff.
+
 #ifndef HATSCHET_SDCSOLVER_H
 #define HATSCHET_SDCSOLVER_H
 
+
+#include <set>
 #include <HatScheT/Graph.h>
 #include "FibonacciHeap.h"
 
@@ -17,6 +21,22 @@ namespace HatScheT {
     Vertex* VSrc;
     Vertex* VDst;
     int constraint;
+
+    /*!
+     * This operator compares the content of 2 SDCConstraints, and returns true if the Content of both is the same.
+     * @param compStruct Struct which is compared with this actual struct.
+     * @return
+     */
+    bool operator == ( const SDCConstraint& compStruct ) const {
+      return (&compStruct.VSrc == &this->VSrc && &compStruct.VDst == &this->VDst && &compStruct.constraint == &this->constraint);
+    }
+
+    /*!
+     * This Operator is needed to create a Set(Datatype) of SDC-Constraints.
+     * @param compStruct Struct which is compared with this actual struct.
+     * @return
+     */
+    inline bool operator < ( const SDCConstraint& compStruct ) const { return &compStruct.VSrc < &this->VSrc; }
   };
 
   class SDCSolver {
@@ -85,6 +105,7 @@ namespace HatScheT {
       /////////////////
 
       map <int, Vertex*> vertex_index;
+
     };
 
     /*!
@@ -118,6 +139,43 @@ namespace HatScheT {
     int key_of(FibonacciHeap<int> &H, Vertex *v);
 
     /*!
+     * @param constr A new constraint which should be added to a feasible system of singe difference constraints.
+     * This funtion is used to add additional constraints to a system of single difference constraints and checks
+     * if thereafter the system is still feasible, if it is the funtions returns a solution for the new system.
+     * Essentially Dijkstras Algorithm with an Fibonacci Heap as priority queue and a path length transformation
+     * is used. [1]
+     *
+     * pseudocode:
+     * 1.  add edge u->v
+     * 2.  length(u->v) = c
+     * 3.  D' = D (D is last feasible solution)
+     * 4.  init empty priority queue (H)
+     * 5.  insert v to H with key = 0
+     * 6.  while (priority queue != empty) do
+     * 7.    (x, dist_x) := FindAndDeleteMin(H)
+     * 8.    if (D(u) + length(u->v) + (D(x) + dist_x - D(v)) < D(x)) then
+     * 9.       if (x = u ) then
+     *            The system is infeasible!
+     * 10.        remove edge u->v
+     * 11.        return infeasible
+     * 12.      else
+     * 13.        D'(x) = D(u) + length(u->v) + (D(x) + dist_x - D(v))
+     * 14.        for each vertex y in Succ (x) do
+     * 15.           scaledPathLength = dist_x + ( D(x) + length(x->y) - D(y))
+     * 16.           if (scaledPathLength < KeyOf(H, y))
+     * 17.               AdjustHeap(H, y, scaledPathLength)
+     * 18.           end if
+     * 19.        end for
+     * 20.      end if
+     * 21.   end if
+     * 22. end while
+     *     The system is feasible!
+     * 23. D = D'
+     * 24. return feasible
+     */
+    void add_to_feasible(SDCConstraint constr);
+
+    /*!
      * Graphbased Representation of the SDC-System.
      */
     ConstraintGraph cg;
@@ -127,8 +185,10 @@ namespace HatScheT {
      * 0  = Ready;
      * 10 = Inital Solution computed, feasible.
      * 11 = Inital Solution computed, infeasible.
-     * 20 = System feasible after adding a constraint.
-     * 21 = System infeasible after adding a constraint.
+     * 20 = System feasible after adding a constraint. (Used internal)
+     * 21 = System infeasible after adding a constraint. (Used internal)
+     * 30 = System feasible, all constraints processed. (function add_Constraint())
+     * 31 = System infeasible, unprocessed constraints. (function add_Constraint())
      * .. = ...
      */
     int solver_status;
@@ -143,7 +203,18 @@ namespace HatScheT {
      */
     Vertex* startvertex;
 
+    /*!
+     * Since F-Heaps are not optimized to find nodes in a short amount of time this map
+     * is used to store a pointer to the FibNode which corresponds to a given Vertex.
+     */
     unordered_map <Vertex*, FibonacciHeap<int>::FibNode*> vertex_to_FibNode_Map;
+
+    /*!
+     * This Variable is used to handle infeasible systems, so it is sometimes useful to allow the addition
+     * of constraints that cause the system to become infeasible. These constraints will be stored in
+     * unProcessed.
+     */
+    set <SDCConstraint> unProcessed;
 
   public:
 
@@ -203,45 +274,44 @@ namespace HatScheT {
     SDCConstraint create_sdc_constraint(Vertex* src, Vertex* dst, int c);
 
     /*!
-     * @param constr A new constraint which should be added to a feasible system of singe difference constraints.
-     * This funtion is used to add additional constraints to a system of single difference constraints and checks
-     * if thereafter the system is still feasible and if it is the funtions returns a solution for the new system.
-     * Essentially Dijkstras Algorithm with an Fibonacci Heap as priority queue and a path length transformation
-     * is used. [1]
-     *
-     * pseudocode:
-     * 1.  add edge u->v
-     * 2.  length(u->v) = c
-     * 3.  D' = D (D is last feasible solution)
-     * 4.  init empty priority queue (H)
-     * 5.  insert v to H with key = 0;
-     * 6.  while (priority queue != empty) do
-     * 7.    (x, dist_x) := FindAndDeleteMin(H)
-     * 8.    if (D(u) + length(u->v) + (D(x) + dist_x - D(v)) < D(x)) then
-     * 9.       if (x = u ) then
-     *            The system is infeasible!
-     * 10.        remove edge u->v
-     * 11.        return infeasible
-     * 12.      else
-     * 13.        D'(x) = D(u) + length(u->v) + (D(x) + dist_x - D(v))
-     * 14.        for each vertex y in Succ (x) do
-     * 15.           scaledPathLength = dist_x + ( D(x) + length(x->y) - D(y))
-     * 16.           if (scaledPathLength < KeyOf(H, y))
-     * 17.               AdjustHeap(H, y, scaledPathLength)
-     * 18.           end if
-     * 19.        end for
-     * 20.      end if
-     * 21.   end if
-     * 22. end while
-     *     The system is feasible!
-     * 23. D = D'
-     * 24. return feasible
+     * Declare:
+     * - C : Constraint to be added to the system
+     * - unProcessed : a set of constraints
+     * 1. if (unProcessed = empty) then
+     *      The System is feasible before the addition of a new constraint!
+     * 2.   if (not add_to_feasible(C) (solver_status = 21)) then
+     *          Adding a new constraint will cause infeasibility!
+     * 3.       Add C to unProcessed
+     * 4.   end if
+     * 5. else
+     *      The System is infeasible before addition of a new constraint
+     * 6.   Add C to unProcessed.
+     * 7. end if
      */
-    void add_to_feasible(SDCConstraint constr);
+    void add_Constraint(SDCConstraint constr);
+
+    /*!
+     * Declade:
+     * - C : Constraint to be added to the system
+     * - unProcessed : a set of constraints
+     * 1.  if (C is in unProcessed) then
+     * 2.    Remove C from unProcessed
+     * 3.  else
+     * 4.    Remove C from the constraint Graph
+     * 5.    while (unProcessed != empty) do
+     * 6.        select a constraint C1 from unProcessed
+     * 7.        if (add_to_feasible(C1) then
+     * 8.            remove C1 from unProcessed
+     * 9.        else
+     * 10.           exit loop
+     * 11.       end if
+     * 12.   end while
+     * 13. end if
+     */
+    void delete_Constraint(SDCConstraint constr);
 
   };
 
 }
-
 
 #endif //HATSCHET_SDCSOLVER_H

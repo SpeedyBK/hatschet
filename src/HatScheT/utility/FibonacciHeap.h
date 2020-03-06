@@ -52,7 +52,7 @@ namespace HatScheT {
     ///////////////////////
 
     /*!
-     * The Fibnode-Object is the Datastructure to save stuff in the F-Heap. It contains 4 Fibnode-Pointers wich can point to the
+     * The Fibnode-Object is the Datastructure to save stuff in the F-Heap. It contains 4 Fibnode-Pointers which can point to the
      * Neighbor-Fibnodes. This makes it possible to establish a double circular link between the Fibnodes in the rootlist of the
      * F-Heap or in childlists.
      */
