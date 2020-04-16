@@ -36,6 +36,8 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->totalTime = 0;
   this->writeLPFile = false;
   this->stat = ScaLP::status::UNKNOWN;
+  //default false to avoid errors using SCIP and LPSolve
+  this->solver->presolve=false;
 }
 
 ILPSchedulerBase::~ILPSchedulerBase()

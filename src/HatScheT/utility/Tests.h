@@ -186,5 +186,14 @@ public:
    */
   static bool ratIIUnrollSchedulerTest();
 
+  /*!
+   * @brief tests the basic functions of the fibonacci heap. In this test the heap is used to sort an array of numbers.
+   * An the result is compared to a simple bubble sort algorithm used on the same array of numbers.
+   * @return
+   */
+  static bool fibonacciTest();
+
+  static bool sdcSolverTest();
+
 };
 }
