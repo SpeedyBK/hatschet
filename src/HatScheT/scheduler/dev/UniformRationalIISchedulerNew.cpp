@@ -1,8 +1,8 @@
 //
-// Created by nfiege on 12/11/19.
+// Created by nfiege on 08/04/20.
 //
 
-#include "UniformRationalIIScheduler.h"
+#include "UniformRationalIISchedulerNew.h"
 #include <iomanip>
 #include <math.h>
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
@@ -13,19 +13,19 @@
 
 namespace HatScheT
 {
-	UniformRationalIIScheduler::UniformRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
+	UniformRationalIISchedulerNew::UniformRationalIISchedulerNew(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
 		: RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist), initiationIntervals()
 	{
 	}
 
-	void UniformRationalIIScheduler::resetContainer() {
+	void UniformRationalIISchedulerNew::resetContainer() {
 		this->latencySequence.clear();
 		this->initiationIntervals.clear();
 		this->tVariables.clear();
 		this->bVariables.clear();
 	}
 
-	void UniformRationalIIScheduler::setObjective()
+	void UniformRationalIISchedulerNew::setObjective()
 	{
 		//supersink latency objective
 		ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink");
@@ -39,10 +39,10 @@ namespace HatScheT
 		this->solver->setObjective(ScaLP::minimize(supersink));
 	}
 
-	void UniformRationalIIScheduler::constructProblem()
+	void UniformRationalIISchedulerNew::constructProblem()
 	{
 		if(this->maxLatencyConstraint == 0) {
-			throw HatScheT::Exception("UniformRationalIIScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
+			throw HatScheT::Exception("UniformRationalIISchedulerNew::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
 		}
 
 		this->setGeneralConstraints();
@@ -50,11 +50,11 @@ namespace HatScheT
 		this->setResourceConstraints();
 	}
 
-	void UniformRationalIIScheduler::printBindingToConsole() {
+	void UniformRationalIISchedulerNew::printBindingToConsole() {
 		Utility::printRationalIIMRT(this->startTimes, this->ratIIbindings, &this->resourceModel, this->modulo, this->latencySequence);
 	}
 
-	void UniformRationalIIScheduler::printScheduleToConsole()
+	void UniformRationalIISchedulerNew::printScheduleToConsole()
 	{
 		cout << "----" << "Samples: " << this->samples << " mod: "
 				 << this->modulo << " maxLat: " << this->maxLatencyConstraint << endl;
@@ -97,11 +97,11 @@ namespace HatScheT
 		cout << "-------" << endl;
 	}
 
-	void UniformRationalIIScheduler::calcDeltaMins() {
+	void UniformRationalIISchedulerNew::calcDeltaMins() {
 		if(this->initiationIntervals.empty() or this->latencySequence.empty())
-			throw HatScheT::Exception("UniformRationalIIScheduler::calcDeltaMins: need to specify initiation intervals/latency sequence");
+			throw HatScheT::Exception("UniformRationalIISchedulerNew::calcDeltaMins: need to specify initiation intervals/latency sequence");
 		if(this->samples<=0 or this->modulo<=0)
-			throw HatScheT::Exception("UniformRationalIIScheduler::calcDeltaMins: need to specify samples and modulo");
+			throw HatScheT::Exception("UniformRationalIISchedulerNew::calcDeltaMins: need to specify samples and modulo");
 		// distance 0 is trivial
 		this->deltaMins[0] = 0;
 		if(!this->quiet)
@@ -126,7 +126,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::fillTContainer() {
+	void UniformRationalIISchedulerNew::fillTContainer() {
 		// create one time variable for each vertex in the graph
 		for(auto &v : this->g.Vertices()) {
 			auto var = ScaLP::newIntegerVariable(v->getName());
@@ -135,7 +135,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::fillBContainer() {
+	void UniformRationalIISchedulerNew::fillBContainer() {
 		for(auto &v : this->g.Vertices()) {
 			for(auto m=0; m<this->modulo; ++m) {
 				auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m));
@@ -144,7 +144,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::setGeneralConstraints() {
+	void UniformRationalIISchedulerNew::setGeneralConstraints() {
 		for(auto &e : this->g.Edges()) {
 			auto *src = &e->getVertexSrc();
 			auto *dst = &e->getVertexDst();
@@ -152,7 +152,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::setModuloConstraints() {
+	void UniformRationalIISchedulerNew::setModuloConstraints() {
 		for(auto &v : this->g.Vertices()) {
 			// create remainder variable k_v
 			ScaLP::Variable k_v = ScaLP::newIntegerVariable("k_"+v->getName());
@@ -169,7 +169,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::setResourceConstraints() {
+	void UniformRationalIISchedulerNew::setResourceConstraints() {
 		// each vertex is assigned exactly one modulo slot
 		for(auto &v : this->g.Vertices()) {
 			ScaLP::Term sum;
@@ -197,7 +197,7 @@ namespace HatScheT
 		}
 	}
 
-	void UniformRationalIIScheduler::fillSolutionStructure() {
+	void UniformRationalIISchedulerNew::fillSolutionStructure() {
 		// store result
 		this->r = this->solver->getResult();
 
@@ -216,9 +216,9 @@ namespace HatScheT
 		}
 	}
 
-	int UniformRationalIIScheduler::getSampleDistanceAsInt(int d, int startIndex) {
+	int UniformRationalIISchedulerNew::getSampleDistanceAsInt(int d, int startIndex) {
 		if((startIndex > this->latencySequence.size()-1) or (startIndex < 0))
-			throw Exception("RationalIIScheduler.getSampleDistanceAsTerm: out of range II_vector entry requested: " + to_string(startIndex));
+			throw Exception("UniformRationalIISchedulerNew.getSampleDistanceAsTerm: out of range II_vector entry requested: " + to_string(startIndex));
 
 		int distance = 0;
 		while(d>0){
@@ -236,7 +236,7 @@ namespace HatScheT
 		return distance;
 	}
 
-	void UniformRationalIIScheduler::scheduleIteration() {
+	void UniformRationalIISchedulerNew::scheduleIteration() {
 		//clear up and reset
 		this->solver->reset();
 		this->resetContainer();
@@ -254,7 +254,7 @@ namespace HatScheT
 		//set up objective, currently asap using supersink
 		this->setObjective();
 
-		if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
+		if(!this->quiet) cout << "UniformRationalIISchedulerNew.schedule: try to solve for s / m : " << this->samples << " / " << this->modulo << endl;
 		//solve the current problem
 		if(this->writeLPFile) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
 
@@ -282,25 +282,25 @@ namespace HatScheT
 
 			if(!this->quiet) {
 				cout << "------------------------" << endl;
-				cout << "UniformRationalIIScheduler.schedule: Found result is " << stat << endl;
-				cout << "UniformRationalIIScheduler.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
+				cout << "UniformRationalIISchedulerNew.schedule: Found result is " << stat << endl;
+				cout << "UniformRationalIISchedulerNew.schedule: this solution is s / m : " << this->samples << " / " << this->modulo
 						 << endl;
-				cout << "UniformRationalIIScheduler.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
+				cout << "UniformRationalIISchedulerNew.schedule: II: " << (double) (this->modulo) / (double) (this->samples)
 						 << " (integer minII " << ceil((double) (this->modulo) / (double) (this->samples)) << ")" << endl;
-				cout << "UniformRationalIIScheduler.schedule: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
+				cout << "UniformRationalIISchedulerNew.schedule: throughput: " << (double) (this->samples) / (double) (this->modulo) << endl;
 				cout << "------------------------" << endl;
 				this->printScheduleToConsole();
 			}
 		}
 		else {
-			if(!this->quiet) cout << "UniformRationalIIScheduler.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
+			if(!this->quiet) cout << "UniformRationalIISchedulerNew.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
 			this->scheduleFound = false;
 		}
 	}
 
-	int UniformRationalIIScheduler::getNewModuloslot(int s, int oldModuloslot) {
+	int UniformRationalIISchedulerNew::getNewModuloslot(int s, int oldModuloslot) {
 		if(s > this->samples)
-			throw HatScheT::Exception("UniformRationalIIScheduler::getNewModuloslot: s>S ("+to_string(s)+">"+to_string(this->samples)+")");
+			throw HatScheT::Exception("UniformRationalIISchedulerNew::getNewModuloslot: s>S ("+to_string(s)+">"+to_string(this->samples)+")");
 		return ((oldModuloslot + this->initiationIntervals[s]) % this->modulo);
 	}
 }

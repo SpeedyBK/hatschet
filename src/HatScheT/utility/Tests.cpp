@@ -1471,6 +1471,38 @@ bool Tests::compareModuloSchedulerTest() {
 #endif
   }
 
+	bool Tests::uniformRationalIISchedulerNewTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+    return false;
+#else
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		HatScheT::XMLResourceReader readerRes(&rm);
+
+		string resStr = "cTest/exampleRatII_RM.xml";
+		string graphStr = "cTest/exampleRatII.graphml";
+		readerRes.readResourceModel(resStr.c_str());
+
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		HatScheT::UniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
+		rii.setQuiet(false);
+		rii.schedule();
+		auto valid = rii.getScheduleValid();
+		if(!valid) {
+			std::cout << "Scheduler found invalid solution" << std::endl;
+			return false;
+		}
+
+		cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
+		cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+		return (rii.getM_Found() == 5 and rii.getS_Found() == 3);
+#endif
+	}
+
 	bool Tests::nonUniformRationalIISchedulerTest() {
 #ifndef USE_XERCESC
     cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
@@ -1599,27 +1631,85 @@ bool Tests::compareModuloSchedulerTest() {
     m.setSolverTimeout(1);
     m.schedule();
 
-    std::cout << "Tests::tcadExampleTest: finished scheduling - resulting control steps:" << std::endl;
+    std::cout << "Tests::tcadExampleTest: SCCQ finished scheduling - resulting control steps:" << std::endl;
     auto startTimesVector = m.getStartTimeVector();
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
     auto valid = m.getScheduleValid();
     if(!valid) {
-      std::cout << "Tests::tcadExampleTest: invalid rational II modulo schedule found" << std::endl;
+      std::cout << "Tests::tcadExampleTest: SCCQ discovered invalid rational-II modulo schedule found" << std::endl;
       return false;
     }
     for(unsigned int i=0; i<initIntervals.size(); ++i) {
       auto l = initIntervals[i];
       auto startTimes = startTimesVector[i];
-      std::cout << "Tests::tcadExampleTest: start times for insertion time=" << l << std::endl;
+      std::cout << "Tests::tcadExampleTest: SCCQ - start times for insertion time=" << l << std::endl;
       for(auto it : startTimes) {
         std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
       }
     }
 
+    UniformRationalIIScheduler u(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    u.setQuiet(false);
+    u.setSolverTimeout(1);
+    u.schedule();
+
+    std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler finished scheduling - resulting control steps:" << std::endl;
+    startTimesVector = u.getStartTimeVector();
+    latencySequence = u.getLatencySequence();
+
+    valid = u.getScheduleValid();
+    if(!valid) {
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler discovered invalid rational-II modulo schedule found" << std::endl;
+      return false;
+    }
+    auto insertionTime = 0;
+    for(unsigned int i=0; i<latencySequence.size(); ++i) {
+      auto startTimes = startTimesVector[i];
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler - start times for insertion time=" << insertionTime << std::endl;
+      for(auto it : startTimes) {
+        std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+      }
+      insertionTime += latencySequence[i];
+    }
+
     std::cout << "Tests::tcadExampleTest: Test passed" << std::endl;
     return true;
+	}
+
+	bool Tests::maFiegeTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &res = rm.makeResource("res", 2, 2, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+
+		rm.registerVertex(&v0,&res);
+		rm.registerVertex(&v1,&res);
+		rm.registerVertex(&v2,&res);
+
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v2,0);
+		g.createEdge(v2,v0,5);
+
+		ASAPScheduler asap(g,rm);
+		EichenbergerDavidson97Scheduler ed97(g,rm,{"Gurobi","CPLEX"});
+    NonUniformRationalIIScheduler ratIInon(g,rm,{"Gurobi","CPLEX"});
+    UniformRationalIIScheduler ratIIu(g,rm,{"Gurobi","CPLEX"});
+
+		asap.setQuiet(false);
+		ed97.setQuiet(false);
+    ratIInon.setQuiet(false);
+    ratIIu.setQuiet(false);
+
+    asap.schedule();
+		ed97.schedule();
+    ratIInon.schedule();
+    ratIIu.schedule();
 	}
 
 

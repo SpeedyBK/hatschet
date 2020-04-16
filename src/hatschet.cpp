@@ -338,7 +338,8 @@ int main(int argc, char *args[]) {
         if(str=="DAIZHANGTWO" && HatScheT::Tests::DaiZhangTestTwo() == false) exit(-1);
         if(str=="COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
-        if(str=="UNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::uniformRationalIISchedulerTest() == false) exit(-1);
+				if(str=="UNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::uniformRationalIISchedulerTest() == false) exit(-1);
+				if(str=="UNIFORMRATIONALIISCHEDULERNEW" && HatScheT::Tests::uniformRationalIISchedulerNewTest() == false) exit(-1);
         if(str=="NONUNIFORMRATIONALIISCHEDULER" && HatScheT::Tests::nonUniformRationalIISchedulerTest() == false) exit(-1);
         if(str=="UNROLLSCHEDULER" && HatScheT::Tests::ratIIUnrollSchedulerTest() == false) exit(-1);
         if(str=="RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false) exit(-1);
@@ -350,6 +351,7 @@ int main(int argc, char *args[]) {
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
         if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
         if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
+        if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

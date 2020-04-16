@@ -1,9 +1,9 @@
 //
-// Created by nfiege on 12/11/19.
+// Created by nfiege on 08/04/20.
 //
 
-#ifndef HATSCHET_UNIFORMRATIONALIISCHEDULER_H
-#define HATSCHET_UNIFORMRATIONALIISCHEDULER_H
+#ifndef HATSCHET_UNIFORMRATIONALIISCHEDULERNEW_H
+#define HATSCHET_UNIFORMRATIONALIISCHEDULERNEW_H
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace HatScheT {
-	class UniformRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
+	class UniformRationalIISchedulerNew : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
 		 * Constructor
@@ -21,7 +21,7 @@ namespace HatScheT {
 		 * @param resourceModel
 		 * @param solverWishlist
 		 */
-		UniformRationalIIScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+		UniformRationalIISchedulerNew(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
 		/*!
 		 * print the rational II modulo schedule
 		 */
@@ -117,4 +117,4 @@ namespace HatScheT {
 }
 
 
-#endif //HATSCHET_UNIFORMRATIONALIISCHEDULER_H
+#endif //HATSCHET_UNIFORMRATIONALIISCHEDULERNEW_H

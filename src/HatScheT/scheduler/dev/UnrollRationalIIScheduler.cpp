@@ -76,22 +76,6 @@ namespace HatScheT {
           new_g->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
         else {
           int distance = e->getDistance();
-
-          //// OLD / BUGGY FOR PAPER EXAMPLE BUT NOT BUGGY FOR VAN-DONGEN
-/*
-          if (distance > i) {
-            int new_distance = distance - i;
-            int new_port = new_distance % s;
-            new_distance = ceil((double) new_distance / (double) distance);
-
-            new_g->createEdge(*v_src_mappings[new_port], *v_dst_mappings[i], new_distance, e->getDependencyType());
-          } else {
-            new_g->createEdge(*v_src_mappings[i - distance], *v_dst_mappings[i], 0, e->getDependencyType());
-          }
-*/
-
-					//// NEW / BUGGY FOR VAN-DONGEN BUT NOT BUGGY FOR PAPER EXAMPLE
-
           auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance,i,s,this->modulo);
           auto index = sampleIndexOffset.first;
           auto newDistance = sampleIndexOffset.second / this->modulo;
