@@ -10,6 +10,7 @@
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 
 namespace HatScheT {
@@ -154,6 +155,15 @@ namespace HatScheT {
         ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
         ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxRuns(1);
         break;
+      case SchedulerType::SUCHAHANZALEK:
+        scheduler = new HatScheT::SuchaHanzalek11Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        if(this->solverTimeout > 0) ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+        if(this->maxLatencyConstraint > 0)
+          ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->setThreads(this->threads);
+        ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->setMaxRuns(1);
+        break;
     }
 
     scheduler->setQuiet(this->quiet);
@@ -171,6 +181,10 @@ namespace HatScheT {
       case SchedulerType::ED97:
         this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getScaLPStatus();
         this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getSolvingTime();
+        break;
+      case SchedulerType::SUCHAHANZALEK:
+        this->stat = ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::SuchaHanzalek11Scheduler*) scheduler)->getSolvingTime();
         break;
     }
 

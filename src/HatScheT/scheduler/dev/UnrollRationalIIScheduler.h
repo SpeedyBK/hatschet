@@ -16,7 +16,7 @@ namespace HatScheT {
   /*!
    * @brief options for the used standard integer II scheduler
    */
-  enum SchedulerType {MOOVAC, MODULOSDC, ED97};
+  enum SchedulerType {MOOVAC, MODULOSDC, ED97, SUCHAHANZALEK};
 
   class UnrollRationalIIScheduler : public RationalIISchedulerLayer, public ILPSchedulerBase {
   public:
