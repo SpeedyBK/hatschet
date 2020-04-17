@@ -158,7 +158,7 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/scheduler/dev/SDSScheduler.cpp)
+src/HatScheT/scheduler/dev/SDSScheduler.cpp src/HatScheT/utility/FibonacciHeap.h src/HatScheT/utility/SDCSolver.cpp src/HatScheT/utility/SDCSolver.h)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -185,6 +185,7 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
+src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.h
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
@@ -229,6 +230,7 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
 src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.cpp
+src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.cpp
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
@@ -298,6 +300,7 @@ add_test("ratIIVerifierWrongMRTDetected" "./hatschet" "--test=ratIIVerifierWrong
 add_test("ratIIVerifierWrongCausalityDetected" "./hatschet" "--test=ratIIVerifierWrongCausalityDetected")
 add_test("ratIIVerifierWrongCausalityDetected" "./hatschet" "--test=ratIIVerifierWrongCausalityDetected")
 add_test("uniformRatII" "./hatschet" "--test=UNIFORMRATIONALIISCHEDULER")
+add_test("uniformRatIINew" "./hatschet" "--test=UNIFORMRATIONALIISCHEDULERNEW")
 add_test("nonUniformRatII" "./hatschet" "--test=NONUNIFORMRATIONALIISCHEDULER")
 add_test("ratIIModuloQ" "./hatschet" "--test=RATIONALIIMODULOQ")
 add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")

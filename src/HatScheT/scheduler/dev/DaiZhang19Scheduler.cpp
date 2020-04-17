@@ -32,9 +32,6 @@ namespace HatScheT {
   void DaiZhang19Scheduler::schedule() {
     cout << endl << "DaiZhang19Scheduler::schedule: start" << endl;
 
-    if (Utility::iscyclic(&g)) {
-      cout << "Graph is cyclic..." << endl << endl;
-
       cout << "-----------------------------------------------------------------------------------------------" << endl;
       cout << "Finding the SCCs in Graph..." << endl;
       cout << "-----------------------------------------------------------------------------------------------" << endl;
@@ -155,18 +152,6 @@ namespace HatScheT {
       for (auto &it:complexSupergraphSCCs) {
         buildSuperGraph(it, complex);
       }
-
-    }
-    else{
-      cout << "Graph is acyclic, passing it directly to scheduler!" << endl << endl;
-      //ToDo call scheduler
-      EichenbergerDavidson97Scheduler ed(g, resourceModel, solverWishlist);
-      ed.schedule();
-      auto sched = ed.getSchedule();
-      for (auto &it : sched){
-        cout << it.first->getName() << " - " << it.second << endl;
-      }
-    }
 
     cout << endl << "DaiZhang19Scheduler::schedule: done!" << endl;
   }

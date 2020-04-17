@@ -112,6 +112,13 @@ public:
    * @return
    */
   static bool uniformRationalIISchedulerTest();
+	/*!
+	 * @brief a test for functionallity of the improved uniform rational II scheduler
+	 * by Fiege
+	 * this test tries to solve the example problem from their paper
+	 * @return
+	 */
+	static bool uniformRationalIISchedulerNewTest();
   /*!
    * @brief a test for functionallity of the non uniform rational II scheduler
    * by Sittel et. al.
@@ -138,6 +145,10 @@ public:
    * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
    */
   static bool tcadExampleTest();
+	/*!
+	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
+	 */
+	static bool maFiegeTest();
   /*!
    * \brief A simpler test for the DaiZhang19Scheduler, with examples from the Paper "Improving Scalability of Exact
    * Modulo Scheduling with Specialized Conflict-Driven Learning"
@@ -174,6 +185,15 @@ public:
    * @return
    */
   static bool ratIIUnrollSchedulerTest();
+
+  /*!
+   * @brief tests the basic functions of the fibonacci heap. In this test the heap is used to sort an array of numbers.
+   * An the result is compared to a simple bubble sort algorithm used on the same array of numbers.
+   * @return
+   */
+  static bool fibonacciTest();
+
+  static bool sdcSolverTest();
 
 };
 }

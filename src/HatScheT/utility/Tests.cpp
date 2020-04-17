@@ -46,6 +46,8 @@
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
 #include "HatScheT/scheduler/dev/SDSScheduler.h"
+#include "HatScheT/utility/FibonacciHeap.h"
+#include "HatScheT/utility/SDCSolver.h"
 
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -1212,20 +1214,33 @@ bool Tests::compareModuloSchedulerTest() {
 
   #ifdef USE_CADICAL
 
+    //ToDo Problems for: fir6dlms, fir_GM, fir_hilb, fir_lms, fir_SAM, fir_SHI, fir_srg, iir4
+
     double timetoschedule = 0;
 
+    /*
     HatScheT::ResourceModel rm;
     HatScheT::Graph g;
     HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "benchmarks/origami/fir_gen_RM.xml";
-    string graphStr = "benchmarks/origami/fir_gen.graphml";
+    //string resStr = "benchmarks/MachSuite/fft_strided/graph2_RM.xml";
+    //string graphStr = "benchmarks/MachSuite/fft_strided/graph2.graphml";
+    //string resStr = "benchmarks/MachSuite/sort_radix/graph14_RM.xml";
+    //string graphStr = "benchmarks/MachSuite/sort_radix/graph14.graphml";
+    //string resStr = "benchmarks/origami/fir_SAMRM.xml";
+    //string graphStr = "benchmarks/origami/fir_SAM.graphml";
+    string resStr = "benchmarks/origami/iir_biquRM.xml";
+    string graphStr = "benchmarks/origami/iir_biqu.graphml";
     readerRes.readResourceModel(resStr.c_str());
-
     HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
     readerGraph.readGraph(graphStr.c_str());
-
+    */
     /*
+    for(auto &it : rm.Resources()){
+        it->setLimit(-1);
+    }*/
+
+
     HatScheT::Graph g;
     HatScheT::ResourceModel rm;
 
@@ -1244,6 +1259,7 @@ bool Tests::compareModuloSchedulerTest() {
     Vertex &E = g.createVertex(4);
     //Store operations:
     Vertex &F = g.createVertex(5);
+    //Vertex &G = g.createVertex(6);
 
     //Load operations:
     rm.registerVertex(&A, &ld);
@@ -1254,6 +1270,7 @@ bool Tests::compareModuloSchedulerTest() {
     rm.registerVertex(&E, &add);
     //Store operations:
     rm.registerVertex(&F, &st);
+    //rm.registerVertex(&G, &st);
 
     //Edges:
     g.createEdge(B, D, 0);
@@ -1261,25 +1278,19 @@ bool Tests::compareModuloSchedulerTest() {
     g.createEdge(A, E, 0);
     g.createEdge(D, E, 0);
     g.createEdge(E, F, 0);
-    */
+    g.createEdge(F, A, 1);
 
-    cout << "Display Graph:" << endl;
-    cout << "SRC " << "-- Distance --" << "DST" << endl;
-    for (auto &it : g.Edges()){
-      cout << it->getVertexSrc().getName() << " -- " << it->getDistance() << " -- " << it->getVertexDst().getName() << endl;
-    }
-    cout << "*******************************************************" << endl << endl;
-    cout << "Display Resources:" << endl;
-    cout << "Name: Limit; Latency; Blockingtime " << endl;
-    for (auto &it : rm.Resources()){
-      cout << it->getName() << ": " << it->getLimit() << "; " << it->getLatency() << "; " << it->getBlockingTime() << endl;
-    }
+    cout << g << endl;
+    cout << rm << endl;
+
+    cout << "Number of Vertices:" << g.getNumberOfVertices() << ", Number of Edges: " << g.getNumberOfEdges() << endl;
     cout << "*******************************************************" << endl << endl;
 
     cout << "SDS:" << endl;
-    SDSScheduler sds(g, rm);
+    list <string> sw = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
+    SDSScheduler sds(g, rm, sw);
     cout << "*******************************************************" << endl << endl;
-    sds.setSilent(false);
+    sds.setQuiet(false);
     sds.setBindingType('S');
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     sds.schedule();
@@ -1287,13 +1298,11 @@ bool Tests::compareModuloSchedulerTest() {
     std::chrono::nanoseconds timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
     timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
     auto sdssched = sds.getSchedule();
-    cout << endl << "Schedule for II = " << sds.getII() << ":" << endl;
+    cout << endl << endl << "Shedule: " << endl;
     for (auto &it : sdssched) {
-      it.second +=2; //ToDo: Fix this shit
       cout << it.first->getName() << " : " << it.second << endl;
     }
-
-    if(verifyModuloSchedule(g, rm, sdssched, sds.getII())){
+    if(verifyModuloSchedule(g, rm, sdssched, sds.getScheduleLength())){
       cout << endl << "SDSScheduler: Schedule is valid" << endl;
     }else {
       cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
@@ -1301,28 +1310,29 @@ bool Tests::compareModuloSchedulerTest() {
 
     cout << endl << "Time to get shedule: " << timetoschedule << endl;
     timetoschedule = 0;
-
+    /*
     cout << endl << endl;
 
-    cout << "MODSDC:" << endl;
-    ModSDC MSDC (g,rm,{"CPLEX","Gurobi", "SCIP", "LPSolve"});
+    cout << "ASAP:" << endl;
+    ASAPScheduler asa (g,rm);
+    asa.setQuiet(false);
     t1 = std::chrono::high_resolution_clock::now();
-    MSDC.schedule();
+    asa.schedule();
     t2 = std::chrono::high_resolution_clock::now();
     timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1);
     timetoschedule += (((double) timeSpan.count()) / 1000000000.0);
-    auto sched = MSDC.getSchedule();
+    auto sched = asa.getSchedule();
 
     for (auto &it : sched){
       cout << it.first->getName() << " : " << it.second << endl;
     }
-    if (verifyModuloSchedule(g, rm, sched, MSDC.getII())){
-      cout << endl << "SDSScheduler: Schedule is valid" << endl;
+    if (verifyModuloSchedule(g, rm, sched, asa.getScheduleLength())){
+      cout << endl << "ASAP: Schedule is valid" << endl;
     }else {
-      cout << endl << "SDSScheduler: Schedule is NOT valid" << endl;
+      cout << endl << "ASAP: Schedule is NOT valid" << endl;
     }
 
-    cout << endl << "Time to get shedule: " << timetoschedule << endl;
+    cout << endl << "Time to get shedule: " << timetoschedule << endl;*/
     return false;
   #else
     //CaDiCaL not active! Test function disabled!
@@ -1471,6 +1481,38 @@ bool Tests::compareModuloSchedulerTest() {
 #endif
   }
 
+	bool Tests::uniformRationalIISchedulerNewTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+    return false;
+#else
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		HatScheT::XMLResourceReader readerRes(&rm);
+
+		string resStr = "cTest/exampleRatII_RM.xml";
+		string graphStr = "cTest/exampleRatII.graphml";
+		readerRes.readResourceModel(resStr.c_str());
+
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		HatScheT::UniformRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
+		rii.setQuiet(false);
+		rii.schedule();
+		auto valid = rii.getScheduleValid();
+		if(!valid) {
+			std::cout << "Scheduler found invalid solution" << std::endl;
+			return false;
+		}
+
+		cout << "Tests::uniformRationalIISchedulerTest: expected II is 5/3" << endl;
+		cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+
+		return (rii.getM_Found() == 5 and rii.getS_Found() == 3);
+#endif
+	}
+
 	bool Tests::nonUniformRationalIISchedulerTest() {
 #ifndef USE_XERCESC
     cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
@@ -1599,29 +1641,295 @@ bool Tests::compareModuloSchedulerTest() {
     m.setSolverTimeout(1);
     m.schedule();
 
-    std::cout << "Tests::tcadExampleTest: finished scheduling - resulting control steps:" << std::endl;
+    std::cout << "Tests::tcadExampleTest: SCCQ finished scheduling - resulting control steps:" << std::endl;
     auto startTimesVector = m.getStartTimeVector();
     auto initIntervals = m.getInitiationIntervals();
     auto latencySequence = m.getLatencySequence();
 
     auto valid = m.getScheduleValid();
     if(!valid) {
-      std::cout << "Tests::tcadExampleTest: invalid rational II modulo schedule found" << std::endl;
+      std::cout << "Tests::tcadExampleTest: SCCQ discovered invalid rational-II modulo schedule found" << std::endl;
       return false;
     }
     for(unsigned int i=0; i<initIntervals.size(); ++i) {
       auto l = initIntervals[i];
       auto startTimes = startTimesVector[i];
-      std::cout << "Tests::tcadExampleTest: start times for insertion time=" << l << std::endl;
+      std::cout << "Tests::tcadExampleTest: SCCQ - start times for insertion time=" << l << std::endl;
       for(auto it : startTimes) {
         std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
       }
+    }
+
+    UniformRationalIIScheduler u(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    u.setQuiet(false);
+    u.setSolverTimeout(1);
+    u.schedule();
+
+    std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler finished scheduling - resulting control steps:" << std::endl;
+    startTimesVector = u.getStartTimeVector();
+    latencySequence = u.getLatencySequence();
+
+    valid = u.getScheduleValid();
+    if(!valid) {
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler discovered invalid rational-II modulo schedule found" << std::endl;
+      return false;
+    }
+    auto insertionTime = 0;
+    for(unsigned int i=0; i<latencySequence.size(); ++i) {
+      auto startTimes = startTimesVector[i];
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler - start times for insertion time=" << insertionTime << std::endl;
+      for(auto it : startTimes) {
+        std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+      }
+      insertionTime += latencySequence[i];
     }
 
     std::cout << "Tests::tcadExampleTest: Test passed" << std::endl;
     return true;
 	}
 
+	bool Tests::maFiegeTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
 
+		auto &res = rm.makeResource("res", 2, 2, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+
+		rm.registerVertex(&v0,&res);
+		rm.registerVertex(&v1,&res);
+		rm.registerVertex(&v2,&res);
+
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v2,0);
+		g.createEdge(v2,v0,5);
+
+		ASAPScheduler asap(g,rm);
+		EichenbergerDavidson97Scheduler ed97(g,rm,{"Gurobi","CPLEX"});
+    NonUniformRationalIIScheduler ratIInon(g,rm,{"Gurobi","CPLEX"});
+    UniformRationalIIScheduler ratIIu(g,rm,{"Gurobi","CPLEX"});
+
+		asap.setQuiet(false);
+		ed97.setQuiet(false);
+    ratIInon.setQuiet(false);
+    ratIIu.setQuiet(false);
+
+    asap.schedule();
+		ed97.schedule();
+    ratIInon.schedule();
+    ratIIu.schedule();
+	}
+
+  bool Tests::fibonacciTest() {
+
+    cout << "INSERT AND EXTRACT_MIN TEST:" << endl << endl;
+
+    const int arraysize = 20; //should be an even number
+    int numbers[arraysize];
+    int sorted_numbers_from_heap[arraysize];
+
+    srand(time(nullptr));
+    for (int i = 0; i < arraysize; i++){
+      numbers[i] = rand() % 100;
+    }
+    cout << "Numbers generates..." << endl;
+    for (int i : numbers){
+      cout << i << " ";
+    }
+
+    /////// Insert and Extract_min Test Begin ///////
+
+    //Creating a new Heap and fill it with numbers-Arrays content.
+    auto *FIB = new FibonacciHeap <int>;
+    for (int i : numbers) {
+      FIB->push(i);
+    }
+
+    //Extracting the values from the heap again.
+    int j = 0;
+    while (!FIB->empty()){
+      sorted_numbers_from_heap[j] = FIB->get_extract_min();
+      j++;
+    }
+
+    cout << endl << "Heap done..." << endl;
+
+    //Sort the numbers Array with a simple Bubble Sort
+    for (int k = arraysize; k > 1; --k){
+      for (int j = 0; j < k-1; ++j){
+        if (numbers[j] > numbers[j+1]){
+          int temp = numbers[j];
+          numbers[j] = numbers[j+1];
+          numbers[j+1] = temp;
+        }
+      }
+    }
+
+    cout << "Bubble Sort done..." << endl;
+
+    //Display Results:
+    cout <<endl << "Sorted array by F-Heap:" << endl;
+    for (int it : sorted_numbers_from_heap){
+      cout << it << " ";
+    }
+    cout << endl << "Sorted array by Bubble Sort:" << endl;
+    for (int it : numbers){
+      cout << it << " ";
+    }
+
+    if (0 != memcmp(sorted_numbers_from_heap, numbers, sizeof(numbers))){
+      cout << endl << "Test failed!" << endl;
+      return false;
+    }
+
+    /////// Insert and Extract_min Test End ///////
+
+    /////// Find Element by Key Test Begin ////////
+
+    for (int i : numbers){
+      FIB->push(i);
+    }
+
+    int ind = rand() % arraysize;
+    auto foundNode = FIB->findNode_by_key(numbers[ind]);
+    if (foundNode.first) {
+      cout << endl << endl << "Value from Heap: " << foundNode.second->key << " Reference Value: " << numbers[ind] << endl << endl;
+      if (foundNode.second->key != numbers[ind]) {
+        cout << "Found Element by Key Test failes!" << endl;
+        return false;
+      }
+    }else {
+      cout << endl << "Element does not exists in the heap, or can't be found! This should not happen!" << endl;
+      return false;
+    }
+
+    delete FIB;
+    /////// Find Element by Key Test End //////////
+
+    /////// Inserting Elements with Payload ///////
+    auto *FIBO = new FibonacciHeap <int>;
+    Vertex* vp = nullptr;
+    for (int i = 0; i < 10; i++){
+      auto *v = new Vertex(9 - i);
+      if (i == 5){
+        vp = v;
+      }
+      FIBO->push(i, v);
+    }
+
+    ///// Find and Element with known Payload /////
+    auto fNode = FIBO->findNode_by_payload(vp);
+    if (fNode.first) {
+      auto fv = (Vertex *) fNode.second->payload;
+      cout << "Key: " << fNode.second->key << " Name: " << fv->getName() << endl << endl;
+    }else{
+      cout << "Element not found, this should not happen" << endl;
+      return false;
+    }
+
+    /////// Removing Elements from the Heap ///////
+    do {
+      auto v = (Vertex*) FIBO->topNode()->payload;
+      auto k = FIBO->topNode()->key;
+      FIBO->pop();
+      cout << "Key: " << k << " Name: "<< v->getName() << endl;
+    }while (!FIBO->empty());
+
+    delete FIBO;
+
+    /////////////// Payload Test End //////////////
+
+    cout << endl << "Test passed!" << endl;
+
+    return true;
+  }
+
+  bool Tests::sdcSolverTest() {
+
+    //Creating an instance of the solver.
+    auto *solver = new SDCSolver();
+
+    //Create a system of Single Difference Constraints.
+    Vertex R(0);
+    R.setName("Rolf");
+    Vertex H(1);
+    H.setName("Horst");
+    Vertex G(2);
+    G.setName("Gunter");
+    Vertex E(3);
+    E.setName("Emma");
+    Vertex P(4);
+    P.setName("Paul");
+
+    //Example SDC-System
+    list <SDCConstraint> constr;
+    //Rolf - Horst <= 3
+    constr.push_back(solver->create_sdc_constraint(&H, &R, 3));
+    //Gunter - Horst <= -2
+    constr.push_back(solver->create_sdc_constraint(&H, &G, -2));
+    //Rolf - Gunter <= 3
+    constr.push_back(solver->create_sdc_constraint(&G, &R, 3));
+    //Gunter - Rolf <= 3
+    constr.push_back(solver->create_sdc_constraint(&R, &G, -3));
+    //Emma - Gunter <= 42
+    constr.push_back(solver->create_sdc_constraint(&G, &E, -1));
+    //Paul - Emma <= 2
+    constr.push_back(solver->create_sdc_constraint(&E, &P, 4));
+
+    //Adding the constraints to the solver
+    for (auto &it : constr){
+      solver->add_sdc_constraint(it);
+    }
+
+    //Printing the system
+    solver->print_Constraint_Graph();
+
+    //Compute an initial solution for the given SDC-System.
+    solver->compute_inital_solution();
+    if (solver->get_solver_status() == 11){
+      cout << endl << "System is not feasible." << endl;
+    }else if (solver->get_solver_status() == 10){
+      cout << endl << "System is feasible." << endl;
+      auto spath = solver->get_solution();
+      for (auto &it : spath){
+        cout << it.first->getName() << ": " << it.second << endl;
+      }
+    }
+    cout << endl;
+
+    //Adding a constraint
+    SDCConstraint c = solver->create_sdc_constraint(&G, &P, -3);
+    SDCConstraint d = solver->create_sdc_constraint(&P, &G, -4);
+
+    //Using the incremental Algorithm to solve the new system.
+    solver->add_to_feasible(c);
+    cout << "Test" << endl;
+    solver->add_to_feasible(d);
+
+    //Checking the Solver Status and Print the Solution if feasible.
+    if (solver->get_solver_status() == 21){
+      cout << endl << "System is not feasible." << endl;
+    }else if (solver->get_solver_status() == 20){
+      cout << endl << "System is feasible." << endl;
+      auto spath = solver->get_solution();
+      for (auto &it : spath){
+        cout << it.first->getName() << ": " << it.second << endl;
+      }
+    }
+    cout << endl;
+
+
+    //Removing a constraint from the solver.
+    //solver->remove_sdc_constraint(D, A);
+
+    //Printing the system again.
+    //solver->print_Constraint_Graph();
+
+    delete solver;
+
+    return false;
+  }
 }
 

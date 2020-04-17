@@ -72,7 +72,12 @@ void EichenbergerDavidson97Scheduler::schedule()
       for (auto *i : g.Vertices())
         startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
-      if(this->quiet==false) std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
+      if(this->quiet==false) {
+        std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
+        for(auto it : this->startTimes) {
+          std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+        }
+      }
       break;
     }
     if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
