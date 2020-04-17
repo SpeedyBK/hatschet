@@ -1576,30 +1576,53 @@ bool Tests::compareModuloSchedulerTest() {
     cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
     return false;
 #else
-    HatScheT::ResourceModel rm;
-    HatScheT::Graph g;
-    HatScheT::XMLResourceReader readerRes(&rm);
+    std::list<SchedulerType> intIISchedulers = {ED97,MODULOSDC,MOOVAC,SUCHAHANZALEK};
+    for(auto intIIScheduler : intIISchedulers) {
+			HatScheT::ResourceModel rm;
+			HatScheT::Graph g;
+			HatScheT::XMLResourceReader readerRes(&rm);
 
-    string resStr = "benchmarks/Programs/vanDongen/vanDongenRM.xml";
-    string graphStr = "benchmarks/Programs/vanDongen/vanDongen.graphml";
-    readerRes.readResourceModel(resStr.c_str());
+			string resStr = "benchmarks/Programs/vanDongen/vanDongenRM.xml";
+			string graphStr = "benchmarks/Programs/vanDongen/vanDongen.graphml";
+			readerRes.readResourceModel(resStr.c_str());
 
-    HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-    readerGraph.readGraph(graphStr.c_str());
+			HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+			readerGraph.readGraph(graphStr.c_str());
 
-    HatScheT::UnrollRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
-    rii.setQuiet(false);
-    rii.schedule();
-    auto valid = rii.getScheduleValid();
-    if(!valid) {
-      std::cout << "Scheduler found invalid solution" << std::endl;
-      return false;
+			HatScheT::UnrollRationalIIScheduler rii(g,rm,{"Gurobi","CPLEX","SCIP","LPSolve"});
+			rii.setIntIIScheduler(SchedulerType::SUCHAHANZALEK);
+			rii.setQuiet(false);
+			rii.schedule();
+			auto valid = rii.getScheduleValid();
+			if(!valid) {
+				std::cout << "Scheduler found invalid solution" << std::endl;
+				return false;
+			}
+
+			switch (intIIScheduler) {
+				case ED97:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: ED97" << std::endl;
+					break;
+				case MODULOSDC:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MODULOSDC" << std::endl;
+					break;
+				case MOOVAC:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MOOVAC" << std::endl;
+					break;
+				case SUCHAHANZALEK:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: SUCHAHANZALEK" << std::endl;
+					break;
+			}
+
+			if(rii.getM_Found() != 16 or rii.getS_Found() != 3) {
+				cout << "Tests::uniformRationalIISchedulerTest: expected II is 16/3" << endl;
+				cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
+				return false;
+			}
     }
 
-    cout << "Tests::uniformRationalIISchedulerTest: expected II is 16/3" << endl;
-    cout << "Tests::uniformRationalIISchedulerTest: found II " << rii.getM_Found() << "/" << rii.getS_Found() << endl;
-
-    return (rii.getM_Found() == 16 and rii.getS_Found() == 3);
+		cout << "Tests::uniformRationalIISchedulerTest: TEST PASSED! All schedulers found expected II of 16/3" << endl;
+    return true;
 #endif
   }
 
