@@ -203,7 +203,7 @@ namespace HatScheT
 
 		// set start times
 		for(auto &v : this->g.Vertices()) {
-			this->startTimes[v] = (int)this->r.values[this->tVariables[v]];
+			this->startTimes[v] = (int)round(this->r.values[this->tVariables[v]]);
 		}
 
 		// set start times vector
