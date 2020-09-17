@@ -127,6 +127,13 @@ void ASAPScheduler::schedule()
   if(this->II < 1)
     this->II = 1;
   this->scheduleFound = true;
+
+  if(!this->quiet) {
+    std::cout << "ASAP scheduler: Found schedule with latency = " << this->getScheduleLength() << std::endl;
+    for(auto it : this->startTimes) {
+      std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+    }
+  }
 }
 
 }

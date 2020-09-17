@@ -10,6 +10,7 @@
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 
 namespace HatScheT {
@@ -76,22 +77,6 @@ namespace HatScheT {
           new_g->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
         else {
           int distance = e->getDistance();
-
-          //// OLD / BUGGY FOR PAPER EXAMPLE BUT NOT BUGGY FOR VAN-DONGEN
-/*
-          if (distance > i) {
-            int new_distance = distance - i;
-            int new_port = new_distance % s;
-            new_distance = ceil((double) new_distance / (double) distance);
-
-            new_g->createEdge(*v_src_mappings[new_port], *v_dst_mappings[i], new_distance, e->getDependencyType());
-          } else {
-            new_g->createEdge(*v_src_mappings[i - distance], *v_dst_mappings[i], 0, e->getDependencyType());
-          }
-*/
-
-					//// NEW / BUGGY FOR VAN-DONGEN BUT NOT BUGGY FOR PAPER EXAMPLE
-
           auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance,i,s,this->modulo);
           auto index = sampleIndexOffset.first;
           auto newDistance = sampleIndexOffset.second / this->modulo;
@@ -140,62 +125,75 @@ namespace HatScheT {
     //unroll the input graph according to s and m
     this->unroll(g_unrolled, rm_unrolled, this->samples);
 
-    HatScheT::SchedulerBase *scheduler;
+    HatScheT::SchedulerBase *schedulerBase;
 
     switch (this->scheduler) {
       case SchedulerType::MOOVAC:
-        scheduler = new HatScheT::MoovacScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
-        if(this->solverTimeout > 0) ((HatScheT::MoovacScheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+        schedulerBase = new HatScheT::MoovacScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        if(this->solverTimeout > 0) ((HatScheT::MoovacScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
-          ((HatScheT::MoovacScheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
-        ((HatScheT::MoovacScheduler*) scheduler)->setThreads(this->threads);
-        ((HatScheT::MoovacScheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
-        ((HatScheT::MoovacScheduler*) scheduler)->setMaxRuns(1);
+          ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::MoovacScheduler*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::MoovacScheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::MODULOSDC:
-        scheduler = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist);
-        if(this->solverTimeout > 0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(this->solverTimeout);
+        schedulerBase = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist);
+        if(this->solverTimeout > 0) ((HatScheT::ModSDC*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
-          ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
-        ((HatScheT::ModSDC*) scheduler)->setThreads(this->threads);
-        ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(this->solverQuiet);
-        ((HatScheT::ModSDC*) scheduler)->setMaxRuns(1);
+          ((HatScheT::ModSDC*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::ModSDC*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::ModSDC*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::ModSDC*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::ED97:
-        scheduler = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
-        if(this->solverTimeout > 0) ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverTimeout(this->solverTimeout);
+        schedulerBase = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        if(this->solverTimeout > 0) ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
-          ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxLatencyConstraint(this->maxLatencyConstraint);
-        ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setThreads(this->threads);
-        ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setSolverQuiet(this->solverQuiet);
-        ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->setMaxRuns(1);
+          ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setMaxRuns(1);
+        break;
+      case SchedulerType::SUCHAHANZALEK:
+        schedulerBase = new HatScheT::SuchaHanzalek11Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        if(this->solverTimeout > 0) ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+        if(this->maxLatencyConstraint > 0)
+          ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setMaxRuns(1);
         break;
     }
 
-    scheduler->setQuiet(this->quiet);
-    scheduler->schedule();
+    schedulerBase->setQuiet(this->quiet);
+    schedulerBase->schedule();
 
     switch(this->scheduler) {
       case SchedulerType::MOOVAC:
-        this->stat = ((HatScheT::MoovacScheduler*) scheduler)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::MoovacScheduler*) scheduler)->getSolvingTime();
+        this->stat = ((HatScheT::MoovacScheduler*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::MoovacScheduler*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::MODULOSDC:
-        this->stat = ((HatScheT::ModSDC*) scheduler)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::ModSDC*) scheduler)->getSolvingTime();
+        this->stat = ((HatScheT::ModSDC*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::ModSDC*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::ED97:
-        this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) scheduler)->getSolvingTime();
+        this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getSolvingTime();
+        break;
+      case SchedulerType::SUCHAHANZALEK:
+        this->stat = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getSolvingTime();
         break;
     }
 
-    if(scheduler->getScheduleFound() == true) {
+    if(schedulerBase->getScheduleFound() == true) {
       this->scheduleFound = true;
 
-      this->fillSolutionStructure(scheduler,&g_unrolled,&rm_unrolled);
+      this->fillSolutionStructure(schedulerBase,&g_unrolled,&rm_unrolled);
     }
 
-    delete scheduler;
+    delete schedulerBase;
 	}
 }

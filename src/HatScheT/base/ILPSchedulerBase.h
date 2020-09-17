@@ -101,7 +101,14 @@ public:
   double getSolvingTime(){
     return this->solvingTime;
   }
-
+  /*!
+   * @brief default false to avoid errors using SCIP and LPSolve
+   * @param p
+   */
+  void setPresolve(bool p) {
+    this->solver->presolve = p;
+  }
+  bool getPresolve(){return this->solver->presolve;}
 protected:
   /*!
    * store the status of ilp-based scheduling
