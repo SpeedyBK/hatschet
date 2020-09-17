@@ -1655,9 +1655,35 @@ bool Tests::compareModuloSchedulerTest() {
       auto l = initIntervals[i];
       auto startTimes = startTimesVector[i];
       std::cout << "Tests::tcadExampleTest: SCCQ - start times for insertion time=" << l << std::endl;
+
       for(auto it : startTimes) {
         std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
       }
+    }
+
+    UniformRationalIIScheduler u(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    u.setQuiet(false);
+    u.setSolverTimeout(1);
+    u.schedule();
+
+    std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler finished scheduling - resulting control steps:" << std::endl;
+    startTimesVector = u.getStartTimeVector();
+    latencySequence = u.getLatencySequence();
+
+    valid = u.getScheduleValid();
+    if(!valid) {
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler discovered invalid rational-II modulo schedule found" << std::endl;
+      return false;
+    }
+    auto insertionTime = 0;
+    for(unsigned int i=0; i<latencySequence.size(); ++i) {
+      auto startTimes = startTimesVector[i];
+      std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler - start times for insertion time=" << insertionTime << std::endl;
+
+      for(auto it : startTimes) {
+        std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+      }
+      insertionTime += latencySequence[i];
     }
 
     UniformRationalIIScheduler u(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
