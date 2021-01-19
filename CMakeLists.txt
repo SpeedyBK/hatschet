@@ -130,11 +130,6 @@ src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/layers/RationalIISchedulerLayer.cpp
 src/HatScheT/ResourceModel.cpp
-src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
-src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
-src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
-src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
-src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/XMLResourceReader.cpp
@@ -153,12 +148,14 @@ src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
 src/HatScheT/utility/Verifier.cpp
 src/HatScheT/utility/reader/XMLTargetReader.cpp
-src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
-src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/scheduler/dev/SDSScheduler.cpp src/HatScheT/utility/FibonacciHeap.h src/HatScheT/utility/SDCSolver.cpp src/HatScheT/utility/SDCSolver.h)
+src/HatScheT/scheduler/dev/SDSScheduler.cpp 
+src/HatScheT/utility/FibonacciHeap.h 
+src/HatScheT/utility/SDCSolver.cpp 
+src/HatScheT/utility/SDCSolver.h
+)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -227,11 +224,18 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.cpp
 src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
+src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
+src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
+src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
+src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
+src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
 src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.cpp
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
+src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 )

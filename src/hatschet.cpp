@@ -25,11 +25,7 @@
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
 #include <HatScheT/utility/writer/DotWriter.h>
-#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
-#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
-#include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
 #include "HatScheT/utility/Tests.h"
-#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
@@ -41,6 +37,7 @@
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
 #include <HatScheT/utility/reader/XMLResourceReader.h>
+#include <HatScheT/utility/reader/XMLTargetReader.h>
 #include <HatScheT/utility/writer/GraphMLGraphWriter.h>
 #include <HatScheT/utility/writer/XMLResourceWriter.h>
 #endif
@@ -54,6 +51,9 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
+#include <HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <HatScheT/scheduler/dev/UniformRationalIIScheduler.h>
@@ -63,6 +63,7 @@
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
 #endif
 
@@ -152,7 +153,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -699,11 +700,13 @@ int main(int argc, char *args[]) {
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
 
+#ifdef USE_SCALP
       // set writeILPFile
 			auto ilpSchedulerBase = dynamic_cast<HatScheT::ILPSchedulerBase*>(scheduler);
       if(ilpSchedulerBase != nullptr) {
       	ilpSchedulerBase->setWriteLPFile(writeLPFile);
       }
+#endif //USE_SCALP
 
       // set quiet or loud
 			scheduler->setQuiet(quiet);
@@ -725,6 +728,8 @@ int main(int argc, char *args[]) {
           exit(-1);
         }
       }
+
+#ifdef USE_SCALP
 			auto *ratIILayer = dynamic_cast<HatScheT::RationalIISchedulerLayer*>(scheduler);
 			if(ratIILayer!=nullptr and isRationalIIScheduler) {
 				if (ratIILayer->getScheduleValid()){
@@ -735,6 +740,7 @@ int main(int argc, char *args[]) {
 					exit(-1);
 				}
       }
+#endif //USE_SCALP
 
       if(scheduler->getScheduleFound() == true) {
         std::cout << "------------------------------------------------------------------------------------" << endl;
@@ -756,6 +762,7 @@ int main(int argc, char *args[]) {
 
 			// write schedule to csv file if requested
       if(!scheduleFile.empty() and scheduler->getScheduleFound()) {
+#ifdef USE_SCALP
         if(ratIILayer == nullptr) {
           // integer II modulo scheduler
           auto bindings = scheduler->getBindings();
@@ -771,6 +778,13 @@ int main(int argc, char *args[]) {
           sBWriter.setGraphPath(graphMLFile);
           sBWriter.write();
         }
+#else 
+          auto bindings = scheduler->getBindings();
+          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
+          sBWriter.setRMPath(resourceModelFile);
+          sBWriter.setGraphPath(graphMLFile);
+          sBWriter.write();
+#endif //USE_SCALP
       }
 
       delete scheduler;
