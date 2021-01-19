@@ -462,7 +462,7 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
 
 double Utility::calcRecMII(Graph *g, ResourceModel *rm)
 {
-  ScaLP::Solver solver({"CPLEX", "Gurobi"});
+  ScaLP::Solver solver({"Gurobi", "CPLEX"});
 
   // construct decision variables
   auto II = ScaLP::newRealVariable("II", 0, ScaLP::INF());

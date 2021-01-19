@@ -139,6 +139,86 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	return moduloSamplePairs;
 }
 
+	std::vector<int> RationalIISchedulerLayer::getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet) {
+		std::vector<int> initIntervalTemp = {};
+		auto lowerII = int(floor(double(modulo)/double(samples)));
+		auto upperII = int(ceil(double(modulo)/double(samples)));
+
+		auto noLowerIIs = (upperII * samples) - modulo;
+		auto noUpperIIs = modulo - (lowerII * samples);
+		if(noLowerIIs + noUpperIIs != samples) {
+			std::cout << "number of lower IIs: " << noLowerIIs << std::endl;
+			std::cout << "number of upper IIs: " << noUpperIIs << std::endl;
+			std::cout << "#samples: " << samples << std::endl;
+			std::cout << noLowerIIs << " + " << noUpperIIs << " != " << samples << std::endl;
+			throw HatScheT::Exception("Something went wrong while calculating optimal latency sequence - that should never happen");
+		}
+		bool lowerDom = false;
+		auto maxNo = noUpperIIs;
+		auto minNo = noLowerIIs;
+		if(noLowerIIs>=noUpperIIs) {
+			lowerDom = true;
+			maxNo = noLowerIIs;
+			minNo = noUpperIIs;
+		}
+
+		int errAccumulator = 0;
+		int latencyCounter = 0;
+		if(lowerDom) latencyCounter -= lowerII;
+		else latencyCounter -= upperII;
+
+		if(!quiet) {
+			std::cout << "  Lower II: " << lowerII << std::endl;
+			std::cout << "  Upper II: " << upperII << std::endl;
+			std::cout << "  number of lower IIs: " << noLowerIIs << std::endl;
+			std::cout << "  number of upper IIs: " << noUpperIIs << std::endl;
+			std::cout << "  dominance of lower IIs: " << lowerDom << std::endl;
+		}
+
+		for(int i=0; i<maxNo; ++i) {
+			if(lowerDom) {
+				latencyCounter += lowerII;
+			}
+			else {
+				latencyCounter += upperII;
+			}
+			initIntervalTemp.emplace_back(latencyCounter);
+			errAccumulator += minNo;
+			if(!quiet) {
+				std::cout << "    errAccumulator: " << errAccumulator << std::endl;
+			}
+			if(errAccumulator >= maxNo) {
+				errAccumulator -= maxNo;
+				if(lowerDom) {
+					latencyCounter += upperII;
+				}
+				else {
+					latencyCounter += lowerII;
+				}
+				initIntervalTemp.emplace_back(latencyCounter);
+			}
+		}
+
+		if(!quiet) {
+			std::cout << "IIs: < ";
+			for(auto II : initIntervalTemp) {
+				std::cout << II << " ";
+			}
+			std::cout << ">" << std::endl;
+		}
+
+		return initIntervalTemp;
+	}
+
+	std::vector<int> RationalIISchedulerLayer::getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M) {
+		std::vector<int> latSeq;
+		for(unsigned int i=0; i<initIntervals.size()-1; ++i) {
+			latSeq.emplace_back(initIntervals[i + 1] - initIntervals[i]);
+		}
+		latSeq.emplace_back(M - initIntervals.back());
+		return latSeq;
+	}
+
 	void RationalIISchedulerLayer::autoSetMAndS() {
 		double minII = this->getMinII();
 		this->integerMinII = (int)ceil(minII);
@@ -223,6 +303,9 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 	}
 
 	bool RationalIISchedulerLayer::verifySchedule() {
+		if(!this->quiet)
+			std::cout << "RationalIISchedulerLayer::verifySchedule: start verifier for II=" << this->m_found << "/" << this->s_found << std::endl;
+
 		if(this->g.isEmpty()) return true;
 		////////////////////////////////////////////////////////////////////
 		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //

@@ -383,5 +383,82 @@ namespace HatScheT {
 
 		return binding;
 	}
+
+	int Binding::countTotalLifetimeRegisters(Graph *g, ResourceModel *rm, std::vector<std::map<Vertex *, int>> schedule,
+																					 std::vector<std::map<Vertex *, int>> binding, int M, int S, bool quiet) {
+		// total number of lifetime registers
+		int totalRegs = 0;
+
+		// each implemented resource has a chain of lifetime registers attached to it
+		std::map<const Resource*,std::map<int,int>> regs;
+
+		// init lifetime register map
+		for (auto& r : rm->Resources()) {
+			regs[r] = std::map<int,int>();
+			for (auto& v : rm->getVerticesOfResource(r)) {
+				for (auto s=0; s<S; ++s) {
+					auto vnc = const_cast<Vertex*>(v);
+					auto fu = binding[s][vnc];
+					regs[r][fu] = 0;
+				}
+			}
+		}
+
+		// iterate over edges and count lifetime registers
+		for(auto s=0; s<S; ++s) {
+			for (auto& e : g->Edges()) {
+				// get sample index and new distance for unrolled graph
+				auto sampleIndexOffset = Utility::getSampleIndexAndOffset(e->getDistance(),s,S,M);
+				auto sSrc = sampleIndexOffset.first;
+				auto offset = sampleIndexOffset.second; // = distance in unrolled graph times M
+				// vertices and start times
+				auto &vsrc = e->getVertexSrc();
+				auto &vdst = e->getVertexDst();
+				auto tsrc = schedule[sSrc][&vsrc];
+				auto tdst = schedule[s][&vdst];
+				// get implemented resource
+				auto *r = rm->getResource(&vsrc);
+				auto lat = r->getLatency();
+				auto fu = binding[s][&vsrc];
+				// check if current number of lifetime regs are enough to support that edge
+				auto neededRegs = tdst - lat - tsrc + offset;
+				// debug messages
+				if(!quiet) {
+					std::cout << "Binding::countTotalLifetimeRegisters:" << std::endl;
+					std::cout << "  edge '" << vsrc.getName() << "' -> '" << vdst.getName() << "'" << std::endl;
+					std::cout << "  edge distance: " << e->getDistance() << std::endl;
+					std::cout << "    dst sample: " << s << std::endl;
+					std::cout << "    S: " << S << std::endl;
+					std::cout << "    M: " << M << std::endl;
+					std::cout << "    src sample: " << sSrc << std::endl;
+					std::cout << "    offset (distance in unrolled graph times M): " << offset << std::endl;
+					std::cout << "  tsrc: " << tsrc << std::endl;
+					std::cout << "  tdst: " << tdst << std::endl;
+					std::cout << "  FU: " << fu << std::endl;
+					std::cout << "  latency: " << lat << std::endl;
+					std::cout << "  => needed regs = " << tdst << " - " << lat << " - " << tsrc << " + " << offset << " = " << neededRegs << std::endl;
+				}
+				if (neededRegs > regs[r][fu]) {
+					regs[r][fu] = neededRegs;
+				}
+			}
+		}
+
+		// sum them up
+		for (auto &it1 : regs) {
+			for (auto &it2 : it1.second) {
+				totalRegs += it2.second;
+			}
+		}
+
+		// return that badboy
+		return totalRegs;
+	}
+
+	int Binding::countTotalLifetimeRegisters(Graph *g, ResourceModel *rm, std::map<Vertex *, int> schedule,
+																					 std::map<Vertex *, int> binding, int II, bool quiet) {
+		return Binding::countTotalLifetimeRegisters(g,rm,{schedule},{binding},II,1,quiet);
+	}
+
 #endif
 }

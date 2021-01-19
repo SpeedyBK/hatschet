@@ -28,6 +28,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UniformRationalIIScheduler.h"
+#include "HatScheT/scheduler/dev/UniformRationalIISchedulerNew.h"
 #include "HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UnrollRationalIIScheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h"
@@ -1715,7 +1716,10 @@ bool Tests::compareModuloSchedulerTest() {
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
 
+		/*
 		auto &res = rm.makeResource("res", 2, 2, 1);
+		 */
+		auto &res = rm.makeResource("res", 2, 1, 1);
 
 		Vertex &v0 = g.createVertex(0);
 		Vertex &v1 = g.createVertex(1);
@@ -1725,24 +1729,170 @@ bool Tests::compareModuloSchedulerTest() {
 		rm.registerVertex(&v1,&res);
 		rm.registerVertex(&v2,&res);
 
+		/*
 		g.createEdge(v0,v1,0);
 		g.createEdge(v1,v2,0);
 		g.createEdge(v2,v0,5);
+		 */
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v2,0);
+		g.createEdge(v2,v0,2);
 
 		ASAPScheduler asap(g,rm);
 		EichenbergerDavidson97Scheduler ed97(g,rm,{"Gurobi","CPLEX"});
-    NonUniformRationalIIScheduler ratIInon(g,rm,{"Gurobi","CPLEX"});
-    UniformRationalIIScheduler ratIIu(g,rm,{"Gurobi","CPLEX"});
+		NonUniformRationalIIScheduler ratIInon(g,rm,{"Gurobi","CPLEX"});
+		UniformRationalIIScheduler ratIIu(g,rm,{"Gurobi","CPLEX"});
 
 		asap.setQuiet(false);
 		ed97.setQuiet(false);
-    ratIInon.setQuiet(false);
-    ratIIu.setQuiet(false);
+		ratIInon.setQuiet(false);
+		ratIIu.setQuiet(false);
 
-    asap.schedule();
+		asap.schedule();
 		ed97.schedule();
-    ratIInon.schedule();
-    ratIIu.schedule();
+		ratIInon.schedule();
+		ratIIu.schedule();
+
+		return true;
+	}
+
+	bool Tests::iiSmallerOneTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		int samples = 50;
+
+		auto &res = rm.makeResource("res", samples, 2, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+
+		rm.registerVertex(&v0,&res);
+		rm.registerVertex(&v1,&res);
+		rm.registerVertex(&v2,&res);
+
+		g.createEdge(v0,v2,0);
+		g.createEdge(v1,v2,0);
+
+		NonUniformRationalIIScheduler ratIInon(g,rm,{"Gurobi","CPLEX"});
+		UniformRationalIISchedulerNew ratIIu(g,rm,{"Gurobi","CPLEX"});
+		SCCQScheduler ratIIsccq(g,rm,{"Gurobi","CPLEX"});
+
+		ratIInon.setQuiet(false);
+		ratIIu.setQuiet(false);
+		ratIIsccq.setQuiet(false);
+
+		ratIInon.setModulo(3);
+		ratIInon.setSamples(samples);
+		ratIIu.setModulo(3);
+		ratIIu.setSamples(samples);
+		ratIIsccq.setModulo(3);
+		ratIIsccq.setSamples(samples);
+
+		ratIInon.schedule();
+		ratIIu.schedule();
+		ratIIsccq.schedule();
+
+		return true;
+	}
+
+	bool Tests::sccqFailTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &res0 = rm.makeResource("res0", 3, 2, 1);
+		auto &res1 = rm.makeResource("res1", 3, 1, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+		Vertex &v3 = g.createVertex(3);
+
+		Vertex &v4 = g.createVertex(4);
+		Vertex &v5 = g.createVertex(5);
+		Vertex &v6 = g.createVertex(6);
+		Vertex &v7 = g.createVertex(7);
+
+		rm.registerVertex(&v0,&res0);
+		rm.registerVertex(&v1,&res0);
+		rm.registerVertex(&v2,&res0);
+		rm.registerVertex(&v3,&res0);
+
+		rm.registerVertex(&v4,&res1);
+		rm.registerVertex(&v5,&res1);
+		rm.registerVertex(&v6,&res1);
+		rm.registerVertex(&v7,&res1);
+
+#if 0
+		// NO UNIFORM SCHEDULE POSSIBLE
+		g.createEdge(v0,v4,0);
+		g.createEdge(v4,v1,0);
+		g.createEdge(v1,v5,0);
+		g.createEdge(v5,v2,0);
+		g.createEdge(v2,v6,0);
+		g.createEdge(v6,v3,0);
+		g.createEdge(v3,v7,0);
+		g.createEdge(v7,v0,8);
+#else
+#if 1
+		// NO SCCQ SCHEDULE POSSIBLE
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v2,0);
+		g.createEdge(v2,v3,0);
+		g.createEdge(v3,v4,0);
+		g.createEdge(v4,v5,0);
+		g.createEdge(v5,v6,0);
+		g.createEdge(v6,v7,0);
+		g.createEdge(v7,v0,8);
+#else
+		// SCHEDULE POSSIBLE
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v2,0);
+		g.createEdge(v2,v3,0);
+		g.createEdge(v3,v4,0);
+		g.createEdge(v4,v5,0);
+		g.createEdge(v5,v6,0);
+		g.createEdge(v6,v7,0);
+		g.createEdge(v7,v0,8);
+#endif
+#endif
+
+		SCCQScheduler sccq(g,rm,{"Gurobi"});
+		//UniformRationalIISchedulerNew sccq(g,rm,{"Gurobi"});
+		//NonUniformRationalIIScheduler sccq(g,rm,{"Gurobi"});
+
+		sccq.setSolverTimeout(48*3600); // 48h timeout
+
+		sccq.setQuiet(false);
+
+		sccq.schedule();
+
+		return true;
+	}
+
+	bool Tests::minIntIIFailTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &res0 = rm.makeResource("res0", 1, 2, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+
+		rm.registerVertex(&v0,&res0);
+		rm.registerVertex(&v1,&res0);
+
+		// NO SCHEDULE POSSIBLE FOR MIN II
+		g.createEdge(v0,v1,0);
+		g.createEdge(v1,v0,2);
+		EichenbergerDavidson97Scheduler ed97(g,rm,{"Gurobi"});
+
+		ed97.setQuiet(false);
+
+		ed97.schedule();
+
+		return true;
 	}
 
   bool Tests::fibonacciTest() {

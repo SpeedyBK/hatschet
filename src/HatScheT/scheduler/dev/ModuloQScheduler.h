@@ -121,13 +121,6 @@ namespace HatScheT {
 		 */
 		std::map<Resource*,std::vector<int>> getMRTShape() const;
 		/*!
-		 * compute intervals between samples for the initiation intervals sequence
-		 * @param initIntervals
-		 * @param M modulo
-		 * @return
-		 */
-		static std::vector<int> getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M);
-		/*!
 		 *
 		 * @return initiation intervals for the latency sequence
 		 */
@@ -146,14 +139,6 @@ namespace HatScheT {
 		 * finds a valid non-rectangular MRT for a given resource model and a initiation intervals
 		 */
 		static void setMRT(ModuloQMRT &mrt, ResourceModel &resourceModel, std::vector<int> &initiationIntervals, int samples, int modulo, bool quiet);
-		/*!
-		 * calculates initiation interval sequence, which is as uniformly distributed as possible
-		 * @param samples
-		 * @param modulo
-		 * @param quiet
-		 * @return
-		 */
-		static std::vector<int> getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet);
 	protected:
 		/*!
 		 * each scheduler should overload this function for one schedule iteration

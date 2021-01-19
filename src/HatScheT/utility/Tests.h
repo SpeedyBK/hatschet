@@ -149,6 +149,18 @@ public:
 	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
 	 */
 	static bool maFiegeTest();
+	/*!
+	 * @brief schedule a graph with an II between 0 and 1
+	 */
+	static bool iiSmallerOneTest();
+	/*!
+	 * @brief try scheduling a graph thats impossible to schedule with current SCCQ scheduler implementation
+	 */
+	static bool sccqFailTest();
+	/*!
+	 * @brief try scheduling a graph thats impossible to schedule for the minimum II with any scheduler
+	 */
+	static bool minIntIIFailTest();
   /*!
    * \brief A simpler test for the DaiZhang19Scheduler, with examples from the Paper "Improving Scalability of Exact
    * Modulo Scheduling with Specialized Conflict-Driven Learning"

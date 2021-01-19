@@ -351,7 +351,10 @@ int main(int argc, char *args[]) {
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
         if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
         if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
-        if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
+				if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
+				if(str=="SCCQFAIL" && HatScheT::Tests::sccqFailTest() == false) exit(-1);
+				if(str=="IISMALLERONE" && HatScheT::Tests::iiSmallerOneTest() == false) exit(-1);
+				if(str=="MININTIIFAIL" && HatScheT::Tests::minIntIIFailTest() == false) exit(-1);
         if(str=="FIBONACCI" && HatScheT::Tests::fibonacciTest() == false) exit(-1);
         if(str=="SDCSOLVE" && HatScheT::Tests::sdcSolverTest() == false) exit(-1);
 
