@@ -287,6 +287,7 @@ configure_file("${PROJECT_SOURCE_DIR}/HaTScheTConfig.cmake.in" "${PROJECT_SOURCE
 
 enable_testing()
 
+IF (SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 add_test("Read" "./hatschet" "--test=READ")
 add_test("Moovac" "./hatschet" "--test=MOOVAC")
 add_test("ReadWriteReadSchedule" "./hatschet" "--test=RWRS")
@@ -313,6 +314,8 @@ add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
 ENDIF(CADICAL_H AND CADICAL_LIB)
+
+ENDIF(SCALP_H AND SCALP_LIB)
 
 ####################
 # example project
