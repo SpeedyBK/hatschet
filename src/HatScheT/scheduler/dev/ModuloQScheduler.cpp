@@ -190,6 +190,17 @@ namespace HatScheT {
 		return rot;
 	}
 
+	std::list<Vertex *> ModuloQMRT::getVerticesInModuloSlot(int m, const Resource* res) {
+		if(m >= this->mrt[res].size()) {
+			throw Exception("ModuloQMRT::getVerticesInModuloSlot: invalid modulo slot requested");
+		}
+		list<Vertex *> l;
+		for(auto v : this->mrt[res][m]) {
+			if(v != nullptr) l.emplace_back(v);
+		}
+		return l;
+	}
+
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																		 std::list<std::string> solverWishlist) :

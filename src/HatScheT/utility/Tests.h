@@ -137,10 +137,14 @@ public:
    * @brief test functionality of (rational II) ModuloQScheduler
    */
   static bool rationalIIModuloQTest();
-  /*!
-   * @brief test functionality of (rational II) SCCQScheduler
-   */
-  static bool rationalIISCCQTest();
+	/*!
+	 * @brief test functionality of (rational II) SCCQScheduler
+	 */
+	static bool rationalIISCCQTest();
+	/*!
+	 * @brief test functionality of (rational II) ModuloSDC scheduler
+	 */
+	static bool rationalIIModuloSDCTest();
   /*!
    * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
    */

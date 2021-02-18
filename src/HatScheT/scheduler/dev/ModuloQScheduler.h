@@ -51,6 +51,12 @@ namespace HatScheT {
 		 */
 		bool removeVertex(Vertex* v);
 		/*!
+		 * @param m modulo slot
+		 * @param res resource
+		 * @return a list of vertices in modulo slot m
+		 */
+		std::list<Vertex*> getVerticesInModuloSlot(int m, const Resource* res);
+		/*!
 		 * print contents of MRT
 		 */
 		void print() const;

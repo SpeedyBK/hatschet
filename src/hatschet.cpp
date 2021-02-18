@@ -57,6 +57,7 @@
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <HatScheT/scheduler/dev/UniformRationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
 #include <HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
@@ -153,7 +154,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -288,9 +289,12 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "modulosdc") {
           schedulerSelection = MODULOSDC;
         }
-        else if(schedulerSelectionStr == "modulosdcfiege") {
-          schedulerSelection = MODULOSDCFIEGE;
-        }
+				else if(schedulerSelectionStr == "modulosdcfiege") {
+					schedulerSelection = MODULOSDCFIEGE;
+				}
+				else if(schedulerSelectionStr == "rationaliimodulosdc") {
+					schedulerSelection = RATIONALIIMODULOSDC;
+				}
         else if(schedulerSelectionStr == "rationalii") {
           schedulerSelection = RATIONALII;
         }
@@ -327,7 +331,8 @@ int main(int argc, char *args[]) {
         if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
         if(str=="RWRS" && HatScheT::Tests::readWriteReadScheduleTest()==false) exit(-1);
         if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
-        if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
+				if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
+				if(str=="RATIONALIIMODULOSDC" && HatScheT::Tests::rationalIIModuloSDCTest()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
@@ -591,14 +596,22 @@ int main(int argc, char *args[]) {
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::ModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
-        case MODULOSDCFIEGE:
-          isModuloScheduler=true;
-          scheduler = new HatScheT::ModSDC(g,rm,solverWishList);
-          if(timeout>0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(timeout);
-          if(maxLatency > 0) ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(maxLatency);
-          ((HatScheT::ModSDC*) scheduler)->setThreads(threads);
-          ((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
-          break;
+				case MODULOSDCFIEGE:
+					isModuloScheduler=true;
+					scheduler = new HatScheT::ModSDC(g,rm,solverWishList);
+					if(timeout>0) ((HatScheT::ModSDC*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::ModSDC*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					((HatScheT::ModSDC*) scheduler)->setThreads(threads);
+					((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
+					break;
+				case RATIONALIIMODULOSDC:
+					isModuloScheduler=true;
+					scheduler = new HatScheT::RationalIIModuloSDCScheduler(g,rm,solverWishList);
+					if(timeout>0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setThreads(threads);
+					((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
+					break;
         case RATIONALII:
           isRationalIIScheduler=true;
           scheduler = new HatScheT::RationalIIScheduler(g,rm,solverWishList);

@@ -183,6 +183,7 @@ src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.h
+src/HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
@@ -234,6 +235,7 @@ src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
 src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.cpp
+src/HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.cpp
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
