@@ -8,7 +8,6 @@
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
-#include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 
 
 namespace HatScheT
@@ -242,8 +241,8 @@ namespace HatScheT
 		this->resetContainer();
 
 		//init latency sequence, init intervals, deltaMin containers
-		this->initiationIntervals = ModuloQScheduler::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
-		this->latencySequence = ModuloQScheduler::getLatencySequenceFromInitiationIntervals(this->initiationIntervals,this->modulo);
+		this->initiationIntervals = RationalIISchedulerLayer::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
+		this->latencySequence = RationalIISchedulerLayer::getLatencySequenceFromInitiationIntervals(this->initiationIntervals,this->modulo);
 		this->calcDeltaMins();
 
 		//set up new variables and constraints

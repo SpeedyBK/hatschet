@@ -152,6 +152,23 @@ namespace HatScheT {
 		getRationalIIQueue(int sMinII, int mMinII, int integerII, int sMax, int maxListSize = -1);
 
 		/*!
+		 * calculates initiation interval sequence, which is as uniformly distributed as possible
+		 * @param samples
+		 * @param modulo
+		 * @param quiet
+		 * @return
+		 */
+		static std::vector<int> getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet);
+
+		/*!
+		 * compute intervals between samples for the initiation intervals sequence
+		 * @param initIntervals
+		 * @param M modulo
+		 * @return
+		 */
+		static std::vector<int> getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M);
+
+		/*!
 		 *
 		 * @return if the found schedule is valid
 		 */

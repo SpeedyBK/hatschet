@@ -9,7 +9,6 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/Verifier.h>
-#include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 
 
 namespace HatScheT

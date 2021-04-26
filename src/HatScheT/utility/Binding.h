@@ -13,6 +13,29 @@ namespace HatScheT {
 	class Binding {
 	public:
 		/*!
+		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
+		 * usable for rational IIs
+		 * @param g graph
+		 * @param rm resource model
+		 * @param schedule schedule container
+		 * @param binding binding container
+		 * @param M cycle length
+		 * @param S number of samples
+		 * @param quiet suppress debug messages if true
+		 * @return
+		 */
+		static int countTotalLifetimeRegisters(Graph* g, ResourceModel* rm, std::vector<std::map<Vertex*, int>> schedule, std::vector<std::map<Vertex*, int>> binding, int M, int S, bool quiet=true);
+		/*!
+		 * @brief same as above but for integer IIs
+		 * @param g
+		 * @param rm
+		 * @param schedule
+		 * @param binding
+		 * @param II
+		 * @return
+		 */
+		static int countTotalLifetimeRegisters(Graph* g, ResourceModel* rm, std::map<Vertex*, int> schedule, std::map<Vertex*, int> binding, int II, bool quiet=true);
+		/*!
 		 * @brief create simple binding that just assignes resources as vertices appear in the schedule
 		 * @param sched
 		 * @param rm

@@ -190,6 +190,17 @@ namespace HatScheT {
 		return rot;
 	}
 
+	std::list<Vertex *> ModuloQMRT::getVerticesInModuloSlot(int m, const Resource* res) {
+		if(m >= this->mrt[res].size()) {
+			throw Exception("ModuloQMRT::getVerticesInModuloSlot: invalid modulo slot requested");
+		}
+		list<Vertex *> l;
+		for(auto v : this->mrt[res][m]) {
+			if(v != nullptr) l.emplace_back(v);
+		}
+		return l;
+	}
+
 
 	ModuloQScheduler::ModuloQScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
 																		 std::list<std::string> solverWishlist) :
@@ -486,15 +497,6 @@ namespace HatScheT {
 		return (stat == ScaLP::status::OPTIMAL) or (stat == ScaLP::status::FEASIBLE) or (stat == ScaLP::status::TIMEOUT_FEASIBLE);
 	}
 
-	std::vector<int> ModuloQScheduler::getLatencySequenceFromInitiationIntervals(std::vector<int> &initIntervals, int M) {
-		std::vector<int> latSeq;
-		for(unsigned int i=0; i<initIntervals.size()-1; ++i) {
-			latSeq.emplace_back(initIntervals[i + 1] - initIntervals[i]);
-		}
-		latSeq.emplace_back(M - initIntervals.back());
-		return latSeq;
-	}
-
 	std::map<Resource*,std::vector<int>> ModuloQScheduler::getMRTShape() const {
 		std::map<Resource*,std::vector<int>> shape;
 		for(auto res : this->resourceModel.Resources()) {
@@ -514,78 +516,7 @@ namespace HatScheT {
 			return;
 		}
 
-		this->initiationIntervals = ModuloQScheduler::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
-	}
-
-	std::vector<int> ModuloQScheduler::getOptimalInitiationIntervalSequence(int samples, int modulo, bool quiet) {
-		std::vector<int> initIntervalTemp = {};
-		auto lowerII = int(floor(double(modulo)/double(samples)));
-		auto upperII = int(ceil(double(modulo)/double(samples)));
-
-		auto noLowerIIs = (upperII * samples) - modulo;
-		auto noUpperIIs = modulo - (lowerII * samples);
-		if(noLowerIIs + noUpperIIs != samples) {
-			std::cout << "number of lower IIs: " << noLowerIIs << std::endl;
-			std::cout << "number of upper IIs: " << noUpperIIs << std::endl;
-			std::cout << "#samples: " << samples << std::endl;
-			std::cout << noLowerIIs << " + " << noUpperIIs << " != " << samples << std::endl;
-			throw HatScheT::Exception("Something went wrong while calculating optimal latency sequence - that should never happen");
-		}
-		bool lowerDom = false;
-		auto maxNo = noUpperIIs;
-		auto minNo = noLowerIIs;
-		if(noLowerIIs>=noUpperIIs) {
-			lowerDom = true;
-			maxNo = noLowerIIs;
-			minNo = noUpperIIs;
-		}
-
-		int errAccumulator = 0;
-		int latencyCounter = 0;
-		if(lowerDom) latencyCounter -= lowerII;
-		else latencyCounter -= upperII;
-
-		if(!quiet) {
-			std::cout << "  Lower II: " << lowerII << std::endl;
-			std::cout << "  Upper II: " << upperII << std::endl;
-			std::cout << "  number of lower IIs: " << noLowerIIs << std::endl;
-			std::cout << "  number of upper IIs: " << noUpperIIs << std::endl;
-			std::cout << "  dominance of lower IIs: " << lowerDom << std::endl;
-		}
-
-		for(int i=0; i<maxNo; ++i) {
-			if(lowerDom) {
-				latencyCounter += lowerII;
-			}
-			else {
-				latencyCounter += upperII;
-			}
-			initIntervalTemp.emplace_back(latencyCounter);
-			errAccumulator += minNo;
-			if(!quiet) {
-				std::cout << "    errAccumulator: " << errAccumulator << std::endl;
-			}
-			if(errAccumulator >= maxNo) {
-				errAccumulator -= maxNo;
-				if(lowerDom) {
-					latencyCounter += upperII;
-				}
-				else {
-					latencyCounter += lowerII;
-				}
-				initIntervalTemp.emplace_back(latencyCounter);
-			}
-		}
-
-		if(!quiet) {
-			std::cout << "IIs: < ";
-			for(auto II : initIntervalTemp) {
-				std::cout << II << " ";
-			}
-			std::cout << ">" << std::endl;
-		}
-
-		return initIntervalTemp;
+		this->initiationIntervals = RationalIISchedulerLayer::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
 	}
 
 	void ModuloQScheduler::scheduleIteration() {
