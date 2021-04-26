@@ -314,7 +314,7 @@ void HatScheT::SDCSolver::add_Constraint(SDCConstraint constr) {
 }
 
 /*!
-  * Declade:
+  * Declare:
   * - C : Constraint to be added to the system
   * - unProcessed : a set of constraints
   * 1.  if (C is in unProcessed) then

@@ -1686,21 +1686,21 @@ bool Tests::compareModuloSchedulerTest() {
       insertionTime += latencySequence[i];
     }
 
-    UniformRationalIIScheduler u(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
-    u.setQuiet(false);
-    u.setSolverTimeout(1);
-    u.schedule();
+    UniformRationalIIScheduler u2(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+    u2.setQuiet(false);
+    u2.setSolverTimeout(1);
+    u2.schedule();
 
     std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler finished scheduling - resulting control steps:" << std::endl;
-    startTimesVector = u.getStartTimeVector();
-    latencySequence = u.getLatencySequence();
+    startTimesVector = u2.getStartTimeVector();
+    latencySequence = u2.getLatencySequence();
 
-    valid = u.getScheduleValid();
+    valid = u2.getScheduleValid();
     if(!valid) {
       std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler discovered invalid rational-II modulo schedule found" << std::endl;
       return false;
     }
-    auto insertionTime = 0;
+    insertionTime = 0;
     for(unsigned int i=0; i<latencySequence.size(); ++i) {
       auto startTimes = startTimesVector[i];
       std::cout << "Tests::tcadExampleTest: Uniform rational-II scheduler - start times for insertion time=" << insertionTime << std::endl;
