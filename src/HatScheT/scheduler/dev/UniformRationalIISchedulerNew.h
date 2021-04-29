@@ -13,6 +13,10 @@
 #include <vector>
 
 namespace HatScheT {
+	/*!
+	 * This is an improved version of the UniformRationalIIScheduler
+	 * which uses less variables for the same problem formulation
+	 */
 	class UniformRationalIISchedulerNew : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!

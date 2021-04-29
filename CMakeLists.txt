@@ -187,6 +187,7 @@ src/HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
+src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
 src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/utility/Exception.h
@@ -236,6 +237,7 @@ src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.cpp
 src/HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.cpp
+src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp

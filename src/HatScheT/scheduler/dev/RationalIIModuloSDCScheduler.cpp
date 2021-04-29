@@ -59,16 +59,7 @@ namespace HatScheT {
 				<< std::endl;
 		}
 		this->mrt.setResourceModelAndII(this->resourceModel, this->modulo);
-		for (auto res : this->resourceModel.Resources()) {
-			if(!this->quiet) {
-				std::cout << "RationalIIModuloSDCScheduler::scheduleIteration: initializing MRT for resource '"
-					<< res->getName() << "'" << std::endl;
-			}
-			if(res->isUnlimited()) continue;
-			for (auto m = 0; m < this->modulo; ++m) {
-				this->mrt.specifyColumnHeight(res, m, res->getLimit());
-			}
-		}
+		this->setMRTShape();
 
 		// LINE 1 - initial schedule
 		if(!this->quiet) {
@@ -492,32 +483,29 @@ namespace HatScheT {
 	}
 
 	bool RationalIIModuloSDCScheduler::hasResourceConflict(Vertex *I, int t) {
-		for (auto i : this->initiationIntervals) {
-			bool valid = this->mrt.insertVertex(I, (t + i) % this->modulo);
-			if (!valid) {
-				this->mrt.removeVertex(I);
-				if(!this->quiet) {
-					std::cout << "RationalIIModuloSDCScheduler::hasResourceConflict: detected resource conflict scheduling '"
-						<< I->getName() << "' in time " << t << "!" << std::endl;
-					this->mrt.print();
-				}
-				return true;
-			}
-		}
+		bool valid = this->mrt.insertVertex(I, t % this->modulo);
 		this->mrt.removeVertex(I);
-		if(!this->quiet) {
-			std::cout << "RationalIIModuloSDCScheduler::hasResourceConflict: detected NO resource conflict scheduling '"
-								<< I->getName() << "' in time " << t << "!" << std::endl;
-			//this->mrt.print();
+		if (!valid) {
+			if(!this->quiet) {
+				std::cout << "RationalIIModuloSDCScheduler::hasResourceConflict: detected resource conflict scheduling '"
+					<< I->getName() << "' in time " << t << "!" << std::endl;
+				this->mrt.print();
+			}
+			return true;
 		}
-		return false;
+		else {
+			if(!this->quiet) {
+				std::cout << "RationalIIModuloSDCScheduler::hasResourceConflict: detected NO resource conflict scheduling '"
+									<< I->getName() << "' in time " << t << "!" << std::endl;
+			}
+			return false;
+		}
 	}
 
 	void RationalIIModuloSDCScheduler::scheduleInstruction(Vertex *I, int t) {
 		this->additionalConstraints[I] = new ScaLP::Constraint(this->tVariables.at(I) == t);
-		for (auto i : this->initiationIntervals) {
-			this->mrt.insertVertex(I, (t + i) % this->modulo);
-		}
+		this->mrt.insertVertex(I, t % this->modulo);
+
 		this->prevSched[I] = t;
 		if(!this->quiet) {
 			std::cout << "RationalIIModuloSDCScheduler::scheduleInstruction: MRT after scheduling '" << I->getName()
@@ -673,25 +661,7 @@ namespace HatScheT {
 	}
 
 	std::list<Vertex *> RationalIIModuloSDCScheduler::getResourceConflicts(Vertex *I, int evictTime) {
-		std::list<Vertex*> l;
-		for(auto i : this->initiationIntervals) {
-			auto vertices = this->mrt.getVerticesInModuloSlot((evictTime+i) % this->modulo,this->resourceModel.getResource(I));
-			for(auto v : vertices) {
-				// check if it's already in the list
-				bool alreadyIn = false;
-				for(auto it : l) {
-					if(it == v) {
-						alreadyIn = true;
-						break;
-					}
-				}
-				// put into it if not
-				if(!alreadyIn) {
-					l.emplace_back(v);
-				}
-			}
-		}
-		return l;
+		return this->mrt.getVerticesInModuloSlot(evictTime%this->modulo,this->resourceModel.getResource(I));
 	}
 
 	void RationalIIModuloSDCScheduler::unscheduleInstruction(Vertex *evictInst) {
@@ -724,6 +694,25 @@ namespace HatScheT {
 																																		 int edgeDelay, int edgeDistance) {
 		return ((newStartTime_i + this->resourceModel.getResource(i)->getLatency() + edgeDelay - newStartTime_j) >
 						(this->deltaMins[edgeDistance]));
+	}
+
+	void RationalIIModuloSDCScheduler::setMRTShape() {
+		for (auto res : this->resourceModel.Resources()) {
+			if(!this->quiet) {
+				std::cout << "RationalIIModuloSDCScheduler::scheduleIteration: initializing MRT for resource '"
+									<< res->getName() << "'" << std::endl;
+			}
+			if(res->isUnlimited()) continue;
+			for (auto m = 0; m < this->modulo; ++m) {
+				auto numVertices = this->resourceModel.getVerticesOfResource(res).size();
+				this->mrt.specifyColumnHeight(res, m, hFunction(numVertices, this->modulo, m));
+			}
+		}
+	}
+
+	int RationalIIModuloSDCScheduler::hFunction(double n, double M, int tau) {
+		if(tau == 0) return (int)ceil(n/M);
+		else return hFunction(n - ceil(n / M), M - 1, tau - 1);
 	}
 
 }

@@ -56,6 +56,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
+#include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -2117,6 +2118,7 @@ namespace HatScheT {
 			HatScheT::ResourceModel rm;
 			HatScheT::Graph g;
 
+			/*
 			auto &load = rm.makeResource("load", 2, 1, 1);
 			auto &add = rm.makeResource("add", -1, 0, 1);
 
@@ -2139,8 +2141,9 @@ namespace HatScheT {
 			rm.registerVertex(&b, &load);
 			rm.registerVertex(&c, &add);
 			rm.registerVertex(&d, &load);
+			 */
 
-			/*
+
 			auto &red = rm.makeResource("red", 5, 1, 1);
 
 			// non-critical resource (#vertices=7, limit=5) => resMinII = 7/5 = 1.4
@@ -2169,7 +2172,7 @@ namespace HatScheT {
 			g.createEdge(r6, r4, 0);
 			g.createEdge(r4, r2, 2);
 			g.createEdge(r6, r5, 2);
-			 */
+
 
 			/*
 			auto &r = rm.makeResource("r", 2, 2, 1);
@@ -2199,6 +2202,51 @@ namespace HatScheT {
 
 			return true;
 		}
+	}
+
+	bool Tests::rationalIICombinedSchedulerTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::rationalIICombinedSchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+		return false;
+#else
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		HatScheT::XMLResourceReader readerRes(&rm);
+
+		string resStr = "benchmarks/origamiRatII/mat_inv/RM78.xml";
+		string graphStr = "benchmarks/origamiRatII/mat_inv/mat_inv.graphml";
+		readerRes.readResourceModel(resStr.c_str());
+
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		HatScheT::CombinedRationalIIScheduler comb{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		comb.setSolverQuiet(true);
+		comb.setQuiet(false);
+		comb.setSolverTimeout(300);
+		comb.schedule();
+
+		HatScheT::UniformRationalIISchedulerNew uni{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		uni.setSolverQuiet(true);
+		uni.setQuiet(false);
+		uni.setSolverTimeout(300);
+		uni.schedule();
+
+		// compare results
+		if(comb.getScheduleFound())
+			std::cout << "Combined scheduler found solution with latency=" << comb.getScheduleLength() << std::endl;
+		else
+			std::cout << "Combined scheduler did not find solution" << std::endl;
+		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec" << std::endl;
+
+		if(uni.getScheduleFound())
+			std::cout << "Optimal uniform scheduler found solution with latency=" << uni.getScheduleLength() << std::endl;
+		else
+			std::cout << "Optimal uniform scheduler did not find solution" << std::endl;
+		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec" << std::endl;
+
+		return true;
+#endif
 	}
 }
 

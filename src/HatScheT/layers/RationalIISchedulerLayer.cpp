@@ -40,6 +40,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->maxRuns = 1;
 	this->minRatIIFound = false;
 	this->scheduleValid = false;
+	this->verifySolution = true;
 
 	this->computeMinII(&this->g, &this->resourceModel);
 	this->integerMinII = (int)ceil(this->minII);
@@ -292,6 +293,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 				this->s_found = this->samples;
 				this->II = (double)(this->modulo) / (double)(this->samples);
 				this->minRatIIFound = this->II == this->minII;
+				if(!this->verifySolution) break;
 				this->scheduleValid = this->verifySchedule();
 				if(!this->scheduleValid) {
 					std::cout << "RationalIISchedulerLayer::schedule: Scheduler found invalid schedule!" << std::endl;
@@ -444,6 +446,10 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			this->ratIIbindings = Binding::getSimpleRationalIIBinding(this->startTimesVector,&this->resourceModel,this->modulo,this->samples);
 		}
 		return this->ratIIbindings;
+	}
+
+	void RationalIISchedulerLayer::disableVerifier() {
+		this->verifySolution = false;
 	}
 
 }

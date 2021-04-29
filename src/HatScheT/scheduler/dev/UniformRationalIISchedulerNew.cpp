@@ -128,17 +128,33 @@ namespace HatScheT
 	void UniformRationalIISchedulerNew::fillTContainer() {
 		// create one time variable for each vertex in the graph
 		for(auto &v : this->g.Vertices()) {
-			auto var = ScaLP::newIntegerVariable(v->getName());
-			this->tVariables[v] = var;
-			this->solver->addConstraint(var>=0);
+			// check if initial solution was given and act accordingly
+			if(this->initialSolutionRatII.empty()) {
+				auto var = ScaLP::newIntegerVariable(v->getName());
+				this->tVariables[v] = var;
+				this->solver->addConstraint(var>=0);
+			}
+			else {
+				auto initVal = this->initialSolutionRatII[0][v];
+				auto var = ScaLP::newIntegerVariable(v->getName(),0,ScaLP::INF(),initVal);
+				this->tVariables[v] = var;
+			}
 		}
 	}
 
 	void UniformRationalIISchedulerNew::fillBContainer() {
 		for(auto &v : this->g.Vertices()) {
 			for(auto m=0; m<this->modulo; ++m) {
-				auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m));
-				this->bVariables[v].emplace_back(var);
+				// check if initial solution was given and act accordingly
+				if(this->initialSolutionRatII.empty()) {
+					auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m));
+					this->bVariables[v].emplace_back(var);
+				}
+				else {
+					bool initVal = (this->initialSolutionRatII[0][v] % this->modulo == 0);
+					auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m),0,1,initVal);
+					this->bVariables[v].emplace_back(var);
+				}
 			}
 		}
 	}
@@ -153,9 +169,16 @@ namespace HatScheT
 
 	void UniformRationalIISchedulerNew::setModuloConstraints() {
 		for(auto &v : this->g.Vertices()) {
-			// create remainder variable k_v
-			ScaLP::Variable k_v = ScaLP::newIntegerVariable("k_"+v->getName());
-			this->solver->addConstraint(k_v >= 0);
+			ScaLP::Variable k_v = nullptr;
+			// create remainder variable k_v and check if initial solution was given and act accordingly
+			if(this->initialSolutionRatII.empty()) {
+				k_v = ScaLP::newIntegerVariable("k_"+v->getName());
+				this->solver->addConstraint(k_v >= 0);
+			}
+			else {
+				auto initVal = floor((double)this->initialSolutionRatII[0][v]/(double)this->modulo);
+				k_v = ScaLP::newIntegerVariable("k_"+v->getName(),0,ScaLP::INF(),initVal);
+			}
 
 			// create constraint
 			ScaLP::Term bSum;

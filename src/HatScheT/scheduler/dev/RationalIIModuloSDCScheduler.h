@@ -27,6 +27,14 @@ namespace HatScheT {
 		 * destructor
 		 */
 		~RationalIIModuloSDCScheduler() override;
+		/*!
+		 * defines non-rectangular MRT height
+		 * @param n number of vertices of that resource
+		 * @param M cycle length
+		 * @param tau modulo slot
+		 * @return mrt height in modulo slot tau
+		 */
+		static int hFunction(double n, double M, int tau);
 
 	protected:
 		/*!
@@ -62,6 +70,10 @@ namespace HatScheT {
 		void resetContainer() override;
 
 	private:
+		/*!
+		 * define non-rectangular MRT shape for uniform scheduling
+		 */
+		void setMRTShape();
 		/*!
      * @param i start of an edge (j is the destination, that doesn't have to be passed)
      * @param newStartTime_i new start time of instruction i
