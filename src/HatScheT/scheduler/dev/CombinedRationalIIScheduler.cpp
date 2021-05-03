@@ -93,12 +93,9 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 		}
 	}
 	else {
-		// handle situation in which optimal scheduler does not find solution
-		// error handling
+		// handle situation in which optimal scheduler does not find solution but heuristic scheduler does
 		if(heuristicFoundSolution and (!optimalFoundSolution)) {
-			throw HatScheT::Exception(
-				"Heuristic scheduler found solution but optimal scheduler did not - that should never happen"
-			);
+			this->stat = ScaLP::status::UNKNOWN;
 		}
 	}
 
