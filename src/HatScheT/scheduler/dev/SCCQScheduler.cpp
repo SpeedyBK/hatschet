@@ -74,6 +74,8 @@ namespace HatScheT {
 		mq.setModulo(this->modulo);
 		mq.setMaxLatencyConstraint(this->getMaxLatencyConstraint());
 		mq.schedule();
+		if(mq.getScaLPStatus() == ScaLP::status::INFEASIBLE_OR_UNBOUND or mq.getScaLPStatus() == ScaLP::status::INFEASIBLE)
+			this->stat = mq.getScaLPStatus();
 
 		if(!tempG.isEmpty()) {
 			// for a graph without cycles, nothing has to be scheduled

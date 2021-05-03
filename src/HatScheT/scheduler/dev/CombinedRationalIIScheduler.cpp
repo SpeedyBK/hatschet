@@ -25,6 +25,8 @@ HatScheT::CombinedRationalIIScheduler::CombinedRationalIIScheduler(Graph &g, Res
 }
 
 void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
+	// reset II
+	this->II = -1;
 
 	// clear container
 	this->initialSolutionRatII.clear();
@@ -38,38 +40,65 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	sccq.setModulo(this->modulo);
 	sccq.schedule();
 
+	// track time
 	double heuristicTime = sccq.getSolvingTime();
+	long ilpTimeoutSec = this->solverTimeout - (long)heuristicTime;
+	if(ilpTimeoutSec <= 0) ilpTimeoutSec = 1;
 
 	// set up optimal algorithm
 	UniformRationalIISchedulerNew opt(this->g,this->resourceModel,this->solverWishlist);
 	opt.setMaxRuns(1);
 	opt.disableVerifier();
-	opt.setSolverTimeout(this->solverTimeout - heuristicTime);
+	opt.setSolverTimeout(ilpTimeoutSec);
 	opt.setSamples(this->samples);
 	opt.setModulo(this->modulo);
 
-	// use heuristic solution as start solution for optimal algorithm
+	// track if heuristic scheduler found solution
+	bool heuristicFoundSolution = sccq.getScheduleFound();
+	this->stat = opt.getScaLPStatus();
+
 	if(sccq.getScheduleFound()) {
+		// heuristic scheduler found solution, yay! :)
+		this->scheduleFound = true;
+		this->startTimesVector = sccq.getStartTimeVector();
 		opt.initialSolutionRatII = sccq.getStartTimeVector();
 		if(!this->quiet) {
 			std::cout << "Heuristic scheduler found solution for II=" << sccq.getM_Found() << "/" << sccq.getS_Found()
-			  << " with latency=" << sccq.getScheduleLength() << " in " << heuristicTime << " sec" << std::endl;
+								<< " with latency=" << sccq.getScheduleLength() << " in " << heuristicTime << " sec" << std::endl;
 		}
+	}
+	else {
+		// handle situation in which heuristic scheduler could not find solution :(
+		this->scheduleFound = false;
 	}
 
 	// start optimal algorithm
 	opt.schedule();
 
-	double optimalTime = opt.getSolvingTime();
+	// track if optimal scheduler found solution
+	bool optimalFoundSolution = opt.getScheduleFound();
+	this->stat = opt.getScaLPStatus();
 
-	// fill solution structure if schedule was found
+	// track time
+	double optimalTime = opt.getSolvingTime();
+	this->solvingTime = heuristicTime + optimalTime;
+
 	if(opt.getScheduleFound()) {
+		// fill solution structure if schedule was found
 		this->startTimesVector = opt.getStartTimeVector();
-		this->stat = opt.getScaLPStatus();
 		if(!this->quiet) {
 			std::cout << "Optimal scheduler found solution for II=" << opt.getM_Found() << "/" << opt.getS_Found()
 								<< " with latency=" << opt.getScheduleLength() << " and ScaLP status " << this->stat
-								<< " in " << optimalTime << " sec" << std::endl;
+								<< " in additional " << optimalTime << " sec (total: " << this->solvingTime << " sec)" << std::endl;
+		}
+	}
+	else {
+		// handle situation in which optimal scheduler does not find solution
+		// error handling
+		if(heuristicFoundSolution and (!optimalFoundSolution)) {
+			throw HatScheT::Exception(
+				"Heuristic scheduler found solution but optimal scheduler did not - that should never happen"
+			);
 		}
 	}
 
