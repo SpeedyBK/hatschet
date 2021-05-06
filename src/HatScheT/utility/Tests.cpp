@@ -2223,13 +2223,13 @@ namespace HatScheT {
 		HatScheT::CombinedRationalIIScheduler comb{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
 		comb.setSolverQuiet(true);
 		comb.setQuiet(false);
-		comb.setSolverTimeout(300);
+		comb.setSolverTimeout(10);
 		comb.schedule();
 
 		HatScheT::UniformRationalIISchedulerNew uni{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
 		uni.setSolverQuiet(true);
 		uni.setQuiet(false);
-		uni.setSolverTimeout(300);
+		uni.setSolverTimeout(10);
 		uni.schedule();
 
 		// compare results

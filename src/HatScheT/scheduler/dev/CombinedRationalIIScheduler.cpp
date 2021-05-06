@@ -98,10 +98,16 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 		}
 	}
 	else {
+		if(!this->quiet) {
+			std::cout << "Optimal timed out with ScaLP status " << this->stat << std::endl;
+		}
 		// handle situation in which optimal scheduler does not find solution but heuristic scheduler does
 		if(heuristicFoundSolution and (!optimalFoundSolution)) {
 			// heuristic found a solution but ILP solver could not prove yet that it is indeed feasible/optimal
 			this->stat = ScaLP::status::UNKNOWN;
+			if(!this->quiet) {
+				std::cout << "Using solution from heuristic scheduler with status " << this->stat << std::endl;
+			}
 		}
 	}
 }
