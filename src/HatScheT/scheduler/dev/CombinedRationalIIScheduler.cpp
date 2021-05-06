@@ -28,6 +28,9 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	// reset II
 	this->II = -1;
 
+	// set to false but set to true later if any scheduler found solution
+	this->scheduleFound = false;
+
 	// clear container
 	this->initialSolutionRatII.clear();
 
@@ -69,7 +72,7 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	}
 	else {
 		// handle situation in which heuristic scheduler could not find solution :(
-		this->scheduleFound = false;
+		// well, there's not much to do I think...
 	}
 
 	// start optimal algorithm
@@ -84,7 +87,9 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	this->solvingTime = heuristicTime + optimalTime;
 
 	if(opt.getScheduleFound()) {
-		// fill solution structure if schedule was found
+		// exact scheduler found solution, yay! :)
+		this->scheduleFound = true;
+		// update solution structure if schedule was found
 		this->startTimesVector = opt.getStartTimeVector();
 		if(!this->quiet) {
 			std::cout << "Optimal scheduler found solution for II=" << opt.getM_Found() << "/" << opt.getS_Found()
@@ -95,10 +100,8 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	else {
 		// handle situation in which optimal scheduler does not find solution but heuristic scheduler does
 		if(heuristicFoundSolution and (!optimalFoundSolution)) {
+			// heuristic found a solution but ILP solver could not prove yet that it is indeed feasible/optimal
 			this->stat = ScaLP::status::UNKNOWN;
 		}
 	}
-
-	this->solvingTime = heuristicTime + optimalTime;
-	this->scheduleFound = opt.getScheduleFound();
 }
