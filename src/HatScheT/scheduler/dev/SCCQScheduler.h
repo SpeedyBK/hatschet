@@ -86,7 +86,7 @@ namespace HatScheT {
 		 * @param sccs
 		 * @param sccSchedule
 		 */
-		void determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
+		bool determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule);
 		/*!
 		 * perform relative schedule on SCCs
 		 * @param sccs

@@ -68,8 +68,7 @@ namespace HatScheT {
 		if(!this->quiet) std::cout << "START MODULO Q SCHEDULER" << std::endl;
 		auto mq = ModuloQScheduler(tempG,rm,this->solverWishlist);
 		mq.setQuiet(this->quiet);
-		auto timeout = this->solver->timeout;
-		if(timeout>0) mq.setSolverTimeout(timeout);
+		mq.setSolverTimeout(this->solverTimeout);
 		mq.setSamples(this->samples);
 		mq.setModulo(this->modulo);
 		mq.setMaxLatencyConstraint(this->getMaxLatencyConstraint());
@@ -148,10 +147,21 @@ namespace HatScheT {
 		}
 	}
 
-	void SCCQScheduler::determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule) {
+	bool SCCQScheduler::determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule) {
+
+		// track time
+		this->end = clock();
+		std::cout << "SCC solver needed " << this->solvingTime << " sec - determining start times now" << std::endl;
+
 		auto queueG = this->getScheduleQueue(sccs,sccSchedule);
 		auto queue = queueG.first;
 		auto sccGraph = queueG.second;
+
+		if(sccGraph == nullptr) {
+			// timeout during schedule queue generation is encoded as a nullptr in the graph object
+			std::cout << "timeout during schedule queue generation after " << this->solvingTime << " sec" << std::endl;
+			return false;
+		}
 
 		if(!this->quiet) {
 			std::cout << "Determined queue for scheduling SCCs:" << std::endl;
@@ -171,6 +181,13 @@ namespace HatScheT {
 		}
 
 		for(auto sccId : queue) {
+			// track time
+			this->end = clock();
+			this->solvingTime = (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			if(this->solvingTime > this->solverTimeout) {
+				std::cout << "timeout during start time determination after " << this->solvingTime << " sec" << std::endl;
+				return false;
+			}
 			// debugging
 			if(!this->quiet) std::cout << "scheduling SCC with ID '" << sccId << "' now" << std::endl;
 			// check which SCCs are inputs to this SCC
@@ -238,6 +255,7 @@ namespace HatScheT {
 					bool scheduled = false;
 					bool limited = this->resourceModel.getResource(vertex)->getLimit()>0;
 					while(!scheduled and limited) {
+						// try scheduling vertex
 						if(!this->quiet)
 							std::cout << "Try scheduling vertex '" << vertex->getName() << "' at time slot " << offset << std::endl;
 						scheduled = this->mrt.insertVertex(vertex,offset);
@@ -379,6 +397,7 @@ namespace HatScheT {
 
 		// free memory
 		delete sccGraph;
+		return true;
 	}
 
 	std::pair<std::list<int>,Graph*> SCCQScheduler::getScheduleQueue(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule) {
@@ -389,6 +408,11 @@ namespace HatScheT {
 		}
 		// insert edges between SCCs
 		for(auto &edge : this->g.Edges()) {
+			this->end = clock();
+			this->solvingTime = ((double)(this->end - this->begin) / CLOCKS_PER_SEC);
+			if(this->solvingTime > this->solverTimeout) {
+				return {std::list<int>(),nullptr};
+			}
 			// check if edge is in one of the SCCs
 			bool foundEdge = false;
 			for(auto &scc : sccs) {
@@ -514,6 +538,8 @@ namespace HatScheT {
 
 		//timestamp
 		this->begin = clock();
+		// reset solving time
+		this->solvingTime = 0.0;
 		// find SCCs
 		KosarajuSCC k(this->g);
 		k.setQuiet(this->quiet);
@@ -534,7 +560,6 @@ namespace HatScheT {
 			this->startTimes.clear();
 			this->startTimesVector.clear();
 			this->end = clock();
-			if (this->solvingTime == -1.0) this->solvingTime = 0.0;
 			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
 			// free memory
 			for(auto scc : sccs) {
@@ -557,7 +582,13 @@ namespace HatScheT {
 		}
 
 		// determine start times based on MRT and DFG
-		this->determineStartTimes(sccs, sccSchedule);
+		bool scheduleSuccess = this->determineStartTimes(sccs, sccSchedule);
+		if(!scheduleSuccess) {
+			this->scheduleFound = false;
+			this->startTimes.clear();
+			this->startTimesVector.clear();
+			return;
+		}
 
 		// optimize start times if possible
 		this->optimizeStartTimes();

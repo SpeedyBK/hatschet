@@ -215,5 +215,11 @@ public:
 
   static bool sdcSolverTest();
 
+  /*!
+   * test getILPBasedIntIIBinding function
+   * @return
+   */
+  static bool ilpBasedIntIIBindingTest();
+
 };
 }

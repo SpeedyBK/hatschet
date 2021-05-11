@@ -54,6 +54,22 @@ namespace HatScheT {
 		static std::vector<std::map<const Vertex*,int>> getSimpleRationalIIBinding(std::vector<std::map<Vertex*, int>> sched, ResourceModel* rm, int M, int S);
 #ifdef USE_SCALP
 		/*!
+		 * @brief create an ILP-based binding for an integer-II schedule
+		 * goal: minimize mux utilization
+		 * based on 'Simultaneous FU and Register Binding Based on Network Flow Method' by Jason Cong and Junjuan Xu
+		 * THIS ASSUMES THAT EVERY OPERATION IS COMMUTATIVE (e.g. not applicable for subtractors)
+		 * THIS ALSO ASSUMES THAT REGISTERS ARE IMPLEMENTED WITH ENABLE-INPUTS AND NOT AS REGISTER-CHAINS
+		 * @param sched schedule
+		 * @param g graph
+		 * @param rm resource model
+		 * @param II initiation interval
+		 * @param sw solver wishlist
+		 * @param timeout max solving time in seconds
+		 * @return a map of vertex to FU-number
+		 */
+		static std::map<const Vertex*, int> getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+																																int II, std::list<std::string> sw = {}, int timeout=300);
+		/*!
 		* @brief create an ilp-based binding for a rational II schedule
 		* the goal is to minimize MUX and register allocation
 		* if you try to understand this: good luck, may the force be with you :-) for questions ask sittel@uni-kassel.de

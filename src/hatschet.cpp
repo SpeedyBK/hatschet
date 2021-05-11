@@ -334,6 +334,7 @@ int main(int argc, char *args[]) {
 				if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
 				if(str=="RATIONALIIMODULOSDC" && HatScheT::Tests::rationalIIModuloSDCTest()==false) exit(-1);
 				if(str=="COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest()==false) exit(-1);
+				if(str=="ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);

@@ -27,9 +27,6 @@ namespace HatScheT {
 
 	private:
 		std::list<std::string> solverWishlist;
-		clock_t start;
-		clock_t afterHeuristic;
-		clock_t afterOptimal;
 	};
 }
 

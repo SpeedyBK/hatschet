@@ -2204,6 +2204,65 @@ namespace HatScheT {
 		}
 	}
 
+	bool Tests::ilpBasedIntIIBindingTest() {
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &add = rm.makeResource("add", 3, 1, 1);
+
+		// resource: #vertices=7, limit=3
+		// recurrence: latency=3, distance=2
+		Vertex &r1 = g.createVertex(1);
+		Vertex &r2 = g.createVertex(2);
+		Vertex &r3 = g.createVertex(3);
+		Vertex &r4 = g.createVertex(4);
+		Vertex &r5 = g.createVertex(5);
+		Vertex &r6 = g.createVertex(6);
+		Vertex &r7 = g.createVertex(7);
+		rm.registerVertex(&r1, &add);
+		rm.registerVertex(&r2, &add);
+		rm.registerVertex(&r3, &add);
+		rm.registerVertex(&r4, &add);
+		rm.registerVertex(&r5, &add);
+		rm.registerVertex(&r6, &add);
+		rm.registerVertex(&r7, &add);
+		g.createEdge(r1, r5, 0);
+		g.createEdge(r2, r5, 0);
+		g.createEdge(r3, r6, 0);
+		g.createEdge(r4, r6, 0);
+		g.createEdge(r5, r7, 0);
+		g.createEdge(r6, r7, 0);
+		g.createEdge(r7, r1, 2);
+		g.createEdge(r7, r4, 2);
+		g.createEdge(r2, r7, 0);
+		g.createEdge(r3, r7, 0);
+
+		std::map<Vertex*, int> sched;
+		int II = 3;
+		sched[&r1] = 0;
+		sched[&r2] = 1;
+		sched[&r3] = 0;
+		sched[&r4] = 0;
+		sched[&r5] = 4;
+		sched[&r6] = 1;
+		sched[&r7] = 5;
+
+		/* We actually do not need to schedule every time.
+		HatScheT::EichenbergerDavidson97Scheduler ed97{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		ed97.setSolverQuiet(true);
+		ed97.setQuiet(false);
+		ed97.setSolverTimeout(300);
+		ed97.schedule();
+
+		if(!ed97.getScheduleFound()) return false;
+		sched = ed97.getSchedule();
+		II = ed97.getII();
+		 */
+
+		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+		return true;
+	}
+
 	bool Tests::rationalIICombinedSchedulerTest() {
 #ifndef USE_XERCESC
 		cout << "Tests::rationalIICombinedSchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
@@ -2220,30 +2279,44 @@ namespace HatScheT {
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
 		readerGraph.readGraph(graphStr.c_str());
 
-		HatScheT::CombinedRationalIIScheduler comb{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		std::list<std::string> sw = {"Gurobi"}; // {"Gurobi", "CPLEX", "SCIP", "LPSolve"}
+
+		long timeout = 60;
+
+		HatScheT::CombinedRationalIIScheduler comb{g, rm, sw};
 		comb.setSolverQuiet(true);
+		comb.disableVerifier();
 		comb.setQuiet(false);
-		comb.setSolverTimeout(10);
+		comb.setSolverTimeout(timeout);
 		comb.schedule();
 
-		HatScheT::UniformRationalIISchedulerNew uni{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		HatScheT::UniformRationalIISchedulerNew uni{g, rm, sw};
 		uni.setSolverQuiet(true);
+		uni.disableVerifier();
 		uni.setQuiet(false);
-		uni.setSolverTimeout(10);
+		uni.setSolverTimeout(timeout);
 		uni.schedule();
 
 		// compare results
-		if(comb.getScheduleFound())
-			std::cout << "Combined scheduler found solution with latency=" << comb.getScheduleLength() << std::endl;
-		else
+		if(comb.getScheduleFound()) {
+			std::cout << "Combined scheduler found solution with II=" << comb.getII() << " (" << comb.getM_Found() << "/"
+			<< comb.getS_Found() << ")" << " and latency=" << comb.getScheduleLength() << std::endl;
+		}
+		else {
 			std::cout << "Combined scheduler did not find solution" << std::endl;
-		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec" << std::endl;
+		}
+		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec with solver status "
+		<< comb.getScaLPStatus() << std::endl;
 
-		if(uni.getScheduleFound())
-			std::cout << "Optimal uniform scheduler found solution with latency=" << uni.getScheduleLength() << std::endl;
-		else
+		if(uni.getScheduleFound()) {
+			std::cout << "Optimal scheduler found solution with II=" << uni.getII() << " (" << uni.getM_Found() << "/"
+			<< uni.getS_Found() << ")" << " and latency=" << uni.getScheduleLength() << std::endl;
+		}
+		else {
 			std::cout << "Optimal uniform scheduler did not find solution" << std::endl;
-		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec" << std::endl;
+		}
+		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec with solver status "
+		<< uni.getScaLPStatus() << std::endl;
 
 		return true;
 #endif

@@ -460,5 +460,166 @@ namespace HatScheT {
 		return Binding::countTotalLifetimeRegisters(g,rm,{schedule},{binding},II,1,quiet);
 	}
 
+	std::map<const Vertex *, int>
+	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, list<string> sw,
+																	 int timeout) {
+		///////////////////////////////////////////////
+		// find conflicting operations and variables //
+		///////////////////////////////////////////////
+
+		// resource compatibility graph
+		Graph resourceCompatibilityGraph;
+		// create vertices
+		for(auto &v : g->Vertices()) {
+			resourceCompatibilityGraph.createVertex(v->getId());
+		}
+		// check compatibility with other vertices
+		for(auto &v : g->Vertices()) {
+			for (auto &it : sched) {
+				// source vertex: the one who comes first in the schedule
+				if (sched[v] >= it.second) continue;
+				// incompatible if resource types are different
+				if (rm->getResource(v) != rm->getResource(it.first)) continue;
+				// incompatible if modulo slots are equal
+				if (sched[v] % II == it.second % II) {
+					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because modulo slots overlap" << std::endl;
+					std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
+					std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
+					continue;
+				}
+				// create edge
+				std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are COMPATIBLE because modulo slots DO NOT overlap" << std::endl;
+				std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
+				std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
+				resourceCompatibilityGraph.createEdge(resourceCompatibilityGraph.getVertexById(v->getId()),resourceCompatibilityGraph.getVertexById(it.first->getId()));
+			}
+		}
+
+		// count minimum number of needed registers to store info
+		// (NOT IN PAPER - IN PAPER IT WAS AN INPUT TO THE ILP FORMULATION)
+		int minRegs = 0;
+		// variable compatibility graph
+		Graph variableCompatibilityGraph;
+		// create vertices
+		for(auto &v : g->Vertices()) {
+			variableCompatibilityGraph.createVertex(v->getId());
+		}
+		// check compatibility with other vertices
+		for(auto &v : g->Vertices()) {
+			// calc lifetime of v
+			int v1Lat = rm->getResource(v)->getLatency();
+			int v1LifeStart = sched[v] + v1Lat;
+			int v1LifeEnd = 0;
+			int numIncompatibilities = 0;
+			for(auto &e : g->Edges()) {
+				if(e->getVertexSrc().getId() != v->getId()) continue;
+				auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
+				if(dstStart > v1LifeEnd) v1LifeEnd = dstStart;
+			}
+			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd);
+			for(auto &it : sched) {
+				// calc lifetime of v
+				int v2Lat = rm->getResource(it.first)->getLatency();
+				int v2LifeStart = it.second + v2Lat;
+				int v2LifeEnd = 0;
+				for(auto &e : g->Edges()) {
+					if(e->getVertexSrc().getId() != it.first->getId()) continue;
+					auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
+					if(dstStart > v2LifeEnd) v2LifeEnd = dstStart;
+				}
+				bool v2Omnicompatible = (v2LifeStart == v2LifeEnd);
+				// incompatible if lifetimes overlap
+				if(!v1Omnicompatible and !v2Omnicompatible and ((v2LifeStart >= v1LifeStart and v2LifeStart <= v1LifeEnd) or (v2LifeEnd >= v1LifeStart and v2LifeEnd <= v1LifeEnd))) {
+					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because lifetimes overlap" << std::endl;
+					std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat << std::endl;
+					std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency " << v2Lat << std::endl;
+					numIncompatibilities++;
+					continue;
+				}
+				// no edge with itself
+				if(v == it.first) continue;
+				// source vertex: the one who comes first in the schedule
+				if(sched[v] > it.second) continue;
+				// create edge
+				std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are COMPATIBLE because lifetimes DO NOT overlap" << std::endl;
+				std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat << std::endl;
+				std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency " << v2Lat << std::endl;
+				variableCompatibilityGraph.createEdge(variableCompatibilityGraph.getVertexById(v->getId()),variableCompatibilityGraph.getVertexById(it.first->getId()));
+			}
+			// update minimum number of registers if necessary
+			std::cout << "Incompatibilities for vertex '" << v->getName() << "': " << numIncompatibilities << std::endl;
+			if(numIncompatibilities > minRegs) minRegs = numIncompatibilities;
+		}
+
+		std::cout << "Minimum number of needed registers = " << minRegs << std::endl;
+
+		///////////////////
+		// set up solver //
+		///////////////////
+		ScaLP::Solver s(sw);
+		if(timeout >= 0) {
+			s.timeout = timeout;
+		}
+		s.quiet = true;
+
+		//////////////////////
+		// create variables //
+		//////////////////////
+
+		// boolean variables whether vertex v_i is bound to functional unit k of resource type r (x_i_k)
+		for(auto &v : g->Vertices()) {
+			for(int i=0; i<rm->getResource(v)->getLimit(); ++i) {
+				ScaLP::newBinaryVariable("x_" + to_string(v->getId()) + "_" + to_string(i));
+			}
+		}
+
+		// boolean variables whether variable of v_i is bound to register k (y_i_k)
+		for(auto &v : g->Vertices()) {
+			for(int i=0; i<minRegs; ++i) {
+				ScaLP::newBinaryVariable("y_" + to_string(v->getId()) + "_" + to_string(i));
+			}
+		}
+
+		// boolean variables for each FU -> register connection (c_i_j)
+
+		// boolean variables for each register -> FU connection for each port of that FU
+
+		// boolean variables for each FU -> FU connection for each port of that FU (only needed for edges with lifetime=0)
+
+		// number of MUX inputs for each FU and each port
+
+		////////////////////////
+		// create constraints //
+		////////////////////////
+
+		// each operation is bound to one resource
+
+		// each variable is bound to one resource
+
+		// no operation overlaps (resource conflict graph)
+
+		// no register overlaps (variable conflict graph)
+
+		// check if there is a connection from resource instance k to register l
+
+		// check if there is a connection from register k to port p of resource instance l
+
+		// calculate number of MUX inputs per port for each FU
+
+		///////////////////////////////
+		// create objective function //
+		///////////////////////////////
+
+		// minimize total number of MUX inputs
+
+		///////////
+		// solve //
+		///////////
+		// s.solve();
+
+		std::map<const Vertex*, int> binding;
+		return binding;
+	}
+
 #endif
 }

@@ -37,20 +37,30 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	// heuristic scheduling first
 	SCCQScheduler sccq(this->g,this->resourceModel,this->solverWishlist);
 	sccq.setMaxRuns(1);
+	//sccq.setQuiet(this->quiet);
 	sccq.disableVerifier();
 	sccq.setSolverTimeout(this->solverTimeout);
 	sccq.setSamples(this->samples);
 	sccq.setModulo(this->modulo);
+
+	if(!this->quiet) {
+		std::cout << "Start heuristic scheduler with timeout = " << sccq.getSolverTimeout() << std::endl;
+	}
 	sccq.schedule();
 
 	// track time
 	double heuristicTime = sccq.getSolvingTime();
 	long ilpTimeoutSec = this->solverTimeout - (long)heuristicTime;
-	if(ilpTimeoutSec <= 0) ilpTimeoutSec = 1;
+	if(ilpTimeoutSec <= 0) ilpTimeoutSec = 1; // minimum is 1 sec; otherwise it is unlimited...
+	if(!this->quiet) {
+		std::cout << "Time for optimal solver = " << ilpTimeoutSec << " = max(1, " << this->solverTimeout << " - "
+		<< (long)heuristicTime << ")" << std::endl;
+	}
 
 	// set up optimal algorithm
 	UniformRationalIISchedulerNew opt(this->g,this->resourceModel,this->solverWishlist);
 	opt.setMaxRuns(1);
+	//sccq.setQuiet(this->quiet);
 	opt.disableVerifier();
 	opt.setSolverTimeout(ilpTimeoutSec);
 	opt.setSamples(this->samples);
@@ -58,7 +68,6 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 
 	// track if heuristic scheduler found solution
 	bool heuristicFoundSolution = sccq.getScheduleFound();
-	this->stat = opt.getScaLPStatus();
 
 	if(sccq.getScheduleFound()) {
 		// heuristic scheduler found solution, yay! :)
@@ -72,7 +81,9 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	}
 	else {
 		// handle situation in which heuristic scheduler could not find solution :(
-		// well, there's not much to do I think...
+		if(!this->quiet) {
+			std::cout << "Heuristic scheduler DID NOT find solution in " << heuristicTime << " sec" << std::endl;
+		}
 	}
 
 	// start optimal algorithm
