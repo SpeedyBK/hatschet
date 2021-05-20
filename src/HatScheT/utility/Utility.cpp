@@ -820,4 +820,9 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
   }
 
+	int Utility::hFunction(double n, double M, int tau) {
+		if(tau == 0) return (int)ceil(n/M);
+		else return hFunction(n - ceil(n / M), M - 1, tau - 1);
+	}
+
 }

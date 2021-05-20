@@ -298,6 +298,14 @@ public:
    * @return true if graph is cyclic, false if graph is acyclic.
    */
   static bool iscyclic (Graph *g);
+		/*!
+		 * defines non-rectangular MRT height
+		 * @param n number of vertices of that resource
+		 * @param M cycle length
+		 * @param tau modulo slot
+		 * @return mrt height in modulo slot tau
+		 */
+		static int hFunction(double n, double M, int tau);
 
   private:
 

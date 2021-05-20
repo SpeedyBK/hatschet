@@ -1260,7 +1260,7 @@ namespace HatScheT {
 			}
 		}
 
-		return binding;l
+		return binding;
 	}
 
 #endif
