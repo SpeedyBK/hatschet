@@ -62,6 +62,7 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	opt.setMaxRuns(1);
 	//sccq.setQuiet(this->quiet);
 	opt.disableVerifier();
+	opt.setSolverQuiet(this->getSolverQuiet());
 	opt.setSolverTimeout(ilpTimeoutSec);
 	opt.setSamples(this->samples);
 	opt.setModulo(this->modulo);

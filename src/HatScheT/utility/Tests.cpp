@@ -2208,37 +2208,36 @@ namespace HatScheT {
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
 
-		auto &add = rm.makeResource("add", 3, 1, 1);
+		auto &mem = rm.makeResource("mem", UNLIMITED, 0, 1);
+		auto &add = rm.makeResource("add", 2, 1, 1);
 
-		// resource: #vertices=7, limit=3
+		// resource: #vertices=3, limit=2
 		// recurrence: latency=3, distance=2
-		Vertex &r1 = g.createVertex(1);
-		Vertex &r2 = g.createVertex(2);
-		Vertex &r3 = g.createVertex(3);
-		Vertex &r4 = g.createVertex(4);
-		Vertex &r5 = g.createVertex(5);
-		Vertex &r6 = g.createVertex(6);
-		Vertex &r7 = g.createVertex(7);
-		rm.registerVertex(&r1, &add);
-		rm.registerVertex(&r2, &add);
-		rm.registerVertex(&r3, &add);
-		rm.registerVertex(&r4, &add);
-		rm.registerVertex(&r5, &add);
-		rm.registerVertex(&r6, &add);
-		rm.registerVertex(&r7, &add);
-		g.createEdge(r1, r5, 0);
-		g.createEdge(r2, r5, 0);
-		g.createEdge(r3, r6, 0);
-		g.createEdge(r4, r6, 0);
-		g.createEdge(r5, r7, 0);
-		g.createEdge(r6, r7, 0);
-		g.createEdge(r7, r1, 2);
-		g.createEdge(r7, r4, 2);
-		g.createEdge(r2, r7, 0);
-		g.createEdge(r3, r7, 0);
+		Vertex &mem1 = g.createVertex(1);
+		Vertex &mem2 = g.createVertex(2);
+		Vertex &mem3 = g.createVertex(3);
+		Vertex &mem4 = g.createVertex(4);
+		Vertex &add1 = g.createVertex(5);
+		Vertex &add2 = g.createVertex(6);
+		Vertex &add3 = g.createVertex(7);
+		rm.registerVertex(&mem1, &mem);
+		rm.registerVertex(&mem2, &mem);
+		rm.registerVertex(&mem3, &mem);
+		rm.registerVertex(&mem4, &mem);
+		rm.registerVertex(&add1, &add);
+		rm.registerVertex(&add2, &add);
+		rm.registerVertex(&add3, &add);
+		g.createEdge(mem1, add1, 0);
+		g.createEdge(mem2, add1, 0);
+		g.createEdge(mem3, add2, 0);
+		g.createEdge(mem4, add2, 0);
+		g.createEdge(add1, add3, 0);
+		g.createEdge(add2, add3, 0);
 
 		std::map<Vertex*, int> sched;
 		int II = 3;
+
+		/*
 		sched[&r1] = 0;
 		sched[&r2] = 1;
 		sched[&r3] = 0;
@@ -2246,8 +2245,9 @@ namespace HatScheT {
 		sched[&r5] = 4;
 		sched[&r6] = 1;
 		sched[&r7] = 5;
+		 */
 
-		/* We actually do not need to schedule every time.
+		// We actually do not need to schedule every time.
 		HatScheT::EichenbergerDavidson97Scheduler ed97{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
 		ed97.setSolverQuiet(true);
 		ed97.setQuiet(false);
@@ -2257,9 +2257,19 @@ namespace HatScheT {
 		if(!ed97.getScheduleFound()) return false;
 		sched = ed97.getSchedule();
 		II = ed97.getII();
-		 */
+
 
 		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+
+		if(bind.resourceBindings.empty()) {
+			std::cout << "Empty resource bindings detected - test failed" << std::endl;
+			return false;
+		}
+
+		for(auto it : bind.resourceBindings) {
+			std::cout << "Binding '" << it.first->getName() << "' to FU '" << it.second << "'" << std::endl;
+		}
+
 		return true;
 	}
 
@@ -2281,7 +2291,7 @@ namespace HatScheT {
 
 		std::list<std::string> sw = {"Gurobi"}; // {"Gurobi", "CPLEX", "SCIP", "LPSolve"}
 
-		long timeout = 60;
+		long timeout = 300;
 
 		HatScheT::CombinedRationalIIScheduler comb{g, rm, sw};
 		comb.setSolverQuiet(true);
@@ -2289,13 +2299,6 @@ namespace HatScheT {
 		comb.setQuiet(false);
 		comb.setSolverTimeout(timeout);
 		comb.schedule();
-
-		HatScheT::UniformRationalIISchedulerNew uni{g, rm, sw};
-		uni.setSolverQuiet(true);
-		uni.disableVerifier();
-		uni.setQuiet(false);
-		uni.setSolverTimeout(timeout);
-		uni.schedule();
 
 		// compare results
 		if(comb.getScheduleFound()) {
@@ -2308,18 +2311,94 @@ namespace HatScheT {
 		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec with solver status "
 		<< comb.getScaLPStatus() << std::endl;
 
+		HatScheT::UniformRationalIISchedulerNew uni{g, rm, sw};
+		uni.setSolverQuiet(true);
+		uni.disableVerifier();
+		uni.setQuiet(false);
+		uni.setSolverTimeout(timeout);
+		uni.schedule();
+
 		if(uni.getScheduleFound()) {
 			std::cout << "Optimal scheduler found solution with II=" << uni.getII() << " (" << uni.getM_Found() << "/"
-			<< uni.getS_Found() << ")" << " and latency=" << uni.getScheduleLength() << std::endl;
+								<< uni.getS_Found() << ")" << " and latency=" << uni.getScheduleLength() << std::endl;
 		}
 		else {
 			std::cout << "Optimal uniform scheduler did not find solution" << std::endl;
 		}
 		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec with solver status "
-		<< uni.getScaLPStatus() << std::endl;
+							<< uni.getScaLPStatus() << std::endl;
 
 		return true;
 #endif
+	}
+
+	bool Tests::ilpBasedIntIIMinRegBindingTest() {
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &mem = rm.makeResource("mem", UNLIMITED, 0, 1);
+		auto &add = rm.makeResource("add", 2, 1, 1);
+
+		// resource: #vertices=3, limit=2
+		// recurrence: latency=3, distance=2
+		Vertex &mem1 = g.createVertex(1);
+		Vertex &mem2 = g.createVertex(2);
+		Vertex &mem3 = g.createVertex(3);
+		Vertex &mem4 = g.createVertex(4);
+		Vertex &add1 = g.createVertex(5);
+		Vertex &add2 = g.createVertex(6);
+		Vertex &add3 = g.createVertex(7);
+		rm.registerVertex(&mem1, &mem);
+		rm.registerVertex(&mem2, &mem);
+		rm.registerVertex(&mem3, &mem);
+		rm.registerVertex(&mem4, &mem);
+		rm.registerVertex(&add1, &add);
+		rm.registerVertex(&add2, &add);
+		rm.registerVertex(&add3, &add);
+		g.createEdge(mem1, add1, 0);
+		g.createEdge(mem2, add1, 0);
+		g.createEdge(mem3, add2, 0);
+		g.createEdge(mem4, add2, 0);
+		g.createEdge(add1, add3, 0);
+		g.createEdge(add2, add3, 0);
+
+		std::map<Vertex*, int> sched;
+		int II = 3;
+
+		/*
+		sched[&r1] = 0;
+		sched[&r2] = 1;
+		sched[&r3] = 0;
+		sched[&r4] = 0;
+		sched[&r5] = 4;
+		sched[&r6] = 1;
+		sched[&r7] = 5;
+		 */
+
+		// We actually do not need to schedule every time.
+		HatScheT::EichenbergerDavidson97Scheduler ed97{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
+		ed97.setSolverQuiet(true);
+		ed97.setQuiet(false);
+		ed97.setSolverTimeout(300);
+		ed97.schedule();
+
+		if(!ed97.getScheduleFound()) return false;
+		sched = ed97.getSchedule();
+		II = ed97.getII();
+
+
+		auto bind = Binding::getILPMinRegBinding(sched,&g,&rm,II,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+
+		if(bind.empty()) {
+			std::cout << "Empty resource bindings detected - test failed" << std::endl;
+			return false;
+		}
+
+		for(auto it : bind) {
+			std::cout << "Binding '" << it.first->getName() << "' to FU '" << it.second << "'" << std::endl;
+		}
+
+		return true;
 	}
 }
 

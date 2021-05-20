@@ -8,6 +8,7 @@
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Verifier.h>
 
 
 namespace HatScheT
@@ -22,6 +23,7 @@ namespace HatScheT
 		this->initiationIntervals.clear();
 		this->tVariables.clear();
 		this->bVariables.clear();
+		this->kVariables.clear();
 	}
 
 	void UniformRationalIISchedulerNew::setObjective()
@@ -40,6 +42,8 @@ namespace HatScheT
 
 	void UniformRationalIISchedulerNew::constructProblem()
 	{
+		this->solver->quiet = this->solverQuiet;
+
 		if(this->maxLatencyConstraint == 0) {
 			throw HatScheT::Exception("UniformRationalIISchedulerNew::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
 		}
@@ -179,6 +183,7 @@ namespace HatScheT
 				auto initVal = floor((double)this->initialSolutionRatII[0][v]/(double)this->modulo);
 				k_v = ScaLP::newIntegerVariable("k_"+v->getName(),0,ScaLP::INF(),initVal);
 			}
+			this->kVariables[v] = k_v;
 
 			// create constraint
 			ScaLP::Term bSum;
@@ -315,7 +320,9 @@ namespace HatScheT
 			}
 		}
 		else {
-			if(!this->quiet) cout << "UniformRationalIISchedulerNew.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
+			if(!this->quiet) {
+				cout << "UniformRationalIISchedulerNew.schedule: no schedule found for s / m : " << this->samples << " / " << this->modulo << " ( " << this->stat << " )" << endl;
+			}
 			this->scheduleFound = false;
 		}
 	}

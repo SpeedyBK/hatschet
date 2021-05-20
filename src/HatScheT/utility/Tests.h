@@ -220,6 +220,11 @@ public:
    * @return
    */
   static bool ilpBasedIntIIBindingTest();
+	/*!
+	 * test getILPMinRegBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIMinRegBindingTest();
 
 };
 }

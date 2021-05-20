@@ -3,6 +3,7 @@
 //
 
 #include "Binding.h"
+#include <cmath>
 #include <HatScheT/utility/Utility.h>
 #ifdef USE_SCALP
 #include <ScaLP/Solver.h>
@@ -247,11 +248,38 @@ namespace HatScheT {
 		solver.threads = 1;
 		solver.timeout = timeout;
 
+		// count if less FUs are needed that allocated
+		std::map<const Resource*,int> resourceLimits;
+		for(auto &r : rm->Resources()) {
+			resourceLimits[r] = 0;
+			if(r->isUnlimited()) {
+				resourceLimits[r] = rm->getVerticesOfResource(r).size();
+				std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+				continue;
+			}
+			std::map<int,int> modSlotHeight;
+			for(int i=0; i<II; i++) {
+				modSlotHeight[0] = 0;
+			}
+			for(auto &it : sched) {
+				auto v = it.first;
+				if(rm->getResource(v) != r) continue;
+				auto modSlot = it.second % II;
+				modSlotHeight[modSlot]++;
+				std::cout << "Mod slot for vertex '" << v->getName() << "' = " << modSlot << " = " << it.second << " mod "
+					<< II << std::endl;
+				std::cout << "  mod slot height = " << modSlotHeight[modSlot] << std::endl;
+			}
+			for(auto it : modSlotHeight) {
+				if(it.second > resourceLimits[r]) resourceLimits[r] = it.second;
+			}
+			std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+		}
+
 		// create vertex-binding variables
 		std::map<Vertex*,std::vector<ScaLP::Variable>> vertexVariables;
 		std::map<const Resource*,std::vector<ScaLP::Variable>> registerVariables;
 		std::map<const Resource*,std::list<Vertex*>> sameResources;
-		std::map<const Resource*,int> resourceLimits;
 		std::map<const Resource*,int> unlimitedResourceCounter;
 		for(auto &it : sched){
 			auto res = rm->getResource(it.first);
@@ -262,12 +290,13 @@ namespace HatScheT {
 				sameResources[res] = {it.first};
 				registerVariables[res] = std::vector<ScaLP::Variable>();
 			}
-			int limit = res->getLimit();
-			if(limit<0) {
+			//int limit = res->getLimit();
+			if(res->isUnlimited()) {
 				binding[it.first] = unlimitedResourceCounter[res];
 				unlimitedResourceCounter[res]++;
 				continue;
 			}
+			int limit = resourceLimits[res];
 
 			vertexVariables[it.first] = std::vector<ScaLP::Variable>();
 			for(auto i = 0; i<limit; i++){
@@ -278,7 +307,9 @@ namespace HatScheT {
 		// create register variables
 		for(auto &it : registerVariables){
 			auto res = it.first;
-			auto limit = res->getLimit();
+			//auto limit = res->getLimit();
+			int limit = resourceLimits[res];
+			if(res->isUnlimited()) limit = UNLIMITED;
 			for(int i=0; i<limit; i++){
 				auto var = ScaLP::newIntegerVariable(res->getName()+to_string(i),0,ScaLP::INF());
 				it.second.emplace_back(var);
@@ -324,7 +355,9 @@ namespace HatScheT {
 		for(auto &it1 : potentiallySame){
 			auto res = it1.first;
 			for(auto &it2 : it1.second){
-				for(int resourceCounter = 0; resourceCounter<res->getLimit(); resourceCounter++){
+				int limit = resourceLimits[res];
+				if(res->isUnlimited()) limit = UNLIMITED;
+				for(int resourceCounter = 0; resourceCounter<limit; resourceCounter++){
 					ScaLP::Term t;
 					for(auto &it3 : it2.second){
 						t += vertexVariables[it3][resourceCounter];
@@ -460,7 +493,7 @@ namespace HatScheT {
 		return Binding::countTotalLifetimeRegisters(g,rm,{schedule},{binding},II,1,quiet);
 	}
 
-	std::map<const Vertex *, int>
+	Binding::BindingContainer
 	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, list<string> sw,
 																	 int timeout) {
 		///////////////////////////////////////////////
@@ -476,12 +509,15 @@ namespace HatScheT {
 		// check compatibility with other vertices
 		for(auto &v : g->Vertices()) {
 			for (auto &it : sched) {
+				// no edge with itself
+				if(v == it.first) continue;
 				// source vertex: the one who comes first in the schedule
-				if (sched[v] >= it.second) continue;
+				if (sched[v] > it.second) continue;
 				// incompatible if resource types are different
-				if (rm->getResource(v) != rm->getResource(it.first)) continue;
-				// incompatible if modulo slots are equal
-				if (sched[v] % II == it.second % II) {
+				// ACTUALLY I think they should always be compatible in that case...
+				//if (rm->getResource(v) != rm->getResource(it.first)) continue;
+				// incompatible if modulo slots are equal and resource types are also equal
+				if ((sched[v] % II == it.second % II) and (rm->getResource(v) == rm->getResource(it.first))) {
 					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because modulo slots overlap" << std::endl;
 					std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
 					std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
@@ -567,58 +603,664 @@ namespace HatScheT {
 		//////////////////////
 
 		// boolean variables whether vertex v_i is bound to functional unit k of resource type r (x_i_k)
+		std::map<std::pair<int,int>,ScaLP::Variable> x_i_k;
 		for(auto &v : g->Vertices()) {
-			for(int i=0; i<rm->getResource(v)->getLimit(); ++i) {
-				ScaLP::newBinaryVariable("x_" + to_string(v->getId()) + "_" + to_string(i));
+			auto r = rm->getResource(v);
+			auto limit = r->getLimit();
+			if(r->isUnlimited()) limit = rm->getVerticesOfResource(r).size();
+			for(int k=0; k<limit; ++k) {
+				auto i = v->getId();
+				x_i_k[{i,k}] = ScaLP::newBinaryVariable("x_" + to_string(i) + "_" + to_string(k));
+				std::cout << "  Created variable '" << x_i_k[{i,k}] << "'" << std::endl;
 			}
 		}
+		std::cout << "Created x_i_k variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// boolean variables whether variable of v_i is bound to register k (y_i_k)
+		// boolean variables whether variable of v_i is bound to register k (y_i_l)
+		std::map<std::pair<int,int>,ScaLP::Variable> y_i_l;
 		for(auto &v : g->Vertices()) {
-			for(int i=0; i<minRegs; ++i) {
-				ScaLP::newBinaryVariable("y_" + to_string(v->getId()) + "_" + to_string(i));
+			for(int l=0; l<minRegs; ++l) {
+				auto i = v->getId();
+				y_i_l[{i,l}] = ScaLP::newBinaryVariable("y_" + to_string(i) + "_" + to_string(l));
+				std::cout << "  Created variable '" << y_i_l[{i,l}] << "'" << std::endl;
 			}
 		}
+		std::cout << "Created y_i_l variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// boolean variables for each FU -> register connection (c_i_j)
+		// boolean variables for each FU -> register connection (c_r_k_l) for each resource type r
+		std::map<std::pair<std::string,std::pair<int,int>>,ScaLP::Variable> c_r_k_l;
+		for(auto &r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			if(r->isUnlimited()) resLimit = rm->getVerticesOfResource(r).size();
+			for(int k=0; k<resLimit; ++k) {
+				for(int l=0; l<minRegs; ++l) {
+					c_r_k_l[{r->getName(),{k,l}}] = ScaLP::newBinaryVariable("c_" + r->getName() + "_" + to_string(k) + "_" + to_string(l));
+					std::cout << "  Created variable '" << c_r_k_l[{r->getName(),{k,l}}] << "'" << std::endl;
+				}
+			}
+		}
+		std::cout << "Created c_r_k_l variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// boolean variables for each register -> FU connection for each port of that FU
+		// number of inputs of each resource type
+		std::map<const Resource*, int> numResourcePorts;
 
-		// boolean variables for each FU -> FU connection for each port of that FU (only needed for edges with lifetime=0)
+		// boolean variables for each register -> FU connection for each port (n) of that FU (a_r_n_k_l)
+		std::map<std::pair<std::pair<std::string,int>,std::pair<int,int>>,ScaLP::Variable> a_r_n_k_l;
+		for(auto &r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			// compute number of inputs for that resource
+			int numPorts = 0;
+			for(auto &v : vertices) {
+				int numInputs = 0;
+				for(auto &e : g->Edges()) {
+					if(e->getDependencyType() == Edge::DependencyType::Precedence) continue; // skip chaining edges
+					if(&e->getVertexDst() != v) continue;
+					numInputs++;
+				}
+				if(numInputs > numPorts) numPorts = numInputs;
+			}
+			numResourcePorts[r] = numPorts;
+			// actually create variables
+			for(int k=0; k<resLimit; ++k) {
+				for(int l=0; l<minRegs; ++l) {
+					for(int n=0; n<numPorts; ++n) {
+						a_r_n_k_l[{{r->getName(),n},{k,l}}] = ScaLP::newBinaryVariable("a_" + r->getName() + "_" + to_string(n)
+							+ "_" + to_string(k) + "_" + to_string(l));
+						std::cout << "  Created variable '" << a_r_n_k_l[{{r->getName(),n},{k,l}}] << "'" << std::endl;
+					}
+				}
+			}
+		}
+		std::cout << "Created a_r_n_k_l variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// number of MUX inputs for each FU and each port
+		// boolean variables for each FU -> FU connection for each port of that FU (needed for edges with lifetime=0) (b_r1_r2_k1_k2_n)
+		std::map<std::pair<std::pair<std::pair<std::string,std::string>,std::pair<int,int>>,int>,ScaLP::Variable> b_r1_r2_k1_k2_n;
+		for(auto &r1 : rm->Resources()) {
+			int resLimit = r1->getLimit();
+			auto vertices = rm->getVerticesOfResource(r1);
+			if(r1->isUnlimited()) resLimit = vertices.size();
+			// compute number of inputs for that resource
+			int numPorts = 0;
+			for(auto &v : vertices) {
+				int numInputs = 0;
+				for(auto &e : g->Edges()) {
+					if(e->getDependencyType() == Edge::DependencyType::Precedence) continue; // skip chaining edges
+					if(&e->getVertexDst() != v) continue;
+					numInputs++;
+				}
+				if(numInputs > numPorts) numPorts = numInputs;
+			}
+			// actually create variables
+			for(int k1=0; k1<resLimit; ++k1) {
+				for(int n=0; n<numPorts; ++n) {
+					for(auto &r2 : rm->Resources()) {
+						int res2Limit = r2->getLimit();
+						if(r2->isUnlimited()) res2Limit = rm->getVerticesOfResource(r2).size();
+						for(int k2=0; k2<res2Limit; ++k2) {
+							b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] = ScaLP::newBinaryVariable("b_" + r1->getName() + "_" + r2->getName() + "_" + to_string(k1) + "_" + to_string(k2) + "_" + to_string(n));
+							std::cout << "  Created variable '" << b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] << "'" << std::endl;
+						}
+					}
+				}
+			}
+		}
+		std::cout << "Created b_r1_r2_k1_k2_n variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
+
+		// number of MUX inputs for each FU and each port (m_r_k_n)
+		std::map<std::pair<std::string,std::pair<int,int>>,ScaLP::Variable> m_r_k_n;
+		for(auto &r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			// compute number of inputs for that resource
+			int numPorts = 0;
+			for(auto &v : vertices) {
+				int numInputs = 0;
+				for(auto &e : g->Edges()) {
+					if(e->getDependencyType() == Edge::DependencyType::Precedence) continue; // skip chaining edges
+					if(&e->getVertexDst() != v) continue;
+					numInputs++;
+				}
+				if(numInputs > numPorts) numPorts = numInputs;
+			}
+			// actually create variables
+			for(int k=0; k<resLimit; ++k) {
+				for(int n=0; n<numPorts; ++n) {
+					m_r_k_n[{r->getName(),{k,n}}] = ScaLP::newIntegerVariable("m_" + r->getName() + "_" + to_string(k) + "_" + to_string(n),0,ScaLP::INF());
+					std::cout << "  Created variable '" << m_r_k_n[{r->getName(),{k,n}}] << "'" << std::endl;
+				}
+			}
+		}
+		std::cout << "Created m_r_k_n variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
+
+		// number of MUX inputs for each register (w_l)
+		std::map<int,ScaLP::Variable> w_l;
+		for(int l=0; l<minRegs; l++) {
+			w_l[l] = ScaLP::newIntegerVariable("w_" + to_string(l));
+			std::cout << "  Created variable '" << w_l[l] << "'" << std::endl;
+		}
+		std::cout << "Created w_l variables" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
 		////////////////////////
 		// create constraints //
 		////////////////////////
 
 		// each operation is bound to one resource
+		for(auto &v : g->Vertices()) {
+			ScaLP::Term t;
+			auto i = v->getId();
+			auto r = rm->getResource(v);
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			for(int k=0; k<resLimit; ++k) {
+				t += x_i_k[{i,k}];
+			}
+			s.addConstraint(t == 1);
+		}
+		std::cout << "Created x_i_k=1 constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// each variable is bound to one resource
+		// each variable is bound to one resource (if registers are needed)
+		if(minRegs >= 1) {
+			for(auto &v : g->Vertices()) {
+				ScaLP::Term t;
+				auto i = v->getId();
+				for(int l=0; l<minRegs; ++l) {
+					t += y_i_l[{i,l}];
+				}
+				s.addConstraint(t == 1);
+			}
+		}
 
-		// no operation overlaps (resource conflict graph)
+		std::cout << "Created y_i_l=1 constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// no register overlaps (variable conflict graph)
+		// no overlaps in operations (resource conflict graph)
+		for(auto &v : g->Vertices()) {
+			std::cout << "vertex: " << v->getName() << std::endl;
+			// find conflicting operations
+			auto predecessors = resourceCompatibilityGraph.getPredecessors(&resourceCompatibilityGraph.getVertexById(v->getId()));
+			auto successors = resourceCompatibilityGraph.getSuccessors(&resourceCompatibilityGraph.getVertexById(v->getId()));
+			std::set<int> conflictVertexIDs;
+			for(auto &v2 : resourceCompatibilityGraph.Vertices()) {
+				// no conflict with itself
+				if(v->getId() == v2->getId()) continue;
+				// no conflict with predecessors in compatibility graph
+				if(predecessors.find(v2) != predecessors.end()) continue;
+				// no conflict with successors in compatibility graph
+				if(successors.find(v2) != successors.end()) continue;
+				// store ID of conflict vertex
+				conflictVertexIDs.insert(v2->getId());
+				std::cout << "  conflict vertex: " << v2->getName() << std::endl;
+			}
+			// create constraints for all vertices with conflict
+			auto i = v->getId();
+			auto r = rm->getResource(v);
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			for(int k = 0; k<resLimit; k++) {
+				for(auto j : conflictVertexIDs) {
+					auto constraint = (x_i_k[{i,k}] + x_i_k[{j,k}]) <= 1;
+					s.addConstraint(constraint);
+					std::cout << "  Added constraint '" << constraint << "'" << std::endl;
+				}
+			}
+		}
+		std::cout << "Created no resource overlap constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// check if there is a connection from resource instance k to register l
+		// no overlaps in registers (variable conflict graph)
+		// no overlaps in operations (resource conflict graph)
+		for(auto &v : g->Vertices()) {
+			// find conflicting operations
+			auto predecessors = variableCompatibilityGraph.getPredecessors(&variableCompatibilityGraph.getVertexById(v->getId()));
+			auto successors = variableCompatibilityGraph.getSuccessors(&variableCompatibilityGraph.getVertexById(v->getId()));
+			std::set<int> conflictVertexIDs;
+			for(auto &v2 : variableCompatibilityGraph.Vertices()) {
+				// no conflict with itself
+				if(v->getId() == v2->getId()) continue;
+				// no conflict with predecessors in compatibility graph
+				if(predecessors.find(v2) != predecessors.end()) continue;
+				// no conflict with successors in compatibility graph
+				if(successors.find(v2) != successors.end()) continue;
+				// store ID of conflict vertex
+				conflictVertexIDs.insert(v2->getId());
+			}
+			// create constraints for all vertices with conflict
+			auto i = v->getId();
+			for(int l = 0; l<minRegs; l++) {
+				for(auto j : conflictVertexIDs) {
+					s.addConstraint((y_i_l[{i,l}] + y_i_l[{j,l}]) <= 1);
+				}
+			}
+		}
+		std::cout << "Created no variable overlap constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
-		// check if there is a connection from register k to port p of resource instance l
+		// A) for edges with lifetime > 0
+		for(auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
+			if(lifetime < 0) {
+				throw HatScheT::Exception("Detected lifetime < 0 from '" + vSrc->getName() + "' (t='" + to_string(sched[vSrc])
+				  + "', lat='" + to_string(rm->getResource(vSrc)->getLatency()) + "', distance='" + to_string(e->getDistance())
+				  + "', II='" + to_string(II) + "') to '" + vDst->getName() + "' (t='" + to_string(sched[vDst]) + "')");
+			}
+			// edges with lifetime = 0 are handled in B)
+			if(lifetime == 0) continue;
 
-		// calculate number of MUX inputs per port for each FU
+			// A) check if there is a connection from resource instance k of resource r (source) to register l
+			auto rSrc = rm->getResource(vSrc);
+			auto i = vSrc->getId();
+			int resLimitSrc = rSrc->getLimit();
+			auto verticesSrc = rm->getVerticesOfResource(rSrc);
+			if(rSrc->isUnlimited()) resLimitSrc = verticesSrc.size();
+			for(int k=0; k<resLimitSrc; k++) {
+				for(int l=0; l<minRegs; ++l) {
+					s.addConstraint(x_i_k[{i,k}] + y_i_l[{i,l}] - c_r_k_l[{rSrc->getName(),{k,l}}] <= 1);
+				}
+			}
+
+			// A) check if there is a connection from register l to port n of resource instance k of resource r (destination)
+			auto rDst = rm->getResource(vDst);
+			int resLimitDst = rDst->getLimit();
+			auto verticesDst = rm->getVerticesOfResource(rDst);
+			if(rDst->isUnlimited()) resLimitDst = verticesDst.size();
+			auto j = vDst->getId();
+			for(int k=0; k<resLimitDst; k++) {
+				for(int n=0; n<numResourcePorts[rDst]; n++) {
+					for(int l=0; l<minRegs; l++) {
+						s.addConstraint(y_i_l[{i,l}] + x_i_k[{j,k}] - a_r_n_k_l[{{rDst->getName(),n},{k,l}}] <= 1);
+					}
+				}
+			}
+		}
+		std::cout << "Created edge constraints for lifetime > 0" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
+
+		// B) for edges with lifetime = 0
+		for(auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
+			if (lifetime < 0) {
+				throw HatScheT::Exception("Detected lifetime < 0 from '" + vSrc->getName() + "' (t='" + to_string(sched[vSrc])
+																	+ "', lat='" + to_string(rm->getResource(vSrc)->getLatency()) + "', distance='" +
+																	to_string(e->getDistance())
+																	+ "', II='" + to_string(II) + "') to '" + vDst->getName() + "' (t='" +
+																	to_string(sched[vDst]) + "')");
+			}
+			// edges with lifetime > 0 are handled in A)
+			if (lifetime > 0) continue;
+
+			// B) check if there is a connection from resource instance k2 of resource r2 to port n of resource instance k1 of resource r1
+			//b_r1_r2_k1_k2_n
+			auto *r2 = rm->getResource(vSrc);
+			auto *r1 = rm->getResource(vDst);
+			auto i = vSrc->getId();
+			auto j = vDst->getId();
+
+			int resLimitSrc = r2->getLimit();
+			auto verticesSrc = rm->getVerticesOfResource(r2);
+			if(r2->isUnlimited()) resLimitSrc = verticesSrc.size();
+			int resLimitDst = r1->getLimit();
+			auto verticesDst = rm->getVerticesOfResource(r1);
+			if(r1->isUnlimited()) resLimitDst = verticesDst.size();
+
+			for(int k1=0; k1<resLimitDst; k1++) {
+				for(int k2=0; k2<resLimitSrc; k2++) {
+					for(int n=0; n<numResourcePorts[r1]; n++) {
+						s.addConstraint(x_i_k[{i,k2}] + x_i_k[{j,k1}] - b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] <= 1);
+					}
+				}
+			}
+		}
+		std::cout << "Created edge constraints for lifetime = 0" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
+
+		// calculate number of MUX inputs per port for each FU (m_r_k_n)
+		for(auto r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			for(int k=0; k<resLimit; k++) {
+				// count number of inputs for each port of this FU separately
+				for(int n=0; n<numResourcePorts[r]; n++) {
+					ScaLP::Term portSum;
+					// sum up all connections from registers to this FU
+					for(int l=0; l<minRegs; l++) {
+						portSum += a_r_n_k_l[{{r->getName(),n},{k,l}}];
+					}
+					// sum up all connections from other FUs to this FU
+					auto r1 = r;
+					auto k1 = k;
+					for(auto r2 : rm->Resources()) {
+						int resLimit2 = r2->getLimit();
+						auto vertices2 = rm->getVerticesOfResource(r2);
+						if(r2->isUnlimited()) resLimit2 = vertices2.size();
+						for(int k2=0; k2<resLimit2; k2++) {
+							portSum += b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}];
+						}
+					}
+					s.addConstraint(portSum - m_r_k_n[{r->getName(),{k,n}}] == 0);
+				}
+			}
+		}
+		std::cout << "Created number of resource mux input constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
+
+		// calculate number of MUX inputs per port for each register
+		for(int l=0; l<minRegs; l++) {
+			ScaLP::Term portSum;
+			// c_r_k_l
+			for(auto r : rm->Resources()) {
+				int resLimit = r->getLimit();
+				auto vertices = rm->getVerticesOfResource(r);
+				if(r->isUnlimited()) resLimit = vertices.size();
+				for(int k=0; k<resLimit; k++) {
+					portSum += c_r_k_l[{r->getName(),{k,l}}];
+				}
+			}
+			s.addConstraint(portSum - w_l[l] == 0);
+		}
+		std::cout << "Created number of register mux input constraints" << std::endl;
+		s.showLP(); // this line does nothing - only for debugging
 
 		///////////////////////////////
 		// create objective function //
 		///////////////////////////////
 
 		// minimize total number of MUX inputs
+		ScaLP::Term obj;
+		for(int l=0; l<minRegs; l++) {
+			obj += w_l[l];
+		}
+		for(auto r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			std::cout << "Resource '";
+			flush(cout);
+			std::cout << r->getName();
+			flush(cout);
+			std::cout << "' - limit ";
+			flush(cout);
+			std::cout << resLimit;
+			flush(cout);
+			std::cout << " - number of ports ";
+			flush(cout);
+			std::cout << numResourcePorts[r];
+			flush(cout);
+			std::cout << std::endl;
+			for(int k=0; k<resLimit; k++) {
+				for(int n=0; n<numResourcePorts[r]; n++) {
+					obj += m_r_k_n[{r->getName(),{k,n}}];
+				}
+			}
+		}
+		std::cout << "Created objective" << std::endl;
 
 		///////////
 		// solve //
 		///////////
-		// s.solve();
+		std::cout << "start solving" << std::endl;
+		auto stat = s.solve();
+		std::cout << "finished solving" << std::endl;
 
-		std::map<const Vertex*, int> binding;
-		return binding;
+		/////////////////
+		// get results //
+		/////////////////
+		BindingContainer b;
+
+		if(stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE) {
+			std::cout << "Could not solve optimal binidng ILP formulation for II = " << II << std::endl;
+			std::cout << "ScaLP solver status: " << stat << std::endl;
+			return b;
+		}
+
+		std::cout << "SOLVER RESULTS: " << std::endl;
+		std::cout << s.getResult();
+
+		auto results = s.getResult().values;
+
+		for(auto v : g->Vertices()) {
+			bool hasBinding = false;
+			auto i = v->getId();
+			auto r = rm->getResource(v);
+			int resLimit = r->getLimit();
+			auto vertices = rm->getVerticesOfResource(r);
+			if(r->isUnlimited()) resLimit = vertices.size();
+			for(int k=0; k<resLimit; ++k) {
+				auto var = x_i_k[{i,k}];
+				auto bTemp = (bool)((int) round(results[var]));
+				if(!bTemp) continue;
+				if(hasBinding) {
+					// this vertex is bound to multiple FUs
+					// that should never happen!
+					throw HatScheT::Exception("Vertex '" + v->getName() + "' is bound to multiple FUs - that should never happen");
+				}
+				hasBinding = true;
+				b.resourceBindings[v] = k;
+			}
+		}
+
+		for(auto v : g->Vertices()) {
+			bool hasBinding = false;
+			auto i = v->getId();
+			for(int l=0; l<minRegs; l++) {
+				auto var = y_i_l[{i,l}];
+				auto bTemp = (bool)((int) round(results[var]));
+				if(!bTemp) continue;
+				if(hasBinding) {
+					// this variable is bound to multiple Register
+					// that should never happen!
+					throw HatScheT::Exception("Variable '" + v->getName() + "' is bound to multiple Registers - that should never happen");
+				}
+				hasBinding = true;
+				b.registerBindings[v] = l;
+			}
+		}
+
+		std::cout << "ILP formulation SOLVED for II = " << II << std::endl;
+		std::cout << "ScaLP solver status: " << stat << std::endl;
+
+		// print results
+
+
+		return b;
+	}
+
+	std::map<const Vertex *, int>
+	Binding::getILPMinMuxBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, std::list <string> sw,
+															 int timeout) {
+		// container to return
+		map<const Vertex*,int> binding;
+		// create solver
+		if(sw.empty()) sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
+		auto solver = ScaLP::Solver(sw);
+		solver.quiet = true;
+		solver.threads = 1;
+		solver.timeout = timeout;
+
+		// count if less FUs are needed that allocated
+		std::map<const Resource*,int> resourceLimits;
+		for(auto &r : rm->Resources()) {
+			resourceLimits[r] = 0;
+			if(r->isUnlimited()) {
+				resourceLimits[r] = rm->getVerticesOfResource(r).size();
+				std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+				continue;
+			}
+			std::map<int,int> modSlotHeight;
+			for(int i=0; i<II; i++) {
+				modSlotHeight[0] = 0;
+			}
+			for(auto &it : sched) {
+				auto v = it.first;
+				if(rm->getResource(v) != r) continue;
+				auto modSlot = it.second % II;
+				modSlotHeight[modSlot]++;
+				std::cout << "Mod slot for vertex '" << v->getName() << "' = " << modSlot << " = " << it.second << " mod "
+									<< II << std::endl;
+				std::cout << "  mod slot height = " << modSlotHeight[modSlot] << std::endl;
+			}
+			for(auto it : modSlotHeight) {
+				if(it.second > resourceLimits[r]) resourceLimits[r] = it.second;
+			}
+			std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+		}
+
+		// create vertex-binding variables
+		std::map<Vertex*,std::vector<ScaLP::Variable>> vertexVariables;
+		std::map<const Resource*,std::vector<ScaLP::Variable>> registerVariables;
+		std::map<const Resource*,std::list<Vertex*>> sameResources;
+		std::map<const Resource*,int> unlimitedResourceCounter;
+		for(auto &it : sched){
+			auto res = rm->getResource(it.first);
+			try{
+				sameResources.at(res).emplace_back(it.first);
+			}
+			catch(std::out_of_range&){
+				sameResources[res] = {it.first};
+				registerVariables[res] = std::vector<ScaLP::Variable>();
+			}
+			//int limit = res->getLimit();
+			if(res->isUnlimited()) {
+				binding[it.first] = unlimitedResourceCounter[res];
+				unlimitedResourceCounter[res]++;
+				continue;
+			}
+			int limit = resourceLimits[res];
+
+			vertexVariables[it.first] = std::vector<ScaLP::Variable>();
+			for(auto i = 0; i<limit; i++){
+				vertexVariables[it.first].emplace_back(ScaLP::newIntegerVariable(it.first->getName()+"_"+to_string(i),0,1));
+			}
+		}
+
+		// create register variables
+		for(auto &it : registerVariables){
+			auto res = it.first;
+			//auto limit = res->getLimit();
+			int limit = resourceLimits[res];
+			if(res->isUnlimited()) limit = UNLIMITED;
+			for(int i=0; i<limit; i++){
+				auto var = ScaLP::newIntegerVariable(res->getName()+to_string(i),0,ScaLP::INF());
+				it.second.emplace_back(var);
+			}
+		}
+
+		// calculate lifetimes
+		std::map<Vertex*,int> lifetimes;
+		for(auto &it : g->Edges()){
+			auto* src = &it->getVertexSrc();
+			auto* dst = &it->getVertexDst();
+			int tempLifetime = sched[dst] - sched[src] - rm->getResource(src)->getLatency() + (II * it->getDistance());
+			if(tempLifetime>lifetimes[src]) lifetimes[src] = tempLifetime;
+		}
+
+		// check, which vertices can potetially be bind to the same resource at the same control step
+		std::map<const Resource*,std::map<int,std::list<Vertex*>>> potentiallySame;
+		for(auto &it : sched){
+			auto vert = it.first;
+			auto timepoint = it.second % II;
+			auto res = rm->getResource(vert);
+			if(potentiallySame.find(res)==potentiallySame.end())
+				potentiallySame[res] = std::map<int,std::list<Vertex*>>();
+			try{
+				potentiallySame[res].at(timepoint).emplace_back(vert);
+			}
+			catch(std::out_of_range&){
+				potentiallySame[res][timepoint] = {vert};
+			}
+		}
+
+		// create constraints: bind each vertex to EXACTLY one resource
+		for(auto &it1 : vertexVariables){
+			ScaLP::Term t;
+			for(auto &it2 : it1.second){
+				t += it2;
+			}
+			auto c = ScaLP::Constraint(t == 1);
+			solver << c;
+		}
+
+		// create constraints: bind AT MOST one vertex to each resource in each control step
+		for(auto &it1 : potentiallySame){
+			auto res = it1.first;
+			for(auto &it2 : it1.second){
+				int limit = resourceLimits[res];
+				if(res->isUnlimited()) limit = UNLIMITED;
+				for(int resourceCounter = 0; resourceCounter<limit; resourceCounter++){
+					ScaLP::Term t;
+					for(auto &it3 : it2.second){
+						t += vertexVariables[it3][resourceCounter];
+					}
+					auto c = ScaLP::Constraint(t <= 1);
+					solver << c;
+				}
+			}
+		}
+
+		// create edge register constraints
+		for(auto &it1 : registerVariables){
+			auto res = it1.first;
+			for(int resoureCounter = 0; resoureCounter<it1.second.size(); resoureCounter++){
+				auto var = it1.second[resoureCounter];
+				for(auto &it2 : sameResources[res]){
+					auto c = ScaLP::Constraint(var - (lifetimes[it2] * vertexVariables[it2][resoureCounter]) >= 0);
+					solver << c;
+				}
+			}
+		}
+
+		// minimize the sum of all registers
+		ScaLP::Term obj;
+		for(auto &it1 : registerVariables){
+			for(auto &it2 : it1.second){
+				obj += it2;
+			}
+		}
+		solver.setObjective(ScaLP::minimize(obj));
+
+		// solve and put results into binding map
+		try{
+			auto status = solver.solve();
+			if(status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE && status != ScaLP::status::TIMEOUT_FEASIBLE){
+				cout << "Utility::getILPMinRegBinding: didn't find solution, returning simple binding" << endl;
+				return Binding::getSimpleBinding(sched,rm,II);
+			}
+		}
+		catch(ScaLP::Exception& e){
+			cout << "Utility::getILPMinRegBinding: caught ScaLP exception: '" << std::string(e.what()) << "' returning simple binding";
+			return Binding::getSimpleBinding(sched,rm,II);
+		}
+
+		auto results = solver.getResult().values;
+		for(auto &it1 : vertexVariables){
+			auto vertex = it1.first;
+			for(int i = 0; i < (int)it1.second.size(); i++){
+				auto &it2 = it1.second[i];
+				auto val = results[it2];
+				if(val==1.0){
+					binding[vertex] = i;
+				}
+			}
+		}
+
+		return binding;l
 	}
 
 #endif

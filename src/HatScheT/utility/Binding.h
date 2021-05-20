@@ -12,6 +12,13 @@
 namespace HatScheT {
 	class Binding {
 	public:
+		struct BindingContainer {
+			// each vertex in a graph is bound to a specific FU of its resource type
+			std::map<const Vertex*,int> resourceBindings;
+			// each variable is bound to a given register (if registers are implemented with enable inputs)
+			// ignore this container if registers are implemented as register chains
+			std::map<const Vertex*,int> registerBindings;
+		};
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
 		 * usable for rational IIs
@@ -67,7 +74,7 @@ namespace HatScheT {
 		 * @param timeout max solving time in seconds
 		 * @return a map of vertex to FU-number
 		 */
-		static std::map<const Vertex*, int> getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
 																																int II, std::list<std::string> sw = {}, int timeout=300);
 		/*!
 		* @brief create an ilp-based binding for a rational II schedule
@@ -95,6 +102,18 @@ namespace HatScheT {
 		 * @return binding
 		 */
 		static std::map<const Vertex*,int> getILPMinRegBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
+		/*!
+		 * @brief getILPMinRegBinding create a binding with minimal number of mux inputs
+		 * (assuming register sharing unlike the one by Cong and Xu!!!)
+		 * @param sched schedule times
+		 * @param g graph
+		 * @param rm resource model
+		 * @param II
+		 * @param sw solver wishlist
+		 * @param timeout timeout for ilp solver
+		 * @return binding
+		 */
+		static std::map<const Vertex*,int> getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
 #endif
 	};
 }
