@@ -1582,6 +1582,27 @@ namespace HatScheT {
 #else
 		std::list<SchedulerType> intIISchedulers = {ED97, MODULOSDC, MOOVAC, SUCHAHANZALEK};
 		for (auto intIIScheduler : intIISchedulers) {
+			std::string schedulerName;
+
+			switch (intIIScheduler) {
+				case ED97:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: ED97" << std::endl;
+					schedulerName = "ED97";
+					break;
+				case MODULOSDC:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MODULOSDC" << std::endl;
+					schedulerName = "MODULOSDC";
+					break;
+				case MOOVAC:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MOOVAC" << std::endl;
+					schedulerName = "MOOVAC";
+					break;
+				case SUCHAHANZALEK:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: SUCHAHANZALEK" << std::endl;
+					schedulerName = "SUCHAHANZALEK";
+					break;
+			}
+
 			HatScheT::ResourceModel rm;
 			HatScheT::Graph g;
 			HatScheT::XMLResourceReader readerRes(&rm);
@@ -1599,23 +1620,8 @@ namespace HatScheT {
 			rii.schedule();
 			auto valid = rii.getScheduleValid();
 			if (!valid) {
-				std::cout << "Scheduler found invalid solution" << std::endl;
+				std::cout << "Scheduler '" << schedulerName << "' found invalid solution" << std::endl;
 				return false;
-			}
-
-			switch (intIIScheduler) {
-				case ED97:
-					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: ED97" << std::endl;
-					break;
-				case MODULOSDC:
-					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MODULOSDC" << std::endl;
-					break;
-				case MOOVAC:
-					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: MOOVAC" << std::endl;
-					break;
-				case SUCHAHANZALEK:
-					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: SUCHAHANZALEK" << std::endl;
-					break;
 			}
 
 			if (rii.getM_Found() != 16 or rii.getS_Found() != 3) {

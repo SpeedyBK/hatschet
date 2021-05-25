@@ -113,7 +113,7 @@ namespace HatScheT {
         }
 
         // insert schedule time into startTimesVector
-        this->startTimesVector[s][v] = schedUnrolled[vertexUnrolled];
+        this->startTimesVector[s][v] = round(schedUnrolled[vertexUnrolled]);
       }
     }
   }

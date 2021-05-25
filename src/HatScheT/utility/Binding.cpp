@@ -1146,7 +1146,7 @@ namespace HatScheT {
 
 			vertexVariables[it.first] = std::vector<ScaLP::Variable>();
 			for(auto i = 0; i<limit; i++){
-				vertexVariables[it.first].emplace_back(ScaLP::newIntegerVariable(it.first->getName()+"_"+to_string(i),0,1));
+				vertexVariables[it.first].emplace_back(ScaLP::newBinaryVariable(it.first->getName()+"_"+to_string(i)));
 			}
 		}
 
