@@ -15,7 +15,7 @@ namespace HatScheT {
 	}
 
 	void RationalIIModuloSDCScheduler::scheduleIteration() {
-		// do nothing
+		cout << "hello"<<endl;
 	}
 
 	void RationalIIModuloSDCScheduler::constructProblem() {

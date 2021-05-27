@@ -2118,87 +2118,32 @@ namespace HatScheT {
 			HatScheT::ResourceModel rm;
 			HatScheT::Graph g;
 
-			/*
-			auto &load = rm.makeResource("load", 2, 1, 1);
-			auto &add = rm.makeResource("add", -1, 0, 1);
+			Vertex &add1 = g.createVertex();
+            Vertex &add2 = g.createVertex();
+            Vertex &add3 = g.createVertex();
+            Vertex &mult1 = g.createVertex();
+            Vertex &mult2 = g.createVertex();
 
-			Vertex &a = g.createVertex(1);
-			Vertex &b = g.createVertex(2);
-			Vertex &c = g.createVertex(3);
-			Vertex &d = g.createVertex(4);
+            g.createEdge(add1,mult1,0);
+            g.createEdge(add2,mult1,0);
+            g.createEdge(add3,mult2,0);
+            g.createEdge(mult1,mult2,0);
 
-			a.setName("a");
-			b.setName("b");
-			c.setName("c");
-			d.setName("d");
+            auto &add = rm.makeResource("add", 2,1,1);
+            auto &mult = rm.makeResource("mult", 2,1,1);
 
-			g.createEdge(a, c, 0);
-			g.createEdge(b, c, 0);
-			g.createEdge(c, d, 0);
-			g.createEdge(d, a, 2);
+            rm.registerVertex(&add1,&add);
+            rm.registerVertex(&add2,&add);
+            rm.registerVertex(&add3,&add);
+            rm.registerVertex(&mult1,&mult);
+            rm.registerVertex(&mult2,&mult);
 
-			rm.registerVertex(&a, &load);
-			rm.registerVertex(&b, &load);
-			rm.registerVertex(&c, &add);
-			rm.registerVertex(&d, &load);
-			 */
+            cout<< rm;
+            cout<< g;
 
-
-			auto &red = rm.makeResource("red", 5, 1, 1);
-
-			// non-critical resource (#vertices=7, limit=5) => resMinII = 7/5 = 1.4
-			// loop: latency=3, distance=2 => recMinII = 3/2 = 1.5
-			Vertex &r1 = g.createVertex(1);
-			Vertex &r2 = g.createVertex(2);
-			Vertex &r3 = g.createVertex(3);
-			Vertex &r4 = g.createVertex(4);
-			Vertex &r5 = g.createVertex(5);
-			Vertex &r6 = g.createVertex(6);
-			Vertex &r7 = g.createVertex(7);
-			rm.registerVertex(&r1, &red);
-			rm.registerVertex(&r2, &red);
-			rm.registerVertex(&r3, &red);
-			rm.registerVertex(&r4, &red);
-			rm.registerVertex(&r5, &red);
-			rm.registerVertex(&r6, &red);
-			rm.registerVertex(&r7, &red);
-			g.createEdge(r1, r2, 0);
-			g.createEdge(r1, r5, 0);
-			g.createEdge(r7, r2, 0);
-			g.createEdge(r7, r5, 0);
-			g.createEdge(r2, r3, 0);
-			g.createEdge(r5, r6, 0);
-			g.createEdge(r3, r4, 0);
-			g.createEdge(r6, r4, 0);
-			g.createEdge(r4, r2, 2);
-			g.createEdge(r6, r5, 2);
-
-
-			/*
-			auto &r = rm.makeResource("r", 2, 2, 1);
-
-			Vertex &a = g.createVertex(1);
-			Vertex &b = g.createVertex(2);
-			Vertex &c = g.createVertex(3);
-
-			a.setName("a");
-			b.setName("b");
-			c.setName("c");
-
-			g.createEdge(a, b, 0);
-			g.createEdge(b, c, 0);
-			g.createEdge(c, a, 4);
-
-			rm.registerVertex(&a, &r);
-			rm.registerVertex(&b, &r);
-			rm.registerVertex(&c, &r);
-			 */
-
-			HatScheT::RationalIIModuloSDCScheduler m{g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}};
-			m.setSolverQuiet(true);
-			m.setQuiet(false);
-			m.setSolverTimeout(300);
-			m.schedule();
+            RationalIIModuloSDCScheduler scheduler (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            scheduler.setQuiet(false);
+            scheduler.schedule();
 
 			return true;
 		}
