@@ -2351,5 +2351,76 @@ namespace HatScheT {
 
 		return true;
 	}
+
+	bool Tests::ilpBasedIntIIMinMuxBindingTest() {
+
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
+		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
+		auto &mult = rm.makeResource("mult", 2, 1, 1);
+		auto &constant = rm.makeResource("constant", UNLIMITED, 0, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &constant0_25 = g.createVertex();
+		constant0_25.setName("constant0_25");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &mult2 = g.createVertex();
+		mult2.setName("mult2");
+		auto &y0 = g.createVertex();
+		y0.setName("y0");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&constant0_25, &constant);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&mult2, &mult);
+		rm.registerVertex(&y0, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(mult2,mult0,4);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x1,mult1,0);
+		portAssignments[&e2] = 0;
+		auto &e3 = g.createEdge(mult0,mult1,0);
+		portAssignments[&e3] = 1;
+		auto &e4 = g.createEdge(constant0_25,mult2,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(mult1,mult2,0);
+		portAssignments[&e5] = 1;
+		auto &e6 = g.createEdge(mult2,y0,0);
+		portAssignments[&e6] = 0;
+
+		// schedule that badboy
+		std::map<Vertex*,int> sched;
+		std::list<std::string> sw = {"Gurobi"};
+		int timeout = 300;
+		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(timeout);
+		scheduler.schedule();
+		sched = scheduler.getSchedule();
+		auto II = (int)scheduler.getII();
+		std::cout << "Schedule:" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// call binding function
+		std::set<const Resource*> commutativeOps;
+		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,II,portAssignments,commutativeOps,sw,timeout);
+		return true;
+	}
 }
 

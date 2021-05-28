@@ -225,6 +225,11 @@ public:
 	 * @return
 	 */
 	static bool ilpBasedIntIIMinRegBindingTest();
+	/*!
+	 * test getILPMinMuxBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIMinMuxBindingTest();
 
 };
 }

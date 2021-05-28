@@ -109,11 +109,15 @@ namespace HatScheT {
 		 * @param g graph
 		 * @param rm resource model
 		 * @param II
+		 * @param portAssignments map that specifies which edge has to be connected to which input port of the destination vertex
+		 * @param commutativeOps a set of commutative operation types (e.g. add or mult)
 		 * @param sw solver wishlist
 		 * @param timeout timeout for ilp solver
 		 * @return binding
 		 */
-		static std::map<const Vertex*,int> getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II, std::list<std::string> sw = {}, int timeout=300);
+		static std::map<const Vertex*,int> getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
+			std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {},
+			std::list<std::string> sw = {}, int timeout=300);
 #endif
 	};
 }
