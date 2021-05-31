@@ -22,6 +22,7 @@
 #include <HatScheT/utility/Utility.h>
 
 #include <vector>
+#include <sstream>
 #include <map>
 #include <iostream>
 #include <cmath>
@@ -352,6 +353,131 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
   }
 
   return true;
+}
+
+bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
+		Binding::BindingContainer bind, map<Edge *, int> portAssignments, set<const Resource *> commutativeOps) {
+	// check if a resource is assigned more than one operation per modulo slot
+	// map <pair<resource type, FU number> -> map of modulo slots in which this FU is busy to the vertex that occupies it>
+	std::map<std::pair<const Resource*,int>,std::map<int,Vertex*>> busyResources;
+	for(auto it : bind.resourceBindings) {
+		auto v = const_cast<Vertex*>(it.first);
+		auto fu = it.second;
+		auto t = sched[v];
+		auto m = t % II;
+		auto r = rm->getResource(v);
+		auto alreadyBusy = busyResources[{r,fu}];
+		try {
+			auto conflictVertex = alreadyBusy.at(m);
+			std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
+								<< "': vertices '" << conflictVertex->getName() << "' and '" << v->getName()
+								<< "' occupy it in the same time slot" << std::endl;
+			return false;
+		}
+		catch(std::out_of_range) {
+			busyResources[{r,fu}][m] = v;
+		}
+		catch(...) {
+			throw HatScheT::Exception("HatScheT::verifyIntIIBinding: something went TERRIBLY wrong when searching for resource conflicts");
+		}
+	}
+
+	// check if port assignments for non-commutative operations are obeyed
+	if(portAssignments.empty() or bind.fuConnections.empty()) {
+		std::cout << "HatScheT::verifyIntIIBinding: no port assignments passed - will skip evaluation for those" << std::endl;
+		return true;
+	}
+
+	for(auto &e : g->Edges()) {
+		auto vSrc = &e->getVertexSrc();
+		auto vDst = &e->getVertexDst();
+		auto rSrc = rm->getResource(vSrc);
+		auto rDst = rm->getResource(vDst);
+		// skip commutative operation types
+		if(commutativeOps.find(rDst) != commutativeOps.end()) continue;
+		// skip chaining edges
+		if(e->getDependencyType() != Edge::DependencyType::Data) continue;
+		// continue check for non-commutative operations
+		auto fuSrc = bind.resourceBindings[vSrc];
+		auto fuDst = bind.resourceBindings[vDst];
+		auto tSrc = sched[vSrc];
+		auto tDst = sched[vDst];
+		auto latSrc = rSrc->getLatency();
+		auto dist = e->getDistance();
+		auto wantedPort = portAssignments[e];
+		auto lifetime = tDst - tSrc - latSrc + dist*II;
+		bool allGood = false;
+		for(auto &it : bind.fuConnections) {
+			if(it.first.first.first != rSrc) continue;
+			if(it.first.first.second != fuSrc) continue;
+			if(it.first.second.first != rDst) continue;
+			if(it.first.second.second != fuDst) continue;
+			if(it.second.first != lifetime) continue;
+			if(it.second.second == wantedPort) {
+				allGood = true;
+				break;
+			}
+			else {
+				std::cout << "Found illegal port assignment for non-commutative operation '" << vDst->getName()
+					<< "' of type '" << rDst->getName() << "' - wanted port '" << wantedPort << "', actual port '"
+					<< it.second.second << "'" << std::endl;
+				return false;
+			}
+		}
+		if(!allGood) {
+			std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
+				<< "' (non-commutative)" << std::endl;
+			return false;
+		}
+	}
+
+	// check if commutative operations have valid port assignments
+	for(auto &vDst : g->Vertices()) {
+		auto rDst = rm->getResource(vDst);
+		// skip non-commutative operation types
+		if(commutativeOps.find(rDst) == commutativeOps.end()) continue;
+		std::set<int> actualPorts;
+		std::set<int> requestedPorts;
+		for(auto &e : g->Edges()) {
+			// skip chaining edges
+			if(e->getDependencyType() != Edge::DependencyType::Data) continue;
+			// skip edges that are not of interest
+			if(&e->getVertexDst() != vDst) continue;
+			// now let's check if everything is ok
+			auto vSrc = &e->getVertexSrc();
+			auto rSrc = rm->getResource(vSrc);
+			auto fuSrc = bind.resourceBindings[vSrc];
+			auto fuDst = bind.resourceBindings[vDst];
+			auto tSrc = sched[vSrc];
+			auto tDst = sched[vDst];
+			auto latSrc = rSrc->getLatency();
+			auto dist = e->getDistance();
+			auto wantedPort = portAssignments[e];
+			requestedPorts.insert(wantedPort);
+			auto lifetime = tDst - tSrc - latSrc + dist*II;
+			bool foundIt = false;
+			for(auto &it : bind.fuConnections) {
+				if(it.first.first.first != rSrc) continue;
+				if(it.first.first.second != fuSrc) continue;
+				if(it.first.second.first != rDst) continue;
+				if(it.first.second.second != fuDst) continue;
+				if(it.second.first != lifetime) continue;
+				foundIt = true;
+				actualPorts.insert(it.second.second);
+				break;
+			}
+			if(!foundIt) {
+				std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
+									<< "' (commutative)" << std::endl;
+				return false;
+			}
+		}
+		if(requestedPorts.size() != actualPorts.size()) {
+			std::cout << "Found invalid port assignments for commutative operation '" << vDst->getName() << "'" << std::endl;
+		}
+	}
+
+	return true;
 }
 
 

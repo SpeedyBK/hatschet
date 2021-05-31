@@ -2361,7 +2361,7 @@ namespace HatScheT {
 		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
 		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
 		auto &mult = rm.makeResource("mult", 2, 1, 1);
-		auto &constant = rm.makeResource("constant", UNLIMITED, 0, 1);
+		auto &cons = rm.makeResource("cons", UNLIMITED, 0, 1);
 
 		auto &x0 = g.createVertex();
 		x0.setName("x0");
@@ -2380,7 +2380,7 @@ namespace HatScheT {
 
 		rm.registerVertex(&x0, &memR);
 		rm.registerVertex(&x1, &memR);
-		rm.registerVertex(&constant0_25, &constant);
+		rm.registerVertex(&constant0_25, &cons);
 		rm.registerVertex(&mult0, &mult);
 		rm.registerVertex(&mult1, &mult);
 		rm.registerVertex(&mult2, &mult);
@@ -2403,15 +2403,26 @@ namespace HatScheT {
 		portAssignments[&e6] = 0;
 
 		// schedule that badboy
-		std::map<Vertex*,int> sched;
 		std::list<std::string> sw = {"Gurobi"};
 		int timeout = 300;
+		std::map<Vertex*,int> sched;
+		int II = 2;
+		sched[&x0] = 0;
+		sched[&x1] = 0;
+		sched[&constant0_25] = 0;
+		sched[&mult0] = 0;
+		sched[&mult1] = 1;
+		sched[&mult2] = 2;
+		sched[&y0] = 3;
+
+		/*
 		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
 		scheduler.setQuiet(true);
 		scheduler.setSolverTimeout(timeout);
 		scheduler.schedule();
 		sched = scheduler.getSchedule();
-		auto II = (int)scheduler.getII();
+		II = (int)scheduler.getII();
+		 */
 		std::cout << "Schedule:" << std::endl;
 		for(auto it : sched) {
 			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
@@ -2419,8 +2430,9 @@ namespace HatScheT {
 
 		// call binding function
 		std::set<const Resource*> commutativeOps;
+		commutativeOps.insert(&mult);
 		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,II,portAssignments,commutativeOps,sw,timeout);
-		return true;
+		return verifyIntIIBinding(&g,&rm,sched,II,bind,portAssignments,commutativeOps);
 	}
 }
 

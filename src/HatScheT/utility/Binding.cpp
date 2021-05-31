@@ -1083,20 +1083,13 @@ namespace HatScheT {
 		return b;
 	}
 
-	std::map<const Vertex *, int>
+	Binding::BindingContainer
 	Binding::getILPMinMuxBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
 		std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps, std::list <string> sw, int timeout) {
 
 		//////////////////////
 		// check for errors //
 		//////////////////////
-		// commutative operations are not supported yet
-		if(!commutativeOps.empty()) {
-			throw HatScheT::Exception(
-				"Binding::getILPMinMuxBinding: Commutative operations are not supported yet, leave commutativeOps empty please"
-			);
-		}
-
 		// edges are missing in port assignment container
 		for(auto e : g->Edges()) {
 			try {
@@ -1110,7 +1103,7 @@ namespace HatScheT {
 		/////////////////////////
 		// container to return //
 		/////////////////////////
-		map<const Vertex*,int> binding;
+		BindingContainer binding;
 
 		///////////////////
 		// create solver //
@@ -1240,6 +1233,36 @@ namespace HatScheT {
 		}
 		std::cout << "checked possible lifetimes" << std::endl;
 
+		//////////////////////////////////////////////////////////////////
+		// check possible port connections for each fu -> fu connection //
+		//////////////////////////////////////////////////////////////////
+		std::map<std::pair<int,int>,std::set<int>> possiblePortConnections;
+		for(auto &e : g->Edges()) {
+			auto &vi = e->getVertexSrc();
+			auto &vj = e->getVertexDst();
+			auto *ri = rm->getResource(&vi);
+			auto *rj= rm->getResource(&vj);
+			for(int a=0; a<resourceLimits[ri]; a++) {
+				auto m = fuIndexMap[{ri,a}];
+				for(int b=0; b<resourceLimits[rj]; b++) {
+					auto n = fuIndexMap[{rj,b}];
+					if(commutativeOps.find(rj) == commutativeOps.end()) {
+						// non-commutative operation
+						// only the user-given port assignment is allowed
+						possiblePortConnections[{m,n}].insert(portAssignments[e]);
+					}
+					else {
+						// commutative operations
+						// all ports are allowed
+						for(int p=0; p<numResourcePorts[rj]; p++) {
+							possiblePortConnections[{m,n}].insert(p);
+						}
+					}
+				}
+			}
+		}
+		std::cout << "checked possible port connections" << std::endl;
+
 		//////////////////////
 		// create variables //
 		//////////////////////
@@ -1250,6 +1273,7 @@ namespace HatScheT {
 		std::map<std::pair<int,int>,ScaLP::Variable> v_i_m; // binding vertex -> fu
 		//std::map<std::pair<int,std::pair<int,int>>,ScaLP::Variable> r_m_n_k; // connection from fu m to fu n over k registers
 		std::map<std::pair<std::pair<int,int>,std::pair<int,int>>,ScaLP::Variable> r_m_n_k_p; // connection from fu m to fu n port p over k registers
+		std::map<std::pair<Edge*,int>,ScaLP::Variable> e_i_j_p;
 
 		// create vertex binding variables
 		for(auto v : g->Vertices()) {
@@ -1274,7 +1298,7 @@ namespace HatScheT {
 					for(int b=0; b<resourceLimits[rj]; b++) {
 						auto n = fuIndexMap[{rj,b}];
 						for(auto k : possibleLifetimes[{m,n}]) {
-							for(int p=0; p<numResourcePorts[rj]; p++) {
+							for(auto p : possiblePortConnections[{m,n}]) {
 								std::stringstream name;
 								name << "r_" << m << "_" << n << "_" << k << "_" << p;
 								r_m_n_k_p[{{m,n},{k,p}}] = ScaLP::newBinaryVariable(name.str());
@@ -1287,9 +1311,112 @@ namespace HatScheT {
 		}
 		std::cout << "created connection variables" << std::endl;
 
+		// create edge-port variables for commutative sink vertices
+		for(auto &e : g->Edges()) {
+			auto vi = &e->getVertexSrc();
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if(commutativeOps.find(rj) == commutativeOps.end()) continue;
+			auto i = vi->getId();
+			auto j = vj->getId();
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				std::stringstream name;
+				name << "e_" << i << "_" << j << "_" << p;
+				e_i_j_p[{e,p}] = ScaLP::newBinaryVariable(name.str());
+				std::cout << "  Successfully created variable " << e_i_j_p[{e,p}] << std::endl;
+			}
+		}
+		std::cout << "created edge-port variables" << std::endl;
+
 		////////////////////////
 		// create constraints //
 		////////////////////////
+		// commutative operations part 1
+		// only one edge-port variable is 1 per edge
+		for(auto &e : g->Edges()) {
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			auto vi = &e->getVertexSrc();
+			std::cout << "Creating constraints that edge-port variables are equal 1 per edge for " << vi->getName() << "->"
+				<< vj->getName() << std::endl;
+			ScaLP::Term lhs;
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				lhs += e_i_j_p[{e,p}];
+			}
+			ScaLP::Constraint constr = lhs == 1;
+			solver.addConstraint(constr);
+			std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		std::cout << "created commutativity constraints part 1" << std::endl;
+
+		// commutative operations part 2
+		// only one edge-port variable is 1 per port and sink vertex
+		for(auto &vj : g->Vertices()) {
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			std::cout << "Creating constraints that edge-port variables are equal 1 per per port for " << vj->getName()
+				<< std::endl;
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				ScaLP::Term lhs;
+				for(auto &e : g->Edges()) {
+					if(vj != &e->getVertexDst()) continue;
+					lhs += e_i_j_p[{e,p}];
+				}
+				ScaLP::Constraint constr = lhs == 1;
+				solver.addConstraint(constr);
+				std::cout << "  Successfully added constraint " << constr << std::endl;
+			}
+		}
+		std::cout << "created commutativity constraints part 2" << std::endl;
+
+		// commutative operations part 3
+		// the sum of edge-port variables is p per sink vertex
+		for(auto &vj : g->Vertices()) {
+			ScaLP::Term lhs;
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			std::cout << "Creating constraints that edge-port variables are equal to " << numResourcePorts[rj] << " for "
+				<< vj->getName() << std::endl;
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				for(auto &e : g->Edges()) {
+					if(vj != &e->getVertexDst()) continue;
+					lhs += e_i_j_p[{e,p}];
+				}
+			}
+			ScaLP::Constraint constr = lhs == numResourcePorts[rj];
+			solver.addConstraint(constr);
+			std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		std::cout << "created commutativity constraints part 3" << std::endl;
+
+		// commutative operations part 4
+		// map edge-port variables to actual binding variables
+		for(auto e : g->Edges()) {
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if(commutativeOps.find(rj) == commutativeOps.end()) continue;
+			auto vi = &e->getVertexSrc();
+			auto ri = rm->getResource(vi);
+			auto i = vi->getId();
+			auto j = vj->getId();
+			auto k = lifetimes[e];
+			std::cout << "Creating edge commutativity constraint for " << vi->getName() << "->" << vj->getName()
+				<< " with distance=" << e->getDistance() << std::endl;
+			for(int a = 0; a < resourceLimits[ri]; a++) {
+				auto m = fuIndexMap[{ri, a}];
+				for(int b = 0; b < resourceLimits[rj]; b++) {
+					auto n = fuIndexMap[{rj, b}];
+					for(int p = 0; p < numResourcePorts[rj]; p++) {
+						ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] + e_i_j_p[{e,p}] - r_m_n_k_p[{{m, n},{k, p}}] <= 2;
+						solver.addConstraint(constr);
+						std::cout << "  Successfully added constraint " << constr << std::endl;
+					}
+				}
+			}
+		}
+		std::cout << "created commutativity constraints part 4" << std::endl;
+
 		// each vertex is bound to exactly one resource
 		for(auto v : g->Vertices()) {
 			auto i = v->getId();
@@ -1322,7 +1449,7 @@ namespace HatScheT {
 				for(int b = 0; b < resourceLimits[rj]; b++) {
 					auto n = fuIndexMap[{rj, b}];
 					ScaLP::Term t;
-					for(int p = 0; p < numResourcePorts[rj]; p++) {
+					for(auto p : possiblePortConnections[{m,n}]) {
 						t += r_m_n_k_p[{{m, n},{k, p}}];
 					}
 					ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] - t <= 1;
@@ -1340,11 +1467,14 @@ namespace HatScheT {
 				auto vertices = rm->getVerticesOfResource(r);
 				for(int t=0; t<II; t++) {
 					ScaLP::Term lhs;
+					bool constraintEmpty = true;
 					for(auto v : vertices) {
 						if(sched[const_cast<Vertex*>(v)] % II != t) continue;
+						constraintEmpty = false;
 						int i = v->getId();
 						lhs += v_i_m[{i,m}];
 					}
+					if(constraintEmpty) continue;
 					ScaLP::Constraint constr = lhs <= 1;
 					solver.addConstraint(lhs <= 1);
 					std::cout << "  Successfully added constraint " << constr << std::endl;
@@ -1354,6 +1484,7 @@ namespace HatScheT {
 		std::cout << "created resource conflict constraints" << std::endl;
 
 		// respect port assignments for non-commutative resources
+		/*
 		for(auto it : portAssignments) {
 			auto e = it.first;
 			auto port = it.second;
@@ -1383,6 +1514,7 @@ namespace HatScheT {
 				std::cout << "  Successfully added constraint " << constr << std::endl;
 			}
 		}
+		 */
 		std::cout << "created port assignment constraints" << std::endl;
 
 		///////////////////
@@ -1421,7 +1553,7 @@ namespace HatScheT {
 			auto v = &g->getVertexById(i);
 			auto r = indexFuMap[m].first;
 			auto fu = indexFuMap[m].second;
-			binding[v] = fu;
+			binding.resourceBindings[v] = fu;
 			std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
 			  << r->getName() << std::endl;
 		}
@@ -1440,6 +1572,7 @@ namespace HatScheT {
 			auto fuj = indexFuMap[n].second;
 			std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
 			  << fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
+			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri,fui),std::make_pair(rj,fuj)),std::make_pair(k,p)));
 		}
 
 		return binding;

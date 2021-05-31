@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "HatScheT/utility/Binding.h"
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
 #include <vector>
@@ -99,5 +100,17 @@ bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector <std::ma
  * @return true iff the schedule is valid
  */
 bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *, double> &schedule, double II);
+
+/*!
+ * verify a binding
+ * @param g graph
+ * @param rm resource model
+ * @param sched schedule time container
+ * @param II initiation interval
+ * @param portAssignments this container specifies which edge is connected with which input port of the sink vertex
+ * @param commutativeOps a set with commutative operations that do not care about their port assignments
+ * @return if the binding is ok
+ */
+bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::BindingContainer bind, std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
 
 }

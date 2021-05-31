@@ -18,6 +18,9 @@ namespace HatScheT {
 			// each variable is bound to a given register (if registers are implemented with enable inputs)
 			// ignore this container if registers are implemented as register chains
 			std::map<const Vertex*,int> registerBindings;
+			// list of connections between FUs
+			// one list element: pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
+			std::list<std::pair<std::pair<std::pair<const Resource*,int>,std::pair<const Resource*,int>>,std::pair<int,int>>> fuConnections;
 		};
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
@@ -115,7 +118,7 @@ namespace HatScheT {
 		 * @param timeout timeout for ilp solver
 		 * @return binding
 		 */
-		static std::map<const Vertex*,int> getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
+		static BindingContainer getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
 			std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {},
 			std::list<std::string> sw = {}, int timeout=300);
 #endif
