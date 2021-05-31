@@ -22,6 +22,13 @@ namespace HatScheT {
 			// one list element: pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
 			std::list<std::pair<std::pair<std::pair<const Resource*,int>,std::pair<const Resource*,int>>,std::pair<int,int>>> fuConnections;
 		};
+		struct RatIIBindingContainer {
+			// The same as above but every container is actually a vector with one sub-container per sample
+			std::vector<std::map<const Vertex*,int>> resourceBindings;
+			std::vector<std::map<const Vertex*,int>> registerBindings;
+			// This one is actually the same as above... the list might be longer though...
+			std::list<std::pair<std::pair<std::pair<const Resource*,int>,std::pair<const Resource*,int>>,std::pair<int,int>>> fuConnections;
+		};
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
 		 * usable for rational IIs
@@ -121,6 +128,22 @@ namespace HatScheT {
 		static BindingContainer getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
 			std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {},
 			std::list<std::string> sw = {}, int timeout=300);
+
+		/*!
+		 * same binding method as getILPMinMuxBinding but this supports rational IIs
+		 * @param sched
+		 * @param g
+		 * @param rm
+		 * @param II
+		 * @param portAssignments
+		 * @param commutativeOps
+		 * @param sw
+		 * @param timeout
+		 * @return
+		 */
+		static RatIIBindingContainer getILPRatIIMinMuxBinding(std::vector<map<Vertex*, int>> sched, Graph *g,
+			ResourceModel* rm, int samples, int modulo, std::map<Edge*,int> portAssignments,
+			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300);
 #endif
 	};
 }

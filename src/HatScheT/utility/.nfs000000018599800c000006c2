@@ -1607,7 +1607,7 @@ namespace HatScheT {
 			for(int s=0; s<samples; ++s) {
 				auto newVertex = &g_unroll.createVertex();
 				newVertex->setName(v->getName()+"_"+to_string(s));
-				auto originalResource = rm->getResource(v);
+				auto originalResource = this->resourceModel.getResource(v);
 				rm_unroll.registerVertex(newVertex,rm_unroll.getResource(originalResource->getName()));
 				// mapping
 				unrolledVertexMappings[{v,s}] = newVertex;
@@ -1623,7 +1623,7 @@ namespace HatScheT {
 			int distance = e->getDistance();
 			int offset = 0;
 
-			// adjust distance/offset so distance < samples
+			// adjust distance/offset so distance < this->samples
 			while(distance>samples) {
 				distance -= samples;
 				++offset;
@@ -1661,16 +1661,14 @@ namespace HatScheT {
 		RatIIBindingContainer b;
 
 		// fill solution structure if binding was found
-		// vertex->fu bindings
 		for(auto it : unrolledBindingContainer.resourceBindings) {
 			auto unrolledVertex = const_cast<Vertex*>(it.first);
 			auto fu = it.second;
 			auto originalVertex = unrolledVertexMappingsReverse[unrolledVertex].first;
 			auto sample = unrolledVertexMappingsReverse[unrolledVertex].second;
-			if(b.resourceBindings.size() <= sample) b.resourceBindings.emplace_back(std::map<const Vertex*,int>());
-			b.resourceBindings[sample][originalVertex] = fu;
+			if(b.resourceBindings.size() <= s) b.resourceBindings.emplace_back(std::map<const Vertex*,int>);
+			b.resourceBindings[s][originalVertex] = fu;
 		}
-		// fu->fu connection bindings
 		for(auto it : unrolledBindingContainer.fuConnections) {
 			auto rSrc = it.first.first.first;
 			auto fuSrc = it.first.first.second;
@@ -1678,7 +1676,6 @@ namespace HatScheT {
 			auto fuDst = it.first.second.second;
 			auto lifetime = it.second.first;
 			auto port = it.second.second;
-			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rm->getResource(rSrc->getName()),fuSrc),std::make_pair(rm->getResource(rDst->getName()),fuDst)),std::make_pair(lifetime,port)));
 		}
 
 		return b;
