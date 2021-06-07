@@ -1085,7 +1085,8 @@ namespace HatScheT {
 
 	Binding::BindingContainer
 	Binding::getILPMinMuxBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
-		std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps, std::list <string> sw, int timeout) {
+		std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps, std::list <string> sw, int timeout,
+		bool quiet) {
 
 		//////////////////////
 		// check for errors //
@@ -1122,7 +1123,7 @@ namespace HatScheT {
 			resourceLimits[r] = 0;
 			if(r->isUnlimited()) {
 				resourceLimits[r] = rm->getVerticesOfResource(r).size();
-				std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+				if(!quiet) std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
 				continue;
 			}
 			std::map<int,int> modSlotHeight;
@@ -1134,14 +1135,16 @@ namespace HatScheT {
 				if(rm->getResource(v) != r) continue;
 				auto modSlot = it.second % II;
 				modSlotHeight[modSlot]++;
-				std::cout << "Mod slot for vertex '" << v->getName() << "' = " << modSlot << " = " << it.second << " mod "
-									<< II << std::endl;
-				std::cout << "  mod slot height = " << modSlotHeight[modSlot] << std::endl;
+				if(!quiet) {
+					std::cout << "Mod slot for vertex '" << v->getName() << "' = " << modSlot << " = " << it.second << " mod "
+					  << II << std::endl;
+					std::cout << "  mod slot height = " << modSlotHeight[modSlot] << std::endl;
+				}
 			}
 			for(auto it : modSlotHeight) {
 				if(it.second > resourceLimits[r]) resourceLimits[r] = it.second;
 			}
-			std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+			if(!quiet) std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
 		}
 
 		/////////////////////////////////////////////
@@ -1162,7 +1165,7 @@ namespace HatScheT {
 			}
 			numResourcePorts[r] = numPorts;
 		}
-		std::cout << "counted number of ports for each resource" << std::endl;
+		if(!quiet) std::cout << "counted number of ports for each resource" << std::endl;
 
 		//////////////////////////////////
 		// check if ports are left open //
@@ -1193,7 +1196,7 @@ namespace HatScheT {
 				throw HatScheT::Exception(exc.str());
 			}
 		}
-		std::cout << "checked if ports are left open" << std::endl;
+		if(!quiet) std::cout << "checked if ports are left open" << std::endl;
 
 		///////////////////////////////////////////////////
 		// assign each FU of each resource type a number //
@@ -1209,7 +1212,7 @@ namespace HatScheT {
 				fuIndexCounter++;
 			}
 		}
-		std::cout << "assigned all fus a number" << std::endl;
+		if(!quiet) std::cout << "assigned all fus a number" << std::endl;
 
 		///////////////////////////////////////////////////////////
 		// check possible lifetimes for each fu -> fu connection //
@@ -1231,7 +1234,7 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "checked possible lifetimes" << std::endl;
+		if(!quiet) std::cout << "checked possible lifetimes" << std::endl;
 
 		//////////////////////////////////////////////////////////////////
 		// check possible port connections for each fu -> fu connection //
@@ -1261,7 +1264,21 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "checked possible port connections" << std::endl;
+		if(!quiet) std::cout << "checked possible port connections" << std::endl;
+
+		//////////////////////////////////////////////////
+		// unlimited operations are bound to unique fus //
+		//////////////////////////////////////////////////
+		std::map<Vertex*,int> unlimitedOpFUs;
+		for(auto &r : rm->Resources()) {
+			if(!r->isUnlimited()) continue;
+			auto vertices = rm->getVerticesOfResource(r);
+			int fuCounter = 0;
+			for(auto v : vertices) {
+				unlimitedOpFUs[const_cast<Vertex*>(v)] = fuCounter;
+				fuCounter++;
+			}
+		}
 
 		//////////////////////
 		// create variables //
@@ -1271,7 +1288,6 @@ namespace HatScheT {
 		// k : lifetime register stage after fu
 		// p ; input port number
 		std::map<std::pair<int,int>,ScaLP::Variable> v_i_m; // binding vertex -> fu
-		//std::map<std::pair<int,std::pair<int,int>>,ScaLP::Variable> r_m_n_k; // connection from fu m to fu n over k registers
 		std::map<std::pair<std::pair<int,int>,std::pair<int,int>>,ScaLP::Variable> r_m_n_k_p; // connection from fu m to fu n port p over k registers
 		std::map<std::pair<Edge*,int>,ScaLP::Variable> e_i_j_p;
 
@@ -1279,16 +1295,21 @@ namespace HatScheT {
 		for(auto v : g->Vertices()) {
 			auto i = v->getId();
 			auto r = rm->getResource(v);
-			std::cout << "  resource limit for resource " << r->getName() << ": " << resourceLimits[r] << std::endl;
+			if(!quiet) std::cout << "  resource limit for resource " << r->getName() << ": " << resourceLimits[r] << std::endl;
 			for(int a=0; a<resourceLimits[r]; a++) {
+				if(r->isUnlimited() and a != unlimitedOpFUs[v]) {
+					// only create variables that are actually needed
+					// unlimited operations need unique fus assignments that were already pre-computed above
+					continue;
+				}
 				auto m = fuIndexMap[{r,a}];
 				std::stringstream name;
 				name << "v_" << i << "_" << m;
 				v_i_m[{i,m}] = ScaLP::newBinaryVariable(name.str());
-				std::cout << "  Successfully created variable " << v_i_m[{i,m}] << std::endl;
+				if(!quiet) std::cout << "  Successfully created variable " << v_i_m[{i,m}] << std::endl;
 			}
 		}
-		std::cout << "created vertex-binding variables" << std::endl;
+		if(!quiet) std::cout << "created vertex-binding variables" << std::endl;
 
 		// create connection variables
 		for(auto ri : rm->Resources()) {
@@ -1302,14 +1323,14 @@ namespace HatScheT {
 								std::stringstream name;
 								name << "r_" << m << "_" << n << "_" << k << "_" << p;
 								r_m_n_k_p[{{m,n},{k,p}}] = ScaLP::newBinaryVariable(name.str());
-								std::cout << "  Successfully created variable " << r_m_n_k_p[{{m,n},{k,p}}] << std::endl;
+								if(!quiet) std::cout << "  Successfully created variable " << r_m_n_k_p[{{m,n},{k,p}}] << std::endl;
 							}
 						}
 					}
 				}
 			}
 		}
-		std::cout << "created connection variables" << std::endl;
+		if(!quiet) std::cout << "created connection variables" << std::endl;
 
 		// create edge-port variables for commutative sink vertices
 		for(auto &e : g->Edges()) {
@@ -1323,10 +1344,10 @@ namespace HatScheT {
 				std::stringstream name;
 				name << "e_" << i << "_" << j << "_" << p;
 				e_i_j_p[{e,p}] = ScaLP::newBinaryVariable(name.str());
-				std::cout << "  Successfully created variable " << e_i_j_p[{e,p}] << std::endl;
+				if(!quiet) std::cout << "  Successfully created variable " << e_i_j_p[{e,p}] << std::endl;
 			}
 		}
-		std::cout << "created edge-port variables" << std::endl;
+		if(!quiet) std::cout << "created edge-port variables" << std::endl;
 
 		////////////////////////
 		// create constraints //
@@ -1338,25 +1359,29 @@ namespace HatScheT {
 			auto rj = rm->getResource(vj);
 			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
 			auto vi = &e->getVertexSrc();
-			std::cout << "Creating constraints that edge-port variables are equal 1 per edge for " << vi->getName() << "->"
-				<< vj->getName() << std::endl;
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal 1 per edge for " << vi->getName() << "->"
+				  << vj->getName() << std::endl;
+			}
 			ScaLP::Term lhs;
 			for(int p=0; p<numResourcePorts[rj]; p++) {
 				lhs += e_i_j_p[{e,p}];
 			}
 			ScaLP::Constraint constr = lhs == 1;
 			solver.addConstraint(constr);
-			std::cout << "  Successfully added constraint " << constr << std::endl;
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 		}
-		std::cout << "created commutativity constraints part 1" << std::endl;
+		if(!quiet) std::cout << "created commutativity constraints part 1" << std::endl;
 
 		// commutative operations part 2
 		// only one edge-port variable is 1 per port and sink vertex
 		for(auto &vj : g->Vertices()) {
 			auto rj = rm->getResource(vj);
 			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
-			std::cout << "Creating constraints that edge-port variables are equal 1 per per port for " << vj->getName()
-				<< std::endl;
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal 1 per per port for " << vj->getName()
+				  << std::endl;
+			}
 			for(int p=0; p<numResourcePorts[rj]; p++) {
 				ScaLP::Term lhs;
 				for(auto &e : g->Edges()) {
@@ -1365,10 +1390,10 @@ namespace HatScheT {
 				}
 				ScaLP::Constraint constr = lhs == 1;
 				solver.addConstraint(constr);
-				std::cout << "  Successfully added constraint " << constr << std::endl;
+				if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 			}
 		}
-		std::cout << "created commutativity constraints part 2" << std::endl;
+		if(!quiet) std::cout << "created commutativity constraints part 2" << std::endl;
 
 		// commutative operations part 3
 		// the sum of edge-port variables is p per sink vertex
@@ -1376,8 +1401,11 @@ namespace HatScheT {
 			ScaLP::Term lhs;
 			auto rj = rm->getResource(vj);
 			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
-			std::cout << "Creating constraints that edge-port variables are equal to " << numResourcePorts[rj] << " for "
-				<< vj->getName() << std::endl;
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal to " << numResourcePorts[rj] << " for "
+				  << vj->getName() << std::endl;
+			}
+
 			for(int p=0; p<numResourcePorts[rj]; p++) {
 				for(auto &e : g->Edges()) {
 					if(vj != &e->getVertexDst()) continue;
@@ -1386,9 +1414,9 @@ namespace HatScheT {
 			}
 			ScaLP::Constraint constr = lhs == numResourcePorts[rj];
 			solver.addConstraint(constr);
-			std::cout << "  Successfully added constraint " << constr << std::endl;
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 		}
-		std::cout << "created commutativity constraints part 3" << std::endl;
+		if(!quiet) std::cout << "created commutativity constraints part 3" << std::endl;
 
 		// commutative operations part 4
 		// map edge-port variables to actual binding variables
@@ -1401,37 +1429,42 @@ namespace HatScheT {
 			auto i = vi->getId();
 			auto j = vj->getId();
 			auto k = lifetimes[e];
-			std::cout << "Creating edge commutativity constraint for " << vi->getName() << "->" << vj->getName()
-				<< " with distance=" << e->getDistance() << std::endl;
+			if(!quiet) {
+				std::cout << "Creating edge commutativity constraint for " << vi->getName() << "->" << vj->getName()
+				  << " with distance=" << e->getDistance() << std::endl;
+			}
 			for(int a = 0; a < resourceLimits[ri]; a++) {
+				if(ri->isUnlimited() and a != unlimitedOpFUs[vi]) continue;
 				auto m = fuIndexMap[{ri, a}];
 				for(int b = 0; b < resourceLimits[rj]; b++) {
+					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
 					auto n = fuIndexMap[{rj, b}];
 					for(int p = 0; p < numResourcePorts[rj]; p++) {
 						ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] + e_i_j_p[{e,p}] - r_m_n_k_p[{{m, n},{k, p}}] <= 2;
 						solver.addConstraint(constr);
-						std::cout << "  Successfully added constraint " << constr << std::endl;
+						if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 					}
 				}
 			}
 		}
-		std::cout << "created commutativity constraints part 4" << std::endl;
+		if(!quiet) std::cout << "created commutativity constraints part 4" << std::endl;
 
 		// each vertex is bound to exactly one resource
 		for(auto v : g->Vertices()) {
 			auto i = v->getId();
 			auto r = rm->getResource(v);
-			std::cout << "Creating constraint for vertex " << v->getName() << " and resource " << r->getName() << std::endl;
+			if(!quiet) std::cout << "Creating constraint for vertex " << v->getName() << " and resource " << r->getName() << std::endl;
 			ScaLP::Term t;
 			for(int a=0; a<resourceLimits[r]; a++) {
+				if(r->isUnlimited() and a != unlimitedOpFUs[v]) continue;
 				auto m = fuIndexMap[{r,a}];
 				t += v_i_m[{i,m}];
 			}
 			ScaLP::Constraint constr = t == 1;
 			solver.addConstraint(constr);
-			std::cout << "  Successfully added constraint " << constr << std::endl;
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 		}
-		std::cout << "created vertex-binding constraints" << std::endl;
+		if(!quiet) std::cout << "created vertex-binding constraints" << std::endl;
 
 		// one connection for each edge
 		for(auto e : g->Edges()) {
@@ -1442,11 +1475,15 @@ namespace HatScheT {
 			auto i = vi->getId();
 			auto j = vj->getId();
 			auto k = lifetimes[e];
-			std::cout << "Creating edge constraint for " << vi->getName() << "->" << vj->getName() << " with distance="
-				<< e->getDistance() << std::endl;
+			if(!quiet) {
+				std::cout << "Creating edge constraint for " << vi->getName() << "->" << vj->getName() << " with distance="
+				  << e->getDistance() << std::endl;
+			}
 			for(int a = 0; a < resourceLimits[ri]; a++) {
+				if(ri->isUnlimited() and a != unlimitedOpFUs[vi]) continue;
 				auto m = fuIndexMap[{ri, a}];
 				for(int b = 0; b < resourceLimits[rj]; b++) {
+					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
 					auto n = fuIndexMap[{rj, b}];
 					ScaLP::Term t;
 					for(auto p : possiblePortConnections[{m,n}]) {
@@ -1454,11 +1491,11 @@ namespace HatScheT {
 					}
 					ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] - t <= 1;
 					solver.addConstraint(constr);
-					std::cout << "  Successfully added constraint " << constr << std::endl;
+					if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 				}
 			}
 		}
-		std::cout << "created edge connection constraints" << std::endl;
+		if(!quiet) std::cout << "created edge connection constraints" << std::endl;
 
 		// no resource conflicts
 		for(auto r : rm->Resources()) {
@@ -1470,6 +1507,7 @@ namespace HatScheT {
 					bool constraintEmpty = true;
 					for(auto v : vertices) {
 						if(sched[const_cast<Vertex*>(v)] % II != t) continue;
+						if(r->isUnlimited() and a != unlimitedOpFUs[const_cast<Vertex*>(v)]) continue;
 						constraintEmpty = false;
 						int i = v->getId();
 						lhs += v_i_m[{i,m}];
@@ -1477,45 +1515,11 @@ namespace HatScheT {
 					if(constraintEmpty) continue;
 					ScaLP::Constraint constr = lhs <= 1;
 					solver.addConstraint(lhs <= 1);
-					std::cout << "  Successfully added constraint " << constr << std::endl;
+					if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 				}
 			}
 		}
-		std::cout << "created resource conflict constraints" << std::endl;
-
-		// respect port assignments for non-commutative resources
-		/*
-		for(auto it : portAssignments) {
-			auto e = it.first;
-			auto port = it.second;
-			auto vi = &e->getVertexSrc();
-			auto vj = &e->getVertexDst();
-			auto ri = rm->getResource(vi);
-			auto rj = rm->getResource(vj);
-			if(commutativeOps.find(rj) != commutativeOps.end()) {
-				// skip commutative operations
-				continue;
-			}
-			for(auto &rContainer : r_m_n_k_p) {
-				auto m = rContainer.first.first.first;
-				auto n = rContainer.first.first.second;
-				if(indexFuMap[m].first != ri or indexFuMap[n].first != rj) {
-					// variable is not relevant for this edge
-					continue;
-				}
-				auto var = rContainer.second;
-				auto p = rContainer.first.second.second;
-				if(p == port) {
-					// binding is allowed to happen according to portAssignment container
-					continue;
-				}
-				ScaLP::Constraint constr = var == 0;
-				solver.addConstraint(constr);
-				std::cout << "  Successfully added constraint " << constr << std::endl;
-			}
-		}
-		 */
-		std::cout << "created port assignment constraints" << std::endl;
+		if(!quiet) std::cout << "created resource conflict constraints" << std::endl;
 
 		///////////////////
 		// set objective //
@@ -1529,15 +1533,18 @@ namespace HatScheT {
 		//////////////////
 		// start solver //
 		//////////////////
-		std::cout << solver.showLP() << std::endl;
-		std::cout << "start solving now" << std::endl;
+		if(!quiet) std::cout << solver.showLP() << std::endl;
+		if(!quiet) std::cout << "start solving now" << std::endl;
 		auto stat = solver.solve();
-		std::cout << "finished solving with status " << stat << std::endl;
+		if(!quiet) std::cout << "finished solving with status " << stat << std::endl;
 		if(stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL) {
-			std::cout << "Binding::getILPMinMuxBinding: could not solve binding problem, ScaLP status " << stat << std::endl;
+			if(!quiet) {
+				std::cout << "Binding::getILPMinMuxBinding: could not solve binding problem, ScaLP status " << stat
+				  << std::endl;
+			}
 			return binding; // empty binding
 		}
-		std::cout << "start filling solution structure" << std::endl;
+		if(!quiet) std::cout << "start filling solution structure" << std::endl;
 
 		/////////////////////////////
 		// fill solution structure //
@@ -1554,8 +1561,10 @@ namespace HatScheT {
 			auto r = indexFuMap[m].first;
 			auto fu = indexFuMap[m].second;
 			binding.resourceBindings[v] = fu;
-			std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
-			  << r->getName() << std::endl;
+			if(!quiet) {
+				std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
+				  << r->getName() << std::endl;
+			}
 		}
 		// connection variables
 		for(auto &it : r_m_n_k_p) {
@@ -1570,8 +1579,10 @@ namespace HatScheT {
 			auto fui = indexFuMap[m].second;
 			auto rj = indexFuMap[n].first;
 			auto fuj = indexFuMap[n].second;
-			std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
-			  << fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
+			if(!quiet) {
+				std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
+				  << fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
+			}
 			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri,fui),std::make_pair(rj,fuj)),std::make_pair(k,p)));
 		}
 
@@ -1581,7 +1592,7 @@ namespace HatScheT {
 	Binding::RatIIBindingContainer
 	Binding::getILPRatIIMinMuxBinding(std::vector<map<Vertex *, int>> sched, Graph *g, ResourceModel *rm, int samples,
 		int modulo, std::map<Edge *, int> portAssignments, set<const Resource *> commutativeOps, list<string> sw,
-		int timeout) {
+		int timeout, bool quiet) {
 		// mappings between vertices of original and unrolled graphs
 		std::map<std::pair<Vertex*,int>,Vertex*> unrolledVertexMappings;
 		std::map<Vertex*,std::pair<Vertex*,int>> unrolledVertexMappingsReverse;
@@ -1653,11 +1664,14 @@ namespace HatScheT {
 
 				// mapping
 				unrolledEdgeMappings[{e,s}] = newEdge;
+
+				// copy port assignment
+				unrolledPortAssignments[newEdge] = portAssignments[e];
 			}
 		}
 
 		// call binding function on unrolled graph
-		auto unrolledBindingContainer = getILPMinMuxBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,unrolledPortAssignments,unrolledCommutativeOps,sw,timeout);
+		auto unrolledBindingContainer = getILPMinMuxBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,unrolledPortAssignments,unrolledCommutativeOps,sw,timeout,quiet);
 		RatIIBindingContainer b;
 
 		// fill solution structure if binding was found

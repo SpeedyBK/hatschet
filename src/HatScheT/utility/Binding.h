@@ -127,14 +127,15 @@ namespace HatScheT {
 		 */
 		static BindingContainer getILPMinMuxBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
 			std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {},
-			std::list<std::string> sw = {}, int timeout=300);
+			std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
 
 		/*!
 		 * same binding method as getILPMinMuxBinding but this supports rational IIs
 		 * @param sched
 		 * @param g
 		 * @param rm
-		 * @param II
+		 * @param samples II = modulo / samples
+		 * @param modulo II = modulo / samples
 		 * @param portAssignments
 		 * @param commutativeOps
 		 * @param sw
@@ -143,7 +144,7 @@ namespace HatScheT {
 		 */
 		static RatIIBindingContainer getILPRatIIMinMuxBinding(std::vector<map<Vertex*, int>> sched, Graph *g,
 			ResourceModel* rm, int samples, int modulo, std::map<Edge*,int> portAssignments,
-			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300);
+			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
 #endif
 	};
 }

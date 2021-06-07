@@ -2406,7 +2406,13 @@ namespace HatScheT {
 		std::list<std::string> sw = {"Gurobi"};
 		int timeout = 300;
 		std::map<Vertex*,int> sched;
-		int II = 2;
+		std::vector<std::map<Vertex*,int>> ratIISched;
+		double intII = 2.0;
+		double ratII = 1.5;
+		int samples = 2;
+		int modulo = 3;
+
+		/*
 		sched[&x0] = 0;
 		sched[&x1] = 0;
 		sched[&constant0_25] = 0;
@@ -2414,25 +2420,46 @@ namespace HatScheT {
 		sched[&mult1] = 1;
 		sched[&mult2] = 2;
 		sched[&y0] = 3;
+		 */
 
-		/*
 		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
 		scheduler.setQuiet(true);
 		scheduler.setSolverTimeout(timeout);
 		scheduler.schedule();
 		sched = scheduler.getSchedule();
-		II = (int)scheduler.getII();
-		 */
-		std::cout << "Schedule:" << std::endl;
+		intII = scheduler.getII();
+
+		std::cout << "Integer-II Schedule:" << std::endl;
 		for(auto it : sched) {
 			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 		}
 
-		// call binding function
+		// rat-II schedule
+		UniformRationalIISchedulerNew ratIIScheduler(g,rm,sw);
+		ratIIScheduler.setQuiet(true);
+		ratIIScheduler.setSolverTimeout(timeout);
+		ratIIScheduler.schedule();
+		ratIISched = ratIIScheduler.getStartTimeVector();
+		ratII = ratIIScheduler.getII();
+		samples = ratIIScheduler.getS_Found();
+		modulo = ratIIScheduler.getM_Found();
+
+		// specify commutative operation types
 		std::set<const Resource*> commutativeOps;
 		commutativeOps.insert(&mult);
-		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,II,portAssignments,commutativeOps,sw,timeout);
-		return verifyIntIIBinding(&g,&rm,sched,II,bind,portAssignments,commutativeOps);
+
+		// call binding function for integer IIs
+		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,(int)intII,portAssignments,commutativeOps,sw,timeout);
+		std::cout << "Integer-II binding successfully computed" << std::endl;
+		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
+		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
+
+		// call binding function for rational IIs
+		auto ratIIBind = Binding::getILPRatIIMinMuxBinding(ratIISched,&g,&rm,samples,modulo,portAssignments,commutativeOps,sw,timeout);
+		std::cout << "Rational-II binding successfully computed" << std::endl;
+		bool ratIIValid = verifyRatIIBinding(&g,&rm,ratIISched,samples,modulo,ratIIBind,portAssignments,commutativeOps);
+		std::cout << "Rational-II binding is " << (ratIIValid?"":"not ") << "valid" << std::endl;
+		return intIIValid and ratIIValid;
 	}
 }
 
