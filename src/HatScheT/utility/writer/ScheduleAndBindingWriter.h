@@ -16,6 +16,32 @@ namespace HatScheT {
 	class ScheduleAndBindingWriter : public Writer {
 
 	public:
+		struct fuConnection {
+			/*!
+			 * source resource name
+			 */
+			std::string resourceSrc;
+			/*!
+			 * source fu number
+			 */
+			int fuSrc;
+			/*!
+			 * destination resource name
+			 */
+			std::string resourceDst;
+			/*!
+			 * destination fu number
+			 */
+			int fuDst;
+			/*!
+			 * destination input port number
+			 */
+			int port;
+			/*!
+			 * number of lifetime regs of that connection
+			 */
+			int lifetimeRegs;
+		};
 		/*!
 		 * rational II constructor
 		 * @param path
@@ -25,7 +51,8 @@ namespace HatScheT {
 		 * @param modulo
 		 */
 		ScheduleAndBindingWriter(std::string path, std::vector<std::map<Vertex *, int>> &schedule,
-														 std::vector<std::map<const Vertex *, int>> &binding, int samples, int modulo);
+														 std::vector<std::map<const Vertex *, int>> &binding, int samples, int modulo,
+														 std::vector<fuConnection> fuConnections = {});
 		/*!
 		 * integer II constructor
 		 * @param path
@@ -33,7 +60,9 @@ namespace HatScheT {
 		 * @param binding
 		 * @param II
 		 */
-		ScheduleAndBindingWriter(std::string path, std::map<Vertex *, int> &schedule, std::map<const Vertex *, int> &binding, int II);
+		ScheduleAndBindingWriter(std::string path, std::map<Vertex *, int> &schedule,
+			                       std::map<const Vertex *, int> &binding, int II,
+														 std::vector<fuConnection> fuConnections = {});
 		/*!
 		 * base method we override
 		 */
@@ -48,6 +77,10 @@ namespace HatScheT {
 		void setRMPath(std::string r) { this->rmPath = r; }
 
 	private:
+		/*!
+		 * connections between FUs (do not have to be specified if multiplexer port assignment should not be included)
+		 */
+		std::vector<fuConnection> fuConnections;
 		/*!
 		 * path to the graph associated to the schedule/binding
 		 */
