@@ -2449,13 +2449,13 @@ namespace HatScheT {
 		commutativeOps.insert(&mult);
 
 		// call binding function for integer IIs
-		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,(int)intII,portAssignments,commutativeOps,sw,timeout);
+		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,(int)intII,portAssignments,commutativeOps,sw,timeout,false);
 		std::cout << "Integer-II binding successfully computed" << std::endl;
 		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
 		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
 
 		// call binding function for rational IIs
-		auto ratIIBind = Binding::getILPRatIIMinMuxBinding(ratIISched,&g,&rm,samples,modulo,portAssignments,commutativeOps,sw,timeout);
+		auto ratIIBind = Binding::getILPRatIIMinMuxBinding(ratIISched,&g,&rm,samples,modulo,portAssignments,commutativeOps,sw,timeout,false);
 		std::cout << "Rational-II binding successfully computed" << std::endl;
 		bool ratIIValid = verifyRatIIBinding(&g,&rm,ratIISched,samples,modulo,ratIIBind,portAssignments,commutativeOps);
 		std::cout << "Rational-II binding is " << (ratIIValid?"":"not ") << "valid" << std::endl;

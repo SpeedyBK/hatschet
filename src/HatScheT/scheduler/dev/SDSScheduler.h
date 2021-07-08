@@ -202,6 +202,7 @@ namespace HatScheT {
      * BindingType is used as a switch for the resourcebinding:
      * R -> Use minimun of resources: Starts with mapping all operations to 1 resource instance.
      * S -> Get maximum Speed : Distributes the operations as equal as possible to the resource instances.
+     * todo: change this to enum please
      */
     char bindingType;
 

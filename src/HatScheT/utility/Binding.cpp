@@ -1287,9 +1287,10 @@ namespace HatScheT {
 		// m/n : fu index
 		// k : lifetime register stage after fu
 		// p ; input port number
-		std::map<std::pair<int,int>,ScaLP::Variable> v_i_m; // binding vertex -> fu
+		// e : edge
+		std::map<std::pair<int,int>,ScaLP::Variable> v_i_m; // binding vertex i -> fu m
 		std::map<std::pair<std::pair<int,int>,std::pair<int,int>>,ScaLP::Variable> r_m_n_k_p; // connection from fu m to fu n port p over k registers
-		std::map<std::pair<Edge*,int>,ScaLP::Variable> e_i_j_p;
+		std::map<std::pair<Edge*,int>,ScaLP::Variable> a_e_p; // if edge e is assigned to port p
 
 		// create vertex binding variables
 		for(auto v : g->Vertices()) {
@@ -1338,13 +1339,11 @@ namespace HatScheT {
 			auto vj = &e->getVertexDst();
 			auto rj = rm->getResource(vj);
 			if(commutativeOps.find(rj) == commutativeOps.end()) continue;
-			auto i = vi->getId();
-			auto j = vj->getId();
 			for(int p=0; p<numResourcePorts[rj]; p++) {
 				std::stringstream name;
-				name << "e_" << i << "_" << j << "_" << p;
-				e_i_j_p[{e,p}] = ScaLP::newBinaryVariable(name.str());
-				if(!quiet) std::cout << "  Successfully created variable " << e_i_j_p[{e,p}] << std::endl;
+				name << "a_" << e << "_" << p;
+				a_e_p[{e,p}] = ScaLP::newBinaryVariable(name.str());
+				if(!quiet) std::cout << "  Successfully created variable " << a_e_p[{e,p}] << std::endl;
 			}
 		}
 		if(!quiet) std::cout << "created edge-port variables" << std::endl;
@@ -1365,7 +1364,7 @@ namespace HatScheT {
 			}
 			ScaLP::Term lhs;
 			for(int p=0; p<numResourcePorts[rj]; p++) {
-				lhs += e_i_j_p[{e,p}];
+				lhs += a_e_p[{e,p}];
 			}
 			ScaLP::Constraint constr = lhs == 1;
 			solver.addConstraint(constr);
@@ -1386,7 +1385,7 @@ namespace HatScheT {
 				ScaLP::Term lhs;
 				for(auto &e : g->Edges()) {
 					if(vj != &e->getVertexDst()) continue;
-					lhs += e_i_j_p[{e,p}];
+					lhs += a_e_p[{e,p}];
 				}
 				ScaLP::Constraint constr = lhs == 1;
 				solver.addConstraint(constr);
@@ -1409,7 +1408,7 @@ namespace HatScheT {
 			for(int p=0; p<numResourcePorts[rj]; p++) {
 				for(auto &e : g->Edges()) {
 					if(vj != &e->getVertexDst()) continue;
-					lhs += e_i_j_p[{e,p}];
+					lhs += a_e_p[{e,p}];
 				}
 			}
 			ScaLP::Constraint constr = lhs == numResourcePorts[rj];
@@ -1440,7 +1439,7 @@ namespace HatScheT {
 					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
 					auto n = fuIndexMap[{rj, b}];
 					for(int p = 0; p < numResourcePorts[rj]; p++) {
-						ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] + e_i_j_p[{e,p}] - r_m_n_k_p[{{m, n},{k, p}}] <= 2;
+						ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] + a_e_p[{e,p}] - r_m_n_k_p[{{m, n},{k, p}}] <= 2;
 						solver.addConstraint(constr);
 						if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
 					}

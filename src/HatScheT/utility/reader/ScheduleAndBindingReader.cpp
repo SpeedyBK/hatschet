@@ -39,32 +39,46 @@ void HatScheT::ScheduleAndBindingReader::read(std::string filepath) {
 			readHeader(linebuffer);
 			continue;
 		}
-		if(this->isRatII()) {
-			// rational-II schedule
-			auto vertexName = segments[0];
-			auto sample = stoi(segments[1]);
-			auto cycle = stoi(segments[2]);
-			auto fu = stoi(segments[3]);
-			if(this->schedule.size() <= sample) this->schedule.resize(sample+1);
-			if(this->binding.size() <= sample) this->binding.resize(sample+1);
-			for(auto v : this->g->Vertices()) {
-				if(v->getName() != vertexName) continue;
-				this->schedule[sample][v] = cycle;
-				this->binding[sample][v] = fu;
+		if(segments.size() == 4 or segments.size() == 3) {
+			// schedule/binding info
+			if(this->isRatII()) {
+				// rational-II schedule
+				auto vertexName = segments[0];
+				auto sample = stoi(segments[1]);
+				auto cycle = stoi(segments[2]);
+				auto fu = stoi(segments[3]);
+				if(this->schedule.size() <= sample) this->schedule.resize(sample+1);
+				if(this->binding.size() <= sample) this->binding.resize(sample+1);
+				for(auto v : this->g->Vertices()) {
+					if(v->getName() != vertexName) continue;
+					this->schedule[sample][v] = cycle;
+					this->binding[sample][v] = fu;
+				}
+			}
+			else {
+				// integer-II schedule
+				auto vertexName = segments[0];
+				auto cycle = stoi(segments[1]);
+				auto fu = stoi(segments[2]);
+				if(this->schedule.empty()) this->schedule.resize(1);
+				if(this->binding.empty()) this->binding.resize(1);
+				for(auto v : this->g->Vertices()) {
+					if(v->getName() != vertexName) continue;
+					this->schedule[0][v] = cycle;
+					this->binding[0][v] = fu;
+				}
 			}
 		}
-		else {
-			// integer-II schedule
-			auto vertexName = segments[0];
-			auto cycle = stoi(segments[1]);
-			auto fu = stoi(segments[2]);
-			if(this->schedule.empty()) this->schedule.resize(1);
-			if(this->binding.empty()) this->binding.resize(1);
-			for(auto v : this->g->Vertices()) {
-				if(v->getName() != vertexName) continue;
-				this->schedule[0][v] = cycle;
-				this->binding[0][v] = fu;
-			}
+		else if(segments.size() == 6) {
+			// fu connection info
+			fuConnection fuC;
+			fuC.resourceSrc = segments[0];
+			fuC.fuSrc = stoi(segments[1]);
+			fuC.resourceDst = segments[2];
+			fuC.fuDst = stoi(segments[3]);
+			fuC.port = stoi(segments[4]);
+			fuC.lifetimeRegs = stoi(segments[5]);
+			this->fuConnections.emplace_back(fuC);
 		}
 	}
 
@@ -111,7 +125,7 @@ double HatScheT::ScheduleAndBindingReader::getII() {
 	return this->II;
 }
 
-void HatScheT::ScheduleAndBindingReader::readHeader(std::string line) {
+void HatScheT::ScheduleAndBindingReader::readHeader(std::string &line) {
 	std::string segment;
 	std::vector<std::string> segments;
 	std::stringstream linebufferStream(line);
@@ -131,4 +145,8 @@ void HatScheT::ScheduleAndBindingReader::readHeader(std::string line) {
 
 bool HatScheT::ScheduleAndBindingReader::isRatII() {
 	return this->modulo >= 0 and this->samples >= 0;
+}
+
+vector<HatScheT::ScheduleAndBindingReader::fuConnection> HatScheT::ScheduleAndBindingReader::getFUConnections() {
+	return this->fuConnections;
 }

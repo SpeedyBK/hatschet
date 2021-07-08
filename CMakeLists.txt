@@ -142,6 +142,7 @@ src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/GraphMLGraphWriter.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.cpp
+src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
@@ -207,6 +208,7 @@ src/HatScheT/utility/Binding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h
+src/HatScheT/utility/writer/DGLWriter.h
 src/HatScheT/utility/writer/Writer.h
 src/HatScheT/utility/writer/GraphMLGraphWriter.h
 src/HatScheT/utility/writer/XMLResourceWriter.h

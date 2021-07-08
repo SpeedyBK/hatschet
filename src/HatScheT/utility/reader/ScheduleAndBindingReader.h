@@ -15,6 +15,35 @@ namespace HatScheT {
 	class ScheduleAndBindingReader {
 	public:
 		/*!
+		 * this defines a connection between two FUs when multiplexer port assignment is performed
+		 */
+		struct fuConnection {
+			/*!
+			 * source resource name
+			 */
+			std::string resourceSrc;
+			/*!
+			 * source fu number
+			 */
+			int fuSrc;
+			/*!
+			 * destination resource name
+			 */
+			std::string resourceDst;
+			/*!
+			 * destination fu number
+			 */
+			int fuDst;
+			/*!
+			 * destination input port number
+			 */
+			int port;
+			/*!
+			 * number of lifetime regs of that connection
+			 */
+			int lifetimeRegs;
+		};
+		/*!
 		 * constructor
 		 * @param g graph belonging to the file that we want to read
 		 * @param rm resource model belonging to the file that we want to read
@@ -50,6 +79,11 @@ namespace HatScheT {
 		 */
 		std::vector<std::map<Vertex*,int>> getRationalIIBinding();
 		/*!
+		 * get connections between FUs if that info was present in the file we just read
+		 * @return
+		 */
+		std::vector<fuConnection> getFUConnections();
+		/*!
 		 * get number of samples in rational-II schedule
 		 * @return
 		 */
@@ -70,7 +104,7 @@ namespace HatScheT {
 		 * read a line of the file header
 		 * @param line
 		 */
-		void readHeader(std::string line);
+		void readHeader(std::string &line);
 		/*!
 		 * graph
 		 */
@@ -87,6 +121,10 @@ namespace HatScheT {
 		 * binding info container
 		 */
 		std::vector<std::map<Vertex*,int>> binding;
+		/*!
+		 * fu connection container
+		 */
+		std::vector<fuConnection> fuConnections;
 		/*!
 		 * number of samples in rat-II schedule
 		 */
