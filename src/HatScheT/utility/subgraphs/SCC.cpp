@@ -90,26 +90,23 @@ list<HatScheT::SCC *> HatScheT::SCC::getConnectedSCCs() { return connectedSCCs;}
 
 
 list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() {
+	return this->sccEdges;
+}
 
-  bool srcVertexInSCC = false;
-  bool dstVertexInSCC = false;
-  list <Edge*> EdgesInSCC;
-
-  for (auto &eIt : g->Edges()){
-    for (auto &vIt : verticesOfSCC){
-      if(&eIt->getVertexSrc() == vIt){
-        srcVertexInSCC = true;
-      }
-      if((&eIt->getVertexDst() == vIt)){
-        dstVertexInSCC = true;
-      }
-    }
-    if (srcVertexInSCC && dstVertexInSCC){
-      EdgesInSCC.push_back(eIt);
-    }
-    srcVertexInSCC = false;
-    dstVertexInSCC = false;
-  }
-
-  return EdgesInSCC;
+void HatScheT::SCC::findSCCEdges() {
+	for (auto &eIt : g->Edges()){
+		bool srcVertexInSCC = false;
+		bool dstVertexInSCC = false;
+		for (auto &vIt : verticesOfSCC){
+			if(&eIt->getVertexSrc() == vIt){
+				srcVertexInSCC = true;
+			}
+			if((&eIt->getVertexDst() == vIt)){
+				dstVertexInSCC = true;
+			}
+		}
+		if (srcVertexInSCC && dstVertexInSCC){
+			this->sccEdges.emplace_back(eIt);
+		}
+	}
 }

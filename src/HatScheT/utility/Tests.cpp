@@ -1497,20 +1497,27 @@ namespace HatScheT {
 		m.setSolverTimeout(1);
 		m.schedule();
 
-		std::cout << "Tests::moduloQTest: finished scheduling - resulting control steps:" << std::endl;
+		std::cout << "Tests::sccqtest: finished scheduling - resulting control steps:" << std::endl;
 		auto startTimesVector = m.getStartTimeVector();
 		auto initIntervals = m.getInitiationIntervals();
 		auto latencySequence = m.getLatencySequence();
 
 		auto valid = m.getScheduleValid();
 		if (!valid) {
-			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
+			std::cout << "Tests::sccqtest: invalid rational II modulo schedule found" << std::endl;
 			return false;
 		}
+
+		if (m.getM_Found() != m.getM_Start() or m.getS_Found() != m.getS_Start()) {
+			std::cout << "Tests::sccqtest: expected scheduler to find solution for II=" << m.getM_Start() << "/"
+				<< m.getS_Start() << " but got II=" << m.getM_Found() << "/" << m.getS_Found() << std::endl;
+			return false;
+		}
+
 		for (unsigned int i = 0; i < initIntervals.size(); ++i) {
 			auto l = initIntervals[i];
 			auto startTimes = startTimesVector[i];
-			std::cout << "Tests::moduloQTest: start times for insertion time=" << l << std::endl;
+			std::cout << "Tests::sccqtest: start times for insertion time=" << l << std::endl;
 			for (auto it : startTimes) {
 				std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 			}

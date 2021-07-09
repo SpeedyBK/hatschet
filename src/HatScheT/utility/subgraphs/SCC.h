@@ -72,6 +72,10 @@ namespace HatScheT {
     map <Vertex*, bool> getVertexInSccMap();
 
     /*!
+     * this function must be called once to set this->sccEdges
+     */
+    void findSCCEdges();
+    /*!
      * @return A list of edges which has Source and Destination in the SCC.
      */
     list<Edge*> getSCCEdges();
@@ -114,6 +118,10 @@ namespace HatScheT {
 
   private:
 
+  	/*!
+  	 * a list of all edges of the original graph with source AND destination vertex inside this scc
+  	 */
+		list<Edge*> sccEdges;
     /*!
      * Pointer to the original graph.
      */
