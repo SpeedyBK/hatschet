@@ -34,11 +34,12 @@ namespace HatScheT {
 		 */
 		void schedule() override;
 		/*!
-		 * desired ratio of subgraph size to the number of subgraphs
-		 * this can generally not hold perfectly but works as a general rule of thumb for the partitioning algorithm
-		 * set to 1.0 to have apporiximately sqrt(|V|) subgraphs with approximately sqrt(|V|) vertices
+		 * desired maximum subgraph size
+		 * this size is not exceeded by the partitioning algorithm if possible (long recurrences may break this rule!)
+		 * if it remains unchanged the algorithm tries to generate
+		 * apporiximately sqrt(|V|) subgraphs with approximately sqrt(|V|) vertices
 		 */
-		double subgraphSizeRatio;
+		double maximalSubgraphSize = -1.0;
 
 	protected:
 		/*!
@@ -59,7 +60,7 @@ namespace HatScheT {
 		 * tries to find a schedule for the candidate II
 		 * \param candidateII
 		 */
-		void scheduleIteration(int candidateII);
+		void scheduleAttempt(int candidateII);
 		/*!
 		 * this function uses a utility function to partition the graph into sccs to remove recurrences
 		 */
@@ -81,6 +82,10 @@ namespace HatScheT {
 		 */
 		void sortSubgraphs();
 		/*!
+		 * post-processing step to further optimize the schedule
+		 */
+		void postProcessSchedule();
+		/*!
 		 * container to hold relative schedules for all subgraphs
 		 */
 		std::map<Graph*, std::map<Vertex*, int>> subgraphSchedule;
@@ -91,15 +96,15 @@ namespace HatScheT {
 		/*!
 		 * a map from original vertex to the subgraph it belongs to
 		 */
-		std::map<Vertex*, Graph*> vertexSubgraphMap;
+		std::map<Vertex*, Graph*> vertexToSubgraphMap;
 		/*!
 		 * a map from original vertex to vertex in subgraph
 		 */
-		std::map<Vertex*, Vertex*> vertexSubgraphVertexMap;
+		std::map<Vertex*, Vertex*> vertexToSubgraphVertexMap;
 		/*!
 		 * a map from vertex in subgraph to original vertex
 		 */
-		std::map<Vertex*, Vertex*> subgraphVertexVertexMap;
+		std::map<Vertex*, Vertex*> subgraphVertexToVertexMap;
 		/*!
 		 * topologically sorted SCCs
 		 */

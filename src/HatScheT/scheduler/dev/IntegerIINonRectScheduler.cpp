@@ -19,9 +19,6 @@ namespace HatScheT {
 		this->startTimes.clear();
 		this->scheduleFound = false;
 		this->optimalResult = true;
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
 	}
 
 	void IntegerIINonRectScheduler::schedule()
@@ -34,20 +31,9 @@ namespace HatScheT {
 			std::cout << "IntIINonRect: solver timeout = " << this->solverTimeout << " (sec)" << endl;
 		}
 
-		//set maxRuns, e.g., maxII - minII, iff value if not -1
-		if(this->maxRuns > 0){
-			int runs = this->maxII - this->minII;
-			if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
-			if(this->quiet==false) std::cout << "IntIINonRect: maxII changed due to maxRuns value set by user!" << endl;
-			if(this->quiet==false) std::cout << "IntIINonRect: min/maxII = " << minII << " " << maxII << std::endl;
-		}
-
-		if (minII > maxII)
-			throw HatScheT::Exception("Inconsistent II bounds");
-
-		bool feasible = false;
 		// iterative modulo scheduling does not make sense with this scheduler
-		// because resource limits must be set according to
+		// because resource limits must be set according to the candidate II
+		bool feasible = false;
 		bool proven = false;
 		scheduleAttempt(candII, feasible, proven);
 		scheduleFound |= feasible;
