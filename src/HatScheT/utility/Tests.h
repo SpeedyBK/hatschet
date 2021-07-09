@@ -57,6 +57,11 @@ public:
      * \return
      */
   static bool moduloSDCTestFiege();
+	/*!
+	 * \brief test whether integer II non rect scheduling is running as expected
+	 * @return 
+	 */
+	static bool integerIINonRectTest();
   /*!
    * \brief apiTest tests API functionality
    * \return

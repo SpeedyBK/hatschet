@@ -330,7 +330,8 @@ int main(int argc, char *args[]) {
         if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
         if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
         if(str=="RWRS" && HatScheT::Tests::readWriteReadScheduleTest()==false) exit(-1);
-        if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+				if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+				if(str=="INTEGERIINONRECT" && HatScheT::Tests::integerIINonRectTest()==false) exit(-1);
 				if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
 				if(str=="RATIONALIIMODULOSDC" && HatScheT::Tests::rationalIIModuloSDCTest()==false) exit(-1);
 				if(str=="COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest()==false) exit(-1);

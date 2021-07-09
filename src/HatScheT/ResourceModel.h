@@ -73,7 +73,29 @@ public:
    * \return the limit
    */
   virtual int getLimit() const {return this->limit;}
+  /*!
+   * set resource limit
+   * @param l new limit
+   */
   void setLimit(int l);
+  /*!
+   * this is used for resources that have different limits in different congruence classes
+   * @param congruenceClass
+   * @return the limit in that congruence class
+   */
+	virtual int getNonRectLimit(int congruenceClass);
+	/*!
+	 * this returns the total number of mrt slots.
+	 * for a rectangular mrt this would be limit * II
+	 * but for a non-rect one we have to count the mrt heights in each modulo slot
+	 */
+	virtual int getTotalNonRectSlots();
+	/*!
+	 * this can be used to specify the limit in a specific congruence class
+	 * @param congruenceClass
+	 * @param l new limit in that congruence class
+	 */
+  void setNonRectLimit(int congruenceClass, int l);
   /*!
    * \return the latency
    */
@@ -110,6 +132,10 @@ protected:
    * \brief the number of available instances. Use HatScheT::UNLIMITED (= -1) to denote an unlimited resource
    */
   int limit;
+  /*!
+   * \brief this map is used for resources with non-rectangular MRTs, i.e. the limit depends on the congruence class
+   */
+  std::map<int, int> nonRectLimit;
   /*!
    * \brief the number of time steps the resource needs to complete its function
    */

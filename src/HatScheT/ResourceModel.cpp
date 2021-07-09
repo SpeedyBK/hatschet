@@ -131,7 +131,37 @@ void Resource::setLimit(int l)
     //cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
     //throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
   }
-  this->limit=l;}
+  this->limit=l;
+}
+
+  int Resource::getNonRectLimit(int congruenceClass) {
+		try {
+			// return non-rect limit if it is set
+			return this->nonRectLimit.at(congruenceClass);
+		}
+		catch (std::out_of_range&) {
+			// return "normal" limit otherwise
+			return this->limit;
+		}
+		catch (...) {
+			// unexpected error if catching fails
+			throw HatScheT::Exception("Resource::getNonRectLimit: Unexpected error for non-rectangular resource limitation");
+		}
+	}
+
+	void Resource::setNonRectLimit(int congruenceClass, int l) {
+		if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
+		if(this->blockingTime==0 && l!=-1) {
+			cout << this->name << ".setLimit: WARNING setting this resource limit to a limited value and a blocking time of 0 was detected! Blocking time set to 1!";
+			this->blockingTime = 1;
+		}
+		if(this->latency==0 && this->phyDelay==0.0f && l!=-1){
+			//ToDo (patrick) ist this warning really neccessary?
+			//cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
+			//throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
+		}
+		this->nonRectLimit[congruenceClass]=l;
+	}
 
 const Resource *ResourceModel::getResource(const Vertex *v) const
 {
@@ -274,7 +304,15 @@ void Resource::addHardwareCost(string n, double c)
   this->hardwareCost.insert(make_pair(n,c));
 }
 
-int ResourceModel::getMaxLatency() const
+	int Resource::getTotalNonRectSlots() {
+		int numSlots = 0;
+		for (auto it : this->nonRectLimit) {
+			numSlots += it.second;
+		}
+		return numSlots;
+	}
+
+	int ResourceModel::getMaxLatency() const
 {
   int maxLat = 0;
 

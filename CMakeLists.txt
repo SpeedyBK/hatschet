@@ -182,6 +182,8 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
+src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.h
+src/HatScheT/scheduler/graphBased/PBScheduler.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.h
@@ -234,6 +236,8 @@ src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
+src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
+src/HatScheT/scheduler/graphBased/PBScheduler.cpp
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
@@ -318,6 +322,7 @@ add_test("nonUniformRatII" "./hatschet" "--test=NONUNIFORMRATIONALIISCHEDULER")
 add_test("ratIIModuloQ" "./hatschet" "--test=RATIONALIIMODULOQ")
 add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")
 add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
+add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
