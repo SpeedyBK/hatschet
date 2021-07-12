@@ -67,6 +67,7 @@ namespace HatScheT {
 	void IntegerIINonRectScheduler::scheduleAttempt(int candII, bool &feasible, bool &proven)
 	{
 		solver->reset();
+		solver->timeout = this->getSolverTimeout();
 
 		constructDecisionVariables(candII);
 		setObjective();

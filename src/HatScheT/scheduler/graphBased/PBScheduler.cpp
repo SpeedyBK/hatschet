@@ -30,6 +30,7 @@ namespace HatScheT {
 	}
 
 	void PBScheduler::schedule() {
+		this->solvingTime = 0.0;
 		if(!this->quiet){
 			std::cout << "PBS: min/maxII = " << this->minII << " " << this->maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 			std::cout << "PBS: solver timeout = " << this->solverTimeout << " (sec)" << endl;
@@ -37,10 +38,13 @@ namespace HatScheT {
 
 		//set maxRuns, e.g., maxII - minII, iff value if not -1
 		if(this->maxRuns > 0){
-			int runs = this->maxII - this->minII;
+			int runs = this->maxII - this->minII + 1;
 			if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
 			if(this->quiet==false) std::cout << "PBS: maxII changed due to maxRuns value set by user!" << endl;
 			if(this->quiet==false) std::cout << "PBS: min/maxII = " << this->minII << " " << this->maxII << std::endl;
+			std::cout << "#q# maxRuns = " << this->maxRuns << std::endl;
+			std::cout << "#q# minII = " << this->minII << std::endl;
+			std::cout << "#q# maxII = " << this->maxII << std::endl;
 		}
 
 		if (this->minII > this->maxII)
@@ -124,7 +128,7 @@ namespace HatScheT {
 		if (!this->scheduleFound) {
 			// timeout :(
 			this->end = clock();
-			this->solvingTime = ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
+			this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
 			this->optimalResult = false; // I would be shocked if we ever found an optimum
 			this->II = -1;
 		}
@@ -140,7 +144,7 @@ namespace HatScheT {
 		//   this->startTimes
 		//   this->solvingTime
 		this->end = clock();
-		this->solvingTime = ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
+		this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
 		this->optimalResult = false; // I would be shocked if we ever found an optimum
 		this->II = candidateII;
 	}
@@ -342,10 +346,14 @@ namespace HatScheT {
 	void PBScheduler::scheduleSubgraphs(int candidateII) {
 		for (auto subgraph : this->subgraphs) {
 			auto elapsedTime = ((double)(clock() - this->begin)) / CLOCKS_PER_SEC;
+			if (!this->quiet) {
+				std::cout << "start scheduling " << subgraph->getName() << " - elapsed time so far: " << elapsedTime << " sec"
+					<< std::endl;
+			}
 			auto rm = this->resourceModels[subgraph];
 			IntegerIINonRectScheduler scheduler(*subgraph, *rm, this->sw);
 			scheduler.setQuiet(this->quiet);
-			scheduler.setSolverTimeout(this->getSolverTimeout() - elapsedTime);
+			scheduler.setSolverTimeout(this->getSolverTimeout() - round(elapsedTime));
 			scheduler.setCandidateII(candidateII);
 			scheduler.schedule();
 			if (!scheduler.getScheduleFound()) {

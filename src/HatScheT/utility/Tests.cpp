@@ -1561,7 +1561,7 @@ namespace HatScheT {
 		g.createEdge(r3, r4, 0);
 		g.createEdge(b1, b2, 0);
 		g.createEdge(b2, r4, 0);
-		//g.createEdge(b2, r1, 1); // optional back edge
+		g.createEdge(b2, r1, 1); // optional back edge
 
 		std::cout << rm << std::endl;
 		std::cout << g << std::endl;
@@ -1569,23 +1569,32 @@ namespace HatScheT {
 		// create scheduler
 		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		// set it up
-		pbs.setQuiet(false);
+		pbs.setQuiet(true);
 		pbs.setSolverTimeout(1);
 		pbs.setMaxRuns(1);
 		pbs.maximalSubgraphSize = 3;
 		// call scheduling function
 		pbs.schedule();
 
+		// get results
+		auto solvingTime = pbs.getSolvingTime();
+		std::cout << "solving time = " << solvingTime << std::endl;
+		auto II = (int)pbs.getII();
+		std::cout << "II = " << II << std::endl;
+		auto latency = pbs.getScheduleLength();
+		std::cout << "latency = " << latency << std::endl;
+		auto schedule = pbs.getSchedule();
+
+		std::cout << "Resulting schedule:" << std::endl;
+		for (auto it : schedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
 		auto foundSolution = pbs.getScheduleFound();
 		if (!foundSolution) {
 			std::cout << "Tests::integerIIPBTest: scheduler failed to find solution" << std::endl;
 			return false;
 		}
-
-		std::cout << "Tests::integerIIPBTest: finished scheduling - resulting control steps:" << std::endl;
-		auto latency = pbs.getScheduleLength();
-		auto schedule = pbs.getSchedule();
-		auto II = (int)pbs.getII();
 
 		auto valid = verifyModuloSchedule(g, rm, schedule, II);
 		if (!valid) {
@@ -1596,11 +1605,6 @@ namespace HatScheT {
 		if (II != 3) {
 			std::cout << "Tests::integerIIPBTest: expected scheduler to find solution for II=3 but got II=" << II << std::endl;
 			return false;
-		}
-
-		std::cout << "Resulting schedule with II=5:" << std::endl;
-		for (auto it : schedule) {
-			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 		}
 
 		return true;
