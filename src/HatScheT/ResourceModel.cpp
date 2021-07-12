@@ -134,7 +134,7 @@ void Resource::setLimit(int l)
   this->limit=l;
 }
 
-  int Resource::getNonRectLimit(int congruenceClass) {
+  int Resource::getNonRectLimit(int congruenceClass) const {
 		try {
 			// return non-rect limit if it is set
 			return this->nonRectLimit.at(congruenceClass);

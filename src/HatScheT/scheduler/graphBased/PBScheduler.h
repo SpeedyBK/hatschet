@@ -28,7 +28,6 @@ namespace HatScheT {
 		 * @param solverWishlist
 		 */
 		PBScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		virtual ~PBScheduler();
 		/*!
 		 * \brief Attempts to schedule the given instances
 		 */
@@ -39,7 +38,7 @@ namespace HatScheT {
 		 * if it remains unchanged the algorithm tries to generate
 		 * apporiximately sqrt(|V|) subgraphs with approximately sqrt(|V|) vertices
 		 */
-		double maximalSubgraphSize = -1.0;
+		int maximalSubgraphSize = -1;
 
 	protected:
 		/*!
@@ -57,6 +56,14 @@ namespace HatScheT {
 
 	private:
 		/*!
+		 * solver wishlist for backbone scheduler
+		 */
+		std::list<std::string> sw;
+		/*!
+		 * free memory after scheduling attempt
+		 */
+		void freeMemory();
+		/*!
 		 * tries to find a schedule for the candidate II
 		 * \param candidateII
 		 */
@@ -71,16 +78,24 @@ namespace HatScheT {
 		void orderSCCs();
 		/*!
 		 * sccs are merged into subgraphs
+		 * \param candidateII
 		 */
-		void partitionSCCs();
+		void partitionSCCGraph(int candidateII);
+		/*!
+		 * assign (enough) resources to all subgraphs
+		 * \param candidateII
+		 */
+		void partitionMRTs(int candidateII);
 		/*!
 		 * subgraphs are scheduled individually for a relative schedule
+		 * \param candidateII
 		 */
-		void scheduleSubgraphs();
+		void scheduleSubgraphs(int candidateII);
 		/*!
 		 * relative schedule are offset by n*II such that all dependency constraints hold
+		 * \param candidateII
 		 */
-		void sortSubgraphs();
+		void sortSubgraphs(int candidateII);
 		/*!
 		 * post-processing step to further optimize the schedule
 		 */
@@ -92,7 +107,11 @@ namespace HatScheT {
 		/*!
 		 * all subgraphs
 		 */
-		 std::vector<Graph*> subgraphs;
+		std::vector<Graph*> subgraphs;
+		/*!
+		 * a resource model for each subgraph
+		 */
+		std::map<Graph*, ResourceModel*> resourceModels;
 		/*!
 		 * a map from original vertex to the subgraph it belongs to
 		 */

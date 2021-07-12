@@ -25,6 +25,7 @@
 #include "HatScheT/TargetModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
+#include <random>
 
 namespace HatScheT
 {
@@ -34,6 +35,23 @@ namespace HatScheT
 class Utility
 {
 public:
+	/*!
+	 * selects a random element from a container
+	 * function definition put into header to prevent linker problems in an easy way
+	 * feel free to change it if you don't like this...
+	 * @tparam iter iterator type
+	 * @param start start iterator
+	 * @param end end iterator
+	 * @return an iterator to a randomly selected element between start and end
+	 */
+	template<typename iter>
+	static iter selectRandomElement(iter start, iter end) {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+		std::advance(start, dis(gen));
+		return start;
+	}
   /*!
    * \brief getNoOfResConstrVertices
    * \param rm

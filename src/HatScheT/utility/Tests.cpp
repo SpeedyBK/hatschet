@@ -26,6 +26,7 @@
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/IntegerIINonRectScheduler.h"
+#include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UniformRationalIIScheduler.h"
@@ -1521,6 +1522,85 @@ namespace HatScheT {
 			for (auto it : startTimes) {
 				std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 			}
+		}
+
+		return true;
+	}
+
+	bool Tests::integerIIPBTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &red = rm.makeResource("red", 2, 1, 1);
+		auto &blue = rm.makeResource("blue", 1, 1, 1);
+
+		Vertex &r0 = g.createVertex();
+		Vertex &r1 = g.createVertex();
+		Vertex &r2 = g.createVertex();
+		Vertex &r3 = g.createVertex();
+		Vertex &r4 = g.createVertex();
+		rm.registerVertex(&r0, &red);
+		rm.registerVertex(&r1, &red);
+		rm.registerVertex(&r2, &red);
+		rm.registerVertex(&r3, &red);
+		rm.registerVertex(&r4, &red);
+		Vertex &b0 = g.createVertex();
+		Vertex &b1 = g.createVertex();
+		Vertex &b2 = g.createVertex();
+		rm.registerVertex(&b0, &blue);
+		rm.registerVertex(&b1, &blue);
+		rm.registerVertex(&b2, &blue);
+		g.createEdge(r0, r2, 0);
+		g.createEdge(r0, b2, 0);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r1, b0, 0);
+		g.createEdge(b0, r2, 0);
+		g.createEdge(b0, r3, 0);
+		g.createEdge(b0, b1, 0);
+		g.createEdge(r2, b2, 0);
+		g.createEdge(r3, r4, 0);
+		g.createEdge(b1, b2, 0);
+		g.createEdge(b2, r4, 0);
+		//g.createEdge(b2, r1, 1); // optional back edge
+
+		std::cout << rm << std::endl;
+		std::cout << g << std::endl;
+
+		// create scheduler
+		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+		// set it up
+		pbs.setQuiet(false);
+		pbs.setSolverTimeout(1);
+		pbs.setMaxRuns(1);
+		pbs.maximalSubgraphSize = 3;
+		// call scheduling function
+		pbs.schedule();
+
+		auto foundSolution = pbs.getScheduleFound();
+		if (!foundSolution) {
+			std::cout << "Tests::integerIIPBTest: scheduler failed to find solution" << std::endl;
+			return false;
+		}
+
+		std::cout << "Tests::integerIIPBTest: finished scheduling - resulting control steps:" << std::endl;
+		auto latency = pbs.getScheduleLength();
+		auto schedule = pbs.getSchedule();
+		auto II = (int)pbs.getII();
+
+		auto valid = verifyModuloSchedule(g, rm, schedule, II);
+		if (!valid) {
+			std::cout << "Tests::integerIIPBTest: invalid modulo schedule found" << std::endl;
+			return false;
+		}
+
+		if (II != 3) {
+			std::cout << "Tests::integerIIPBTest: expected scheduler to find solution for II=3 but got II=" << II << std::endl;
+			return false;
+		}
+
+		std::cout << "Resulting schedule with II=5:" << std::endl;
+		for (auto it : schedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 		}
 
 		return true;

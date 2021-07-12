@@ -83,7 +83,7 @@ public:
    * @param congruenceClass
    * @return the limit in that congruence class
    */
-	virtual int getNonRectLimit(int congruenceClass);
+	virtual int getNonRectLimit(int congruenceClass) const;
 	/*!
 	 * this returns the total number of mrt slots.
 	 * for a rectangular mrt this would be limit * II
