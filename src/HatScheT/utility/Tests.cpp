@@ -1569,7 +1569,7 @@ namespace HatScheT {
 		// create scheduler
 		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		// set it up
-		pbs.setQuiet(true);
+		pbs.setQuiet(false);
 		pbs.setSolverTimeout(1);
 		pbs.setMaxRuns(1);
 		pbs.maximalSubgraphSize = 3;
