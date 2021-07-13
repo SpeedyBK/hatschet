@@ -1561,7 +1561,7 @@ namespace HatScheT {
 		g.createEdge(r3, r4, 0);
 		g.createEdge(b1, b2, 0);
 		g.createEdge(b2, r4, 0);
-		g.createEdge(b2, r1, 1); // optional back edge
+		//g.createEdge(b2, r1, 1); // optional back edge
 
 		std::cout << rm << std::endl;
 		std::cout << g << std::endl;

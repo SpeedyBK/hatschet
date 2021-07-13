@@ -42,9 +42,6 @@ namespace HatScheT {
 			if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
 			if(this->quiet==false) std::cout << "PBS: maxII changed due to maxRuns value set by user!" << endl;
 			if(this->quiet==false) std::cout << "PBS: min/maxII = " << this->minII << " " << this->maxII << std::endl;
-			std::cout << "#q# maxRuns = " << this->maxRuns << std::endl;
-			std::cout << "#q# minII = " << this->minII << std::endl;
-			std::cout << "#q# maxII = " << this->maxII << std::endl;
 		}
 
 		if (this->minII > this->maxII)
