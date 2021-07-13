@@ -398,7 +398,8 @@ namespace HatScheT {
 					auto tDst = this->subgraphSchedule[subgraphDst][vSubDst];
 					auto distance = e->getDistance();
 					auto delay = e->getDelay();
-					auto minOffset = (int) ceil(((double) tSrc + this->resourceModel.getVertexLatency(vSrc) - delay) / ((double)candidateII)) + distance;
+					auto minOffset = (int) ceil(((double) tSrc + this->resourceModel.getVertexLatency(vSrc) - delay) / ((double)candidateII)) - distance;
+					minOffset = std::max(minOffset, 0); // do not let the minimum offset be negative to prevent negative starting times
 					maxMinOffset = std::max(maxMinOffset, minOffset);
 				}
 				// offset every vertex by the minimum offset
