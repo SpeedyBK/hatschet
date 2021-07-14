@@ -35,10 +35,10 @@ namespace HatScheT {
 		/*!
 		 * desired maximum subgraph size
 		 * this size is not exceeded by the partitioning algorithm if possible (long recurrences may break this rule!)
-		 * if it remains unchanged the algorithm tries to generate
+		 * if it is set to 0 (or any negative value) the algorithm tries to generate
 		 * apporiximately sqrt(|V|) subgraphs with approximately sqrt(|V|) vertices
 		 */
-		int maximalSubgraphSize = -1;
+		int maximalSubgraphSize = 15;
 
 	protected:
 		/*!
