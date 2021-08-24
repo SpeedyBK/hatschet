@@ -80,12 +80,14 @@ namespace HatScheT {
 		 * @param g graph
 		 * @param rm resource model
 		 * @param II initiation interval
+		 * @param portAssignments specify for each edge the input port number of the destination vertex
 		 * @param sw solver wishlist
 		 * @param timeout max solving time in seconds
 		 * @return a map of vertex to FU-number
 		 */
 		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
-																																int II, std::list<std::string> sw = {}, int timeout=300);
+																																int II, std::map<Edge*,int> portAssignments,
+																																std::list<std::string> sw = {}, int timeout=300);
 		/*!
 		* @brief create an ilp-based binding for a rational II schedule
 		* the goal is to minimize MUX and register allocation

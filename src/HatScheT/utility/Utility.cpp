@@ -825,4 +825,61 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		else return hFunction(n - ceil(n / M), M - 1, tau - 1);
 	}
 
+	std::pair<Graph *, ResourceModel *> Utility::unrollGraph(Graph *g, ResourceModel *resourceModel, int samples) {
+		auto* g_unroll(new Graph);
+		auto* rm_unroll(new ResourceModel);
+
+		for(auto res : resourceModel->Resources()) {
+			rm_unroll->makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+		}
+
+		for(auto v : g->Vertices()) {
+			for(int s=0; s<samples; ++s) {
+				auto& newVertex = g_unroll->createVertex();
+				newVertex.setName(v->getName()+"_"+to_string(s));
+				auto originalResource = resourceModel->getResource(v);
+				rm_unroll->registerVertex(&newVertex,rm_unroll->getResource(originalResource->getName()));
+			}
+		}
+
+		for(auto e : g->Edges()) {
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+
+			int distance = e->getDistance();
+			int offset = 0;
+
+			// adjust distance/offset so distance < samples
+			while(distance>samples) {
+				distance -= samples;
+				++offset;
+			}
+
+			for(int s=0; s<samples; ++s) {
+				// adjust distance again (only once)
+				int sourceSampleNumber = s - distance;
+				int edgeOffset = offset;
+				if(sourceSampleNumber < 0) {
+					sourceSampleNumber += samples;
+					++edgeOffset;
+				}
+
+				// create edge
+				Vertex* srcVertex = nullptr;
+				Vertex* dstVertex = nullptr;
+
+				for(auto v : g_unroll->Vertices()) {
+					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
+						srcVertex = v;
+					if(v->getName() == dstName + "_" + to_string(s))
+						dstVertex = v;
+				}
+
+				g_unroll->createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
+			}
+		}
+
+		return {g_unroll, rm_unroll};
+	}
+
 }

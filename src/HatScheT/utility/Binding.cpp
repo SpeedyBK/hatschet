@@ -495,8 +495,8 @@ namespace HatScheT {
 	}
 
 	Binding::BindingContainer
-	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, list<string> sw,
-																	 int timeout) {
+	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
+																	std::map<Edge*,int> portAssignments,  list<string> sw, int timeout) {
 		///////////////////////////////////////////////
 		// find conflicting operations and variables //
 		///////////////////////////////////////////////
@@ -618,7 +618,7 @@ namespace HatScheT {
 		std::cout << "Created x_i_k variables" << std::endl;
 		s.showLP(); // this line does nothing - only for debugging
 
-		// boolean variables whether variable of v_i is bound to register k (y_i_l)
+		// boolean variables whether variable of v_i is bound to register l (y_i_l)
 		std::map<std::pair<int,int>,ScaLP::Variable> y_i_l;
 		for(auto &v : g->Vertices()) {
 			for(int l=0; l<minRegs; ++l) {
@@ -881,10 +881,14 @@ namespace HatScheT {
 			if(rDst->isUnlimited()) resLimitDst = verticesDst.size();
 			auto j = vDst->getId();
 			for(int k=0; k<resLimitDst; k++) {
-				for(int n=0; n<numResourcePorts[rDst]; n++) {
+				try {
+					auto n = portAssignments.at(e);
 					for(int l=0; l<minRegs; l++) {
 						s.addConstraint(y_i_l[{i,l}] + x_i_k[{j,k}] - a_r_n_k_l[{{rDst->getName(),n},{k,l}}] <= 1);
 					}
+				}
+				catch (std::out_of_range&) {
+					throw HatScheT::Exception("Could not find port assignment for edge '"+vSrc->getName()+"' -> '"+vDst->getName()+"'");
 				}
 			}
 		}
@@ -922,8 +926,12 @@ namespace HatScheT {
 
 			for(int k1=0; k1<resLimitDst; k1++) {
 				for(int k2=0; k2<resLimitSrc; k2++) {
-					for(int n=0; n<numResourcePorts[r1]; n++) {
+					try {
+						auto n = portAssignments.at(e);
 						s.addConstraint(x_i_k[{i,k2}] + x_i_k[{j,k1}] - b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] <= 1);
+					}
+					catch (std::out_of_range&) {
+						throw HatScheT::Exception("Could not find port assignment for edge '"+vSrc->getName()+"' -> '"+vDst->getName()+"'");
 					}
 				}
 			}

@@ -2321,7 +2321,6 @@ namespace HatScheT {
 		auto &add = rm.makeResource("add", 2, 1, 1);
 
 		// resource: #vertices=3, limit=2
-		// recurrence: latency=3, distance=2
 		Vertex &mem1 = g.createVertex(1);
 		Vertex &mem2 = g.createVertex(2);
 		Vertex &mem3 = g.createVertex(3);
@@ -2336,15 +2335,24 @@ namespace HatScheT {
 		rm.registerVertex(&add1, &add);
 		rm.registerVertex(&add2, &add);
 		rm.registerVertex(&add3, &add);
-		g.createEdge(mem1, add1, 0);
-		g.createEdge(mem2, add1, 0);
-		g.createEdge(mem3, add2, 0);
-		g.createEdge(mem4, add2, 0);
-		g.createEdge(add1, add3, 0);
-		g.createEdge(add2, add3, 0);
+		auto *e0 = &g.createEdge(mem1, add1, 0);
+		auto *e1 = &g.createEdge(mem2, add1, 0);
+		auto *e2 = &g.createEdge(mem3, add2, 0);
+		auto *e3 = &g.createEdge(mem4, add2, 0);
+		auto *e4 = &g.createEdge(add1, add3, 0);
+		auto *e5 = &g.createEdge(add2, add3, 0);
+
+		// port assignment for each edge
+		std::map<Edge*,int> portAssignments;
+		portAssignments[e0] = 0;
+		portAssignments[e1] = 1;
+		portAssignments[e2] = 0;
+		portAssignments[e3] = 1;
+		portAssignments[e4] = 0;
+		portAssignments[e5] = 1;
 
 		std::map<Vertex*, int> sched;
-		int II = 3;
+		int II = 2;
 
 		/*
 		sched[&r1] = 0;
@@ -2365,10 +2373,9 @@ namespace HatScheT {
 
 		if(!ed97.getScheduleFound()) return false;
 		sched = ed97.getSchedule();
-		II = ed97.getII();
+		II = (int)ed97.getII();
 
-
-		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,portAssignments,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
 
 		if(bind.resourceBindings.empty()) {
 			std::cout << "Empty resource bindings detected - test failed" << std::endl;
