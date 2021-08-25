@@ -14,20 +14,26 @@ namespace HatScheT {
 	public:
 		struct BindingContainer {
 			// each vertex in a graph is bound to a specific FU of its resource type
-			std::map<const Vertex*,int> resourceBindings;
+			std::map<std::string,int> resourceBindings;
 			// each variable is bound to a given register (if registers are implemented with enable inputs)
 			// ignore this container if registers are implemented as register chains
-			std::map<const Vertex*,int> registerBindings;
+			std::map<std::string,int> registerBindings;
 			// list of connections between FUs
 			// one list element: pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
-			std::list<std::pair<std::pair<std::pair<const Resource*,int>,std::pair<const Resource*,int>>,std::pair<int,int>>> fuConnections;
+			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
+			// list of connections from FUs to registers (if registers are implemented with enable inputs)
+			// one list element: pair<pair<src resource type, src FU number>, dst register number>
+			std::list<std::pair<std::pair<std::string,int>,int>> fuRegConnections;
+			// list of connections from registers to FUs (if registers are implemented with enable inputs)
+			// one list element: pair<pair<src register number, dst port number>, pair<dst resource type, dst FU number>>
+			std::list<std::pair<std::pair<int, int>, std::pair<std::string, int>>> regFuConnections;
 		};
 		struct RatIIBindingContainer {
 			// The same as above but every container is actually a vector with one sub-container per sample
-			std::vector<std::map<const Vertex*,int>> resourceBindings;
-			std::vector<std::map<const Vertex*,int>> registerBindings;
+			std::vector<std::map<std::string,int>> resourceBindings;
+			std::vector<std::map<std::string,int>> registerBindings;
 			// This one is actually the same as above... the list might be longer though...
-			std::list<std::pair<std::pair<std::pair<const Resource*,int>,std::pair<const Resource*,int>>,std::pair<int,int>>> fuConnections;
+			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
 		};
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
@@ -70,11 +76,11 @@ namespace HatScheT {
 		 */
 		static std::vector<std::map<const Vertex*,int>> getSimpleRationalIIBinding(std::vector<std::map<Vertex*, int>> sched, ResourceModel* rm, int M, int S);
 #ifdef USE_SCALP
-		/*!
+		/*! ATTENTION: DO NOT USE THIS AS IT IS NOT FINISHED YET
 		 * @brief create an ILP-based binding for an integer-II schedule
 		 * goal: minimize mux utilization
 		 * based on 'Simultaneous FU and Register Binding Based on Network Flow Method' by Jason Cong and Junjuan Xu
-		 * THIS ASSUMES THAT EVERY OPERATION IS COMMUTATIVE (e.g. not applicable for subtractors)
+		 * THIS ASSUMES THAT NO OPERATION IS COMMUTATIVE (i.e., does not find optimal results for e.g. adders)
 		 * THIS ALSO ASSUMES THAT REGISTERS ARE IMPLEMENTED WITH ENABLE-INPUTS AND NOT AS REGISTER-CHAINS
 		 * @param sched schedule
 		 * @param g graph
@@ -83,11 +89,13 @@ namespace HatScheT {
 		 * @param portAssignments specify for each edge the input port number of the destination vertex
 		 * @param sw solver wishlist
 		 * @param timeout max solving time in seconds
+		 * @param quiet suppress debug outputs
 		 * @return a map of vertex to FU-number
 		 */
 		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
 																																int II, std::map<Edge*,int> portAssignments,
-																																std::list<std::string> sw = {}, int timeout=300);
+																																std::list<std::string> sw = {}, int timeout=300,
+																																bool quiet = true);
 		/*!
 		* @brief create an ilp-based binding for a rational II schedule
 		* the goal is to minimize MUX and register allocation
@@ -117,6 +125,7 @@ namespace HatScheT {
 		/*!
 		 * @brief getILPMinRegBinding create a binding with minimal number of mux inputs
 		 * (assuming register sharing unlike the one by Cong and Xu!!!)
+		 *
 		 * @param sched schedule times
 		 * @param g graph
 		 * @param rm resource model

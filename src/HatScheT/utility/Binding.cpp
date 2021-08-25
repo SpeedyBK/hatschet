@@ -496,7 +496,7 @@ namespace HatScheT {
 
 	Binding::BindingContainer
 	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
-																	std::map<Edge*,int> portAssignments,  list<string> sw, int timeout) {
+																	std::map<Edge*,int> portAssignments,  list<string> sw, int timeout, bool quiet) {
 		///////////////////////////////////////////////
 		// find conflicting operations and variables //
 		///////////////////////////////////////////////
@@ -519,15 +519,22 @@ namespace HatScheT {
 				//if (rm->getResource(v) != rm->getResource(it.first)) continue;
 				// incompatible if modulo slots are equal and resource types are also equal
 				if ((sched[v] % II == it.second % II) and (rm->getResource(v) == rm->getResource(it.first))) {
-					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because modulo slots overlap" << std::endl;
-					std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
-					std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
+					if (!quiet) {
+						std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because modulo slots overlap" << std::endl;
+						std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
+						std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
+					}
 					continue;
 				}
 				// create edge
-				std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are COMPATIBLE because modulo slots DO NOT overlap" << std::endl;
-				std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II << std::endl;
-				std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II << std::endl;
+				if (!quiet) {
+					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName()
+										<< "' are COMPATIBLE because modulo slots DO NOT overlap" << std::endl;
+					std::cout << "  " << v->getName() << " t = " << sched[v] << " mod " << II << " = " << sched[v] % II
+										<< std::endl;
+					std::cout << "  " << it.first->getName() << " t = " << it.second << " mod " << II << " = " << it.second % II
+										<< std::endl;
+				}
 				resourceCompatibilityGraph.createEdge(resourceCompatibilityGraph.getVertexById(v->getId()),resourceCompatibilityGraph.getVertexById(it.first->getId()));
 			}
 		}
@@ -546,30 +553,35 @@ namespace HatScheT {
 			// calc lifetime of v
 			int v1Lat = rm->getResource(v)->getLatency();
 			int v1LifeStart = sched[v] + v1Lat;
-			int v1LifeEnd = 0;
+			int v1LifeEnd = -1; // default value if vertex has no outgoing edges
 			int numIncompatibilities = 0;
 			for(auto &e : g->Edges()) {
 				if(e->getVertexSrc().getId() != v->getId()) continue;
 				auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
 				if(dstStart > v1LifeEnd) v1LifeEnd = dstStart;
 			}
-			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd);
+			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd) or (v1LifeEnd == -1);
 			for(auto &it : sched) {
-				// calc lifetime of v
+				// calc lifetime of v2
 				int v2Lat = rm->getResource(it.first)->getLatency();
 				int v2LifeStart = it.second + v2Lat;
-				int v2LifeEnd = 0;
+				int v2LifeEnd = -1; // default value if vertex has no outgoing edges
 				for(auto &e : g->Edges()) {
 					if(e->getVertexSrc().getId() != it.first->getId()) continue;
 					auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
 					if(dstStart > v2LifeEnd) v2LifeEnd = dstStart;
 				}
-				bool v2Omnicompatible = (v2LifeStart == v2LifeEnd);
+				bool v2Omnicompatible = (v2LifeStart == v2LifeEnd) or (v2LifeEnd == -1);
 				// incompatible if lifetimes overlap
 				if(!v1Omnicompatible and !v2Omnicompatible and ((v2LifeStart >= v1LifeStart and v2LifeStart <= v1LifeEnd) or (v2LifeEnd >= v1LifeStart and v2LifeEnd <= v1LifeEnd))) {
-					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are INCOMPATIBLE because lifetimes overlap" << std::endl;
-					std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat << std::endl;
-					std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency " << v2Lat << std::endl;
+					if (!quiet) {
+						std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName()
+											<< "' are INCOMPATIBLE because lifetimes overlap" << std::endl;
+						std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat
+											<< std::endl;
+						std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency "
+											<< v2Lat << std::endl;
+					}
 					numIncompatibilities++;
 					continue;
 				}
@@ -578,17 +590,25 @@ namespace HatScheT {
 				// source vertex: the one who comes first in the schedule
 				if(sched[v] > it.second) continue;
 				// create edge
-				std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName() << "' are COMPATIBLE because lifetimes DO NOT overlap" << std::endl;
-				std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat << std::endl;
-				std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency " << v2Lat << std::endl;
+				if (!quiet) {
+					std::cout << "Vertices '" << v->getName() << "' and '" << it.first->getName()
+										<< "' are COMPATIBLE because lifetimes DO NOT overlap" << std::endl;
+					std::cout << "  " << v->getName() << ": " << v1LifeStart << " -> " << v1LifeEnd << " with latency " << v1Lat
+										<< std::endl;
+					std::cout << "  " << it.first->getName() << ": " << v2LifeStart << " -> " << v2LifeEnd << " with latency "
+										<< v2Lat << std::endl;
+				}
 				variableCompatibilityGraph.createEdge(variableCompatibilityGraph.getVertexById(v->getId()),variableCompatibilityGraph.getVertexById(it.first->getId()));
 			}
 			// update minimum number of registers if necessary
-			std::cout << "Incompatibilities for vertex '" << v->getName() << "': " << numIncompatibilities << std::endl;
+			if (!quiet) {
+				std::cout << "Incompatibilities for vertex '" << v->getName() << "': " << numIncompatibilities << std::endl;
+			}
 			if(numIncompatibilities > minRegs) minRegs = numIncompatibilities;
 		}
-
-		std::cout << "Minimum number of needed registers = " << minRegs << std::endl;
+		if (!quiet) {
+			std::cout << "Minimum number of needed registers = " << minRegs << std::endl;
+		}
 
 		///////////////////
 		// set up solver //
@@ -612,10 +632,14 @@ namespace HatScheT {
 			for(int k=0; k<limit; ++k) {
 				auto i = v->getId();
 				x_i_k[{i,k}] = ScaLP::newBinaryVariable("x_" + to_string(i) + "_" + to_string(k));
-				std::cout << "  Created variable '" << x_i_k[{i,k}] << "'" << std::endl;
+				if (!quiet) {
+					std::cout << "  Created variable '" << x_i_k[{i, k}] << "'" << std::endl;
+				}
 			}
 		}
-		std::cout << "Created x_i_k variables" << std::endl;
+		if (!quiet) {
+			std::cout << "Created x_i_k variables" << std::endl;
+		}
 		s.showLP(); // this line does nothing - only for debugging
 
 		// boolean variables whether variable of v_i is bound to register l (y_i_l)
@@ -624,10 +648,14 @@ namespace HatScheT {
 			for(int l=0; l<minRegs; ++l) {
 				auto i = v->getId();
 				y_i_l[{i,l}] = ScaLP::newBinaryVariable("y_" + to_string(i) + "_" + to_string(l));
-				std::cout << "  Created variable '" << y_i_l[{i,l}] << "'" << std::endl;
+				if (!quiet) {
+					std::cout << "  Created variable '" << y_i_l[{i, l}] << "'" << std::endl;
+				}
 			}
 		}
-		std::cout << "Created y_i_l variables" << std::endl;
+		if (!quiet) {
+			std::cout << "Created y_i_l variables" << std::endl;
+		}
 		s.showLP(); // this line does nothing - only for debugging
 
 		// boolean variables for each FU -> register connection (c_r_k_l) for each resource type r
@@ -638,12 +666,16 @@ namespace HatScheT {
 			for(int k=0; k<resLimit; ++k) {
 				for(int l=0; l<minRegs; ++l) {
 					c_r_k_l[{r->getName(),{k,l}}] = ScaLP::newBinaryVariable("c_" + r->getName() + "_" + to_string(k) + "_" + to_string(l));
-					std::cout << "  Created variable '" << c_r_k_l[{r->getName(),{k,l}}] << "'" << std::endl;
+					if (!quiet) {
+						std::cout << "  Created variable '" << c_r_k_l[{r->getName(), {k, l}}] << "'" << std::endl;
+					}
 				}
 			}
 		}
-		std::cout << "Created c_r_k_l variables" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created c_r_k_l variables" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// number of inputs of each resource type
 		std::map<const Resource*, int> numResourcePorts;
@@ -672,13 +704,18 @@ namespace HatScheT {
 					for(int n=0; n<numPorts; ++n) {
 						a_r_n_k_l[{{r->getName(),n},{k,l}}] = ScaLP::newBinaryVariable("a_" + r->getName() + "_" + to_string(n)
 							+ "_" + to_string(k) + "_" + to_string(l));
-						std::cout << "  Created variable '" << a_r_n_k_l[{{r->getName(),n},{k,l}}] << "'" << std::endl;
+						if (!quiet) {
+							std::cout << "  Created variable '" << a_r_n_k_l[{{r->getName(), n},
+																																{k,            l}}] << "'" << std::endl;
+						}
 					}
 				}
 			}
 		}
-		std::cout << "Created a_r_n_k_l variables" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created a_r_n_k_l variables" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// boolean variables for each FU -> FU connection for each port of that FU (needed for edges with lifetime=0) (b_r1_r2_k1_k2_n)
 		std::map<std::pair<std::pair<std::pair<std::string,std::string>,std::pair<int,int>>,int>,ScaLP::Variable> b_r1_r2_k1_k2_n;
@@ -705,13 +742,18 @@ namespace HatScheT {
 						if(r2->isUnlimited()) res2Limit = rm->getVerticesOfResource(r2).size();
 						for(int k2=0; k2<res2Limit; ++k2) {
 							b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] = ScaLP::newBinaryVariable("b_" + r1->getName() + "_" + r2->getName() + "_" + to_string(k1) + "_" + to_string(k2) + "_" + to_string(n));
-							std::cout << "  Created variable '" << b_r1_r2_k1_k2_n[{{{r1->getName(),r2->getName()},{k1,k2}},n}] << "'" << std::endl;
+							if (!quiet) {
+								std::cout << "  Created variable '" << b_r1_r2_k1_k2_n[{{{r1->getName(), r2->getName()}, {k1, k2}}, n}]
+													<< "'" << std::endl;
+							}
 						}
 					}
 				}
 			}
 		}
-		std::cout << "Created b_r1_r2_k1_k2_n variables" << std::endl;
+		if (!quiet) {
+			std::cout << "Created b_r1_r2_k1_k2_n variables" << std::endl;
+		}
 		s.showLP(); // this line does nothing - only for debugging
 
 		// number of MUX inputs for each FU and each port (m_r_k_n)
@@ -735,21 +777,29 @@ namespace HatScheT {
 			for(int k=0; k<resLimit; ++k) {
 				for(int n=0; n<numPorts; ++n) {
 					m_r_k_n[{r->getName(),{k,n}}] = ScaLP::newIntegerVariable("m_" + r->getName() + "_" + to_string(k) + "_" + to_string(n),0,ScaLP::INF());
-					std::cout << "  Created variable '" << m_r_k_n[{r->getName(),{k,n}}] << "'" << std::endl;
+					if (!quiet) {
+						std::cout << "  Created variable '" << m_r_k_n[{r->getName(), {k, n}}] << "'" << std::endl;
+					}
 				}
 			}
 		}
-		std::cout << "Created m_r_k_n variables" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created m_r_k_n variables" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// number of MUX inputs for each register (w_l)
 		std::map<int,ScaLP::Variable> w_l;
 		for(int l=0; l<minRegs; l++) {
 			w_l[l] = ScaLP::newIntegerVariable("w_" + to_string(l));
-			std::cout << "  Created variable '" << w_l[l] << "'" << std::endl;
+			if (!quiet) {
+				std::cout << "  Created variable '" << w_l[l] << "'" << std::endl;
+			}
 		}
-		std::cout << "Created w_l variables" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created w_l variables" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		////////////////////////
 		// create constraints //
@@ -768,8 +818,10 @@ namespace HatScheT {
 			}
 			s.addConstraint(t == 1);
 		}
-		std::cout << "Created x_i_k=1 constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created x_i_k=1 constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// each variable is bound to one resource (if registers are needed)
 		if(minRegs >= 1) {
@@ -783,12 +835,16 @@ namespace HatScheT {
 			}
 		}
 
-		std::cout << "Created y_i_l=1 constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created y_i_l=1 constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// no overlaps in operations (resource conflict graph)
 		for(auto &v : g->Vertices()) {
-			std::cout << "vertex: " << v->getName() << std::endl;
+			if (!quiet) {
+				std::cout << "vertex: " << v->getName() << std::endl;
+			}
 			// find conflicting operations
 			auto predecessors = resourceCompatibilityGraph.getPredecessors(&resourceCompatibilityGraph.getVertexById(v->getId()));
 			auto successors = resourceCompatibilityGraph.getSuccessors(&resourceCompatibilityGraph.getVertexById(v->getId()));
@@ -802,7 +858,9 @@ namespace HatScheT {
 				if(successors.find(v2) != successors.end()) continue;
 				// store ID of conflict vertex
 				conflictVertexIDs.insert(v2->getId());
-				std::cout << "  conflict vertex: " << v2->getName() << std::endl;
+				if (!quiet) {
+					std::cout << "  conflict vertex: " << v2->getName() << std::endl;
+				}
 			}
 			// create constraints for all vertices with conflict
 			auto i = v->getId();
@@ -814,12 +872,16 @@ namespace HatScheT {
 				for(auto j : conflictVertexIDs) {
 					auto constraint = (x_i_k[{i,k}] + x_i_k[{j,k}]) <= 1;
 					s.addConstraint(constraint);
-					std::cout << "  Added constraint '" << constraint << "'" << std::endl;
+					if (!quiet) {
+						std::cout << "  Added constraint '" << constraint << "'" << std::endl;
+					}
 				}
 			}
 		}
-		std::cout << "Created no resource overlap constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created no resource overlap constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// no overlaps in registers (variable conflict graph)
 		// no overlaps in operations (resource conflict graph)
@@ -846,8 +908,10 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "Created no variable overlap constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created no variable overlap constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// A) for edges with lifetime > 0
 		for(auto &e : g->Edges()) {
@@ -892,8 +956,10 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "Created edge constraints for lifetime > 0" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created edge constraints for lifetime > 0" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// B) for edges with lifetime = 0
 		for(auto &e : g->Edges()) {
@@ -936,8 +1002,10 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "Created edge constraints for lifetime = 0" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created edge constraints for lifetime = 0" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// calculate number of MUX inputs per port for each FU (m_r_k_n)
 		for(auto r : rm->Resources()) {
@@ -967,8 +1035,10 @@ namespace HatScheT {
 				}
 			}
 		}
-		std::cout << "Created number of resource mux input constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created number of resource mux input constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		// calculate number of MUX inputs per port for each register
 		for(int l=0; l<minRegs; l++) {
@@ -984,8 +1054,10 @@ namespace HatScheT {
 			}
 			s.addConstraint(portSum - w_l[l] == 0);
 		}
-		std::cout << "Created number of register mux input constraints" << std::endl;
-		s.showLP(); // this line does nothing - only for debugging
+		if (!quiet) {
+			std::cout << "Created number of register mux input constraints" << std::endl;
+			s.showLP(); // this line does nothing - only for debugging
+		}
 
 		///////////////////////////////
 		// create objective function //
@@ -1000,33 +1072,41 @@ namespace HatScheT {
 			int resLimit = r->getLimit();
 			auto vertices = rm->getVerticesOfResource(r);
 			if(r->isUnlimited()) resLimit = vertices.size();
-			std::cout << "Resource '";
-			flush(cout);
-			std::cout << r->getName();
-			flush(cout);
-			std::cout << "' - limit ";
-			flush(cout);
-			std::cout << resLimit;
-			flush(cout);
-			std::cout << " - number of ports ";
-			flush(cout);
-			std::cout << numResourcePorts[r];
-			flush(cout);
-			std::cout << std::endl;
+			if (!quiet) {
+				std::cout << "Resource '";
+				flush(cout);
+				std::cout << r->getName();
+				flush(cout);
+				std::cout << "' - limit ";
+				flush(cout);
+				std::cout << resLimit;
+				flush(cout);
+				std::cout << " - number of ports ";
+				flush(cout);
+				std::cout << numResourcePorts[r];
+				flush(cout);
+				std::cout << std::endl;
+			}
 			for(int k=0; k<resLimit; k++) {
 				for(int n=0; n<numResourcePorts[r]; n++) {
 					obj += m_r_k_n[{r->getName(),{k,n}}];
 				}
 			}
 		}
-		std::cout << "Created objective" << std::endl;
+		if (!quiet) {
+			std::cout << "Created objective" << std::endl;
+		}
 
 		///////////
 		// solve //
 		///////////
-		std::cout << "start solving" << std::endl;
+		if (!quiet) {
+			std::cout << "start solving" << std::endl;
+		}
 		auto stat = s.solve();
-		std::cout << "finished solving" << std::endl;
+		if (!quiet) {
+			std::cout << "finished solving" << std::endl;
+		}
 
 		/////////////////
 		// get results //
@@ -1034,13 +1114,17 @@ namespace HatScheT {
 		BindingContainer b;
 
 		if(stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE) {
-			std::cout << "Could not solve optimal binidng ILP formulation for II = " << II << std::endl;
-			std::cout << "ScaLP solver status: " << stat << std::endl;
+			if (!quiet) {
+				std::cout << "Could not solve optimal binidng ILP formulation for II = " << II << std::endl;
+				std::cout << "ScaLP solver status: " << stat << std::endl;
+			}
 			return b;
 		}
 
-		std::cout << "SOLVER RESULTS: " << std::endl;
-		std::cout << s.getResult();
+		if (!quiet) {
+			std::cout << "SOLVER RESULTS: " << std::endl;
+			std::cout << s.getResult();
+		}
 
 		auto results = s.getResult().values;
 
@@ -1061,7 +1145,8 @@ namespace HatScheT {
 					throw HatScheT::Exception("Vertex '" + v->getName() + "' is bound to multiple FUs - that should never happen");
 				}
 				hasBinding = true;
-				b.resourceBindings[v] = k;
+				b.resourceBindings[v->getName()] = k;
+				std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "'" << std::endl;
 			}
 		}
 
@@ -1078,15 +1163,54 @@ namespace HatScheT {
 					throw HatScheT::Exception("Variable '" + v->getName() + "' is bound to multiple Registers - that should never happen");
 				}
 				hasBinding = true;
-				b.registerBindings[v] = l;
+				b.registerBindings[v->getName()] = l;
+				std::cout << "Variable '" << v->getName() << "' is bound to register number '" << l << "'" << std::endl;
 			}
 		}
 
-		std::cout << "ILP formulation SOLVED for II = " << II << std::endl;
-		std::cout << "ScaLP solver status: " << stat << std::endl;
+		for(auto &r : rm->Resources()) {
+			int resLimit = r->getLimit();
+			if (r->isUnlimited()) resLimit = rm->getVerticesOfResource(r).size();
+			for (int k = 0; k < resLimit; ++k) {
+				for (int l = 0; l < minRegs; ++l) {
+					auto var = c_r_k_l[{r->getName(),{k,l}}];
+					auto bTemp = (bool)((int) round(results[var]));
+					if(!bTemp) continue;
+					b.fuRegConnections.push_back({{r->getName(),k},l});
+					std::cout << "FU '" << k << "' of type '" << r->getName() << "' is connected to register '" << l << "'" << std::endl;
+				}
+			}
+		}
 
-		// print results
+		for (auto &it : a_r_n_k_l) {
+			auto var = it.second;
+			auto bTemp = (bool)((int) round(results[var]));
+			if(!bTemp) continue;
+			auto r = it.first.first.first;
+			auto n = it.first.first.second;
+			auto k = it.first.second.first;
+			auto l = it.first.second.second;
+			b.regFuConnections.push_back({{l,n},{r,k}});
+			std::cout << "Register '" << l << "' is connected to port '" << n << "' of FU '" << k << "' of type '" << r << "'" << std::endl;
+		}
 
+		for (auto &it : b_r1_r2_k1_k2_n) {
+			auto var = it.second;
+			auto bTemp = (bool)((int) round(results[var]));
+			if(!bTemp) continue;
+			auto r1 = it.first.first.first.first;
+			auto r2 = it.first.first.first.second;
+			auto k1 = it.first.first.second.first;
+			auto k2 = it.first.first.second.second;
+			auto n = it.first.second;
+			b.fuConnections.push_back({{{r2,k2},{r1,k1}},{0,n}});
+			std::cout << "FU '" << k2 << "' of type '" << r2 << "' is connected to port '" << n << "' of FU '" << k1 << "' of type '" << r1 << "'" << std::endl;
+		}
+
+		if (!quiet) {
+			std::cout << "ILP formulation SOLVED for II = " << II << std::endl;
+			std::cout << "ScaLP solver status: " << stat << std::endl;
+		}
 
 		return b;
 	}
@@ -1105,7 +1229,7 @@ namespace HatScheT {
 				portAssignments.at(e);
 			}
 			catch(...) {
-				throw HatScheT::Exception("Binding::getILPMinMuxBinding: Edge missing in port assignment container");
+				throw HatScheT::Exception("Binding::getILPMinMuxBinding: Edge '"+e->getVertexSrcName()+"' -> '"+e->getVertexDstName()+"' missing in port assignment container");
 			}
 		}
 
@@ -1493,7 +1617,15 @@ namespace HatScheT {
 					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
 					auto n = fuIndexMap[{rj, b}];
 					ScaLP::Term t;
-					for(auto p : possiblePortConnections[{m,n}]) {
+					if (commutativeOps.find(rj) != commutativeOps.end()) {
+						// commutative operation
+						for(auto p : possiblePortConnections[{m,n}]) {
+							t += r_m_n_k_p[{{m, n},{k, p}}];
+						}
+					}
+					else {
+						// noncommutative operation
+						auto p = portAssignments.at(e);
 						t += r_m_n_k_p[{{m, n},{k, p}}];
 					}
 					ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] - t <= 1;
@@ -1567,11 +1699,11 @@ namespace HatScheT {
 			auto v = &g->getVertexById(i);
 			auto r = indexFuMap[m].first;
 			auto fu = indexFuMap[m].second;
-			binding.resourceBindings[v] = fu;
-			if(!quiet) {
+			binding.resourceBindings[v->getName()] = fu;
+			//if(!quiet) {
 				std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
 				  << r->getName() << std::endl;
-			}
+			//}
 		}
 		// connection variables
 		for(auto &it : r_m_n_k_p) {
@@ -1586,11 +1718,11 @@ namespace HatScheT {
 			auto fui = indexFuMap[m].second;
 			auto rj = indexFuMap[n].first;
 			auto fuj = indexFuMap[n].second;
-			if(!quiet) {
+			//if(!quiet) {
 				std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
 				  << fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
-			}
-			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri,fui),std::make_pair(rj,fuj)),std::make_pair(k,p)));
+			//}
+			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri->getName(),fui),std::make_pair(rj->getName(),fuj)),std::make_pair(k,p)));
 		}
 
 		return binding;
@@ -1601,8 +1733,8 @@ namespace HatScheT {
 		int modulo, std::map<Edge *, int> portAssignments, set<const Resource *> commutativeOps, list<string> sw,
 		int timeout, bool quiet) {
 		// mappings between vertices of original and unrolled graphs
-		std::map<std::pair<Vertex*,int>,Vertex*> unrolledVertexMappings;
-		std::map<Vertex*,std::pair<Vertex*,int>> unrolledVertexMappingsReverse;
+		std::map<std::pair<std::string,int>,std::string> unrolledVertexMappings;
+		std::map<std::string,std::pair<std::string,int>> unrolledVertexMappingsReverse;
 		std::map<std::pair<Edge*,int>,Edge*> unrolledEdgeMappings;
 		std::map<Edge*,std::pair<Edge*,int>> unrolledEdgeMappingsReverse;
 		std::map<Edge*,int> unrolledPortAssignments;
@@ -1628,8 +1760,8 @@ namespace HatScheT {
 				auto originalResource = rm->getResource(v);
 				rm_unroll.registerVertex(newVertex,rm_unroll.getResource(originalResource->getName()));
 				// mapping
-				unrolledVertexMappings[{v,s}] = newVertex;
-				unrolledVertexMappingsReverse[newVertex] = {v,s};
+				unrolledVertexMappings[{v->getName(),s}] = newVertex->getName();
+				unrolledVertexMappingsReverse[newVertex->getName()] = {v->getName(),s};
 				unrolledSchedule[newVertex] = sched[s][v];
 			}
 		}
@@ -1683,23 +1815,23 @@ namespace HatScheT {
 
 		// fill solution structure if binding was found
 		// vertex->fu bindings
-		for(auto it : unrolledBindingContainer.resourceBindings) {
-			auto unrolledVertex = const_cast<Vertex*>(it.first);
+		for(auto &it : unrolledBindingContainer.resourceBindings) {
+			auto unrolledVertex = it.first;
 			auto fu = it.second;
 			auto originalVertex = unrolledVertexMappingsReverse[unrolledVertex].first;
 			auto sample = unrolledVertexMappingsReverse[unrolledVertex].second;
-			if(b.resourceBindings.size() <= sample) b.resourceBindings.emplace_back(std::map<const Vertex*,int>());
+			if(b.resourceBindings.size() <= sample) b.resourceBindings.emplace_back(std::map<std::string,int>());
 			b.resourceBindings[sample][originalVertex] = fu;
 		}
 		// fu->fu connection bindings
-		for(auto it : unrolledBindingContainer.fuConnections) {
+		for(auto &it : unrolledBindingContainer.fuConnections) {
 			auto rSrc = it.first.first.first;
 			auto fuSrc = it.first.first.second;
 			auto rDst = it.first.second.first;
 			auto fuDst = it.first.second.second;
 			auto lifetime = it.second.first;
 			auto port = it.second.second;
-			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rm->getResource(rSrc->getName()),fuSrc),std::make_pair(rm->getResource(rDst->getName()),fuDst)),std::make_pair(lifetime,port)));
+			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rSrc,fuSrc),std::make_pair(rDst,fuDst)),std::make_pair(lifetime,port)));
 		}
 
 		return b;

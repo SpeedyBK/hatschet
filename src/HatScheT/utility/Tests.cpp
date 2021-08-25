@@ -1884,6 +1884,155 @@ namespace HatScheT {
 		return true;
 	}
 
+	bool Tests::dateExampleTest() {
+
+		// SET UP GRAPH AND RESOURCE MODEL
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &memr = rm.makeResource("memr", 1, 1, 1);
+		auto &add = rm.makeResource("mac", 1, 5, 1);
+		auto &memw = rm.makeResource("memw", 1, 1, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+		Vertex &v3 = g.createVertex(3);
+
+		rm.registerVertex(&v0, &memr);
+		rm.registerVertex(&v1, &memr);
+		rm.registerVertex(&v2, &memw);
+		rm.registerVertex(&v3, &add);
+
+		auto *e0 = &g.createEdge(v0, v3, 0);
+		auto *e1 = &g.createEdge(v1, v3, 0);
+		auto *e2 = &g.createEdge(v3, v2, 0);
+		auto *e3 = &g.createEdge(v3, v3, 2);
+
+		// SET UP CONTAINER WITH PORT ASSIGNMENTS
+		std::map<Edge*, int> portAssignments;
+		portAssignments[e0] = 0;
+		portAssignments[e1] = 1;
+		portAssignments[e2] = 0;
+		portAssignments[e3] = 2;
+
+		// SET UP SCHEDULERS
+		bool quiet = true;
+		std::list<std::string> sw{"Gurobi", "CPLEX"};
+		EichenbergerDavidson97Scheduler ed97(g, rm, sw);
+		NonUniformRationalIIScheduler ratIInon(g, rm, sw);
+		UniformRationalIISchedulerNew ratIIu(g, rm, sw);
+
+		ed97.setQuiet(quiet);
+		ratIInon.setQuiet(quiet);
+		ratIIu.setQuiet(quiet);
+
+		ed97.schedule();
+		ratIInon.schedule();
+		ratIIu.schedule();
+
+		// GET RESULTS
+		auto ed97Sched = ed97.getSchedule();
+		auto ratIInonSched = ratIInon.getStartTimeVector();
+		auto ratIIuSched = ratIIu.getStartTimeVector();
+
+		auto ed97II = 3;
+		auto M = 5;
+		auto S = 2;
+		auto ratII = ((double)M) / ((double)S);
+
+		// MAKE SURE THAT WE GET CORRECT RESULTS
+		if (ed97II != ed97.getII()) {
+			std::cout << "Expected integer II = 2 but got integer II = " << ed97II << std::endl;
+			return false;
+		}
+		if (ratII != ratIIu.getII() or M != ratIIu.getM_Found() or S != ratIIu.getS_Found()) {
+			std::cout << "Expected (uniform) rational II = " << ratII << " = " << M << "/" << S << " but got rational II = " << ratIIu.getII() << " = "
+								<< ratIIu.getM_Found() << "/" << ratIIu.getS_Found() << std::endl;
+			return false;
+		}
+		if (ratII != ratIInon.getII() or M != ratIInon.getM_Found() or S != ratIInon.getS_Found()) {
+			std::cout << "Expected (nonuniform) rational II = " << ratII << " = " << M << "/" << S << " but got rational II = " << ratIInon.getII() << " = "
+			<< ratIInon.getM_Found() << "/" << ratIInon.getS_Found() << std::endl;
+			return false;
+		}
+
+		// CALC INT II BINDINGS
+		std::cout << std::endl << "INTEGER-II SCHEDULE WITH II = " << ed97II << std::endl;
+		for (auto it : ed97Sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "INTEGER-II BINDINGS" << std::endl;
+		auto ed97Bindings = Binding::getILPMinMuxBinding(ed97Sched, &g, &rm, (int)ed97II, portAssignments, {}, sw, 300, quiet);
+
+		// UNROLL GRAPH & RESOURCE MODEL
+		auto g_rm_unrolled = Utility::unrollGraph(&g, &rm, S);
+		auto &g_unrolled = *g_rm_unrolled.first;
+		auto &rm_unrolled = *g_rm_unrolled.second;
+
+		// COPY START TIMES FOR UNROLLED GRAPH
+		std::map<Vertex*, int> ratIInonUnrolledSched;
+		std::map<Vertex*, int> ratIIuUnrolledSched;
+		for (auto v : g.Vertices()) {
+			for (auto s=0; s<S; s++) {
+				auto* vUnrolled = &g_unrolled.getVertexByName(v->getName() + "_" + std::to_string(s));
+				ratIInonUnrolledSched[vUnrolled] = ratIInonSched[s][v];
+				ratIIuUnrolledSched[vUnrolled] = ratIIuSched[s][v];
+			}
+		}
+
+		// COPY PORT ASSIGNMENTS INTO UNROLLED GRAPH
+		std::map<Edge*, int> unrolledPortAssignments;
+		for (auto &e : g_unrolled.Edges()) {
+			if (e->getDependencyType() == Edge::DependencyType::Precedence) {
+				// skip chaining edges
+				continue;
+			}
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+			bool foundIt = false;
+			for (auto s=0; s<S; s++) {
+				for (auto it : portAssignments) {
+					auto originalSrcName = it.first->getVertexSrc().getName();
+					auto originalDstName = it.first->getVertexDst().getName();
+					if (originalSrcName + "_" + std::to_string(s) != srcName) {
+						// source not equal or not the right sample
+						continue;
+					}
+					if (originalDstName + "_" + std::to_string(s) != dstName) {
+						// destination not equal or not the right sample
+						continue;
+					}
+					foundIt = true;
+					unrolledPortAssignments[e] = it.second;
+					std::cout << "Unrolled port assignment for '" << srcName << "' -> '" << dstName << "' = " << it.second << std::endl;
+					break;
+				}
+				if (foundIt) break;
+			}
+			if (!foundIt) {
+				throw HatScheT::Exception("Tests::dateExampleTest: error while unrolling graph");
+			}
+		}
+
+		// CALC RAT II BINDINGS
+		std::cout << std::endl << "UNIFORM SCHEDULE WITH II = " << M << "/" << S << std::endl;
+		for (auto it : ratIIuUnrolledSched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "UNIFORM BINDINGS" << std::endl;
+		auto uniformBindings = Binding::getILPMinMuxBinding(ratIIuUnrolledSched, &g_unrolled, &rm_unrolled, M, unrolledPortAssignments, {}, sw, 300, quiet);
+		std::cout << std::endl << "NONUNIFORM SCHEDULE WITH II = " << M << "/" << S << std::endl;
+		for (auto it : ratIInonUnrolledSched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "NONUNIFORM BINDINGS" << std::endl;
+		auto nonuniformBindings = Binding::getILPMinMuxBinding(ratIInonUnrolledSched, &g_unrolled, &rm_unrolled, M, unrolledPortAssignments, {}, sw, 300, quiet);
+
+		// return true if nothing OBVIOUS went wrong
+		return true;
+	}
+
 	bool Tests::maFiegeTest() {
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
@@ -2383,7 +2532,7 @@ namespace HatScheT {
 		}
 
 		for(auto it : bind.resourceBindings) {
-			std::cout << "Binding '" << it.first->getName() << "' to FU '" << it.second << "'" << std::endl;
+			std::cout << "Binding '" << it.first << "' to FU '" << it.second << "'" << std::endl;
 		}
 
 		return true;

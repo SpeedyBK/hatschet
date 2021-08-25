@@ -175,6 +175,15 @@ Vertex& Graph::getVertexById(int id) const{
   throw HatScheT::Exception("Graph::getVertexById: Vertex not found!");
 }
 
+
+
+	Vertex &Graph::getVertexByName(std::string n) const {
+		for(auto &v : this->vertices){
+			if(v->getName() == n) return *v;
+		}
+		throw HatScheT::Exception("Graph::getVertexByName: Vertex '"+n+"' not found!");
+	}
+
 ostream& operator<<(ostream& os, const Graph& g){
   os << "------------------------------------------------------------------------------------" << endl;
   os << "---------------------------------- Graph Model -------------------------------------" << endl;

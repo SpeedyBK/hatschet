@@ -159,10 +159,14 @@ public:
 	 * @brief test functionality of the combined rational II scheduler
 	 */
 	static bool rationalIICombinedSchedulerTest();
-  /*!
-   * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
-   */
-  static bool tcadExampleTest();
+	/*!
+	 * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
+	 */
+	static bool tcadExampleTest();
+	/*!
+	 * @brief test functionality for the DATE example
+	 */
+	static bool dateExampleTest();
 	/*!
 	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
 	 */

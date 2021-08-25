@@ -371,7 +371,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			if(res != res2) continue;
 			if(fu == fu2) {
 				// FUs are equal, this should not happen!
-				std::cout << "Operations '" << v->getName() << "' and '" << v2->getName()
+				std::cout << "Operations '" << v << "' and '" << v2
 				          << "' are unlimited and bound to the same resource - that should never happen!" << std::endl;
 				return false;
 			}
@@ -381,7 +381,8 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	// map <pair<resource type, FU number> -> map of modulo slots in which this FU is busy to the vertex that occupies it>
 	std::map<std::pair<const Resource*,int>,std::map<int,Vertex*>> busyResources;
 	for(auto it : bind.resourceBindings) {
-		auto v = const_cast<Vertex*>(it.first);
+		auto vName = it.first;
+		auto v = &g->getVertexByName(vName);
 		auto fu = it.second;
 		auto t = sched[v];
 		auto m = t % II;
@@ -390,7 +391,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		try {
 			auto conflictVertex = alreadyBusy.at(m);
 			std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
-								<< "': vertices '" << conflictVertex->getName() << "' and '" << v->getName()
+								<< "': vertices '" << conflictVertex->getName() << "' and '" << v
 								<< "' occupy it in the same time slot" << std::endl;
 			return false;
 		}
@@ -418,8 +419,8 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		// skip chaining edges
 		if(e->getDependencyType() != Edge::DependencyType::Data) continue;
 		// continue check for non-commutative operations
-		auto fuSrc = bind.resourceBindings[vSrc];
-		auto fuDst = bind.resourceBindings[vDst];
+		auto fuSrc = bind.resourceBindings[vSrc->getName()];
+		auto fuDst = bind.resourceBindings[vDst->getName()];
 		auto tSrc = sched[vSrc];
 		auto tDst = sched[vDst];
 		auto latSrc = rSrc->getLatency();
@@ -428,9 +429,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		auto lifetime = tDst - tSrc - latSrc + dist*II;
 		bool allGood = false;
 		for(auto &it : bind.fuConnections) {
-			if(it.first.first.first != rSrc) continue;
+			if(it.first.first.first != rSrc->getName()) continue;
 			if(it.first.first.second != fuSrc) continue;
-			if(it.first.second.first != rDst) continue;
+			if(it.first.second.first != rDst->getName()) continue;
 			if(it.first.second.second != fuDst) continue;
 			if(it.second.first != lifetime) continue;
 			if(it.second.second == wantedPort) {
@@ -466,8 +467,8 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			// now let's check if everything is ok
 			auto vSrc = &e->getVertexSrc();
 			auto rSrc = rm->getResource(vSrc);
-			auto fuSrc = bind.resourceBindings[vSrc];
-			auto fuDst = bind.resourceBindings[vDst];
+			auto fuSrc = bind.resourceBindings[vSrc->getName()];
+			auto fuDst = bind.resourceBindings[vDst->getName()];
 			auto tSrc = sched[vSrc];
 			auto tDst = sched[vDst];
 			auto latSrc = rSrc->getLatency();
@@ -477,9 +478,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			auto lifetime = tDst - tSrc - latSrc + dist*II;
 			bool foundIt = false;
 			for(auto &it : bind.fuConnections) {
-				if(it.first.first.first != rSrc) continue;
+				if(it.first.first.first != rSrc->getName()) continue;
 				if(it.first.first.second != fuSrc) continue;
-				if(it.first.second.first != rDst) continue;
+				if(it.first.second.first != rDst->getName()) continue;
 				if(it.first.second.second != fuDst) continue;
 				if(it.second.first != lifetime) continue;
 				foundIt = true;
@@ -519,7 +520,7 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 					if(res != res2) continue;
 					if(fu == fu2) {
 						// FUs are equal, this should not happen!
-						std::cout << "Operation '" << v->getName() << "' of sample '" << s << "' and operation '" << v2->getName()
+						std::cout << "Operation '" << v << "' of sample '" << s << "' and operation '" << v2
 											<< "' of sample '" << s2
 											<< "' are unlimited and bound to the same resource - that should never happen!" << std::endl;
 						return false;
@@ -534,7 +535,8 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 	std::map<std::pair<const Resource*,int>,std::map<int,std::pair<Vertex*,int>>> busyResources;
 	for(int s=0; s<samples;s++) {
 		for(auto it : bind.resourceBindings[s]) {
-			auto v = const_cast<Vertex*>(it.first);
+			auto vName = it.first;
+			auto v = &g->getVertexByName(vName);
 			auto fu = it.second;
 			auto t = sched[s][v];
 			auto m = t % modulo;
@@ -577,8 +579,8 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 			auto dist = e->getDistance();
 			auto sSrc = (sDst - dist) % samples;
 			auto delta = ceil((double) (dist - sDst) / (double) samples);
-			auto fuSrc = bind.resourceBindings[sSrc][vSrc];
-			auto fuDst = bind.resourceBindings[sDst][vDst];
+			auto fuSrc = bind.resourceBindings[sSrc][vSrc->getName()];
+			auto fuDst = bind.resourceBindings[sDst][vDst->getName()];
 			auto tSrc = sched[sSrc][vSrc];
 			auto tDst = sched[sDst][vDst];
 			auto latSrc = rSrc->getLatency();
@@ -586,9 +588,9 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 			auto lifetime = tDst - tSrc - latSrc + delta*modulo;
 			bool allGood = false;
 			for(auto &it : bind.fuConnections) {
-				if(it.first.first.first != rSrc) continue;
+				if(it.first.first.first != rSrc->getName()) continue;
 				if(it.first.first.second != fuSrc) continue;
-				if(it.first.second.first != rDst) continue;
+				if(it.first.second.first != rDst->getName()) continue;
 				if(it.first.second.second != fuDst) continue;
 				if(it.second.first != lifetime) continue;
 				if(it.second.second == wantedPort) {
@@ -630,8 +632,8 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 				auto delta = (int)ceil((double) (dist - sDst) / (double) samples);
 				auto vSrc = &e->getVertexSrc();
 				auto rSrc = rm->getResource(vSrc);
-				auto fuSrc = bind.resourceBindings[sSrc][vSrc];
-				auto fuDst = bind.resourceBindings[sDst][vDst];
+				auto fuSrc = bind.resourceBindings[sSrc][vSrc->getName()];
+				auto fuDst = bind.resourceBindings[sDst][vDst->getName()];
 				auto tSrc = sched[sSrc][vSrc];
 				auto tDst = sched[sDst][vDst];
 				auto latSrc = rSrc->getLatency();
@@ -640,9 +642,9 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 				auto lifetime = tDst - tSrc - latSrc + delta*modulo;
 				bool foundIt = false;
 				for(auto &it : bind.fuConnections) {
-					if(it.first.first.first != rSrc) continue;
+					if(it.first.first.first != rSrc->getName()) continue;
 					if(it.first.first.second != fuSrc) continue;
-					if(it.first.second.first != rDst) continue;
+					if(it.first.second.first != rDst->getName()) continue;
 					if(it.first.second.second != fuDst) continue;
 					if(it.second.first != lifetime) continue;
 					foundIt = true;
