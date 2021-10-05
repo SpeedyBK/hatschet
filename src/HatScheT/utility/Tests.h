@@ -237,11 +237,17 @@ public:
 
   static bool sdcSolverTest();
 
-  /*!
-   * test getILPBasedIntIIBindingCong function
-   * @return
-   */
-  static bool ilpBasedIntIIBindingTest();
+	/*!
+	 * test getILPBasedIntIIBindingCong function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTestCong();
+
+	/*!
+	 * test getILPBasedIntIIBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTest();
 	/*!
 	 * test getILPMinRegBinding function
 	 * @return

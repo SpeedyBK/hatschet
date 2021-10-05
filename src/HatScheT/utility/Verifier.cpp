@@ -357,6 +357,11 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
 
 bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
 		Binding::BindingContainer bind, map<Edge *, int> portAssignments, set<const Resource *> commutativeOps) {
+	// check for empty binding
+	if (bind.resourceBindings.empty()) {
+		std::cout << "HatScheT::verifyIntIIBinding: detected empty binding" << std::endl;
+		return false;
+	}
 	// check if operations of unlimited resources are executed on unique FUs
 	for(auto it : bind.resourceBindings) {
 		auto v = it.first;
@@ -495,6 +500,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		}
 		if(requestedPorts.size() != actualPorts.size()) {
 			std::cout << "Found invalid port assignments for commutative operation '" << vDst->getName() << "'" << std::endl;
+			return false;
 		}
 	}
 
@@ -504,6 +510,11 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<Vertex *, int>> sched, int samples, int modulo,
 												Binding::RatIIBindingContainer bind, map<Edge *, int> portAssignments,
 												set<const Resource *> commutativeOps) {
+	// check for empty binding
+	if (bind.resourceBindings.empty()) {
+		std::cout << "HatScheT::verifyRatIIBinding: detected empty binding" << std::endl;
+		return false;
+	}
 	// check if operations of unlimited resources are executed on unique FUs
 	for(int s=0; s<samples; s++) {
 		for(auto it : bind.resourceBindings[s]) {
@@ -659,6 +670,7 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 			}
 			if(requestedPorts.size() != actualPorts.size()) {
 				std::cout << "Found invalid port assignments for commutative operation '" << vDst->getName() << "'" << std::endl;
+				return false;
 			}
 		}
 	}

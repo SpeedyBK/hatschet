@@ -13,6 +13,10 @@ namespace HatScheT {
 	class Binding {
 	public:
 		struct BindingContainer {
+			// register costs for easy tracking
+			int registerCosts=-1;
+			// multiplexer costs for easy tracking
+			int multiplexerCosts=-1;
 			// each vertex in a graph is bound to a specific FU of its resource type
 			std::map<std::string,int> resourceBindings;
 			// each variable is bound to a given register (if registers are implemented with enable inputs)
@@ -29,9 +33,12 @@ namespace HatScheT {
 			std::list<std::pair<std::pair<int, int>, std::pair<std::string, int>>> regFuConnections;
 		};
 		struct RatIIBindingContainer {
+			// register costs for easy tracking
+			int registerCosts=-1;
+			// multiplexer costs for easy tracking
+			int multiplexerCosts=-1;
 			// The same as above but every container is actually a vector with one sub-container per sample
 			std::vector<std::map<std::string,int>> resourceBindings;
-			std::vector<std::map<std::string,int>> registerBindings;
 			// This one is actually the same as above... the list might be longer though...
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
 		};
@@ -156,7 +163,48 @@ namespace HatScheT {
 		static RatIIBindingContainer getILPRatIIMinMuxBinding(std::vector<map<Vertex*, int>> sched, Graph *g,
 			ResourceModel* rm, int samples, int modulo, std::map<Edge*,int> portAssignments,
 			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
-#endif
+		/*!
+		 * @brief getILPBasedIntIIBinding create a binding with minimal number of mux inputs and minimal number of registers
+		 * (assuming register sharing unlike the one by Cong and Xu!!!)
+		 * @param sched schedule times
+		 * @param g graph
+		 * @param rm resource model
+		 * @param II
+		 * @param wMux weighting factor for multiplexer costs
+		 * @param wReg weighting factor for register costs
+		 * @param portAssignments map that specifies which edge has to be connected to which input port of the destination vertex
+		 * @param maxMux upper limit for multiplexer costs; set to -1 for no limit
+		 * @param maxReg upper limit for register costs; set to -1 for no limit
+		 * @param commutativeOps a set of commutative operation types (e.g. add or mult)
+		 * @param sw solver wishlist
+		 * @param timeout timeout for ilp solver
+		 * @return binding
+		 */
+		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
+			int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
+			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
+		/*!
+		 * @brief getILPBasedRatIIBinding create a binding with minimal number of mux inputs and minimal number of registers
+		 * (assuming register sharing unlike the one by Cong and Xu!!!)
+		 * @param sched schedule times
+		 * @param g graph
+		 * @param rm resource model
+		 * @param samples II = modulo / samples
+		 * @param modulo II = modulo / samples
+		 * @param wMux weighting factor for multiplexer costs
+		 * @param wReg weighting factor for register costs
+		 * @param portAssignments map that specifies which edge has to be connected to which input port of the destination vertex
+		 * @param maxMux upper limit for multiplexer costs; set to -1 for no limit
+		 * @param maxReg upper limit for register costs; set to -1 for no limit
+		 * @param commutativeOps a set of commutative operation types (e.g. add or mult)
+		 * @param sw solver wishlist
+		 * @param timeout timeout for ilp solver
+		 * @return binding
+		 */
+		static RatIIBindingContainer getILPBasedRatIIBinding(std::vector<map<Vertex*, int>> sched, Graph *g, ResourceModel* rm, int samples,
+			int modulo, int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
+			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
+	#endif
 	};
 }
 

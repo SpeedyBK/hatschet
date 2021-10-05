@@ -324,6 +324,7 @@ add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")
 add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
 add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
 add_test("minMuxBinding" "./hatschet" "--test=ILPMINMUXBINDING")
+add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")

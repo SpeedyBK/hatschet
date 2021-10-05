@@ -1700,10 +1700,10 @@ namespace HatScheT {
 			auto r = indexFuMap[m].first;
 			auto fu = indexFuMap[m].second;
 			binding.resourceBindings[v->getName()] = fu;
-			//if(!quiet) {
+			if(!quiet) {
 				std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
 				  << r->getName() << std::endl;
-			//}
+			}
 		}
 		// connection variables
 		for(auto &it : r_m_n_k_p) {
@@ -1718,10 +1718,10 @@ namespace HatScheT {
 			auto fui = indexFuMap[m].second;
 			auto rj = indexFuMap[n].first;
 			auto fuj = indexFuMap[n].second;
-			//if(!quiet) {
+			if(!quiet) {
 				std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
 				  << fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
-			//}
+			}
 			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri->getName(),fui),std::make_pair(rj->getName(),fuj)),std::make_pair(k,p)));
 		}
 
@@ -1833,6 +1833,722 @@ namespace HatScheT {
 			auto port = it.second.second;
 			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rSrc,fuSrc),std::make_pair(rDst,fuDst)),std::make_pair(lifetime,port)));
 		}
+
+		return b;
+	}
+
+	Binding::BindingContainer
+	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, int wMux,
+																	 int wReg, std::map<Edge *, int> portAssignments, double maxMux, double maxReg,
+																	 std::set<const Resource *> commutativeOps, std::list<std::string> sw, int timeout,
+																	 bool quiet) {
+		//////////////////////
+		// check for errors //
+		//////////////////////
+		// edges are missing in port assignment container
+		for(auto e : g->Edges()) {
+			try {
+				portAssignments.at(e);
+			}
+			catch(...) {
+				throw HatScheT::Exception("Binding::getILPBasedIntIIBinding: Edge '"+e->getVertexSrcName()+"' -> '"+e->getVertexDstName()+"' missing in port assignment container");
+			}
+		}
+
+		//////////////////////////////////////////////////////////////////
+		// set objective weights to meaningful valuees if they are zero //
+		//////////////////////////////////////////////////////////////////
+		double wMuxInternally = wMux;
+		double wRegInternally = wReg;
+		if (wMuxInternally <= 0) {
+			// make sure that mux costs do not influence register costs
+			// by normalizing mux costs with the number of edges + 1
+			auto normFactor = (double)g->getNumberOfEdges() + 1.0;
+			wMuxInternally = 1.0 / normFactor;
+		}
+		if (wRegInternally <= 0) {
+			// make sure that register costs do not influence multiplexer costs
+			// by normalizing register costs with the total lifetime over all edges + 1
+			double normFactor = 1.0;
+			for (auto e : g->Edges()) {
+				if (!e->isDataEdge()) continue; // skip chaining edges for lifetime computation
+				auto vSrc = &e->getVertexSrc();
+				auto vDst = &e->getVertexDst();
+				auto tSrc = sched[vSrc];
+				auto tDst = sched[vDst];
+				auto lifetime = tDst - tSrc - rm->getVertexLatency(vSrc) + II * e->getDistance();
+				normFactor += lifetime;
+			}
+			wRegInternally = 1.0 / normFactor;
+		}
+
+		if (!quiet) {
+			std::cout << "Mux cost weighting factor: " << wMuxInternally << std::endl;
+			std::cout << "Reg cost weighting factor: " << wRegInternally << std::endl;
+		}
+
+		/////////////////////////
+		// container to return //
+		/////////////////////////
+		BindingContainer binding;
+
+		///////////////////
+		// create solver //
+		///////////////////
+		if(sw.empty()) sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
+		auto solver = ScaLP::Solver(sw);
+		solver.quiet = true;
+		solver.threads = 1;
+		solver.timeout = timeout;
+
+		/////////////////////////////////////////////////
+		// count if less FUs are needed than allocated //
+		/////////////////////////////////////////////////
+		std::map<const Resource*,int> resourceLimits;
+		for(auto &r : rm->Resources()) {
+			resourceLimits[r] = 0;
+			if(r->isUnlimited()) {
+				resourceLimits[r] = rm->getVerticesOfResource(r).size();
+				if(!quiet) std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+				continue;
+			}
+			std::map<int,int> modSlotHeight;
+			for(int i=0; i<II; i++) {
+				modSlotHeight[i] = 0;
+			}
+			for(auto &it : sched) {
+				auto v = it.first;
+				if(rm->getResource(v) != r) continue;
+				auto modSlot = it.second % II;
+				modSlotHeight[modSlot]++;
+				if(!quiet) {
+					std::cout << "Mod slot for vertex '" << v->getName() << "' = " << modSlot << " = " << it.second << " mod "
+										<< II << std::endl;
+					std::cout << "  mod slot height = " << modSlotHeight[modSlot] << std::endl;
+				}
+			}
+			for(auto it : modSlotHeight) {
+				if(it.second > resourceLimits[r]) resourceLimits[r] = it.second;
+			}
+			if(!quiet) std::cout << "Resource limits for resource '" << r->getName() << "': " << resourceLimits[r] << std::endl;
+		}
+
+		/////////////////////////////////////////////
+		// count number of ports for each resource //
+		/////////////////////////////////////////////
+		std::map<const Resource*, int> numResourcePorts;
+		for(auto &r : rm->Resources()) {
+			auto vertices = rm->getVerticesOfResource(r);
+			int numPorts = 0;
+			for(auto &v : vertices) {
+				int numInputs = 0;
+				for(auto &e : g->Edges()) {
+					if(e->getDependencyType() == Edge::DependencyType::Precedence) continue; // skip chaining edges
+					if(&e->getVertexDst() != v) continue;
+					numInputs++;
+				}
+				if(numInputs > numPorts) numPorts = numInputs;
+			}
+			numResourcePorts[r] = numPorts;
+		}
+		if(!quiet) std::cout << "counted number of ports for each resource" << std::endl;
+
+		//////////////////////////////////
+		// check if ports are left open //
+		//////////////////////////////////
+		// this might happen if the portAssignment container is not filled properly
+		// this is not supported here
+		for(auto vj : g->Vertices()) {
+			auto rj = rm->getResource(vj);
+			std::set<int> foundPorts;
+			for(auto it : portAssignments) {
+				auto e = it.first;
+				auto port = it.second;
+				if(&e->getVertexDst() != vj) continue;
+				if(port >= numResourcePorts[rj]) {
+					std::stringstream exc;
+					exc << "Binding::getILPBasedIntIIBinding: Illegal port number (" << port << ") provided for edge from "
+							<< e->getVertexSrc().getName() << " to " << e->getVertexDst().getName() << " - resource " << rj->getName()
+							<< " only has " << numResourcePorts[rj] << " ports";
+					throw HatScheT::Exception(exc.str());
+				}
+				foundPorts.insert(port);
+			}
+			if(foundPorts.size() != numResourcePorts[rj]) {
+				std::stringstream exc;
+				exc << "Binding::getILPBasedIntIIBinding: not all ports are occupied for vertex " << vj->getName()
+						<< ", found ports: " << foundPorts.size() << ", required ports: " << numResourcePorts[rj]
+						<< " - open ports are not supported yet";
+				throw HatScheT::Exception(exc.str());
+			}
+		}
+		if(!quiet) std::cout << "checked if ports are left open" << std::endl;
+
+		///////////////////////////////////////////////////
+		// assign each FU of each resource type a number //
+		///////////////////////////////////////////////////
+		std::map<std::pair<const Resource*,int>,int> fuIndexMap;
+		std::map<int,std::pair<const Resource*,int>> indexFuMap;
+		int fuIndexCounter = 0;
+		for(auto &r : rm->Resources()) {
+			for(auto i=0; i<resourceLimits[r]; i++) {
+				auto p = make_pair(r,i);
+				fuIndexMap[p] = fuIndexCounter;
+				indexFuMap[fuIndexCounter] = p;
+				fuIndexCounter++;
+			}
+		}
+		if(!quiet) std::cout << "assigned all fus a number" << std::endl;
+
+		///////////////////////////////////////////////////////////
+		// check possible lifetimes for each fu -> fu connection //
+		///////////////////////////////////////////////////////////
+		std::map<std::pair<int,int>,std::set<int>> possibleLifetimes;
+		std::map<Edge*,int> lifetimes;
+		for(auto &e : g->Edges()) {
+			auto &vi = e->getVertexSrc();
+			auto &vj = e->getVertexDst();
+			auto lifetime = sched[&vj] - sched[&vi] - rm->getResource(&vi)->getLatency() + (II * e->getDistance());
+			lifetimes[e] = lifetime;
+			auto *ri = rm->getResource(&vi);
+			auto *rj= rm->getResource(&vj);
+			for(int a=0; a<resourceLimits[ri]; a++) {
+				auto m = fuIndexMap[{ri,a}];
+				for(int b=0; b<resourceLimits[rj]; b++) {
+					auto n = fuIndexMap[{rj,b}];
+					possibleLifetimes[{m,n}].insert(lifetime);
+				}
+			}
+		}
+		if(!quiet) std::cout << "checked possible lifetimes" << std::endl;
+
+		//////////////////////////////////////////////////////////////////
+		// check possible port connections for each fu -> fu connection //
+		//////////////////////////////////////////////////////////////////
+		std::map<std::pair<int,int>,std::set<int>> possiblePortConnections;
+		for(auto &e : g->Edges()) {
+			auto &vi = e->getVertexSrc();
+			auto &vj = e->getVertexDst();
+			auto *ri = rm->getResource(&vi);
+			auto *rj= rm->getResource(&vj);
+			for(int a=0; a<resourceLimits[ri]; a++) {
+				auto m = fuIndexMap[{ri,a}];
+				for(int b=0; b<resourceLimits[rj]; b++) {
+					auto n = fuIndexMap[{rj,b}];
+					if(commutativeOps.find(rj) == commutativeOps.end()) {
+						// non-commutative operation
+						// only the user-given port assignment is allowed
+						possiblePortConnections[{m,n}].insert(portAssignments[e]);
+					}
+					else {
+						// commutative operations
+						// all ports are allowed
+						for(int p=0; p<numResourcePorts[rj]; p++) {
+							possiblePortConnections[{m,n}].insert(p);
+						}
+					}
+				}
+			}
+		}
+		if(!quiet) std::cout << "checked possible port connections" << std::endl;
+
+		//////////////////////////////////////////////////
+		// unlimited operations are bound to unique fus //
+		//////////////////////////////////////////////////
+		std::map<Vertex*,int> unlimitedOpFUs;
+		for(auto &r : rm->Resources()) {
+			if(!r->isUnlimited()) continue;
+			auto vertices = rm->getVerticesOfResource(r);
+			int fuCounter = 0;
+			for(auto v : vertices) {
+				unlimitedOpFUs[const_cast<Vertex*>(v)] = fuCounter;
+				fuCounter++;
+			}
+		}
+
+		//////////////////////
+		// create variables //
+		//////////////////////
+		// i : vertex index
+		// m/n : fu index
+		// k : lifetime register stage after fu
+		// p ; input port number
+		// e : edge
+		std::map<std::pair<int,int>,ScaLP::Variable> v_i_m; // binding vertex i -> fu m
+		std::map<std::pair<std::pair<int,int>,std::pair<int,int>>,ScaLP::Variable> r_m_n_k_p; // connection from fu m to fu n port p over k registers
+		std::map<std::pair<Edge*,int>,ScaLP::Variable> a_e_p; // if edge e is assigned to port p
+		std::map<int,ScaLP::Variable> z_m; // number of lifetime registers after FU m
+
+		// create vertex binding variables
+		for(auto v : g->Vertices()) {
+			auto i = v->getId();
+			auto r = rm->getResource(v);
+			if(!quiet) std::cout << "  resource limit for resource " << r->getName() << ": " << resourceLimits[r] << std::endl;
+			for(int a=0; a<resourceLimits[r]; a++) {
+				if(r->isUnlimited() and a != unlimitedOpFUs[v]) {
+					// only create variables that are actually needed
+					// unlimited operations need unique fus assignments that were already pre-computed above
+					continue;
+				}
+				auto m = fuIndexMap[{r,a}];
+				std::stringstream name;
+				name << "v_" << i << "_" << m;
+				v_i_m[{i,m}] = ScaLP::newBinaryVariable(name.str());
+				if(!quiet) std::cout << "  Successfully created variable " << v_i_m[{i,m}] << std::endl;
+			}
+		}
+		if(!quiet) std::cout << "created vertex-binding variables" << std::endl;
+
+		// create connection variables
+		for(auto ri : rm->Resources()) {
+			for(auto rj : rm->Resources()) {
+				for(int a=0; a<resourceLimits[ri]; a++) {
+					auto m = fuIndexMap[{ri,a}];
+					for(int b=0; b<resourceLimits[rj]; b++) {
+						auto n = fuIndexMap[{rj,b}];
+						for(auto k : possibleLifetimes[{m,n}]) {
+							for(auto p : possiblePortConnections[{m,n}]) {
+								std::stringstream name;
+								name << "r_" << m << "_" << n << "_" << k << "_" << p;
+								r_m_n_k_p[{{m,n},{k,p}}] = ScaLP::newBinaryVariable(name.str());
+								if(!quiet) std::cout << "  Successfully created variable " << r_m_n_k_p[{{m,n},{k,p}}] << std::endl;
+							}
+						}
+					}
+				}
+			}
+		}
+		if(!quiet) std::cout << "created connection variables" << std::endl;
+
+		// create edge-port variables for commutative sink vertices
+		for(auto &e : g->Edges()) {
+			auto vi = &e->getVertexSrc();
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if(commutativeOps.find(rj) == commutativeOps.end()) continue;
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				std::stringstream name;
+				name << "a_" << e << "_" << p;
+				a_e_p[{e,p}] = ScaLP::newBinaryVariable(name.str());
+				if(!quiet) std::cout << "  Successfully created variable " << a_e_p[{e,p}] << std::endl;
+			}
+		}
+		if(!quiet) std::cout << "created edge-port variables" << std::endl;
+
+		// create lifetime register variables
+		for (int m=0; m<fuIndexCounter; m++) {
+			// we can use real variables here because they only appear in >= constraints with integers on the RHS
+			// and those variables get minimized in the objective function so their optimal values are already integers
+			// this means that we can save computation time in the ILP solving algorithm by relaxing the integer constraint
+			z_m[m] = ScaLP::newRealVariable("z_"+std::to_string(m), 0.0, ScaLP::INF());
+		}
+
+		////////////////////////
+		// create constraints //
+		////////////////////////
+		// commutative operations part 1
+		// only one edge-port variable is 1 per edge
+		for(auto &e : g->Edges()) {
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			auto vi = &e->getVertexSrc();
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal 1 per edge for " << vi->getName() << "->"
+									<< vj->getName() << std::endl;
+			}
+			ScaLP::Term lhs;
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				lhs += a_e_p[{e,p}];
+			}
+			ScaLP::Constraint constr = lhs == 1;
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		if(!quiet) std::cout << "created commutativity constraints part 1" << std::endl;
+
+		// commutative operations part 2
+		// only one edge-port variable is 1 per port and sink vertex
+		for(auto &vj : g->Vertices()) {
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal 1 per per port for " << vj->getName()
+									<< std::endl;
+			}
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				ScaLP::Term lhs;
+				for(auto &e : g->Edges()) {
+					if(vj != &e->getVertexDst()) continue;
+					lhs += a_e_p[{e,p}];
+				}
+				ScaLP::Constraint constr = lhs == 1;
+				solver.addConstraint(constr);
+				if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+			}
+		}
+		if(!quiet) std::cout << "created commutativity constraints part 2" << std::endl;
+
+		// commutative operations part 3
+		// the sum of edge-port variables is p per sink vertex
+		for(auto &vj : g->Vertices()) {
+			ScaLP::Term lhs;
+			auto rj = rm->getResource(vj);
+			if (commutativeOps.find(rj) == commutativeOps.end()) continue;
+			if(!quiet) {
+				std::cout << "Creating constraints that edge-port variables are equal to " << numResourcePorts[rj] << " for "
+									<< vj->getName() << std::endl;
+			}
+
+			for(int p=0; p<numResourcePorts[rj]; p++) {
+				for(auto &e : g->Edges()) {
+					if(vj != &e->getVertexDst()) continue;
+					lhs += a_e_p[{e,p}];
+				}
+			}
+			ScaLP::Constraint constr = lhs == numResourcePorts[rj];
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		if(!quiet) std::cout << "created commutativity constraints part 3" << std::endl;
+
+		// commutative operations part 4
+		// map edge-port variables to actual binding variables
+		for(auto e : g->Edges()) {
+			auto vj = &e->getVertexDst();
+			auto rj = rm->getResource(vj);
+			if(commutativeOps.find(rj) == commutativeOps.end()) continue;
+			auto vi = &e->getVertexSrc();
+			auto ri = rm->getResource(vi);
+			auto i = vi->getId();
+			auto j = vj->getId();
+			auto k = lifetimes[e];
+			if(!quiet) {
+				std::cout << "Creating edge commutativity constraint for " << vi->getName() << "->" << vj->getName()
+									<< " with distance=" << e->getDistance() << std::endl;
+			}
+			for(int a = 0; a < resourceLimits[ri]; a++) {
+				if(ri->isUnlimited() and a != unlimitedOpFUs[vi]) continue;
+				auto m = fuIndexMap[{ri, a}];
+				for(int b = 0; b < resourceLimits[rj]; b++) {
+					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
+					auto n = fuIndexMap[{rj, b}];
+					for(int p = 0; p < numResourcePorts[rj]; p++) {
+						ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] + a_e_p[{e,p}] - r_m_n_k_p[{{m, n},{k, p}}] <= 2;
+						solver.addConstraint(constr);
+						if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+					}
+				}
+			}
+		}
+		if(!quiet) std::cout << "created commutativity constraints part 4" << std::endl;
+
+		// each vertex is bound to exactly one resource
+		for(auto v : g->Vertices()) {
+			auto i = v->getId();
+			auto r = rm->getResource(v);
+			if(!quiet) std::cout << "Creating constraint for vertex " << v->getName() << " and resource " << r->getName() << std::endl;
+			ScaLP::Term t;
+			for(int a=0; a<resourceLimits[r]; a++) {
+				if(r->isUnlimited() and a != unlimitedOpFUs[v]) continue;
+				auto m = fuIndexMap[{r,a}];
+				t += v_i_m[{i,m}];
+			}
+			ScaLP::Constraint constr = t == 1;
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		if(!quiet) std::cout << "created vertex-binding constraints" << std::endl;
+
+		// one connection for each edge
+		for(auto e : g->Edges()) {
+			auto *vi = &e->getVertexSrc();
+			auto *vj = &e->getVertexDst();
+			auto ri = rm->getResource(vi);
+			auto rj = rm->getResource(vj);
+			auto i = vi->getId();
+			auto j = vj->getId();
+			auto k = lifetimes[e];
+			if(!quiet) {
+				std::cout << "Creating edge constraint for " << vi->getName() << "->" << vj->getName() << " with distance="
+									<< e->getDistance() << std::endl;
+			}
+			for(int a = 0; a < resourceLimits[ri]; a++) {
+				if(ri->isUnlimited() and a != unlimitedOpFUs[vi]) continue;
+				auto m = fuIndexMap[{ri, a}];
+				for(int b = 0; b < resourceLimits[rj]; b++) {
+					if(rj->isUnlimited() and b != unlimitedOpFUs[vj]) continue;
+					auto n = fuIndexMap[{rj, b}];
+					ScaLP::Term t;
+					if (commutativeOps.find(rj) != commutativeOps.end()) {
+						// commutative operation
+						for(auto p : possiblePortConnections[{m,n}]) {
+							t += r_m_n_k_p[{{m, n},{k, p}}];
+						}
+					}
+					else {
+						// noncommutative operation
+						auto p = portAssignments.at(e);
+						t += r_m_n_k_p[{{m, n},{k, p}}];
+					}
+					ScaLP::Constraint constr = v_i_m[{i,m}] + v_i_m[{j,n}] - t <= 1;
+					solver.addConstraint(constr);
+					if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+				}
+			}
+		}
+		if(!quiet) std::cout << "created edge connection constraints" << std::endl;
+
+		// no resource conflicts
+		for(auto r : rm->Resources()) {
+			for(int a=0; a<resourceLimits[r]; a++) {
+				auto m = fuIndexMap[{r, a}];
+				auto vertices = rm->getVerticesOfResource(r);
+				for(int t=0; t<II; t++) {
+					ScaLP::Term lhs;
+					bool constraintEmpty = true;
+					for(auto v : vertices) {
+						if(sched[const_cast<Vertex*>(v)] % II != t) continue;
+						if(r->isUnlimited() and a != unlimitedOpFUs[const_cast<Vertex*>(v)]) continue;
+						constraintEmpty = false;
+						int i = v->getId();
+						lhs += v_i_m[{i,m}];
+					}
+					if(constraintEmpty) continue;
+					ScaLP::Constraint constr = lhs <= 1;
+					solver.addConstraint(lhs <= 1);
+					if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+				}
+			}
+		}
+		if(!quiet) std::cout << "created resource conflict constraints" << std::endl;
+
+		for (auto it : r_m_n_k_p) {
+			auto rVar = it.second;
+			auto k = it.first.second.first;
+			auto m = it.first.first.first;
+			auto zVar = z_m[m];
+			ScaLP::Constraint constr = (zVar - k*rVar >= 0);
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		if(!quiet) std::cout << "created lifetime register constraints" << std::endl;
+
+		if (maxMux >= 0.0) {
+			ScaLP::Term t;
+			for(auto &it : r_m_n_k_p) {
+				t += it.second;
+			}
+			ScaLP::Constraint constr = t <= maxMux;
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+
+		if (maxReg >= 0.0) {
+			ScaLP::Term t;
+			for(auto &it : z_m) {
+				t += it.second;
+			}
+			ScaLP::Constraint constr = t <= maxReg;
+			solver.addConstraint(constr);
+			if(!quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
+		}
+		if(!quiet) std::cout << "created maximum mux/reg cost constraints if necessary" << std::endl;
+
+		///////////////////
+		// set objective //
+		///////////////////
+		ScaLP::Term obj;
+		if (wMuxInternally > 0) {
+			for(auto &it : r_m_n_k_p) {
+				obj += (wMuxInternally * it.second);
+			}
+		}
+		if (wRegInternally > 0) {
+			for(auto &it : z_m) {
+				obj += (wRegInternally * it.second);
+			}
+		}
+		solver.setObjective(ScaLP::minimize(obj));
+
+		//////////////////
+		// start solver //
+		//////////////////
+		if(!quiet) std::cout << solver.showLP() << std::endl;
+		if(!quiet) std::cout << "start solving now" << std::endl;
+		auto stat = solver.solve();
+		if(!quiet) std::cout << "finished solving with status " << stat << std::endl;
+		if(stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL) {
+			std::cout << "Binding::getILPBasedIntIIBinding: could not solve binding problem, ScaLP status " << stat
+								<< std::endl;
+
+			return binding; // empty binding
+		}
+		if(!quiet) std::cout << "start filling solution structure" << std::endl;
+
+		/////////////////////////////
+		// fill solution structure //
+		/////////////////////////////
+		binding.multiplexerCosts = 0.0;
+		binding.registerCosts = 0.0;
+		auto res = solver.getResult().values;
+		// binding variables
+		for(auto &it : v_i_m) {
+			auto var = it.second;
+			auto i = it.first.first;
+			auto m = it.first.second;
+			auto value = round(res[var]);
+			if(value != 1.0) continue;
+			auto v = &g->getVertexById(i);
+			auto r = indexFuMap[m].first;
+			auto fu = indexFuMap[m].second;
+			binding.resourceBindings[v->getName()] = fu;
+			if(!quiet) {
+				std::cout << "Vertex " << v->getName() << " is bound to FU " << fu << " of resource type "
+								<< r->getName() << std::endl;
+			}
+		}
+		// connection variables
+		for(auto &it : r_m_n_k_p) {
+			auto var = it.second;
+			auto m = it.first.first.first;
+			auto n = it.first.first.second;
+			auto k = it.first.second.first;
+			auto p = it.first.second.second;
+			auto value = round(res[var]);
+			if(value != 1.0) continue;
+			binding.multiplexerCosts += 1.0;
+			auto ri = indexFuMap[m].first;
+			auto fui = indexFuMap[m].second;
+			auto rj = indexFuMap[n].first;
+			auto fuj = indexFuMap[n].second;
+			if(!quiet) {
+				std::cout << "fu " << fui << " of resource type " << ri->getName() << " is connected to port " << p << " of fu "
+								<< fuj << " of resource type " << rj->getName() << " over " << k << " lifetime registers" << std::endl;
+			}
+			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri->getName(),fui),std::make_pair(rj->getName(),fuj)),std::make_pair(k,p)));
+		}
+
+		for (auto it : z_m) {
+			binding.registerCosts += round(res[it.second]);
+		}
+
+		if(!quiet) {
+			std::cout << "total multiplexer costs: " << binding.multiplexerCosts << std::endl;
+			std::cout << "total register costs: " << binding.registerCosts << std::endl;
+		}
+
+		return binding;
+	}
+
+	Binding::RatIIBindingContainer
+	Binding::getILPBasedRatIIBinding(std::vector<map<Vertex*, int>> sched, Graph *g, ResourceModel *rm, int samples, int modulo,
+																	 int wMux, int wReg, std::map<Edge *, int> portAssignments, double maxMux,
+																	 double maxReg, std::set<const Resource *> commutativeOps, std::list<std::string> sw,
+																	 int timeout, bool quiet) {
+		// mappings between vertices of original and unrolled graphs
+		std::map<std::pair<std::string,int>,std::string> unrolledVertexMappings;
+		std::map<std::string,std::pair<std::string,int>> unrolledVertexMappingsReverse;
+		std::map<std::pair<Edge*,int>,Edge*> unrolledEdgeMappings;
+		std::map<Edge*,std::pair<Edge*,int>> unrolledEdgeMappingsReverse;
+		std::map<Edge*,int> unrolledPortAssignments;
+		std::set<const Resource*> unrolledCommutativeOps;
+		std::map<Vertex*,int> unrolledSchedule;
+
+		// unroll graph
+		// unroll graph and create corresponding resource model
+		Graph g_unroll;
+		ResourceModel rm_unroll;
+
+		for(auto res : rm->Resources()) {
+			auto res_unroll = &rm_unroll.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+			if(commutativeOps.find(res) != commutativeOps.end()) {
+				unrolledCommutativeOps.insert(res_unroll);
+			}
+		}
+
+		for(auto v : g->Vertices()) {
+			for(int s=0; s<samples; ++s) {
+				auto newVertex = &g_unroll.createVertex();
+				newVertex->setName(v->getName()+"_"+to_string(s));
+				auto originalResource = rm->getResource(v);
+				rm_unroll.registerVertex(newVertex,rm_unroll.getResource(originalResource->getName()));
+				// mapping
+				unrolledVertexMappings[{v->getName(),s}] = newVertex->getName();
+				unrolledVertexMappingsReverse[newVertex->getName()] = {v->getName(),s};
+				unrolledSchedule[newVertex] = sched[s][v];
+			}
+		}
+
+		for(auto e : g->Edges()) {
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+
+			int distance = e->getDistance();
+			int offset = 0;
+
+			// adjust distance/offset so distance < samples
+			while(distance>samples) {
+				distance -= samples;
+				++offset;
+			}
+
+			for(int s=0; s<samples; ++s) {
+				// adjust distance again (only once)
+				int sourceSampleNumber = s - distance;
+				int edgeOffset = offset;
+				if(sourceSampleNumber < 0) {
+					sourceSampleNumber += samples;
+					++edgeOffset;
+				}
+
+				// create edge
+				Vertex* srcVertex = nullptr;
+				Vertex* dstVertex = nullptr;
+
+				for(auto v : g_unroll.Vertices()) {
+					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
+						srcVertex = v;
+					if(v->getName() == dstName + "_" + to_string(s))
+						dstVertex = v;
+				}
+
+				auto newEdge = &g_unroll.createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
+
+				// mapping
+				unrolledEdgeMappings[{e,s}] = newEdge;
+
+				// copy port assignment
+				unrolledPortAssignments[newEdge] = portAssignments[e];
+			}
+		}
+
+		// call binding function on unrolled graph
+		auto unrolledBindingContainer = getILPBasedIntIIBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,wMux,wReg,unrolledPortAssignments,maxMux,maxReg,unrolledCommutativeOps,sw,timeout,quiet);
+		RatIIBindingContainer b;
+
+		// fill solution structure if binding was found
+		// vertex->fu bindings
+		for(auto &it : unrolledBindingContainer.resourceBindings) {
+			auto unrolledVertex = it.first;
+			auto fu = it.second;
+			auto originalVertex = unrolledVertexMappingsReverse[unrolledVertex].first;
+			auto sample = unrolledVertexMappingsReverse[unrolledVertex].second;
+			if(b.resourceBindings.size() <= sample) b.resourceBindings.emplace_back(std::map<std::string,int>());
+			b.resourceBindings[sample][originalVertex] = fu;
+		}
+		// fu->fu connection bindings
+		for(auto &it : unrolledBindingContainer.fuConnections) {
+			auto rSrc = it.first.first.first;
+			auto fuSrc = it.first.first.second;
+			auto rDst = it.first.second.first;
+			auto fuDst = it.first.second.second;
+			auto lifetime = it.second.first;
+			auto port = it.second.second;
+			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rSrc,fuSrc),std::make_pair(rDst,fuDst)),std::make_pair(lifetime,port)));
+		}
+		b.multiplexerCosts = unrolledBindingContainer.multiplexerCosts;
+		b.registerCosts = unrolledBindingContainer.registerCosts;
 
 		return b;
 	}
