@@ -1707,8 +1707,10 @@ namespace HatScheT {
 	}
 
 	bool Tests::ratIIOptimalIterationTest() {
-		int mMinII = 11;
-		int sMinII = 10;
+		//int mMinII = 11;
+		//int sMinII = 10;
+		int mMinII = 7;
+		int sMinII = 5;
 		double minII = double(mMinII) / double(sMinII);
 		auto integerII = (int) ceil(double(mMinII) / double(sMinII));
 		int sMax = -1;
@@ -2524,7 +2526,8 @@ namespace HatScheT {
 		sched = ed97.getSchedule();
 		II = (int)ed97.getII();
 
-		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,portAssignments,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+		auto bind = Binding::getILPBasedIntIIBindingCong(sched, &g, &rm, II, portAssignments,
+																										 {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, 300);
 
 		if(bind.resourceBindings.empty()) {
 			std::cout << "Empty resource bindings detected - test failed" << std::endl;
@@ -2775,5 +2778,165 @@ namespace HatScheT {
 		std::cout << "Rational-II binding is " << (ratIIValid?"":"not ") << "valid" << std::endl;
 		return intIIValid and ratIIValid;
 	}
-}
 
+  bool Tests::firSAMRatIIImplementationsTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::firSAMRatIIImplementationsTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+		return false;
+#else
+		// read resource model and graph
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		string resStr = "benchmarks/origami/fir_SAMRM.xml";
+		string graphStr = "benchmarks/origami/fir_SAM.graphml";
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		// create new resource model for minimum FUs with II=30/7=4.29 and II=9/2=4.5 (95.33% of max TP)
+		ResourceModel rm307;
+		ResourceModel rm92;
+		for (auto *r : rm.Resources()) {
+			auto vertices = rm.getVerticesOfResource(r);
+			auto newLimit307 = (int)ceil(((double)vertices.size()) / (30.0/7.0));
+			auto newLimit92 = (int)ceil(((double)vertices.size()) / (9.0/2.0));
+			if(newLimit307 == 0) newLimit307 = 1;
+			if(newLimit92 == 0) newLimit92 = 1;
+			auto *r307 = &rm307.makeResource(r->getName(), newLimit307, r->getLatency(), r->getBlockingTime());
+			auto *r92 = &rm92.makeResource(r->getName(), newLimit92, r->getLatency(), r->getBlockingTime());
+			std::cout << "Resource '" << r->getName() << "' - 30/7 limit: " << newLimit307 << ", 9/2 limit: " << newLimit92 << std::endl;
+			if (newLimit92 != newLimit307) {
+				std::cout << "  DIFFERENT" << std::endl;
+				return false;
+			}
+			for (auto *v : vertices) {
+				rm307.registerVertex(v, r307);
+				rm92.registerVertex(v, r92);
+			}
+		}
+
+		// ILP solvers
+		std::list<std::string> sw = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+
+		// generate schedulers
+		UniformRationalIISchedulerNew u307(g, rm307, sw);
+		UniformRationalIISchedulerNew u92(g, rm92, sw);
+		u307.setModulo(30);
+		u307.setSamples(7);
+		u92.setModulo(9);
+		u92.setSamples(2);
+		u307.setSolverTimeout(600);
+		u92.setSolverTimeout(600);
+		u307.setThreads(10);
+		u92.setThreads(10);
+
+		// schedule the shit out of them
+		std::cout << "Start scheduling for II=30/7" << std::endl;
+		u307.schedule();
+		std::cout << "Start scheduling for II=9/2" << std::endl;
+		u92.schedule();
+
+		// check for solutions
+		if (!u307.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=30/7" << std::endl;
+			return false;
+		}
+		if (!u92.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=9/2" << std::endl;
+			return false;
+		}
+
+		// do simple bindings
+		auto binding307 = Binding::getSimpleRationalIIBinding(u307.getStartTimeVector(), &rm307, 30, 7);
+		auto binding92 = Binding::getSimpleRationalIIBinding(u92.getStartTimeVector(), &rm92, 9, 2);
+
+		// save results
+		ScheduleAndBindingWriter writer307("fir_SAM_30_7.csv", u307.getStartTimeVector(), binding307, 7, 30);
+		ScheduleAndBindingWriter writer92("fir_SAM_9_2.csv", u92.getStartTimeVector(), binding92, 2, 9);
+		writer307.write();
+		writer92.write();
+
+		return true;
+#endif
+	}
+
+
+  bool Tests::firSHIRatIIImplementationsTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::firSHIRatIIImplementationsTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+		return false;
+#else
+		// read resource model and graph
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		string resStr = "benchmarks/origami/fir_SHIRM.xml";
+		string graphStr = "benchmarks/origami/fir_SHI.graphml";
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		// create new resource model for minimum FUs with II=30/7=4.29 and II=9/2=4.5 (95.33% of max TP)
+		ResourceModel rm75;
+		ResourceModel rm32;
+		for (auto *r : rm.Resources()) {
+			auto vertices = rm.getVerticesOfResource(r);
+			auto newLimit75 = (int)ceil(((double)vertices.size()) / (7.0/5.0));
+			auto newLimit32 = (int)ceil(((double)vertices.size()) / (3.0/2.0));
+			if(newLimit75 == 0) newLimit75 = 1;
+			if(newLimit32 == 0) newLimit32 = 1;
+			auto *r75 = &rm75.makeResource(r->getName(), newLimit75, r->getLatency(), r->getBlockingTime());
+			auto *r32 = &rm32.makeResource(r->getName(), newLimit32, r->getLatency(), r->getBlockingTime());
+			std::cout << "Resource '" << r->getName() << "' - 7/5 limit: " << newLimit75 << ", 3/2 limit: " << newLimit32 << std::endl;
+			for (auto *v : vertices) {
+				rm75.registerVertex(v, r75);
+				rm32.registerVertex(v, r32);
+			}
+		}
+
+		// ILP solvers
+		std::list<std::string> sw = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+
+		// generate schedulers
+		UniformRationalIISchedulerNew u75(g, rm75, sw);
+		UniformRationalIISchedulerNew u32(g, rm32, sw);
+		u75.setModulo(7);
+		u75.setSamples(5);
+		u32.setModulo(3);
+		u32.setSamples(2);
+		u75.setSolverTimeout(600);
+		u32.setSolverTimeout(600);
+		u75.setThreads(10);
+		u32.setThreads(10);
+
+		// schedule the shit out of them
+		std::cout << "Start scheduling for II=7/5" << std::endl;
+		u75.schedule();
+		std::cout << "Start scheduling for II=3/2" << std::endl;
+		u32.schedule();
+
+		// check for solutions
+		if (!u75.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=7/5" << std::endl;
+			return false;
+		}
+		if (!u32.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=3/2" << std::endl;
+			return false;
+		}
+
+		// do simple bindings
+		auto binding75 = Binding::getSimpleRationalIIBinding(u75.getStartTimeVector(), &rm75, 7, 5);
+		auto binding32 = Binding::getSimpleRationalIIBinding(u32.getStartTimeVector(), &rm32, 3, 2);
+
+		// save results
+		ScheduleAndBindingWriter writer75("fir_SHI_7_5.csv", u75.getStartTimeVector(), binding75, 5, 7);
+		ScheduleAndBindingWriter writer32("fir_SHI_3_2.csv", u32.getStartTimeVector(), binding32, 2, 3);
+		writer75.write();
+		writer32.write();
+
+		return true;
+#endif
+	}
+}

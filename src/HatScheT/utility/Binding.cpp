@@ -495,8 +495,8 @@ namespace HatScheT {
 	}
 
 	Binding::BindingContainer
-	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
-																	std::map<Edge*,int> portAssignments,  list<string> sw, int timeout, bool quiet) {
+	Binding::getILPBasedIntIIBindingCong(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
+																			 std::map<Edge*,int> portAssignments, list<string> sw, int timeout, bool quiet) {
 		///////////////////////////////////////////////
 		// find conflicting operations and variables //
 		///////////////////////////////////////////////

@@ -92,10 +92,10 @@ namespace HatScheT {
 		 * @param quiet suppress debug outputs
 		 * @return a map of vertex to FU-number
 		 */
-		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
-																																int II, std::map<Edge*,int> portAssignments,
-																																std::list<std::string> sw = {}, int timeout=300,
-																																bool quiet = true);
+		static BindingContainer getILPBasedIntIIBindingCong(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
+																												int II, std::map<Edge*,int> portAssignments,
+																												std::list<std::string> sw = {}, int timeout= 300,
+																												bool quiet = true);
 		/*!
 		* @brief create an ilp-based binding for a rational II schedule
 		* the goal is to minimize MUX and register allocation

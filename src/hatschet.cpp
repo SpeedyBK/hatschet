@@ -361,7 +361,9 @@ int main(int argc, char *args[]) {
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
-        if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
+				if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
+				if(str=="FIRSAMRATIIIMPLEMENTATION" && HatScheT::Tests::firSAMRatIIImplementationsTest() == false) exit(-1);
+				if(str=="FIRSHIRATIIIMPLEMENTATION" && HatScheT::Tests::firSHIRatIIImplementationsTest() == false) exit(-1);
 				if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
 				if(str=="DATEEXAMPLE" && HatScheT::Tests::dateExampleTest() == false) exit(-1);
 				if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
@@ -801,7 +803,7 @@ int main(int argc, char *args[]) {
           sBWriter.setGraphPath(graphMLFile);
           sBWriter.write();
         }
-#else 
+#else
           auto bindings = scheduler->getBindings();
           HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
           sBWriter.setRMPath(resourceModelFile);

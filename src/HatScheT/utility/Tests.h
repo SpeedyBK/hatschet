@@ -168,6 +168,14 @@ public:
 	 */
 	static bool dateExampleTest();
 	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SAM filter from Origami benchmark
+	 */
+	static bool firSAMRatIIImplementationsTest();
+	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SHI filter from Origami benchmark
+	 */
+	static bool firSHIRatIIImplementationsTest();
+	/*!
 	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
 	 */
 	static bool maFiegeTest();
@@ -230,7 +238,7 @@ public:
   static bool sdcSolverTest();
 
   /*!
-   * test getILPBasedIntIIBinding function
+   * test getILPBasedIntIIBindingCong function
    * @return
    */
   static bool ilpBasedIntIIBindingTest();

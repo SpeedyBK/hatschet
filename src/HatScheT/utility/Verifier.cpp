@@ -361,13 +361,13 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	for(auto it : bind.resourceBindings) {
 		auto v = it.first;
 		auto fu = it.second;
-		auto res = rm->getResource(v);
+		auto res = rm->getResource(&g->getVertexByName(v));
 		if(!res->isUnlimited()) continue;
 		for(auto it2 : bind.resourceBindings) {
 			auto v2 = it2.first;
 			if(v == v2) continue;
 			auto fu2 = it2.second;
-			auto res2 = rm->getResource(v2);
+			auto res2 = rm->getResource(&g->getVertexByName(v2));
 			if(res != res2) continue;
 			if(fu == fu2) {
 				// FUs are equal, this should not happen!
@@ -509,14 +509,14 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 		for(auto it : bind.resourceBindings[s]) {
 			auto v = it.first;
 			auto fu = it.second;
-			auto res = rm->getResource(v);
+			auto res = rm->getResource(&g->getVertexByName(v));
 			if(!res->isUnlimited()) continue;
 			for(int s2=0; s2<samples;s2++) {
 				for(auto it2 : bind.resourceBindings[s2]) {
 					auto v2 = it2.first;
 					if(v == v2 and s == s2) continue;
 					auto fu2 = it2.second;
-					auto res2 = rm->getResource(v2);
+					auto res2 = rm->getResource(&g->getVertexByName(v2));
 					if(res != res2) continue;
 					if(fu == fu2) {
 						// FUs are equal, this should not happen!
