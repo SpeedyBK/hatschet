@@ -2434,32 +2434,52 @@ namespace HatScheT {
 			HatScheT::ResourceModel rm;
 			HatScheT::Graph g;
 
-			Vertex &add1 = g.createVertex();
-            Vertex &add2 = g.createVertex();
-            Vertex &add3 = g.createVertex();
-            Vertex &mult1 = g.createVertex();
-            Vertex &mult2 = g.createVertex();
+			Vertex &A = g.createVertex();
+            Vertex &B = g.createVertex();
+            Vertex &C = g.createVertex();
+            Vertex &D = g.createVertex();
+            Vertex &E = g.createVertex();
 
-            g.createEdge(add1,mult1,0);
-            g.createEdge(add2,mult1,0);
-            g.createEdge(add3,mult2,0);
-            g.createEdge(mult1,mult2,0);
+            A.setName("A");
+            B.setName("B");
+            C.setName("C");
+            D.setName("D");
+            E.setName("E");
 
-            auto &add = rm.makeResource("add", 2,1,1);
-            auto &mult = rm.makeResource("mult", 2,1,1);
+            g.createEdge(A,E,0);
+            g.createEdge(B,E,0);
+            g.createEdge(C,E,0);
+            g.createEdge(E,D,0);
+            g.createEdge(D,A,3);
 
-            rm.registerVertex(&add1,&add);
-            rm.registerVertex(&add2,&add);
-            rm.registerVertex(&add3,&add);
-            rm.registerVertex(&mult1,&mult);
-            rm.registerVertex(&mult2,&mult);
+            auto &add = rm.makeResource("add", -1,0,1);
+            auto &load = rm.makeResource("load", 3,2,1);
+
+
+            rm.registerVertex(&A,&load);
+            rm.registerVertex(&B,&load);
+            rm.registerVertex(&C,&load);
+            rm.registerVertex(&D,&load);
+            rm.registerVertex(&E,&add);
 
             cout<< rm;
             cout<< g;
 
-            RationalIIModuloSDCScheduler scheduler (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-            scheduler.setQuiet(false);
-            scheduler.schedule();
+            //UniformRationalIISchedulerNew schedulerUNIFORM (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            ModSDC schedulerMod (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            ModuloQScheduler test (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            RationalIIModuloSDCScheduler schedulerRationalSDC (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            //ASAPScheduler schedulerASAP (g,rm);
+            //RationalIIModuloSDCScheduler scheduler (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            //schedulerRationalSDC.setSolverTimeout(30000);
+            schedulerRationalSDC.setBudgetMultiplier(15);
+            schedulerRationalSDC.setQuiet(false);
+            schedulerRationalSDC.schedule();
+            //auto &test = schedulerRationalSDC.getStartTimeVector();
+            //auto s =schedulerMod.getSchedule();
+            //for (auto it : s){
+            //    cout << "Vertex: " << it.first->getName() << " Time: " << it.second <<endl;
+            //}
 
 			return true;
 		}
