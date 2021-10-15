@@ -320,7 +320,6 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		for(auto res : this->resourceModel.Resources()) {
 			rm_unroll.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
 		}
-
 		for(auto v : this->g.Vertices()) {
 			for(int s=0; s<this->samples; ++s) {
 				auto& newVertex = g_unroll.createVertex();
@@ -329,7 +328,6 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 				rm_unroll.registerVertex(&newVertex,rm_unroll.getResource(originalResource->getName()));
 			}
 		}
-
 		for(auto e : this->g.Edges()) {
 			auto srcName = e->getVertexSrc().getName();
 			auto dstName = e->getVertexDst().getName();
@@ -366,14 +364,10 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 				g_unroll.createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
 			}
 		}
-
 		std::map<Vertex*, int> unrolledSchedule;
-
 		for(unsigned int s=0; s<this->samples; ++s) {
 			for(auto it : this->startTimesVector[s]) {
-
 				Vertex* v = nullptr;
-
 				for(auto vIt : g_unroll.Vertices()) {
 					if(vIt->getName() == it.first->getName() + "_" + to_string(s))
 						v = vIt;
@@ -382,14 +376,12 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 				unrolledSchedule[v] = it.second;
 			}
 		}
-
 		if(!this->quiet) {
 			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED GRAPH:" << std::endl;
 			std::cout << g_unroll << std::endl;
 			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
 			std::cout << rm_unroll << std::endl;
 		}
-
 		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
 
 		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);

@@ -167,6 +167,7 @@ namespace HatScheT {
       // pop first element from scheduling queue
       Vertex *I = this->schedQueue.front();
       this->schedQueue.pop_front();
+      cout << "Next Vertex: " << I->getName()<<endl;
       //////////////////////
       // ALGORITHM LINE 5 //
       //////////////////////
@@ -182,12 +183,16 @@ namespace HatScheT {
         throw HatScheT::Exception("Error: ModSDC::modSDCIteration: invalid time (" + to_string(time) +
                                   ") found by ILP solver for instruction '" + I->getName() + "'");
       if (!this->hasResourceConflict(I, time)) {
-        ////////////////////////
+          cout << "No RessourceConflict Next Vertex: " << I->getName()<<" Time: "<<time<<endl;
+
+          ////////////////////////
         // ALGORITHM LINE 7-8 //
         ////////////////////////
         scheduleInstruction(I, time);
       } else {
-        ///////////////////////
+          cout << "RessourceConflict found Next Vertex: " << I->getName() << " Time: "<< time <<endl;
+
+          ///////////////////////
         // ALGORITHM LINE 10 //
         ///////////////////////
         // add constraint t_I >= time+1 to ilp formulation
@@ -206,12 +211,14 @@ namespace HatScheT {
           return false;
         }
         if (foundSolution) {
-          ///////////////////////
+            cout << "No Backtracking needed Next Vertex: " << I->getName() << " Time: "<< time <<endl;
+            ///////////////////////
           // ALGORITHM LINE 13 //
           ///////////////////////
           PriorityHandler::putIntoSchedQueue(I, this->pType, &this->priorityForSchedQueue, &this->schedQueue);
         } else {
-          ///////////////////////
+            cout << "Need Backtracking Next Vertex: " << I->getName() << " Time: "<< time <<endl;
+            ///////////////////////
           // ALGORITHM LINE 15 //
           ///////////////////////
           this->clearConstraintForVertex(I);
@@ -442,13 +449,17 @@ namespace HatScheT {
     //////////////////////
     int prevSchedTime = this->getPrevSched(I);
     int evictTime;
-    if (minTime >= prevSchedTime || prevSchedTime < 0) {
+    cout << "Vertex: "<< I->getName()<< " min Time: "<< minTime << " Prev SchedTime"<< prevSchedTime << endl;
+    if (minTime > prevSchedTime || prevSchedTime < 0) {
+        cout<< "In if minTime >= prevSchedTime| | prevSchedTime < 0" <<endl;
       //////////////////////
       // ALGORITHM LINE 7 //
       //////////////////////
       evictTime = minTime;
     } else {
-      //////////////////////
+        cout<< "no In if minTime >= prevSchedTime| | prevSchedTime < 0" <<endl;
+
+        //////////////////////
       // ALGORITHM LINE 9 //
       //////////////////////
       evictTime = prevSchedTime + 1;
@@ -741,6 +752,8 @@ namespace HatScheT {
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp - this->timeTracker);
     double elapsedTime = ((double) timeSpan.count()) / 1000.0;
+      std::cout << "elapsed time: " << elapsedTime<<endl;
+      std::cout << "time budget before minus elapsed time: " << this->timeBudget<<endl;
     this->timeTracker = tp;
     this->timeBudget -= elapsedTime;
     if(this->timeBudget<0) this->scalpStatus = ScaLP::status::TIMEOUT_INFEASIBLE;
@@ -779,6 +792,7 @@ namespace HatScheT {
     for (auto it : this->g.Vertices()) {
       visited[it] = false;
     }
+    visited[v] = true; //No need to visit myself again
 
     std::list<Vertex *> queue = {v};
 
@@ -797,7 +811,7 @@ namespace HatScheT {
         }
       }
     }
-
+    cout << "Vertex: " << v->getName() << " Vertex Count: " << noOfSubseq << endl;
     return noOfSubseq;
   }
 
@@ -906,6 +920,7 @@ namespace HatScheT {
     PriorityHandler *pV;
     try {
       pV = pHandlers->at(v);
+        std::cout << "test: "<< *v << std::endl;
     }
     catch (std::out_of_range &) {
       stringstream err;
