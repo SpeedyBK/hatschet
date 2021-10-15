@@ -58,6 +58,16 @@ namespace HatScheT {
      * @return solution status
      */
     std::string getSolutionStatus();
+    /*!
+     * sets upper limit for mux costs
+     * @param l new limit
+     */
+		void setMuxLimit(double l);
+		/*!
+		 * sets upper limit for register costs
+		 * @param l new limit
+		 */
+		void setRegLimit(double l);
     
   private:
   	/*!
@@ -127,6 +137,14 @@ namespace HatScheT {
      * weighting factor for register costs
      */
     double wReg;
+    /*!
+     * upper limit for mux costs
+     */
+    double maxMux;
+    /*!
+     * upper limit for register costs
+     */
+		double maxReg;
     /*!
      * set the next possible binding based on the resource queues
      * and the previously tried bindings

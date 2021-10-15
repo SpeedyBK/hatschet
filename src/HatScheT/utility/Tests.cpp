@@ -3159,11 +3159,13 @@ namespace HatScheT {
 		double maxMux = -1.0;
 		double maxReg = -1.0;
 		TreeBind tb(&g,&rm,sched,intII,portAssignments);
+		tb.setMuxLimit(maxMux);
+		tb.setRegLimit(maxReg);
 		tb.setTimeout(timeout);
 		tb.setQuiet(false);
 		tb.bind();
 		auto treeBind = tb.getBinding();
-		std::cout << "tree-based binding successfully computed" << std::endl;
+		std::cout << "tree-based binding finished" << std::endl;
 		bool treeIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeBind,portAssignments,commutativeOps);
 		std::cout << "tree-based binding is " << (treeIIValid?"":"not ") << "valid" << std::endl;
 		std::cout << "tree-based implementation multiplexer costs: " << treeBind.multiplexerCosts << std::endl;
@@ -3171,7 +3173,7 @@ namespace HatScheT {
 
 		// compare with ILP-based optimal binding
 		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
-		std::cout << "ILP-based binding successfully computed" << std::endl;
+		std::cout << "ILP-based binding finished" << std::endl;
 		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,portAssignments,commutativeOps);
 		std::cout << "ILP-based binding is " << (ilpValid?"":"not ") << "valid" << std::endl;
 		std::cout << "ILP-based implementation multiplexer costs: " << ilpBind.multiplexerCosts << std::endl;

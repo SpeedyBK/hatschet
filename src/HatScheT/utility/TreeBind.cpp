@@ -4,10 +4,13 @@
 #include <chrono>
 #include <algorithm>
 #include <sstream>
+#include <limits>
 
 namespace HatScheT {
   TreeBind::TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments) 
-  : g(g), rm(rm), sched(sched), II(II), portAssignments(portAssignments), currentBinding(), bestBinding(), timeBudget(300.0), wMux(1.0), wReg(1.0), status("NOT_SOLVED"), quiet(true) {
+  : g(g), rm(rm), sched(sched), II(II), portAssignments(portAssignments), currentBinding(), bestBinding(),
+  timeBudget(300.0), wMux(1.0), wReg(1.0), status("NOT_SOLVED"), quiet(true),
+  maxMux(std::numeric_limits<double>::infinity()), maxReg(std::numeric_limits<double>::infinity()) {
     // check if port assignments are complete
     for(auto e : g->Edges()) {
       try {
@@ -249,11 +252,19 @@ namespace HatScheT {
 					std::cout << "  hit leaf node" << std::endl;
 				}
         if (
+        	// current binding is feasible
+					this->currentBinding.multiplexerCosts <= this->maxMux
+					and
+					this->currentBinding.registerCosts <= this->maxReg
+					and
+					(
           // current binding is better than best binding
           ((this->wMux * this->currentBinding.multiplexerCosts + this->wReg * this->currentBinding.registerCosts) < (this->wMux * this->bestBinding.multiplexerCosts + this->wReg * this->bestBinding.registerCosts))
           or
           // best binding is not feasible
-          (this->bestBinding.multiplexerCosts < 0 or this->bestBinding.registerCosts < 0)) {
+          (this->bestBinding.multiplexerCosts < 0 or this->bestBinding.registerCosts < 0)
+          )
+					){
           this->bestBinding = this->currentBinding;
           this->status = "TIMEOUT_FEASIBLE";
 					std::cout << "  updated best solution" << std::endl;
@@ -282,10 +293,18 @@ namespace HatScheT {
     // we have found the optimum solution iff the stack is empty
     // i.e. we didn't terminate because of a timeout
     if (stack.empty()) {
-			if (!this->quiet) {
-				std::cout << "TreeBind::iterativeTreeSearch: found optimum solution" << std::endl;
+    	if (this->bestBinding.multiplexerCosts >= 0 and this->bestBinding.registerCosts >= 0) {
+				if (!this->quiet) {
+					std::cout << "TreeBind::iterativeTreeSearch: found optimum solution" << std::endl;
+				}
+				this->status = "OPTIMAL";
+    	}
+			else {
+				if (!this->quiet) {
+					std::cout << "TreeBind::iterativeTreeSearch: problem is infeasible" << std::endl;
+				}
+				this->status = "INFEASIBLE";
 			}
-    	this->status = "OPTIMAL";
     }
     else if (!this->quiet) {
 			std::cout << "TreeBind::iterativeTreeSearch: did not find optimum solution" << std::endl;
@@ -530,4 +549,14 @@ namespace HatScheT {
       return lifetime;
     }
   }
+
+	void TreeBind::setMuxLimit(double l) {
+  	if (l >= 0.0) this->maxMux = l;
+  	else this->maxMux = std::numeric_limits<double>::infinity();
+  }
+
+	void TreeBind::setRegLimit(double l) {
+		if (l >= 0.0) this->maxReg = l;
+		else this->maxReg = std::numeric_limits<double>::infinity();
+	}
 }
