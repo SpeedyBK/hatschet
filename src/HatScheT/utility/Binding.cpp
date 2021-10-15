@@ -1714,6 +1714,7 @@ namespace HatScheT {
 			auto p = it.first.second.second;
 			auto value = round(res[var]);
 			if(value != 1.0) continue;
+      // ToDo: check if this connection can be omitted in case of a nonoptimal solution
 			auto ri = indexFuMap[m].first;
 			auto fui = indexFuMap[m].second;
 			auto rj = indexFuMap[n].first;
@@ -2417,6 +2418,7 @@ namespace HatScheT {
 			auto p = it.first.second.second;
 			auto value = round(res[var]);
 			if(value != 1.0) continue;
+      // ToDo: check if this connection can be omitted in case of a nonoptimal solution
 			binding.multiplexerCosts += 1.0;
 			auto ri = indexFuMap[m].first;
 			auto fui = indexFuMap[m].second;

@@ -19,6 +19,7 @@
 */
 
 #include "HatScheT/utility/Tests.h"
+#include "HatScheT/utility/TreeBind.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
@@ -3055,4 +3056,98 @@ namespace HatScheT {
 		return true;
 #endif
 	}
+
+
+  bool Tests::treeBindTest() {
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
+		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
+		auto &mult = rm.makeResource("mult", 2, 1, 1);
+		auto &cons = rm.makeResource("cons", UNLIMITED, 0, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &constant0_25 = g.createVertex();
+		constant0_25.setName("constant0_25");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &mult2 = g.createVertex();
+		mult2.setName("mult2");
+		auto &y0 = g.createVertex();
+		y0.setName("y0");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&constant0_25, &cons);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&mult2, &mult);
+		rm.registerVertex(&y0, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(mult2,mult0,4);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x1,mult1,0);
+		portAssignments[&e2] = 0;
+		auto &e3 = g.createEdge(mult0,mult1,0);
+		portAssignments[&e3] = 1;
+		auto &e4 = g.createEdge(constant0_25,mult2,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(mult1,mult2,0);
+		portAssignments[&e5] = 1;
+		auto &e6 = g.createEdge(mult2,y0,0);
+		portAssignments[&e6] = 0;
+
+		// schedule that badboy
+		std::list<std::string> sw = {"Gurobi"};
+		int timeout = 5;
+		std::map<Vertex*,int> sched;
+		std::vector<std::map<Vertex*,int>> ratIISched;
+		double intII = 2.0;
+		double ratII = 1.5;
+		int samples = 2;
+		int modulo = 3;
+
+		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(timeout);
+		scheduler.schedule();
+		sched = scheduler.getSchedule();
+		intII = scheduler.getII();
+
+		std::cout << "Integer-II Schedule:" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		
+		// specify commutative operation types
+		std::set<const Resource*> commutativeOps;
+		//commutativeOps.insert(&mult);
+
+		// call tree based binding function for integer IIs
+		double wMux = 1.0;
+		double wReg = 1.0;
+		double maxMux = -1.0;
+		double maxReg = -1.0;
+		TreeBind tb(&g,&rm,sched,intII,portAssignments);
+		tb.setTimeout(timeout);
+		tb.setQuiet(false);
+		tb.bind();
+		auto bind = tb.getBinding();
+		std::cout << "Integer-II binding successfully computed" << std::endl;
+		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
+		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "Integer-II implementation multiplexer costs: " << bind.multiplexerCosts << std::endl;
+		std::cout << "Integer-II implementation register costs: " << bind.registerCosts << std::endl;
+		return intIIValid;
+  }
 }
