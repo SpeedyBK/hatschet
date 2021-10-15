@@ -330,12 +330,16 @@ int main(int argc, char *args[]) {
         if(str=="READ" && HatScheT::Tests::readTest()==false) exit(-1);
         if(str=="MOOVAC" && HatScheT::Tests::moovacTest()==false) exit(-1);
         if(str=="RWRS" && HatScheT::Tests::readWriteReadScheduleTest()==false) exit(-1);
-        if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+				if(str=="MODULOSDC" && HatScheT::Tests::moduloSDCTest()==false) exit(-1);
+				if(str=="INTEGERIINONRECT" && HatScheT::Tests::integerIINonRectTest()==false) exit(-1);
+				if(str=="INTEGERIIPB" && HatScheT::Tests::integerIIPBTest()==false) exit(-1);
 				if(str=="MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege()==false) exit(-1);
 				if(str=="RATIONALIIMODULOSDC" && HatScheT::Tests::rationalIIModuloSDCTest()==false) exit(-1);
 				if(str=="COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest()==false) exit(-1);
-				if(str=="ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest()==false) exit(-1);
+				if(str=="ILPBASEDINTIIBINDINGCONG" && HatScheT::Tests::ilpBasedIntIIBindingTestCong() == false) exit(-1);
+				if(str=="ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest() == false) exit(-1);
 				if(str=="ILPMINREGBINDING" && HatScheT::Tests::ilpBasedIntIIMinRegBindingTest()==false) exit(-1);
+				if(str=="ILPMINMUXBINDING" && HatScheT::Tests::ilpBasedIntIIMinMuxBindingTest()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
@@ -358,8 +362,11 @@ int main(int argc, char *args[]) {
         if(str=="SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
         if(str=="ratIIVerifierWrongMRTDetected" && HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false) exit(-1);
         if(str=="ratIIVerifierWrongCausalityDetected" && HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false) exit(-1);
-        if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
-        if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
+				if(str=="RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
+				if(str=="FIRSAMRATIIIMPLEMENTATION" && HatScheT::Tests::firSAMRatIIImplementationsTest() == false) exit(-1);
+				if(str=="FIRSHIRATIIIMPLEMENTATION" && HatScheT::Tests::firSHIRatIIImplementationsTest() == false) exit(-1);
+				if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
+				if(str=="DATEEXAMPLE" && HatScheT::Tests::dateExampleTest() == false) exit(-1);
 				if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
 				if(str=="SCCQFAIL" && HatScheT::Tests::sccqFailTest() == false) exit(-1);
 				if(str=="IISMALLERONE" && HatScheT::Tests::iiSmallerOneTest() == false) exit(-1);
@@ -797,7 +804,7 @@ int main(int argc, char *args[]) {
           sBWriter.setGraphPath(graphMLFile);
           sBWriter.write();
         }
-#else 
+#else
           auto bindings = scheduler->getBindings();
           HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
           sBWriter.setRMPath(resourceModelFile);

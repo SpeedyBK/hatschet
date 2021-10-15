@@ -9,14 +9,17 @@
 namespace HatScheT {
 	ScheduleAndBindingWriter::ScheduleAndBindingWriter(std::string path, std::vector<std::map<Vertex *, int>> &schedule,
 																										 std::vector<std::map<const Vertex *, int>> &binding, int samples,
-																										 int modulo) :
-		Writer(path), schedule(schedule), binding(binding), samples(samples), modulo(modulo), graphPath(""), rmPath("") {
+																										 int modulo, std::vector<fuConnection> fuConnections) :
+		Writer(path), schedule(schedule), binding(binding), samples(samples), modulo(modulo), graphPath(""), rmPath(""),
+		fuConnections(fuConnections){
 
 	}
 
 	ScheduleAndBindingWriter::ScheduleAndBindingWriter(std::string path, std::map<Vertex *, int> &schedule,
-																										 std::map<const Vertex *, int> &binding, int II) :
-		Writer(path), schedule({schedule}), binding({binding}), samples(1), modulo(II), graphPath(""), rmPath("") {
+																										 std::map<const Vertex *, int> &binding, int II,
+																										 std::vector<fuConnection> fuConnections) :
+		Writer(path), schedule({schedule}), binding({binding}), samples(1), modulo(II), graphPath(""), rmPath(""),
+		fuConnections(fuConnections) {
 
 	}
 
@@ -87,7 +90,7 @@ namespace HatScheT {
 			file << "# vertex;sample;cycle;fu" << std::endl;
 		}
 
-		// write all lines into file
+		// write all lines regarding schedule and fu binding info into file
 		for(auto &line : lines) {
 			if(this->samples==1) {
 				// integer II -> information about sample can be omitted
@@ -97,6 +100,17 @@ namespace HatScheT {
 				// rational II
 				file << line.name << ";" << line.sample << ";" << line.cycle << ";" << line.fu << std::endl;
 			}
+		}
+
+		// new header for fu connections if needed
+		if(this->fuConnections.empty()) {
+			file.close();
+			return;
+		}
+
+		file << "# resourceSrc;fuSrc;resourceDst;fuDst;port;lifetimeRegs" << std::endl;
+		for(auto &it : this->fuConnections) {
+			file << it.resourceSrc << ";" << it.fuSrc << ";" << it.resourceDst << ";" << it.fuDst << ";" << it.port << ";" << it.lifetimeRegs << std::endl;
 		}
 
 		// close file

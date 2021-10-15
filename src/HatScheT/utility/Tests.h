@@ -57,6 +57,16 @@ public:
      * \return
      */
   static bool moduloSDCTestFiege();
+	/*!
+	 * \brief test whether integer II non rect scheduling is running as expected
+	 * @return
+	 */
+	static bool integerIINonRectTest();
+	/*!
+	 * \brief test whether integer II non rect scheduling is running as expected
+	 * @return
+	 */
+	static bool integerIIPBTest();
   /*!
    * \brief apiTest tests API functionality
    * \return
@@ -149,10 +159,22 @@ public:
 	 * @brief test functionality of the combined rational II scheduler
 	 */
 	static bool rationalIICombinedSchedulerTest();
-  /*!
-   * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
-   */
-  static bool tcadExampleTest();
+	/*!
+	 * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
+	 */
+	static bool tcadExampleTest();
+	/*!
+	 * @brief test functionality for the DATE example
+	 */
+	static bool dateExampleTest();
+	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SAM filter from Origami benchmark
+	 */
+	static bool firSAMRatIIImplementationsTest();
+	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SHI filter from Origami benchmark
+	 */
+	static bool firSHIRatIIImplementationsTest();
 	/*!
 	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
 	 */
@@ -215,16 +237,27 @@ public:
 
   static bool sdcSolverTest();
 
-  /*!
-   * test getILPBasedIntIIBinding function
-   * @return
-   */
-  static bool ilpBasedIntIIBindingTest();
+	/*!
+	 * test getILPBasedIntIIBindingCong function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTestCong();
+
+	/*!
+	 * test getILPBasedIntIIBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTest();
 	/*!
 	 * test getILPMinRegBinding function
 	 * @return
 	 */
 	static bool ilpBasedIntIIMinRegBindingTest();
+	/*!
+	 * test getILPMinMuxBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIMinMuxBindingTest();
 
 };
 }

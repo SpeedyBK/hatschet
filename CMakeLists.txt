@@ -133,6 +133,7 @@ src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
 src/HatScheT/utility/reader/XMLResourceReader.cpp
+src/HatScheT/utility/reader/ScheduleAndBindingReader.cpp
 src/HatScheT/utility/subgraphs/KosarajuSCC.cpp
 src/HatScheT/utility/subgraphs/Occurrence.cpp
 src/HatScheT/utility/subgraphs/OccurrenceSet.cpp
@@ -141,6 +142,7 @@ src/HatScheT/utility/writer/Writer.cpp
 src/HatScheT/utility/writer/GraphMLGraphWriter.cpp
 src/HatScheT/utility/writer/DotWriter.cpp
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.cpp
+src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
@@ -180,6 +182,8 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
+src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.h
+src/HatScheT/scheduler/graphBased/PBScheduler.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIISchedulerNew.h
@@ -194,6 +198,7 @@ src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h
 src/HatScheT/utility/reader/XMLTargetReader.h
+src/HatScheT/utility/reader/ScheduleAndBindingReader.h
 src/HatScheT/utility/reader/Reader.h
 src/HatScheT/utility/subgraphs/KosarajuSCC.h
 src/HatScheT/utility/subgraphs/Occurrence.h
@@ -205,6 +210,7 @@ src/HatScheT/utility/Binding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h
+src/HatScheT/utility/writer/DGLWriter.h
 src/HatScheT/utility/writer/Writer.h
 src/HatScheT/utility/writer/GraphMLGraphWriter.h
 src/HatScheT/utility/writer/XMLResourceWriter.h
@@ -230,6 +236,8 @@ src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
+src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
+src/HatScheT/scheduler/graphBased/PBScheduler.cpp
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModSDC.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
@@ -314,6 +322,9 @@ add_test("nonUniformRatII" "./hatschet" "--test=NONUNIFORMRATIONALIISCHEDULER")
 add_test("ratIIModuloQ" "./hatschet" "--test=RATIONALIIMODULOQ")
 add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")
 add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
+add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
+add_test("minMuxBinding" "./hatschet" "--test=ILPMINMUXBINDING")
+add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")

@@ -25,6 +25,7 @@
 #include "HatScheT/TargetModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
+#include <random>
 
 namespace HatScheT
 {
@@ -34,6 +35,36 @@ namespace HatScheT
 class Utility
 {
 public:
+	/*!
+	 * unroll graph with factor samples
+	 * "in C-language" this corresponds to modifying a for loop such that the number of iterations is divided by S
+	 * and S iterations of the original loop are calculated within one iteration of the new loop
+	 * vertex names are appended with "_s" with s = 0, ..., samples-1
+	 * e.g. original vertex name = asdf and samples = 3
+	 * => created vertices: asdf_0, asdf_1, asdf_2
+	 * @param g original graph
+	 * @param resourceModel original resource model
+	 * @param samples unroll factor
+	 * @return a pair of (new constructed) graph and the corresponding resource model
+	 */
+	static std::pair<Graph*, ResourceModel*> unrollGraph(Graph* g, ResourceModel* resourceModel, int samples);
+	/*!
+	 * selects a random element from a container
+	 * function definition put into header to prevent linker problems in an easy way
+	 * feel free to change it if you don't like this...
+	 * @tparam iter iterator type
+	 * @param start start iterator
+	 * @param end end iterator
+	 * @return an iterator to a randomly selected element between start and end
+	 */
+	template<typename iter>
+	static iter selectRandomElement(iter start, iter end) {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+		std::advance(start, dis(gen));
+		return start;
+	}
   /*!
    * \brief getNoOfResConstrVertices
    * \param rm

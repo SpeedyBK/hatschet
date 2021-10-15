@@ -25,6 +25,8 @@
 #include "HatScheT/utility/writer/GraphMLGraphWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+#include "HatScheT/scheduler/dev/IntegerIINonRectScheduler.h"
+#include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/RationalIIScheduler.h"
 #include "HatScheT/scheduler/dev/UniformRationalIIScheduler.h"
@@ -436,6 +438,72 @@ namespace HatScheT {
 			if (verifyModuloSchedule(g, rm, sch, m.getII()) == false) return false;
 			if (m.getII() != 4) return false;
 			return result;
+		}
+		catch (HatScheT::Exception &e) {
+			std::cout << e.msg << std::endl;
+		}
+		return false;
+	}
+
+	bool Tests::integerIINonRectTest() {
+		try {
+			HatScheT::ResourceModel rm;
+
+			auto &load = rm.makeResource("load", 1, 2, 1);
+			auto &add = rm.makeResource("add", -1, 0, 1);
+			// create non-rectangular mrt for load resource
+			load.setNonRectLimit(0, 1);
+			load.setNonRectLimit(1, 1);
+			load.setNonRectLimit(2, 1);
+			load.setNonRectLimit(3, 0);
+
+			HatScheT::Graph g;
+
+			Vertex &a = g.createVertex(1);
+			Vertex &b = g.createVertex(2);
+			Vertex &c = g.createVertex(3);
+			Vertex &d = g.createVertex(4);
+
+			a.setName("a");
+			b.setName("b");
+			c.setName("c");
+			d.setName("d");
+
+			g.createEdge(a, c, 0);
+			g.createEdge(b, c, 0);
+			g.createEdge(c, d, 0);
+			g.createEdge(d, a, 1);
+
+			rm.registerVertex(&a, &load);
+			rm.registerVertex(&b, &load);
+			rm.registerVertex(&c, &add);
+			rm.registerVertex(&d, &load);
+
+			HatScheT::IntegerIINonRectScheduler m{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+			m.setSolverQuiet(true);
+			m.setQuiet(false);
+			m.setCandidateII(4);
+			m.schedule();
+
+			auto sch = m.getSchedule();
+
+			for (auto &p:sch) {
+				std::cout << p.first->getName() << " = " << p.second << std::endl;
+			}
+
+			if (verifyModuloSchedule(g, rm, sch, m.getII()) == false) {
+				std::cout << "Detected invalid modulo schedule" << std::endl;
+				return false;
+			}
+			if (m.getII() != 4) {
+				std::cout << "Expected II=4 but got II=" << m.getII() << std::endl;
+				return false;
+			}
+			if (m.getScheduleLength() != 6) {
+				std::cout << "Expected latency=6 but got latency=" << m.getScheduleLength() << std::endl;
+				return false;
+			}
+			return true;
 		}
 		catch (HatScheT::Exception &e) {
 			std::cout << e.msg << std::endl;
@@ -1430,23 +1498,113 @@ namespace HatScheT {
 		m.setSolverTimeout(1);
 		m.schedule();
 
-		std::cout << "Tests::moduloQTest: finished scheduling - resulting control steps:" << std::endl;
+		std::cout << "Tests::sccqtest: finished scheduling - resulting control steps:" << std::endl;
 		auto startTimesVector = m.getStartTimeVector();
 		auto initIntervals = m.getInitiationIntervals();
 		auto latencySequence = m.getLatencySequence();
 
 		auto valid = m.getScheduleValid();
 		if (!valid) {
-			std::cout << "Tests::moduloQTest: invalid rational II modulo schedule found" << std::endl;
+			std::cout << "Tests::sccqtest: invalid rational II modulo schedule found" << std::endl;
 			return false;
 		}
+
+		if (m.getM_Found() != m.getM_Start() or m.getS_Found() != m.getS_Start()) {
+			std::cout << "Tests::sccqtest: expected scheduler to find solution for II=" << m.getM_Start() << "/"
+				<< m.getS_Start() << " but got II=" << m.getM_Found() << "/" << m.getS_Found() << std::endl;
+			return false;
+		}
+
 		for (unsigned int i = 0; i < initIntervals.size(); ++i) {
 			auto l = initIntervals[i];
 			auto startTimes = startTimesVector[i];
-			std::cout << "Tests::moduloQTest: start times for insertion time=" << l << std::endl;
+			std::cout << "Tests::sccqtest: start times for insertion time=" << l << std::endl;
 			for (auto it : startTimes) {
 				std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 			}
+		}
+
+		return true;
+	}
+
+	bool Tests::integerIIPBTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &red = rm.makeResource("red", 2, 1, 1);
+		auto &blue = rm.makeResource("blue", 1, 1, 1);
+
+		Vertex &r0 = g.createVertex();
+		Vertex &r1 = g.createVertex();
+		Vertex &r2 = g.createVertex();
+		Vertex &r3 = g.createVertex();
+		Vertex &r4 = g.createVertex();
+		rm.registerVertex(&r0, &red);
+		rm.registerVertex(&r1, &red);
+		rm.registerVertex(&r2, &red);
+		rm.registerVertex(&r3, &red);
+		rm.registerVertex(&r4, &red);
+		Vertex &b0 = g.createVertex();
+		Vertex &b1 = g.createVertex();
+		Vertex &b2 = g.createVertex();
+		rm.registerVertex(&b0, &blue);
+		rm.registerVertex(&b1, &blue);
+		rm.registerVertex(&b2, &blue);
+		g.createEdge(r0, r2, 0);
+		g.createEdge(r0, b2, 0);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r1, b0, 0);
+		g.createEdge(b0, r2, 0);
+		g.createEdge(b0, r3, 0);
+		g.createEdge(b0, b1, 0);
+		g.createEdge(r2, b2, 0);
+		g.createEdge(r3, r4, 0);
+		g.createEdge(b1, b2, 0);
+		g.createEdge(b2, r4, 0);
+		//g.createEdge(b2, r1, 1); // optional back edge
+
+		std::cout << rm << std::endl;
+		std::cout << g << std::endl;
+
+		// create scheduler
+		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+		// set it up
+		pbs.setQuiet(false);
+		pbs.setSolverTimeout(1);
+		pbs.setMaxRuns(1);
+		pbs.maximalSubgraphSize = 3;
+		// call scheduling function
+		pbs.schedule();
+
+		// get results
+		auto solvingTime = pbs.getSolvingTime();
+		std::cout << "solving time = " << solvingTime << std::endl;
+		auto II = (int)pbs.getII();
+		std::cout << "II = " << II << std::endl;
+		auto latency = pbs.getScheduleLength();
+		std::cout << "latency = " << latency << std::endl;
+		auto schedule = pbs.getSchedule();
+
+		std::cout << "Resulting schedule:" << std::endl;
+		for (auto it : schedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		auto foundSolution = pbs.getScheduleFound();
+		if (!foundSolution) {
+			std::cout << "Tests::integerIIPBTest: scheduler failed to find solution" << std::endl;
+			return false;
+		}
+
+		auto valid = verifyModuloSchedule(g, rm, schedule, II);
+		if (!valid) {
+			std::cout << "Tests::integerIIPBTest: invalid modulo schedule found" << std::endl;
+			return false;
+		}
+
+		if (II != 3) {
+			std::cout << "Tests::integerIIPBTest: expected scheduler to find solution for II=3 but got II=" << II << std::endl;
+			return false;
 		}
 
 		return true;
@@ -1549,8 +1707,10 @@ namespace HatScheT {
 	}
 
 	bool Tests::ratIIOptimalIterationTest() {
-		int mMinII = 11;
-		int sMinII = 10;
+		//int mMinII = 11;
+		//int sMinII = 10;
+		int mMinII = 7;
+		int sMinII = 5;
 		double minII = double(mMinII) / double(sMinII);
 		auto integerII = (int) ceil(double(mMinII) / double(sMinII));
 		int sMax = -1;
@@ -1723,6 +1883,155 @@ namespace HatScheT {
 		}
 
 		std::cout << "Tests::tcadExampleTest: Test passed" << std::endl;
+		return true;
+	}
+
+	bool Tests::dateExampleTest() {
+
+		// SET UP GRAPH AND RESOURCE MODEL
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &memr = rm.makeResource("memr", 1, 1, 1);
+		auto &add = rm.makeResource("mac", 1, 5, 1);
+		auto &memw = rm.makeResource("memw", 1, 1, 1);
+
+		Vertex &v0 = g.createVertex(0);
+		Vertex &v1 = g.createVertex(1);
+		Vertex &v2 = g.createVertex(2);
+		Vertex &v3 = g.createVertex(3);
+
+		rm.registerVertex(&v0, &memr);
+		rm.registerVertex(&v1, &memr);
+		rm.registerVertex(&v2, &memw);
+		rm.registerVertex(&v3, &add);
+
+		auto *e0 = &g.createEdge(v0, v3, 0);
+		auto *e1 = &g.createEdge(v1, v3, 0);
+		auto *e2 = &g.createEdge(v3, v2, 0);
+		auto *e3 = &g.createEdge(v3, v3, 2);
+
+		// SET UP CONTAINER WITH PORT ASSIGNMENTS
+		std::map<Edge*, int> portAssignments;
+		portAssignments[e0] = 0;
+		portAssignments[e1] = 1;
+		portAssignments[e2] = 0;
+		portAssignments[e3] = 2;
+
+		// SET UP SCHEDULERS
+		bool quiet = true;
+		std::list<std::string> sw{"Gurobi", "CPLEX"};
+		EichenbergerDavidson97Scheduler ed97(g, rm, sw);
+		NonUniformRationalIIScheduler ratIInon(g, rm, sw);
+		UniformRationalIISchedulerNew ratIIu(g, rm, sw);
+
+		ed97.setQuiet(quiet);
+		ratIInon.setQuiet(quiet);
+		ratIIu.setQuiet(quiet);
+
+		ed97.schedule();
+		ratIInon.schedule();
+		ratIIu.schedule();
+
+		// GET RESULTS
+		auto ed97Sched = ed97.getSchedule();
+		auto ratIInonSched = ratIInon.getStartTimeVector();
+		auto ratIIuSched = ratIIu.getStartTimeVector();
+
+		auto ed97II = 3;
+		auto M = 5;
+		auto S = 2;
+		auto ratII = ((double)M) / ((double)S);
+
+		// MAKE SURE THAT WE GET CORRECT RESULTS
+		if (ed97II != ed97.getII()) {
+			std::cout << "Expected integer II = 2 but got integer II = " << ed97II << std::endl;
+			return false;
+		}
+		if (ratII != ratIIu.getII() or M != ratIIu.getM_Found() or S != ratIIu.getS_Found()) {
+			std::cout << "Expected (uniform) rational II = " << ratII << " = " << M << "/" << S << " but got rational II = " << ratIIu.getII() << " = "
+								<< ratIIu.getM_Found() << "/" << ratIIu.getS_Found() << std::endl;
+			return false;
+		}
+		if (ratII != ratIInon.getII() or M != ratIInon.getM_Found() or S != ratIInon.getS_Found()) {
+			std::cout << "Expected (nonuniform) rational II = " << ratII << " = " << M << "/" << S << " but got rational II = " << ratIInon.getII() << " = "
+			<< ratIInon.getM_Found() << "/" << ratIInon.getS_Found() << std::endl;
+			return false;
+		}
+
+		// CALC INT II BINDINGS
+		std::cout << std::endl << "INTEGER-II SCHEDULE WITH II = " << ed97II << std::endl;
+		for (auto it : ed97Sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "INTEGER-II BINDINGS" << std::endl;
+		auto ed97Bindings = Binding::getILPMinMuxBinding(ed97Sched, &g, &rm, (int)ed97II, portAssignments, {}, sw, 300, quiet);
+
+		// UNROLL GRAPH & RESOURCE MODEL
+		auto g_rm_unrolled = Utility::unrollGraph(&g, &rm, S);
+		auto &g_unrolled = *g_rm_unrolled.first;
+		auto &rm_unrolled = *g_rm_unrolled.second;
+
+		// COPY START TIMES FOR UNROLLED GRAPH
+		std::map<Vertex*, int> ratIInonUnrolledSched;
+		std::map<Vertex*, int> ratIIuUnrolledSched;
+		for (auto v : g.Vertices()) {
+			for (auto s=0; s<S; s++) {
+				auto* vUnrolled = &g_unrolled.getVertexByName(v->getName() + "_" + std::to_string(s));
+				ratIInonUnrolledSched[vUnrolled] = ratIInonSched[s][v];
+				ratIIuUnrolledSched[vUnrolled] = ratIIuSched[s][v];
+			}
+		}
+
+		// COPY PORT ASSIGNMENTS INTO UNROLLED GRAPH
+		std::map<Edge*, int> unrolledPortAssignments;
+		for (auto &e : g_unrolled.Edges()) {
+			if (e->getDependencyType() == Edge::DependencyType::Precedence) {
+				// skip chaining edges
+				continue;
+			}
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+			bool foundIt = false;
+			for (auto s=0; s<S; s++) {
+				for (auto it : portAssignments) {
+					auto originalSrcName = it.first->getVertexSrc().getName();
+					auto originalDstName = it.first->getVertexDst().getName();
+					if (originalSrcName + "_" + std::to_string(s) != srcName) {
+						// source not equal or not the right sample
+						continue;
+					}
+					if (originalDstName + "_" + std::to_string(s) != dstName) {
+						// destination not equal or not the right sample
+						continue;
+					}
+					foundIt = true;
+					unrolledPortAssignments[e] = it.second;
+					std::cout << "Unrolled port assignment for '" << srcName << "' -> '" << dstName << "' = " << it.second << std::endl;
+					break;
+				}
+				if (foundIt) break;
+			}
+			if (!foundIt) {
+				throw HatScheT::Exception("Tests::dateExampleTest: error while unrolling graph");
+			}
+		}
+
+		// CALC RAT II BINDINGS
+		std::cout << std::endl << "UNIFORM SCHEDULE WITH II = " << M << "/" << S << std::endl;
+		for (auto it : ratIIuUnrolledSched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "UNIFORM BINDINGS" << std::endl;
+		auto uniformBindings = Binding::getILPMinMuxBinding(ratIIuUnrolledSched, &g_unrolled, &rm_unrolled, M, unrolledPortAssignments, {}, sw, 300, quiet);
+		std::cout << std::endl << "NONUNIFORM SCHEDULE WITH II = " << M << "/" << S << std::endl;
+		for (auto it : ratIInonUnrolledSched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		std::cout << std::endl << "NONUNIFORM BINDINGS" << std::endl;
+		auto nonuniformBindings = Binding::getILPMinMuxBinding(ratIInonUnrolledSched, &g_unrolled, &rm_unrolled, M, unrolledPortAssignments, {}, sw, 300, quiet);
+
+		// return true if nothing OBVIOUS went wrong
 		return true;
 	}
 
@@ -2175,7 +2484,7 @@ namespace HatScheT {
 		}
 	}
 
-	bool Tests::ilpBasedIntIIBindingTest() {
+	bool Tests::ilpBasedIntIIBindingTestCong() {
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
 
@@ -2183,7 +2492,6 @@ namespace HatScheT {
 		auto &add = rm.makeResource("add", 2, 1, 1);
 
 		// resource: #vertices=3, limit=2
-		// recurrence: latency=3, distance=2
 		Vertex &mem1 = g.createVertex(1);
 		Vertex &mem2 = g.createVertex(2);
 		Vertex &mem3 = g.createVertex(3);
@@ -2198,15 +2506,24 @@ namespace HatScheT {
 		rm.registerVertex(&add1, &add);
 		rm.registerVertex(&add2, &add);
 		rm.registerVertex(&add3, &add);
-		g.createEdge(mem1, add1, 0);
-		g.createEdge(mem2, add1, 0);
-		g.createEdge(mem3, add2, 0);
-		g.createEdge(mem4, add2, 0);
-		g.createEdge(add1, add3, 0);
-		g.createEdge(add2, add3, 0);
+		auto *e0 = &g.createEdge(mem1, add1, 0);
+		auto *e1 = &g.createEdge(mem2, add1, 0);
+		auto *e2 = &g.createEdge(mem3, add2, 0);
+		auto *e3 = &g.createEdge(mem4, add2, 0);
+		auto *e4 = &g.createEdge(add1, add3, 0);
+		auto *e5 = &g.createEdge(add2, add3, 0);
+
+		// port assignment for each edge
+		std::map<Edge*,int> portAssignments;
+		portAssignments[e0] = 0;
+		portAssignments[e1] = 1;
+		portAssignments[e2] = 0;
+		portAssignments[e3] = 1;
+		portAssignments[e4] = 0;
+		portAssignments[e5] = 1;
 
 		std::map<Vertex*, int> sched;
-		int II = 3;
+		int II = 2;
 
 		/*
 		sched[&r1] = 0;
@@ -2227,10 +2544,10 @@ namespace HatScheT {
 
 		if(!ed97.getScheduleFound()) return false;
 		sched = ed97.getSchedule();
-		II = ed97.getII();
+		II = (int)ed97.getII();
 
-
-		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,II,{"Gurobi", "CPLEX", "SCIP", "LPSolve"},300);
+		auto bind = Binding::getILPBasedIntIIBindingCong(sched, &g, &rm, II, portAssignments,
+																										 {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, 300);
 
 		if(bind.resourceBindings.empty()) {
 			std::cout << "Empty resource bindings detected - test failed" << std::endl;
@@ -2238,7 +2555,7 @@ namespace HatScheT {
 		}
 
 		for(auto it : bind.resourceBindings) {
-			std::cout << "Binding '" << it.first->getName() << "' to FU '" << it.second << "'" << std::endl;
+			std::cout << "Binding '" << it.first << "' to FU '" << it.second << "'" << std::endl;
 		}
 
 		return true;
@@ -2371,5 +2688,391 @@ namespace HatScheT {
 
 		return true;
 	}
-}
 
+	bool Tests::ilpBasedIntIIMinMuxBindingTest() {
+
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
+		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
+		auto &mult = rm.makeResource("mult", 2, 1, 1);
+		auto &cons = rm.makeResource("cons", UNLIMITED, 0, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &constant0_25 = g.createVertex();
+		constant0_25.setName("constant0_25");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &mult2 = g.createVertex();
+		mult2.setName("mult2");
+		auto &y0 = g.createVertex();
+		y0.setName("y0");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&constant0_25, &cons);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&mult2, &mult);
+		rm.registerVertex(&y0, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(mult2,mult0,4);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x1,mult1,0);
+		portAssignments[&e2] = 0;
+		auto &e3 = g.createEdge(mult0,mult1,0);
+		portAssignments[&e3] = 1;
+		auto &e4 = g.createEdge(constant0_25,mult2,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(mult1,mult2,0);
+		portAssignments[&e5] = 1;
+		auto &e6 = g.createEdge(mult2,y0,0);
+		portAssignments[&e6] = 0;
+
+		// schedule that badboy
+		std::list<std::string> sw = {"Gurobi"};
+		int timeout = 300;
+		std::map<Vertex*,int> sched;
+		std::vector<std::map<Vertex*,int>> ratIISched;
+		double intII = 2.0;
+		double ratII = 1.5;
+		int samples = 2;
+		int modulo = 3;
+
+		/*
+		sched[&x0] = 0;
+		sched[&x1] = 0;
+		sched[&constant0_25] = 0;
+		sched[&mult0] = 0;
+		sched[&mult1] = 1;
+		sched[&mult2] = 2;
+		sched[&y0] = 3;
+		 */
+
+		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(timeout);
+		scheduler.schedule();
+		sched = scheduler.getSchedule();
+		intII = scheduler.getII();
+
+		std::cout << "Integer-II Schedule:" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// rat-II schedule
+		UniformRationalIISchedulerNew ratIIScheduler(g,rm,sw);
+		ratIIScheduler.setQuiet(true);
+		ratIIScheduler.setSolverTimeout(timeout);
+		ratIIScheduler.schedule();
+		ratIISched = ratIIScheduler.getStartTimeVector();
+		ratII = ratIIScheduler.getII();
+		samples = ratIIScheduler.getS_Found();
+		modulo = ratIIScheduler.getM_Found();
+
+		// specify commutative operation types
+		std::set<const Resource*> commutativeOps;
+		commutativeOps.insert(&mult);
+
+		// call binding function for integer IIs
+		auto bind = Binding::getILPMinMuxBinding(sched,&g,&rm,(int)intII,portAssignments,commutativeOps,sw,timeout,false);
+		std::cout << "Integer-II binding successfully computed" << std::endl;
+		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
+		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
+
+		// call binding function for rational IIs
+		auto ratIIBind = Binding::getILPRatIIMinMuxBinding(ratIISched,&g,&rm,samples,modulo,portAssignments,commutativeOps,sw,timeout,false);
+		std::cout << "Rational-II binding successfully computed" << std::endl;
+		bool ratIIValid = verifyRatIIBinding(&g,&rm,ratIISched,samples,modulo,ratIIBind,portAssignments,commutativeOps);
+		std::cout << "Rational-II binding is " << (ratIIValid?"":"not ") << "valid" << std::endl;
+		return intIIValid and ratIIValid;
+	}
+
+	bool Tests::ilpBasedIntIIBindingTest() {
+
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
+		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
+		auto &mult = rm.makeResource("mult", 2, 1, 1);
+		auto &cons = rm.makeResource("cons", UNLIMITED, 0, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &constant0_25 = g.createVertex();
+		constant0_25.setName("constant0_25");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &mult2 = g.createVertex();
+		mult2.setName("mult2");
+		auto &y0 = g.createVertex();
+		y0.setName("y0");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&constant0_25, &cons);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&mult2, &mult);
+		rm.registerVertex(&y0, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(mult2,mult0,4);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x1,mult1,0);
+		portAssignments[&e2] = 0;
+		auto &e3 = g.createEdge(mult0,mult1,0);
+		portAssignments[&e3] = 1;
+		auto &e4 = g.createEdge(constant0_25,mult2,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(mult1,mult2,0);
+		portAssignments[&e5] = 1;
+		auto &e6 = g.createEdge(mult2,y0,0);
+		portAssignments[&e6] = 0;
+
+		// schedule that badboy
+		std::list<std::string> sw = {"Gurobi"};
+		int timeout = 300;
+		std::map<Vertex*,int> sched;
+		std::vector<std::map<Vertex*,int>> ratIISched;
+		double intII = 2.0;
+		double ratII = 1.5;
+		int samples = 2;
+		int modulo = 3;
+
+		EichenbergerDavidson97Scheduler scheduler(g,rm,sw);
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(timeout);
+		scheduler.schedule();
+		sched = scheduler.getSchedule();
+		intII = scheduler.getII();
+
+		std::cout << "Integer-II Schedule:" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// rat-II schedule
+		UniformRationalIISchedulerNew ratIIScheduler(g,rm,sw);
+		ratIIScheduler.setQuiet(true);
+		ratIIScheduler.setSolverTimeout(timeout);
+		ratIIScheduler.schedule();
+		ratIISched = ratIIScheduler.getStartTimeVector();
+		ratII = ratIIScheduler.getII();
+		samples = ratIIScheduler.getS_Found();
+		modulo = ratIIScheduler.getM_Found();
+
+		std::cout << "Rational-II Schedule:" << std::endl;
+		for(int s=0; s<ratIISched.size(); s++) {
+			std::cout << "  sample " << s << std::endl;
+			for (auto it : ratIISched[s]) {
+				std::cout << "    " << it.first->getName() << " - " << it.second << std::endl;
+			}
+		}
+
+		// specify commutative operation types
+		std::set<const Resource*> commutativeOps;
+		commutativeOps.insert(&mult);
+
+		// call binding function for integer IIs
+		double wMux = 1.0;
+		double wReg = 1.0;
+		double maxMux = -1.0;
+		double maxReg = -1.0;
+		auto bind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,sw,timeout,true);
+		std::cout << "Integer-II binding successfully computed" << std::endl;
+		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
+		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "Integer-II implementation multiplexer costs: " << bind.multiplexerCosts << std::endl;
+		std::cout << "Integer-II implementation register costs: " << bind.registerCosts << std::endl;
+
+		// call binding function for rational IIs
+		auto ratIIBind = Binding::getILPBasedRatIIBinding(ratIISched,&g,&rm,samples,modulo,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,sw,timeout,true);
+		std::cout << "Rational-II binding successfully computed" << std::endl;
+		bool ratIIValid = verifyRatIIBinding(&g,&rm,ratIISched,samples,modulo,ratIIBind,portAssignments,commutativeOps);
+		std::cout << "Rational-II binding is " << (ratIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "Rational-II implementation multiplexer costs: " << ratIIBind.multiplexerCosts << std::endl;
+		std::cout << "Rational-II implementation register costs: " << ratIIBind.registerCosts << std::endl;
+		return intIIValid and ratIIValid and (bind.multiplexerCosts+bind.registerCosts==15) and (ratIIBind.multiplexerCosts+ratIIBind.registerCosts==21);
+	}
+
+  bool Tests::firSAMRatIIImplementationsTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::firSAMRatIIImplementationsTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+		return false;
+#else
+		// read resource model and graph
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		string resStr = "benchmarks/origami/fir_SAMRM.xml";
+		string graphStr = "benchmarks/origami/fir_SAM.graphml";
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		// create new resource model for minimum FUs with II=30/7=4.29 and II=9/2=4.5 (95.33% of max TP)
+		ResourceModel rm307;
+		ResourceModel rm92;
+		for (auto *r : rm.Resources()) {
+			auto vertices = rm.getVerticesOfResource(r);
+			auto newLimit307 = (int)ceil(((double)vertices.size()) / (30.0/7.0));
+			auto newLimit92 = (int)ceil(((double)vertices.size()) / (9.0/2.0));
+			if(newLimit307 == 0) newLimit307 = 1;
+			if(newLimit92 == 0) newLimit92 = 1;
+			auto *r307 = &rm307.makeResource(r->getName(), newLimit307, r->getLatency(), r->getBlockingTime());
+			auto *r92 = &rm92.makeResource(r->getName(), newLimit92, r->getLatency(), r->getBlockingTime());
+			std::cout << "Resource '" << r->getName() << "' - 30/7 limit: " << newLimit307 << ", 9/2 limit: " << newLimit92 << std::endl;
+			if (newLimit92 != newLimit307) {
+				std::cout << "  DIFFERENT" << std::endl;
+				return false;
+			}
+			for (auto *v : vertices) {
+				rm307.registerVertex(v, r307);
+				rm92.registerVertex(v, r92);
+			}
+		}
+
+		// ILP solvers
+		std::list<std::string> sw = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+
+		// generate schedulers
+		UniformRationalIISchedulerNew u307(g, rm307, sw);
+		UniformRationalIISchedulerNew u92(g, rm92, sw);
+		u307.setModulo(30);
+		u307.setSamples(7);
+		u92.setModulo(9);
+		u92.setSamples(2);
+		u307.setSolverTimeout(600);
+		u92.setSolverTimeout(600);
+		u307.setThreads(10);
+		u92.setThreads(10);
+
+		// schedule the shit out of them
+		std::cout << "Start scheduling for II=30/7" << std::endl;
+		u307.schedule();
+		std::cout << "Start scheduling for II=9/2" << std::endl;
+		u92.schedule();
+
+		// check for solutions
+		if (!u307.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=30/7" << std::endl;
+			return false;
+		}
+		if (!u92.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=9/2" << std::endl;
+			return false;
+		}
+
+		// do simple bindings
+		auto binding307 = Binding::getSimpleRationalIIBinding(u307.getStartTimeVector(), &rm307, 30, 7);
+		auto binding92 = Binding::getSimpleRationalIIBinding(u92.getStartTimeVector(), &rm92, 9, 2);
+
+		// save results
+		ScheduleAndBindingWriter writer307("fir_SAM_30_7.csv", u307.getStartTimeVector(), binding307, 7, 30);
+		ScheduleAndBindingWriter writer92("fir_SAM_9_2.csv", u92.getStartTimeVector(), binding92, 2, 9);
+		writer307.write();
+		writer92.write();
+
+		return true;
+#endif
+	}
+
+
+  bool Tests::firSHIRatIIImplementationsTest() {
+#ifndef USE_XERCESC
+		cout << "Tests::firSHIRatIIImplementationsTest: XERCESC parsing library is not active! This test is disabled!" << endl;
+		return false;
+#else
+		// read resource model and graph
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+		string resStr = "benchmarks/origami/fir_SHIRM.xml";
+		string graphStr = "benchmarks/origami/fir_SHI.graphml";
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		// create new resource model for minimum FUs with II=30/7=4.29 and II=9/2=4.5 (95.33% of max TP)
+		ResourceModel rm75;
+		ResourceModel rm32;
+		for (auto *r : rm.Resources()) {
+			auto vertices = rm.getVerticesOfResource(r);
+			auto newLimit75 = (int)ceil(((double)vertices.size()) / (7.0/5.0));
+			auto newLimit32 = (int)ceil(((double)vertices.size()) / (3.0/2.0));
+			if(newLimit75 == 0) newLimit75 = 1;
+			if(newLimit32 == 0) newLimit32 = 1;
+			auto *r75 = &rm75.makeResource(r->getName(), newLimit75, r->getLatency(), r->getBlockingTime());
+			auto *r32 = &rm32.makeResource(r->getName(), newLimit32, r->getLatency(), r->getBlockingTime());
+			std::cout << "Resource '" << r->getName() << "' - 7/5 limit: " << newLimit75 << ", 3/2 limit: " << newLimit32 << std::endl;
+			for (auto *v : vertices) {
+				rm75.registerVertex(v, r75);
+				rm32.registerVertex(v, r32);
+			}
+		}
+
+		// ILP solvers
+		std::list<std::string> sw = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+
+		// generate schedulers
+		UniformRationalIISchedulerNew u75(g, rm75, sw);
+		UniformRationalIISchedulerNew u32(g, rm32, sw);
+		u75.setModulo(7);
+		u75.setSamples(5);
+		u32.setModulo(3);
+		u32.setSamples(2);
+		u75.setSolverTimeout(600);
+		u32.setSolverTimeout(600);
+		u75.setThreads(10);
+		u32.setThreads(10);
+
+		// schedule the shit out of them
+		std::cout << "Start scheduling for II=7/5" << std::endl;
+		u75.schedule();
+		std::cout << "Start scheduling for II=3/2" << std::endl;
+		u32.schedule();
+
+		// check for solutions
+		if (!u75.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=7/5" << std::endl;
+			return false;
+		}
+		if (!u32.getScheduleFound()) {
+			std::cout << "failed to find schedule for II=3/2" << std::endl;
+			return false;
+		}
+
+		// do simple bindings
+		auto binding75 = Binding::getSimpleRationalIIBinding(u75.getStartTimeVector(), &rm75, 7, 5);
+		auto binding32 = Binding::getSimpleRationalIIBinding(u32.getStartTimeVector(), &rm32, 3, 2);
+
+		// save results
+		ScheduleAndBindingWriter writer75("fir_SHI_7_5.csv", u75.getStartTimeVector(), binding75, 5, 7);
+		ScheduleAndBindingWriter writer32("fir_SHI_3_2.csv", u32.getStartTimeVector(), binding32, 2, 3);
+		writer75.write();
+		writer32.write();
+
+		return true;
+#endif
+	}
+}

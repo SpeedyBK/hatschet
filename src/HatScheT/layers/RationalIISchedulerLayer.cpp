@@ -314,56 +314,10 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 		////////////////////////////////////////////////////////////////////
 
 		// unroll graph and create corresponding resource model
-		Graph g_unroll;
-		ResourceModel rm_unroll;
+		auto g_rm_unrolled = Utility::unrollGraph(&this->g, &this->resourceModel, this->samples);
+		auto &g_unroll = *g_rm_unrolled.first;
+		auto &rm_unroll = *g_rm_unrolled.second;
 
-		for(auto res : this->resourceModel.Resources()) {
-			rm_unroll.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
-		}
-		for(auto v : this->g.Vertices()) {
-			for(int s=0; s<this->samples; ++s) {
-				auto& newVertex = g_unroll.createVertex();
-				newVertex.setName(v->getName()+"_"+to_string(s));
-				auto originalResource = this->resourceModel.getResource(v);
-				rm_unroll.registerVertex(&newVertex,rm_unroll.getResource(originalResource->getName()));
-			}
-		}
-		for(auto e : this->g.Edges()) {
-			auto srcName = e->getVertexSrc().getName();
-			auto dstName = e->getVertexDst().getName();
-
-			int distance = e->getDistance();
-			int offset = 0;
-
-			// adjust distance/offset so distance < this->samples
-			while(distance>this->samples) {
-				distance -= this->samples;
-				++offset;
-			}
-
-			for(int s=0; s<this->samples; ++s) {
-				// adjust distance again (only once)
-				int sourceSampleNumber = s - distance;
-				int edgeOffset = offset;
-				if(sourceSampleNumber < 0) {
-					sourceSampleNumber += this->samples;
-					++edgeOffset;
-				}
-
-				// create edge
-				Vertex* srcVertex = nullptr;
-				Vertex* dstVertex = nullptr;
-
-				for(auto v : g_unroll.Vertices()) {
-					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
-						srcVertex = v;
-					if(v->getName() == dstName + "_" + to_string(s))
-						dstVertex = v;
-				}
-
-				g_unroll.createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
-			}
-		}
 		std::map<Vertex*, int> unrolledSchedule;
 		for(unsigned int s=0; s<this->samples; ++s) {
 			for(auto it : this->startTimesVector[s]) {
@@ -383,6 +337,8 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			std::cout << rm_unroll << std::endl;
 		}
 		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
+		delete &g_unroll;
+		delete &rm_unroll;
 
 		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
 
