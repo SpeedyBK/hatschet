@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <chrono>
 #include <algorithm>
+#include <sstream>
 
 namespace HatScheT {
   TreeBind::TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments) 
@@ -95,11 +96,13 @@ namespace HatScheT {
     }
 
     // fix connections between unlimited operations
+    // and init binding costs
     // even though they will never produce multiplexers
     // but they might produce registers
+		this->currentBinding.multiplexerCosts = 0;
+		this->currentBinding.registerCosts = 0;
     for (auto &rSrc : this->rm->Resources()) {
       if (!rSrc->isUnlimited()) continue;
-      int resourceCounter = 0;
       auto vs = rm->getVerticesOfResource(rSrc);
       for (auto &vSrc : vs) {
       	int maxLifetime = 0;
@@ -107,16 +110,28 @@ namespace HatScheT {
           auto *vDst = &e->getVertexDst();
           auto *rDst = this->rm->getResource(vDst);
           if (!rDst->isUnlimited()) continue;
+					if (!this->quiet) {
+						std::cout << "TreeBind::bind: found edge between unlimited resources: '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
+					}
           auto fuSrc = this->currentBinding.resourceBindings.at(vSrc->getName());
           auto fuDst = this->currentBinding.resourceBindings.at(vDst->getName());
           auto lifetime = this->getLifetime(e);
           if (lifetime > maxLifetime) maxLifetime = lifetime;
-          this->currentBinding.fuConnections.push_back(std::make_pair(std::make_pair(std::make_pair(rSrc->getName(), fuSrc), std::make_pair(rDst->getName(), fuDst)), std::make_pair(lifetime, this->portAssignments[const_cast<Edge*>(e)])));
+          auto connectionMadness = std::make_pair(std::make_pair(std::make_pair(rSrc->getName(), fuSrc), std::make_pair(rDst->getName(), fuDst)), std::make_pair(lifetime, this->portAssignments[const_cast<Edge*>(e)]));
+          if (std::find(this->currentBinding.fuConnections.begin(), this->currentBinding.fuConnections.end(), connectionMadness) == this->currentBinding.fuConnections.end()) {
+						this->currentBinding.fuConnections.push_back(connectionMadness);
+						this->currentBinding.multiplexerCosts++;
+					}
         }
-
-        resourceCounter++;
+        this->currentBinding.registerCosts += maxLifetime;
+				if (!this->quiet) {
+					std::cout << "  updated register costs to " << this->currentBinding.registerCosts << std::endl;
+				}
       }
     }
+		if (!this->quiet) {
+			std::cout << "TreeBind::bind: initialized binding costs for unlimited resources" << std::endl;
+		}
     
     // do a full tree search for operations with limited resources ...
     this->iterativeTreeSearch();
@@ -130,6 +145,8 @@ namespace HatScheT {
   	if (!this->quiet) {
 			std::cout << "TreeBind::iterativeTreeSearch: start" << std::endl;
   	}
+  	// init iteration counter
+		this->iterationCounter = 0;
     // init time tracker
     auto startTime = std::chrono::steady_clock::now();
     auto elapsedTime = 0.0;
@@ -153,67 +170,57 @@ namespace HatScheT {
 			std::cout << "TreeBind::iterativeTreeSearch: initialized stack" << std::endl;
 		}
     
-    // init binding costs
-    this->currentBinding.multiplexerCosts = 0;
-    this->currentBinding.registerCosts = 0;
-    for (auto &rDst : this->rm->Resources()) {
-      if (!rDst->isUnlimited()) continue;
-      auto vs = rm->getVerticesOfResource(rDst);
-      for (auto &vDst : vs) {
-        int regs = 0;
-        for (auto &e : this->outgoingEdges[vDst]) {
-          auto *vSrc = &e->getVertexSrc();
-          auto *rSrc = this->rm->getResource(vSrc);
-          if (!rDst->isUnlimited()) continue;
-          auto fuSrc = this->currentBinding.resourceBindings[vSrc->getName()];
-          auto fuDst = this->currentBinding.resourceBindings[vDst->getName()];
-          auto lifetime = this->getLifetime(e);
-          if (regs < lifetime) {
-            regs = lifetime;
-          }
-          this->currentBinding.multiplexerCosts++;
-        }
-        this->currentBinding.registerCosts += regs;
-      }
-    }
-		if (!this->quiet) {
-			std::cout << "TreeBind::iterativeTreeSearch: initialized binding costs" << std::endl;
-		}
-    
     while (!stack.empty() and this->timeBudget > elapsedTime) {
     	// debug info
+			this->iterationCounter++;
 			if (!this->quiet) {
-				std::cout << "TreeBind::iterativeTreeSearch: start new iteration" << std::endl;
+				std::cout << std::endl << "TreeBind::iterativeTreeSearch: start new iteration (" << this->iterationCounter << ")" << std::endl;
 				std::cout << "  elapsed time = " << elapsedTime << std::endl;
 			}
 
       // pop front vertex from stack
       auto currentVertexIterator = stack.front();
       auto currentVertex = *currentVertexIterator;
-      auto currentResource = this->rm->getResource(currentVertex); // O(log n)
-      auto currentScheduleTime = this->sched[currentVertex]; // O(log n)
+      //auto currentResource = this->rm->getResource(currentVertex); // O(log n)
+      //auto currentScheduleTime = this->sched[currentVertex]; // O(log n)
       stack.pop_front();
 			if (!this->quiet) {
 				std::cout << "  next vertex: " << currentVertex->getName() << std::endl;
 				std::cout << "  current resource bindings:" << std::endl;
-				for (auto it : this->currentBinding.resourceBindings) {
+				for (auto &it : this->currentBinding.resourceBindings) {
 					std::cout << "    " << it.first << " -> " << it.second << std::endl;
 				}
+				if (this->currentBinding.resourceBindings.empty()) {
+					std::cout << "    empty" << std::endl;
+				}
 				std::cout << "  current fu connections:" << std::endl;
-				for (auto it : this->currentBinding.fuConnections) {
-					std::cout << "    " << it.first.first.first << " (" << it.first.first.second << ") -> " << it.first.second.first << " (" << it.first.second.second << ") port '" << it.second.first << "' over '" << it.second.second << "' lifetime register" << std::endl;
+				for (auto &it : this->currentBinding.fuConnections) {
+					std::cout << "    " << it.first.first.first << " (" << it.first.first.second << ") -> " << it.first.second.first << " (" << it.first.second.second << ") port '" << it.second.second << "' over '" << it.second.first << "' lifetime register" << std::endl;
+				}
+				if (this->currentBinding.fuConnections.empty()) {
+					std::cout << "    empty" << std::endl;
 				}
 				std::cout << "  multiplexer costs: " << this->currentBinding.multiplexerCosts << std::endl;
-				std::cout << "  register costs: " << this->currentBinding.multiplexerCosts << std::endl;
+				std::cout << "  register costs: " << this->currentBinding.registerCosts << std::endl;
 			}
       
-      // remove binding info from binding for current node
+      // remove binding info from binding for all vertices until the current one
       // obviously only if binding info already exists...
       // simultaneously update current costs
-      this->removeBindingInfo(currentVertex);
-			if (!this->quiet) {
-				std::cout << "  removed binding info" << std::endl;
-			}
+      // we must through the queue starting from the current vertex until the end to remove all
+      // nodes from the tree until the end
+      bool startRemoving = false;
+      for (auto v : this->queue) {
+      	if (v == currentVertex) {
+      		startRemoving = true;
+      	}
+      	if (startRemoving) {
+					this->removeBindingInfo(v);
+					if (!this->quiet) {
+						std::cout << "  removed binding info" << std::endl;
+					}
+      	}
+      }
       
       // calculate new binding info for current node 
       // and insert it into binding container
@@ -287,12 +294,18 @@ namespace HatScheT {
   
   void TreeBind::removeBindingInfo(Edge* e) {
 		std::cout << "    removing binding info for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "' with distance '" << e->getDistance() << "'" << std::endl;
-    for (auto itPtr=this->currentBinding.fuConnections.begin(); itPtr!=this->currentBinding.fuConnections.end(); itPtr++) {
+    bool removedBindingInfo = false;
+		for (auto itPtr=this->currentBinding.fuConnections.begin(); itPtr!=this->currentBinding.fuConnections.end(); itPtr++) {
       auto it = *itPtr;
       // skip edges between two unlimited resources (as they are irrelevant)
       if (this->rm->getResource(it.first.first.first)->isUnlimited() and this->rm->getResource(it.first.second.first)->isUnlimited()) continue;
       // pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
-      auto bindingEdgeMapIterator = bindingEdgeMap.find(it);
+      auto bindingEdgeMapIterator = this->bindingEdgeMap.find(it);
+      if (bindingEdgeMapIterator == this->bindingEdgeMap.end()) {
+      	std::stringstream con;
+      	con << "'" << it.first.first.first << "' (" << it.first.first.second << ") -> '" << it.first.second.first << "' (" << it.first.second.second << ") port '" << it.second.second << "' over '" << it.second.first << "' lifetime registers";
+      	throw HatScheT::Exception("could not find responsible edges for FU connection ("+con.str()+") - this should never happen...");
+      }
       auto edges = (*bindingEdgeMapIterator).second;
       auto edgeIterator = std::find(edges.begin(), edges.end(), e);
       if (edgeIterator == edges.end()) continue;
@@ -304,22 +317,29 @@ namespace HatScheT {
         // i.e., handle mux costs;
         this->currentBinding.multiplexerCosts--;
         // handle register costs;
-        auto regList = this->lifetimeRegisters[std::make_pair(it.first.first.first, it.first.first.second)];
+        auto &regList = this->lifetimeRegisters[std::make_pair(it.first.first.first, it.first.first.second)];
         if (regList.front().second == e) {
           this->currentBinding.registerCosts -= regList.front().first;
           regList.pop_front();
           if (!regList.empty()) {
             this->currentBinding.registerCosts += regList.front().first;
           }
+					if (!this->quiet) {
+						std::cout << "    updated register costs to " << this->currentBinding.registerCosts << std::endl;
+					}
         }
         // handle containers
         bindingEdgeMap.erase(bindingEdgeMapIterator);
         this->currentBinding.fuConnections.erase(itPtr);
       }
       // now we can stop this loop because each edge only leads at most 
-      // to one associated fu connection 
+      // to one associated fu connection
+      removedBindingInfo = true;
       break; 
     }
+		if (!removedBindingInfo) {
+			throw HatScheT::Exception("Failed to remove binding info for edge ('"+e->getVertexSrcName()+"' -> '"+e->getVertexDstName()+"' with distance '"+std::to_string(e->getDistance())+"') - that should never happen");
+		}
   }
   
   void TreeBind::addBindingInfo(Edge* e) {
@@ -345,10 +365,10 @@ namespace HatScheT {
     auto lifetime = this->getLifetime(e);
     auto port = this->portAssignments[e];
     auto connectionMadness = std::make_pair(std::make_pair(std::make_pair(srcRes->getName(), srcFu), std::make_pair(dstRes->getName(), dstFu)), std::make_pair(lifetime, port));
+		this->bindingEdgeMap[connectionMadness].push_back(e);
     if (std::find(this->currentBinding.fuConnections.begin(), this->currentBinding.fuConnections.end(), connectionMadness) != this->currentBinding.fuConnections.end()) {
       // connection already exists and can be re-used for this edge
-      auto l = this->bindingEdgeMap[connectionMadness];
-      l.push_back(e);
+      std::cout << "      connection already exists and will be reused for this edge" << std::endl;
       return;
     }
     // increment mux costs because we need one more connection
@@ -356,17 +376,23 @@ namespace HatScheT {
     
     // check if enough lifetime registers are available
     // and insert edge into lifetime register list
-    auto regList = this->lifetimeRegisters[std::make_pair(srcRes->getName(), srcFu)];
+    auto &regList = this->lifetimeRegisters[std::make_pair(srcRes->getName(), srcFu)];
     if (regList.empty()) {
       // this is the first operation bound to this fu
       regList.push_front(std::make_pair(lifetime, e));
       this->currentBinding.registerCosts += lifetime;
+			if (!this->quiet) {
+				std::cout << "    updated register costs to " << this->currentBinding.registerCosts << std::endl;
+			}
     }
     else {
       // there is at least one other operation bound to this fu
       auto availableRegs = regList.front().first;
       if (availableRegs < lifetime) {
         this->currentBinding.registerCosts += (lifetime - availableRegs);
+				if (!this->quiet) {
+					std::cout << "    updated register costs to " << this->currentBinding.registerCosts << std::endl;
+				}
       }
       bool inserted = false;
       for (auto it = regList.begin(); it != regList.end(); it++) {
@@ -385,7 +411,7 @@ namespace HatScheT {
   }
   
   void TreeBind::removeBindingInfo(Vertex* v) {
-  	// maybe it does not exist yet in one of the first iterations...
+  	// maybe a binding for this vertex does not exist yet...
   	// skip it then
 		auto mapIt = this->currentBinding.resourceBindings.find(v->getName());
 		if (mapIt == this->currentBinding.resourceBindings.end()) return;
@@ -438,10 +464,10 @@ namespace HatScheT {
     auto nextBindingIt = std::find(vertexQueue.begin(), vertexQueue.end(), this->lastTriedBinding[v]);
     for (int i=0; i<res->getLimit(); i++) {
       if (*nextBindingIt == vertexQueue.back()) {
-        nextBindingIt = std::next(nextBindingIt);
+				nextBindingIt = vertexQueue.begin();
       }
       else {
-        nextBindingIt = vertexQueue.begin();
+				nextBindingIt = std::next(nextBindingIt);
       }
       if (std::find(this->occupiedResources[resSlotPair].begin(), this->occupiedResources[resSlotPair].end(), *nextBindingIt) == this->occupiedResources[resSlotPair].end()) {
         this->occupiedResources[resSlotPair].push_back(*nextBindingIt);
@@ -450,6 +476,9 @@ namespace HatScheT {
     }
     auto nextBinding = *nextBindingIt;
     this->currentBinding.resourceBindings[v->getName()] = nextBinding;
+    if (!this->quiet) {
+    	std::cout << "  fixed binding '" << v->getName() << "' -> '" << nextBinding << "'" << std::endl;
+    }
     
     // handle incoming edges from other FUs
     for (auto &eConst : this->incomingEdges[v]) {
@@ -491,7 +520,12 @@ namespace HatScheT {
       return this->lifetimes.at(e);
     }
     catch (std::out_of_range&) {
-      auto lifetime = this->sched[&e->getVertexDst()] - this->sched[&e->getVertexSrc()] - this->rm->getVertexLatency(&e->getVertexSrc()) + (this->II * e->getDistance());
+    	auto src = &e->getVertexSrc();
+    	auto dst = &e->getVertexDst();
+      auto lifetime = this->sched[dst] - this->sched[src] - this->rm->getVertexLatency(src) + (this->II * e->getDistance());
+      if (!this->quiet) {
+      	std::cout << "    lifetime for edge '" << src->getName() << "' -> '" << dst->getName() << "' with distance '" << e->getDistance() << "' is '" << lifetime << "'" << std::endl;
+      }
       this->lifetimes[e] = lifetime;
       return lifetime;
     }

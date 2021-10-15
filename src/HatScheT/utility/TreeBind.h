@@ -61,6 +61,10 @@ namespace HatScheT {
     
   private:
   	/*!
+  	 * track number of iterations in iterativeTreeSearch
+  	 */
+  	int iterationCounter;
+  	/*!
   	 * suppress debug outputs if this is true
   	 */
   	bool quiet;

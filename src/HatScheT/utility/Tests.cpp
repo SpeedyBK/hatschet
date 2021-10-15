@@ -3144,7 +3144,7 @@ namespace HatScheT {
 		sched = scheduler.getSchedule();
 		intII = scheduler.getII();
 
-		std::cout << "Integer-II Schedule:" << std::endl;
+		std::cout << "Integer-II Schedule with II = " << intII << ":" << std::endl;
 		for(auto it : sched) {
 			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 		}
@@ -3162,12 +3162,21 @@ namespace HatScheT {
 		tb.setTimeout(timeout);
 		tb.setQuiet(false);
 		tb.bind();
-		auto bind = tb.getBinding();
-		std::cout << "Integer-II binding successfully computed" << std::endl;
-		bool intIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,bind,portAssignments,commutativeOps);
-		std::cout << "Integer-II binding is " << (intIIValid?"":"not ") << "valid" << std::endl;
-		std::cout << "Integer-II implementation multiplexer costs: " << bind.multiplexerCosts << std::endl;
-		std::cout << "Integer-II implementation register costs: " << bind.registerCosts << std::endl;
-		return intIIValid;
+		auto treeBind = tb.getBinding();
+		std::cout << "tree-based binding successfully computed" << std::endl;
+		bool treeIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeBind,portAssignments,commutativeOps);
+		std::cout << "tree-based binding is " << (treeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "tree-based implementation multiplexer costs: " << treeBind.multiplexerCosts << std::endl;
+		std::cout << "tree-based implementation register costs: " << treeBind.registerCosts << std::endl;
+
+		// compare with ILP-based optimal binding
+		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
+		std::cout << "ILP-based binding successfully computed" << std::endl;
+		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,portAssignments,commutativeOps);
+		std::cout << "ILP-based binding is " << (ilpValid?"":"not ") << "valid" << std::endl;
+		std::cout << "ILP-based implementation multiplexer costs: " << ilpBind.multiplexerCosts << std::endl;
+		std::cout << "ILP-based implementation register costs: " << ilpBind.registerCosts << std::endl;
+
+		return treeIIValid and ilpValid and (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts);
   }
 }
