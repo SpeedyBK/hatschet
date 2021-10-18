@@ -26,6 +26,27 @@ namespace HatScheT {
         throw HatScheT::Exception("Missing port assignment for edge '"+vSrc+"' -> '"+vDst+"'");
       }
     }
+
+    // compute total number of leaf nodes
+    // i.e. total number of feasible bindings that must be explored
+    double numFeasibleBindings = 1.0;
+    for (auto r : rm->Resources()) {
+    	if (r->isUnlimited()) continue;
+    	auto vs = rm->getVerticesOfResource(r);
+    	auto limit = r->getLimit();
+    	std::map<int,int> numVertices;
+			for (auto v : vs) {
+				numVertices[this->sched[const_cast<Vertex *>(v)] % this->II]++;
+			}
+			for (int i=0; i<this->II; i++) {
+				double fraction = 1.0;
+				for (int j=limit-numVertices[i]+1; j<=limit; j++) {
+					fraction *= (double) j;
+				}
+				numFeasibleBindings *= fraction;
+			}
+    }
+    std::cout << "TreeBind::Constructor: number of feasible bindings for this problem: " << numFeasibleBindings << std::endl;
     
     // compute queue for tree traversal
     // at the moment we just insert all limited operations
@@ -122,14 +143,43 @@ namespace HatScheT {
           if (lifetime > maxLifetime) maxLifetime = lifetime;
           auto connectionMadness = std::make_pair(std::make_pair(std::make_pair(rSrc->getName(), fuSrc), std::make_pair(rDst->getName(), fuDst)), std::make_pair(lifetime, this->portAssignments[const_cast<Edge*>(e)]));
           if (std::find(this->currentBinding.fuConnections.begin(), this->currentBinding.fuConnections.end(), connectionMadness) == this->currentBinding.fuConnections.end()) {
-						this->currentBinding.fuConnections.push_back(connectionMadness);
+						// handle container with lifetime registers
+						auto &regList = this->lifetimeRegisters[std::make_pair(rSrc->getName(), fuSrc)];
+						if (regList.empty()) {
+							// this is the first operation bound to this fu
+							regList.push_front(std::make_pair(lifetime, const_cast<Edge*>(e)));
+							this->currentBinding.registerCosts += lifetime;
+							if (!this->quiet) {
+								std::cout << "    updated register costs to " << this->currentBinding.registerCosts << std::endl;
+							}
+						}
+						else {
+							// there is at least one other operation bound to this fu
+							auto availableRegs = regList.front().first;
+							if (availableRegs < lifetime) {
+								this->currentBinding.registerCosts += (lifetime - availableRegs);
+								if (!this->quiet) {
+									std::cout << "    updated register costs to " << this->currentBinding.registerCosts << std::endl;
+								}
+							}
+							bool inserted = false;
+							for (auto it = regList.begin(); it != regList.end(); it++) {
+								if (it->first < lifetime) {
+									regList.insert(it, std::make_pair(lifetime, const_cast<Edge*>(e)));
+									inserted = true;
+									break;
+								}
+							}
+							if (!inserted) {
+								// insert it to the end if it has a shorter lifetime than every oder edge
+								regList.push_back(std::make_pair(lifetime, const_cast<Edge*>(e)));
+							}
+						}
+						// add port connection
+						this->currentBinding.fuConnections.emplace_back(connectionMadness);
 						this->currentBinding.multiplexerCosts++;
 					}
         }
-        this->currentBinding.registerCosts += maxLifetime;
-				if (!this->quiet) {
-					std::cout << "  updated register costs to " << this->currentBinding.registerCosts << std::endl;
-				}
       }
     }
 		if (!this->quiet) {
@@ -138,6 +188,28 @@ namespace HatScheT {
     
     // do a full tree search for operations with limited resources ...
     this->iterativeTreeSearch();
+
+		// print solution
+		if (!this->quiet) {
+			std::cout << "TreeBind::bind: solution after " << this->iterationCounter << " iterations:" << std::endl;
+			std::cout << "  final resource bindings:" << std::endl;
+			for (auto &it : this->bestBinding.resourceBindings) {
+				std::cout << "    " << it.first << " -> " << it.second << std::endl;
+			}
+			if (this->bestBinding.resourceBindings.empty()) {
+				std::cout << "    empty" << std::endl;
+			}
+			std::cout << "  final fu connections:" << std::endl;
+			for (auto &it : this->bestBinding.fuConnections) {
+				std::cout << "    " << it.first.first.first << " (" << it.first.first.second << ") -> " << it.first.second.first << " (" << it.first.second.second << ") port '" << it.second.second << "' over '" << it.second.first << "' lifetime register" << std::endl;
+			}
+			if (this->bestBinding.fuConnections.empty()) {
+				std::cout << "    empty" << std::endl;
+			}
+			std::cout << "  multiplexer costs: " << this->bestBinding.multiplexerCosts << std::endl;
+			std::cout << "  register costs: " << this->bestBinding.registerCosts << std::endl;
+			std::cout << "  objective: " << this->wMux << " * " << this->bestBinding.multiplexerCosts << " + " << this->wReg << " * " << this->bestBinding.registerCosts << std::endl;
+		}
   }
   
   Binding::BindingContainer TreeBind::getBinding() {
@@ -166,9 +238,17 @@ namespace HatScheT {
     // init stack
 		// and push first vertex on stack based on the number of its possible resource bindings
     std::list<std::list<Vertex*>::iterator> stack;
-    for (int i=0; i<this->rm->getResource(this->queue.front())->getLimit(); i++) {
-      stack.push_front(this->queue.begin());
-    }
+		if (!this->queue.empty()) {
+			for (int i=0; i<this->rm->getResource(this->queue.front())->getLimit(); i++) {
+				stack.push_front(this->queue.begin());
+			}
+		}
+		else {
+			// there are no limited resources
+			// in this case there is no need to do any binding because everything is implemented in parallel
+			// just update final binding
+			this->bestBinding = this->currentBinding;
+		}
 		if (!this->quiet) {
 			std::cout << "TreeBind::iterativeTreeSearch: initialized stack" << std::endl;
 		}
@@ -220,7 +300,7 @@ namespace HatScheT {
       	if (startRemoving) {
 					this->removeBindingInfo(v);
 					if (!this->quiet) {
-						std::cout << "  removed binding info" << std::endl;
+						std::cout << "  removed binding info for '" << v->getName() << "'" << std::endl;
 					}
       	}
       }
@@ -230,19 +310,8 @@ namespace HatScheT {
       // simultaneously update current costs
       this->addBindingInfo(currentVertex);
 			if (!this->quiet) {
-				std::cout << "  added binding info" << std::endl;
+				std::cout << "  added binding info for '" << currentVertex->getName() << "'" << std::endl;
 			}
-      
-      // check if we can prune the search tree starting from here
-      if (this->currentBinding.multiplexerCosts > 0 and this->currentBinding.registerCosts > 0 and this->bestBinding.multiplexerCosts > 0 and this->bestBinding.registerCosts > 0) {
-        if ((this->wMux * this->currentBinding.multiplexerCosts + this->wReg * this->currentBinding.registerCosts) > (this->wMux * this->bestBinding.multiplexerCosts + this->wReg * this->bestBinding.registerCosts)) {
-          std::cout << "  pruned search space" << std::endl;
-        	continue;
-        }
-        else if (!this->quiet) {
-					std::cout << "  could not prune search space" << std::endl;
-				}
-      }
       
       // check if we hit a leaf node
       // if so: check if we need to update best binding
@@ -267,13 +336,33 @@ namespace HatScheT {
 					){
           this->bestBinding = this->currentBinding;
           this->status = "TIMEOUT_FEASIBLE";
-					std::cout << "  updated best solution" << std::endl;
+					if (!this->quiet) {
+						std::cout << "  updated best solution" << std::endl;
+					}
         }
       }
       else {
 				if (!this->quiet) {
 					std::cout << "  did not hit leaf node" << std::endl;
 				}
+				// check if we can prune the search tree starting from here
+				if (this->currentBinding.multiplexerCosts > 0 and this->currentBinding.registerCosts > 0 and this->bestBinding.multiplexerCosts > 0 and this->bestBinding.registerCosts > 0) {
+					if ((this->wMux * this->currentBinding.multiplexerCosts + this->wReg * this->currentBinding.registerCosts) > (this->wMux * this->bestBinding.multiplexerCosts + this->wReg * this->bestBinding.registerCosts)) {
+						if (!this->quiet) {
+							std::cout << "  pruned search space because" << std::endl;
+							std::cout << "    current register costs: " << this->currentBinding.registerCosts << std::endl;
+							std::cout << "    current multiplexer costs: " << this->currentBinding.multiplexerCosts << std::endl;
+							std::cout << "    best register costs: " << this->bestBinding.registerCosts << std::endl;
+							std::cout << "    best multiplexer costs: " << this->bestBinding.multiplexerCosts << std::endl;
+						}
+						continue;
+					}
+					else if (!this->quiet) {
+						std::cout << "  could not prune search space" << std::endl;
+					}
+				}
+
+				// no pruning possible => push children on stack
         auto nextVertexIterator = std::next(currentVertexIterator);
         auto nextVertex = *nextVertexIterator;
         auto nextResource = this->rm->getResource(nextVertex); // O(log n)
@@ -312,7 +401,9 @@ namespace HatScheT {
   }
   
   void TreeBind::removeBindingInfo(Edge* e) {
-		std::cout << "    removing binding info for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "' with distance '" << e->getDistance() << "'" << std::endl;
+		if (!this->quiet) {
+			std::cout << "    removing binding info for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "' with distance '" << e->getDistance() << "'" << std::endl;
+		}
     bool removedBindingInfo = false;
 		for (auto itPtr=this->currentBinding.fuConnections.begin(); itPtr!=this->currentBinding.fuConnections.end(); itPtr++) {
       auto it = *itPtr;
@@ -362,7 +453,9 @@ namespace HatScheT {
   }
   
   void TreeBind::addBindingInfo(Edge* e) {
-		std::cout << "    adding binding info for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "' with distance '" << e->getDistance() << "'" << std::endl;
+		if (!this->quiet) {
+			std::cout << "    adding binding info for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "' with distance '" << e->getDistance() << "'" << std::endl;
+		}
     // check if there already exists a connection 
     // between the correct FUs with the correct number of lifetime 
     // registers to the correct port
@@ -387,7 +480,9 @@ namespace HatScheT {
 		this->bindingEdgeMap[connectionMadness].push_back(e);
     if (std::find(this->currentBinding.fuConnections.begin(), this->currentBinding.fuConnections.end(), connectionMadness) != this->currentBinding.fuConnections.end()) {
       // connection already exists and can be re-used for this edge
-      std::cout << "      connection already exists and will be reused for this edge" << std::endl;
+      if (!this->quiet) {
+      	std::cout << "      connection already exists and will be reused for this edge" << std::endl;
+      }
       return;
     }
     // increment mux costs because we need one more connection
