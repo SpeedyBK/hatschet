@@ -25,6 +25,13 @@ project (hatschet)
 ####################
 option(USE_XERCESC "Use XercesC for parsing" ON)
 #option(USE_CADICAL "Use CaDiCaL SAT solving" ON)
+option(OLD_CXX_ABI "Build with an old C++-abi (activate if you get undefined references with '__cxx11')" OFF)
+
+
+# Deactivate C++11-abi?
+if(OLD_CXX_ABI) 
+  add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0) 
+endif()
 
 ####################
 #Find ScaLP
