@@ -4,6 +4,7 @@
 
 #include "Binding.h"
 #include <cmath>
+#include <algorithm>
 #include <HatScheT/utility/Utility.h>
 #include <sstream>
 #ifdef USE_SCALP
@@ -1962,10 +1963,16 @@ namespace HatScheT {
 		for(auto vj : g->Vertices()) {
 			auto rj = rm->getResource(vj);
 			std::set<int> foundPorts;
+			if (!quiet) {
+				std::cout << "checking ports of vertex '" << vj->getName() << "'" << std::endl;
+			}
 			for(auto it : portAssignments) {
 				auto e = it.first;
 				auto port = it.second;
 				if(&e->getVertexDst() != vj) continue;
+				if (!quiet) {
+					std::cout << "  found connection from '" << e->getVertexSrcName() << "' (" << &e->getVertexSrc() << ") to '" << e->getVertexDstName() << "' (" << &e->getVertexDst() << ") port no. " << port << " (edge " << e << ")" << std::endl;
+				}
 				if(port >= numResourcePorts[rj]) {
 					std::stringstream exc;
 					exc << "Binding::getILPBasedIntIIBinding: Illegal port number (" << port << ") provided for edge from "
@@ -2324,7 +2331,7 @@ namespace HatScheT {
 		}
 		if(!quiet) std::cout << "created resource conflict constraints" << std::endl;
 
-		for (auto it : r_m_n_k_p) {
+		for (auto &it : r_m_n_k_p) {
 			auto rVar = it.second;
 			auto k = it.first.second.first;
 			auto m = it.first.first.first;
@@ -2378,11 +2385,11 @@ namespace HatScheT {
 		if(!quiet) std::cout << solver.showLP() << std::endl;
 		if(!quiet) std::cout << "start solving now" << std::endl;
 		auto stat = solver.solve();
+		binding.solutionStatus = ScaLP::showStatus(stat);
 		if(!quiet) std::cout << "finished solving with status " << stat << std::endl;
 		if(stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL) {
 			std::cout << "Binding::getILPBasedIntIIBinding: could not solve binding problem, ScaLP status " << stat
 								<< std::endl;
-
 			return binding; // empty binding
 		}
 		if(!quiet) std::cout << "start filling solution structure" << std::endl;
@@ -2431,7 +2438,7 @@ namespace HatScheT {
 			binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri->getName(),fui),std::make_pair(rj->getName(),fuj)),std::make_pair(k,p)));
 		}
 
-		for (auto it : z_m) {
+		for (auto &it : z_m) {
 			binding.registerCosts += round(res[it.second]);
 		}
 
@@ -2528,6 +2535,7 @@ namespace HatScheT {
 		// call binding function on unrolled graph
 		auto unrolledBindingContainer = getILPBasedIntIIBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,wMux,wReg,unrolledPortAssignments,maxMux,maxReg,unrolledCommutativeOps,sw,timeout,quiet);
 		RatIIBindingContainer b;
+		b.solutionStatus = unrolledBindingContainer.solutionStatus;
 
 		// fill solution structure if binding was found
 		// vertex->fu bindings
@@ -2556,4 +2564,42 @@ namespace HatScheT {
 	}
 
 #endif
+
+	void
+	Binding::calcFUConnectionsAndCosts(Binding::BindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int>* portAssignments) {
+		b->multiplexerCosts = 0;
+		b->registerCosts = 0;
+		std::map<std::pair<std::string, int>, int> lifetimeRegsAfterResources;
+		for (auto &e : g->Edges()) {
+			// skip chaining edges (although I am not sure if they can even exist at this point...)
+			if (!e->isDataEdge()) continue;
+			// compute connection
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto *rSrc = rm->getResource(vSrc);
+			auto *rDst = rm->getResource(vDst);
+			auto fuSrc = b->resourceBindings[vSrc->getName()];
+			auto fuDst = b->resourceBindings[vDst->getName()];
+			auto tSrc = sched->at(vSrc);
+			auto tDst = sched->at(vDst);
+			auto latSrc = rm->getVertexLatency(vSrc);
+			auto distance = e->getDistance();
+			auto lifetime = tDst - tSrc - latSrc + (II * distance);
+			auto port = portAssignments->at(e);
+			auto connection = std::make_pair(std::make_pair(std::make_pair(rSrc->getName(), fuSrc), std::make_pair(rDst->getName(), fuDst)), std::make_pair(lifetime, port));
+			if (std::find(b->fuConnections.begin(), b->fuConnections.end(), connection) == b->fuConnections.end()) {
+				// create connection
+				b->fuConnections.emplace_back(connection);
+				// update mux costs
+				b->multiplexerCosts++;
+				// update register costs
+				auto currentRegs = lifetimeRegsAfterResources[std::make_pair(rSrc->getName(), fuSrc)];
+				auto diff = lifetime - currentRegs;
+				if (diff > 0) {
+					b->registerCosts += diff;
+					lifetimeRegsAfterResources[std::make_pair(rSrc->getName(), fuSrc)] += diff;
+				}
+			}
+		}
+	}
 }

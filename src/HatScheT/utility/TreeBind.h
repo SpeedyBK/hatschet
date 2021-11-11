@@ -12,6 +12,7 @@
 #include <map>
 #include <list>
 #include <ScaLP/Solver.h>
+#include <chrono>
 
 namespace HatScheT {
   class Binding; // forward declaration to prevent linker errors
@@ -68,12 +69,61 @@ namespace HatScheT {
 		 * @param l new limit
 		 */
 		void setRegLimit(double l);
+		/*!
+		 * setter for this->pruningEnabled
+		 * @param p new value
+		 */
+		void setPruning(bool p);
+		/*!
+		 * setter for this->skipEquivalentBindings
+		 * @param s new value
+		 */
+		void setSkipEquivalent(bool s);
+		/*!
+		 * getter for this->numFeasibleBindings
+		 * @return this->numFeasibleBindings
+		 */
+		double getNumFeasibleBindings();
     
   private:
   	/*!
-  	 * track number of iterations in iterativeTreeSearch
+  	 * this pushes a new vertex to the stack
+  	 * @param stack the stack
+  	 * @param v new vertex
   	 */
-  	int iterationCounter;
+  	void pushToStack(std::list<std::list<Vertex*>::iterator> &stack, const std::list<Vertex*>::iterator &v);
+  	/*!
+  	 * cut off subtree from the search space if it only leads to bindings that are equivalent to already explored ones
+  	 */
+  	bool skipEquivalentBindings;
+  	/*!
+  	 * cut off subtree from the search space if an incomplete binding already has higher costs than the current best one
+  	 */
+  	bool pruningEnabled;
+  	/*!
+  	 * container for time tracking (in seconds)
+  	 * map key: algorithm part; map value: time (in seconds) spent in that part
+  	 */
+  	std::map<std::string, double> timeTracker;
+  	/*!
+  	 * container to track time points
+  	 * map key: algorithm part; map value: last time point
+  	 */
+  	std::map<std::string, std::chrono::steady_clock::time_point> timePoints;
+		/*!
+		 * calculate maximum number of feasible bindings
+		 * need double precision because this number can be HUGE
+		 * maybe even double precision is not enough but then we are doomed anyway
+		 */
+		double numFeasibleBindings;
+		/*!
+		 * track number of iterations in iterativeTreeSearch
+		 */
+		int iterationCounter;
+  	/*!
+  	 * track number of explored leaf nodes (i.e., number of feasible bindings)
+  	 */
+  	int leafNodeCounter;
   	/*!
   	 * suppress debug outputs if this is true
   	 */
@@ -85,6 +135,11 @@ namespace HatScheT {
      * this map is needed to manage the current binding container
      */
     std::map<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>, std::list<Edge*>> bindingEdgeMap;
+    /*!
+     * this one might be even uglier
+     * even though this container "only" stores the binding variables for each edge
+     */
+    std::map<Edge*,std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>*> edgeBindingMap;
     /*!
      * removes vertex from current binding and updates costs
      * @param v vertex that gets removed
@@ -146,14 +201,6 @@ namespace HatScheT {
      */
 		double maxReg;
     /*!
-     * set the next possible binding based on the resource queues
-     * and the previously tried bindings
-     * this also updates triedBindings container
-     * @param v the vertex that this should compute the next binding for
-     * @return if it succeeded
-     */
-    bool setBinding(Vertex* v);
-    /*!
      * main function to compute the binding by iteratively searching
      * a tree
      */
@@ -203,15 +250,11 @@ namespace HatScheT {
      */
     std::map<Vertex*, int> lastTriedBinding;
     /*!
-     * this container tracks how many resources are occupied 
+     * this container tracks how many and which resources are occupied
      * in each modulo slot
      * map from <resource, modulo slot> to list with indices of occupied resources
      */
     std::map<std::pair<const Resource*, int>, std::list<int>> occupiedResources;
-    /*!
-     * track solution status
-     */
-    std::string status;
   };
 }
 
