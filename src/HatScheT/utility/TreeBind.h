@@ -28,7 +28,7 @@ namespace HatScheT {
      * @param portAssignments container that specifies input ports for
      * dst vertices of each edge in g
      */
-    TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments);
+    TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {});
     /*!
      * specify time budget in seconds 
      * @param timeout 
@@ -84,14 +84,50 @@ namespace HatScheT {
 		 * @return this->numFeasibleBindings
 		 */
 		double getNumFeasibleBindings();
-    
+		/*!
+		 * set new optimization objective
+		 * @param o new optimization objective
+		 */
+    void setObjective(Binding::objective o);
   private:
+  	/*!
+  	 * resources with exactly one vertex associeated to them have a trivial binding
+  	 * even if they are limited
+  	 */
+  	std::set<const Resource*> trivialBindings;
+  	/*!
+  	 * this stores for each commutative operation if we assume in the current binding that its inputs are swapped
+  	 */
+  	std::map<const Vertex*, bool> commutativeInputsSwapped;
+  	/*!
+  	 * contains all commutative operation types
+  	 * ATTENTION: at the moment, each commutative operation must have EXACTLY 2 inputs
+  	 */
+		std::set<const Resource*> commutativeOps;
+		/*!
+		 * compare two bindings and return if A is better than B based on this->objective
+		 * @param bindingA A
+		 * @param bindingB B
+		 * @return if A is better than B
+		 */
+		bool bindingABetterThanB(Binding::BindingContainer* bindingA, Binding::BindingContainer* bindingB);
+		/*!
+		 * compare two bindings and return if A is better than B or equally good based on this->objective
+		 * @param bindingA A
+		 * @param bindingB B
+		 * @return if A is better than B or if both are equally good
+		 */
+		bool bindingABetterThanBOrEqual(Binding::BindingContainer* bindingA, Binding::BindingContainer* bindingB);
+  	/*!
+  	 * optimization goal
+  	 */
+  	Binding::objective obj;
   	/*!
   	 * this pushes a new vertex to the stack
   	 * @param stack the stack
   	 * @param v new vertex
   	 */
-  	void pushToStack(std::list<std::list<Vertex*>::iterator> &stack, const std::list<Vertex*>::iterator &v);
+  	void pushToStack(std::list<std::pair<std::list<Vertex*>::iterator, int>> &stack, const std::list<Vertex*>::iterator &v);
   	/*!
   	 * cut off subtree from the search space if it only leads to bindings that are equivalent to already explored ones
   	 */
@@ -154,8 +190,9 @@ namespace HatScheT {
     /*!
      * adds vertex to current binding and updates costs
      * @param v vertex that gets added
+     * @param nextFU its FU
      */
-    void addBindingInfo(Vertex* v);
+    void addBindingInfo(Vertex* v, int nextFU);
     /*!
      * this is called by addBindingInfo(Vertex*)
      * it adds binding info for a specific edge
@@ -217,6 +254,10 @@ namespace HatScheT {
      * schedule times for all operations
      */
     std::map<Vertex*, int> sched;
+		/*!
+		 * modulo slots for all operations
+		 */
+		std::map<Vertex*, int> mod;
     /*!
      * initiation interval
      */

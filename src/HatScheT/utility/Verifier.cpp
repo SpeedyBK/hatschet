@@ -395,9 +395,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		auto alreadyBusy = busyResources[{r,fu}];
 		try {
 			auto conflictVertex = alreadyBusy.at(m);
-			std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
-								<< "': vertices '" << conflictVertex->getName() << "' and '" << v
-								<< "' occupy it in the same time slot" << std::endl;
+			std::cout << "Found resource conflict for resource '" << r->getName() << "', FU '" << fu << "' in modulo slot '"
+				<< m << "': vertices '" << conflictVertex->getName() << "' and '" << v->getName()
+				<< "' occupy it in the same time slot" << std::endl;
 			return false;
 		}
 		catch(std::out_of_range&) {
@@ -600,9 +600,9 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 			try {
 				auto conflictVertex = alreadyBusy.at(m).first;
 				auto conflictSample = alreadyBusy.at(m).second;
-				std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
-									<< "': vertices '" << conflictVertex->getName() << "' of sample '" << conflictSample << "' and '"
-									<< v->getName() << "' of sample '" << s << "' occupy it in the same time slot" << std::endl;
+				std::cout << "Found resource conflict for resource '" << r->getName() << "' FU '" << fu << "' in modulo slot '"
+					<< m << "': vertices '" << conflictVertex->getName() << "' of sample '" << conflictSample << "' and '"
+					<< v->getName() << "' of sample '" << s << "' occupy it in the same time slot" << std::endl;
 				return false;
 			}
 			catch(std::out_of_range&) {

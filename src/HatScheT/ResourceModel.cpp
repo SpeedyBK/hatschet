@@ -109,6 +109,7 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
 void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
 {
   this->registrations[v] = r;
+  this->reverseRegistrations[r].insert(v);
 }
 
 bool ResourceModel::resourceExists(std::string name) {
@@ -248,47 +249,32 @@ Resource *ResourceModel::getResource(string name) const
 
 bool ResourceModel::isEmpty()
 {
-  if(this->resources.size() == 0) return true;
-  return false;
+  return this->resources.empty();
 }
 
 set<const Vertex*> ResourceModel::getVerticesOfResource(const Resource *r) const
 {
-  set<const Vertex*> vertices;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(rr==r) vertices.insert(it.first);
+  try {
+    return this->reverseRegistrations.at(r);
   }
-
-  return vertices;
+  catch (std::out_of_range&) {
+    return std::set<const Vertex*>();
+  }
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
-  }
-
-  return count;
+  return this->getNumVerticesRegisteredToResource(const_cast<const Resource*>(r));
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(const Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
+  try {
+    return this->reverseRegistrations.at(r).size();
   }
-
-  return count;
+  catch (std::out_of_range&) {
+    return 0;
+  }
 }
 
 double Resource::getHardwareCost(string n) {

@@ -373,7 +373,8 @@ int main(int argc, char *args[]) {
 				if(str=="MININTIIFAIL" && HatScheT::Tests::minIntIIFailTest() == false) exit(-1);
         if(str=="FIBONACCI" && HatScheT::Tests::fibonacciTest() == false) exit(-1);
         if(str=="SDCSOLVE" && HatScheT::Tests::sdcSolverTest() == false) exit(-1);
-        if(str=="TREEBIND" && HatScheT::Tests::treeBindTest() == false) exit(-1);
+				if(str=="TREEBIND" && HatScheT::Tests::treeBindTest() == false) exit(-1);
+				if(str=="TREEBINDCOMMUTATIVE" && HatScheT::Tests::treeBindCommutativeTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

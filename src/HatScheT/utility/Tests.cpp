@@ -3185,4 +3185,105 @@ namespace HatScheT {
 
 		return treeIIValid and ilpValid and (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts) and (treeNum2x1Muxs == ilpNum2x1Muxs);
   }
+
+	bool Tests::treeBindCommutativeTest() {
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", 1, 1, 1);
+		auto &memW = rm.makeResource("memW", 1, 1, 1);
+		auto &mult = rm.makeResource("mult", 1, 1, 1);
+		auto &cons = rm.makeResource("cons", UNLIMITED, 0, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &c = g.createVertex();
+		c.setName("c");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &y0 = g.createVertex();
+		y0.setName("y0");
+		auto &y1 = g.createVertex();
+		y1.setName("y1");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&c, &cons);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&y0, &memW);
+		rm.registerVertex(&y1, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(c,mult0,0);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x1,mult1,0);
+		portAssignments[&e2] = 1;
+		auto &e3 = g.createEdge(c,mult1,0);
+		portAssignments[&e3] = 0;
+		auto &e4 = g.createEdge(mult0,y0,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(mult1,y1,0);
+		portAssignments[&e5] = 0;
+
+		// schedule that badboy
+		std::map<Vertex*,int> sched;
+		double intII = 2.0;
+		sched[&x0] = 0;
+		sched[&x1] = 1;
+		sched[&c] = 0;
+		sched[&mult0] = 1;
+		sched[&mult1] = 2;
+		sched[&y0] = 2;
+		sched[&y1] = 3;
+
+		std::cout << "Integer-II Schedule with II = " << intII << ":" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// specify commutative operation types
+		std::set<const Resource*> commutativeOps;
+		commutativeOps.insert(&mult);
+
+		// call tree based binding function for integer IIs
+		double wMux = 1.0;
+		double wReg = 1.0;
+		double maxMux = -1.0;
+		double maxReg = -1.0;
+		auto timeout = 10; //seconds
+		TreeBind tb(&g,&rm,sched,intII,portAssignments,commutativeOps);
+		tb.setMuxLimit(maxMux);
+		tb.setRegLimit(maxReg);
+		tb.setTimeout(timeout);
+		tb.setQuiet(false);
+		tb.bind();
+		auto treeBind = tb.getBinding();
+		std::cout << "tree-based binding finished" << std::endl;
+		bool treeIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeBind,portAssignments,commutativeOps);
+		auto treeNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(treeBind.multiplexerCosts, &g, &rm);
+		std::cout << "tree-based binding is " << (treeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "tree-based implementation multiplexer costs: " << treeBind.multiplexerCosts << std::endl;
+		std::cout << "tree-based implementation number of 2x1 multiplexers: " << treeNum2x1Muxs << std::endl;
+		std::cout << "tree-based implementation register costs: " << treeBind.registerCosts << std::endl;
+
+		// compare with ILP-based optimal binding
+		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
+		std::cout << "ILP-based binding finished" << std::endl;
+		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,portAssignments,commutativeOps);
+		auto ilpNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(ilpBind.multiplexerCosts, &g, &rm);
+		std::cout << "ILP-based binding is " << (ilpValid?"":"not ") << "valid" << std::endl;
+		std::cout << "ILP-based implementation multiplexer costs: " << ilpBind.multiplexerCosts << std::endl;
+		std::cout << "ILP-based implementation number of 2x1 multiplexers: " << ilpNum2x1Muxs << std::endl;
+		std::cout << "ILP-based implementation register costs: " << ilpBind.registerCosts << std::endl;
+
+		return treeIIValid and ilpValid and (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts) and (treeNum2x1Muxs == ilpNum2x1Muxs);
+	}
 }

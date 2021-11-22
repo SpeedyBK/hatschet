@@ -263,6 +263,11 @@ public:
 	 * @return if test was passed
 	 */
   static bool treeBindTest();
+	/*!
+	 * test treeBindTest function with commutative resource types
+	 * @return if test was passed
+	 */
+	static bool treeBindCommutativeTest();
 
 };
 }

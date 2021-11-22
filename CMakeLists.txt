@@ -153,6 +153,7 @@ src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
 src/HatScheT/utility/TreeBind.cpp
+src/HatScheT/utility/OptimalIntegerIIBinding.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
@@ -216,6 +217,7 @@ src/HatScheT/utility/Tests.h
 src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Binding.h
 src/HatScheT/utility/TreeBind.h
+src/HatScheT/utility/OptimalIntegerIIBinding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h
@@ -334,6 +336,8 @@ add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
 add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
 add_test("minMuxBinding" "./hatschet" "--test=ILPMINMUXBINDING")
 add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
+add_test("treeBind" "./hatschet" "--test=TREEBIND")
+add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")

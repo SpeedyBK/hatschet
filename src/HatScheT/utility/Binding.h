@@ -12,6 +12,10 @@
 namespace HatScheT {
 	class Binding {
 	public:
+		enum objective {
+			minimize,
+			maximize
+		};
 		struct BindingContainer {
 			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
 			std::string solutionStatus="NOT_SOLVED";

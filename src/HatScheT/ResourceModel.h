@@ -414,10 +414,14 @@ public:
     return {resources.begin(),resources.end()};
   }
 private:
-  /*!
-   * \brief the mapping between vertices and resources
-   */
-  map<const Vertex*, const Resource*> registrations;
+	/*!
+	 * \brief the mapping between vertices and resources
+	 */
+	map<const Vertex*, const Resource*> registrations;
+	/*!
+	 * \brief the mapping between resources and vertices
+	 */
+	map<const Resource*, std::set<const Vertex*>> reverseRegistrations;
   /*!
    * \brief all created resources
    */
