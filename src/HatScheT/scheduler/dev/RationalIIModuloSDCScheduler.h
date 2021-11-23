@@ -433,7 +433,7 @@ namespace HatScheT {
          * @brief getInitialSchedule
          * @return an asap schedule without resource constraints
          */
-        void createInitialSchedule();
+        bool createInitialSchedule();
 
         /*!
          * @brief initialize solver (i.e. reset etc.)

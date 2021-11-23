@@ -68,7 +68,9 @@ namespace HatScheT {
         // ALGORITHM LINE 1 //
         //////////////////////
         // asap scheduling without resource constraints
-        this->createInitialSchedule();
+        if(!this->createInitialSchedule()){
+            return;
+        }
         //////////////////////
         // ALGORITHM LINE 2 //
         //////////////////////
@@ -512,7 +514,7 @@ namespace HatScheT {
         scheduleInstruction(I, evictTime);
     }
 
-    void RationalIIModuloSDCScheduler::createInitialSchedule() {
+    bool RationalIIModuloSDCScheduler::createInitialSchedule() {
 
         this->setUpScalp();
         ScaLP::status s = this->solver->solve(); // solver should never timeout here...
@@ -524,8 +526,8 @@ namespace HatScheT {
             }
             this->printAdditionalSolverConstraints();
             if(this->quiet == false)
-                cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
-            throw HatScheT::Exception("ModSDC::createInitialSchedule: failed to find schedule without resource constraints");
+                cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints (no hatschet exception)" << endl;
+            return false;
         }
 
         ScaLP::Result r = this->solver->getResult();
@@ -534,6 +536,7 @@ namespace HatScheT {
             if (v != nullptr) this->asapTimes[v] = (int) it.second;
             else this->scheduleLength = (int) it.second;
         }
+        return true;
     }
 
     void RationalIIModuloSDCScheduler::unscheduleInstruction(Vertex *evictInst) {

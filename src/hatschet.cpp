@@ -106,6 +106,7 @@ void print_short_help() {
   std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
 	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)" << std::endl;
 	std::cout << "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)" << std::endl;
+    std::cout << "                            RATIONALIIMODULOSDC: Sixth experimental rational II scheduler (SDC based heuristic)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -460,6 +461,9 @@ int main(int argc, char *args[]) {
         break;
       case NONE:
         cout << "NONE";
+        break;
+      case RATIONALIIMODULOSDC:
+        cout << "RATIONALIIMODULOSDC";
         break;
     }
     std::cout << std::endl;
