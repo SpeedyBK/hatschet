@@ -65,9 +65,8 @@ public:
    * a resource is unlimited iff their limit is -1
    * @return
    */
-  virtual bool isUnlimited() const{
-    if(this->limit == -1) return true;
-    return false;
+  virtual bool isUnlimited() const {
+    return (this->limit == -1);
   }
   /*!
    * \return the limit

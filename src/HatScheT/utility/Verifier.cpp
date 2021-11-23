@@ -363,7 +363,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		return false;
 	}
 	// check if operations of unlimited resources are executed on unique FUs
-	for(auto it : bind.resourceBindings) {
+	for(auto &it : bind.resourceBindings) {
 		auto v = it.first;
 		auto fu = it.second;
 		auto res = rm->getResource(&g->getVertexByName(v));
@@ -385,7 +385,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	// check if a resource is assigned more than one operation per modulo slot
 	// map <pair<resource type, FU number> -> map of modulo slots in which this FU is busy to the vertex that occupies it>
 	std::map<std::pair<const Resource*,int>,std::map<int,Vertex*>> busyResources;
-	for(auto it : bind.resourceBindings) {
+	for(auto &it : bind.resourceBindings) {
 		auto vName = it.first;
 		auto v = &g->getVertexByName(vName);
 		auto fu = it.second;
@@ -414,6 +414,44 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		return true;
 	}
 
+	for (auto &v : g->Vertices()) {
+		// iterate through all incoming edges of that vertex
+		auto resDst = rm->getResource(v);
+		// skip commutative operation types
+		if(commutativeOps.find(resDst) != commutativeOps.end()) continue;
+		for (auto &e : g->Edges()) {
+			// ignore chaining edges
+			if (!e->isDataEdge()) continue;
+			// make sure to only consider incoming edges
+			if (&e->getVertexDst() != v) continue;
+			// check if a valid connection exists
+			bool foundConnection = false;
+			for (auto &it : bind.fuConnections) {
+				if (it.first.second.first != resDst->getName()) continue;
+				auto resSrc = rm->getResource(&e->getVertexSrc());
+				if (it.first.first.first != resSrc->getName()) continue;
+				auto fuSrc = bind.resourceBindings[e->getVertexSrcName()];
+				if (it.first.first.second != fuSrc) continue;
+				auto fuDst = bind.resourceBindings[e->getVertexDstName()];
+				if (it.first.second.second != fuDst) continue;
+				auto latSrc = rm->getVertexLatency(const_cast<Vertex*>(&e->getVertexSrc()));
+				auto tSrc = sched[const_cast<Vertex*>(&e->getVertexSrc())];
+				auto tDst = sched[const_cast<Vertex*>(&e->getVertexDst())];
+				auto lifetime = tDst - tSrc - latSrc + (II * e->getDistance());
+				if (it.second.first != lifetime) continue;
+				auto port = portAssignments[e];
+				if (it.second.second != port) continue;
+				foundConnection = true;
+				break;
+			}
+			if (!foundConnection) {
+				std::cout << "Could not find a port assignment for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName()
+									<< "' (non-commutative)" << std::endl;
+				return false;
+			}
+		}
+	}
+	/*
 	for(auto &e : g->Edges()) {
 		auto vSrc = &e->getVertexSrc();
 		auto vDst = &e->getVertexDst();
@@ -456,6 +494,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			return false;
 		}
 	}
+	*/
 
 	// check if commutative operations have valid port assignments
 	for(auto &vDst : g->Vertices()) {
@@ -479,6 +518,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			auto latSrc = rSrc->getLatency();
 			auto dist = e->getDistance();
 			auto wantedPort = portAssignments[e];
+			if (requestedPorts.find(wantedPort) != requestedPorts.end()) {
+				throw HatScheT::Exception("Corrupt port assignment container - Multiple edges are connected to port '"+std::to_string(wantedPort)+"' of '"+vDst->getName()+"'");
+			}
 			requestedPorts.insert(wantedPort);
 			auto lifetime = tDst - tSrc - latSrc + dist*II;
 			bool foundIt = false;
@@ -490,7 +532,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				if(it.second.first != lifetime) continue;
 				foundIt = true;
 				actualPorts.insert(it.second.second);
-				break;
+				// nfiege: do not break here because multiple connections can lead to different ports
+				// and we might miss some if we break...
+				//break;
 			}
 			if(!foundIt) {
 				std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
@@ -660,7 +704,9 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 					if(it.second.first != lifetime) continue;
 					foundIt = true;
 					actualPorts.insert(it.second.second);
-					break;
+					// nfiege: do not break here because multiple connections can lead to different ports
+					// and we might miss some if we break...
+					// break;
 				}
 				if(!foundIt) {
 					std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()

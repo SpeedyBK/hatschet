@@ -13,6 +13,8 @@ namespace HatScheT {
 	class Binding {
 	public:
 		struct BindingContainer {
+			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
+			std::string solutionStatus="NOT_SOLVED";
 			// register costs for easy tracking
 			int registerCosts=-1;
 			// multiplexer costs for easy tracking
@@ -33,6 +35,8 @@ namespace HatScheT {
 			std::list<std::pair<std::pair<int, int>, std::pair<std::string, int>>> regFuConnections;
 		};
 		struct RatIIBindingContainer {
+			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
+			std::string solutionStatus="NOT_SOLVED";
 			// register costs for easy tracking
 			int registerCosts=-1;
 			// multiplexer costs for easy tracking
@@ -42,6 +46,17 @@ namespace HatScheT {
 			// This one is actually the same as above... the list might be longer though...
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
 		};
+		/*!
+		 * assume that resource bindings are set
+		 * calculate and set all necessary FU connections and resulting MUX and register costs
+		 * @param b binding container with correctly defined and valid resource bindings
+		 * @param g graph for which the binding was calculated
+		 * @param rm corresponding resource model
+		 * @param sched a schedule for g that satisfies the II
+		 * @param II initiation interval
+		 * @param portAssignments a container with input port connections for each edge destination vertex
+		 */
+		static void calcFUConnectionsAndCosts(BindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int> *portAssignments);
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
 		 * usable for rational IIs

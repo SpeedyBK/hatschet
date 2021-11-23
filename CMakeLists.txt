@@ -25,6 +25,13 @@ project (hatschet)
 ####################
 option(USE_XERCESC "Use XercesC for parsing" ON)
 #option(USE_CADICAL "Use CaDiCaL SAT solving" ON)
+option(OLD_CXX_ABI "Build with an old C++-abi (activate if you get undefined references with '__cxx11')" OFF)
+
+
+# Deactivate C++11-abi?
+if(OLD_CXX_ABI) 
+  add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0) 
+endif()
 
 ####################
 #Find ScaLP
@@ -145,6 +152,7 @@ src/HatScheT/utility/writer/ScheduleAndBindingWriter.cpp
 src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
+src/HatScheT/utility/TreeBind.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
@@ -207,6 +215,7 @@ src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
 src/HatScheT/utility/Tests.h
 src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Binding.h
+src/HatScheT/utility/TreeBind.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h

@@ -258,6 +258,11 @@ public:
 	 * @return
 	 */
 	static bool ilpBasedIntIIMinMuxBindingTest();
+	/*!
+	 * test treeBindTest function
+	 * @return if test was passed
+	 */
+  static bool treeBindTest();
 
 };
 }

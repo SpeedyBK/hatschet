@@ -36,6 +36,16 @@ class Utility
 {
 public:
 	/*!
+	 * this function computes the number of equivalent 2x1 multiplexers for a binding
+	 * that needs numFUConnections connections between functional units
+	 * this function assumes that all operations bound to a resource have the same number of inputss
+	 * @param numFUConnections the number of connections between FUs that will be implemented in hardware
+	 * @param g graph
+	 * @param rm resource model
+	 * @return number of equivalent 2x1 multiplexers
+	 */
+	static double getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph* g, ResourceModel* rm);
+	/*!
 	 * unroll graph with factor samples
 	 * "in C-language" this corresponds to modifying a for loop such that the number of iterations is divided by S
 	 * and S iterations of the original loop are calculated within one iteration of the new loop
