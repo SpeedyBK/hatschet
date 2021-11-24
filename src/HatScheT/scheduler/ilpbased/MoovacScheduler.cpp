@@ -172,7 +172,7 @@ void MoovacScheduler::fillSolutionStructure()
     unsigned int index =this->tIndices.at(v);
     ScaLP::Variable svTemp = this->ti[index];
 
-    int startTime = this->r.values[svTemp];
+    int startTime = std::round(this->r.values[svTemp]);
     this->startTimes.insert(make_pair(v, startTime));
   }
 }
@@ -273,8 +273,8 @@ std::map<const Vertex *, int> MoovacScheduler::getBindings()
     else{
       for(auto v:vs){
         ScaLP::Variable bv = this->ri[this->rIndices[v]];
-        ScaLP::Result r = this->solver->getResult();
-        bindings.insert(make_pair(v,r.values[bv]));
+        ScaLP::Result res = this->solver->getResult();
+        bindings.insert(make_pair(v,std::round(res.values[bv])));
       }
     }
   }
