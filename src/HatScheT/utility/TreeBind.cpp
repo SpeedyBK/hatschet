@@ -521,7 +521,6 @@ namespace HatScheT {
 								std::cout << "    max multiplexer costs: " << this->maxMux << std::endl;
 							}
 							this->timePoints["iteration_end"] = std::chrono::steady_clock::now();
-							this->timeTracker["iteration_pruning"] += ((double)std::chrono::duration_cast<std::chrono::microseconds>(this->timePoints["iteration_end"] - this->timePoints["iteration_calc_costs"]).count()) / 1000000.0;
 							elapsedTime = ((double)std::chrono::duration_cast<std::chrono::milliseconds>(this->timePoints["iteration_end"] - this->timePoints["iterativeTreeSearch_start"]).count()) / 1000.0;
 							continue;
 						}
@@ -542,9 +541,20 @@ namespace HatScheT {
         }
         */
 				this->pushToStack(stack, nextVertexIterator);
-				this->timePoints["iteration_stack_pushing"] = std::chrono::steady_clock::now();
-				this->timeTracker["iteration_stack_pushing"] += ((double)std::chrono::duration_cast<std::chrono::microseconds>(this->timePoints["iteration_stack_pushing"] - this->timePoints["iteration_add_binding_info"]).count()) / 1000000.0;
-
+				if (this->pruningEnabled) {
+					this->timePoints["iteration_stack_pushing"] = std::chrono::steady_clock::now();
+					this->timeTracker["iteration_stack_pushing"] +=
+						((double) std::chrono::duration_cast<std::chrono::microseconds>(
+							this->timePoints["iteration_stack_pushing"] - this->timePoints["iteration_calc_costs"]).count()) /
+						1000000.0;
+				}
+				else {
+					this->timePoints["iteration_stack_pushing"] = std::chrono::steady_clock::now();
+					this->timeTracker["iteration_stack_pushing"] +=
+						((double) std::chrono::duration_cast<std::chrono::microseconds>(
+							this->timePoints["iteration_stack_pushing"] - this->timePoints["iteration_add_binding_info"]).count()) /
+						1000000.0;
+				}
 			}
 
 			// debug info
