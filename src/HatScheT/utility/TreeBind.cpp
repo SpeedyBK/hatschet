@@ -498,7 +498,8 @@ namespace HatScheT {
 				}
 
 				// check if we can prune the search tree starting from here
-				if (this->pruningEnabled) {
+				// only in minimization we can use pruning!!!
+				if (this->pruningEnabled and this->obj == Binding::objective::minimize) {
 				 	// calc FU connections and costs
 					Binding::calcFUConnectionsAndCosts(&currentBinding,this->g,this->rm,&this->sched,this->II,&this->portAssignments);
 					this->timePoints["iteration_calc_costs"] = std::chrono::steady_clock::now();
@@ -541,7 +542,7 @@ namespace HatScheT {
         }
         */
 				this->pushToStack(stack, nextVertexIterator);
-				if (this->pruningEnabled) {
+				if (this->pruningEnabled and this->obj == Binding::objective::minimize) {
 					this->timePoints["iteration_stack_pushing"] = std::chrono::steady_clock::now();
 					this->timeTracker["iteration_stack_pushing"] +=
 						((double) std::chrono::duration_cast<std::chrono::microseconds>(
@@ -839,6 +840,7 @@ namespace HatScheT {
     auto &moduloSlot = this->mod[v];
     auto res = this->rm->getResource(v);
     this->occupiedResources[std::make_pair(res, moduloSlot)].remove(fu);
+    this->numOperationsOnFU[std::make_pair(res, fu)]--;
     this->currentBinding.resourceBindings.erase(mapIt);
   }
 
@@ -864,6 +866,7 @@ namespace HatScheT {
 		this->currentBinding.resourceBindings[v->getName()] = currentFU;
 		// track occupied resources
 		this->occupiedResources[std::make_pair(res, this->mod[v])].push_back(currentFU);
+		this->numOperationsOnFU[std::make_pair(res, currentFU)]++;
 	}
 
 	void TreeBind::pushToStack(std::list<std::pair<std::list<Vertex*>::iterator, int>> &stack, const list<Vertex *>::iterator &v) {
@@ -875,12 +878,6 @@ namespace HatScheT {
 		auto numOcc = occ.size();
 		auto numAddedChildren = 0;
 		auto maxAddedChildren = res->getLimit() - numOcc;
-		std::map<int,int> numOperationsOnFUs;
-		for (int i=0; i<this->II; i++) {
-			for (auto it : this->occupiedResources[std::make_pair(res, i)]) {
-				numOperationsOnFUs[it]++;
-			}
-		}
 		// used for pruning
 		bool addedFreeResource = false;
 		// compute new resources and add them to stack
@@ -892,7 +889,7 @@ namespace HatScheT {
 				continue;
 			}
 			// check if FU is the first free one
-			if (numOperationsOnFUs[fu] == 0) {
+			if (this->numOperationsOnFU[std::make_pair(res, fu)] == 0) {
 				if (addedFreeResource) {
 					continue;
 				}
