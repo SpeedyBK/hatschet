@@ -296,6 +296,11 @@ namespace HatScheT {
      * map from <resource, modulo slot> to list with indices of occupied resources
      */
     std::map<std::pair<const Resource*, int>, std::list<int>> occupiedResources;
+    /*!
+     * this container tracks how many operations are bound to which FU for each resource type
+     * map from <resource, fu index> to the number of bound operations
+     */
+    std::map<std::pair<const Resource*, int>, int> numOperationsOnFU;
   };
 }
 
