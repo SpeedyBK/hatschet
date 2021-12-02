@@ -3458,14 +3458,14 @@ namespace HatScheT {
 		tb.setObjective(Binding::objective::minimize);
 		tb.bind();
 		auto minTreeBind = tb.getBinding();
-		bool minTreeIIValid = verifyIntIIBinding(&g,&rm,sched,II,minTreeBind,portAssignments,commutativeOps);
+		bool minTreeValid = verifyIntIIBinding(&g,&rm,sched,II,minTreeBind,portAssignments,commutativeOps);
 		auto minTreeNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(minTreeBind.multiplexerCosts, &g, &rm);
 
 		// minimization
 		tb.setObjective(Binding::objective::maximize);
 		tb.bind();
 		auto maxTreeBind = tb.getBinding();
-		bool maxTreeIIValid = verifyIntIIBinding(&g,&rm,sched,II,maxTreeBind,portAssignments,commutativeOps);
+		bool maxTreeValid = verifyIntIIBinding(&g,&rm,sched,II,maxTreeBind,portAssignments,commutativeOps);
 		auto maxTreeNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(maxTreeBind.multiplexerCosts, &g, &rm);
 
 		// print bindings
@@ -3483,16 +3483,16 @@ namespace HatScheT {
 		std::cout << "  " << maxPair.first << " registers" << std::endl;
 		std::cout << "  " << maxPair.second << " multiplexers" << std::endl;
 		std::cout << "minimization results:" << std::endl;
-		std::cout << "  binding is " << (minTreeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "  binding is " << (minTreeValid?"":"not ") << "valid" << std::endl;
 		std::cout << "  multiplexer costs: " << minTreeBind.multiplexerCosts << std::endl;
 		std::cout << "  number of 2x1 multiplexers: " << minTreeNum2x1Muxs << std::endl;
 		std::cout << "  register costs: " << minTreeBind.registerCosts << std::endl;
 		std::cout << "maximization results:" << std::endl;
-		std::cout << "  binding is " << (maxTreeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "  binding is " << (maxTreeValid?"":"not ") << "valid" << std::endl;
 		std::cout << "  multiplexer costs: " << maxTreeBind.multiplexerCosts << std::endl;
 		std::cout << "  number of 2x1 multiplexers: " << maxTreeNum2x1Muxs << std::endl;
 		std::cout << "  register costs: " << maxTreeBind.registerCosts << std::endl;
 
-		return true;
+		return minTreeValid and maxTreeValid;
 	}
 }
