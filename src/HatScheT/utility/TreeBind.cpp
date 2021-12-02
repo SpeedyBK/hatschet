@@ -267,12 +267,18 @@ namespace HatScheT {
 			auto costsPair = Utility::getMaxRegsAndMuxs(this->g, this->rm, this->sched, this->II);
 			if (this->wReg < 0.0) {
 				this->wReg = 1.0 / (1.0 + ((double) costsPair.first));
+				if (!this->quiet) {
+					std::cout << "set reg costs to " << this->wReg << " = 1 / (1 + " << costsPair.first << ")" << std::endl;
+				}
 			}
 			if (this->wMux < 0.0) {
 				// function computes actual multiplexer costs instead of interconnect costs
 				// => adjust
 				costsPair.second = Utility::getNumberOfFUConnections(costsPair.second, this->g, this->rm);
 				this->wMux = 1.0 / (1.0 + ((double) costsPair.second));
+				if (!this->quiet) {
+					std::cout << "set mux costs to " << this->wMux << " = 1 / (1 + " << costsPair.second << ")" << std::endl;
+				}
 			}
 		}
 

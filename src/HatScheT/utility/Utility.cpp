@@ -970,8 +970,12 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 	double Utility::getNumberOfFUConnections(int num2x1Muxs, Graph *g, ResourceModel *rm) {
 		for (auto &r : rm->Resources()) {
-			// skip unlimited resources because they never need any muxs
-			if (r->isUnlimited()) continue;
+			// here we can NOT skip unlimited resources
+			// even though they will never add muxs to the design, they do need input connections
+			auto numFUs = r->getLimit();
+			if (r->isUnlimited()) {
+				numFUs = rm->getNumVerticesRegisteredToResource(r);
+			}
 			// calculate the number of inputs for this FU
 			int numInputs = 0;
 			for (auto &v : rm->getVerticesOfResource(r)) {
@@ -983,7 +987,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			// then one 2x1 mux is needed for port 1 and 5 2x1 muxs are needed on port number 2
 			// this means that #connections = 2+6 = 8 = 1+5+#ports = 1+5+2
 			// since this holds for each implemented FU, we must multiply the number of inputs with the number of FUs
-			num2x1Muxs += (numInputs * r->getLimit());
+			num2x1Muxs += (numInputs * numFUs);
 		}
 		return num2x1Muxs;
 	}

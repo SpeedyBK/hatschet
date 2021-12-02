@@ -3444,10 +3444,12 @@ namespace HatScheT {
 
 		// set up algorithm
 		TreeBind tb(&g,&rm,sched,II,portAssignments,commutativeOps);
+		tb.setMuxCostFactor(wMux);
+		tb.setRegCostFactor(wReg);
 		tb.setMuxLimit(maxMux);
 		tb.setRegLimit(maxReg);
 		tb.setTimeout(timeout);
-		tb.setQuiet(true);
+		tb.setQuiet(false);
 
 		// calculate upper bounds for multiplexers and registers
 		auto maxPair = Utility::getMaxRegsAndMuxs(&g, &rm, sched, II);
@@ -3468,11 +3470,11 @@ namespace HatScheT {
 
 		// print bindings
 		std::cout << "binding with minimal costs:" << std::endl;
-		for (auto it : minTreeBind.resourceBindings) {
+		for (auto &it : minTreeBind.resourceBindings) {
 			std::cout << "  " << it.first << " - " << it.second << std::endl;
 		}
 		std::cout << "binding with maximal costs:" << std::endl;
-		for (auto it : maxTreeBind.resourceBindings) {
+		for (auto &it : maxTreeBind.resourceBindings) {
 			std::cout << "  " << it.first << " - " << it.second << std::endl;
 		}
 
