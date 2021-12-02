@@ -3,6 +3,7 @@
 //
 
 #include "OptimalIntegerIIBinding.h"
+#include <HatScheT/utility/Utility.h>
 #include <limits>
 #include <sstream>
 #include <cmath>
@@ -59,26 +60,17 @@ namespace HatScheT {
 		//////////////////////////////////////////////////////////////////
 		double wMuxInternally = this->wMux;
 		double wRegInternally = this->wReg;
-		if (wMuxInternally <= 0) {
-			// make sure that mux costs do not influence register costs
-			// by normalizing mux costs with the number of edges + 1
-			auto normFactor = (double)this->g->getNumberOfEdges() + 1.0;
-			wMuxInternally = 1.0 / normFactor;
-		}
-		if (wRegInternally <= 0) {
-			// make sure that register costs do not influence multiplexer costs
-			// by normalizing register costs with the total lifetime over all edges + 1
-			double normFactor = 1.0;
-			for (auto e : this->g->Edges()) {
-				if (!e->isDataEdge()) continue; // skip chaining edges for lifetime computation
-				auto vSrc = &e->getVertexSrc();
-				auto vDst = &e->getVertexDst();
-				auto tSrc = this->sched[vSrc];
-				auto tDst = this->sched[vDst];
-				auto lifetime = tDst - tSrc - this->rm->getVertexLatency(vSrc) + this->II * e->getDistance();
-				normFactor += lifetime;
+		if (this->wReg < 0.0 or this->wMux < 0.0) {
+			auto costsPair = Utility::getMaxRegsAndMuxs(this->g, this->rm, this->sched, this->II);
+			if (wRegInternally < 0.0) {
+				wRegInternally = 1.0 / (1.0 + ((double) costsPair.first));
 			}
-			wRegInternally = 1.0 / normFactor;
+			if (wMuxInternally < 0.0) {
+				// function computes actual multiplexer costs instead of interconnect costs
+				// => adjust
+				costsPair.second = Utility::getNumberOfFUConnections(costsPair.second, this->g, this->rm);
+				wMuxInternally = 1.0 / (1.0 + ((double) costsPair.second));
+			}
 		}
 
 		if (!quiet) {

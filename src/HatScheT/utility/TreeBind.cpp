@@ -263,12 +263,17 @@ namespace HatScheT {
     }
 
     // adjust costs to always find pareto optimal solutions
-    auto costsPair = Utility::getMaxRegsAndMuxs(this->g, this->rm, this->sched, this->II);
-		if (this->wReg < 0.0) {
-			this->wReg = 1.0 / (1.0 + ((double)costsPair.first));
-		}
-		if (this->wMux < 0.0) {
-			this->wMux = 1.0 / (1.0 + ((double)costsPair.second));
+    if (this->wReg < 0.0 or this->wMux < 0.0) {
+			auto costsPair = Utility::getMaxRegsAndMuxs(this->g, this->rm, this->sched, this->II);
+			if (this->wReg < 0.0) {
+				this->wReg = 1.0 / (1.0 + ((double) costsPair.first));
+			}
+			if (this->wMux < 0.0) {
+				// function computes actual multiplexer costs instead of interconnect costs
+				// => adjust
+				costsPair.second = Utility::getNumberOfFUConnections(costsPair.second, this->g, this->rm);
+				this->wMux = 1.0 / (1.0 + ((double) costsPair.second));
+			}
 		}
 
     /* COMMENTED OUT BECAUSE OF NEW COST CALCULATION/TRACKING
