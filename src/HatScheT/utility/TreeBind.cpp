@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <limits>
+#include <HatScheT/utility/Utility.h>
 
 namespace HatScheT {
   TreeBind::TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps)
@@ -100,8 +101,8 @@ namespace HatScheT {
 				this->numFeasibleBindings *= fraction;
 			}
     }
-    std::cout << "TreeBind::Constructor: number of vertices: " << this->g->getNumberOfVertices() << std::endl;
-    std::cout << "TreeBind::Constructor: number of feasible bindings for this problem: " << this->numFeasibleBindings << std::endl;
+    //std::cout << "TreeBind::Constructor: number of vertices: " << this->g->getNumberOfVertices() << std::endl;
+    //std::cout << "TreeBind::Constructor: number of feasible bindings for this problem: " << this->numFeasibleBindings << std::endl;
 
     // compute queue for tree traversal
     // at the moment we just insert all limited operations
@@ -109,6 +110,9 @@ namespace HatScheT {
     // put resources with trivial bindings into queue first to minimize the number of necessary iterations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // create queue
+    // based on order in memory
+    /*
     for (auto r : rm->Resources()) {
       if (r->isUnlimited()) continue;
       auto isTrivial = this->trivialBindings.find(r) != this->trivialBindings.end();
@@ -123,10 +127,47 @@ namespace HatScheT {
         }
       }
     }
+     */
+    // based on lifetimes
+    std::map<Vertex*,int> vertexLifetimes;
+    for (auto e : this->g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto l = this->getLifetime(e);
+			if (vertexLifetimes[vSrc] < l) vertexLifetimes[vSrc] = l;
+		}
+    std::map<int, std::list<Vertex*>> orderedLifetimes;
+    for (auto it : vertexLifetimes) {
+			orderedLifetimes[it.second].emplace_front(it.first);
+		}
+		for (auto &v : this->g->Vertices()) {
+			// only trivial ones now
+			if (this->rm->getResource(v)->isUnlimited()) continue;
+			if (this->trivialBindings.find(this->rm->getResource(v)) == this->trivialBindings.end()) continue;
+			this->queue.push_front(v);
+		}
+		for (auto &it : orderedLifetimes) {
+			// based on ordered lifetimes
+			for (auto v : it.second) {
+				if (this->rm->getResource(v)->isUnlimited()) continue;
+				if (this->trivialBindings.find(this->rm->getResource(v)) != this->trivialBindings.end()) continue;
+				this->queue.push_back(v);
+			}
+		}
+		for (auto &v : this->g->Vertices()) {
+			// remaining ones
+			// the ones without output edges (i.e. sinks)
+			// just bind them last... no idea how to treat those ones...
+			if (this->rm->getResource(v)->isUnlimited()) continue;
+			if (std::find(this->queue.begin(), this->queue.end(), v) != this->queue.end()) continue;
+			this->queue.push_back(v);
+		}
+
+    /*
     std::cout << "TreeBind::Constructor: queue for tree traversal:" << std::endl;
     for (auto &it : this->queue) {
     	std::cout << "  " << it->getName() << std::endl;
     }
+     */
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		/*
@@ -221,6 +262,15 @@ namespace HatScheT {
       }
     }
 
+    // adjust costs to always find pareto optimal solutions
+    auto costsPair = Utility::getMaxRegsAndMuxs(this->g, this->rm, this->sched, this->II);
+		if (this->wReg < 0.0) {
+			this->wReg = 1.0 / (1.0 + ((double)costsPair.first));
+		}
+		if (this->wMux < 0.0) {
+			this->wMux = 1.0 / (1.0 + ((double)costsPair.second));
+		}
+
     /* COMMENTED OUT BECAUSE OF NEW COST CALCULATION/TRACKING
     // fix connections between unlimited operations
     // and init binding costs
@@ -257,7 +307,7 @@ namespace HatScheT {
 		this->timeTracker["total_time"] += ((double)std::chrono::duration_cast<std::chrono::microseconds>(this->timePoints["bind_end"] - this->timePoints["bind_start"]).count()) / 1000000.0;
 
 		// print solution
-		//if (!this->quiet) {
+		if (!this->quiet) {
 			std::cout << "TreeBind::bind: found solution after " << this->iterationCounter << " iterations" << std::endl;
 			std::cout << "  status: " << this->bestBinding.solutionStatus << std::endl;
 			std::cout << "  explored " << this->leafNodeCounter << " of " << this->numFeasibleBindings << " leaf nodes" << std::endl;
@@ -282,7 +332,7 @@ namespace HatScheT {
 			std::cout << "  multiplexer costs: " << this->bestBinding.multiplexerCosts << std::endl;
 			std::cout << "  register costs: " << this->bestBinding.registerCosts << std::endl;
 			std::cout << "  objective: " << this->wMux << " * " << this->bestBinding.multiplexerCosts << " + " << this->wReg << " * " << this->bestBinding.registerCosts << std::endl;
-		//}
+		}
   }
   
   Binding::BindingContainer TreeBind::getBinding() {

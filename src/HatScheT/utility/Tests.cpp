@@ -3286,4 +3286,211 @@ namespace HatScheT {
 
 		return treeIIValid and ilpValid and (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts) and (treeNum2x1Muxs == ilpNum2x1Muxs);
 	}
+
+	bool Tests::fccmPaperTest() {
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		auto &memR = rm.makeResource("memR", UNLIMITED, 0, 1);
+		auto &memW = rm.makeResource("memW", UNLIMITED, 0, 1);
+		auto &mult = rm.makeResource("mult", 2, 1, 1);
+
+		auto &x0 = g.createVertex();
+		x0.setName("x0");
+		auto &x1 = g.createVertex();
+		x1.setName("x1");
+		auto &x2 = g.createVertex();
+		x2.setName("x2");
+		auto &x3 = g.createVertex();
+		x3.setName("x3");
+		auto &x4 = g.createVertex();
+		x4.setName("x4");
+		auto &x5 = g.createVertex();
+		x5.setName("x5");
+		auto &x6 = g.createVertex();
+		x6.setName("x6");
+		auto &x7 = g.createVertex();
+		x7.setName("x7");
+		auto &mult0 = g.createVertex();
+		mult0.setName("mult0");
+		auto &mult1 = g.createVertex();
+		mult1.setName("mult1");
+		auto &mult2 = g.createVertex();
+		mult2.setName("mult2");
+		auto &mult3 = g.createVertex();
+		mult3.setName("mult3");
+		auto &mult4 = g.createVertex();
+		mult4.setName("mult4");
+		auto &mult5 = g.createVertex();
+		mult5.setName("mult5");
+		auto &mult6 = g.createVertex();
+		mult6.setName("mult6");
+		auto &y = g.createVertex();
+		y.setName("y");
+
+		rm.registerVertex(&x0, &memR);
+		rm.registerVertex(&x1, &memR);
+		rm.registerVertex(&x2, &memR);
+		rm.registerVertex(&x3, &memR);
+		rm.registerVertex(&x4, &memR);
+		rm.registerVertex(&x5, &memR);
+		rm.registerVertex(&x6, &memR);
+		rm.registerVertex(&x7, &memR);
+		rm.registerVertex(&mult0, &mult);
+		rm.registerVertex(&mult1, &mult);
+		rm.registerVertex(&mult2, &mult);
+		rm.registerVertex(&mult3, &mult);
+		rm.registerVertex(&mult4, &mult);
+		rm.registerVertex(&mult5, &mult);
+		rm.registerVertex(&mult6, &mult);
+		rm.registerVertex(&y, &memW);
+
+		std::map<Edge*,int> portAssignments;
+		auto &e0 = g.createEdge(x0,mult0,0);
+		portAssignments[&e0] = 0;
+		auto &e1 = g.createEdge(x1,mult0,0);
+		portAssignments[&e1] = 1;
+		auto &e2 = g.createEdge(x2,mult1,0);
+		portAssignments[&e2] = 0;
+		auto &e3 = g.createEdge(x3,mult1,0);
+		portAssignments[&e3] = 1;
+		auto &e4 = g.createEdge(x4,mult2,0);
+		portAssignments[&e4] = 0;
+		auto &e5 = g.createEdge(x5,mult2,0);
+		portAssignments[&e5] = 1;
+		auto &e6 = g.createEdge(x6,mult3,0);
+		portAssignments[&e6] = 0;
+		auto &e7 = g.createEdge(x7,mult3,0);
+		portAssignments[&e7] = 1;
+		auto &e8 = g.createEdge(mult0,mult4,0);
+		portAssignments[&e8] = 0;
+		auto &e9 = g.createEdge(mult1,mult4,0);
+		portAssignments[&e9] = 1;
+		auto &e10 = g.createEdge(mult2,mult5,0);
+		portAssignments[&e10] = 0;
+		auto &e11 = g.createEdge(mult3,mult5,0);
+		portAssignments[&e11] = 1;
+		auto &e12 = g.createEdge(mult4,mult6,0);
+		portAssignments[&e12] = 0;
+		auto &e13 = g.createEdge(mult5,mult6,0);
+		portAssignments[&e13] = 1;
+		auto &e14 = g.createEdge(mult6,y,0);
+		portAssignments[&e14] = 0;
+
+		// schedule it
+		EichenbergerDavidson97Scheduler scheduler(g,rm, {"Gurobi"});
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(60);
+		scheduler.schedule();
+		auto sched = scheduler.getSchedule();
+		auto II = (int)scheduler.getII();
+
+		// define schedule by hand (so an optimization by the binding algorithm is actually possible)
+		/*
+		sched[&x0] = 0;
+		sched[&x1] = 0;
+		sched[&x2] = 1;
+		sched[&x3] = 1;
+		sched[&x4] = 0;
+		sched[&x5] = 0;
+		sched[&x6] = 1;
+		sched[&x7] = 1;
+		sched[&mult0] = 1;
+		sched[&mult1] = 2;
+		sched[&mult2] = 1;
+		sched[&mult3] = 2;
+		sched[&mult4] = 3;
+		sched[&mult5] = 3;
+		sched[&mult6] = 4;
+		sched[&y] = 5;
+		 */
+		sched[&x0] = 0;
+		sched[&x1] = 0;
+		sched[&x2] = 0;
+		sched[&x3] = 0;
+		sched[&x4] = 1;
+		sched[&x5] = 1;
+		sched[&x6] = 1;
+		sched[&x7] = 1;
+		sched[&mult0] = 0;
+		sched[&mult1] = 0;
+		sched[&mult2] = 1;
+		sched[&mult3] = 1;
+		sched[&mult4] = 2;
+		sched[&mult5] = 3;
+		sched[&mult6] = 6;
+		sched[&y] = 7;
+
+		// verify modulo schedule
+		auto schedValid = verifyModuloSchedule(g, rm, sched, II);
+		if (!schedValid) {
+			std::cout << "Modulo schedule invalid - that should never happen..." << std::endl;
+			return false;
+		}
+
+		std::cout << "Integer-II Schedule with II = " << II << ":" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// compute bindings
+		double wMux = 1.0;
+		double wReg = 1.0;
+		double maxMux = -1.0;
+		double maxReg = -1.0;
+		auto timeout = 10; //seconds
+		std::set<const Resource*> commutativeOps = {&mult};
+
+		// set up algorithm
+		TreeBind tb(&g,&rm,sched,II,portAssignments,commutativeOps);
+		tb.setMuxLimit(maxMux);
+		tb.setRegLimit(maxReg);
+		tb.setTimeout(timeout);
+		tb.setQuiet(true);
+
+		// calculate upper bounds for multiplexers and registers
+		auto maxPair = Utility::getMaxRegsAndMuxs(&g, &rm, sched, II);
+
+		// minimization
+		tb.setObjective(Binding::objective::minimize);
+		tb.bind();
+		auto minTreeBind = tb.getBinding();
+		bool minTreeIIValid = verifyIntIIBinding(&g,&rm,sched,II,minTreeBind,portAssignments,commutativeOps);
+		auto minTreeNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(minTreeBind.multiplexerCosts, &g, &rm);
+
+		// minimization
+		tb.setObjective(Binding::objective::maximize);
+		tb.bind();
+		auto maxTreeBind = tb.getBinding();
+		bool maxTreeIIValid = verifyIntIIBinding(&g,&rm,sched,II,maxTreeBind,portAssignments,commutativeOps);
+		auto maxTreeNum2x1Muxs = Utility::getNumberOfEquivalent2x1Muxs(maxTreeBind.multiplexerCosts, &g, &rm);
+
+		// print bindings
+		std::cout << "binding with minimal costs:" << std::endl;
+		for (auto it : minTreeBind.resourceBindings) {
+			std::cout << "  " << it.first << " - " << it.second << std::endl;
+		}
+		std::cout << "binding with maximal costs:" << std::endl;
+		for (auto it : maxTreeBind.resourceBindings) {
+			std::cout << "  " << it.first << " - " << it.second << std::endl;
+		}
+
+		// print results
+		std::cout << "Upper bounds for binding problem:" << std::endl;
+		std::cout << "  " << maxPair.first << " registers" << std::endl;
+		std::cout << "  " << maxPair.second << " multiplexers" << std::endl;
+		std::cout << "minimization results:" << std::endl;
+		std::cout << "  binding is " << (minTreeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "  multiplexer costs: " << minTreeBind.multiplexerCosts << std::endl;
+		std::cout << "  number of 2x1 multiplexers: " << minTreeNum2x1Muxs << std::endl;
+		std::cout << "  register costs: " << minTreeBind.registerCosts << std::endl;
+		std::cout << "maximization results:" << std::endl;
+		std::cout << "  binding is " << (maxTreeIIValid?"":"not ") << "valid" << std::endl;
+		std::cout << "  multiplexer costs: " << maxTreeBind.multiplexerCosts << std::endl;
+		std::cout << "  number of 2x1 multiplexers: " << maxTreeNum2x1Muxs << std::endl;
+		std::cout << "  register costs: " << maxTreeBind.registerCosts << std::endl;
+
+		return true;
+	}
 }

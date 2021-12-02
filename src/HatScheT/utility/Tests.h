@@ -268,6 +268,11 @@ public:
 	 * @return if test was passed
 	 */
 	static bool treeBindCommutativeTest();
+	/*!
+	 * use tree bind algorithm for motivating example for FCCM paper about optimal binding
+	 * @return if test was passed
+	 */
+	static bool fccmPaperTest();
 
 };
 }

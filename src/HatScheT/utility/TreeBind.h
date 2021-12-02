@@ -48,11 +48,13 @@ namespace HatScheT {
      */
     Binding::BindingContainer getBinding();
     /*!
-     * set weighting factor for multiplexer costs
+     * set weighting factor for multiplexer costs;
+     * setting it to a negative value means that registers are optimized as a first objective and multiplexers second
      */
     void setMuxCostFactor(double wMux);
     /*!
-     * set weighting factor for multiplexer costs
+     * set weighting factor for register costs
+     * setting it to a negative value means that multiplexers are optimized as a first objective and registers second
      */
     void setRegCostFactor(double wReg);
     /*!

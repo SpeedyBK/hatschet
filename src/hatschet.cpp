@@ -376,6 +376,7 @@ int main(int argc, char *args[]) {
         if(str=="SDCSOLVE" && HatScheT::Tests::sdcSolverTest() == false) exit(-1);
 				if(str=="TREEBIND" && HatScheT::Tests::treeBindTest() == false) exit(-1);
 				if(str=="TREEBINDCOMMUTATIVE" && HatScheT::Tests::treeBindCommutativeTest() == false) exit(-1);
+				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");

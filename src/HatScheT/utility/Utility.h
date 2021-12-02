@@ -36,15 +36,32 @@ class Utility
 {
 public:
 	/*!
+	 * worst case calculation for register and multiplexer costs for a given DFG, allocation, schedule and II
+	 * @param g data flow graph
+	 * @param rm resource model with resource limitations
+	 * @param times schedule times container
+	 * @param II initiation interval
+	 * @return {maxRegs, maxMuxs}
+	 */
+	static std::pair<int, int> getMaxRegsAndMuxs(Graph* g, ResourceModel* rm, std::map<Vertex*, int> times, int II);
+	/*!
 	 * this function computes the number of equivalent 2x1 multiplexers for a binding
 	 * that needs numFUConnections connections between functional units
-	 * this function assumes that all operations bound to a resource have the same number of inputss
+	 * this function assumes that all operations bound to a resource have the same number of inputs
 	 * @param numFUConnections the number of connections between FUs that will be implemented in hardware
 	 * @param g graph
 	 * @param rm resource model
 	 * @return number of equivalent 2x1 multiplexers
 	 */
 	static double getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph* g, ResourceModel* rm);
+	/*!
+	 * this is the counterpart to getNumberOfEquivalent2x1Muxs
+	 * @param num2x1Muxs the number of equivalent 2x1Muxs
+	 * @param g graph
+	 * @param rm resource model
+	 * @return number of interconnect lines between FUs
+	 */
+	static double getNumberOfFUConnections(int num2x1Muxs, Graph* g, ResourceModel* rm);
 	/*!
 	 * unroll graph with factor samples
 	 * "in C-language" this corresponds to modifying a for loop such that the number of iterations is divided by S

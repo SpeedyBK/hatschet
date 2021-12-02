@@ -902,4 +902,84 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		return numFUConnections;
 	}
 
+	std::pair<int, int> Utility::getMaxRegsAndMuxs(Graph *g, ResourceModel *rm, std::map<Vertex *, int> times, int II) {
+		int maxRegs = 0;
+		int maxConnections = 0;
+		int maxMuxs = 0;
+		// upper bound for the number of registers
+		std::map<const HatScheT::Vertex*, int> sortedLifetimesVertices;
+		std::map<const HatScheT::Resource*, std::list<int>> sortedLifetimesResources;
+		try {
+			for (auto &e : g->Edges()) {
+				if (!e->isDataEdge()) continue;
+				auto *vSrc = &e->getVertexSrc();
+				auto *vDst = &e->getVertexDst();
+				auto *rSrc = rm->getResource(vSrc);
+				auto *rDst = rm->getResource(vDst);
+				auto tSrc = times.at(vSrc);
+				auto tDst = times.at(vDst);
+				auto latSrc = rm->getVertexLatency(vSrc);
+				auto distance = e->getDistance();
+				auto lifetime = tDst - tSrc - latSrc + (II * distance);
+				if (sortedLifetimesVertices[vSrc] < lifetime) sortedLifetimesVertices[vSrc] = lifetime;
+			}
+			for (auto &it : sortedLifetimesVertices) {
+				auto &v = it.first;
+				auto res = rm->getResource(v);
+				auto &lifetime = it.second;
+				sortedLifetimesResources[res].emplace_front(lifetime);
+				sortedLifetimesResources[res].sort();
+			}
+			for (auto &it : sortedLifetimesResources) {
+				auto &res = it.first;
+				int numIt;
+				if (res->isUnlimited()) {
+					numIt = rm->getNumVerticesRegisteredToResource(res);
+				}
+				else {
+					numIt = res->getLimit();
+				}
+				auto &sortedStuff = it.second;
+				auto listIt = sortedStuff.end();
+				int regs = 0;
+				for (int i=0; i<numIt; i++) {
+					listIt--;
+					regs += (*listIt);
+				}
+				maxRegs += regs;
+			}
+		}
+		catch (std::out_of_range&) {
+			throw Exception("Utility::getMaxRegsAndMuxs: allocation or schedule corrupt");
+		}
+		// upper bound for the number of interconnect lines
+		for (auto &e : g->Edges()) {
+			if (!e->isDataEdge()) continue;
+			maxConnections += 1;
+		}
+		// calculate upper bound for multiplexers from upper bound of interconnect lines
+		maxMuxs = (int)HatScheT::Utility::getNumberOfEquivalent2x1Muxs(maxConnections, g, rm);
+		return {maxRegs, maxMuxs};
+	}
+
+	double Utility::getNumberOfFUConnections(int num2x1Muxs, Graph *g, ResourceModel *rm) {
+		for (auto &r : rm->Resources()) {
+			// skip unlimited resources because they never need any muxs
+			if (r->isUnlimited()) continue;
+			// calculate the number of inputs for this FU
+			int numInputs = 0;
+			for (auto &v : rm->getVerticesOfResource(r)) {
+				auto numVertexInputs = g->getPredecessors(v).size();
+				if (numVertexInputs > numInputs) numInputs = numVertexInputs;
+			}
+			// add the number of input ports * the number of FUs
+			// e.g. an FU has 2 inputs to port number 1 and 6 inputs to port number 2
+			// then one 2x1 mux is needed for port 1 and 5 2x1 muxs are needed on port number 2
+			// this means that #connections = 2+6 = 8 = 1+5+#ports = 1+5+2
+			// since this holds for each implemented FU, we must multiply the number of inputs with the number of FUs
+			num2x1Muxs += (numInputs * r->getLimit());
+		}
+		return num2x1Muxs;
+	}
+
 }
