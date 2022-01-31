@@ -164,10 +164,6 @@ public:
 	 */
 	static bool tcadExampleTest();
 	/*!
-	 * @brief test functionality for the DATE example
-	 */
-	static bool dateExampleTest();
-	/*!
 	 * @return test functionality to generate various ratII implementations for fir_SAM filter from Origami benchmark
 	 */
 	static bool firSAMRatIIImplementationsTest();
@@ -248,11 +244,6 @@ public:
 	 * @return
 	 */
 	static bool ilpBasedIntIIBindingTest();
-	/*!
-	 * test getILPMinRegBinding function
-	 * @return
-	 */
-	static bool ilpBasedIntIIMinRegBindingTest();
 	/*!
 	 * test getILPMinMuxBinding function
 	 * @return

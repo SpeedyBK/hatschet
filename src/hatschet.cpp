@@ -339,8 +339,6 @@ int main(int argc, char *args[]) {
 				if(str=="COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest()==false) exit(-1);
 				if(str=="ILPBASEDINTIIBINDINGCONG" && HatScheT::Tests::ilpBasedIntIIBindingTestCong() == false) exit(-1);
 				if(str=="ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest() == false) exit(-1);
-				if(str=="ILPMINREGBINDING" && HatScheT::Tests::ilpBasedIntIIMinRegBindingTest()==false) exit(-1);
-				if(str=="ILPMINMUXBINDING" && HatScheT::Tests::ilpBasedIntIIMinMuxBindingTest()==false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
@@ -367,7 +365,6 @@ int main(int argc, char *args[]) {
 				if(str=="FIRSAMRATIIIMPLEMENTATION" && HatScheT::Tests::firSAMRatIIImplementationsTest() == false) exit(-1);
 				if(str=="FIRSHIRATIIIMPLEMENTATION" && HatScheT::Tests::firSHIRatIIImplementationsTest() == false) exit(-1);
 				if(str=="TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
-				if(str=="DATEEXAMPLE" && HatScheT::Tests::dateExampleTest() == false) exit(-1);
 				if(str=="MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
 				if(str=="SCCQFAIL" && HatScheT::Tests::sccqFailTest() == false) exit(-1);
 				if(str=="IISMALLERONE" && HatScheT::Tests::iiSmallerOneTest() == false) exit(-1);

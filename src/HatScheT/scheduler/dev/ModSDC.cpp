@@ -873,9 +873,7 @@ namespace HatScheT {
   }
 
   std::map<const Vertex *, int> ModSDC::getBindings() {
-    //return Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-    return Binding::getILPMinRegBinding(this->getSchedule(), &this->g, &this->resourceModel, (int) this->II,
-                                                 {"Gurobi"});
+    return Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
   }
 
   std::map<Edge *, int> ModSDC::getLifeTimes() {
