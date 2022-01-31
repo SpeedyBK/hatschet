@@ -81,7 +81,7 @@ namespace HatScheT {
 		/////////////////////////
 		// container to return //
 		/////////////////////////
-		this->binding = Binding::BindingContainer();
+		this->binding = Binding::RegChainBindingContainer();
 
 		///////////////////
 		// create solver //
@@ -657,7 +657,7 @@ namespace HatScheT {
 		}
 	}
 
-	Binding::BindingContainer OptimalIntegerIIBinding::getBinding() {
+	Binding::RegChainBindingContainer OptimalIntegerIIBinding::getBinding() {
 		return this->binding;
 	}
 

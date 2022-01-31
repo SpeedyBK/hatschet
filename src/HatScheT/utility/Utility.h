@@ -29,12 +29,21 @@
 
 namespace HatScheT
 {
+	//class ResourceModel; // forward declaration for cyclic include
+	//class Resource; // forward declaration for cyclic include
 /*!
  * \brief The Utility class use this class for utility functions
  */
 class Utility
 {
 public:
+	/*!
+	 * CASE INSENSITIVE comparisons of two strings for equality
+	 * @param s1 first string
+	 * @param s2 second strong
+	 * @return s1 == s2
+	 */
+	static bool iequals(const std::string &s1, const std::string &s2);
 	/*!
 	 * worst case calculation for register and multiplexer costs for a given DFG, allocation, schedule and II
 	 * @param g data flow graph

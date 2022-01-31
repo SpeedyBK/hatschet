@@ -33,7 +33,8 @@
 namespace HatScheT
 {
 
-const int UNLIMITED = -1;
+//class Utility; // forward declaration for cyclic include
+const int UNLIMITED = -1; // code for unlimited resource type
 
 /*!
  * \brief Instances of this class represent a simple resource
@@ -48,11 +49,7 @@ public:
    * \param latency the number of time steps the resource needs to complete its function
    * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
    */
-  Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
-    if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERORR it is not allowed to limit other than 1 to this resource!");
-    if(blockingTime==0  && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
-    this->phyDelay = 0.0f;
-  }
+  Resource(std::string name, int limit, int latency, int blockingTime);
   /*!
    * copy constructor is forbidden for this class
    */

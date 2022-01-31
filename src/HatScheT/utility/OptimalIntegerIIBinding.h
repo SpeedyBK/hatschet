@@ -49,7 +49,7 @@ namespace HatScheT {
 		/*!
 		 * @return binding
 		 */
-		Binding::BindingContainer getBinding();
+		Binding::RegChainBindingContainer getBinding();
 		/*!
 		 * set weighting factor for multiplexer costs
 		 */
@@ -142,7 +142,7 @@ namespace HatScheT {
 		/*!
 		 * best solution found so far
 		 */
-		Binding::BindingContainer binding;
+		Binding::RegChainBindingContainer binding;
 	};
 }
 

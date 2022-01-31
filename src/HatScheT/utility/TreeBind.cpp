@@ -346,7 +346,7 @@ namespace HatScheT {
 		}
   }
   
-  Binding::BindingContainer TreeBind::getBinding() {
+  Binding::RegChainBindingContainer TreeBind::getBinding() {
     return this->bestBinding;
   }
   
@@ -1170,7 +1170,7 @@ namespace HatScheT {
 		this->obj = o;
 	}
 
-	bool TreeBind::bindingABetterThanB(Binding::BindingContainer *bindingA, Binding::BindingContainer *bindingB) {
+	bool TreeBind::bindingABetterThanB(Binding::RegChainBindingContainer *bindingA, Binding::RegChainBindingContainer *bindingB) {
 		switch (this->obj) {
 			case Binding::objective::minimize: {
 				return (this->wMux * bindingA->multiplexerCosts + this->wReg * bindingA->registerCosts) < (this->wMux * bindingB->multiplexerCosts + this->wReg * bindingB->registerCosts);
@@ -1184,7 +1184,7 @@ namespace HatScheT {
 		}
 	}
 
-	bool TreeBind::bindingABetterThanBOrEqual(Binding::BindingContainer *bindingA, Binding::BindingContainer *bindingB) {
+	bool TreeBind::bindingABetterThanBOrEqual(Binding::RegChainBindingContainer *bindingA, Binding::RegChainBindingContainer *bindingB) {
 		switch (this->obj) {
 			case Binding::objective::minimize: {
 				return (this->wMux * bindingA->multiplexerCosts + this->wReg * bindingA->registerCosts) <= (this->wMux * bindingB->multiplexerCosts + this->wReg * bindingB->registerCosts);

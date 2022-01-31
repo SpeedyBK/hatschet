@@ -20,6 +20,7 @@
 */
 
 #include <HatScheT/ResourceModel.h>
+#include <HatScheT/utility/Utility.h>
 
 #include <algorithm>
 #include <iostream>
@@ -296,6 +297,13 @@ void Resource::addHardwareCost(string n, double c)
 			numSlots += it.second;
 		}
 		return numSlots;
+	}
+
+	Resource::Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime)  {
+		if(Utility::iequals(name, "register")) throw Exception("register.constructor: ERROR resource name 'register' is not allowed; please choose another one");
+		if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERROR it is not allowed to limit other than 1 to this resource!");
+		if(blockingTime==0  && limit!=-1) throw Exception(name + ".constructor: ERROR it is not allowed to limit resource with a blocking time of 0!");
+		this->phyDelay = 0.0f;
 	}
 
 	int ResourceModel::getMaxLatency() const

@@ -992,4 +992,12 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		return num2x1Muxs;
 	}
 
+	bool Utility::iequals(const std::string &s1, const std::string &s2) {
+		auto sz = s1.size();
+		if (s2.size() != sz) return false;
+		for (unsigned int i=0; i<sz; i++) {
+			if (std::tolower(s1[i]) != std::tolower(s2[i])) return false;
+		}
+		return true;
+	}
 }

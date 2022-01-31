@@ -802,10 +802,12 @@ namespace HatScheT {
 				}
 				hasBinding = true;
 				b.resourceBindings[v->getName()] = k;
-				std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "'" << std::endl;
+				if (!quiet)
+					std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "'" << std::endl;
 			}
 		}
 
+		/*
 		for(auto v : g->Vertices()) {
 			bool hasBinding = false;
 			auto i = v->getId();
@@ -823,6 +825,7 @@ namespace HatScheT {
 				std::cout << "Variable '" << v->getName() << "' is bound to register number '" << l << "'" << std::endl;
 			}
 		}
+		 */
 
 		for(auto &r : rm->Resources()) {
 			int resLimit = r->getLimit();
@@ -832,8 +835,10 @@ namespace HatScheT {
 					auto var = c_r_k_l[{r->getName(),{k,l}}];
 					auto bTemp = (bool)((int) round(results[var]));
 					if(!bTemp) continue;
-					b.fuRegConnections.push_back({{r->getName(),k},l});
-					std::cout << "FU '" << k << "' of type '" << r->getName() << "' is connected to register '" << l << "'" << std::endl;
+					//b.fuRegConnections.push_back({{r->getName(),k},l});
+					b.connections.push_back({r->getName(), k, "register", l, 0});
+					if (!quiet)
+						std::cout << "FU '" << k << "' of type '" << r->getName() << "' is connected to register '" << l << "'" << std::endl;
 				}
 			}
 		}
@@ -846,8 +851,10 @@ namespace HatScheT {
 			auto n = it.first.first.second;
 			auto k = it.first.second.first;
 			auto l = it.first.second.second;
-			b.regFuConnections.push_back({{l,n},{r,k}});
-			std::cout << "Register '" << l << "' is connected to port '" << n << "' of FU '" << k << "' of type '" << r << "'" << std::endl;
+			//b.regFuConnections.push_back({{l,n},{r,k}});
+			b.connections.push_back({"register", l, r, k, n});
+			if (!quiet)
+				std::cout << "Register '" << l << "' is connected to port '" << n << "' of FU '" << k << "' of type '" << r << "'" << std::endl;
 		}
 
 		for (auto &it : b_r1_r2_k1_k2_n) {
@@ -859,8 +866,10 @@ namespace HatScheT {
 			auto k1 = it.first.first.second.first;
 			auto k2 = it.first.first.second.second;
 			auto n = it.first.second;
-			b.fuConnections.push_back({{{r2,k2},{r1,k1}},{0,n}});
-			std::cout << "FU '" << k2 << "' of type '" << r2 << "' is connected to port '" << n << "' of FU '" << k1 << "' of type '" << r1 << "'" << std::endl;
+			//b.fuConnections.push_back({{{r2,k2},{r1,k1}},{0,n}});
+			b.connections.push_back({r2, k2, r1, k1, n});
+			if (!quiet)
+				std::cout << "FU '" << k2 << "' of type '" << r2 << "' is connected to port '" << n << "' of FU '" << k1 << "' of type '" << r1 << "'" << std::endl;
 		}
 
 		if (!quiet) {
@@ -871,7 +880,7 @@ namespace HatScheT {
 		return b;
 	}
 
-	Binding::BindingContainer
+	Binding::RegChainBindingContainer
 	Binding::getILPBasedIntIIBinding(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II, int wMux,
 																	 int wReg, std::map<Edge *, int> portAssignments, double maxMux, double maxReg,
 																	 std::set<const Resource *> commutativeOps, std::list<std::string> sw, int timeout,
@@ -887,7 +896,7 @@ namespace HatScheT {
 		return oib.getBinding();
 	}
 
-	Binding::RatIIBindingContainer
+	Binding::RatIIRegChainBindingContainer
 	Binding::getILPBasedRatIIBinding(std::vector<map<Vertex*, int>> sched, Graph *g, ResourceModel *rm, int samples, int modulo,
 																	 int wMux, int wReg, std::map<Edge *, int> portAssignments, double maxMux,
 																	 double maxReg, std::set<const Resource *> commutativeOps, std::list<std::string> sw,
@@ -971,7 +980,7 @@ namespace HatScheT {
 
 		// call binding function on unrolled graph
 		auto unrolledBindingContainer = getILPBasedIntIIBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,wMux,wReg,unrolledPortAssignments,maxMux,maxReg,unrolledCommutativeOps,sw,timeout,quiet);
-		RatIIBindingContainer b;
+		RatIIRegChainBindingContainer b;
 		b.solutionStatus = unrolledBindingContainer.solutionStatus;
 
 		// fill solution structure if binding was found
@@ -1003,7 +1012,7 @@ namespace HatScheT {
 #endif
 
 	void
-	Binding::calcFUConnectionsAndCosts(Binding::BindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int>* portAssignments) {
+	Binding::calcFUConnectionsAndCosts(Binding::RegChainBindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int>* portAssignments) {
 		b->multiplexerCosts = 0;
 		b->registerCosts = 0;
 		b->fuConnections.clear();

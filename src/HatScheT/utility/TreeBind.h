@@ -46,7 +46,7 @@ namespace HatScheT {
     /*!
      * @return binding
      */
-    Binding::BindingContainer getBinding();
+    Binding::RegChainBindingContainer getBinding();
     /*!
      * set weighting factor for multiplexer costs;
      * setting it to a negative value means that registers are optimized as a first objective and multiplexers second
@@ -112,14 +112,14 @@ namespace HatScheT {
 		 * @param bindingB B
 		 * @return if A is better than B
 		 */
-		bool bindingABetterThanB(Binding::BindingContainer* bindingA, Binding::BindingContainer* bindingB);
+		bool bindingABetterThanB(Binding::RegChainBindingContainer* bindingA, Binding::RegChainBindingContainer* bindingB);
 		/*!
 		 * compare two bindings and return if A is better than B or equally good based on this->objective
 		 * @param bindingA A
 		 * @param bindingB B
 		 * @return if A is better than B or if both are equally good
 		 */
-		bool bindingABetterThanBOrEqual(Binding::BindingContainer* bindingA, Binding::BindingContainer* bindingB);
+		bool bindingABetterThanBOrEqual(Binding::RegChainBindingContainer* bindingA, Binding::RegChainBindingContainer* bindingB);
   	/*!
   	 * optimization goal
   	 */
@@ -275,11 +275,11 @@ namespace HatScheT {
     /*!
      * best solution found so far
      */
-    Binding::BindingContainer bestBinding;
+    Binding::RegChainBindingContainer bestBinding;
     /*!
      * keep track of current solution
      */
-    Binding::BindingContainer currentBinding;
+    Binding::RegChainBindingContainer currentBinding;
     /*!
      * sequence for tree traversal containing all limited operations
      */

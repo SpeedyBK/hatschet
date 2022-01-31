@@ -16,7 +16,7 @@ namespace HatScheT {
 			minimize,
 			maximize
 		};
-		struct BindingContainer {
+		struct RegChainBindingContainer {
 			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
 			std::string solutionStatus="NOT_SOLVED";
 			// register costs for easy tracking
@@ -25,20 +25,11 @@ namespace HatScheT {
 			int multiplexerCosts=-1;
 			// each vertex in a graph is bound to a specific FU of its resource type
 			std::map<std::string,int> resourceBindings;
-			// each variable is bound to a given register (if registers are implemented with enable inputs)
-			// ignore this container if registers are implemented as register chains
-			std::map<std::string,int> registerBindings;
 			// list of connections between FUs
 			// one list element: pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
-			// list of connections from FUs to registers (if registers are implemented with enable inputs)
-			// one list element: pair<pair<src resource type, src FU number>, dst register number>
-			std::list<std::pair<std::pair<std::string,int>,int>> fuRegConnections;
-			// list of connections from registers to FUs (if registers are implemented with enable inputs)
-			// one list element: pair<pair<src register number, dst port number>, pair<dst resource type, dst FU number>>
-			std::list<std::pair<std::pair<int, int>, std::pair<std::string, int>>> regFuConnections;
 		};
-		struct RatIIBindingContainer {
+		struct RatIIRegChainBindingContainer {
 			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
 			std::string solutionStatus="NOT_SOLVED";
 			// register costs for easy tracking
@@ -50,6 +41,27 @@ namespace HatScheT {
 			// This one is actually the same as above... the list might be longer though...
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
 		};
+		struct BindingContainer {
+			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
+			std::string solutionStatus="NOT_SOLVED";
+			// register costs for easy tracking
+			int registerCosts=-1;
+			// multiplexer costs for easy tracking
+			int multiplexerCosts=-1;
+			// each vertex in a graph is bound to a specific FU of its resource type
+			std::map<std::string,int> resourceBindings;
+			// container to keep track of any possible connections
+			// [0]: src resource name, [1]: src index, [2]: dst resource name, [3]: dst index, [4]: dst input port
+			// resource name "register" is reserved for registers only
+			// possibilities:
+			//   FU -> FU
+			//   FU -> register
+			//   register -> FU
+			//   register -> register
+			std::list<std::tuple<std::string, int, std::string, int, int>> connections;
+			// container to keep track in which times the registers accept their input data
+			std::map<int, std::set<int>> registerEnableTimes;
+		};
 		/*!
 		 * assume that resource bindings are set
 		 * calculate and set all necessary FU connections and resulting MUX and register costs
@@ -60,7 +72,7 @@ namespace HatScheT {
 		 * @param II initiation interval
 		 * @param portAssignments a container with input port connections for each edge destination vertex
 		 */
-		static void calcFUConnectionsAndCosts(BindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int> *portAssignments);
+		static void calcFUConnectionsAndCosts(RegChainBindingContainer* b, Graph* g, ResourceModel* rm, std::map<Vertex*, int>* sched, int II, std::map<Edge*,int> *portAssignments);
 		/*!
 		 * @brief count the total number of needed lifetime registers for that graph, resource model schedule and binding
 		 * usable for rational IIs
@@ -119,9 +131,9 @@ namespace HatScheT {
 		 * @return a map of vertex to FU-number
 		 */
 		static BindingContainer getILPBasedIntIIBindingCong(map<Vertex*, int> sched, Graph* g, ResourceModel* rm,
-																												int II, std::map<Edge*,int> portAssignments,
-																												std::list<std::string> sw = {}, int timeout= 300,
-																												bool quiet = true);
+																																int II, std::map<Edge*,int> portAssignments,
+																																std::list<std::string> sw = {}, int timeout= 300,
+																																bool quiet = true);
 		/*!
 		 * @brief getILPBasedIntIIBinding create a binding with minimal number of mux inputs and minimal number of registers
 		 * (assuming register sharing unlike the one by Cong and Xu!!!)
@@ -139,9 +151,9 @@ namespace HatScheT {
 		 * @param timeout timeout for ilp solver
 		 * @return binding
 		 */
-		static BindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
-			int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
-			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
+		static RegChainBindingContainer getILPBasedIntIIBinding(map<Vertex*, int> sched, Graph *g, ResourceModel* rm, int II,
+																														int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
+																														std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
 		/*!
 		 * @brief getILPBasedRatIIBinding create a binding with minimal number of mux inputs and minimal number of registers
 		 * (assuming register sharing unlike the one by Cong and Xu!!!)
@@ -160,9 +172,9 @@ namespace HatScheT {
 		 * @param timeout timeout for ilp solver
 		 * @return binding
 		 */
-		static RatIIBindingContainer getILPBasedRatIIBinding(std::vector<map<Vertex*, int>> sched, Graph *g, ResourceModel* rm, int samples,
-			int modulo, int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
-			std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
+		static RatIIRegChainBindingContainer getILPBasedRatIIBinding(std::vector<map<Vertex*, int>> sched, Graph *g, ResourceModel* rm, int samples,
+																																 int modulo, int wMux, int wReg, std::map<Edge*,int> portAssignments, double maxMux=-1.0, double maxReg=-1.0,
+																																 std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {}, int timeout=300, bool quiet=true);
 	#endif
 	};
 }
