@@ -1723,17 +1723,18 @@ namespace HatScheT {
 		std::cout << "sMinII = " << sMinII << std::endl;
 		std::cout << "minII = " << minII << std::endl;
 		std::cout << "integerII = " << integerII << std::endl;
-		std::cout << "Queue size:" << solutions.size() << std::endl;
+		std::cout << "Queue size = " << solutions.size() << std::endl;
 		std::cout << "M/S Queue:" << std::endl;
 		for (auto it : solutions) {
 			std::cout << "  M = " << it.first << ", S = " << it.second << ", M/S = " << double(it.first) / double(it.second)
 								<< std::endl;
 		}
 
-		if (solutions.size() != 31) {
-			std::cout << "Expected queue size of 31 but got queue size of " << solutions.size() << std::endl;
+		auto expectedSize = 6;
+		if (solutions.size() != expectedSize) {
+			std::cout << "Expected queue size of " << expectedSize << " but got queue size of " << solutions.size() << std::endl;
 		}
-		return solutions.size() == 31;
+		return solutions.size() == expectedSize;
 	}
 
 	bool Tests::ratIIUnrollSchedulerTest() {
