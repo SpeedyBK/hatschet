@@ -216,6 +216,10 @@ namespace HatScheT {
 				auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
 				if(dstStart > v1LifeEnd) v1LifeEnd = dstStart;
 			}
+			if (v1LifeEnd - v1LifeStart > II) {
+				// variable overlaps with itself from future or past iterations
+				throw HatScheT::Exception("Variable '"+v->getName()+"' has lifetime > II ("+std::to_string(v1LifeEnd - v1LifeStart)+" > "+std::to_string(II)+"); this is not supported, yet; please choose another binding algorithm");
+			}
 			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd) or (v1LifeEnd == -1);
 			for(auto &it : sched) {
 				// calc lifetime of v2
@@ -807,7 +811,6 @@ namespace HatScheT {
 			}
 		}
 
-		/*
 		for(auto v : g->Vertices()) {
 			bool hasBinding = false;
 			auto i = v->getId();
@@ -821,11 +824,10 @@ namespace HatScheT {
 					throw HatScheT::Exception("Variable '" + v->getName() + "' is bound to multiple Registers - that should never happen");
 				}
 				hasBinding = true;
-				b.registerBindings[v->getName()] = l;
+				b.registerEnableTimes[l] = {(sched[v] + rm->getResource(v)->getLatency()) % II};
 				std::cout << "Variable '" << v->getName() << "' is bound to register number '" << l << "'" << std::endl;
 			}
 		}
-		 */
 
 		for(auto &r : rm->Resources()) {
 			int resLimit = r->getLimit();
