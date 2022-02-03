@@ -107,11 +107,10 @@ bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *
  * @param rm resource model
  * @param sched schedule time container
  * @param II initiation interval
- * @param portAssignments this container specifies which edge is connected with which input port of the sink vertex
  * @param commutativeOps a set with commutative operations that do not care about their port assignments
  * @return if the binding is ok
  */
-	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::RegChainBindingContainer bind, std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::RegChainBindingContainer bind, std::set<const Resource*> commutativeOps = {});
 	/*!
 	 * do the same but with a different binding container type
 	 * @param g

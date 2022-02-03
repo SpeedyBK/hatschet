@@ -46,7 +46,7 @@ public:
 	 * @param bChain binding container to convert
 	 * @return converted binding container
 	 */
-	Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain);
+	static Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain);
 	/*!
 	 * CASE INSENSITIVE comparisons of two strings for equality
 	 * @param s1 first string

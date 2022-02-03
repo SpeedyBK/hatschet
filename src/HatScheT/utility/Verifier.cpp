@@ -356,7 +356,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
 }
 
 bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
-																	Binding::RegChainBindingContainer bind, map<Edge *, int> portAssignments, set<const Resource *> commutativeOps) {
+																	Binding::RegChainBindingContainer bind, set<const Resource *> commutativeOps) {
 	// check for empty binding
 	if (bind.resourceBindings.empty()) {
 		std::cout << "HatScheT::verifyIntIIBinding: detected empty binding" << std::endl;
@@ -409,7 +409,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	}
 
 	// check if port assignments for non-commutative operations are obeyed
-	if(portAssignments.empty() or bind.fuConnections.empty()) {
+	if(bind.portAssignments.empty() or bind.fuConnections.empty()) {
 		std::cout << "HatScheT::verifyIntIIBinding: no port assignments passed - will skip evaluation for those" << std::endl;
 		return true;
 	}
@@ -439,7 +439,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				auto tDst = sched[const_cast<Vertex*>(&e->getVertexDst())];
 				auto lifetime = tDst - tSrc - latSrc + (II * e->getDistance());
 				if (it.second.first != lifetime) continue;
-				auto port = portAssignments[e];
+				auto port = bind.portAssignments[e];
 				if (it.second.second != port) continue;
 				foundConnection = true;
 				break;
@@ -517,7 +517,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			auto tDst = sched[vDst];
 			auto latSrc = rSrc->getLatency();
 			auto dist = e->getDistance();
-			auto wantedPort = portAssignments[e];
+			auto wantedPort = bind.portAssignments[e];
 			if (requestedPorts.find(wantedPort) != requestedPorts.end()) {
 				throw HatScheT::Exception("Corrupt port assignment container - Multiple edges are connected to port '"+std::to_string(wantedPort)+"' of '"+vDst->getName()+"'");
 			}
@@ -741,6 +741,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			catch (std::out_of_range&) {
 				// edge has no port assignment
 				// oh no, binding is invalid :(
+				std::cout << "Missing port assignment for edge '" << e->getVertexSrcName() << "' -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "'" << std::endl;
 				return false;
 			}
 			numInputEdges++;
@@ -748,6 +749,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		if (numInputEdges != occupiedInputPorts.size()) {
 			// not all input ports are occupied
 			// oh no, binding is invalid :(
+			std::cout << "Not all ports of vertex '" << vDst->getName() << "' are occupied (" << occupiedInputPorts.size() << "/" << numInputEdges << ")" << std::endl;
 			return false;
 		}
 	}
@@ -756,6 +758,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	for (auto v : g->Vertices()) {
 		if (bind.resourceBindings.find(v->getName()) == bind.resourceBindings.end()) {
 			// oh no, binding is invalid :(
+			std::cout << "Vertex '" << v->getName() << "' is not assigned to an FU" << std::endl;
 			return false;
 		}
 	}
@@ -772,6 +775,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			// we got a conflict if they are executed by the same FU
 			if (bind.resourceBindings.at(v1->getName()) == bind.resourceBindings.at(v2->getName())) {
 				// oh no, binding is invalid :(
+				std::cout << "Conflicting vertices '" << v1->getName() << "' and '" << v2->getName() << "' are bound to the same FU" << std::endl;
 				return false;
 			}
 		}
@@ -880,6 +884,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			}
 			if (!foundConnection) {
 				// oh no, binding is invalid :(
+				std::cout << "Failed to find connection path for edge '" << e->getVertexSrcName() << "' -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "'" << std::endl;
 				return false;
 			}
 		}

@@ -983,8 +983,19 @@ namespace HatScheT {
 		// call binding function on unrolled graph
 		auto unrolledBindingContainer = getILPBasedIntIIBinding(unrolledSchedule,&g_unroll,&rm_unroll,modulo,wMux,wReg,unrolledPortAssignments,maxMux,maxReg,unrolledCommutativeOps,sw,timeout,quiet);
 		RatIIRegChainBindingContainer b;
+		// solution status
 		b.solutionStatus = unrolledBindingContainer.solutionStatus;
-
+		// port assignments
+		for (auto &it : unrolledBindingContainer.portAssignments) {
+			auto unrolledEdge = it.first;
+			auto portAssignment = it.second;
+			auto originalEdge = unrolledEdgeMappingsReverse[unrolledEdge].first;
+			auto sample = unrolledEdgeMappingsReverse[unrolledEdge].second;
+			if (sample >= b.portAssignments[originalEdge].size()) {
+				b.portAssignments[originalEdge].resize(sample+1);
+			}
+			b.portAssignments[originalEdge][sample] = portAssignment;
+		}
 		// fill solution structure if binding was found
 		// vertex->fu bindings
 		for(auto &it : unrolledBindingContainer.resourceBindings) {
@@ -1005,6 +1016,7 @@ namespace HatScheT {
 			auto port = it.second.second;
 			b.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(rSrc,fuSrc),std::make_pair(rDst,fuDst)),std::make_pair(lifetime,port)));
 		}
+		// costs
 		b.multiplexerCosts = unrolledBindingContainer.multiplexerCosts;
 		b.registerCosts = unrolledBindingContainer.registerCosts;
 

@@ -487,7 +487,7 @@ namespace HatScheT {
 							t += r_m_n_k_p[{{m, n},{k, p}}];
 						}
 						 */
-						// skipt them because they were already handled earlier
+						// skip them because they were already handled earlier
 						continue;
 					}
 					else {
@@ -647,8 +647,22 @@ namespace HatScheT {
 			this->binding.fuConnections.emplace_back(std::make_pair(std::make_pair(std::make_pair(ri->getName(),fui),std::make_pair(rj->getName(),fuj)),std::make_pair(k,p)));
 		}
 
+		// register costs
 		for (auto &it : z_m) {
 			this->binding.registerCosts += round(res[it.second]);
+		}
+
+		// port assignments
+		// first: copy port assignments
+		this->binding.portAssignments = this->portAssignments;
+		// overwrite assignments for commutative operations
+		for (auto &it : a_e_p) {
+			if (not (bool)round(res[it.second])) {
+				continue;
+			}
+			auto edge = it.first.first;
+			auto port = it.first.second;
+			this->binding.portAssignments[edge] = port;
 		}
 
 		if(!this->quiet) {

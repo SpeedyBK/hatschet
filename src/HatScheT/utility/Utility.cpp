@@ -1037,6 +1037,13 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			throw Exception("Utility::convertBindingContainer: detected invalid register costs");
 		}
 
+		// enable all registers in all timesteps
+		for (int regIndex=0; regIndex<registerCounter; regIndex++) {
+			for (int i=0; i<II; i++) {
+				b.registerEnableTimes[regIndex].insert(i);
+			}
+		}
+
 		// now comes the tricky part...
 		// we must re-create all connections
 		// start with FU->register and register->register connections
@@ -1044,6 +1051,10 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto rSrcName = it.first.first;
 			auto fuSrcIndex = it.first.second;
 			auto numRegs = it.second;
+
+			// check if there is a FU->register connections after this FU
+			if (numRegs <= 0) continue;
+
 			auto regOffset = regOffsets[it.first];
 			// create FU->register connection
 			b.connections.push_back({rSrcName, fuSrcIndex, "register", regOffset, 0});
@@ -1052,12 +1063,12 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			if (numRegs <= 1) continue;
 
 			// create register->register connections
-			for (int i=0; i<numRegs; i++) {
+			for (int i=0; i<numRegs-1; i++) {
 				b.connections.push_back({"register", regOffset+i, "register", regOffset+i+1, 0});
 			}
 		}
 
-		// now do the remaining register->FU connections
+		// now do the remaining register->FU and FU->FU connections
 		for (auto &connection : bChain.fuConnections) {
 			auto rSrcName = connection.first.first.first;
 			auto fuSrcIndex = connection.first.first.second;
@@ -1066,9 +1077,44 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto numRegs = connection.second.first;
 			auto dstPort = connection.second.second;
 
-			auto srcRegisterIndex = regOffsets[{rSrcName, fuSrcIndex}] + numRegs;
-			b.connections.push_back({"register", srcRegisterIndex, rDstName, fuDstIndex, dstPort});
+			if (numRegs > 0) {
+				// register -> FU
+				auto srcRegisterIndex = regOffsets.at({rSrcName, fuSrcIndex}) + numRegs - 1;
+				b.connections.push_back({"register", srcRegisterIndex, rDstName, fuDstIndex, dstPort});
+			}
+			else {
+				// FU -> FU
+				b.connections.push_back({rSrcName, fuSrcIndex, rDstName, fuDstIndex, dstPort});
+			}
 		}
+
+		/*
+		// debugging
+		std::cout << "FU bindings:" << std::endl;
+		for (auto &it : bChain.resourceBindings) {
+			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' (" << it.second << ")" << std::endl;
+		}
+		std::cout << "connections in register chain binding container:" << std::endl;
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << " over " << numRegs << " registers" << std::endl;
+		}
+
+		std::cout << "connections in general binding container:" << std::endl;
+		for (auto &connection : b.connections) {
+			auto rSrcName = std::get<0>(connection);
+			auto fuSrcIndex = std::get<1>(connection);
+			auto rDstName = std::get<2>(connection);
+			auto fuDstIndex = std::get<3>(connection);
+			auto dstPort = std::get<4>(connection);
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << std::endl;
+		}
+		 */
 
 		return b;
 	}

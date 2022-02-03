@@ -381,6 +381,7 @@ namespace HatScheT {
 			// in this case there is no need to do any binding because everything is implemented in parallel
 			// just update final binding
 			this->bestBinding = this->currentBinding;
+			this->bestBinding.portAssignments = this->portAssignments;
 		}
 		if (!this->quiet) {
 			std::cout << "TreeBind::iterativeTreeSearch: initialized stack" << std::endl;
@@ -547,6 +548,7 @@ namespace HatScheT {
           )
 					){
           this->bestBinding = this->currentBinding;
+					this->bestBinding.portAssignments = this->portAssignments;
           this->bestBinding.solutionStatus = "TIMEOUT_FEASIBLE";
 					if (!this->quiet) {
 						std::cout << "  updated best solution" << std::endl;

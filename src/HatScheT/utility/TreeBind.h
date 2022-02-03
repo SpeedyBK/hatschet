@@ -93,7 +93,7 @@ namespace HatScheT {
     void setObjective(Binding::objective o);
   private:
   	/*!
-  	 * resources with exactly one vertex associeated to them have a trivial binding
+  	 * resources with exactly one vertex associated to them have a trivial binding
   	 * even if they are limited
   	 */
   	std::set<const Resource*> trivialBindings;
