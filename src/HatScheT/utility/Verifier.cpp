@@ -724,6 +724,171 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 	return true;
 }
 
+bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
+																	Binding::BindingContainer bind, std::set<const Resource *> commutativeOps) {
+
+	// check if all edges have a *valid* port assignment (i.e., all input ports of each vertex must be occupied)
+	// ATTENTION: this function expects that the port assignments container was updated
+	// if ports were switched for commutative operations
+	for (auto &vDst : g->Vertices()) {
+		int numInputEdges = 0;
+		std::set<int> occupiedInputPorts;
+		for (auto &e : g->Edges()) {
+			if (vDst != &e->getVertexDst()) continue;
+			try {
+				occupiedInputPorts.insert(bind.portAssignments.at(e));
+			}
+			catch (std::out_of_range&) {
+				// edge has no port assignment
+				// oh no, binding is invalid :(
+				return false;
+			}
+			numInputEdges++;
+		}
+		if (numInputEdges != occupiedInputPorts.size()) {
+			// not all input ports are occupied
+			// oh no, binding is invalid :(
+			return false;
+		}
+	}
+
+	// check if all vertices are assigned to an FU
+	for (auto v : g->Vertices()) {
+		if (bind.resourceBindings.find(v->getName()) == bind.resourceBindings.end()) {
+			// oh no, binding is invalid :(
+			return false;
+		}
+	}
+
+	// check if conflicting vertices are bound to the same FU
+	for (auto v1 : g->Vertices()) {
+		for (auto v2 : g->Vertices()) {
+			// skip potential conflicts with itself
+			if (v1 == v2) continue;
+			// conflicts are only possible if both resource types are equal
+			if (rm->getResource(v1) != rm->getResource(v2)) continue;
+			// conflicts are only possible if both congruence classes are also equal
+			if (sched.at(v1) % II != sched.at(v2) % II) continue;
+			// we got a conflict if they are executed by the same FU
+			if (bind.resourceBindings.at(v1->getName()) == bind.resourceBindings.at(v2->getName())) {
+				// oh no, binding is invalid :(
+				return false;
+			}
+		}
+	}
+
+	// check if all dependencies for all vertices are ok
+	for (auto &vDst : g->Vertices()) {
+		// get info about this vertex
+		auto rDst = rm->getResource(vDst);
+		auto tDst = sched.at(vDst);
+		auto fuDst = bind.resourceBindings.at(vDst->getName());
+		// this is needed for commutative operation types
+		// keep track which edge is connected to which input port of the FU that executes this operation
+		std::map<Edge*, std::set<int>> vertexInputs;
+		std::vector<Edge*> inputEdges;
+		// check all input edges
+		for (auto e : g->Edges()) {
+			// skip input edges of other vertices
+			if (vDst != &e->getVertexDst()) continue;
+			// register edge as input edges of this vertex
+			inputEdges.emplace_back(e);
+			// just get all info about src vertex that we may potentially need
+			auto vSrc = &e->getVertexSrc();
+			auto rSrc = rm->getResource(vSrc);
+			auto tSrc = sched.at(vSrc);
+			auto fuSrc = bind.resourceBindings.at(vSrc->getName());
+			// calculate lifetime
+			int lifetime = tDst - tSrc - rSrc->getLatency() + e->getDistance() * II;
+			// keep track of where the variable is at which time step
+			std::set<std::pair<std::string, int>> currentSources = {{rSrc->getName(), fuSrc}};
+			// number of considered lifetime register stages
+			int numLifetimeRegs = 0;
+			// the time step in which the variable was created
+			int currentTimestep = tSrc + rSrc->getLatency();
+			// search the location of the variable in the time step when the dst operation is executed
+			while (lifetime > numLifetimeRegs) {
+				// container to store where the variable will be in the next time step
+				std::set<std::pair<std::string, int>> nextSources;
+
+				// check all locations of the variable in the current time step
+				for (auto &source : currentSources) {
+					// check if it is passed to another register
+					for (auto &connection : bind.connections) {
+						// only check connections for which the source matches
+						// skip connections for source resource type mismatch
+						if (std::get<0>(connection) != source.first) continue;
+						// also skip it if FU or register index does not match
+						if (std::get<1>(connection) != source.second) continue;
+						// also skip it if destination is not a register
+						if (std::get<2>(connection) != "register") continue;
+						// shortcut for the register index
+						auto regIndex = std::get<3>(connection);
+						// also skip it if the register is not enabled in the current time step
+						if (bind.registerEnableTimes[regIndex].find(currentTimestep % II) == bind.registerEnableTimes[regIndex].end()) continue;
+						// looks like we found a register that holds the variable in the next time step
+						nextSources.insert({"register", regIndex});
+					}
+
+					// check if it remains where it is
+					bool overwritesValue = false;
+					if (source.first == "register") {
+						for (auto enableTime : bind.registerEnableTimes[source.second]) {
+							if (enableTime == currentTimestep % II) {
+								overwritesValue = true;
+								break;
+							}
+						}
+					}
+					else {
+						// FUs always produce a new value
+						overwritesValue = true;
+					}
+					if (!overwritesValue) {
+						nextSources.insert(source);
+					}
+				}
+
+				// update sources
+				currentSources = nextSources;
+
+				// update time step counter
+				currentTimestep++;
+
+				// update register stage counter
+				numLifetimeRegs++;
+			}
+
+			// check if there is a connection from any of the sources to the actual destination
+			bool foundConnection = false;
+			for (auto &source : currentSources) {
+				for (auto connection : bind.connections) {
+					// skip connections for source resource type mismatch
+					if (std::get<0>(connection) != source.first) continue;
+					// skip if FU or register index does not match
+					if (std::get<1>(connection) != source.second) continue;
+					// skip if destination does not match
+					if (std::get<2>(connection) != rDst->getName()) continue;
+					if (std::get<3>(connection) != fuDst) continue;
+					// skip if port does not match
+					if (std::get<4>(connection) != bind.portAssignments.at(e)) continue;
+					// connection seems fine...
+					foundConnection = true;
+					break;
+				}
+				if (foundConnection) break;
+			}
+			if (!foundConnection) {
+				// oh no, binding is invalid :(
+				return false;
+			}
+		}
+	}
+
+	// binding seems fine :)
+	return true;
+}
+
 
 ///return numerator and denominator of a rational number stored in double
 ///If the number is not rational, or a specific budget is hit, it returns the pair <0,0>

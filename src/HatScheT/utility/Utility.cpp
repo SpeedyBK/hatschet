@@ -24,6 +24,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include <limits>
 #include <cmath>
+#include <algorithm>
 #include <map>
 #include <ios>
 #include <fstream>
@@ -999,5 +1000,76 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			if (std::tolower(s1[i]) != std::tolower(s2[i])) return false;
 		}
 		return true;
+	}
+
+	Binding::BindingContainer Utility::convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain) {
+		Binding::BindingContainer b;
+
+		// trivial copies
+		b.multiplexerCosts = bChain.multiplexerCosts;
+		b.registerCosts = bChain.registerCosts;
+		b.solutionStatus = bChain.solutionStatus;
+		b.portAssignments = bChain.portAssignments;
+		b.resourceBindings = bChain.resourceBindings;
+
+		// count number of registers after each FU
+		std::map<std::pair<std::string, int>, int> regChainLength;
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+			regChainLength[{rSrcName, fuSrcIndex}] = std::max(regChainLength[{rSrcName, fuSrcIndex}], numRegs);
+		}
+
+		// uniquely number registers
+		int registerCounter = 0;
+		std::map<std::pair<std::string, int>, int> regOffsets;
+		for (auto &it : regChainLength) {
+			regOffsets[it.first] = registerCounter;
+			registerCounter += it.second;
+		}
+
+		// check if register costs are ok
+		if (bChain.registerCosts != registerCounter) {
+			throw Exception("Utility::convertBindingContainer: detected invalid register costs");
+		}
+
+		// now comes the tricky part...
+		// we must re-create all connections
+		// start with FU->register and register->register connections
+		for (auto &it : regChainLength) {
+			auto rSrcName = it.first.first;
+			auto fuSrcIndex = it.first.second;
+			auto numRegs = it.second;
+			auto regOffset = regOffsets[it.first];
+			// create FU->register connection
+			b.connections.push_back({rSrcName, fuSrcIndex, "register", regOffset, 0});
+
+			// check if there are any register->register connections after this FU
+			if (numRegs <= 1) continue;
+
+			// create register->register connections
+			for (int i=0; i<numRegs; i++) {
+				b.connections.push_back({"register", regOffset+i, "register", regOffset+i+1, 0});
+			}
+		}
+
+		// now do the remaining register->FU connections
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+
+			auto srcRegisterIndex = regOffsets[{rSrcName, fuSrcIndex}] + numRegs;
+			b.connections.push_back({"register", srcRegisterIndex, rDstName, fuDstIndex, dstPort});
+		}
+
+		return b;
 	}
 }

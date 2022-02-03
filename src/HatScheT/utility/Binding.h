@@ -28,6 +28,8 @@ namespace HatScheT {
 			// list of connections between FUs
 			// one list element: pair<pair<pair<src resource type, src FU number>, pair<dst resource type, dst FU number>>, pair<number of lifetime registers, dst input port number>>
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
+			// container to keep track of port assignments in case there are commutative operations inside the DFG
+			std::map<Edge*, int> portAssignments;
 		};
 		struct RatIIRegChainBindingContainer {
 			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
@@ -40,6 +42,9 @@ namespace HatScheT {
 			std::vector<std::map<std::string,int>> resourceBindings;
 			// This one is actually the same as above... the list might be longer though...
 			std::list<std::pair<std::pair<std::pair<std::string,int>,std::pair<std::string,int>>,std::pair<int,int>>> fuConnections;
+			// container to keep track of port assignments in case there are commutative operations inside the DFG
+			// -> one edge per sample
+			std::map<Edge*, std::vector<int>> portAssignments;
 		};
 		struct BindingContainer {
 			// a string that holds information about the solution quality (e.g., "TIMEOUT_FEASIBLE" or "OPTIMAL")
@@ -61,6 +66,8 @@ namespace HatScheT {
 			std::list<std::tuple<std::string, int, std::string, int, int>> connections;
 			// container to keep track in which times the registers accept their input data
 			std::map<int, std::set<int>> registerEnableTimes;
+			// container to keep track of port assignments in case there are commutative operations inside the DFG
+			std::map<Edge*, int> portAssignments;
 		};
 		/*!
 		 * assume that resource bindings are set

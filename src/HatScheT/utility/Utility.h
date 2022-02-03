@@ -21,6 +21,7 @@
 #pragma once
 #include <string>
 #include "HatScheT/Graph.h"
+#include "HatScheT/utility/Binding.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/TargetModel.h"
 #include "HatScheT/base/SchedulerBase.h"
@@ -38,9 +39,18 @@ class Utility
 {
 public:
 	/*!
+	 * converts the register chain binding container into the general one
+	 * @param g graph
+	 * @param rm resource model
+	 * @param II initiation interval
+	 * @param bChain binding container to convert
+	 * @return converted binding container
+	 */
+	Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain);
+	/*!
 	 * CASE INSENSITIVE comparisons of two strings for equality
 	 * @param s1 first string
-	 * @param s2 second strong
+	 * @param s2 second string
 	 * @return s1 == s2
 	 */
 	static bool iequals(const std::string &s1, const std::string &s2);
