@@ -73,7 +73,8 @@ namespace HatScheT {
 			// container to keep track in which times the registers accept their input data
 			std::map<int, std::set<int>> registerEnableTimes;
 			// container to keep track of port assignments in case there are commutative operations inside the DFG
-			std::map<Edge*, int> portAssignments;
+			// the pair consists of output port of src vertex and input port of dst vertex
+			std::map<Edge*, std::pair<int,int>> portAssignments;
 		};
 		/*!
 		 * assume that resource bindings are set

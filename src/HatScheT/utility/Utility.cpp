@@ -1009,8 +1009,14 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		b.multiplexerCosts = bChain.multiplexerCosts;
 		b.registerCosts = bChain.registerCosts;
 		b.solutionStatus = bChain.solutionStatus;
-		b.portAssignments = bChain.portAssignments;
+		//b.portAssignments = bChain.portAssignments; // not so trivial anymore eh?
 		b.resourceBindings = bChain.resourceBindings;
+
+		// copy port assignments and assume that the output port of the src vertex is always zero
+		// i.e. all operators have exactly one output port
+		for (auto &p : bChain.portAssignments) {
+			b.portAssignments[p.first] = {0, p.second};
+		}
 
 		// calc lifetimes for all vertices
 		std::map<Vertex*, int> vertexLifetimes;

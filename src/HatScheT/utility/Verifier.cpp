@@ -736,7 +736,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		for (auto &e : g->Edges()) {
 			if (vDst != &e->getVertexDst()) continue;
 			try {
-				occupiedInputPorts.insert(bind.portAssignments.at(e));
+				occupiedInputPorts.insert(bind.portAssignments.at(e).second);
 			}
 			catch (std::out_of_range&) {
 				// edge has no port assignment
@@ -890,11 +890,13 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 					if (std::get<0>(connection) != source.first) continue;
 					// skip if FU or register index does not match
 					if (std::get<1>(connection) != source.second) continue;
+					// skip if src port does not match
+					if (std::get<2>(connection) != bind.portAssignments.at(e).first) continue;
 					// skip if destination does not match
 					if (std::get<3>(connection) != rDst->getName()) continue;
 					if (std::get<4>(connection) != fuDst) continue;
-					// skip if port does not match
-					if (std::get<5>(connection) != bind.portAssignments.at(e)) continue;
+					// skip if dst port does not match
+					if (std::get<5>(connection) != bind.portAssignments.at(e).second) continue;
 					// connection seems fine...
 					foundConnection = true;
 					break;
