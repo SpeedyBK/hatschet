@@ -1002,7 +1002,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		return true;
 	}
 
-	Binding::BindingContainer Utility::convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain) {
+	Binding::BindingContainer Utility::convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain, std::map<Vertex*, int> sched) {
 		Binding::BindingContainer b;
 
 		// trivial copies
@@ -1011,6 +1011,22 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		b.solutionStatus = bChain.solutionStatus;
 		b.portAssignments = bChain.portAssignments;
 		b.resourceBindings = bChain.resourceBindings;
+
+		// calc lifetimes for all vertices
+		std::map<Vertex*, int> vertexLifetimes;
+		std::map<Edge*, int> edgeLifetimes;
+		for (auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto tSrc = sched[vSrc];
+			auto tDst = sched[vDst];
+			auto lSrc = rm->getVertexLatency(vSrc);
+			auto lifetime = vDst - vSrc - lSrc + (II * e->getDistance());
+			if (lifetime > vertexLifetimes[vSrc]) {
+				vertexLifetimes[vSrc] = lifetime;
+			}
+			edgeLifetimes[e] = lifetime;
+		}
 
 		// count number of registers after each FU
 		std::map<std::pair<std::string, int>, int> regChainLength;
@@ -1055,16 +1071,42 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			// check if there is a FU->register connections after this FU
 			if (numRegs <= 0) continue;
 
+			// get registers
 			auto regOffset = regOffsets[it.first];
+
+			// compute times when this FU produces variables with lifetime > 0
+			std::set<int> variableProductionTimes;
+			for (auto &vFu : bChain.resourceBindings) {
+				auto *v = &g->getVertexByName(vFu.first);
+				if (vertexLifetimes[v] == 0) continue;
+				auto fuIndex = vFu.second;
+				auto *r = rm->getResource(v);
+				if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
+				auto t = sched.at(v);
+				auto productionTime = t + r->getLatency();
+				variableProductionTimes.insert(productionTime);
+			}
+
 			// create FU->register connection
-			b.connections.push_back({rSrcName, fuSrcIndex, "register", regOffset, 0});
+			b.connections.push_back({rSrcName, fuSrcIndex, 0, "register", regOffset, 0, variableProductionTimes});
 
 			// check if there are any register->register connections after this FU
 			if (numRegs <= 1) continue;
 
 			// create register->register connections
 			for (int i=0; i<numRegs-1; i++) {
-				b.connections.push_back({"register", regOffset+i, "register", regOffset+i+1, 0});
+				std::set<int> updatedVariableProductionTimes;
+				for (auto &vFu : bChain.resourceBindings) {
+					auto *v = &g->getVertexByName(vFu.first);
+					if (vertexLifetimes[v] <= i) continue;
+					auto fuIndex = vFu.second;
+					auto *r = rm->getResource(v);
+					if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
+					auto t = sched.at(v);
+					auto productionTime = t + r->getLatency();
+					updatedVariableProductionTimes.insert(productionTime + i);
+				}
+				b.connections.push_back({"register", regOffset+i, 0, "register", regOffset+i+1, 0, updatedVariableProductionTimes});
 			}
 		}
 
@@ -1079,12 +1121,36 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 			if (numRegs > 0) {
 				// register -> FU
+				std::set<int> variableReadTimes;
+				for (auto &e : g->Edges()) {
+					// only consider edges with lifetime = numRegs (otherwise we would have at least one reg in between)
+					if (edgeLifetimes[e] != numRegs) continue;
+					auto *vSrc = &e->getVertexSrc();
+					auto *vDst = &e->getVertexDst();
+					if (rm->getResource(vSrc)->getName() != rSrcName or
+							rm->getResource(vDst)->getName() != rDstName or
+							bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
+							bChain.resourceBindings.at(vDst->getName()) != fuDstIndex) continue;
+					variableReadTimes.insert(sched.at(vDst));
+				}
 				auto srcRegisterIndex = regOffsets.at({rSrcName, fuSrcIndex}) + numRegs - 1;
-				b.connections.push_back({"register", srcRegisterIndex, rDstName, fuDstIndex, dstPort});
+				b.connections.push_back({"register", srcRegisterIndex, 0, rDstName, fuDstIndex, dstPort, variableReadTimes});
 			}
 			else {
 				// FU -> FU
-				b.connections.push_back({rSrcName, fuSrcIndex, rDstName, fuDstIndex, dstPort});
+				std::set<int> variablePassTimes;
+				for (auto &e : g->Edges()) {
+					// only consider edges with lifetime = 0 (otherwise we would have at least one reg in between)
+					if (edgeLifetimes[e] != 0) continue;
+					auto *vSrc = &e->getVertexSrc();
+					auto *vDst = &e->getVertexDst();
+					if (rm->getResource(vSrc)->getName() != rSrcName or
+					  rm->getResource(vDst)->getName() != rDstName or
+					  bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
+						bChain.resourceBindings.at(vDst->getName()) != fuDstIndex) continue;
+					variablePassTimes.insert(sched.at(vDst));
+				}
+				b.connections.push_back({rSrcName, fuSrcIndex, 0, rDstName, fuDstIndex, dstPort, variablePassTimes});
 			}
 		}
 

@@ -44,9 +44,10 @@ public:
 	 * @param rm resource model
 	 * @param II initiation interval
 	 * @param bChain binding container to convert
+	 * @param sched the schedule associated to this binding
 	 * @return converted binding container
 	 */
-	static Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain);
+	static Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain, std::map<Vertex*, int> sched);
 	/*!
 	 * CASE INSENSITIVE comparisons of two strings for equality
 	 * @param s1 first string

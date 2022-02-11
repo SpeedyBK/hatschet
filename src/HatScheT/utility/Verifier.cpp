@@ -754,6 +754,25 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		}
 	}
 
+	// check if all connections have valid active times
+	std::map<std::tuple<std::string, int, int>, std::set<int>> activeTimes;
+	for (auto &it : bind.connections) {
+		for (auto t : std::get<6>(it)) {
+			if (t >= II) {
+				std::cout << "Detected invalid active time of connection '" << std::get<0>(it) << "' (" << std::get<1>(it) << ") port " << std::get<2>(it) << " -> '" << std::get<3>(it) << "' (" << std::get<4>(it) << ") port " << std::get<5>(it) << ": t >= II (" << t << " >= " << II << ")" << std::endl;
+				return false;
+			}
+			std::tuple<std::string, int, int> dst = {std::get<3>(it), std::get<4>(it), std::get<5>(it)};
+			if (activeTimes[dst].find(t) == activeTimes[dst].end()) {
+				activeTimes[dst].insert(t);
+			}
+			else {
+				std::cout << "Detected duplicate active time of '" << std::get<3>(it) << "' (" << std::get<4>(it) << ") input " << std::get<5>(it) << std::endl;
+				return false;
+			}
+		}
+	}
+
 	// check if all vertices are assigned to an FU
 	for (auto v : g->Vertices()) {
 		if (bind.resourceBindings.find(v->getName()) == bind.resourceBindings.end()) {
@@ -825,9 +844,9 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 						// also skip it if FU or register index does not match
 						if (std::get<1>(connection) != source.second) continue;
 						// also skip it if destination is not a register
-						if (std::get<2>(connection) != "register") continue;
+						if (std::get<3>(connection) != "register") continue;
 						// shortcut for the register index
-						auto regIndex = std::get<3>(connection);
+						auto regIndex = std::get<4>(connection);
 						// also skip it if the register is not enabled in the current time step
 						if (bind.registerEnableTimes[regIndex].find(currentTimestep % II) == bind.registerEnableTimes[regIndex].end()) continue;
 						// looks like we found a register that holds the variable in the next time step
@@ -872,10 +891,10 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 					// skip if FU or register index does not match
 					if (std::get<1>(connection) != source.second) continue;
 					// skip if destination does not match
-					if (std::get<2>(connection) != rDst->getName()) continue;
-					if (std::get<3>(connection) != fuDst) continue;
+					if (std::get<3>(connection) != rDst->getName()) continue;
+					if (std::get<4>(connection) != fuDst) continue;
 					// skip if port does not match
-					if (std::get<4>(connection) != bind.portAssignments.at(e)) continue;
+					if (std::get<5>(connection) != bind.portAssignments.at(e)) continue;
 					// connection seems fine...
 					foundConnection = true;
 					break;

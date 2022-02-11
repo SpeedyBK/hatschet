@@ -811,6 +811,7 @@ namespace HatScheT {
 			}
 		}
 
+		std::map<Vertex*, int> registerBindings;
 		for(auto v : g->Vertices()) {
 			bool hasBinding = false;
 			auto i = v->getId();
@@ -819,16 +820,18 @@ namespace HatScheT {
 				auto bTemp = (bool)((int) round(results[var]));
 				if(!bTemp) continue;
 				if(hasBinding) {
-					// this variable is bound to multiple Register
+					// this variable is bound to multiple Registers
 					// that should never happen!
 					throw HatScheT::Exception("Variable '" + v->getName() + "' is bound to multiple Registers - that should never happen");
 				}
 				hasBinding = true;
 				b.registerEnableTimes[l] = {(sched[v] + rm->getResource(v)->getLatency()) % II};
 				std::cout << "Variable '" << v->getName() << "' is bound to register number '" << l << "'" << std::endl;
+				registerBindings[v] = l;
 			}
 		}
 
+		// FU -> register connections
 		for(auto &r : rm->Resources()) {
 			int resLimit = r->getLimit();
 			if (r->isUnlimited()) resLimit = rm->getVerticesOfResource(r).size();
@@ -838,13 +841,15 @@ namespace HatScheT {
 					auto bTemp = (bool)((int) round(results[var]));
 					if(!bTemp) continue;
 					//b.fuRegConnections.push_back({{r->getName(),k},l});
-					b.connections.push_back({r->getName(), k, "register", l, 0});
+					// assume that FUs only have 1 output port
+					b.connections.push_back({r->getName(), k, 0, "register", l, 0, {}});
 					if (!quiet)
 						std::cout << "FU '" << k << "' of type '" << r->getName() << "' is connected to register '" << l << "'" << std::endl;
 				}
 			}
 		}
 
+		// register -> FU connections
 		for (auto &it : a_r_n_k_l) {
 			auto var = it.second;
 			auto bTemp = (bool)((int) round(results[var]));
@@ -854,11 +859,12 @@ namespace HatScheT {
 			auto k = it.first.second.first;
 			auto l = it.first.second.second;
 			//b.regFuConnections.push_back({{l,n},{r,k}});
-			b.connections.push_back({"register", l, r, k, n});
+			b.connections.push_back({"register", l, 0, r, k, n, {}}); // registers only have 1 output port
 			if (!quiet)
 				std::cout << "Register '" << l << "' is connected to port '" << n << "' of FU '" << k << "' of type '" << r << "'" << std::endl;
 		}
 
+		// FU -> FU connections
 		for (auto &it : b_r1_r2_k1_k2_n) {
 			auto var = it.second;
 			auto bTemp = (bool)((int) round(results[var]));
@@ -869,9 +875,63 @@ namespace HatScheT {
 			auto k2 = it.first.first.second.second;
 			auto n = it.first.second;
 			//b.fuConnections.push_back({{{r2,k2},{r1,k1}},{0,n}});
-			b.connections.push_back({r2, k2, r1, k1, n});
+			b.connections.push_back({r2, k2, 0, r1, k1, n, {}}); // assume that FUs only have 1 output port
 			if (!quiet)
 				std::cout << "FU '" << k2 << "' of type '" << r2 << "' is connected to port '" << n << "' of FU '" << k1 << "' of type '" << r1 << "'" << std::endl;
+		}
+
+		// fill sets in which the connections are active
+		for (auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
+			auto srcFU = b.resourceBindings.at(vSrc->getName());
+			auto dstFU = b.resourceBindings.at(vDst->getName());
+			auto srcResName = rm->getResource(vSrc)->getName();
+			auto dstResName = rm->getResource(vDst)->getName();
+			if (lifetime > 0) {
+				// FU -> reg -> FU
+				int regIndex = registerBindings[vSrc];
+				for (auto it : b.connections) {
+					if (
+						std::get<0>(it) == srcResName and
+						std::get<1>(it) == srcFU and
+						std::get<2>(it) == 0 and
+						std::get<3>(it) == "register" and
+						std::get<4>(it) == regIndex and
+						std::get<5>(it) == 0
+						) {
+						// insert time step for register
+						std::get<6>(it).insert((sched[vSrc] + rm->getResource(vSrc)->getLatency()) % II);
+					}
+					else if (
+						std::get<0>(it) == "register" and
+						std::get<1>(it) == regIndex and
+						std::get<2>(it) == 0 and
+						std::get<3>(it) == dstResName and
+						std::get<4>(it) == dstFU and
+						std::get<5>(it) == portAssignments[e]
+						) {
+						// insert time step for dst FU
+						std::get<6>(it).insert(sched[vDst] % II);
+					}
+				}
+			}
+			else {
+				// FU -> FU
+				for (auto it : b.connections) {
+					if (
+						std::get<0>(it) == srcResName and
+						std::get<1>(it) == srcFU and
+						std::get<2>(it) == 0 and
+						std::get<3>(it) == dstResName and
+						std::get<4>(it) == dstFU and
+						std::get<5>(it) == portAssignments[e]
+						) {
+						std::get<6>(it).insert(sched[vDst] % II);
+					}
+				}
+			}
 		}
 
 		if (!quiet) {

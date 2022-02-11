@@ -2844,7 +2844,7 @@ namespace HatScheT {
 		tb.setQuiet(false);
 		tb.bind();
 		auto treeBind = tb.getBinding();
-		auto treeGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, treeBind);
+		auto treeGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, treeBind, sched);
 		std::cout << "tree-based binding finished" << std::endl;
 		bool treeIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeBind,commutativeOps);
 		bool treeGeneralValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeGeneralBind,commutativeOps);
@@ -2857,7 +2857,7 @@ namespace HatScheT {
 
 		// compare with ILP-based optimal binding
 		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
-		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind);
+		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind, sched);
 		std::cout << "ILP-based binding finished" << std::endl;
 		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,commutativeOps);
 		bool ilpGeneralValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpGeneralBind,commutativeOps);
@@ -2951,7 +2951,7 @@ namespace HatScheT {
 		tb.setQuiet(false);
 		tb.bind();
 		auto treeBind = tb.getBinding();
-		auto treeGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, treeBind);
+		auto treeGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, treeBind, sched);
 		std::cout << "tree-based binding finished" << std::endl;
 		bool treeIIValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeBind,commutativeOps);
 		bool treeGeneralValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,treeGeneralBind,commutativeOps);
@@ -2964,7 +2964,7 @@ namespace HatScheT {
 
 		// compare with ILP-based optimal binding
 		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
-		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind);
+		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind, sched);
 		std::cout << "ILP-based binding finished" << std::endl;
 		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,commutativeOps);
 		bool ilpGeneralValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpGeneralBind,commutativeOps);

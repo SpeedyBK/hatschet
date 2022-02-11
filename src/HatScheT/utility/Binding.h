@@ -56,14 +56,20 @@ namespace HatScheT {
 			// each vertex in a graph is bound to a specific FU of its resource type
 			std::map<std::string,int> resourceBindings;
 			// container to keep track of any possible connections
-			// [0]: src resource name, [1]: src index, [2]: dst resource name, [3]: dst index, [4]: dst input port
+			//   [0]: src resource name
+			//   [1]: src index
+			//   [2]: src output port
+			//   [3]: dst resource name
+			//   [4]: dst index
+			//   [5]: dst input port
+			//   [6]: a set of time steps in which this connection is active (usually controlled by a MUX on the dst input)
 			// resource name "register" is reserved for registers only
 			// possibilities:
 			//   FU -> FU
 			//   FU -> register
 			//   register -> FU
 			//   register -> register
-			std::list<std::tuple<std::string, int, std::string, int, int>> connections;
+			std::list<std::tuple<std::string, int, int, std::string, int, int, std::set<int>>> connections;
 			// container to keep track in which times the registers accept their input data
 			std::map<int, std::set<int>> registerEnableTimes;
 			// container to keep track of port assignments in case there are commutative operations inside the DFG
