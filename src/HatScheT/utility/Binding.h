@@ -10,6 +10,7 @@
 #include <vector>
 
 namespace HatScheT {
+
 	class Binding {
 	public:
 		enum objective {
@@ -132,8 +133,12 @@ namespace HatScheT {
 		 * @brief create an ILP-based binding for an integer-II schedule
 		 * goal: minimize mux utilization
 		 * based on 'Simultaneous FU and Register Binding Based on Network Flow Method' by Jason Cong and Junjuan Xu
-		 * THIS ASSUMES THAT NO OPERATION IS COMMUTATIVE (i.e., does not find optimal results for e.g. adders)
-		 * THIS ALSO ASSUMES THAT REGISTERS ARE IMPLEMENTED WITH ENABLE-INPUTS AND NOT AS REGISTER-CHAINS
+		 * ASSUMPTIONS:
+		 *   (1) NO OPERATION IS COMMUTATIVE (i.e., does not find optimal results for e.g. adders)
+		 *   (2) REGISTERS ARE IMPLEMENTED WITH ENABLE-INPUTS AND NOT AS REGISTER-CHAINS
+		 *   (3) ALL LIFETIMES ARE SHORTER THAN THE II
+		 * unroll the graph S times and implement it with cycle length S*II/S if (3) is violated
+		 * and set S such that (3) is not violated anymore
 		 * @param sched schedule
 		 * @param g graph
 		 * @param rm resource model

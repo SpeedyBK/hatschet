@@ -10,15 +10,15 @@
 #include <HatScheT/Graph.h>
 #include <HatScheT/ResourceModel.h>
 #include <HatScheT/utility/Binding.h>
+#include <HatScheT/utility/BindingBase.h>
 #include <vector>
 #include <map>
 #include <list>
 #include <ScaLP/Solver.h>
 
 namespace HatScheT {
-	class Binding; // forward declaration to prevent linker errors
 
-	class OptimalIntegerIIBinding {
+	class OptimalIntegerIIBinding : public BindingBase {
 	public:
 		/*!
 		 * default constructor
@@ -33,112 +33,24 @@ namespace HatScheT {
 		 */
 		OptimalIntegerIIBinding(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {}, std::list<std::string> sw = {});
 		/*!
-		 * specify time budget in seconds
-		 * @param timeout
+		 * override the function that actually does the binding
 		 */
-		void setTimeout(unsigned int timeout);
+		void bind() override;
 		/*!
-		 * suppress debug outputs based on q
-		 * @param q true: suppress; false: print to stdout
+		 * override base class's method
+		 * @param b binding container to set
 		 */
-		void setQuiet(bool q);
-		/*!
-		 * main binding algorithm
-		 */
-		void bind();
-		/*!
-		 * @return binding
-		 */
-		Binding::RegChainBindingContainer getBinding();
-		/*!
-		 * set weighting factor for multiplexer costs
-		 */
-		void setMuxCostFactor(double wMux);
-		/*!
-		 * set weighting factor for multiplexer costs
-		 */
-		void setRegCostFactor(double wReg);
-		/*!
-		 * @return solution status
-		 */
-		std::string getSolutionStatus();
-		/*!
-		 * sets upper limit for mux costs
-		 * @param l new limit
-		 */
-		void setMuxLimit(double l);
-		/*!
-		 * sets upper limit for register costs
-		 * @param l new limit
-		 */
-		void setRegLimit(double l);
-		/*!
-		 * set ILP optimization goal
-		 * @param o new optimization goal
-		 */
-		void setObjective(Binding::objective o);
+		void getBinding(Binding::RegChainBindingContainer* b) override;
 
 	private:
-		/*!
-		 * container with all commutative resource types
-		 */
-		std::set<const Resource*> commutativeOps;
 		/*!
 		 * ILP solver wishlist
 		 */
 		std::list<std::string> sw;
 		/*!
-		 * solution status
-		 */
-		ScaLP::status status;
-		/*!
-		 * optimization goal
-		 */
-		Binding::objective obj;
-		/*!
-		 * suppress debug outputs if this is true
-		 */
-		bool quiet;
-		/*!
-		 * weighting factor for multiplexer costs
-		 */
-		double wMux;
-		/*!
-		 * weighting factor for register costs
-		 */
-		double wReg;
-		/*!
-		 * upper limit for mux costs
-		 */
-		double maxMux;
-		/*!
-		 * upper limit for register costs
-		 */
-		double maxReg;
-		/*!
-		 * input graph
-		 */
-		Graph* g;
-		/*!
-		 * input resource model
-		 */
-		ResourceModel* rm;
-		/*!
-		 * schedule times for all operations
-		 */
-		std::map<Vertex*, int> sched;
-		/*!
-		 * initiation interval
-		 */
-		int II;
-		/*!
 		 * port assignment for each edge in g
 		 */
 		std::map<Edge*,int> portAssignments;
-		/*!
-		 * time budget in seconds
-		 */
-		double timeBudget;
 		/*!
 		 * best solution found so far
 		 */

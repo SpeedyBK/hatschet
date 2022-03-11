@@ -4,7 +4,6 @@
 
 #include "OptimalIntegerIIBinding.h"
 #include <HatScheT/utility/Utility.h>
-#include <limits>
 #include <sstream>
 #include <cmath>
 
@@ -12,9 +11,7 @@ namespace HatScheT {
 
 	OptimalIntegerIIBinding::OptimalIntegerIIBinding(Graph *g, ResourceModel *rm, std::map<Vertex *, int> sched, int II,
 																									 std::map<Edge *, int> portAssignments, std::set<const Resource*> commutativeOps, std::list<std::string> sw) :
-	g(g), rm(rm), sched(sched), II(II), portAssignments(portAssignments), timeBudget(300), quiet(true),
-	wMux(1.0), wReg(1.0), maxMux(std::numeric_limits<double>::infinity()), sw(sw), commutativeOps(commutativeOps),
-	maxReg(std::numeric_limits<double>::infinity()), obj(Binding::objective::minimize)
+	BindingBase(g, rm, sched, II, commutativeOps), portAssignments(portAssignments), sw(sw)
 	{
 		// check if port assignments are complete
 		for(auto e : this->g->Edges()) {
@@ -33,14 +30,6 @@ namespace HatScheT {
 		}
 	}
 
-	void OptimalIntegerIIBinding::setTimeout(unsigned int timeout) {
-		this->timeBudget = timeout;
-	}
-
-	void OptimalIntegerIIBinding::setQuiet(bool q) {
-		this->quiet = q;
-	}
-
 	void OptimalIntegerIIBinding::bind() {
 		//////////////////////
 		// check for errors //
@@ -55,9 +44,9 @@ namespace HatScheT {
 			}
 		}
 
-		//////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////
 		// set objective weights to meaningful values if they are zero //
-		//////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////
 		double wMuxInternally = this->wMux;
 		double wRegInternally = this->wReg;
 		if (this->wReg < 0.0 or this->wMux < 0.0) {
@@ -587,17 +576,17 @@ namespace HatScheT {
 			}
 		}
 
-
 		//////////////////
 		// start solver //
 		//////////////////
 		if(!this->quiet) std::cout << solver.showLP() << std::endl;
 		if(!this->quiet) std::cout << "start solving now" << std::endl;
 		auto stat = solver.solve();
-		this->binding.solutionStatus = ScaLP::showStatus(stat);
+		this->solutionStatus = ScaLP::showStatus(stat);
+		this->binding.solutionStatus = this->solutionStatus;
 		if(!this->quiet) std::cout << "finished solving with status " << stat << std::endl;
 		if(stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL) {
-			std::cout << "Binding::getILPBasedIntIIBinding: could not solve binding problem, ScaLP status " << stat
+			std::cout << "OptimalIntegerIIBinding::bind: could not solve binding problem, ScaLP status " << stat
 								<< std::endl;
 			return; // empty binding
 		}
@@ -671,31 +660,7 @@ namespace HatScheT {
 		}
 	}
 
-	Binding::RegChainBindingContainer OptimalIntegerIIBinding::getBinding() {
-		return this->binding;
-	}
-
-	void OptimalIntegerIIBinding::setMuxCostFactor(double wMux) {
-		this->wMux = wMux;
-	}
-
-	void OptimalIntegerIIBinding::setRegCostFactor(double wReg) {
-		this->wReg = wReg;
-	}
-
-	std::string OptimalIntegerIIBinding::getSolutionStatus() {
-		return ScaLP::showStatus(this->status);
-	}
-
-	void OptimalIntegerIIBinding::setMuxLimit(double l) {
-		this->maxMux = l;
-	}
-
-	void OptimalIntegerIIBinding::setRegLimit(double l) {
-		this->maxReg = l;
-	}
-
-	void OptimalIntegerIIBinding::setObjective(Binding::objective o) {
-		this->obj = o;
+	void OptimalIntegerIIBinding::getBinding(Binding::RegChainBindingContainer* b) {
+		*b = this->binding;
 	}
 }

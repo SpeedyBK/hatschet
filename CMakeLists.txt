@@ -152,8 +152,8 @@ src/HatScheT/utility/writer/ScheduleAndBindingWriter.cpp
 src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
+src/HatScheT/utility/BindingBase.cpp
 src/HatScheT/utility/TreeBind.cpp
-src/HatScheT/utility/OptimalIntegerIIBinding.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
 src/HatScheT/scheduler/ULScheduler.cpp
@@ -216,8 +216,10 @@ src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
 src/HatScheT/utility/Tests.h
 src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Binding.h
+src/HatScheT/utility/BindingBase.h
 src/HatScheT/utility/TreeBind.h
 src/HatScheT/utility/OptimalIntegerIIBinding.h
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h
@@ -261,6 +263,8 @@ src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
+src/HatScheT/utility/OptimalIntegerIIBinding.cpp
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
 

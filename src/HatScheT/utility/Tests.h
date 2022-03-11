@@ -245,6 +245,11 @@ public:
 	 */
 	static bool ilpBasedIntIIBindingTest();
 	/*!
+	 * test OptimalIntegerIIGeneralizedBinding class
+	 * @return
+	 */
+	static bool optimalIntegerIIGeneralizedBindingTest();
+	/*!
 	 * test getILPMinMuxBinding function
 	 * @return
 	 */

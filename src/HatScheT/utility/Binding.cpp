@@ -218,7 +218,7 @@ namespace HatScheT {
 			}
 			if (v1LifeEnd - v1LifeStart > II) {
 				// variable overlaps with itself from future or past iterations
-				throw HatScheT::Exception("Variable '"+v->getName()+"' has lifetime > II ("+std::to_string(v1LifeEnd - v1LifeStart)+" > "+std::to_string(II)+"); this is not supported, yet; please choose another binding algorithm");
+				throw HatScheT::Exception("Variable '"+v->getName()+"' has lifetime > II ("+std::to_string(v1LifeEnd - v1LifeStart)+" > "+std::to_string(II)+"); this is not supported, yet; please choose another binding algorithm or unroll the graph to get a longer cycle length");
 			}
 			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd) or (v1LifeEnd == -1);
 			for(auto &it : sched) {
@@ -955,7 +955,9 @@ namespace HatScheT {
 		oib.setTimeout(timeout);
 		oib.setQuiet(quiet);
 		oib.bind();
-		return oib.getBinding();
+		RegChainBindingContainer b;
+		oib.getBinding(&b);
+		return b;
 	}
 
 	Binding::RatIIRegChainBindingContainer

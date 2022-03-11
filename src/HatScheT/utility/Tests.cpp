@@ -20,6 +20,7 @@
 
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/TreeBind.h"
+#include "HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h"
 #include "HatScheT/utility/reader/GraphMLGraphReader.h"
 #include "HatScheT/utility/reader/XMLResourceReader.h"
 #include "HatScheT/utility/reader/XMLTargetReader.h"
@@ -2593,6 +2594,138 @@ namespace HatScheT {
 		std::cout << "Rational-II implementation multiplexer costs: " << ratIIBind.multiplexerCosts << std::endl;
 		std::cout << "Rational-II implementation register costs: " << ratIIBind.registerCosts << std::endl;
 		return intIIValid and ratIIValid and (bind.multiplexerCosts+bind.registerCosts==15) and (ratIIBind.multiplexerCosts+ratIIBind.registerCosts==21);
+	}
+
+	bool Tests::optimalIntegerIIGeneralizedBindingTest() {
+#ifndef USE_SCALP
+		std::cout << "Tests::optimalIntegerIIGeneralizedBindingTest: build HatScheT with ScaLP to enable this test" << std::endl;
+		return true;
+#else
+		// create HLS problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		// read ports
+		auto &r1 = g.createVertex();
+		r1.setName("r1");
+		auto &r2 = g.createVertex();
+		r2.setName("r2");
+		auto &r3 = g.createVertex();
+		r3.setName("r3");
+		auto &r4 = g.createVertex();
+		r4.setName("r4");
+
+		// complex limited operations
+		auto &c1 = g.createVertex();
+		c1.setName("c1");
+		auto &c2 = g.createVertex();
+		c2.setName("c2");
+		auto &c3 = g.createVertex();
+		c3.setName("c3");
+		auto &c4 = g.createVertex();
+		c4.setName("c4");
+		auto &c5 = g.createVertex();
+		c5.setName("c5");
+
+		// write ports
+		auto &w1 = g.createVertex();
+		w1.setName("w1");
+		auto &w2 = g.createVertex();
+		w2.setName("w2");
+		auto &w3 = g.createVertex();
+		w3.setName("w3");
+		auto &w4 = g.createVertex();
+		w4.setName("w4");
+
+		// edges
+		std::map<Edge*, std::pair<int,int>> portAssignments;
+		auto &e1 = g.createEdge(r1, c1, 0, Edge::DependencyType::Data);
+		portAssignments[&e1] = {0, 0};
+		auto &e2 = g.createEdge(r2, c1, 0, Edge::DependencyType::Data);
+		portAssignments[&e2] = {0, 1};
+		auto &e3 = g.createEdge(r3, c2, 0, Edge::DependencyType::Data);
+		portAssignments[&e3] = {0, 0};
+		auto &e4 = g.createEdge(r4, c2, 0, Edge::DependencyType::Data);
+		portAssignments[&e4] = {0, 1};
+		auto &e5 = g.createEdge(c1, c3, 0, Edge::DependencyType::Data);
+		portAssignments[&e5] = {1, 0};
+		auto &e6 = g.createEdge(c2, c3, 0, Edge::DependencyType::Data);
+		portAssignments[&e6] = {0, 1};
+		auto &e7 = g.createEdge(c1, c4, 0, Edge::DependencyType::Data);
+		portAssignments[&e7] = {0, 0};
+		auto &e8 = g.createEdge(c2, c5, 0, Edge::DependencyType::Data);
+		portAssignments[&e8] = {1, 1};
+		auto &e9 = g.createEdge(c3, c4, 0, Edge::DependencyType::Data);
+		portAssignments[&e9] = {0, 1};
+		auto &e10 = g.createEdge(c3, c5, 0, Edge::DependencyType::Data);
+		portAssignments[&e10] = {1, 0};
+		auto &e11 = g.createEdge(c4, w1, 0, Edge::DependencyType::Data);
+		portAssignments[&e11] = {0, 0};
+		auto &e12 = g.createEdge(c4, w2, 0, Edge::DependencyType::Data);
+		portAssignments[&e12] = {1, 0};
+		auto &e13 = g.createEdge(c5, w3, 0, Edge::DependencyType::Data);
+		portAssignments[&e13] = {0, 0};
+		auto &e14 = g.createEdge(c5, w4, 0, Edge::DependencyType::Data);
+		portAssignments[&e14] = {1, 0};
+
+		// create resources
+		auto &read = rm.makeResource("read",2,0,1);
+		auto &write = rm.makeResource("write",2,0,1);
+		auto &complex_operation = rm.makeResource("complex_operation",3,1,1);
+
+		// register vertices
+		rm.registerVertex(&r1, &read);
+		rm.registerVertex(&r2, &read);
+		rm.registerVertex(&r3, &read);
+		rm.registerVertex(&r4, &read);
+		rm.registerVertex(&w1, &write);
+		rm.registerVertex(&w2, &write);
+		rm.registerVertex(&w3, &write);
+		rm.registerVertex(&w4, &write);
+		rm.registerVertex(&c1, &complex_operation);
+		rm.registerVertex(&c2, &complex_operation);
+		rm.registerVertex(&c3, &complex_operation);
+		rm.registerVertex(&c4, &complex_operation);
+		rm.registerVertex(&c5, &complex_operation);
+
+		// debug info
+		std::cout << g << std::endl;
+		std::cout << rm << std::endl;
+
+		// schedule
+		EichenbergerDavidson97Scheduler ed97(g,rm,{"Gurobi", "CPLEX", "LPSolve", "SCIP"});
+		ed97.schedule();
+
+		// print result
+		if (!ed97.getScheduleFound()) {
+			std::cout << "scheduler failed to find solution - this should never happen!" << std::endl;
+			return false;
+		}
+		auto II = ed97.getII();
+		auto sl = ed97.getScheduleLength();
+		auto sched = ed97.getSchedule();
+
+		std::cout << "found schedule with II=" << (int)II << " and latency=" << sl << std::endl;
+		for (auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		OptimalIntegerIIGeneralizedBinding oigb(&g, &rm, sched, II, portAssignments, {}, {"Gurobi"});
+		oigb.setQuiet(false);
+		oigb.bind();
+		Binding::BindingContainer b;
+		oigb.getBinding(&b);
+		std::cout << "binding finished!" << std::endl;
+
+		auto valid = verifyIntIIBinding(&g, &rm, sched, II, b, {});
+		if (!valid) {
+			std::cout << "binding invalid" << std::endl;
+			return false;
+		}
+
+		std::cout << "Test passed!" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::firSAMRatIIImplementationsTest() {

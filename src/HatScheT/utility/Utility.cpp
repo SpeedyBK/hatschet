@@ -1027,7 +1027,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto tSrc = sched[vSrc];
 			auto tDst = sched[vDst];
 			auto lSrc = rm->getVertexLatency(vSrc);
-			auto lifetime = vDst - vSrc - lSrc + (II * e->getDistance());
+			auto lifetime = tDst - tSrc - lSrc + (II * e->getDistance());
 			if (lifetime > vertexLifetimes[vSrc]) {
 				vertexLifetimes[vSrc] = lifetime;
 			}
@@ -1036,6 +1036,9 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 		// count number of registers after each FU
 		std::map<std::pair<std::string, int>, int> regChainLength;
+		for (auto &it : bChain.resourceBindings) {
+			regChainLength[{it.first, it.second}] = 0;
+		}
 		for (auto &connection : bChain.fuConnections) {
 			auto rSrcName = connection.first.first.first;
 			auto fuSrcIndex = connection.first.first.second;
@@ -1068,19 +1071,38 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 		// now comes the tricky part...
 		// we must re-create all connections
+		// define helper function
+		// this checks if a specific connection already exists and creates it if not
+		auto checkConnection = [](
+			std::list<std::tuple<std::string, int, int, std::string, int, int, std::set<int>>> *conn,
+			const std::string &srcRes, const int &srcFU, const int &srcPort, const std::string &dstRes, const int &dstFU,
+			const int &dstPort) {
+			for (auto &c : *conn) {
+				if (std::get<0>(c) != srcRes) continue;
+				if (std::get<1>(c) != srcFU) continue;
+				if (std::get<2>(c) != srcPort) continue;
+				if (std::get<3>(c) != dstRes) continue;
+				if (std::get<4>(c) != dstFU) continue;
+				if (std::get<5>(c) != dstPort) continue;
+				return &c;
+			}
+			conn->push_front({srcRes,srcFU,srcPort,dstRes,dstFU,dstPort,{}});
+			return &conn->front();
+		};
 		// start with FU->register and register->register connections
 		for (auto &it : regChainLength) {
 			auto rSrcName = it.first.first;
 			auto fuSrcIndex = it.first.second;
 			auto numRegs = it.second;
 
-			// check if there is a FU->register connections after this FU
+			// check if there are any FU->register connections after this FU
 			if (numRegs <= 0) continue;
 
 			// get registers
 			auto regOffset = regOffsets[it.first];
 
 			// compute times when this FU produces variables with lifetime > 0
+			/*
 			std::set<int> variableProductionTimes;
 			for (auto &vFu : bChain.resourceBindings) {
 				auto *v = &g->getVertexByName(vFu.first);
@@ -1090,17 +1112,27 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
 				auto t = sched.at(v);
 				auto productionTime = t + r->getLatency();
-				variableProductionTimes.insert(productionTime);
+				variableProductionTimes.insert(productionTime % II);
 			}
+			 */
 
 			// create FU->register connection
-			b.connections.push_back({rSrcName, fuSrcIndex, 0, "register", regOffset, 0, variableProductionTimes});
+			auto *cFUReg = checkConnection(&b.connections, rSrcName, fuSrcIndex, 0, "register", regOffset, 0);
+			/*
+			for (auto t : variableProductionTimes) {
+				std::get<6>(*cFUReg).insert(t);
+			}
+			 */
+			for (int t=0; t<II; t++) {
+				std::get<6>(*cFUReg).insert(t);
+			}
 
 			// check if there are any register->register connections after this FU
 			if (numRegs <= 1) continue;
 
 			// create register->register connections
 			for (int i=0; i<numRegs-1; i++) {
+				/*
 				std::set<int> updatedVariableProductionTimes;
 				for (auto &vFu : bChain.resourceBindings) {
 					auto *v = &g->getVertexByName(vFu.first);
@@ -1110,9 +1142,19 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 					if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
 					auto t = sched.at(v);
 					auto productionTime = t + r->getLatency();
-					updatedVariableProductionTimes.insert(productionTime + i);
+					updatedVariableProductionTimes.insert((productionTime + i + 1) % II);
 				}
-				b.connections.push_back({"register", regOffset+i, 0, "register", regOffset+i+1, 0, updatedVariableProductionTimes});
+				 */
+				auto *cRegReg = checkConnection(&b.connections, "register", regOffset+i, 0, "register", regOffset+i+1, 0);
+				/*
+				for (auto t : updatedVariableProductionTimes) {
+					std::get<6>(*cRegReg).insert(t);
+				}
+				 */
+				for (int t=0; t<II; t++) {
+					std::get<6>(*cRegReg).insert(t);
+				}
+
 			}
 		}
 
@@ -1129,18 +1171,26 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				// register -> FU
 				std::set<int> variableReadTimes;
 				for (auto &e : g->Edges()) {
-					// only consider edges with lifetime = numRegs (otherwise we would have at least one reg in between)
-					if (edgeLifetimes[e] != numRegs) continue;
 					auto *vSrc = &e->getVertexSrc();
 					auto *vDst = &e->getVertexDst();
 					if (rm->getResource(vSrc)->getName() != rSrcName or
 							rm->getResource(vDst)->getName() != rDstName or
 							bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
-							bChain.resourceBindings.at(vDst->getName()) != fuDstIndex) continue;
-					variableReadTimes.insert(sched.at(vDst));
+							bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
+							bChain.portAssignments.at(e) != dstPort) {
+						continue;
+					}
+					// only consider edges with lifetime = numRegs
+					if (edgeLifetimes[e] != numRegs) {
+						continue;
+					}
+					variableReadTimes.insert(sched.at(vDst) % II);
 				}
 				auto srcRegisterIndex = regOffsets.at({rSrcName, fuSrcIndex}) + numRegs - 1;
-				b.connections.push_back({"register", srcRegisterIndex, 0, rDstName, fuDstIndex, dstPort, variableReadTimes});
+				auto *cRegFU = checkConnection(&b.connections, "register", srcRegisterIndex, 0, rDstName, fuDstIndex, dstPort);
+				for (auto t : variableReadTimes) {
+					std::get<6>(*cRegFU).insert(t);
+				}
 			}
 			else {
 				// FU -> FU
@@ -1153,15 +1203,21 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 					if (rm->getResource(vSrc)->getName() != rSrcName or
 					  rm->getResource(vDst)->getName() != rDstName or
 					  bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
-						bChain.resourceBindings.at(vDst->getName()) != fuDstIndex) continue;
-					variablePassTimes.insert(sched.at(vDst));
+						bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
+						bChain.portAssignments.at(e) != dstPort) {
+						continue;
+					}
+					variablePassTimes.insert(sched.at(vDst) % II);
 				}
-				b.connections.push_back({rSrcName, fuSrcIndex, 0, rDstName, fuDstIndex, dstPort, variablePassTimes});
+				auto *cFUFU = checkConnection(&b.connections, rSrcName, fuSrcIndex, 0, rDstName, fuDstIndex, dstPort);
+				for (auto t : variablePassTimes) {
+					std::get<6>(*cFUFU).insert(t);
+				}
 			}
 		}
 
-		/*
 		// debugging
+
 		std::cout << "FU bindings:" << std::endl;
 		for (auto &it : bChain.resourceBindings) {
 			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' (" << it.second << ")" << std::endl;
@@ -1181,12 +1237,23 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		for (auto &connection : b.connections) {
 			auto rSrcName = std::get<0>(connection);
 			auto fuSrcIndex = std::get<1>(connection);
-			auto rDstName = std::get<2>(connection);
-			auto fuDstIndex = std::get<3>(connection);
-			auto dstPort = std::get<4>(connection);
-			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << std::endl;
+			auto srcPort = std::get<2>(connection);
+			auto rDstName = std::get<3>(connection);
+			auto fuDstIndex = std::get<4>(connection);
+			auto dstPort = std::get<5>(connection);
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") port " << srcPort << " -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << std::endl;
+			for (auto t : std::get<6>(connection)) {
+				std::cout << "    active in t=" << t << std::endl;
+			}
 		}
-		 */
+
+		std::cout << "register enable times:" << std::endl;
+		for (auto &it : b.registerEnableTimes) {
+			std::cout << "  reg #" << it.first << ": " << std::endl;
+			for (auto &t : it.second) {
+				std::cout << "    " << t << std::endl;
+			}
+		}
 
 		return b;
 	}

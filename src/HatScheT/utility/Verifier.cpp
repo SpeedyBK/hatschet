@@ -885,13 +885,20 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			// check if there is a connection from any of the sources to the actual destination
 			bool foundConnection = false;
 			for (auto &source : currentSources) {
+				int expectedSrcOutputPort;
+				if (source.first == "register") {
+					expectedSrcOutputPort = 0;
+				}
+				else {
+					expectedSrcOutputPort = bind.portAssignments.at(e).first;
+				}
 				for (auto connection : bind.connections) {
 					// skip connections for source resource type mismatch
 					if (std::get<0>(connection) != source.first) continue;
 					// skip if FU or register index does not match
 					if (std::get<1>(connection) != source.second) continue;
 					// skip if src port does not match
-					if (std::get<2>(connection) != bind.portAssignments.at(e).first) continue;
+					if (std::get<2>(connection) != expectedSrcOutputPort) continue;
 					// skip if destination does not match
 					if (std::get<3>(connection) != rDst->getName()) continue;
 					if (std::get<4>(connection) != fuDst) continue;
@@ -901,11 +908,13 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 					foundConnection = true;
 					break;
 				}
-				if (foundConnection) break;
+				if (foundConnection) {
+					break;
+				}
 			}
 			if (!foundConnection) {
 				// oh no, binding is invalid :(
-				std::cout << "Failed to find connection path for edge '" << e->getVertexSrcName() << "' -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "'" << std::endl;
+				std::cout << "Failed to find connection path for edge '" << e->getVertexSrcName() << "' port " << bind.portAssignments.at(e).first << " -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "' port " << bind.portAssignments.at(e).second << std::endl;
 				return false;
 			}
 		}

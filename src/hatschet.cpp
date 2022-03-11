@@ -339,6 +339,7 @@ int main(int argc, char *args[]) {
 				if(str=="COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest()==false) exit(-1);
 				if(str=="ILPBASEDINTIIBINDINGCONG" && HatScheT::Tests::ilpBasedIntIIBindingTestCong() == false) exit(-1);
 				if(str=="ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest() == false) exit(-1);
+				if(str=="OPTIMALINTIIGENERALIZEDBINDING" && HatScheT::Tests::optimalIntegerIIGeneralizedBindingTest() == false) exit(-1);
         if(str=="API" && HatScheT::Tests::apiTest()==false) exit(-1);
         if(str=="ASAPHC" && HatScheT::Tests::asapHCTest()==false) exit(-1);
         if(str=="ALAPHC" && HatScheT::Tests::alapHCTest()==false) exit(-1);
