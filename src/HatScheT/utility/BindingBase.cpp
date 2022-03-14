@@ -50,11 +50,21 @@ namespace HatScheT {
 	}
 
 	void BindingBase::setMuxLimit(double l) {
-		this->maxMux = l;
+		if (l >= 0) {
+			// valid value requested
+			this->maxMux = l;
+		}
+		// invalid mux cost limit -> set to inifinity
+		this->maxMux = std::numeric_limits<double>::infinity();
 	}
 
 	void BindingBase::setRegLimit(double l) {
-		this->maxReg = l;
+		if (l >= 0) {
+			// valid value requested
+			this->maxReg = l;
+		}
+		// invalid reg cost limit -> set to inifinity
+		this->maxReg = std::numeric_limits<double>::infinity();
 	}
 
 	void BindingBase::setObjective(Binding::objective o) {

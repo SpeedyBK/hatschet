@@ -224,9 +224,14 @@ namespace HatScheT {
 		}
 		if (minNumRegs > this->maxReg) {
 			this->solutionStatus = "INFEASIBLE";
+			if (!this->quiet) {
+				std::cout << "OptimalIntegerIIGeneralizedBinding::bind: requested infeasible number of registers ("
+				  << this->maxReg << ") - at least " << minNumRegs << " registers are required for implementation" << std::endl;
+			}
 			return;
 		}
-		if (this->allocMinRegs) {
+		if (this->allocMinRegs or this->maxReg == std::numeric_limits<double>::infinity()) {
+			// can only model a finite number of registers
 			this->maxReg = minNumRegs;
 		}
 
@@ -446,10 +451,6 @@ namespace HatScheT {
 		///////////////////////////////////
 		for (auto &v1 : this->g->Vertices()) {
 			for (auto &v2 : this->g->Vertices()) {
-				if (v1 == v2) {
-					// no conflict with itself
-					continue;
-				}
 				for (auto &p1 : outputPortsOfVertex.at(v1)) {
 					auto tBirth1 = birthTimes.at({v1, p1});
 					auto tDeath1 = deathTimes.at({v1, p1});
@@ -468,6 +469,10 @@ namespace HatScheT {
 							for (int t2 = tBirth2+1; t2<=tDeath2; t2++) {
 								if ((t1 % this->II) != (t2 % this->II)) {
 									// no conflict for different congruence classes
+									continue;
+								}
+								if ((v1 == v2) and (t1 == t2)) {
+									// no conflict with itself
 									continue;
 								}
 								for (int i=0; i<this->numRegs; i++) {
@@ -615,7 +620,7 @@ namespace HatScheT {
 		////////////////////////////
 		// actually start solving //
 		////////////////////////////
-		if(!this->quiet) std::cout << solver.showLP() << std::endl;
+		//if(!this->quiet) std::cout << solver.showLP() << std::endl;
 		if(!this->quiet) std::cout << "start solving now" << std::endl;
 		auto stat = solver.solve();
 		this->solutionStatus = ScaLP::showStatus(stat);
