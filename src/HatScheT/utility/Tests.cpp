@@ -2409,8 +2409,8 @@ namespace HatScheT {
 		}
 
 		std::cout << "resource bindings:" << std::endl;
-		for(auto it : bind.resourceBindings) {
-			std::cout << "  binding '" << it.first << "' to FU '" << it.second << "'" << std::endl;
+		for(auto &it : bind.resourceBindings) {
+			std::cout << "  binding '" << it.first << "' to FU '" << *it.second.begin() << "'" << std::endl;
 		}
 
 		std::cout << "connections:" << std::endl;

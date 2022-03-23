@@ -37,8 +37,17 @@ namespace HatScheT {
 		 * @param a new value for this->allocMinRegs
 		 */
 		void setAllocMinRegs(bool a);
+		/*!
+		 * set this->allowMultipleBindings to m
+		 * @param m a new value for this->allowMultipleBindings
+		 */
+		void setAllowMultipleBindings(bool m);
 
 	private:
+		/*!
+		 * if this is set, operations/variables are bound to AT LEAST one operator/register instead of EXACTLY one
+		 */
+		bool allowMultipleBindings;
 		/*!
 		 * container with solver wishlist
 		 */

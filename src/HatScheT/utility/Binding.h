@@ -54,8 +54,9 @@ namespace HatScheT {
 			int registerCosts=-1;
 			// multiplexer costs for easy tracking
 			int multiplexerCosts=-1;
-			// each vertex in a graph is bound to a specific FU of its resource type
-			std::map<std::string,int> resourceBindings;
+			// each vertex in a graph is bound to a set of specific FUs of its resource type
+			// this structure supports multiple bindings for each vertex
+			std::map<std::string,std::set<int>> resourceBindings;
 			// container to keep track of any possible connections
 			//   [0]: src resource name
 			//   [1]: src index

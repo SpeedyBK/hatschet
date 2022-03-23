@@ -11,7 +11,7 @@ namespace HatScheT {
 		HatScheT::Graph *g, HatScheT::ResourceModel *rm, map<Vertex *, int> sched, int II,
 		map<Edge *, std::pair<int, int>> portAssignments, set<const Resource *> commutativeOps, std::list<std::string> sw) :
 	  BindingBase(g, rm, sched, II, commutativeOps), portAssignments(portAssignments), sw(sw), numRegs(-1),
-	  allocMinRegs(true)
+	  allocMinRegs(true), allowMultipleBindings(false)
 	{}
 
 	void OptimalIntegerIIGeneralizedBinding::bind() {
@@ -170,6 +170,9 @@ namespace HatScheT {
 		std::map<const Vertex*, std::set<int>> inputPortsOfVertex;
 		std::map<const Resource*, std::set<int>> outputPortsOfResource;
 		std::map<const Resource*, std::set<int>> inputPortsOfResource;
+		std::map<std::pair<const Vertex*, int>, Edge*> inputEdges;
+		std::map<std::pair<const Vertex*, int>, std::set<Edge*>> outputEdges;
+		std::map<Edge*, int> lifetimes;
 		for (auto &r : this->rm->Resources()) {
 			outputPortsOfResource[r] = {};
 			inputPortsOfResource[r] = {};
@@ -198,6 +201,9 @@ namespace HatScheT {
 			inputPortsOfVertex[vDst].insert(pDst);
 			outputPortsOfResource[rSrc].insert(pSrc);
 			inputPortsOfResource[rDst].insert(pDst);
+			inputEdges[{vDst, pDst}] = e;
+			outputEdges[{vSrc, pSrc}].insert(e);
+			lifetimes[e] = deathTime - birthTime;
 		}
 
 		///////////////////////////////////////////
@@ -275,7 +281,7 @@ namespace HatScheT {
 		//////////////////////////
 		// FU binding variables //
 		//////////////////////////
-		std::map<std::pair<Vertex*, int>, ScaLP::Variable> F;
+		std::map<std::pair<const Vertex*, int>, ScaLP::Variable> F;
 		for (auto &v : this->g->Vertices()) {
 			for (auto &fuIdx : compatibleFUs.at(v)) {
 				std::stringstream name;
@@ -289,7 +295,7 @@ namespace HatScheT {
 		/////////////////////////////////
 		// map from <vertex that produces this variable and the output port where it comes out of>
 		// to another map from time step to scalp variable
-		std::map<std::tuple<Vertex*, int, int, int>, ScaLP::Variable> T;
+		std::map<std::tuple<const Vertex*, int, int, int>, ScaLP::Variable> T;
 		bool registerSelfLoops = false;
 		for (auto &v : this->g->Vertices()) {
 			for (auto &p : outputPortsOfVertex.at(v)) {
@@ -298,13 +304,6 @@ namespace HatScheT {
 				auto dt = deathTimes.at(vp);
 				if (dt - bt >= 2) registerSelfLoops = true;
 				// at its birth time, the variable comes out of an FU
-				/*
-				for (auto fuIdx : compatibleFUs.at(v)) {
-					std::stringstream name;
-					name << "T_" << v->getId() << "_" << p << "_" << bt << "_" << fuIdx;
-					T[{v, p, bt, fuIdx}] = ScaLP::newBinaryVariable(name.str());
-				}
-				 */
 				// afterwards, the variable remains in some register
 				if (bt != dt) {
 					for (int i=0; i<this->numRegs; i++) {
@@ -370,9 +369,9 @@ namespace HatScheT {
 		}
 		if(!this->quiet) std::cout << "created connection variables" << std::endl;
 
-		////////////////////////
-		// register variables //
-		////////////////////////
+		//////////////////////////////
+		// register usage variables //
+		//////////////////////////////
 		std::map<int, ScaLP::Variable> R;
 		if (this->numRegs > minNumRegs) {
 			for (int i=0; i<this->numRegs; i++) {
@@ -384,21 +383,100 @@ namespace HatScheT {
 		}
 		if(!this->quiet) std::cout << "created register variables" << std::endl;
 
-		//////////////////////////////////////////////////////////////////////
-		// constraints that each operation is bound to exactly one operator //
-		//////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////
+		// operator source selection variables //
+		/////////////////////////////////////////
+		std::map<std::tuple<Vertex*, int, int, int>, ScaLP::Variable> SO;
+		if (this->allowMultipleBindings) {
+			for (auto &vDst : this->g->Vertices()) {
+				for (auto &pDst : inputPortsOfVertex.at(vDst)) {
+					auto &inputEdge = inputEdges.at({vDst, pDst});
+					auto &lifetime = lifetimes.at(inputEdge);
+					for (auto &fuDstIdx : compatibleFUs.at(vDst)) {
+						if (lifetime == 0) {
+							// source is an FU
+							auto *vSrc = &inputEdge->getVertexSrc();
+							for (auto &fuSrcIdx : compatibleFUs.at(vSrc)) {
+								std::stringstream name;
+								name << "I_" << vDst->getId() << "_" << pDst << "_" << fuDstIdx << "_" << fuSrcIdx;
+								SO[{vDst, pDst, fuDstIdx, fuSrcIdx}] = ScaLP::newBinaryVariable(name.str());
+							}
+						}
+						else {
+							// source is a register
+							for (int i=0; i<this->numRegs; i++) {
+								auto regSrcIdx = regIndexMap.at(i);
+								std::stringstream name;
+								name << "I_" << vDst->getId() << "_" << pDst << "_" << fuDstIdx << "_" << regSrcIdx;
+								SO[{vDst, pDst, fuDstIdx, regSrcIdx}] = ScaLP::newBinaryVariable(name.str());
+							}
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created operator source selection variables" << std::endl;
+		}
+
+		/////////////////////////////////////////
+		// register source selection variables //
+		/////////////////////////////////////////
+		std::map<std::tuple<Vertex*, int, int, int, int>, ScaLP::Variable> SR;
+		if (this->allowMultipleBindings) {
+			for (auto &v : this->g->Vertices()) {
+				for (auto &p : outputPortsOfVertex.at(v)) {
+					auto bt = birthTimes.at({v, p});
+					auto dt = deathTimes.at({v, p});
+					if (bt == dt) {
+						// no register needed for this variable
+						continue;
+					}
+					for (int t=bt+1; t<=dt; t++) {
+						for (int i=0; i<this->numRegs; i++) {
+							auto regDstIdx = regIndexMap.at(i);
+							if (t == bt+1) {
+								// source is the FU
+								for (auto &fuSrcIdx : compatibleFUs.at(v)) {
+									std::stringstream name;
+									name << "I_" << v->getId() << "_" << p << "_" << t << "_" << regDstIdx << "_" << fuSrcIdx;
+									SR[{v, p, t, regDstIdx, fuSrcIdx}] = ScaLP::newBinaryVariable(name.str());
+								}
+							}
+							else {
+								// source is another register
+								for (int j=0; j<this->numRegs; j++) {
+									auto regSrcIdx = regIndexMap.at(j);
+									std::stringstream name;
+									name << "I_" << v->getId() << "_" << p << "_" << t << "_" << regDstIdx << "_" << regSrcIdx;
+									SR[{v, p, t, regDstIdx, regSrcIdx}] = ScaLP::newBinaryVariable(name.str());
+								}
+							}
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created register source selection variables" << std::endl;
+		}
+
+		///////////////////////////////////////////////////////////////////////////////
+		// constraints that each operation is bound to exactly/at least one operator //
+		///////////////////////////////////////////////////////////////////////////////
 		for (auto &v : this->g->Vertices()) {
 			ScaLP::Term lhs;
 			for (auto fuIdx : compatibleFUs[v]) {
 				lhs += F.at({v, fuIdx});
 			}
-			solver.addConstraint(lhs == 1);
+			if (this->allowMultipleBindings) {
+				solver.addConstraint(lhs >= 1);
+			}
+			else {
+				solver.addConstraint(lhs == 1);
+			}
 		}
 		if(!this->quiet) std::cout << "created operator constraints" << std::endl;
 
-		///////////////////////////////////////////////////////////////////////////////////////
-		// constraints that each variable is bound to exactly one register in each time step //
-		///////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////////
+		// constraints that each variable is bound to exactly/at least one register in each time step //
+		////////////////////////////////////////////////////////////////////////////////////////////////
 		for (auto &v : this->g->Vertices()) {
 			for (auto &p : outputPortsOfVertex.at(v)) {
 				std::pair<Vertex *, int> vp = {v, p};
@@ -411,7 +489,12 @@ namespace HatScheT {
 						auto regIdx = regIndexMap.at(i);
 						lhs += T.at({v, p, t, regIdx});
 					}
-					solver.addConstraint(lhs == 1);
+					if (this->allowMultipleBindings) {
+						solver.addConstraint(lhs >= 1);
+					}
+					else {
+						solver.addConstraint(lhs == 1);
+					}
 				}
 			}
 		}
@@ -432,6 +515,11 @@ namespace HatScheT {
 				if (r1 != r2) {
 					// no conflict with different resources
 					continue;
+				}
+				if (v1->getId() > v2->getId()) {
+					// do not create unnecessary/duplicate constraints
+					// e.g. we already have all constraints for v_5 vs v_6
+					// then we do not need to create all constraints again for v_6 vs v_5
 				}
 				if ((this->sched.at(v1) % this->II) != (this->sched.at(v2) % this->II)) {
 					// no conflict for different congruence classes
@@ -467,12 +555,17 @@ namespace HatScheT {
 						}
 						for (int t1 = tBirth1+1; t1<=tDeath1; t1++) {
 							for (int t2 = tBirth2+1; t2<=tDeath2; t2++) {
-								if ((t1 % this->II) != (t2 % this->II)) {
-									// no conflict for different congruence classes
-									continue;
+								if (v1->getId() > v2->getId()) {
+									// do not create unnecessary/duplicate constraints
+									// e.g. we already have all constraints for v_5 vs v_6
+									// then we do not need to create all constraints again for v_6 vs v_5
 								}
 								if ((v1 == v2) and (t1 == t2)) {
 									// no conflict with itself
+									continue;
+								}
+								if ((t1 % this->II) != (t2 % this->II)) {
+									// no conflict for different congruence classes
 									continue;
 								}
 								for (int i=0; i<this->numRegs; i++) {
@@ -508,11 +601,160 @@ namespace HatScheT {
 		}
 		if(!this->quiet) std::cout << "created register usage constraints" << std::endl;
 
+		//////////////////////////////////////////////////
+		// unique operator source selection constraints //
+		//////////////////////////////////////////////////
+		if (this->allowMultipleBindings) {
+			for (auto &vDst : this->g->Vertices()) {
+				for (auto &pDst : inputPortsOfVertex.at(vDst)) {
+					auto &inputEdge = inputEdges.at({vDst, pDst});
+					auto &lifetime = lifetimes.at(inputEdge);
+					for (auto &fuDstIdx : compatibleFUs.at(vDst)) {
+						if (lifetime == 0) {
+							// source is an FU
+							auto *vSrc = &inputEdge->getVertexSrc();
+							ScaLP::Term lhs;
+							for (auto &fuSrcIdx : compatibleFUs.at(vSrc)) {
+								lhs += SO.at({vDst, pDst, fuDstIdx, fuSrcIdx});
+							}
+							solver.addConstraint(lhs == 1);
+						}
+						else {
+							// source is a register
+							ScaLP::Term lhs;
+							for (int i=0; i<this->numRegs; i++) {
+								auto regSrcIdx = regIndexMap.at(i);
+								lhs += SO.at({vDst, pDst, fuDstIdx, regSrcIdx});
+							}
+							solver.addConstraint(lhs == 1);
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created unique operator source selection constraints" << std::endl;
+		}
+
+		//////////////////////////////////////////////////
+		// unique register source selection constraints //
+		//////////////////////////////////////////////////
+		if (this->allowMultipleBindings) {
+			for (auto &v : this->g->Vertices()) {
+				for (auto &p : outputPortsOfVertex.at(v)) {
+					auto bt = birthTimes.at({v, p});
+					auto dt = deathTimes.at({v, p});
+					if (bt == dt) {
+						// no register needed for this variable
+						continue;
+					}
+					for (int t=bt+1; t<=dt; t++) {
+						for (int i=0; i<this->numRegs; i++) {
+							auto regDstIdx = regIndexMap.at(i);
+							if (t == bt+1) {
+								// source is the FU
+								ScaLP::Term lhs;
+								for (auto &fuSrcIdx : compatibleFUs.at(v)) {
+									lhs += SR.at({v, p, t, regDstIdx, fuSrcIdx});
+								}
+								solver.addConstraint(lhs == 1);
+							}
+							else {
+								// source is another register
+								ScaLP::Term lhs;
+								for (int j=0; j<this->numRegs; j++) {
+									auto regSrcIdx = regIndexMap.at(j);
+									lhs += SR.at({v, p, t, regDstIdx, regSrcIdx});
+								}
+								solver.addConstraint(lhs == 1);
+							}
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created unique register source selection constraints" << std::endl;
+		}
+
+		///////////////////////////////////////////////////////
+		// operator source selection implication constraints //
+		///////////////////////////////////////////////////////
+		if (this->allowMultipleBindings) {
+			for (auto &e : this->g->Edges()) {
+				if (!e->isDataEdge()) continue;
+				auto *vSrc = &e->getVertexSrc();
+				auto *vDst = &e->getVertexDst();
+				auto lSrc = this->rm->getVertexLatency(vSrc);
+				auto lDst = this->rm->getVertexLatency(vDst);
+				auto pSrc = this->portAssignments.at(e).first;
+				auto pDst = this->portAssignments.at(e).second;
+				auto lifetime = lifetimes.at(e);
+				auto birthTime = birthTimes.at({vSrc, pSrc});
+				auto deathTime = birthTime + lifetime;
+				for (auto &fuDstIdx : compatibleFUs.at(vDst)) {
+					if (lifetime == 0) {
+						// src: FU
+						for (int fuSrcIdx : compatibleFUs.at(vSrc)) {
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, fuSrcIdx});
+							auto fVar = F.at({vSrc, fuSrcIdx});
+							solver.addConstraint(soVar - fVar <= 0);
+						}
+					}
+					else {
+						// src: register
+						for (int i=0; i<this->numRegs; i++) {
+							auto regSrcIdx = regIndexMap.at(i);
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, regSrcIdx});
+							auto tVar = T.at({vSrc, pSrc, deathTime, regSrcIdx});
+							solver.addConstraint(soVar - tVar <= 0);
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created operator source selection implication constraints" << std::endl;
+		}
+
+		///////////////////////////////////////////////////////
+		// register source selection implication constraints //
+		///////////////////////////////////////////////////////
+		if (this->allowMultipleBindings) {
+			for (auto &v : this->g->Vertices()) {
+				for (auto &p : outputPortsOfVertex.at(v)) {
+					auto bt = birthTimes.at({v, p});
+					auto dt = deathTimes.at({v, p});
+					if (bt == dt) {
+						// no register needed for this variable
+						continue;
+					}
+					for (int t=bt+1; t<=dt; t++) {
+						for (int i=0; i<this->numRegs; i++) {
+							auto regDstIdx = regIndexMap.at(i);
+							if (t == bt+1) {
+								// source is the FU
+								for (auto &fuSrcIdx : compatibleFUs.at(v)) {
+									auto srVar = SR.at({v, p, t, regDstIdx, fuSrcIdx});
+									auto fVar = F.at({v, fuSrcIdx});
+									solver.addConstraint(srVar - fVar <= 0);
+								}
+							}
+							else {
+								// source is another register
+								for (int j=0; j<this->numRegs; j++) {
+									auto regSrcIdx = regIndexMap.at(j);
+									auto srVar = SR.at({v, p, t, regDstIdx, regSrcIdx});
+									auto tVar = T.at({v, p, t, regSrcIdx});
+									solver.addConstraint(srVar - tVar <= 0);
+								}
+							}
+						}
+					}
+				}
+			}
+			if(!this->quiet) std::cout << "created register source selection implication constraints" << std::endl;
+		}
+
 		/////////////////////////////////////////////////////
 		// FU -> Reg and Reg -> Reg connection constraints //
 		/////////////////////////////////////////////////////
 		for (auto &v : this->g->Vertices()) {
-			for (auto &p : outputPortsOfVertex[v]) {
+			for (auto &p : outputPortsOfVertex.at(v)) {
 				std::pair<Vertex *, int> vp = {v, p};
 				auto bt = birthTimes.at(vp);
 				auto dt = deathTimes.at(vp);
@@ -528,7 +770,13 @@ namespace HatScheT {
 						auto regIdx = regIndexMap.at(i);
 						auto regVar = T.at({v, p, bt+1, regIdx});
 						auto connectionVar = C.at({fuIdx, regIdx, p, 0});
-						solver.addConstraint(fuVar + regVar - connectionVar <= 1);
+						if (this->allowMultipleBindings) {
+							auto srVar = SR.at({v, p, bt+1, regIdx, fuIdx});
+							solver.addConstraint(fuVar + regVar + srVar - connectionVar <= 2);
+						}
+						else {
+							solver.addConstraint(fuVar + regVar - connectionVar <= 1);
+						}
 					}
 				}
 				// Reg -> Reg
@@ -544,7 +792,13 @@ namespace HatScheT {
 							auto regDstIdx = regIndexMap.at(j);
 							auto regDstVar = T.at({v, p, t+1, regDstIdx});
 							auto connectionVar = C.at({regSrcIdx, regDstIdx, 0, 0});
-							solver.addConstraint(regSrcVar + regDstVar - connectionVar <= 1);
+							if (this->allowMultipleBindings) {
+								auto srVar = SR.at({v, p, t+1, regDstIdx, regSrcIdx});
+								solver.addConstraint(regSrcVar + regDstVar + srVar - connectionVar <= 2);
+							}
+							else {
+								solver.addConstraint(regSrcVar + regDstVar - connectionVar <= 1);
+							}
 						}
 					}
 				}
@@ -577,7 +831,13 @@ namespace HatScheT {
 						//auto fuSrcVar = T.at({vSrc, pSrc, tBirth, fuSrcIdx});
 						auto fuSrcVar = F.at({vSrc, fuSrcIdx});
 						auto connectionVar = C.at({fuSrcIdx, fuDstIdx, pSrc, pDst});
-						solver.addConstraint(fuSrcVar + fuDstVar - connectionVar <= 1);
+						if (this->allowMultipleBindings) {
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, fuSrcIdx});
+							solver.addConstraint(fuSrcVar + fuDstVar + soVar - connectionVar <= 2);
+						}
+						else {
+							solver.addConstraint(fuSrcVar + fuDstVar - connectionVar <= 1);
+						}
 					}
 				}
 				else {
@@ -586,7 +846,13 @@ namespace HatScheT {
 						auto regSrcIdx = regIndexMap.at(i);
 						auto regSrcVar = T.at({vSrc, pSrc, tDeath, regSrcIdx});
 						auto connectionVar = C.at({regSrcIdx, fuDstIdx, 0, pDst});
-						solver.addConstraint(regSrcVar + fuDstVar - connectionVar <= 1);
+						if (this->allowMultipleBindings) {
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, regSrcIdx});
+							solver.addConstraint(regSrcVar + fuDstVar + soVar - connectionVar <= 2);
+						}
+						else {
+							solver.addConstraint(regSrcVar + fuDstVar - connectionVar <= 1);
+						}
 					}
 				}
 			}
@@ -645,7 +911,7 @@ namespace HatScheT {
 			for (auto &fuIdx : compatibleFUs.at(v)) {
 				auto val = (int)round(resultValues.at(F.at({v, fuIdx})));
 				if (val == 1) {
-					this->bin.resourceBindings[v->getName()] = indexFuMap.at(fuIdx).second;
+					this->bin.resourceBindings[v->getName()].insert(indexFuMap.at(fuIdx).second);
 				}
 			}
 		}
@@ -700,7 +966,7 @@ namespace HatScheT {
 		////////////////////////
 		// variable locations //
 		////////////////////////
-		std::map<std::tuple<Vertex*, int, int>, int> variableLocations;
+		std::map<std::tuple<const Vertex*, int, int>, std::set<int>> variableLocations;
 		for (auto &it : T) {
 			auto &v = std::get<0>(it.first);
 			auto &p = std::get<1>(it.first);
@@ -714,7 +980,7 @@ namespace HatScheT {
 			auto val = (int)round(resultValues.at(var));
 
 			if (val == 1) {
-				variableLocations[{v, p, t}] = regIdx;
+				variableLocations[{v, p, t}].insert(regIdx);
 			}
 		}
 		if(!this->quiet) std::cout << "determined variable locations" << std::endl;
@@ -732,7 +998,7 @@ namespace HatScheT {
 		// FU -> Reg and Reg -> Reg connections //
 		//////////////////////////////////////////
 		for (auto &v : this->g->Vertices()) {
-			auto fuIdx = this->bin.resourceBindings.at(v->getName());
+			auto fuIdxs = this->bin.resourceBindings.at(v->getName());
 			for (auto &p : outputPortsOfVertex[v]) {
 				std::pair<Vertex *, int> vp = {v, p};
 				auto bt = birthTimes.at(vp);
@@ -743,69 +1009,97 @@ namespace HatScheT {
 				}
 				auto srcRes = this->rm->getResource(v);
 				std::string srcResName = srcRes->getName();
-				int srcIndex = fuIndexMap.at({this->rm->getResource(srcResName), fuIdx});
 				int srcOutputPort = p;
 				std::string dstResName = "register";
 				int dstInputPort = 0;
+				auto srcIndices = std::set<int>();
+				for (auto fuIdx : fuIdxs) {
+					srcIndices.insert(fuIndexMap.at({this->rm->getResource(srcResName), fuIdx}));
+				}
+				//int srcIndex = fuIndexMap.at({this->rm->getResource(srcResName), fuIdx});
 				for (auto tDst=bt+1; tDst<=dt; tDst++) {
 					// get current variable location
-					int dstIndex = variableLocations.at({v, p, tDst});
-					// sanity check if corresponding C-variable is actually set
-					int srcFuRegIdx;
-					if (srcResName == "register") {
-						srcFuRegIdx = indexRegMap.at(srcIndex);
-					}
-					else {
-						srcFuRegIdx = indexFuMap.at(srcIndex).second;
-					}
-
-					auto cVar = C.at({srcIndex, dstIndex, srcOutputPort, dstInputPort});
-					auto cVal = (int)round(resultValues.at(cVar));
-					if (cVal != 1) {
-						std::stringstream errMsg;
-						errMsg << "error in ILP formulation" << std::endl;
-						errMsg << "C_" << srcIndex << "_" << dstIndex << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
-						throw HatScheT::Exception("OptimalIntegerIIGeneralizedBinding::bind: "+errMsg.str());
-					}
-
-					int dstRegIndex = indexRegMap.at(dstIndex);
-					if (not (srcResName == "register" and dstResName == "register" and srcFuRegIdx == dstRegIndex)) {
-						// insert connection if it is not a register self loop
-						// additionally, set enable=1 for that register on that clock cycle
-						auto enableTimeInserted = this->bin.registerEnableTimes[dstRegIndex].insert((tDst-1) % this->II);
-						if (!enableTimeInserted.second) {
-							// register conflict detected
-							throw Exception("OptimalIntegerIIGeneralizedBinding::bind: register conflict detected for register '"+
-															std::to_string(dstRegIndex)+"' in congruence class '"+std::to_string((tDst-1) % this->II)+
-															"' - this should never happen");
+					auto dstIndices = variableLocations.at({v, p, tDst});
+					// for each dst index, make a connection to its source
+					for (auto &dstIndex : dstIndices) {
+						// check which source is selected
+						int srcIndex = -1;
+						int srcFuRegIdx = -1;
+						bool foundSrc = false;
+						for (auto &possibleSrcIndex : srcIndices) {
+							// check if it is actually the source
+							if (this->allowMultipleBindings) {
+								auto srVar = SR.at({v, p, tDst, dstIndex, possibleSrcIndex}); // v, p, t, regDstIdx, fuSrcIdx
+								if ((int)round(resultValues.at(srVar)) == 0) {
+									continue;
+								}
+							}
+							// check for multiple sources (this should never happen)
+							if (foundSrc) {
+								throw Exception("OptimalIntegerIIGeneralizedBinding::bind: found multiple sources for register '"+std::to_string(dstIndex)+"' in time step '"+std::to_string(tDst)+"' for the variable produced by vertex '"+v->getName()+"', port '"+std::to_string(p)+"'");
+							}
+							foundSrc = true;
+							// seems like we found the source
+							srcIndex = possibleSrcIndex;
+							if (srcResName == "register") {
+								srcFuRegIdx = indexRegMap.at(srcIndex);
+							}
+							else {
+								srcFuRegIdx = indexFuMap.at(srcIndex).second;
+							}
 						}
-						bool foundConnection = false;
-						for (auto &c : this->bin.connections) {
-							if (std::get<0>(c) != srcResName) continue;
-							if (std::get<1>(c) != srcFuRegIdx) continue;
-							if (std::get<2>(c) != srcOutputPort) continue;
-							if (std::get<3>(c) != dstResName) continue;
-							if (std::get<4>(c) != dstRegIndex) continue;
-							if (std::get<5>(c) != dstInputPort) continue;
-							auto inserted = std::get<6>(c).insert((tDst-1) % this->II);
-							if (!inserted.second) {
-								// FU connection conflict detected
-								throw Exception("OptimalIntegerIIGeneralizedBinding::bind: register connection conflict detected for '"
-																+std::to_string(dstIndex)+"' in congruence class '"+std::to_string((tDst-1) % this->II)+
+						if (not foundSrc) {
+							throw Exception("OptimalIntegerIIGeneralizedBinding::bind: failed to find source for register '"+std::to_string(dstIndex)+"' in time step '"+std::to_string(tDst)+"' for the variable produced by vertex '"+v->getName()+"', port '"+std::to_string(p)+"'");
+						}
+						// sanity check if corresponding C-variable is actually set
+						auto cVar = C.at({srcIndex, dstIndex, srcOutputPort, dstInputPort});
+						auto cVal = (int)round(resultValues.at(cVar));
+						if (cVal != 1) {
+							std::stringstream errMsg;
+							errMsg << "error in ILP formulation" << std::endl;
+							errMsg << "C_" << srcIndex << "_" << dstIndex << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
+							throw HatScheT::Exception("OptimalIntegerIIGeneralizedBinding::bind: "+errMsg.str());
+						}
+
+						int dstRegIndex = indexRegMap.at(dstIndex);
+						if (not (srcResName == "register" and dstResName == "register" and srcFuRegIdx == dstRegIndex)) {
+							// insert connection if it is not a register self loop
+							// additionally, set enable=1 for that register on that clock cycle
+							auto enableTimeInserted = this->bin.registerEnableTimes[dstRegIndex].insert((tDst-1) % this->II);
+							if (!enableTimeInserted.second) {
+								// register conflict detected
+								throw Exception("OptimalIntegerIIGeneralizedBinding::bind: register conflict detected for register '"+
+																std::to_string(dstRegIndex)+"' in congruence class '"+std::to_string((tDst-1) % this->II)+
 																"' - this should never happen");
 							}
-							foundConnection = true;
-							break;
-						}
-						if (!foundConnection) {
-							this->bin.connections.push_back({srcResName, srcFuRegIdx, srcOutputPort, dstResName, dstRegIndex, dstInputPort, {(tDst-1) % this->II}});
+							bool foundConnection = false;
+							for (auto &c : this->bin.connections) {
+								if (std::get<0>(c) != srcResName) continue;
+								if (std::get<1>(c) != srcFuRegIdx) continue;
+								if (std::get<2>(c) != srcOutputPort) continue;
+								if (std::get<3>(c) != dstResName) continue;
+								if (std::get<4>(c) != dstRegIndex) continue;
+								if (std::get<5>(c) != dstInputPort) continue;
+								auto inserted = std::get<6>(c).insert((tDst-1) % this->II);
+								if (!inserted.second) {
+									// FU connection conflict detected
+									throw Exception("OptimalIntegerIIGeneralizedBinding::bind: register connection conflict detected for '"
+																	+std::to_string(dstIndex)+"' in congruence class '"+std::to_string((tDst-1) % this->II)+
+																	"' - this should never happen");
+								}
+								foundConnection = true;
+								break;
+							}
+							if (!foundConnection) {
+								this->bin.connections.push_back({srcResName, srcFuRegIdx, srcOutputPort, dstResName, dstRegIndex, dstInputPort, {(tDst-1) % this->II}});
+							}
 						}
 					}
 
-					// update source
+					// update sources
 					srcResName = "register";
 					srcOutputPort = 0;
-					srcIndex = dstIndex;
+					srcIndices = dstIndices;
 				}
 			}
 		}
@@ -829,76 +1123,108 @@ namespace HatScheT {
 			auto tProdDst = tDst + lDst;
 			auto pSrc = this->portAssignments.at(e).first;
 			auto pDst = this->portAssignments.at(e).second;
-			auto fuSrc = this->bin.resourceBindings.at(vSrc->getName());
-			auto fuDst = this->bin.resourceBindings.at(vDst->getName());
-			// what we need for a connection
-			std::string srcResName;
-			int srcIndex;
-			int srcOutputPort;
-			std::string dstResName = rDst->getName();
-			int dstIndex = fuDst;
-			int dstInputPort = pDst;
+			auto fuSrcs = this->bin.resourceBindings.at(vSrc->getName());
+			auto fuDsts = this->bin.resourceBindings.at(vDst->getName());
+			// create/reuse a connection for each dst
+			for (auto &fuDst : fuDsts) {
+				// what we need for a connection
+				std::string srcResName;
+				int srcIndex;
+				int srcOutputPort;
+				std::string dstResName = rDst->getName();
+				int dstIndex = fuDst;
+				int dstInputPort = pDst;
 
-			// std::list<std::tuple<src resource name, src index, src output port, dst resource name, dst index, dst input port, set of active times modulo II>> connections;
-			if (tBirth == tDeath) {
-				// FU -> FU connection
-				srcResName = rSrc->getName();
-				srcIndex = fuSrc;
-				srcOutputPort = pSrc;
-			}
-			else {
-				// Reg -> FU connection
-				srcResName = "register";
-				srcIndex = variableLocations.at({vSrc, pSrc, tDeath});
-				srcOutputPort = 0;
-			}
-			// sanity check if corresponding C variable was set
-			int srcFuRegIdx;
-			int dstFuRegIdx;
-			if (srcResName == "register") {
-				srcFuRegIdx = srcIndex;
-			}
-			else {
-				srcFuRegIdx = fuIndexMap.at({this->rm->getResource(srcResName), srcIndex});
-			}
-			dstFuRegIdx = fuIndexMap.at({this->rm->getResource(dstResName), dstIndex});
+				// check which source is selected
+				bool foundSrc = false;
+				int srcFuRegIdx;
+				int dstFuRegIdx;
 
-			auto cVar = C.at({srcFuRegIdx, dstFuRegIdx, srcOutputPort, dstInputPort});
-			auto cVal = (int)round(resultValues.at(cVar));
-			if (cVal != 1) {
-				std::stringstream errMsg;
-				std::cout << "error in ILP formulation" << std::endl;
-				std::cout << "C_" << srcFuRegIdx << "_" << dstFuRegIdx << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
-				errMsg << "error in ILP formulation" << std::endl;
-				errMsg << "C_" << srcFuRegIdx << "_" << dstFuRegIdx << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
-				throw HatScheT::Exception("OptimalIntegerIIGeneralizedBinding::bind: "+errMsg.str());
-			}
-			if (srcResName == "register") {
-				srcIndex = indexRegMap.at(srcFuRegIdx);
-			}
-			//std::tuple<std::string, int, int, std::string, int, int> connectionKey = {srcResName, srcIndex, srcOutputPort, dstResName, dstIndex, dstInputPort};
-			bool foundConnection = false;
-			for (auto &c : this->bin.connections) {
-				if (std::get<0>(c) != srcResName) continue;
-				if (std::get<1>(c) != srcIndex) continue;
-				if (std::get<2>(c) != srcOutputPort) continue;
-				if (std::get<3>(c) != dstResName) continue;
-				if (std::get<4>(c) != dstIndex) continue;
-				if (std::get<5>(c) != dstInputPort) continue;
-				auto inserted = std::get<6>(c).insert(tDst % this->II);
-				if (!inserted.second) {
-					// FU connection conflict detected
-					throw Exception("OptimalIntegerIIGeneralizedBinding::bind: FU connection conflict detected for FU '"+
-													std::to_string(dstIndex)+"' of resource type '"+dstResName+"' in congruence class '"+
-													std::to_string(tDst % this->II)+"' - this should never happen");
+				// std::list<std::tuple<src resource name, src index, src output port, dst resource name, dst index, dst input port, set of active times modulo II>> connections;
+				if (tBirth == tDeath) {
+					// FU -> FU connection
+					for (auto &possibleFuSrc : fuSrcs) {
+						// check if it is actually the source
+						if (this->allowMultipleBindings) {
+							auto soVar = SO.at({vDst, pDst, fuDst, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
+							if ((int)round(resultValues.at(soVar)) == 0) {
+								continue;
+							}
+						}
+						// check for multiple sources (this should never happen)
+						if (foundSrc) {
+							throw Exception("OptimalIntegerIIGeneralizedBinding::bind: found multiple sources for FU '"+std::to_string(dstIndex)+"' for vertex '"+vDst->getName()+"', port '"+std::to_string(pDst)+"'");
+						}
+						foundSrc = true;
+						// seems like we found the source
+						srcResName = rSrc->getName();
+						srcIndex = possibleFuSrc;
+						srcOutputPort = pSrc;
+						srcFuRegIdx = fuIndexMap.at({this->rm->getResource(srcResName), srcIndex});
+					}
 				}
-				foundConnection = true;
-				break;
-			}
-			if (!foundConnection) {
-				this->bin.connections.push_back({srcResName, srcIndex, srcOutputPort, dstResName, dstIndex, dstInputPort, {tDst % this->II}});
-			}
-		}
+				else {
+					// Reg -> FU connection
+					for (auto &possibleFuSrc : variableLocations.at({vSrc, pSrc, tDeath})) {
+						// check if it is actually the source
+						if (this->allowMultipleBindings) {
+							auto soVar = SO.at({vDst, pDst, fuDst, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
+							if ((int)round(resultValues.at(soVar)) == 0) {
+								continue;
+							}
+						}
+						// check for multiple sources (this should never happen)
+						if (foundSrc) {
+							throw Exception("OptimalIntegerIIGeneralizedBinding::bind: found multiple sources for FU '"+std::to_string(dstIndex)+"' for vertex '"+vDst->getName()+"', port '"+std::to_string(pDst)+"'");
+						}
+						foundSrc = true;
+						// seems like we found the source
+						srcResName = "register";
+						srcIndex = possibleFuSrc;
+						srcOutputPort = 0;
+						srcFuRegIdx = srcIndex;
+					}
+				}
+				dstFuRegIdx = fuIndexMap.at({this->rm->getResource(dstResName), dstIndex});
+
+				// sanity check if corresponding C variable was set
+				auto cVar = C.at({srcFuRegIdx, dstFuRegIdx, srcOutputPort, dstInputPort});
+				auto cVal = (int)round(resultValues.at(cVar));
+				if (cVal != 1) {
+					std::stringstream errMsg;
+					std::cout << "error in ILP formulation" << std::endl;
+					std::cout << "C_" << srcFuRegIdx << "_" << dstFuRegIdx << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
+					errMsg << "error in ILP formulation" << std::endl;
+					errMsg << "C_" << srcFuRegIdx << "_" << dstFuRegIdx << "_" << srcOutputPort << "_" << dstInputPort << " should have been set but isn't" << std::endl;
+					throw HatScheT::Exception("OptimalIntegerIIGeneralizedBinding::bind: "+errMsg.str());
+				}
+				if (srcResName == "register") {
+					srcIndex = indexRegMap.at(srcFuRegIdx);
+				}
+				//std::tuple<std::string, int, int, std::string, int, int> connectionKey = {srcResName, srcIndex, srcOutputPort, dstResName, dstIndex, dstInputPort};
+				bool foundConnection = false;
+				for (auto &c : this->bin.connections) {
+					if (std::get<0>(c) != srcResName) continue;
+					if (std::get<1>(c) != srcIndex) continue;
+					if (std::get<2>(c) != srcOutputPort) continue;
+					if (std::get<3>(c) != dstResName) continue;
+					if (std::get<4>(c) != dstIndex) continue;
+					if (std::get<5>(c) != dstInputPort) continue;
+					auto inserted = std::get<6>(c).insert(tDst % this->II);
+					if (!inserted.second) {
+						// FU connection conflict detected
+						throw Exception("OptimalIntegerIIGeneralizedBinding::bind: FU connection conflict detected for FU '"+
+														std::to_string(dstIndex)+"' of resource type '"+dstResName+"' in congruence class '"+
+														std::to_string(tDst % this->II)+"' - this should never happen");
+					}
+					foundConnection = true;
+					break;
+				}
+				if (!foundConnection) {
+					this->bin.connections.push_back({srcResName, srcIndex, srcOutputPort, dstResName, dstIndex, dstInputPort, {tDst % this->II}});
+				}
+			} // fuDst
+		} // e
 		if(!this->quiet) std::cout << "determined FU -> FU and Reg -> FU connections" << std::endl;
 		if (this->bin.connections.size() != this->bin.multiplexerCosts) {
 			//throw HatScheT::Exception("OptimalIntegerIIGeneralizedBinding::bind: something went wrong when calculating multiplexer costs - this should never happen");
@@ -917,7 +1243,10 @@ namespace HatScheT {
 			std::cout << "connection costs: " << this->bin.multiplexerCosts << std::endl;
 			std::cout << "----resource bindings----" << std::endl;
 			for (auto &rb : this->bin.resourceBindings) {
-				std::cout << rb.first << " -> " << rb.second << std::endl;
+				std::cout << rb.first << " -> ";
+				for (auto &fu : rb.second) {
+					std::cout << fu << " " << std::endl;
+				}
 			}
 			std::cout << "----register enable times----" << std::endl;
 			for (auto &et : this->bin.registerEnableTimes) {

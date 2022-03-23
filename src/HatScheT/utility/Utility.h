@@ -71,9 +71,12 @@ public:
 	 * @param numFUConnections the number of connections between FUs that will be implemented in hardware
 	 * @param g graph
 	 * @param rm resource model
+	 * @param numRegsWithPossibleMuxInputs the registers that can possibly have MUXs at their inputs
+	 *   -> for registers as register chains after FUs, this number is 0
+	 *   -> otherwise this number is equal to the number of allocated registers
 	 * @return number of equivalent 2x1 multiplexers
 	 */
-	static double getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph* g, ResourceModel* rm);
+	static double getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph* g, ResourceModel* rm, int numRegsWithPossibleMuxInputs=0);
 	/*!
 	 * this is the counterpart to getNumberOfEquivalent2x1Muxs
 	 * @param num2x1Muxs the number of equivalent 2x1Muxs

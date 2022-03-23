@@ -883,7 +883,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		return {g_unroll, rm_unroll};
 	}
 
-	double Utility::getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph *g, ResourceModel *rm) {
+	double Utility::getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph *g, ResourceModel *rm, int numRegsWithPossibleMuxInputs) {
 		for (auto &r : rm->Resources()) {
 			// number of FUs for this resource
 			int numFUs;
@@ -896,7 +896,16 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			// number of inputs for each FU
 			int numInputs = 0;
 			for (auto &v : rm->getVerticesOfResource(r)) {
-				auto numVertexInputs = g->getPredecessors(v).size();
+				//auto numVertexInputs = g->getPredecessors(v).size(); // nfiege: this does not work...
+				int numVertexInputs = 0;
+				// count number of inputs
+				// using g->getPredecessors does not work because a vertex can have multiple edges
+				// coming from the same predecessor
+				for (auto &e : g->Edges()) {
+					if (not e->isDataEdge()) continue;
+					if (not (v == &e->getVertexDst())) continue;
+					numVertexInputs++;
+				}
 				if (numVertexInputs > numInputs) numInputs = numVertexInputs;
 			}
 			// subtract the number of input ports * the number of FUs
@@ -906,7 +915,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			// since this holds for each implemented FU, we must multiply the number of inputs with the number of FUs
 			numFUConnections -= (numInputs * numFUs);
 		}
-		return numFUConnections;
+		return numFUConnections - numRegsWithPossibleMuxInputs;
 	}
 
 	std::pair<int, int> Utility::getMaxRegsAndMuxs(Graph *g, ResourceModel *rm, std::map<Vertex *, int> times, int II) {
@@ -1010,7 +1019,10 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		b.registerCosts = bChain.registerCosts;
 		b.solutionStatus = bChain.solutionStatus;
 		//b.portAssignments = bChain.portAssignments; // not so trivial anymore eh?
-		b.resourceBindings = bChain.resourceBindings;
+		//b.resourceBindings = bChain.resourceBindings; // easy but copying doesn't work because of different data structures
+		for (auto &it : bChain.resourceBindings) {
+			b.resourceBindings[it.first] = {it.second};
+		}
 
 		// copy port assignments and assume that the output port of the src vertex is always zero
 		// i.e. all operators have exactly one output port

@@ -153,6 +153,17 @@ namespace HatScheT {
 	Binding::BindingContainer
 	Binding::getILPBasedIntIIBindingCong(map<Vertex *, int> sched, Graph *g, ResourceModel *rm, int II,
 																			 std::map<Edge*,int> portAssignments, list<string> sw, int timeout, bool quiet) {
+
+		if (!quiet) {
+			std::cout << "Binding::getILPBasedIntIIBindingCong: start for the following graph with associated resource model and schedule:" << std::endl;
+			std::cout << *g << std::endl;
+			std::cout << *rm << std::endl;
+			std::cout << "schedule with II=" << II << std::endl;
+			for (auto &it : sched) {
+				std::cout << "  " << it.first->getName() << " (" << it.first->getId() << ") - " << it.second << std::endl;
+			}
+		}
+
 		///////////////////////////////////////////////
 		// find conflicting operations and variables //
 		///////////////////////////////////////////////
@@ -192,6 +203,26 @@ namespace HatScheT {
 										<< std::endl;
 				}
 				resourceCompatibilityGraph.createEdge(resourceCompatibilityGraph.getVertexById(v->getId()),resourceCompatibilityGraph.getVertexById(it.first->getId()));
+			}
+		}
+
+		// keep track of vertices that produce registered variables
+		std::map<Vertex*, bool> producesRegisteredVariable;
+		for (auto &v : g->Vertices()) {
+			producesRegisteredVariable[v] = false;
+			for (auto &e : g->Edges()) {
+				if (!e->isDataEdge()) continue;
+				auto *vSrc = &e->getVertexSrc();
+				auto *vDst = &e->getVertexDst();
+				if (vSrc != v) continue;
+				auto tSrc = sched.at(vSrc);
+				auto tDst = sched.at(vDst);
+				auto lSrc = rm->getVertexLatency(v);
+				auto lifetime = tDst - tSrc - lSrc + (e->getDistance() * II);
+				if (lifetime > 0) {
+					producesRegisteredVariable[v] = true;
+					break;
+				}
 			}
 		}
 
@@ -305,8 +336,12 @@ namespace HatScheT {
 		// boolean variables whether variable of v_i is bound to register l (y_i_l)
 		std::map<std::pair<int,int>,ScaLP::Variable> y_i_l;
 		for(auto &v : g->Vertices()) {
+			if (!producesRegisteredVariable.at(v)) {
+				// skip vertices that do not produce registered variables
+				continue;
+			}
+			auto i = v->getId();
 			for(int l=0; l<minRegs; ++l) {
-				auto i = v->getId();
 				y_i_l[{i,l}] = ScaLP::newBinaryVariable("y_" + to_string(i) + "_" + to_string(l));
 				if (!quiet) {
 					std::cout << "  Created variable '" << y_i_l[{i, l}] << "'" << std::endl;
@@ -486,6 +521,10 @@ namespace HatScheT {
 		// each variable is bound to one resource (if registers are needed)
 		if(minRegs >= 1) {
 			for(auto &v : g->Vertices()) {
+				if (!producesRegisteredVariable.at(v)) {
+					// skip vertices that do not produce registered variables
+					continue;
+				}
 				ScaLP::Term t;
 				auto i = v->getId();
 				for(int l=0; l<minRegs; ++l) {
@@ -539,18 +578,23 @@ namespace HatScheT {
 			}
 		}
 		if (!quiet) {
-			std::cout << "Created no resource overlap constraints" << std::endl;
+			std::cout << "Created resource overlap constraints" << std::endl;
 			s.showLP(); // this line does nothing - only for debugging
 		}
 
 		// no overlaps in registers (variable conflict graph)
-		// no overlaps in operations (resource conflict graph)
 		for(auto &v : g->Vertices()) {
+			if (!producesRegisteredVariable.at(v)) {
+				// skip vertices that do not produce registered variables
+				continue;
+			}
 			// find conflicting operations
 			auto predecessors = variableCompatibilityGraph.getPredecessors(&variableCompatibilityGraph.getVertexById(v->getId()));
 			auto successors = variableCompatibilityGraph.getSuccessors(&variableCompatibilityGraph.getVertexById(v->getId()));
 			std::set<int> conflictVertexIDs;
 			for(auto &v2 : variableCompatibilityGraph.Vertices()) {
+				// skip vertices that do not produce registered variables
+				//if (!producesRegisteredVariable.at(v2)) continue;
 				// no conflict with itself
 				if(v->getId() == v2->getId()) continue;
 				// no conflict with predecessors in compatibility graph
@@ -564,36 +608,57 @@ namespace HatScheT {
 			auto i = v->getId();
 			for(int l = 0; l<minRegs; l++) {
 				for(auto j : conflictVertexIDs) {
-					s.addConstraint((y_i_l[{i,l}] + y_i_l[{j,l}]) <= 1);
+					std::cout << "creating constraint y_" << i << "_" << l << " + y_" << j << "_" << l << std::endl;
+					auto constr = (y_i_l[{i,l}] + y_i_l[{j,l}]) <= 1;
+					s.addConstraint(constr);
+					std::cout << "created constraint " << constr << std::endl;
 				}
 			}
 		}
 		if (!quiet) {
-			std::cout << "Created no variable overlap constraints" << std::endl;
+			std::cout << "Created register overlap constraints" << std::endl;
 			s.showLP(); // this line does nothing - only for debugging
+			std::cout << "#q# 0" << std::endl;
 		}
 
 		// A) for edges with lifetime > 0
 		for(auto &e : g->Edges()) {
+			std::cout << "#q# 1" << std::endl;
 			auto *vSrc = &e->getVertexSrc();
+			std::cout << "#q# 2" << std::endl;
 			auto *vDst = &e->getVertexDst();
+			std::cout << "#q# 3" << std::endl;
 			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
+			std::cout << "#q# 4" << std::endl;
 			if(lifetime < 0) {
 				throw HatScheT::Exception("Detected lifetime < 0 from '" + vSrc->getName() + "' (t='" + to_string(sched[vSrc])
 				  + "', lat='" + to_string(rm->getResource(vSrc)->getLatency()) + "', distance='" + to_string(e->getDistance())
 				  + "', II='" + to_string(II) + "') to '" + vDst->getName() + "' (t='" + to_string(sched[vDst]) + "')");
 			}
+			std::cout << "#q# 5" << std::endl;
 			// edges with lifetime = 0 are handled in B)
 			if(lifetime == 0) continue;
+			std::cout << "#q# 6" << std::endl;
 
 			// A) check if there is a connection from resource instance k of resource r (source) to register l
 			auto rSrc = rm->getResource(vSrc);
+			std::cout << "#q# 7" << std::endl;
 			auto i = vSrc->getId();
+			std::cout << "#q# 8" << std::endl;
 			int resLimitSrc = rSrc->getLimit();
+			std::cout << "#q# 9" << std::endl;
 			auto verticesSrc = rm->getVerticesOfResource(rSrc);
+			std::cout << "#q# 10" << std::endl;
 			if(rSrc->isUnlimited()) resLimitSrc = verticesSrc.size();
+			std::cout << "#q# 11" << std::endl;
 			for(int k=0; k<resLimitSrc; k++) {
+				std::cout << "#q# 12" << std::endl;
 				for(int l=0; l<minRegs; ++l) {
+					std::cout << "#q# 13" << std::endl;
+					if (!quiet) {
+						std::cout << "adding constraint x_" << i << "_" << k << " + y_" << i << "_" << l << " - c_"
+						  << rSrc->getName() << "_" << k << "_" << l << " <= 1" << std::endl;
+					}
 					s.addConstraint(x_i_k[{i,k}] + y_i_l[{i,l}] - c_r_k_l[{rSrc->getName(),{k,l}}] <= 1);
 				}
 			}
@@ -608,6 +673,10 @@ namespace HatScheT {
 				try {
 					auto n = portAssignments.at(e);
 					for(int l=0; l<minRegs; l++) {
+						if (!quiet) {
+							std::cout << "adding constraint y_" << i << "_" << l << " + x_" << i << "_" << k << " - a_"
+												<< rSrc->getName() << "_" << n << "_" << k << "_" << l << " <= 1" << std::endl;
+						}
 						s.addConstraint(y_i_l[{i,l}] + x_i_k[{j,k}] - a_r_n_k_l[{{rDst->getName(),n},{k,l}}] <= 1);
 					}
 				}
@@ -756,6 +825,7 @@ namespace HatScheT {
 		if (!quiet) {
 			std::cout << "Created objective" << std::endl;
 		}
+		s.setObjective(ScaLP::minimize(obj));
 
 		///////////
 		// solve //
@@ -773,13 +843,26 @@ namespace HatScheT {
 		/////////////////
 		BindingContainer b;
 
+		///////////////////////////
+		// copy port assignments //
+		///////////////////////////
+		// assume that all operators have exactly 1 output port
+		for (auto &it : portAssignments) {
+			b.portAssignments[it.first] = {0, it.second};
+		}
+
 		if(stat != ScaLP::status::TIMEOUT_FEASIBLE and stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE) {
 			if (!quiet) {
-				std::cout << "Could not solve optimal binidng ILP formulation for II = " << II << std::endl;
+				std::cout << "Could not solve optimal binding ILP formulation for II = " << II << std::endl;
 				std::cout << "ScaLP solver status: " << stat << std::endl;
 			}
 			return b;
 		}
+
+		/////////////////
+		// get results //
+		/////////////////
+		b.registerCosts = minRegs;
 
 		if (!quiet) {
 			std::cout << "SOLVER RESULTS: " << std::endl;
@@ -787,6 +870,7 @@ namespace HatScheT {
 		}
 
 		auto results = s.getResult().values;
+		b.multiplexerCosts = (int)round(s.getResult().objectiveValue);
 
 		for(auto v : g->Vertices()) {
 			bool hasBinding = false;
@@ -805,7 +889,7 @@ namespace HatScheT {
 					throw HatScheT::Exception("Vertex '" + v->getName() + "' is bound to multiple FUs - that should never happen");
 				}
 				hasBinding = true;
-				b.resourceBindings[v->getName()] = k;
+				b.resourceBindings[v->getName()] = {k};
 				if (!quiet)
 					std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "'" << std::endl;
 			}
@@ -813,6 +897,10 @@ namespace HatScheT {
 
 		std::map<Vertex*, int> registerBindings;
 		for(auto v : g->Vertices()) {
+			if (!producesRegisteredVariable.at(v)) {
+				// skip vertices that do not produce registered variables
+				continue;
+			}
 			bool hasBinding = false;
 			auto i = v->getId();
 			for(int l=0; l<minRegs; l++) {
@@ -825,7 +913,12 @@ namespace HatScheT {
 					throw HatScheT::Exception("Variable '" + v->getName() + "' is bound to multiple Registers - that should never happen");
 				}
 				hasBinding = true;
-				b.registerEnableTimes[l] = {(sched[v] + rm->getResource(v)->getLatency()) % II};
+				auto inserted = b.registerEnableTimes[l].insert((sched[v] + rm->getResource(v)->getLatency()) % II);
+				if (!inserted.second) {
+					// register conflict detected
+					throw HatScheT::Exception("Binding::getILPBasedIntIIBindingCong: register conflict detected for register "+
+					  std::to_string(l)+" in congruence class "+std::to_string(*inserted.first));
+				}
 				std::cout << "Variable '" << v->getName() << "' is bound to register number '" << l << "'" << std::endl;
 				registerBindings[v] = l;
 			}
@@ -885,8 +978,8 @@ namespace HatScheT {
 			auto *vSrc = &e->getVertexSrc();
 			auto *vDst = &e->getVertexDst();
 			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
-			auto srcFU = b.resourceBindings.at(vSrc->getName());
-			auto dstFU = b.resourceBindings.at(vDst->getName());
+			auto srcFU = *b.resourceBindings.at(vSrc->getName()).begin();
+			auto dstFU = *b.resourceBindings.at(vDst->getName()).begin();
 			auto srcResName = rm->getResource(vSrc)->getName();
 			auto dstResName = rm->getResource(vDst)->getName();
 			if (lifetime > 0) {

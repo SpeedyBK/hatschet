@@ -792,10 +792,14 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			// conflicts are only possible if both congruence classes are also equal
 			if (sched.at(v1) % II != sched.at(v2) % II) continue;
 			// we got a conflict if they are executed by the same FU
-			if (bind.resourceBindings.at(v1->getName()) == bind.resourceBindings.at(v2->getName())) {
-				// oh no, binding is invalid :(
-				std::cout << "Conflicting vertices '" << v1->getName() << "' and '" << v2->getName() << "' are bound to the same FU" << std::endl;
-				return false;
+			for (auto &fu1 : bind.resourceBindings.at(v1->getName())) {
+				for (auto &fu2 : bind.resourceBindings.at(v2->getName())) {
+					if (fu1 == fu2) {
+						// oh no, binding is invalid :(
+						std::cout << "Conflicting vertices '" << v1->getName() << "' and '" << v2->getName() << "' are bound to the same FU" << std::endl;
+						return false;
+					}
+				}
 			}
 		}
 	}
@@ -824,7 +828,10 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			// calculate lifetime
 			int lifetime = tDst - tSrc - rSrc->getLatency() + e->getDistance() * II;
 			// keep track of where the variable is at which time step
-			std::set<std::pair<std::string, int>> currentSources = {{rSrc->getName(), fuSrc}};
+			std::set<std::pair<std::string, int>> currentSources; // = {{rSrc->getName(), fuSrc}};
+			for (auto &it : fuSrc) {
+				currentSources.insert({rSrc->getName(), it});
+			}
 			// number of considered lifetime register stages
 			int numLifetimeRegs = 0;
 			// the time step in which the variable was created
@@ -882,8 +889,8 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				numLifetimeRegs++;
 			}
 
-			// check if there is a connection from any of the sources to the actual destination
-			bool foundConnection = false;
+			// check if all destinations get their data from any of the sources
+			std::set<int> foundConnection;
 			for (auto &source : currentSources) {
 				int expectedSrcOutputPort;
 				if (source.first == "register") {
@@ -892,29 +899,27 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				else {
 					expectedSrcOutputPort = bind.portAssignments.at(e).first;
 				}
-				for (auto connection : bind.connections) {
-					// skip connections for source resource type mismatch
-					if (std::get<0>(connection) != source.first) continue;
-					// skip if FU or register index does not match
-					if (std::get<1>(connection) != source.second) continue;
-					// skip if src port does not match
-					if (std::get<2>(connection) != expectedSrcOutputPort) continue;
-					// skip if destination does not match
-					if (std::get<3>(connection) != rDst->getName()) continue;
-					if (std::get<4>(connection) != fuDst) continue;
-					// skip if dst port does not match
-					if (std::get<5>(connection) != bind.portAssignments.at(e).second) continue;
-					// connection seems fine...
-					foundConnection = true;
-					break;
-				}
-				if (foundConnection) {
-					break;
+				for (auto &fu : fuDst) {
+					for (auto connection : bind.connections) {
+						// skip connections for source resource type mismatch
+						if (std::get<0>(connection) != source.first) continue;
+						// skip if FU or register index does not match
+						if (std::get<1>(connection) != source.second) continue;
+						// skip if src port does not match
+						if (std::get<2>(connection) != expectedSrcOutputPort) continue;
+						// skip if destination does not match
+						if (std::get<3>(connection) != rDst->getName()) continue;
+						if (std::get<4>(connection) != fu) continue;
+						// skip if dst port does not match
+						if (std::get<5>(connection) != bind.portAssignments.at(e).second) continue;
+						// connection seems fine...
+						foundConnection.insert(fu);
+					}
 				}
 			}
-			if (!foundConnection) {
+			if (foundConnection != fuDst) {
 				// oh no, binding is invalid :(
-				std::cout << "Failed to find connection path for edge '" << e->getVertexSrcName() << "' port " << bind.portAssignments.at(e).first << " -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "' port " << bind.portAssignments.at(e).second << std::endl;
+				std::cout << "Failed to find all necessary connection paths for edge '" << e->getVertexSrcName() << "' port " << bind.portAssignments.at(e).first << " -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "' port " << bind.portAssignments.at(e).second << std::endl;
 				return false;
 			}
 		}
