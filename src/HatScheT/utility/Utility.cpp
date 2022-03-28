@@ -1015,7 +1015,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		Binding::BindingContainer b;
 
 		// trivial copies
-		b.multiplexerCosts = bChain.multiplexerCosts;
+		//b.multiplexerCosts = bChain.multiplexerCosts; // can't just copy mux costs
 		b.registerCosts = bChain.registerCosts;
 		b.solutionStatus = bChain.solutionStatus;
 		//b.portAssignments = bChain.portAssignments; // not so trivial anymore eh?
@@ -1228,8 +1228,10 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			}
 		}
 
-		// debugging
+		// now set mux costs
+		b.multiplexerCosts = b.connections.size();
 
+		// debugging
 		std::cout << "FU bindings:" << std::endl;
 		for (auto &it : bChain.resourceBindings) {
 			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' (" << it.second << ")" << std::endl;

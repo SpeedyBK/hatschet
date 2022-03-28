@@ -235,7 +235,82 @@ namespace HatScheT {
 		for(auto &v : g->Vertices()) {
 			variableCompatibilityGraph.createVertex(v->getId());
 		}
-		// check compatibility with other vertices
+		// check compatibility with other vertices and determine min number of registers
+		std::map<int, int> numAliveVariables;
+		std::map<Vertex*, std::set<int>> registeredTimeSteps;
+
+		for(auto &v : g->Vertices()) {
+			// calc lifetime of v
+			int v1Lat = rm->getResource(v)->getLatency();
+			int v1LifeStart = sched[v] + v1Lat;
+			int v1LifeEnd = v1LifeStart; // default value if vertex has no outgoing edges
+			int numIncompatibilities = 0;
+			for (auto &e : g->Edges()) {
+				if (e->getVertexSrc().getId() != v->getId()) continue;
+				auto dstStart = sched[&e->getVertexDst()] + (e->getDistance() * II);
+				if (dstStart > v1LifeEnd) v1LifeEnd = dstStart;
+			}
+			if (v1LifeEnd - v1LifeStart > II) {
+				// variable overlaps with itself from future or past iterations
+				throw HatScheT::Exception(
+					"Variable '" + v->getName() + "' has lifetime > II (" + std::to_string(v1LifeEnd - v1LifeStart) + " > " +
+					std::to_string(II) +
+					"); this is not supported, yet; please choose another binding algorithm or unroll the graph to get a longer cycle length");
+			}
+			if (v1LifeStart == v1LifeEnd) {
+				// variable does not have to be registered
+				continue;
+			}
+			for (int t=v1LifeStart+1; t<=v1LifeEnd; t++) {
+				auto cc = t % II;
+				registeredTimeSteps[v].insert(cc);
+				numAliveVariables[cc]++;
+			}
+		}
+		for(auto &v1 : g->Vertices()) {
+			for(auto &v2 : g->Vertices()) {
+				if (v1 == v2) {
+					// no self loops in variable compatibility graph
+					continue;
+				}
+				// source vertex: the one who comes first in the schedule
+				// tiebreaker: vertex IDs
+				if(sched[v1] > sched[v2] or (sched[v1] == sched[v2] and v1->getId() > v2->getId())) {
+					continue;
+				}
+				bool compatible = true;
+				if (registeredTimeSteps.find(v1) != registeredTimeSteps.end() and registeredTimeSteps.find(v2) != registeredTimeSteps.end()) {
+					// both variables must be stored in registers
+					// check if they are compatible
+					for (auto &t1 : registeredTimeSteps.at(v1)) {
+						for (auto &t2 : registeredTimeSteps.at(v2)) {
+							if (t1 == t2) {
+								compatible = false;
+								break;
+							}
+						}
+						if (not compatible) break;
+					}
+				}
+				if (compatible) {
+					// create edge
+					if (!quiet) {
+						std::cout << "Vertices '" << v1->getName() << "' and '" << v2->getName()
+											<< "' are COMPATIBLE because lifetimes DO NOT overlap" << std::endl;
+					}
+					variableCompatibilityGraph.createEdge(variableCompatibilityGraph.getVertexById(v1->getId()),
+																					 variableCompatibilityGraph.getVertexById(v2->getId()));
+				}
+				else {
+					if (!quiet) {
+						std::cout << "Vertices '" << v1->getName() << "' and '" << v2->getName()
+											<< "' are INCOMPATIBLE because lifetimes overlap" << std::endl;
+					}
+				}
+			}
+		}
+
+		/*
 		for(auto &v : g->Vertices()) {
 			// calc lifetime of v
 			int v1Lat = rm->getResource(v)->getLatency();
@@ -244,7 +319,7 @@ namespace HatScheT {
 			int numIncompatibilities = 0;
 			for(auto &e : g->Edges()) {
 				if(e->getVertexSrc().getId() != v->getId()) continue;
-				auto dstStart = sched[&e->getVertexDst()] + e->getDistance() * II;
+				auto dstStart = sched[&e->getVertexDst()] + (e->getDistance() * II);
 				if(dstStart > v1LifeEnd) v1LifeEnd = dstStart;
 			}
 			if (v1LifeEnd - v1LifeStart > II) {
@@ -252,6 +327,11 @@ namespace HatScheT {
 				throw HatScheT::Exception("Variable '"+v->getName()+"' has lifetime > II ("+std::to_string(v1LifeEnd - v1LifeStart)+" > "+std::to_string(II)+"); this is not supported, yet; please choose another binding algorithm or unroll the graph to get a longer cycle length");
 			}
 			bool v1Omnicompatible = (v1LifeStart == v1LifeEnd) or (v1LifeEnd == -1);
+			if (not v1Omnicompatible) {
+				for (int t=v1LifeStart+1; t<=v1LifeEnd; t++) {
+					numAliveVariables[t % II] = numAliveVariables[t % II] + 1;
+				}
+			}
 			for(auto &it : sched) {
 				// calc lifetime of v2
 				int v2Lat = rm->getResource(it.first)->getLatency();
@@ -295,7 +375,11 @@ namespace HatScheT {
 			if (!quiet) {
 				std::cout << "Incompatibilities for vertex '" << v->getName() << "': " << numIncompatibilities << std::endl;
 			}
-			if(numIncompatibilities > minRegs) minRegs = numIncompatibilities;
+			//if(numIncompatibilities > minRegs) minRegs = numIncompatibilities;
+		}
+		 */
+		for (auto &it : numAliveVariables) {
+			if (minRegs < it.second) minRegs = it.second;
 		}
 		if (!quiet) {
 			std::cout << "Minimum number of needed registers = " << minRegs << std::endl;
@@ -623,38 +707,25 @@ namespace HatScheT {
 
 		// A) for edges with lifetime > 0
 		for(auto &e : g->Edges()) {
-			std::cout << "#q# 1" << std::endl;
 			auto *vSrc = &e->getVertexSrc();
-			std::cout << "#q# 2" << std::endl;
 			auto *vDst = &e->getVertexDst();
-			std::cout << "#q# 3" << std::endl;
 			auto lifetime = sched[vDst] - sched[vSrc] - rm->getResource(vSrc)->getLatency() + (II * e->getDistance());
-			std::cout << "#q# 4" << std::endl;
 			if(lifetime < 0) {
 				throw HatScheT::Exception("Detected lifetime < 0 from '" + vSrc->getName() + "' (t='" + to_string(sched[vSrc])
 				  + "', lat='" + to_string(rm->getResource(vSrc)->getLatency()) + "', distance='" + to_string(e->getDistance())
 				  + "', II='" + to_string(II) + "') to '" + vDst->getName() + "' (t='" + to_string(sched[vDst]) + "')");
 			}
-			std::cout << "#q# 5" << std::endl;
 			// edges with lifetime = 0 are handled in B)
 			if(lifetime == 0) continue;
-			std::cout << "#q# 6" << std::endl;
 
 			// A) check if there is a connection from resource instance k of resource r (source) to register l
 			auto rSrc = rm->getResource(vSrc);
-			std::cout << "#q# 7" << std::endl;
 			auto i = vSrc->getId();
-			std::cout << "#q# 8" << std::endl;
 			int resLimitSrc = rSrc->getLimit();
-			std::cout << "#q# 9" << std::endl;
 			auto verticesSrc = rm->getVerticesOfResource(rSrc);
-			std::cout << "#q# 10" << std::endl;
 			if(rSrc->isUnlimited()) resLimitSrc = verticesSrc.size();
-			std::cout << "#q# 11" << std::endl;
 			for(int k=0; k<resLimitSrc; k++) {
-				std::cout << "#q# 12" << std::endl;
 				for(int l=0; l<minRegs; ++l) {
-					std::cout << "#q# 13" << std::endl;
 					if (!quiet) {
 						std::cout << "adding constraint x_" << i << "_" << k << " + y_" << i << "_" << l << " - c_"
 						  << rSrc->getName() << "_" << k << "_" << l << " <= 1" << std::endl;
@@ -835,13 +906,18 @@ namespace HatScheT {
 		}
 		auto stat = s.solve();
 		if (!quiet) {
-			std::cout << "finished solving" << std::endl;
+			std::cout << "finished solving with status " << ScaLP::showStatus(stat) << std::endl;
 		}
 
 		/////////////////
 		// get results //
 		/////////////////
 		BindingContainer b;
+
+		if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
+			// unable to find feasible binding -> return empty binding
+			return b;
+		}
 
 		///////////////////////////
 		// copy port assignments //
@@ -890,8 +966,10 @@ namespace HatScheT {
 				}
 				hasBinding = true;
 				b.resourceBindings[v->getName()] = {k};
-				if (!quiet)
-					std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "'" << std::endl;
+				if (!quiet) {
+					std::cout << "Vertex '" << v->getName() << "' is bound to FU number '" << k << "' of resource type '"
+					  << rm->getResource(v)->getName() << "'" << std::endl;
+				}
 			}
 		}
 
@@ -985,7 +1063,7 @@ namespace HatScheT {
 			if (lifetime > 0) {
 				// FU -> reg -> FU
 				int regIndex = registerBindings[vSrc];
-				for (auto it : b.connections) {
+				for (auto &it : b.connections) {
 					if (
 						std::get<0>(it) == srcResName and
 						std::get<1>(it) == srcFU and
@@ -1012,7 +1090,7 @@ namespace HatScheT {
 			}
 			else {
 				// FU -> FU
-				for (auto it : b.connections) {
+				for (auto &it : b.connections) {
 					if (
 						std::get<0>(it) == srcResName and
 						std::get<1>(it) == srcFU and
@@ -1028,6 +1106,16 @@ namespace HatScheT {
 		}
 
 		if (!quiet) {
+			// info about register enable times
+			for (auto &it : b.registerEnableTimes) {
+				std::cout << "register '" << it.first << "' is enabled in time steps ";
+				for (auto &t : it.second) {
+					std::cout << t << " ";
+				}
+				std::cout << std::endl;
+			}
+
+			// info about solving status
 			std::cout << "ILP formulation SOLVED for II = " << II << std::endl;
 			std::cout << "ScaLP solver status: " << stat << std::endl;
 		}

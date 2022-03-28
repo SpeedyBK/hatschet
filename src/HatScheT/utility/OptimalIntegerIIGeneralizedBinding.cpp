@@ -1272,5 +1272,9 @@ namespace HatScheT {
 	void OptimalIntegerIIGeneralizedBinding::setAllocMinRegs(bool a) {
 		this->allocMinRegs = a;
 	}
+
+	void OptimalIntegerIIGeneralizedBinding::setAllowMultipleBindings(bool m) {
+		this->allowMultipleBindings = m;
+	}
 }
 

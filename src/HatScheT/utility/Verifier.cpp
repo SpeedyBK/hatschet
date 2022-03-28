@@ -805,6 +805,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	}
 
 	// check if all dependencies for all vertices are ok
+	bool allDependenciesOk = true;
 	for (auto &vDst : g->Vertices()) {
 		// get info about this vertex
 		auto rDst = rm->getResource(vDst);
@@ -920,13 +921,15 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			if (foundConnection != fuDst) {
 				// oh no, binding is invalid :(
 				std::cout << "Failed to find all necessary connection paths for edge '" << e->getVertexSrcName() << "' port " << bind.portAssignments.at(e).first << " -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "' port " << bind.portAssignments.at(e).second << std::endl;
-				return false;
+				//return false;
+				allDependenciesOk = false;
 			}
 		}
 	}
+	return allDependenciesOk;
 
 	// binding seems fine :)
-	return true;
+	//return true;
 }
 
 
