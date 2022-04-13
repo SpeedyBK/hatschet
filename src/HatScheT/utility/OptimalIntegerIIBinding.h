@@ -14,7 +14,6 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <ScaLP/Solver.h>
 
 namespace HatScheT {
 

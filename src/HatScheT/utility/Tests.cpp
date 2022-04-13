@@ -2403,7 +2403,7 @@ namespace HatScheT {
 		auto bind = Binding::getILPBasedIntIIBindingCong(sched, &g, &rm, II, portAssignments,
 																										 {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, 300);
 
-		if(verifyIntIIBinding(&g, &rm, sched, II, bind)) {
+		if(not verifyIntIIBinding(&g, &rm, sched, II, bind)) {
 			std::cout << "Invalid binding detected - test failed" << std::endl;
 			return false;
 		}

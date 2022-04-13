@@ -6,6 +6,7 @@
 #include <HatScheT/utility/Utility.h>
 #include <sstream>
 #include <cmath>
+#include <ScaLP/Solver.h>
 
 namespace HatScheT {
 

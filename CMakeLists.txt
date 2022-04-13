@@ -219,6 +219,7 @@ src/HatScheT/utility/Binding.h
 src/HatScheT/utility/BindingBase.h
 src/HatScheT/utility/TreeBind.h
 src/HatScheT/utility/OptimalIntegerIIBinding.h
+src/HatScheT/utility/OptimalIntegerIIBindingCong.h
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
@@ -264,6 +265,7 @@ src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/OptimalIntegerIIBinding.cpp
+src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
@@ -341,6 +343,7 @@ add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
 add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
 add_test("treeBind" "./hatschet" "--test=TREEBIND")
 add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
+add_test("congBind" "./hatschet" "--test=ILPBASEDINTIIBINDINGCONG")
 
 IF(CADICAL_H AND CADICAL_LIB)
 add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
