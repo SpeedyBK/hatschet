@@ -360,4 +360,59 @@ namespace HatScheT {
 			}
 		}
 	}
+
+	ostream& operator<<(ostream& os, const Binding::BindingContainer& bin) {
+		os << "Binding container" << std::endl;
+		os << "Mux costs: " << bin.multiplexerCosts << std::endl;
+		os << "Reg costs: " << bin.registerCosts << std::endl;
+		os << "Solution status: " << bin.solutionStatus << std::endl;
+		os << "Port assignments: " << std::endl;
+		if (bin.portAssignments.empty()) {
+			os << "  *empty*" << std::endl;
+		}
+		else {
+			for (auto &it : bin.portAssignments) {
+				os << "  edge '" << it.first->getVertexSrcName() << "' (" << it.second.first << ") -("
+				   << it.first->getDistance() << ")-> '" << it.first->getVertexDstName() << "' (" << it.second.second << ")"
+				   << std::endl;
+			}
+		}
+		os << "Resource bindings: " << std::endl;
+		if (bin.resourceBindings.empty()) {
+			os << "  *empty*" << std::endl;
+		}
+		else {
+			for (auto &it : bin.resourceBindings) {
+				os << "  " << it.first << " -> ";
+				for (auto &it2 : it.second) {
+					os << it2 << " ";
+				}
+				os << std::endl;
+			}
+		}
+		os << "Connections: " << std::endl;
+		if (bin.connections.empty()) {
+			os << "  *empty*" << std::endl;
+		}
+		else {
+			for (auto &it : bin.connections) {
+				os << "  "   << std::get<0>(it) << " (" << std::get<1>(it) << ") port " << std::get<2>(it)
+				   << " -> " << std::get<3>(it) << " (" << std::get<4>(it) << ") port " << std::get<5>(it) << std::endl;
+			}
+		}
+		os << "Register enable times: " << std::endl;
+		if (bin.registerEnableTimes.empty()) {
+			os << "  *empty*" << std::endl;
+		}
+		else {
+			for (auto &it : bin.registerEnableTimes) {
+				os << "  reg #" << it.first << ": ";
+				for (auto &it2 : it.second) {
+					os << it2 << " ";
+				}
+				os << std::endl;
+			}
+		}
+		return os;
+	}
 }

@@ -79,6 +79,13 @@ namespace HatScheT {
 			std::map<Edge*, std::pair<int,int>> portAssignments;
 		};
 		/*!
+		 * overload << operator, useful for, e.g., std::cout << bindingContainer;
+		 * @param os ostream object
+		 * @param b binding to stream into os
+		 * @return updated os
+		 */
+		friend ostream& operator<<(ostream& os, const BindingContainer& b);
+		/*!
 		 * assume that resource bindings are set
 		 * calculate and set all necessary FU connections and resulting MUX and register costs
 		 * @param b binding container with correctly defined and valid resource bindings

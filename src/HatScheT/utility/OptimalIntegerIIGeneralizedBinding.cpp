@@ -689,12 +689,14 @@ namespace HatScheT {
 				auto birthTime = birthTimes.at({vSrc, pSrc});
 				auto deathTime = birthTime + lifetime;
 				for (auto &fuDstIdx : compatibleFUs.at(vDst)) {
+					auto fDstVar = F.at({vDst, fuDstIdx});
 					if (lifetime == 0) {
 						// src: FU
 						for (int fuSrcIdx : compatibleFUs.at(vSrc)) {
 							auto soVar = SO.at({vDst, pDst, fuDstIdx, fuSrcIdx});
-							auto fVar = F.at({vSrc, fuSrcIdx});
-							solver.addConstraint(soVar - fVar <= 0);
+							auto fSrcVar = F.at({vSrc, fuSrcIdx});
+							//solver.addConstraint(soVar - fVar <= 0);
+							solver.addConstraint(fDstVar + soVar - fSrcVar <= 1);
 						}
 					}
 					else {
@@ -703,7 +705,8 @@ namespace HatScheT {
 							auto regSrcIdx = regIndexMap.at(i);
 							auto soVar = SO.at({vDst, pDst, fuDstIdx, regSrcIdx});
 							auto tVar = T.at({vSrc, pSrc, deathTime, regSrcIdx});
-							solver.addConstraint(soVar - tVar <= 0);
+							//solver.addConstraint(soVar - tVar <= 0);
+							solver.addConstraint(fDstVar + soVar - tVar <= 1);
 						}
 					}
 				}
@@ -726,12 +729,14 @@ namespace HatScheT {
 					for (int t=bt+1; t<=dt; t++) {
 						for (int i=0; i<this->numRegs; i++) {
 							auto regDstIdx = regIndexMap.at(i);
+							auto tDstVar = T.at({v, p, t, regDstIdx});
 							if (t == bt+1) {
 								// source is the FU
 								for (auto &fuSrcIdx : compatibleFUs.at(v)) {
 									auto srVar = SR.at({v, p, t, regDstIdx, fuSrcIdx});
 									auto fVar = F.at({v, fuSrcIdx});
-									solver.addConstraint(srVar - fVar <= 0);
+									//solver.addConstraint(srVar - fVar <= 0);
+									solver.addConstraint(tDstVar + srVar - fVar <= 1);
 								}
 							}
 							else {
@@ -739,8 +744,10 @@ namespace HatScheT {
 								for (int j=0; j<this->numRegs; j++) {
 									auto regSrcIdx = regIndexMap.at(j);
 									auto srVar = SR.at({v, p, t, regDstIdx, regSrcIdx});
-									auto tVar = T.at({v, p, t, regSrcIdx});
-									solver.addConstraint(srVar - tVar <= 0);
+									//auto tVar = T.at({v, p, t, regSrcIdx});
+									auto tSrcVar = T.at({v, p, t-1, regSrcIdx});
+									//solver.addConstraint(srVar - tVar <= 0);
+									solver.addConstraint(tDstVar + srVar - tSrcVar <= 1);
 								}
 							}
 						}
@@ -915,7 +922,16 @@ namespace HatScheT {
 				}
 			}
 		}
-		if(!this->quiet) std::cout << "determined resource bindings" << std::endl;
+		if(!this->quiet) {
+			std::cout << "determined resource bindings" << std::endl;
+			for (auto &it : this->bin.resourceBindings) {
+				std::cout << "  " << it.first;
+				for (auto &it2 : it.second) {
+					std::cout << " " << it2;
+				}
+				std::cout << std::endl;
+			}
+		}
 
 		////////////////////
 		// register costs //
@@ -940,7 +956,9 @@ namespace HatScheT {
 			}
 			this->bin.registerCosts = actualNumRegs;
 		}
-		if(!this->quiet) std::cout << "determined register costs" << std::endl;
+		if(!this->quiet) {
+			std::cout << "determined register costs = " << this->bin.registerCosts << std::endl;
+		}
 
 		///////////////////////
 		// multiplexer costs //
@@ -961,7 +979,9 @@ namespace HatScheT {
 				this->bin.multiplexerCosts++;
 			}
 		}
-		if(!this->quiet) std::cout << "determined multiplexer costs" << std::endl;
+		if(!this->quiet) {
+			std::cout << "determined multiplexer costs = " << this->bin.multiplexerCosts << std::endl;
+		}
 
 		////////////////////////
 		// variable locations //
@@ -983,16 +1003,17 @@ namespace HatScheT {
 				variableLocations[{v, p, t}].insert(regIdx);
 			}
 		}
-		if(!this->quiet) std::cout << "determined variable locations" << std::endl;
-
-		/*
-		std::cout << "#q# varaible locations:" << std::endl;
-		for (auto &it : variableLocations) {
-			std::cout << "  '" << std::get<0>(it.first)->getName() << "', port " << std::get<1>(it.first) << " at t="
-			  << std::get<2>(it.first) << " is in reg #" << it.second << " (hardware reg #" << indexRegMap.at(it.second)
-			  << ")" << std::endl;
+		if(!this->quiet) {
+			std::cout << "determined variable locations:" << std::endl;
+			for (auto &it : variableLocations) {
+				std::cout << "  " << std::get<0>(it.first)->getName() << " port " << std::get<1>(it.first) << " in t="
+				  << std::get<2>(it.first) << " is located in " << (it.second.size()==1?"register ":"registers ");
+				for (auto &it2 : it.second) {
+					std::cout << it2 << " ";
+				}
+				std::cout << std::endl;
+			}
 		}
-		 */
 
 		//////////////////////////////////////////
 		// FU -> Reg and Reg -> Reg connections //
@@ -1127,11 +1148,13 @@ namespace HatScheT {
 			auto fuDsts = this->bin.resourceBindings.at(vDst->getName());
 			// create/reuse a connection for each dst
 			for (auto &fuDst : fuDsts) {
+				// convert resource and fu into unique fu idx
+				auto fuDstIdx = fuIndexMap.at({rDst, fuDst});
 				// what we need for a connection
 				std::string srcResName;
 				int srcIndex;
 				int srcOutputPort;
-				std::string dstResName = rDst->getName();
+				auto &dstResName = rDst->getName();
 				int dstIndex = fuDst;
 				int dstInputPort = pDst;
 
@@ -1144,9 +1167,10 @@ namespace HatScheT {
 				if (tBirth == tDeath) {
 					// FU -> FU connection
 					for (auto &possibleFuSrc : fuSrcs) {
+						auto possibleFuSrcIdx = fuIndexMap.at({rSrc, possibleFuSrc});
 						// check if it is actually the source
 						if (this->allowMultipleBindings) {
-							auto soVar = SO.at({vDst, pDst, fuDst, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, possibleFuSrcIdx}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
 							if ((int)round(resultValues.at(soVar)) == 0) {
 								continue;
 							}
@@ -1168,7 +1192,8 @@ namespace HatScheT {
 					for (auto &possibleFuSrc : variableLocations.at({vSrc, pSrc, tDeath})) {
 						// check if it is actually the source
 						if (this->allowMultipleBindings) {
-							auto soVar = SO.at({vDst, pDst, fuDst, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
+							//auto soVar = SO.at({vDst, pDst, fuDst, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
+							auto soVar = SO.at({vDst, pDst, fuDstIdx, possibleFuSrc}); // vDst, pDst, fuDstIdx, fuSrcIdx/regSrcIdx
 							if ((int)round(resultValues.at(soVar)) == 0) {
 								continue;
 							}

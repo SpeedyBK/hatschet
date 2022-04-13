@@ -2712,6 +2712,7 @@ namespace HatScheT {
 
 		OptimalIntegerIIGeneralizedBinding oigb(&g, &rm, sched, II, portAssignments, {}, {"Gurobi"});
 		oigb.setQuiet(false);
+		oigb.setAllowMultipleBindings(false);
 		oigb.bind();
 		Binding::BindingContainer b;
 		oigb.getBinding(&b);
@@ -2720,6 +2721,7 @@ namespace HatScheT {
 		auto valid = verifyIntIIBinding(&g, &rm, sched, II, b, {});
 		if (!valid) {
 			std::cout << "binding invalid" << std::endl;
+			std::cout << b << std::endl;
 			return false;
 		}
 

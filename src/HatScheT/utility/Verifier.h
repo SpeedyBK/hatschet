@@ -110,7 +110,7 @@ bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *
  * @param commutativeOps a set with commutative operations that do not care about their port assignments
  * @return if the binding is ok
  */
-	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::RegChainBindingContainer bind, std::set<const Resource*> commutativeOps = {});
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::RegChainBindingContainer bind, std::set<const Resource*> commutativeOps = {}, bool quiet=true);
 	/*!
 	 * do the same but with a different binding container type
 	 * @param g
@@ -122,7 +122,7 @@ bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *
 	 * @param commutativeOps
 	 * @return
 	 */
-	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::BindingContainer bind, std::set<const Resource*> commutativeOps = {});
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::BindingContainer bind, std::set<const Resource*> commutativeOps = {}, bool quiet=true);
 
 /*!
  * verify a binding
