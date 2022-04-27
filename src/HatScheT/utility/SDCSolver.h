@@ -40,7 +40,7 @@ namespace HatScheT {
   };
 
   class SDCSolver {
-  private:
+  public://private:
 
     ///////////////////////
     /// Data Structures ///
