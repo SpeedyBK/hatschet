@@ -13,6 +13,10 @@
 #include <vector>
 
 namespace HatScheT {
+	/*!
+	 * This is an improved version of the UniformRationalIIScheduler
+	 * which uses less variables for the same problem formulation
+	 */
 	class UniformRationalIISchedulerNew : public RationalIISchedulerLayer, public ILPSchedulerBase {
 	public:
 		/*!
@@ -106,6 +110,15 @@ namespace HatScheT {
 		 * second index of b-Matrix: modulo slot
 		 */
 		std::map<const Vertex*,std::vector<ScaLP::Variable>> bVariables;
+		/*!
+		 * container for ILP variables with t = M * k + b
+		 * with
+		 *     t = start time of vertex
+		 *     M : cycle length of the schedule (modulo)
+		 *     k : remainder variable (this container)
+		 *     b : modulo slot of vertex
+		 */
+		std::map<Vertex*,ScaLP::Variable> kVariables;
 		/*!
 		 * calc tau hat in R3
 		 * @param s sample index

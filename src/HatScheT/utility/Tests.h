@@ -57,6 +57,16 @@ public:
      * \return
      */
   static bool moduloSDCTestFiege();
+	/*!
+	 * \brief test whether integer II non rect scheduling is running as expected
+	 * @return
+	 */
+	static bool integerIINonRectTest();
+	/*!
+	 * \brief test whether integer II non rect scheduling is running as expected
+	 * @return
+	 */
+	static bool integerIIPBTest();
   /*!
    * \brief apiTest tests API functionality
    * \return
@@ -145,10 +155,22 @@ public:
 	 * @brief test functionality of (rational II) ModuloSDC scheduler
 	 */
 	static bool rationalIIModuloSDCTest();
-  /*!
-   * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
-   */
-  static bool tcadExampleTest();
+	/*!
+	 * @brief test functionality of the combined rational II scheduler
+	 */
+	static bool rationalIICombinedSchedulerTest();
+	/*!
+	 * @brief test functionality of (rational II) SCCQScheduler for the TCAD example
+	 */
+	static bool tcadExampleTest();
+	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SAM filter from Origami benchmark
+	 */
+	static bool firSAMRatIIImplementationsTest();
+	/*!
+	 * @return test functionality to generate various ratII implementations for fir_SHI filter from Origami benchmark
+	 */
+	static bool firSHIRatIIImplementationsTest();
 	/*!
 	 * @brief schedule a graph with asap, ed97 and rational II scheduler for direct comparison
 	 */
@@ -210,6 +232,43 @@ public:
   static bool fibonacciTest();
 
   static bool sdcSolverTest();
+
+	/*!
+	 * test getILPBasedIntIIBindingCong function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTestCong();
+
+	/*!
+	 * test getILPBasedIntIIBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIBindingTest();
+	/*!
+	 * test OptimalIntegerIIGeneralizedBinding class
+	 * @return
+	 */
+	static bool optimalIntegerIIGeneralizedBindingTest();
+	/*!
+	 * test getILPMinMuxBinding function
+	 * @return
+	 */
+	static bool ilpBasedIntIIMinMuxBindingTest();
+	/*!
+	 * test treeBindTest function
+	 * @return if test was passed
+	 */
+  static bool treeBindTest();
+	/*!
+	 * test treeBindTest function with commutative resource types
+	 * @return if test was passed
+	 */
+	static bool treeBindCommutativeTest();
+	/*!
+	 * use tree bind algorithm for motivating example for FCCM paper about optimal binding
+	 * @return if test was passed
+	 */
+	static bool fccmPaperTest();
 
 };
 }

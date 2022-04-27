@@ -21,19 +21,100 @@
 #pragma once
 #include <string>
 #include "HatScheT/Graph.h"
+#include "HatScheT/utility/Binding.h"
 #include "HatScheT/ResourceModel.h"
 #include "HatScheT/TargetModel.h"
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSet.h"
+#include <random>
 
 namespace HatScheT
 {
+	//class ResourceModel; // forward declaration for cyclic include
+	//class Resource; // forward declaration for cyclic include
 /*!
  * \brief The Utility class use this class for utility functions
  */
 class Utility
 {
 public:
+	/*!
+	 * converts the register chain binding container into the general one
+	 * @param g graph
+	 * @param rm resource model
+	 * @param II initiation interval
+	 * @param bChain binding container to convert
+	 * @param sched the schedule associated to this binding
+	 * @return converted binding container
+	 */
+	static Binding::BindingContainer convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain, std::map<Vertex*, int> sched);
+	/*!
+	 * CASE INSENSITIVE comparisons of two strings for equality
+	 * @param s1 first string
+	 * @param s2 second string
+	 * @return s1 == s2
+	 */
+	static bool iequals(const std::string &s1, const std::string &s2);
+	/*!
+	 * worst case calculation for register and multiplexer costs for a given DFG, allocation, schedule and II
+	 * @param g data flow graph
+	 * @param rm resource model with resource limitations
+	 * @param times schedule times container
+	 * @param II initiation interval
+	 * @return {maxRegs, maxMuxs}
+	 */
+	static std::pair<int, int> getMaxRegsAndMuxs(Graph* g, ResourceModel* rm, std::map<Vertex*, int> times, int II);
+	/*!
+	 * this function computes the number of equivalent 2x1 multiplexers for a binding
+	 * that needs numFUConnections connections between functional units
+	 * this function assumes that all operations bound to a resource have the same number of inputs
+	 * @param numFUConnections the number of connections between FUs that will be implemented in hardware
+	 * @param g graph
+	 * @param rm resource model
+	 * @param numRegsWithPossibleMuxInputs the registers that can possibly have MUXs at their inputs
+	 *   -> for registers as register chains after FUs, this number is 0
+	 *   -> otherwise this number is equal to the number of allocated registers
+	 * @return number of equivalent 2x1 multiplexers
+	 */
+	static double getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph* g, ResourceModel* rm, int numRegsWithPossibleMuxInputs=0);
+	/*!
+	 * this is the counterpart to getNumberOfEquivalent2x1Muxs
+	 * @param num2x1Muxs the number of equivalent 2x1Muxs
+	 * @param g graph
+	 * @param rm resource model
+	 * @return number of interconnect lines between FUs
+	 */
+	static double getNumberOfFUConnections(int num2x1Muxs, Graph* g, ResourceModel* rm);
+	/*!
+	 * unroll graph with factor samples
+	 * "in C-language" this corresponds to modifying a for loop such that the number of iterations is divided by S
+	 * and S iterations of the original loop are calculated within one iteration of the new loop
+	 * vertex names are appended with "_s" with s = 0, ..., samples-1
+	 * e.g. original vertex name = asdf and samples = 3
+	 * => created vertices: asdf_0, asdf_1, asdf_2
+	 * @param g original graph
+	 * @param resourceModel original resource model
+	 * @param samples unroll factor
+	 * @return a pair of (new constructed) graph and the corresponding resource model
+	 */
+	static std::pair<Graph*, ResourceModel*> unrollGraph(Graph* g, ResourceModel* resourceModel, int samples);
+	/*!
+	 * selects a random element from a container
+	 * function definition put into header to prevent linker problems in an easy way
+	 * feel free to change it if you don't like this...
+	 * @tparam iter iterator type
+	 * @param start start iterator
+	 * @param end end iterator
+	 * @return an iterator to a randomly selected element between start and end
+	 */
+	template<typename iter>
+	static iter selectRandomElement(iter start, iter end) {
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+		std::advance(start, dis(gen));
+		return start;
+	}
   /*!
    * \brief getNoOfResConstrVertices
    * \param rm
@@ -298,6 +379,14 @@ public:
    * @return true if graph is cyclic, false if graph is acyclic.
    */
   static bool iscyclic (Graph *g);
+		/*!
+		 * defines non-rectangular MRT height
+		 * @param n number of vertices of that resource
+		 * @param M cycle length
+		 * @param tau modulo slot
+		 * @return mrt height in modulo slot tau
+		 */
+		static int hFunction(double n, double M, int tau);
 
   private:
 

@@ -24,6 +24,7 @@
 #include "HatScheT/utility/Verifier.h"
 #include <limits>
 #include <cmath>
+#include <algorithm>
 #include <map>
 #include <ios>
 #include <fstream>
@@ -820,4 +821,454 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
   }
 
+	int Utility::hFunction(double n, double M, int tau) {
+		if(tau == 0) return (int)ceil(n/M);
+		else return hFunction(n - ceil(n / M), M - 1, tau - 1);
+	}
+
+	std::pair<Graph *, ResourceModel *> Utility::unrollGraph(Graph *g, ResourceModel *resourceModel, int samples) {
+		auto* g_unroll(new Graph);
+		auto* rm_unroll(new ResourceModel);
+
+		for(auto res : resourceModel->Resources()) {
+			rm_unroll->makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+		}
+
+		for(auto v : g->Vertices()) {
+			for(int s=0; s<samples; ++s) {
+				auto& newVertex = g_unroll->createVertex();
+				newVertex.setName(v->getName()+"_"+to_string(s));
+				auto originalResource = resourceModel->getResource(v);
+				rm_unroll->registerVertex(&newVertex,rm_unroll->getResource(originalResource->getName()));
+			}
+		}
+
+		for(auto e : g->Edges()) {
+			auto srcName = e->getVertexSrc().getName();
+			auto dstName = e->getVertexDst().getName();
+
+			int distance = e->getDistance();
+			int offset = 0;
+
+			// adjust distance/offset so distance < samples
+			while(distance>samples) {
+				distance -= samples;
+				++offset;
+			}
+
+			for(int s=0; s<samples; ++s) {
+				// adjust distance again (only once)
+				int sourceSampleNumber = s - distance;
+				int edgeOffset = offset;
+				if(sourceSampleNumber < 0) {
+					sourceSampleNumber += samples;
+					++edgeOffset;
+				}
+
+				// create edge
+				Vertex* srcVertex = nullptr;
+				Vertex* dstVertex = nullptr;
+
+				for(auto v : g_unroll->Vertices()) {
+					if(v->getName() == srcName + "_" + to_string(sourceSampleNumber))
+						srcVertex = v;
+					if(v->getName() == dstName + "_" + to_string(s))
+						dstVertex = v;
+				}
+
+				g_unroll->createEdge(*srcVertex,*dstVertex,edgeOffset,e->getDependencyType());
+			}
+		}
+
+		return {g_unroll, rm_unroll};
+	}
+
+	double Utility::getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph *g, ResourceModel *rm, int numRegsWithPossibleMuxInputs) {
+		for (auto &r : rm->Resources()) {
+			// number of FUs for this resource
+			int numFUs;
+			if (r->isUnlimited()) {
+				numFUs = rm->getNumVerticesRegisteredToResource(r);
+			}
+			else {
+				numFUs = r->getLimit();
+			}
+			// number of inputs for each FU
+			int numInputs = 0;
+			for (auto &v : rm->getVerticesOfResource(r)) {
+				//auto numVertexInputs = g->getPredecessors(v).size(); // nfiege: this does not work...
+				int numVertexInputs = 0;
+				// count number of inputs
+				// using g->getPredecessors does not work because a vertex can have multiple edges
+				// coming from the same predecessor
+				for (auto &e : g->Edges()) {
+					if (not e->isDataEdge()) continue;
+					if (not (v == &e->getVertexDst())) continue;
+					numVertexInputs++;
+				}
+				if (numVertexInputs > numInputs) numInputs = numVertexInputs;
+			}
+			// subtract the number of input ports * the number of FUs
+			// e.g. an FU has 2 inputs to port number 1 and 6 inputs to port number 2
+			// then one 2x1 mux is needed for port 1 and 5 2x1 muxs are needed on port number 2
+			// this means that #2x1 muxs = 1+5 = 6 = 2+6-#ports = 2+6-2
+			// since this holds for each implemented FU, we must multiply the number of inputs with the number of FUs
+			numFUConnections -= (numInputs * numFUs);
+		}
+		return numFUConnections - numRegsWithPossibleMuxInputs;
+	}
+
+	std::pair<int, int> Utility::getMaxRegsAndMuxs(Graph *g, ResourceModel *rm, std::map<Vertex *, int> times, int II) {
+		int maxRegs = 0;
+		int maxConnections = 0;
+		int maxMuxs = 0;
+		// upper bound for the number of registers
+		std::map<const HatScheT::Vertex*, int> sortedLifetimesVertices;
+		std::map<const HatScheT::Resource*, std::list<int>> sortedLifetimesResources;
+		try {
+			for (auto &e : g->Edges()) {
+				if (!e->isDataEdge()) continue;
+				auto *vSrc = &e->getVertexSrc();
+				auto *vDst = &e->getVertexDst();
+				auto *rSrc = rm->getResource(vSrc);
+				auto *rDst = rm->getResource(vDst);
+				auto tSrc = times.at(vSrc);
+				auto tDst = times.at(vDst);
+				auto latSrc = rm->getVertexLatency(vSrc);
+				auto distance = e->getDistance();
+				auto lifetime = tDst - tSrc - latSrc + (II * distance);
+				if (sortedLifetimesVertices[vSrc] < lifetime) sortedLifetimesVertices[vSrc] = lifetime;
+			}
+			for (auto &it : sortedLifetimesVertices) {
+				auto &v = it.first;
+				auto res = rm->getResource(v);
+				auto &lifetime = it.second;
+				sortedLifetimesResources[res].emplace_front(lifetime);
+				sortedLifetimesResources[res].sort();
+			}
+			for (auto &it : sortedLifetimesResources) {
+				auto &res = it.first;
+				int numIt;
+				if (res->isUnlimited()) {
+					numIt = rm->getNumVerticesRegisteredToResource(res);
+				}
+				else {
+					numIt = res->getLimit();
+				}
+				auto &sortedStuff = it.second;
+				auto listIt = sortedStuff.end();
+				int regs = 0;
+				for (int i=0; i<numIt; i++) {
+					listIt--;
+					regs += (*listIt);
+				}
+				maxRegs += regs;
+			}
+		}
+		catch (std::out_of_range&) {
+			throw Exception("Utility::getMaxRegsAndMuxs: allocation or schedule corrupt");
+		}
+		// upper bound for the number of interconnect lines
+		for (auto &e : g->Edges()) {
+			if (!e->isDataEdge()) continue;
+			maxConnections += 1;
+		}
+		// calculate upper bound for multiplexers from upper bound of interconnect lines
+		maxMuxs = (int)HatScheT::Utility::getNumberOfEquivalent2x1Muxs(maxConnections, g, rm);
+		return {maxRegs, maxMuxs};
+	}
+
+	double Utility::getNumberOfFUConnections(int num2x1Muxs, Graph *g, ResourceModel *rm) {
+		for (auto &r : rm->Resources()) {
+			// here we can NOT skip unlimited resources
+			// even though they will never add muxs to the design, they do need input connections
+			auto numFUs = r->getLimit();
+			if (r->isUnlimited()) {
+				numFUs = rm->getNumVerticesRegisteredToResource(r);
+			}
+			// calculate the number of inputs for this FU
+			int numInputs = 0;
+			for (auto &v : rm->getVerticesOfResource(r)) {
+				auto numVertexInputs = g->getPredecessors(v).size();
+				if (numVertexInputs > numInputs) numInputs = numVertexInputs;
+			}
+			// add the number of input ports * the number of FUs
+			// e.g. an FU has 2 inputs to port number 1 and 6 inputs to port number 2
+			// then one 2x1 mux is needed for port 1 and 5 2x1 muxs are needed on port number 2
+			// this means that #connections = 2+6 = 8 = 1+5+#ports = 1+5+2
+			// since this holds for each implemented FU, we must multiply the number of inputs with the number of FUs
+			num2x1Muxs += (numInputs * numFUs);
+		}
+		return num2x1Muxs;
+	}
+
+	bool Utility::iequals(const std::string &s1, const std::string &s2) {
+		auto sz = s1.size();
+		if (s2.size() != sz) return false;
+		for (unsigned int i=0; i<sz; i++) {
+			if (std::tolower(s1[i]) != std::tolower(s2[i])) return false;
+		}
+		return true;
+	}
+
+	Binding::BindingContainer Utility::convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain, std::map<Vertex*, int> sched) {
+		Binding::BindingContainer b;
+
+		// trivial copies
+		//b.multiplexerCosts = bChain.multiplexerCosts; // can't just copy mux costs
+		b.registerCosts = bChain.registerCosts;
+		b.solutionStatus = bChain.solutionStatus;
+		//b.portAssignments = bChain.portAssignments; // not so trivial anymore eh?
+		//b.resourceBindings = bChain.resourceBindings; // easy but copying doesn't work because of different data structures
+		for (auto &it : bChain.resourceBindings) {
+			b.resourceBindings[it.first] = {it.second};
+		}
+
+		// copy port assignments and assume that the output port of the src vertex is always zero
+		// i.e. all operators have exactly one output port
+		for (auto &p : bChain.portAssignments) {
+			b.portAssignments[p.first] = {0, p.second};
+		}
+
+		// calc lifetimes for all vertices
+		std::map<Vertex*, int> vertexLifetimes;
+		std::map<Edge*, int> edgeLifetimes;
+		for (auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto tSrc = sched[vSrc];
+			auto tDst = sched[vDst];
+			auto lSrc = rm->getVertexLatency(vSrc);
+			auto lifetime = tDst - tSrc - lSrc + (II * e->getDistance());
+			if (lifetime > vertexLifetimes[vSrc]) {
+				vertexLifetimes[vSrc] = lifetime;
+			}
+			edgeLifetimes[e] = lifetime;
+		}
+
+		// count number of registers after each FU
+		std::map<std::pair<std::string, int>, int> regChainLength;
+		for (auto &it : bChain.resourceBindings) {
+			regChainLength[{it.first, it.second}] = 0;
+		}
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+			regChainLength[{rSrcName, fuSrcIndex}] = std::max(regChainLength[{rSrcName, fuSrcIndex}], numRegs);
+		}
+
+		// uniquely number registers
+		int registerCounter = 0;
+		std::map<std::pair<std::string, int>, int> regOffsets;
+		for (auto &it : regChainLength) {
+			regOffsets[it.first] = registerCounter;
+			registerCounter += it.second;
+		}
+
+		// check if register costs are ok
+		if (bChain.registerCosts != registerCounter) {
+			throw Exception("Utility::convertBindingContainer: detected invalid register costs");
+		}
+
+		// enable all registers in all timesteps
+		for (int regIndex=0; regIndex<registerCounter; regIndex++) {
+			for (int i=0; i<II; i++) {
+				b.registerEnableTimes[regIndex].insert(i);
+			}
+		}
+
+		// now comes the tricky part...
+		// we must re-create all connections
+		// define helper function
+		// this checks if a specific connection already exists and creates it if not
+		auto checkConnection = [](
+			std::list<std::tuple<std::string, int, int, std::string, int, int, std::set<int>>> *conn,
+			const std::string &srcRes, const int &srcFU, const int &srcPort, const std::string &dstRes, const int &dstFU,
+			const int &dstPort) {
+			for (auto &c : *conn) {
+				if (std::get<0>(c) != srcRes) continue;
+				if (std::get<1>(c) != srcFU) continue;
+				if (std::get<2>(c) != srcPort) continue;
+				if (std::get<3>(c) != dstRes) continue;
+				if (std::get<4>(c) != dstFU) continue;
+				if (std::get<5>(c) != dstPort) continue;
+				return &c;
+			}
+			conn->push_front({srcRes,srcFU,srcPort,dstRes,dstFU,dstPort,{}});
+			return &conn->front();
+		};
+		// start with FU->register and register->register connections
+		for (auto &it : regChainLength) {
+			auto rSrcName = it.first.first;
+			auto fuSrcIndex = it.first.second;
+			auto numRegs = it.second;
+
+			// check if there are any FU->register connections after this FU
+			if (numRegs <= 0) continue;
+
+			// get registers
+			auto regOffset = regOffsets[it.first];
+
+			// compute times when this FU produces variables with lifetime > 0
+			/*
+			std::set<int> variableProductionTimes;
+			for (auto &vFu : bChain.resourceBindings) {
+				auto *v = &g->getVertexByName(vFu.first);
+				if (vertexLifetimes[v] == 0) continue;
+				auto fuIndex = vFu.second;
+				auto *r = rm->getResource(v);
+				if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
+				auto t = sched.at(v);
+				auto productionTime = t + r->getLatency();
+				variableProductionTimes.insert(productionTime % II);
+			}
+			 */
+
+			// create FU->register connection
+			auto *cFUReg = checkConnection(&b.connections, rSrcName, fuSrcIndex, 0, "register", regOffset, 0);
+			/*
+			for (auto t : variableProductionTimes) {
+				std::get<6>(*cFUReg).insert(t);
+			}
+			 */
+			for (int t=0; t<II; t++) {
+				std::get<6>(*cFUReg).insert(t);
+			}
+
+			// check if there are any register->register connections after this FU
+			if (numRegs <= 1) continue;
+
+			// create register->register connections
+			for (int i=0; i<numRegs-1; i++) {
+				/*
+				std::set<int> updatedVariableProductionTimes;
+				for (auto &vFu : bChain.resourceBindings) {
+					auto *v = &g->getVertexByName(vFu.first);
+					if (vertexLifetimes[v] <= i) continue;
+					auto fuIndex = vFu.second;
+					auto *r = rm->getResource(v);
+					if (r->getName() != rSrcName or fuIndex != fuSrcIndex) continue;
+					auto t = sched.at(v);
+					auto productionTime = t + r->getLatency();
+					updatedVariableProductionTimes.insert((productionTime + i + 1) % II);
+				}
+				 */
+				auto *cRegReg = checkConnection(&b.connections, "register", regOffset+i, 0, "register", regOffset+i+1, 0);
+				/*
+				for (auto t : updatedVariableProductionTimes) {
+					std::get<6>(*cRegReg).insert(t);
+				}
+				 */
+				for (int t=0; t<II; t++) {
+					std::get<6>(*cRegReg).insert(t);
+				}
+
+			}
+		}
+
+		// now do the remaining register->FU and FU->FU connections
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+
+			if (numRegs > 0) {
+				// register -> FU
+				std::set<int> variableReadTimes;
+				for (auto &e : g->Edges()) {
+					auto *vSrc = &e->getVertexSrc();
+					auto *vDst = &e->getVertexDst();
+					if (rm->getResource(vSrc)->getName() != rSrcName or
+							rm->getResource(vDst)->getName() != rDstName or
+							bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
+							bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
+							bChain.portAssignments.at(e) != dstPort) {
+						continue;
+					}
+					// only consider edges with lifetime = numRegs
+					if (edgeLifetimes[e] != numRegs) {
+						continue;
+					}
+					variableReadTimes.insert(sched.at(vDst) % II);
+				}
+				auto srcRegisterIndex = regOffsets.at({rSrcName, fuSrcIndex}) + numRegs - 1;
+				auto *cRegFU = checkConnection(&b.connections, "register", srcRegisterIndex, 0, rDstName, fuDstIndex, dstPort);
+				for (auto t : variableReadTimes) {
+					std::get<6>(*cRegFU).insert(t);
+				}
+			}
+			else {
+				// FU -> FU
+				std::set<int> variablePassTimes;
+				for (auto &e : g->Edges()) {
+					// only consider edges with lifetime = 0 (otherwise we would have at least one reg in between)
+					if (edgeLifetimes[e] != 0) continue;
+					auto *vSrc = &e->getVertexSrc();
+					auto *vDst = &e->getVertexDst();
+					if (rm->getResource(vSrc)->getName() != rSrcName or
+					  rm->getResource(vDst)->getName() != rDstName or
+					  bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
+						bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
+						bChain.portAssignments.at(e) != dstPort) {
+						continue;
+					}
+					variablePassTimes.insert(sched.at(vDst) % II);
+				}
+				auto *cFUFU = checkConnection(&b.connections, rSrcName, fuSrcIndex, 0, rDstName, fuDstIndex, dstPort);
+				for (auto t : variablePassTimes) {
+					std::get<6>(*cFUFU).insert(t);
+				}
+			}
+		}
+
+		// now set mux costs
+		b.multiplexerCosts = b.connections.size();
+
+		// debugging
+		std::cout << "FU bindings:" << std::endl;
+		for (auto &it : bChain.resourceBindings) {
+			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' (" << it.second << ")" << std::endl;
+		}
+		std::cout << "connections in register chain binding container:" << std::endl;
+		for (auto &connection : bChain.fuConnections) {
+			auto rSrcName = connection.first.first.first;
+			auto fuSrcIndex = connection.first.first.second;
+			auto rDstName = connection.first.second.first;
+			auto fuDstIndex = connection.first.second.second;
+			auto numRegs = connection.second.first;
+			auto dstPort = connection.second.second;
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << " over " << numRegs << " registers" << std::endl;
+		}
+
+		std::cout << "connections in general binding container:" << std::endl;
+		for (auto &connection : b.connections) {
+			auto rSrcName = std::get<0>(connection);
+			auto fuSrcIndex = std::get<1>(connection);
+			auto srcPort = std::get<2>(connection);
+			auto rDstName = std::get<3>(connection);
+			auto fuDstIndex = std::get<4>(connection);
+			auto dstPort = std::get<5>(connection);
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") port " << srcPort << " -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << std::endl;
+			for (auto t : std::get<6>(connection)) {
+				std::cout << "    active in t=" << t << std::endl;
+			}
+		}
+
+		std::cout << "register enable times:" << std::endl;
+		for (auto &it : b.registerEnableTimes) {
+			std::cout << "  reg #" << it.first << ": " << std::endl;
+			for (auto &t : it.second) {
+				std::cout << "    " << t << std::endl;
+			}
+		}
+
+		return b;
+	}
 }

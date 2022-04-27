@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "HatScheT/utility/Binding.h"
 #include "HatScheT/Graph.h"
 #include "HatScheT/ResourceModel.h"
 #include <vector>
@@ -100,4 +101,39 @@ bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector <std::ma
  */
 bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *, double> &schedule, double II);
 
+/*!
+ * verify a binding
+ * @param g graph
+ * @param rm resource model
+ * @param sched schedule time container
+ * @param II initiation interval
+ * @param commutativeOps a set with commutative operations that do not care about their port assignments
+ * @return if the binding is ok
+ */
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::RegChainBindingContainer bind, std::set<const Resource*> commutativeOps = {});
+	/*!
+	 * do the same but with a different binding container type
+	 * @param g
+	 * @param rm
+	 * @param sched
+	 * @param II
+	 * @param bind
+	 * @param portAssignments
+	 * @param commutativeOps
+	 * @return
+	 */
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::BindingContainer bind, std::set<const Resource*> commutativeOps = {});
+
+/*!
+ * verify a binding
+ * @param g graph
+ * @param rm resource model
+ * @param sched schedule time container
+ * @param samples number of samples included in the scheudle (II = modulo / samples)
+ * @param modulo cycle length of the schedule (II = modulo / samples)
+ * @param portAssignments this container specifies which edge is connected with which input port of the sink vertex
+ * @param commutativeOps a set with commutative operations that do not care about their port assignments
+ * @return if the binding is ok
+ */
+	bool verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<Vertex*, int>> sched, int samples, int modulo, Binding::RatIIRegChainBindingContainer bind, std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
 }

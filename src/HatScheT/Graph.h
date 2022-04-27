@@ -122,6 +122,13 @@ public:
    */
   Vertex& getVertexById(int id) const;
   /*!
+   * \brief looks up the vertex with the given name
+   * \param n the name to find
+   * \return the vertex matching the given name
+   * \throws Exception if no vertex in the graph has the given name
+   */
+  Vertex& getVertexByName(std::string n) const;
+  /*!
    * \brief looks up the edge between the given vertices
    * IMPORTANT NOTE: This does not support multiple edges between vertices
    * REMOVED / UNSUPPORTED CODE

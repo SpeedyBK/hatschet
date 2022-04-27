@@ -53,6 +53,7 @@ HatScheT::SDCSolver::ConstraintGraph::createEdgeSDC(Vertex &Vsrc, Vertex &Vdst, 
     }
     idExists = false;
   }
+  throw HatScheT::Exception("SDCSolver::ConstraintGraph::createEdgeSDC: Failed to create edge - this should never happen");
 }
 
 HatScheT::Vertex &HatScheT::SDCSolver::ConstraintGraph::createVertexSDC() {

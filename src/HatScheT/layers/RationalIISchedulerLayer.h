@@ -189,6 +189,11 @@ namespace HatScheT {
 			return this->s_max;
 		}
 
+		/*!
+		 * call this function if you want to disable verifier
+		 */
+		void disableVerifier();
+
 	protected:
 		/*!
 		 * each scheduler should overload this function for one schedule iteration
@@ -255,6 +260,7 @@ namespace HatScheT {
 		bool minRatIIFound;
 
 	private:
+		bool verifySolution;
 		/*!
 		 * verify the found schedule (stored in startTimesVector)
 		 * 	1) based on rational II verifier

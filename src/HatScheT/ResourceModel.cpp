@@ -20,6 +20,7 @@
 */
 
 #include <HatScheT/ResourceModel.h>
+#include <HatScheT/utility/Utility.h>
 
 #include <algorithm>
 #include <iostream>
@@ -109,6 +110,7 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
 void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
 {
   this->registrations[v] = r;
+  this->reverseRegistrations[r].insert(v);
 }
 
 bool ResourceModel::resourceExists(std::string name) {
@@ -131,7 +133,37 @@ void Resource::setLimit(int l)
     //cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
     //throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
   }
-  this->limit=l;}
+  this->limit=l;
+}
+
+  int Resource::getNonRectLimit(int congruenceClass) const {
+		try {
+			// return non-rect limit if it is set
+			return this->nonRectLimit.at(congruenceClass);
+		}
+		catch (std::out_of_range&) {
+			// return "normal" limit otherwise
+			return this->limit;
+		}
+		catch (...) {
+			// unexpected error if catching fails
+			throw HatScheT::Exception("Resource::getNonRectLimit: Unexpected error for non-rectangular resource limitation");
+		}
+	}
+
+	void Resource::setNonRectLimit(int congruenceClass, int l) {
+		if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
+		if(this->blockingTime==0 && l!=-1) {
+			cout << this->name << ".setLimit: WARNING setting this resource limit to a limited value and a blocking time of 0 was detected! Blocking time set to 1!";
+			this->blockingTime = 1;
+		}
+		if(this->latency==0 && this->phyDelay==0.0f && l!=-1){
+			//ToDo (patrick) ist this warning really neccessary?
+			//cout << this->name << ".setLimit: WARNING you should not limit a resource with a latency and physical delay of 0 as its not describing real hardware!" << endl;
+			//throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit resource with a latency and physical delay of 0!");
+		}
+		this->nonRectLimit[congruenceClass]=l;
+	}
 
 const Resource *ResourceModel::getResource(const Vertex *v) const
 {
@@ -218,47 +250,32 @@ Resource *ResourceModel::getResource(string name) const
 
 bool ResourceModel::isEmpty()
 {
-  if(this->resources.size() == 0) return true;
-  return false;
+  return this->resources.empty();
 }
 
 set<const Vertex*> ResourceModel::getVerticesOfResource(const Resource *r) const
 {
-  set<const Vertex*> vertices;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(rr==r) vertices.insert(it.first);
+  try {
+    return this->reverseRegistrations.at(r);
   }
-
-  return vertices;
+  catch (std::out_of_range&) {
+    return std::set<const Vertex*>();
+  }
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
-  }
-
-  return count;
+  return this->getNumVerticesRegisteredToResource(const_cast<const Resource*>(r));
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(const Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
+  try {
+    return this->reverseRegistrations.at(r).size();
   }
-
-  return count;
+  catch (std::out_of_range&) {
+    return 0;
+  }
 }
 
 double Resource::getHardwareCost(string n) {
@@ -274,7 +291,22 @@ void Resource::addHardwareCost(string n, double c)
   this->hardwareCost.insert(make_pair(n,c));
 }
 
-int ResourceModel::getMaxLatency() const
+	int Resource::getTotalNonRectSlots() {
+		int numSlots = 0;
+		for (auto it : this->nonRectLimit) {
+			numSlots += it.second;
+		}
+		return numSlots;
+	}
+
+	Resource::Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime)  {
+		if(Utility::iequals(name, "register")) throw Exception("register.constructor: ERROR resource name 'register' is not allowed; please choose another one");
+		if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERROR it is not allowed to limit other than 1 to this resource!");
+		if(blockingTime==0  && limit!=-1) throw Exception(name + ".constructor: ERROR it is not allowed to limit resource with a blocking time of 0!");
+		this->phyDelay = 0.0f;
+	}
+
+	int ResourceModel::getMaxLatency() const
 {
   int maxLat = 0;
 

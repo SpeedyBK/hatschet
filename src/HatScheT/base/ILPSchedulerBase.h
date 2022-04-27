@@ -109,6 +109,16 @@ public:
     this->solver->presolve = p;
   }
   bool getPresolve(){return this->solver->presolve;}
+	/*!
+	 * use this container to specify an initial solution from which the solver should start its solving process
+	 * for rational II schedulers only
+	 */
+	std::vector<std::map<Vertex*,int>> initialSolutionRatII;
+	/*!
+	 * use this container to specify an initial solution from which the solver should start its solving process
+	 * for integer II schedulers only
+	 */
+	std::map<Vertex*,int> initialSolutionIntII;
 protected:
   /*!
    * store the status of ilp-based scheduling

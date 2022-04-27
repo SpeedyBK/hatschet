@@ -11,6 +11,7 @@
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
+#include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 
 namespace HatScheT {
@@ -113,7 +114,7 @@ namespace HatScheT {
         }
 
         // insert schedule time into startTimesVector
-        this->startTimesVector[s][v] = schedUnrolled[vertexUnrolled];
+        this->startTimesVector[s][v] = round(schedUnrolled[vertexUnrolled]);
       }
     }
   }
@@ -164,6 +165,15 @@ namespace HatScheT {
         ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
         ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setMaxRuns(1);
         break;
+    	case SchedulerType::PBS:
+				schedulerBase = new HatScheT::PBScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+				if(this->solverTimeout > 0) ((HatScheT::PBScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+				if(this->maxLatencyConstraint > 0)
+					((HatScheT::PBScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+				((HatScheT::PBScheduler*) schedulerBase)->setThreads(this->threads);
+				((HatScheT::PBScheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+				((HatScheT::PBScheduler*) schedulerBase)->setMaxRuns(1);
+				break;
     }
 
     schedulerBase->setQuiet(this->quiet);
@@ -182,10 +192,14 @@ namespace HatScheT {
         this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getScaLPStatus();
         this->solvingTime = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getSolvingTime();
         break;
-      case SchedulerType::SUCHAHANZALEK:
-        this->stat = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getSolvingTime();
-        break;
+			case SchedulerType::SUCHAHANZALEK:
+				this->stat = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getScaLPStatus();
+				this->solvingTime = ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->getSolvingTime();
+				break;
+			case SchedulerType::PBS:
+				this->stat = ((HatScheT::PBScheduler*) schedulerBase)->getScaLPStatus();
+				this->solvingTime = ((HatScheT::PBScheduler*) schedulerBase)->getSolvingTime();
+				break;
     }
 
     if(schedulerBase->getScheduleFound() == true) {
