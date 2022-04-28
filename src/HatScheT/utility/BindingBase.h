@@ -77,6 +77,11 @@ namespace HatScheT {
 		 * @param o new optimization goal
 		 */
 		void setObjective(Binding::objective o);
+		/*!
+		 * set number of allowed threads
+		 * @param t numThreads
+		 */
+		void setThreads(int t);
 
 	protected:
 		/*!
@@ -131,6 +136,10 @@ namespace HatScheT {
 		 * time budget in seconds
 		 */
 		double timeBudget;
+		/*!
+		 * number of CPU threads this algorithm is allowed to use
+		 */
+		int numThreads;
 	};
 }
 

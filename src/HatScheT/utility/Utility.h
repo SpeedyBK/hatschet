@@ -188,6 +188,14 @@ public:
   */
  static double calcRecMII(Graph *g, ResourceModel *rm);
  /*!
+  * same as above but using a depth first search (DFS) instead of ILP
+  * Todo: fix bugs before usage - this does not work, yet!
+  * @param g
+  * @param rm
+  * @return
+  */
+ static double calcRecMIIDFS(Graph *g, ResourceModel *rm);
+ /*!
   * \brief calcMaxII
   * \param rm
   * \param g

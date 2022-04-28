@@ -440,22 +440,18 @@ int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
   }
 
   //get optimal critical path using asap ilp scheduler
-  HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-  asapilp->setMaxLatencyConstraint(criticalPath);
-  asapilp->schedule();
-  criticalPath = asapilp->getScheduleLength();
-
-  delete asapilp;
+  auto asapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+  asapilp.setMaxLatencyConstraint(criticalPath);
+  asapilp.schedule();
+  criticalPath = asapilp.getScheduleLength();
 
   //error in non ilp-based asap detected
   //starting new asap ilp
   if(criticalPath <= 0){
-    HatScheT::ASAPILPScheduler* asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-    asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
-    asapilp->schedule();
-    criticalPath = asapilp->getScheduleLength();
-
-    delete asapilp;
+    auto newasapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+    newasapilp.setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
+    newasapilp.schedule();
+    criticalPath = newasapilp.getScheduleLength();
   }
 
   return criticalPath;
@@ -500,8 +496,8 @@ int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
 {
   int sum = 0;
 
-  for(auto it=startTimes.begin();it!=startTimes.end();++it){
-    sum+=it->second;
+  for(auto & startTime : startTimes){
+    sum+=startTime.second;
   }
 
   return sum;
@@ -514,9 +510,9 @@ bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceMod
 
   int instancesUsed = 0;
 
-  for(auto it=startTimes.begin(); it!=startTimes.end(); ++it){
-    if(it->second == timeStep){
-      Vertex* v = it->first;
+  for(auto & startTime : startTimes){
+    if(startTime.second == timeStep){
+      Vertex* v = startTime.first;
       if(checkV != v && rm->getResource(v) == r) instancesUsed++;
     }
   }
@@ -527,8 +523,7 @@ bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceMod
 
 bool Utility::edgeIsInGraph(Graph *g, const Edge *e)
 {
-  for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
-    Edge* iterE = *it;
+  for(auto iterE : g->Edges()){
     if(iterE==e) return true;
   }
   return false;
@@ -536,8 +531,7 @@ bool Utility::edgeIsInGraph(Graph *g, const Edge *e)
 
 bool Utility::isInput(Graph *g, Vertex *v)
 {
-  for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
-      Edge* e = *it;
+  for(auto e : g->Edges()){
       Vertex* vDst = &e->getVertexDst();
 
       if(v==vDst && e->getDistance()==0) return false;
@@ -548,8 +542,7 @@ bool Utility::isInput(Graph *g, Vertex *v)
 
 bool Utility::existEdgeBetweenVertices(Graph* g, Vertex* Vsrc, Vertex* Vdst)
 {
-    for(auto it=g->edgesBegin();it!=g->edgesEnd();++it){
-        Edge* iterE = *it;
+    for(auto iterE : g->Edges()){
         Vertex* iterSrc = &iterE->getVertexSrc();
         Vertex* iterDst = &iterE->getVertexDst();
 
@@ -571,7 +564,7 @@ bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
   for(auto it:occ1Set){
     Vertex* v = it;
 
-    if(occ2->vertexIsNew(v)==false){
+    if(!occ2->vertexIsNew(v)){
       return false;
     }
   }
@@ -582,8 +575,7 @@ bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
 {
   vector<Vertex*> vVec = occ->getVertices();
 
-  for(auto it:vVec){
-    Vertex* vIter = it;
+  for(auto vIter : vVec){
     if(vIter==v) return true;
   }
   return false;
@@ -597,9 +589,9 @@ bool Utility::resourceModelAndTargetValid(HatScheT::ResourceModel &rm, HatScheT:
     //if(r->getLimit() == -1) continue;
     map<string,double>& costs = r->getHardwareCosts();
 
-    for(auto it2 = costs.begin(); it2 != costs.end(); ++it2) {
-      if (t.elementExists(it2->first) == false) {
-        cout << "Utility.resourceModelAndTargetValid: ERROR demanded hardware element '" << it2->first << "' of resource '" << r->getName() << "' is not available on this target:" << endl;
+    for(auto & cost : costs) {
+      if (!t.elementExists(cost.first)) {
+        cout << "Utility.resourceModelAndTargetValid: ERROR demanded hardware element '" << cost.first << "' of resource '" << r->getName() << "' is not available on this target:" << endl;
         cout << t << endl;
         return false;
       }
@@ -632,7 +624,7 @@ int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, Reso
   }
 
   for(int i=0;i<usedOp.size();i++){
-    if(usedOp[i]==true) opsUsed++;
+    if(usedOp[i]) opsUsed++;
   }
 
   return opsUsed;
@@ -690,7 +682,7 @@ bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *
     for(auto it2:occs2Set){
       Occurrence* occ2 = it2;
 
-      if(Utility::occurrencesAreConflictFree(occ,occ2)==false) return false;
+      if(!Utility::occurrencesAreConflictFree(occ,occ2)) return false;
     }
   }
 
@@ -731,13 +723,13 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
     //do the printing
     cout << "-----" << endl;
     cout << "MRT after binding for resource " << r->getName() << " (limit " << r->getLimit() << ")" << endl;
-    for(auto it:MRT){
-      cout << to_string(it.first) << ": ";
+    for(auto &itMrt:MRT){
+      cout << to_string(itMrt.first) << ": ";
 
-      for(auto it2:it.second){
+      for(auto &it2:itMrt.second){
         cout << "(" << it2.first << ", unit " << to_string(it2.second) << ") ";
       }
-      if(it.second.size()==0) cout << "-----";
+      if(itMrt.second.empty()) cout << "-----";
       cout << endl;
     }
     cout << "-----" << endl;
@@ -903,7 +895,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				// coming from the same predecessor
 				for (auto &e : g->Edges()) {
 					if (not e->isDataEdge()) continue;
-					if (not (v == &e->getVertexDst())) continue;
+					if (v != &e->getVertexDst()) continue;
 					numVertexInputs++;
 				}
 				if (numVertexInputs > numInputs) numInputs = numVertexInputs;
@@ -1271,4 +1263,80 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 		return b;
 	}
+
+	// Todo: fix bugs before usage - this does not work, yet!
+  double Utility::calcRecMIIDFS(Graph *g, ResourceModel *rm) {
+    double minII = 0.0;
+    for (auto &vStart : g->Vertices()) {
+      // start a DFS originating from this vertex and check for loops
+      // this container tracks the current path through the graph
+      // for convenience we always start with a nullptr that stands for the start of the path
+      // each element consists of the following tuple:
+      //   [0] the vertex
+      //   [1] the cumulative distance until this vertex
+      //   [2] the cumulative delay until this vertex (INCLUDING its own delay)
+      // here, delay = vertexLatency + edgeDelay (edgeDelay != 0 for chaining edges)
+      std::vector<std::tuple<Vertex*, double, double>> path = {{nullptr, 0.0, 0.0}};
+      // this container tracks the stack that controls the DFS
+      // each element consists of the following pair:
+      //   [0] the vertex on the stack
+      //   [1] its input
+      //   [2] the distance on the edge from the input to the vertex on the stack
+      //   [3] the delay on the edge from the input to the vertex on the stack (delay defined as above)
+      std::list<std::tuple<Vertex*, Vertex*, double, double>> stack{{vStart, nullptr, 0.0, 0.0}};
+      while (!stack.empty()) {
+        // get current element from stack
+        auto stackTuple = stack.front();
+        auto *currVertex = std::get<0>(stackTuple);
+        auto *lastVertex = std::get<1>(stackTuple);
+        auto additionalDistance = std::get<2>(stackTuple);
+        auto additionalDelay = std::get<3>(stackTuple);
+        stack.pop_front();
+        // check if we have to re-calculate the path (that happens after we found a recurrence or the end on a path)
+        if (std::get<0>(path.back()) != lastVertex) {
+          std::vector<std::tuple<Vertex*, double, double>> newPath;
+          for (auto &it : path) {
+            newPath.emplace_back(it);
+            if (std::get<0>(it) == lastVertex) break;
+          }
+          path = newPath;
+        }
+        // check if we found a loop
+        bool foundLoop = false;
+        for (auto &it : path) {
+          if (std::get<0>(it) != currVertex) {
+            continue;
+          }
+          foundLoop = true;
+          auto q = std::get<2>(it) / std::get<1>(it);
+          std::cout << "found loop with q = " << q << " = " << std::get<2>(it) << "/" << std::get<1>(it) << std::endl;
+          if (q > minII) {
+            minII = q;
+          }
+          break;
+        }
+        // continue with next iteration if we find a loop
+        if (foundLoop) {
+          continue;
+        }
+        // get last path element
+        auto lastPathTuple = path.back();
+        // insert current element into path
+        double newDistance = std::get<1>(lastPathTuple) + additionalDistance;
+        double newDelay = std::get<2>(lastPathTuple) + additionalDelay;
+        path.emplace_back(currVertex, newDistance, newDelay);
+        // loop over outgoing edges and put everything we can find on the stack
+        for (auto &e : g->Edges()) {
+          auto *vSrc = &e->getVertexSrc();
+          if (vSrc != currVertex) continue;
+          auto *vDst = &e->getVertexDst();
+          double edgeDistance = e->getDistance();
+          double edgeDelay = e->getDelay() + rm->getVertexLatency(vSrc);
+          std::tuple<Vertex*, Vertex*, double, double> nextStackElement{vDst, vSrc, edgeDistance, edgeDelay};
+          stack.emplace_front(nextStackElement);
+        }
+      }
+    }
+    return max(1.0, minII); // RecMII could be 0 if instance has no loops
+  }
 }

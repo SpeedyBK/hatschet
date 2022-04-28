@@ -269,6 +269,16 @@ public:
 	 * @return if test was passed
 	 */
 	static bool fccmPaperTest();
+	/*!
+	 * test functionality of multi min reg scheduler
+	 * @return if test was passed
+	 */
+	static bool multiMinRegSchedulerTest();
+	/*!
+	 * test functionality of multi min reg scheduler
+	 * @return if test was passed
+	 */
+	static bool satSchedulerTest();
 
 };
 }

@@ -186,6 +186,7 @@ namespace HatScheT {
 		if(this->timeBudget >= 0) {
 			s.timeout = (long)this->timeBudget;
 		}
+		s.threads = this->numThreads;
 		s.quiet = true;
 
 		//////////////////////

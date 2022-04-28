@@ -99,33 +99,25 @@ ELSE(USE_XERCESC)
 ENDIF (USE_XERCESC)
 
 ####################
-#Find CaDiCaL lib
+#Find CaDiCaL
 ####################
 FIND_LIBRARY(CADICAL_LIB
              NAMES libcadical.a
              HINTS "${CADICAL_LIBRARY_PATH}"
              DOC "Directory of the CaDiCaL library")
 
-IF(CADICAL_LIB)
-    MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB}")
-ELSE(CADICAL_LIB)
-    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}). Please specify path by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>)")
-ENDIF(CADICAL_LIB)
-
-####################
-#Find CaDiCaL Headers
-####################
 FIND_PATH(CADICAL_H
-          cadical.hpp
-          HINTS "${CADICAL_INCLUDE_PATH}"
-          DOC "Path to main CaDiCal header file"
+        cadical.hpp
+        HINTS "${CADICAL_INCLUDE_PATH}"
+        DOC "Path to main CaDiCal header file"
         )
 
-IF(CADICAL_H)
-    MESSAGE(STATUS "Found CaDiCaL Header: ${CADICAL_H}")
-ELSE(CADICAL_H)
-    MESSAGE(STATUS "Could not find CaDiCaL Headers (${CADICAL_H}). Please specify path by setting CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
-ENDIF(CADICAL_H)
+IF(CADICAL_H AND CADICAL_LIB)
+    add_definitions(-DUSE_CADICAL)
+    MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB} and Headers: ${CADICAL_H}")
+ELSE(CADICAL_H AND CADICAL_LIB)
+    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}) or CaDiCaL Header (${CADICAL_H}). Please specify paths by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>) and CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
+ENDIF(CADICAL_H AND CADICAL_LIB)
 
 
 set(HatScheT_SOURCES
@@ -162,8 +154,7 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/scheduler/dev/SDSScheduler.cpp 
-src/HatScheT/utility/FibonacciHeap.h 
+src/HatScheT/utility/FibonacciHeap.h
 src/HatScheT/utility/SDCSolver.cpp 
 src/HatScheT/utility/SDCSolver.h
 )
@@ -192,6 +183,7 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.h
+src/HatScheT/scheduler/dev/MinRegMultiScheduler.h
 src/HatScheT/scheduler/graphBased/PBScheduler.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
@@ -202,7 +194,7 @@ src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
 src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
-src/HatScheT/scheduler/dev/ModSDC.cpp
+src/HatScheT/scheduler/dev/ModSDC.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h
@@ -232,6 +224,7 @@ src/HatScheT/utility/subgraphs/SCC.h
 src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
+src/HatScheT/scheduler/dev/SATScheduler.h
 )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -251,6 +244,7 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
+src/HatScheT/scheduler/dev/MinRegMultiScheduler.cpp
 src/HatScheT/scheduler/graphBased/PBScheduler.cpp
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModSDC.cpp
@@ -269,6 +263,13 @@ src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
 )
 ENDIF (SCALP_H AND SCALP_LIB)
+
+IF (CADICAL_H AND CADICAL_LIB)
+list(APPEND HatScheT_SOURCES
+src/HatScheT/scheduler/dev/SDSScheduler.cpp
+src/HatScheT/scheduler/dev/SATScheduler.cpp
+)
+ENDIF (CADICAL_H AND CADICAL_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})
 
@@ -299,7 +300,6 @@ include_directories(${XERCESC_H})
 ENDIF (XERCESC_H AND XERCESC_LIB)
 
 IF (CADICAL_H AND CADICAL_LIB)
-add_definitions(-DUSE_CADICAL)
 include_directories(${CADICAL_H})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 

@@ -12,7 +12,7 @@ namespace HatScheT {
 													std::set<const Resource*> commutativeOps) :
 	g(g), rm(rm), sched(sched), II(II), timeBudget(300), quiet(true), solutionStatus("NOT_SOLVED"), wMux(1.0),
 	wReg(1.0), maxMux(std::numeric_limits<double>::infinity()), commutativeOps(commutativeOps),
-	maxReg(std::numeric_limits<double>::infinity()), obj(Binding::objective::minimize)
+	maxReg(std::numeric_limits<double>::infinity()), obj(Binding::objective::minimize), numThreads(1)
 	{
 		// only init some members...
 	}
@@ -69,5 +69,12 @@ namespace HatScheT {
 
 	void BindingBase::setObjective(Binding::objective o) {
 		this->obj = o;
+	}
+
+	void BindingBase::setThreads(int t) {
+		if (t <= 0) {
+			throw HatScheT::Exception("Specified illegal number of threads: "+std::to_string(t)+" - only values >= 1 are allowed!");
+		}
+		this->numThreads = t;
 	}
 }

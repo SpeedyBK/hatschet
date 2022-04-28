@@ -61,6 +61,8 @@
 #include <math.h>
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
 #include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
+#include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
+#include <HatScheT/scheduler/dev/SATScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3320,5 +3322,232 @@ namespace HatScheT {
 		std::cout << "  register costs: " << maxTreeBind.registerCosts << std::endl;
 
 		return minTreeValid and maxTreeValid;
+	}
+
+	bool Tests::multiMinRegSchedulerTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &red = rm.makeResource("red", 3, 2, 1);
+		auto &green = rm.makeResource("green", 5, 1, 1);
+
+		// critical resource (#vertices=5, limit=3)
+		// loop: latency=6, distance=5
+		Vertex &r0 = g.createVertex(0);
+		Vertex &r1 = g.createVertex(1);
+		Vertex &r2 = g.createVertex(2);
+		Vertex &r3 = g.createVertex(3);
+		Vertex &r4 = g.createVertex(4);
+		rm.registerVertex(&r0, &red);
+		rm.registerVertex(&r1, &red);
+		rm.registerVertex(&r2, &red);
+		rm.registerVertex(&r3, &red);
+		rm.registerVertex(&r4, &red);
+		g.createEdge(r0, r2, 0);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r2, r3, 0);
+		g.createEdge(r3, r4, 0);
+		g.createEdge(r3, r0, 5);
+
+		// non-critical resource (#vertices=22, limit=5)
+		// loop: latency=4, distance=3
+		Vertex &g5 = g.createVertex(5);
+		Vertex &g6 = g.createVertex(6);
+		Vertex &g7 = g.createVertex(7);
+		Vertex &g8 = g.createVertex(8);
+		Vertex &g9 = g.createVertex(9);
+		Vertex &g10 = g.createVertex(10);
+		Vertex &g11 = g.createVertex(11);
+		Vertex &g12 = g.createVertex(12);
+		Vertex &g13 = g.createVertex(13);
+		Vertex &g14 = g.createVertex(14);
+		Vertex &g15 = g.createVertex(15);
+		Vertex &g16 = g.createVertex(16);
+		Vertex &g17 = g.createVertex(17);
+		Vertex &g18 = g.createVertex(18);
+		Vertex &g19 = g.createVertex(19);
+		Vertex &g20 = g.createVertex(20);
+		Vertex &g21 = g.createVertex(21);
+		Vertex &g22 = g.createVertex(22);
+		Vertex &g23 = g.createVertex(23);
+		Vertex &g24 = g.createVertex(24);
+		Vertex &g25 = g.createVertex(25);
+		Vertex &g26 = g.createVertex(26);
+		rm.registerVertex(&g5, &green);
+		rm.registerVertex(&g6, &green);
+		rm.registerVertex(&g7, &green);
+		rm.registerVertex(&g8, &green);
+		rm.registerVertex(&g9, &green);
+		rm.registerVertex(&g10, &green);
+		rm.registerVertex(&g11, &green);
+		rm.registerVertex(&g12, &green);
+		rm.registerVertex(&g13, &green);
+		rm.registerVertex(&g14, &green);
+		rm.registerVertex(&g15, &green);
+		rm.registerVertex(&g16, &green);
+		rm.registerVertex(&g17, &green);
+		rm.registerVertex(&g18, &green);
+		rm.registerVertex(&g19, &green);
+		rm.registerVertex(&g20, &green);
+		rm.registerVertex(&g21, &green);
+		rm.registerVertex(&g22, &green);
+		rm.registerVertex(&g23, &green);
+		rm.registerVertex(&g24, &green);
+		rm.registerVertex(&g25, &green);
+		rm.registerVertex(&g26, &green);
+		g.createEdge(g5, g7, 0);
+		g.createEdge(g12, g7, 0);
+		g.createEdge(g13, g7, 0);
+		g.createEdge(g14, g7, 0);
+		g.createEdge(g6, g7, 0);
+		g.createEdge(g7, g8, 0);
+		g.createEdge(g8, g9, 0);
+		g.createEdge(g9, g6, 3);
+		g.createEdge(g9, g10, 0);
+		g.createEdge(g9, g11, 0);
+
+		MinRegMultiScheduler m(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+		m.setQuiet(false);
+		m.setSolverQuiet(true);
+		m.setThreads(24);
+		m.setSolverTimeout(300);
+		m.setMaxRuns(1);
+
+		std::cout << "Start reg min scheduling with multiple assignments" << std::endl;
+		m.disableMultipleStartTimes();
+		m.schedule();
+		auto validMulti = m.validateScheduleAndBinding();
+		auto numLifetimeRegsMulti = m.getNumLifetimeRegs();
+
+		std::cout << "Start reg min scheduling with single assignments" << std::endl;
+		m.enableMultipleStartTimes();
+		m.schedule();
+		auto validSingle = m.validateScheduleAndBinding();
+		auto numLifetimeRegsSingle = m.getNumLifetimeRegs();
+
+		std::cout << "#Lifetime regs (multi)  = " << numLifetimeRegsMulti  << std::endl;
+		std::cout << "#Lifetime regs (single) = " << numLifetimeRegsSingle << std::endl;
+
+		return validMulti and validSingle;
+	}
+
+	bool Tests::satSchedulerTest() {
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+
+		auto &red = rm.makeResource("red", 3, 2, 1);
+		auto &green = rm.makeResource("green", 5, 1, 1);
+
+		// non-critical resource (#vertices=5, limit=3)
+		// loop: latency=6, distance=5
+		Vertex &r0 = g.createVertex(0);
+		Vertex &r1 = g.createVertex(1);
+		Vertex &r2 = g.createVertex(2);
+		Vertex &r3 = g.createVertex(3);
+		Vertex &r4 = g.createVertex(4);
+		rm.registerVertex(&r0, &red);
+		rm.registerVertex(&r1, &red);
+		rm.registerVertex(&r2, &red);
+		rm.registerVertex(&r3, &red);
+		rm.registerVertex(&r4, &red);
+		g.createEdge(r0, r2, 0);
+		g.createEdge(r1, r2, 0);
+		g.createEdge(r2, r3, 0);
+		g.createEdge(r3, r4, 0);
+		g.createEdge(r3, r0, 5);
+
+		// critical resource (#vertices=22, limit=5)
+		// loop: latency=4, distance=3
+		Vertex &g5 = g.createVertex(5);
+		Vertex &g6 = g.createVertex(6);
+		Vertex &g7 = g.createVertex(7);
+		Vertex &g8 = g.createVertex(8);
+		Vertex &g9 = g.createVertex(9);
+		Vertex &g10 = g.createVertex(10);
+		Vertex &g11 = g.createVertex(11);
+		Vertex &g12 = g.createVertex(12);
+		Vertex &g13 = g.createVertex(13);
+		Vertex &g14 = g.createVertex(14);
+		Vertex &g15 = g.createVertex(15);
+		Vertex &g16 = g.createVertex(16);
+		Vertex &g17 = g.createVertex(17);
+		Vertex &g18 = g.createVertex(18);
+		Vertex &g19 = g.createVertex(19);
+		Vertex &g20 = g.createVertex(20);
+		Vertex &g21 = g.createVertex(21);
+		Vertex &g22 = g.createVertex(22);
+		Vertex &g23 = g.createVertex(23);
+		Vertex &g24 = g.createVertex(24);
+		Vertex &g25 = g.createVertex(25);
+		Vertex &g26 = g.createVertex(26);
+		rm.registerVertex(&g5, &green);
+		rm.registerVertex(&g6, &green);
+		rm.registerVertex(&g7, &green);
+		rm.registerVertex(&g8, &green);
+		rm.registerVertex(&g9, &green);
+		rm.registerVertex(&g10, &green);
+		rm.registerVertex(&g11, &green);
+		rm.registerVertex(&g12, &green);
+		rm.registerVertex(&g13, &green);
+		rm.registerVertex(&g14, &green);
+		rm.registerVertex(&g15, &green);
+		rm.registerVertex(&g16, &green);
+		rm.registerVertex(&g17, &green);
+		rm.registerVertex(&g18, &green);
+		rm.registerVertex(&g19, &green);
+		rm.registerVertex(&g20, &green);
+		rm.registerVertex(&g21, &green);
+		rm.registerVertex(&g22, &green);
+		rm.registerVertex(&g23, &green);
+		rm.registerVertex(&g24, &green);
+		rm.registerVertex(&g25, &green);
+		rm.registerVertex(&g26, &green);
+		g.createEdge(g5, g7, 0);
+		g.createEdge(g12, g7, 0);
+		g.createEdge(g13, g7, 0);
+		g.createEdge(g14, g7, 0);
+		g.createEdge(g6, g7, 0);
+		g.createEdge(g7, g8, 0);
+		g.createEdge(g8, g9, 0);
+		g.createEdge(g9, g6, 3);
+		g.createEdge(g9, g10, 0);
+		g.createEdge(g9, g11, 0);
+
+		SATScheduler m(g, rm);
+		m.setQuiet(false);
+		m.setMaxRuns(1);
+		m.setSolverTimeout(10);
+
+		std::cout << "Start SAT scheduling" << std::endl;
+		m.schedule();
+		auto &schedule = m.getSchedule();
+		auto II = m.getII();
+		auto SL = m.getScheduleLength();
+		std::cout << "II = " << II << " (schedule length = " << SL << ")" << std::endl;
+		std::cout << "schedule: " << std::endl;
+		for (auto &it : schedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		if (II < 1) {
+			std::cout << "Invalid II" << std::endl;
+			return false;
+		}
+		auto valid = verifyModuloSchedule(g, rm, schedule, II);
+		if (!valid) {
+			std::cout << "Invalid schedule" << std::endl;
+			return false;
+		}
+		auto expectedII = 5;
+		auto expectedSL = 8;
+		if (II != expectedII) {
+			std::cout << "Expected II = " << expectedII << " but got II = " << II << std::endl;
+			return false;
+		}
+		if (SL != expectedSL) {
+			std::cout << "Expected schedule length = " << expectedSL << " but got schedule length = " << SL << std::endl;
+			return false;
+		}
+		std::cout << "Passed test :)" << std::endl;
+		return true;
 	}
 }

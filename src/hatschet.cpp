@@ -68,6 +68,10 @@
 #include "HatScheT/utility/Tests.h"
 #endif
 
+#ifdef USE_CADICAL
+#include <HatScheT/scheduler/dev/SATScheduler.h>
+#endif
+
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -106,7 +110,8 @@ void print_short_help() {
   std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
 	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)" << std::endl;
 	std::cout << "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)" << std::endl;
-    std::cout << "                            RATIONALIIMODULOSDC: Sixth experimental rational II scheduler (SDC based heuristic)" << std::endl;
+	std::cout << "                            RATIONALIIMODULOSDC: Sixth experimental rational II scheduler (SDC based heuristic)" << std::endl;
+	std::cout << "                            SAT: Experimental integer II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -155,7 +160,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {SAT, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -266,6 +271,9 @@ int main(int argc, char *args[]) {
         else if(schedulerSelectionStr == "alap") {
           schedulerSelection = ALAP;
         }
+				else if(schedulerSelectionStr == "sat") {
+					schedulerSelection = SAT;
+				}
         else if(schedulerSelectionStr == "ul") {
           schedulerSelection = UL;
         }
@@ -375,6 +383,8 @@ int main(int argc, char *args[]) {
 				if(str=="TREEBIND" && HatScheT::Tests::treeBindTest() == false) exit(-1);
 				if(str=="TREEBINDCOMMUTATIVE" && HatScheT::Tests::treeBindCommutativeTest() == false) exit(-1);
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
+				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
+				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -409,9 +419,12 @@ int main(int argc, char *args[]) {
       case ALAP:
         cout << "ALAP";
         break;
-      case UL:
-        cout << "UL";
-        break;
+			case UL:
+				cout << "UL";
+				break;
+			case SAT:
+				cout << "SAT";
+				break;
       case MOOVAC:
         cout << "MOOVAC";
         break;
@@ -548,6 +561,14 @@ int main(int argc, char *args[]) {
         case UL:
           scheduler = new HatScheT::ULScheduler(g,rm);
           break;
+#ifdef USE_CADICAL
+      	case SAT:
+      		scheduler = new HatScheT::SATScheduler(g, rm);
+					isModuloScheduler=true;
+					if(timeout > 0) ((HatScheT::SATScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::SATScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+      		break;
+#endif
 #ifdef USE_SCALP
         case MOOVAC:
           isModuloScheduler=true;

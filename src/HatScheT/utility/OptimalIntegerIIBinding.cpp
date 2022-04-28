@@ -79,7 +79,7 @@ namespace HatScheT {
 		if(this->sw.empty()) this->sw = {"Gurobi","CPLEX","SCIP","LPSolve"};
 		auto solver = ScaLP::Solver(sw);
 		solver.quiet = true;
-		solver.threads = 1;
+		solver.threads = this->numThreads;
 		solver.timeout = (long)this->timeBudget;
 
 		/////////////////////////////////////////////////
