@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 #include <algorithm>
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
@@ -768,8 +769,11 @@ int main(int argc, char *args[]) {
 			scheduler->setUseOptBinding(optBinding);
 
       cout << "HatScheT: Performing schedule" << endl;
+      auto startTime = std::chrono::steady_clock::now();
       scheduler->schedule();
-      cout << "HatScheT: Finished schedule" << endl;
+      auto endTime = std::chrono::steady_clock::now();
+      auto schedulingTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count() / 1000.0;
+      cout << "HatScheT: Finished scheduling in " << schedulingTime << " seconds" << endl;
 
       if(isModuloScheduler) {
         if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), scheduler->getII())){
@@ -794,7 +798,7 @@ int main(int argc, char *args[]) {
       }
 #endif //USE_SCALP
 
-      if(scheduler->getScheduleFound() == true) {
+      if(scheduler->getScheduleFound()) {
         std::cout << "------------------------------------------------------------------------------------" << endl;
         std::cout << "---------------------------------- Schedule: ---------------------------------------" << endl;
         std::cout << "------------------------------------------------------------------------------------" << endl;
@@ -804,7 +808,7 @@ int main(int argc, char *args[]) {
           std::map<const HatScheT::Vertex*,int> b = scheduler->getBindings();
           HatScheT::Utility::printBinding(*&b,rm);
 
-          if (htmlFile != "") {
+          if (!htmlFile.empty()) {
             scheduler->writeScheduleChart(htmlFile);
           }
         }
@@ -819,6 +823,8 @@ int main(int argc, char *args[]) {
           // integer II modulo scheduler
           auto bindings = scheduler->getBindings();
           HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
+          sBWriter.setScheduleLength(scheduler->getScheduleLength());
+					sBWriter.setSolvingTime(schedulingTime);
           sBWriter.setRMPath(resourceModelFile);
           sBWriter.setGraphPath(graphMLFile);
           sBWriter.write();

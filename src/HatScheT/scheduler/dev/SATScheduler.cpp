@@ -145,7 +145,7 @@ namespace HatScheT {
 				asapRm.registerVertex(v, &asapR);
 			}
 		}
-		ASAPScheduler asapScheduler(this->g, this->resourceModel);
+		ASAPScheduler asapScheduler(this->g, asapRm);
 		asapScheduler.schedule();
 		this->minLatency = asapScheduler.getScheduleLength();
 		if (!this->quiet) {
@@ -454,7 +454,7 @@ namespace HatScheT {
 	}
 
 	double CaDiCalTerminator::getElapsedTime() const {
-		return chrono::duration_cast<chrono::seconds>(std::chrono::steady_clock::now() - this->timerStart).count();
+		return chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - this->timerStart).count() / 1000.0;
 	}
 }
 #endif

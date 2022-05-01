@@ -11,7 +11,7 @@ namespace HatScheT {
 																										 std::vector<std::map<const Vertex *, int>> &binding, int samples,
 																										 int modulo, std::vector<fuConnection> fuConnections) :
 		Writer(path), schedule(schedule), binding(binding), samples(samples), modulo(modulo), graphPath(""), rmPath(""),
-		fuConnections(fuConnections){
+		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1) {
 
 	}
 
@@ -19,7 +19,7 @@ namespace HatScheT {
 																										 std::map<const Vertex *, int> &binding, int II,
 																										 std::vector<fuConnection> fuConnections) :
 		Writer(path), schedule({schedule}), binding({binding}), samples(1), modulo(II), graphPath(""), rmPath(""),
-		fuConnections(fuConnections) {
+		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1) {
 
 	}
 
@@ -80,6 +80,12 @@ namespace HatScheT {
 		}
 		if(!this->graphPath.empty()) {
 			file << "# resourceModel " << this->rmPath << std::endl;
+		}
+		if(this->solvingTime >= 0.0) {
+			file << "# solvingTime " << this->solvingTime << std::endl;
+		}
+		if(this->scheduleLength >= 0) {
+			file << "# scheduleLength " << this->scheduleLength << std::endl;
 		}
 		if(this->samples==1) {
 			// integer II -> information about sample can be omitted
