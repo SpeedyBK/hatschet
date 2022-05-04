@@ -338,46 +338,21 @@ namespace HatScheT {
 				std::cout << "SATScheduler: creating schedule time constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// schedule time
-			auto lat = this->resourceModel.getVertexLatency(v);
-			// all zero clause
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->solver->add(this->scheduleTimeLiterals.at({v, tau}));
 			}
 			this->solver->add(0);
 			this->scheduleTimeConstraintClauseCounter++;
-			/* commented out to reduce the number of clauses (this enforces "at least 1" instead of "exactly 1" schedule time)
-			for (int tau1=this->earliestStartTime.at(v); tau1<= this->latestStartTime.at(v); tau1++) {
-				auto t1 = this->scheduleTimeLiterals.at({v, tau1});
-				for (int tau2=tau1+1; tau2<= this->latestStartTime.at(v); tau2++) {
-					this->solver->add(-t1);
-					this->solver->add(-this->scheduleTimeLiterals.at({v, tau2}));
-					this->solver->add(0);
-					this->scheduleTimeConstraintClauseCounter++;
-				}
-			}
-			 */
 			if (!this->quiet) {
 				std::cout << "SATScheduler: creating binding constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// binding
 			if (this->vertexIsUnlimited.at(v) or this->resourceLimit.at(v) == 1) continue;
-			// all zero clause
 			for (int l=0; l<this->resourceLimit.at(v); l++) {
 				this->solver->add(this->bindingLiterals.at({v, l}));
 			}
 			this->solver->add(0);
 			this->bindingConstraintClauseCounter++;
-			/* commented out to reduce the number of clauses (this enforces "at least 1" instead of "exactly 1" binding)
-			for (int l1=0; l1<this->resourceLimit.at(v); l1++) {
-				auto b1 = this->bindingLiterals.at({v, l1});
-				for (int l2=l1+1; l2<this->resourceLimit.at(v); l2++) {
-					this->solver->add(-b1);
-					this->solver->add(-this->bindingLiterals.at({v, l2}));
-					this->solver->add(0);
-					this->bindingConstraintClauseCounter++;
-				}
-			}
-			 */
 		}
 		this->clauseCounter = this->dependencyConstraintClauseCounter + this->resourceConstraintClauseCounter +
 			this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter;
@@ -415,11 +390,6 @@ namespace HatScheT {
 				if (this->solver->val(this->scheduleTimeLiterals.at({v, tau})) < 0) {
 					continue;
 				}
-				/*
-				if (t >= 0) {
-					throw Exception("Determined multiple start times ("+std::to_string(tau)+" and "+std::to_string(t)+") for vertex '"+v->getName()+"' - that should never happen!");
-				}
-				 */
 				t = tau;
 				break;
 			}
@@ -444,11 +414,6 @@ namespace HatScheT {
 				if (this->solver->val(this->bindingLiterals.at({v, l})) < 0) {
 					continue;
 				}
-				/*
-				if (b >= 0) {
-					throw Exception("Determined multiple bindings ("+std::to_string(l)+" and "+std::to_string(b)+") for vertex '"+v->getName()+"' - that should never happen!");
-				}
-				 */
 				b = l;
 				break;
 			}
