@@ -72,8 +72,9 @@ public:
   /*!
    * set resource limit
    * @param l new limit
+   * @param safe guarantee safe operation by enabling error checks - DISABLE THIS ONLY IF YOU KNOW WHAT YOU ARE DOING!
    */
-  void setLimit(int l);
+  void setLimit(int l, const bool &safe=true);
   /*!
    * this is used for resources that have different limits in different congruence classes
    * @param congruenceClass

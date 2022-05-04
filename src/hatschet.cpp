@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <memory>
 #include <algorithm>
 #include <HatScheT/utility/Exception.h>
 #include <HatScheT/Graph.h>
@@ -775,8 +776,8 @@ int main(int argc, char *args[]) {
       auto schedulingTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count() / 1000.0;
       cout << "HatScheT: Finished scheduling in " << schedulingTime << " seconds" << endl;
 
-      if(isModuloScheduler) {
-        if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), scheduler->getII())){
+      if(isModuloScheduler and scheduler->getScheduleFound()) {
+        if (HatScheT::verifyModuloSchedule(g, rm, scheduler->getSchedule(), (int)scheduler->getII())){
           cout << "Modulo schedule verified successfully" << endl;
           cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
         } else {
@@ -791,7 +792,8 @@ int main(int argc, char *args[]) {
 				if (ratIILayer->getScheduleValid()){
 					cout << "Rational II Modulo schedule verified successfully" << endl;
 					cout << "Found II " << scheduler->getII() << " with sampleLatency " << scheduler->getScheduleLength() << endl;
-				} else {
+				}
+				else {
 					cout << ">>> Rational II Modulo schedule verification failed! <<<" << endl;
 					exit(-1);
 				}
@@ -812,37 +814,50 @@ int main(int argc, char *args[]) {
             scheduler->writeScheduleChart(htmlFile);
           }
         }
-
       }
-      else cout << "No schedule found!" << endl;
+      else {
+      	cout << "No schedule found!" << endl;
+      }
 
 			// write schedule to csv file if requested
-      if(!scheduleFile.empty() and scheduler->getScheduleFound()) {
+      //if(!scheduleFile.empty() and scheduler->getScheduleFound()) {
+      if (!scheduleFile.empty()) {
+				std::map<HatScheT::Vertex*, int> intIISchedule;
+				std::map<const HatScheT::Vertex*, int> intIIBindings;
+				std::vector<std::map<HatScheT::Vertex*, int>> ratIISchedule;
+				std::vector<std::map<const HatScheT::Vertex*, int>> ratIIBindings;
+      	if (scheduler->getScheduleFound()) {
 #ifdef USE_SCALP
-        if(ratIILayer == nullptr) {
-          // integer II modulo scheduler
-          auto bindings = scheduler->getBindings();
-          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
-          sBWriter.setScheduleLength(scheduler->getScheduleLength());
-					sBWriter.setSolvingTime(schedulingTime);
-          sBWriter.setRMPath(resourceModelFile);
-          sBWriter.setGraphPath(graphMLFile);
-          sBWriter.write();
-        }
-        else {
-          // rational II modulo scheduler
-          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,ratIILayer->getStartTimeVector(),ratIILayer->getRationalIIBindings(),ratIILayer->getS_Found(),ratIILayer->getM_Found());
-          sBWriter.setRMPath(resourceModelFile);
-          sBWriter.setGraphPath(graphMLFile);
-          sBWriter.write();
-        }
+					if (ratIILayer == nullptr) {
+						// integer II modulo scheduler
+						intIISchedule = scheduler->getSchedule();
+						intIIBindings = scheduler->getBindings();
+					} else {
+						// rational II modulo scheduler
+						ratIISchedule = ratIILayer->getStartTimeVector();
+						ratIIBindings = ratIILayer->getRationalIIBindings();
+					}
 #else
-          auto bindings = scheduler->getBindings();
-          HatScheT::ScheduleAndBindingWriter sBWriter(scheduleFile,scheduler->getSchedule(),bindings,(int)scheduler->getII());
-          sBWriter.setRMPath(resourceModelFile);
-          sBWriter.setGraphPath(graphMLFile);
-          sBWriter.write();
+					intIISchedule = scheduler->getSchedule();
+					intIIBindings = scheduler->getBindings();
 #endif //USE_SCALP
+				}
+				std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
+#ifdef USE_SCALP
+      	if (ratIILayer == nullptr) {
+					sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings, (int)scheduler->getII()));
+				}
+      	else {
+					sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, ratIISchedule, ratIIBindings, ratIILayer->getS_Found(), ratIILayer->getM_Found()));
+				}
+#else
+				sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings, (int)scheduler->getII()));
+#endif //USE_SCALP
+				sBWriter->setRMPath(resourceModelFile);
+				sBWriter->setGraphPath(graphMLFile);
+				sBWriter->setScheduleLength(scheduler->getScheduleLength());
+				sBWriter->setSolvingTime(schedulingTime);
+				sBWriter->write();
       }
 
       delete scheduler;

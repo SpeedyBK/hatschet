@@ -225,6 +225,7 @@ src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/dev/SATScheduler.h
+src/HatScheT/scheduler/dev/SATMinRegScheduler.h
 )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -268,6 +269,7 @@ IF (CADICAL_H AND CADICAL_LIB)
 list(APPEND HatScheT_SOURCES
 src/HatScheT/scheduler/dev/SDSScheduler.cpp
 src/HatScheT/scheduler/dev/SATScheduler.cpp
+src/HatScheT/scheduler/dev/SATMinRegScheduler.cpp
 )
 ENDIF (CADICAL_H AND CADICAL_LIB)
 

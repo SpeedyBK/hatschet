@@ -31,11 +31,20 @@ namespace HatScheT {
 
 	class SATScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
+		const int linearJumpLength = 5; // todo: replace by sqrt(latMax - latMin)?
+		enum LatencyOptimizationStrategy {
+			REVERSE_LINEAR,
+			LINEAR,
+			LINEAR_JUMP,
+			LOGARITHMIC
+		};
 		SATScheduler(Graph& g, ResourceModel &resourceModel);
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
+		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
 
 	private:
+		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
 		void calcMinLatency();
 		void calcMaxLatency();
 
@@ -51,6 +60,8 @@ namespace HatScheT {
 		int candidateLatency;
 		int minLatency;
 		int maxLatency;
+		int latencyLowerBound;
+		int latencyUpperBound;
 
 		unsigned int solverTimeout;
 
@@ -70,6 +81,8 @@ namespace HatScheT {
 		std::map<Vertex*, bool> vertexIsUnlimited;
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeLiterals;
 		std::map<std::pair<Vertex*, int>, int> bindingLiterals;
+		std::set<int> latencyAttempts;
+		LatencyOptimizationStrategy los;
 	};
 }
 #endif //USE_CADICAL

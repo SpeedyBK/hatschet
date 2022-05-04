@@ -7,28 +7,19 @@
 #include <chrono>
 #include <iomanip>
 #include <HatScheT/scheduler/ASAPScheduler.h>
-#include <HatScheT/utility/Utility.h>
 
 #ifdef USE_CADICAL
 namespace HatScheT {
 #define CADICAL_SAT 10
 
-	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel) :
-		SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0) {
-		this->quiet = false; // debugging
+	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel)
+		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
+		  los(LatencyOptimizationStrategy::LINEAR_JUMP), latencyLowerBound(-1), latencyUpperBound(-1) {
 		this->II = -1;
 		this->timeouts = 0;
-		//this->startTimes.clear();
 		this->scheduleFound = false;
 		this->optimalResult = false;
 		computeMinII(&g, &resourceModel);
-		// start replace min II calculation with DFS
-		/*
-		this->resMinII = Utility::calcResMII(&resourceModel,nullptr);
-		this->recMinII = Utility::calcRecMIIDFS(&g,&resourceModel);
-		this->minII = Utility::calcMinII(this->resMinII,this->recMinII);
-		 */
-		// end replace min II calculation with DFS
 		this->minII = ceil(this->minII);
 		computeMaxII(&g, &resourceModel);
 
@@ -51,9 +42,21 @@ namespace HatScheT {
 		this->initScheduler();
 		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
 			if (!this->quiet) {
+				auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cout << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+			}
+
+			if (!this->quiet) {
 				std::cout << "SATScheduler: candidate II=" << this->candidateII << std::endl;
 			}
-			for (this->candidateLatency = max(this->minLatency, this->candidateII); this->candidateLatency <= this->maxLatency; this->candidateLatency++) {
+			this->latencyAttempts.clear();
+			this->candidateLatency = -1;
+			this->latencyLowerBound = this->minLatency;
+			this->latencyUpperBound = this->maxLatency;
+			bool lastAttemptSuccess = false;
+			bool breakByTimeout = false;
+			this->terminator = CaDiCalTerminator((double)this->solverTimeout);
+			while (this->computeNewLatencySuccess(lastAttemptSuccess)) {
 				if (!this->quiet) {
 					std::cout << "SATScheduler: resetting containers" << std::endl;
 				}
@@ -79,9 +82,8 @@ namespace HatScheT {
 					std::cout << "  '" << this->resourceConstraintClauseCounter << "' resource constraint clauses" << std::endl;
 					std::cout << "  '" << this->scheduleTimeConstraintClauseCounter << "' schedule time constraint clauses" << std::endl;
 					std::cout << "  '" << this->bindingConstraintClauseCounter << "' binding constraint clauses" << std::endl;
-					auto now = std::chrono::system_clock::now();
-					auto inTime = std::chrono::system_clock::to_time_t(now);
-					std::cout << "  current time: " << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X") << std::endl;
+					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cout << "  current time: " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
 				}
 				auto elapsedTime = this->terminator.getElapsedTime();
 				if (!this->quiet) {
@@ -93,26 +95,31 @@ namespace HatScheT {
 					if (!this->quiet) {
 						std::cout << "SATScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec) - total elapsed time: " << this->solvingTime << "sec" << std::endl;
 					}
-					this->timeouts++;
+					breakByTimeout = true;
 					break;
 				}
 				// start solving
 				auto stat = this->solver->solve();
 				elapsedTime = this->terminator.getElapsedTime();
 				this->solvingTime += elapsedTime;
+				lastAttemptSuccess = stat == CADICAL_SAT;
 				if (!this->quiet) {
 					std::cout << "SATScheduler: finished solving with status '" <<
-					  (stat == CADICAL_SAT?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
+					  (lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
 					  << " sec (total: " << this->solvingTime << " sec)" << std::endl;
 				}
-				if(stat != CADICAL_SAT) {
+				if(!lastAttemptSuccess) {
+					if (!this->quiet) {
+						auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+						std::cout << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+					}
 					// check if it was due to a timeout
 					if (elapsedTime >= this->solverTimeout) {
 						// timeout when solving
 						if (!this->quiet) {
 							std::cout << "SATScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec)" << std::endl;
 						}
-						this->timeouts++;
+						breakByTimeout = true;
 						break;
 					}
 					// schedule attempt failed :(
@@ -123,10 +130,16 @@ namespace HatScheT {
 					continue;
 				}
 				this->scheduleFound = true;
-				this->optimalResult = true;
 				this->II = this->candidateII;
 				this->fillSolutionStructure();
-				break;
+				if (!this->quiet) {
+					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cout << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+				}
+			}
+			this->optimalResult = !breakByTimeout;
+			if (breakByTimeout) {
+				this->timeouts++;
 			}
 			if (this->scheduleFound) {
 				// schedule attempt finished :)
@@ -138,18 +151,19 @@ namespace HatScheT {
 
 	void SATScheduler::calcMinLatency() {
 		// unconstrained ASAP scheduler for lower limit on achievable latency
-		ResourceModel asapRm;
+		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
-			auto &asapR = asapRm.makeResource(r->getName(), UNLIMITED, r->getLatency(), r->getBlockingTime());
-			for (auto &v : this->resourceModel.getVerticesOfResource(r)) {
-				asapRm.registerVertex(v, &asapR);
-			}
+			originalLimits[r] = r->getLimit();
+			r->setLimit(UNLIMITED, false); // disable errors during set limit function
 		}
-		ASAPScheduler asapScheduler(this->g, asapRm);
+		ASAPScheduler asapScheduler(this->g, this->resourceModel);
 		asapScheduler.schedule();
 		this->minLatency = asapScheduler.getScheduleLength();
 		if (!this->quiet) {
 			std::cout << "SATScheduler: computed minimum latency " << this->minLatency << std::endl;
+		}
+		for (auto &r : this->resourceModel.Resources()) {
+			r->setLimit(originalLimits.at(r));
 		}
 	}
 
@@ -185,6 +199,7 @@ namespace HatScheT {
 		// latency bounds
 		this->calcMinLatency();
 		this->calcMaxLatency();
+		// handle max latency constraint
 		if (this->maxLatencyConstraint < 0 or this->maxLatency < this->maxLatencyConstraint) {
 			this->maxLatencyConstraint = this->maxLatency;
 		}
@@ -219,8 +234,6 @@ namespace HatScheT {
 
 	void SATScheduler::resetContainer() {
 		// just create a new solver lol
-		//this->solver = CaDiCaL::Solver(); // nfiege: that creates segmentation faults!! (why tho?!)
-		//this->solver = std::make_unique<CaDiCaL::Solver>();
 		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->scheduleTimeLiterals.clear();
 		this->bindingLiterals.clear();
@@ -232,7 +245,6 @@ namespace HatScheT {
 		this->resourceConstraintClauseCounter = 0;
 		this->scheduleTimeConstraintClauseCounter = 0;
 		this->bindingConstraintClauseCounter = 0;
-		this->terminator = CaDiCalTerminator((double)this->solverTimeout);
 	}
 
 	void SATScheduler::createClauses() {
@@ -271,6 +283,7 @@ namespace HatScheT {
 		}
 		for (auto &r : this->resourceModel.Resources()) {
 			auto limit = r->getLimit();
+			auto bindingTrivial = limit == 1;
 			if (limit == UNLIMITED) continue;
 			//auto limit = r->isUnlimited()?(int)this->resourceModel.getNumVerticesRegisteredToResource(r):r->getLimit();
 			auto lat = r->getLatency();
@@ -280,11 +293,17 @@ namespace HatScheT {
 				}
 				for (auto &v1 : this->g.Vertices()) {
 					if (this->resourceModel.getResource(v1) != r) continue;
-					auto b1 = this->bindingLiterals.at({v1, l});
+					auto b1 = -1;
+					if (!bindingTrivial) {
+						b1 = this->bindingLiterals.at({v1, l});
+					}
 					for (auto &v2 : this->g.Vertices()) {
 						if (this->resourceModel.getResource(v2) != r) continue;
 						if (v1->getId() >= v2->getId()) continue;
-						auto b2 = this->bindingLiterals.at({v2, l});
+						auto b2 = -1;
+						if (!bindingTrivial) {
+							b2 = this->bindingLiterals.at({v2, l});
+						}
 						for (int x=0; x<this->candidateII; x++) {
 							for (int tau1=0; tau1<= this->candidateLatency - lat; tau1++) {
 								if (tau1 % this->candidateII != x) continue;
@@ -294,8 +313,8 @@ namespace HatScheT {
 									auto t2 = this->scheduleTimeLiterals.at({v2, tau2});
 									this->solver->add(-t1);
 									this->solver->add(-t2);
-									this->solver->add(-b1);
-									this->solver->add(-b2);
+									if (!bindingTrivial) this->solver->add(-b1);
+									if (!bindingTrivial) this->solver->add(-b2);
 									this->solver->add(0);
 									this->resourceConstraintClauseCounter++;
 								}
@@ -334,7 +353,7 @@ namespace HatScheT {
 				std::cout << "SATScheduler: creating binding constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// binding
-			if (this->vertexIsUnlimited.at(v)) continue;
+			if (this->vertexIsUnlimited.at(v) or this->resourceLimit.at(v) == 1) continue;
 			// all zero clause
 			for (int l=0; l<this->resourceLimit.at(v); l++) {
 				this->solver->add(this->bindingLiterals.at({v, l}));
@@ -369,6 +388,10 @@ namespace HatScheT {
 					std::cout << "    unlimited" << std::endl;
 					continue;
 				}
+				if (this->resourceLimit.at(v) == 1) {
+					std::cout << "    FU=0 - 1 (trivial)" << std::endl;
+					continue;
+				}
 				// bindings
 				for (int l=0; l<this->resourceLimit.at(v); l++) {
 					std::cout << "    FU=" << l << " - " << this->solver->val(this->bindingLiterals.at({v, l})) << std::endl;
@@ -397,6 +420,11 @@ namespace HatScheT {
 				// assign unlimited vertices unique FUs
 				auto *r = this->resourceModel.getResource(v);
 				this->binding[v] = unlimitedResourceCounter[r]++; // assign FU and increment counter
+				continue;
+			}
+			if (this->resourceLimit.at(v) == 1) {
+				// assign trivial bindings
+				this->binding[v] = 0;
 				continue;
 			}
 			auto b = -1;
@@ -429,7 +457,7 @@ namespace HatScheT {
 				this->scheduleTimeLiterals[{v, tau}] = ++this->literalCounter;
 			}
 			// binding variables
-			if (this->vertexIsUnlimited.at(v)) continue;
+			if (this->vertexIsUnlimited.at(v) or this->resourceLimit.at(v)==1) continue;
 			for (int l=0; l<this->resourceLimit.at(v); l++) {
 				this->bindingLiteralCounter++;
 				this->bindingLiterals[{v, l}] = ++this->literalCounter;
@@ -439,6 +467,113 @@ namespace HatScheT {
 
 	void SATScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
 		this->solverTimeout = newTimeoutInSec;
+	}
+
+	bool SATScheduler::computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful) {
+		switch (this->los) {
+			case REVERSE_LINEAR: {
+				if (this->candidateLatency < 0) {
+					// first attempt: try maximum latency
+					this->candidateLatency = this->latencyUpperBound;
+					return true;
+				}
+				else if (lastSchedulingAttemptSuccessful) {
+					// last scheduling attempt was a success
+					if (this->candidateLatency == this->latencyLowerBound) {
+						// and we reached the lower bound
+						// -> we found the optimum
+						return true;
+					}
+					else {
+						// and we did not yet reach the lower bound
+						// -> try again with the next latency...
+						this->candidateLatency--;
+						return true;
+					}
+				}
+				else {
+					// last scheduling attempt was a fail
+					// -> II is either infeasible or we found the optimum
+					return false;
+				}
+			}
+			case LINEAR: {
+				if (this->candidateLatency < 0) {
+					// first attempt: try minimum latency
+					this->candidateLatency = this->latencyLowerBound;
+					return true;
+				}
+				else if (lastSchedulingAttemptSuccessful) {
+					// last scheduling attempt was a success
+					// -> we found the optimum
+					return false;
+				}
+				else if (this->candidateLatency < this->latencyUpperBound) {
+					// last scheduling attempt was a fail
+					// and we did not reach the upper bound
+					// -> try again with the next latency...
+					this->candidateLatency++;
+					return true;
+				}
+				else {
+					// last scheduling attempt was a fail
+					// and we reached the upper bound
+					// -> II is infeasible
+					return false;
+				}
+			}
+			case LINEAR_JUMP: {
+				if (this->candidateLatency < 0) {
+					// first attempt: try minimum latency
+					this->candidateLatency = this->latencyLowerBound;
+				}
+				else if (lastSchedulingAttemptSuccessful) {
+					// check if we found the optimum
+					if (this->candidateLatency == this->latencyLowerBound+1) return false;
+					// we already got a valid solution
+					// adjust upper bound
+					this->latencyUpperBound = this->candidateLatency;
+					// decrease latency to find optimum
+					this->candidateLatency--;
+				}
+				else {
+					// check if we found the optimum
+					if (this->scheduleFound) return false;
+					// looks like we are still searching for a valid solution
+					// adjust lower bound
+					this->latencyLowerBound = this->candidateLatency;
+					this->candidateLatency += this->linearJumpLength;
+					if (this->candidateLatency > this->latencyUpperBound) this->candidateLatency = this->latencyUpperBound;
+				}
+				return true;
+			}
+			case LOGARITHMIC: {
+				if (this->candidateLatency < 0) {
+					// first attempt: try minimum latency
+					this->candidateLatency = this->latencyLowerBound;
+				}
+				else if (lastSchedulingAttemptSuccessful) {
+					// last scheduling attempt was a success
+					this->latencyUpperBound = this->candidateLatency;
+					// -> floor(mean(lower bound, last latency))
+					this->candidateLatency = floor(((double)this->candidateLatency + (double)this->latencyLowerBound) / 2.0);
+				}
+				else {
+					// last scheduling attempt was a fail
+					this->latencyLowerBound = this->candidateLatency;
+					// -> ceil(mean(upper bound, last latency))
+					this->candidateLatency = ceil(((double)this->candidateLatency + (double)this->latencyUpperBound) / 2.0);
+				}
+				auto successPair = this->latencyAttempts.insert(this->candidateLatency);
+				return successPair.second;
+			}
+		}
+		// something went wrong ... ABORT!
+		return false;
+	}
+
+	void SATScheduler::setLatencyOptimizationStrategy(const SATScheduler::LatencyOptimizationStrategy &newLos) {
+		this->los = newLos;
 	}
 
 	CaDiCalTerminator::CaDiCalTerminator(double timeout)

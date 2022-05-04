@@ -61,16 +61,15 @@ int SchedulerBase::getScheduleLength()
 
 std::map<Vertex*,int>&  SchedulerBase::getSchedule()
 {
-    if (startTimes.size() == 0) {
+    if (this->startTimes.empty()) {
         cout << "SchedulerBase.getStartTimes: Empty schedule detected by SchedulerClass" << endl;
         //exit(-1); //Shouldnt ever terminate whole program!
         throw HatScheT::Exception("SchedulerBase.getStartTimes: Empty schedule detected by SchedulerClass");
     }
-    if (II < 1) {
-        cout << "SchedulerBase.getStartTimes: Invalid II detected by SchedulerClass, II = " << to_string(II) << endl;
+    if (this->II < 1) {
+        cout << "SchedulerBase.getStartTimes: Invalid II detected by SchedulerClass, II = " << to_string(this->II) << endl;
         //exit(-1); //Shouldnt ever terminate whole program!
-        throw HatScheT::Exception("SchedulerBase.getStartTimes: Invalid schedule detected by SchedulerClass, II = " + to_string(II));
-
+        throw HatScheT::Exception("SchedulerBase.getStartTimes: Invalid schedule detected by SchedulerClass, II = " + to_string(this->II));
     }
 
   return this->startTimes;
