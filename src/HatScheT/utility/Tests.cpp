@@ -2137,29 +2137,6 @@ namespace HatScheT {
 
 		/////// Insert and Extract_min Test End ///////
 
-		/////// Find Element by Key Test Begin ////////
-
-		for (int i : numbers) {
-			FIB->push(i);
-		}
-
-		int ind = rand() % arraysize;
-		auto foundNode = FIB->findNode_by_key(numbers[ind]);
-		if (foundNode.first) {
-			cout << endl << endl << "Value from Heap: " << foundNode.second->key << " Reference Value: " << numbers[ind]
-					 << endl << endl;
-			if (foundNode.second->key != numbers[ind]) {
-				cout << "Found Element by Key Test failes!" << endl;
-				return false;
-			}
-		} else {
-			cout << endl << "Element does not exists in the heap, or can't be found! This should not happen!" << endl;
-			return false;
-		}
-
-		delete FIB;
-		/////// Find Element by Key Test End //////////
-
 		/////// Inserting Elements with Payload ///////
 		auto *FIBO = new FibonacciHeap<int>;
 		Vertex *vp = nullptr;
@@ -2169,16 +2146,6 @@ namespace HatScheT {
 				vp = v;
 			}
 			FIBO->push(i, v);
-		}
-
-		///// Find and Element with known Payload /////
-		auto fNode = FIBO->findNode_by_payload(vp);
-		if (fNode.first) {
-			auto fv = (Vertex *) fNode.second->payload;
-			cout << "Key: " << fNode.second->key << " Name: " << fv->getName() << endl << endl;
-		} else {
-			cout << "Element not found, this should not happen" << endl;
-			return false;
 		}
 
 		/////// Removing Elements from the Heap ///////
