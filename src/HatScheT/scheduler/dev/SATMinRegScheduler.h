@@ -14,6 +14,9 @@
 #include <memory>
 #include <chrono>
 #include <HatScheT/scheduler/dev/SATScheduler.h>
+#ifdef USE_SCALP
+#include <ScaLP/Solver.h>
+#endif // USE_SCALP
 
 namespace HatScheT {
 
@@ -25,6 +28,7 @@ namespace HatScheT {
 		int getNumRegs() const;
 		void setII(const int& newII);
 		void setRegMax(const int& newRegMax);
+		void setSolverWishlist(const std::list<std::string>& newSolverWishlist);
 
 	private:
 		void initScheduler();
@@ -33,6 +37,12 @@ namespace HatScheT {
 		void createLiterals();
 		void createClauses();
 		void fillSolutionStructure();
+		void calculateLatestStartTimes();
+		void calculateEarliestStartTimes();
+#ifdef USE_SCALP
+		int calculateEarliestStartTime(Vertex* v, ScaLP::Solver *s, const std::map<Vertex*, ScaLP::Variable> &vars);
+		void setUpEarliestStartTimeSolver(ScaLP::Solver *s);
+#endif
 
 		bool optimalResult;
 		int candidateNumRegs;
@@ -67,6 +77,9 @@ namespace HatScheT {
 		std::map<Vertex*, std::set<int>> startTimesContainer;
 		std::map<Vertex*, bool> hasOutgoingEdges;
 		std::map<Vertex*, int> latestVariableReadTime;
+		std::map<Vertex*, int> earliestStartTime;
+		std::map<Vertex*, int> latestStartTime;
+		std::list<std::string> sdcSolverWishlist;
 	};
 }
 #endif //USE_CADICAL

@@ -5,6 +5,8 @@
 #include "SATMinRegScheduler.h"
 #include <chrono>
 #include <iomanip>
+#include <cmath>
+#include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
 
 #ifdef USE_CADICAL
@@ -199,6 +201,16 @@ namespace HatScheT {
 				std::cout << "    latest variable read time = " << this->latestVariableReadTime.at(v) << std::endl;
 			}
 		}
+		// calc earliest and latest start times for all vertices to reduce the number of necessary boolean variables
+		this->calculateEarliestStartTimes();
+		this->calculateLatestStartTimes();
+		if (!this->quiet) {
+			std::cout << "SATScheduler: computed earliest/latest start times:" << std::endl;
+			for (auto &v : this->g.Vertices()) {
+				std::cout << "  " << v->getName() << " - " << this->earliestStartTime.at(v) << " / "
+				  << this->latestStartTime.at(v) << std::endl;
+			}
+		}
 	}
 
 	void SATMinRegScheduler::resetContainer() {
@@ -236,8 +248,10 @@ namespace HatScheT {
 			auto lDst = this->resourceModel.getVertexLatency(vDst);
 			auto distance = e->getDistance();
 			auto delay = e->getDelay();
-			for (int tau1=0; tau1 <= this->maxLatencyConstraint - lSrc; tau1++) {
-				for (int tau2=0; tau2 <= this->maxLatencyConstraint - lDst; tau2++) {
+			//for (int tau1=0; tau1 <= this->maxLatencyConstraint - lSrc; tau1++) {
+			for (int tau1=this->earliestStartTime.at(vSrc); tau1 <= this->latestStartTime.at(vSrc); tau1++) {
+				//for (int tau2=0; tau2 <= this->maxLatencyConstraint - lDst; tau2++) {
+				for (int tau2=this->earliestStartTime.at(vDst); tau2 <= this->latestStartTime.at(vDst); tau2++) {
 					// dependency constraint
 					if (tau2 + (distance * this->II) - tau1 - lSrc - delay < 0) {
 						// dependency violated!
@@ -288,10 +302,12 @@ namespace HatScheT {
 							b2 = this->bindingLiterals.at({v2, l});
 						}
 						for (int x=0; x<this->II; x++) {
-							for (int tau1=0; tau1<= this->maxLatencyConstraint - lat; tau1++) {
+							//for (int tau1=0; tau1<= this->maxLatencyConstraint - lat; tau1++) {
+							for (int tau1=this->earliestStartTime.at(v1); tau1<= this->latestStartTime.at(v1); tau1++) {
 								if (tau1 % (int)this->II != x) continue;
 								auto t1 = this->scheduleTimeLiterals.at({v1, tau1});
-								for (int tau2=0; tau2<= this->maxLatencyConstraint - lat; tau2++) {
+								//for (int tau2=0; tau2<= this->maxLatencyConstraint - lat; tau2++) {
+								for (int tau2=this->earliestStartTime.at(v2); tau2<= this->latestStartTime.at(v2); tau2++) {
 									if (tau2 % (int)this->II != x) continue;
 									auto t2 = this->scheduleTimeLiterals.at({v2, tau2});
 									this->solver->add(-t1);
@@ -317,7 +333,8 @@ namespace HatScheT {
 			}
 			// schedule time
 			auto lat = this->resourceModel.getVertexLatency(v);
-			for (int tau=0; tau<= this->maxLatencyConstraint - lat; tau++) {
+			//for (int tau=0; tau<= this->maxLatencyConstraint - lat; tau++) {
+			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->solver->add(this->scheduleTimeLiterals.at({v, tau}));
 			}
 			this->solver->add(0);
@@ -327,7 +344,8 @@ namespace HatScheT {
 				if (!this->quiet) {
 					std::cout << "SATMinRegScheduler: creating register binding constraints for vertex '" << v->getName() << "'" << std::endl;
 				}
-				for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
+				//for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
+				for (int tau=this->earliestStartTime.at(v); tau<= this->latestVariableReadTime.at(v); tau++) {
 					this->solver->add(-this->variableLiterals.at({v, tau}));
 					for (int reg=0; reg < this->candidateNumRegs; reg++) {
 						this->solver->add(this->registerBindingLiterals.at({v, tau, reg}));
@@ -349,16 +367,17 @@ namespace HatScheT {
 			}
 		}
 		// register overlap constraints
-
 		for (int gamma=0; gamma<this->II; gamma++) {
 			for (auto &v1 : this->g.Vertices()) {
 				if (!this->hasOutgoingEdges.at(v1)) continue; // skip vertices without outputs
 				for (auto &v2 : this->g.Vertices()) {
 					if (v1->getId() > v2->getId()) continue; // only create overlap constraints once
 					if (!this->hasOutgoingEdges.at(v2)) continue; // skip vertices without outputs
-					for (int tau1=0; tau1<= this->latestVariableReadTime.at(v1); tau1++) {
+					//for (int tau1=0; tau1<= this->latestVariableReadTime.at(v1); tau1++) {
+					for (int tau1=this->earliestStartTime.at(v1); tau1<= this->latestVariableReadTime.at(v1); tau1++) {
 						if (tau1 % (int)this->II != gamma) continue;
-						for (int tau2=0; tau2<= this->latestVariableReadTime.at(v2); tau2++) {
+						//for (int tau2=0; tau2<= this->latestVariableReadTime.at(v2); tau2++) {
+						for (int tau2=this->earliestStartTime.at(v2); tau2<= this->latestVariableReadTime.at(v2); tau2++) {
 							if (tau2 % (int)this->II != gamma) continue;
 							if (v1 == v2 and tau1 == tau2) continue;
 							for (int reg=0; reg<this->candidateNumRegs; reg++) {
@@ -372,7 +391,6 @@ namespace HatScheT {
 				}
 			}
 		}
-
 		this->clauseCounter = this->dependencyConstraintClauseCounter + this->resourceConstraintClauseCounter +
 													this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter +
 													this->variableConstraintClauseCounter + this->registerBindingConstraintClauseCounter +
@@ -385,7 +403,8 @@ namespace HatScheT {
 			std::cout << "SATMinRegScheduler: CaDiCaL solution: " << std::endl;
 			for (auto &v : this->g.Vertices()) {
 				std::cout << "  vertex " << v->getName() << std::endl;
-				for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+				//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+				for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 					std::cout << "    t=" << tau << " - " << this->solver->val(this->scheduleTimeLiterals.at({v, tau})) << std::endl;
 				}
 				if (!this->vertexIsUnlimited.at(v)) {
@@ -393,7 +412,8 @@ namespace HatScheT {
 						std::cout << "    b=" << l << " - " << this->solver->val(this->bindingLiterals.at({v, l})) << std::endl;
 					}
 				}
-				for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
+				//for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
+				for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
 					std::cout << "    z=" << tau << " - " << this->solver->val(this->variableLiterals.at({v, tau})) << std::endl;
 				}
 			}
@@ -401,7 +421,8 @@ namespace HatScheT {
 				std::cout << "  register " << reg << std::endl;
 				for (auto &v : this->g.Vertices()) {
 					std::cout << "    vertex " << v->getName() << std::endl;
-					for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
+					//for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
+					for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
 						std::cout << "      r=" << tau << " - " << this->solver->val(this->registerBindingLiterals.at({v, tau, reg})) << std::endl;
 					}
 				}
@@ -410,7 +431,8 @@ namespace HatScheT {
 		this->startTimesContainer.clear();
 		for (auto &v : this->g.Vertices()) {
 			// schedule time
-			for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+			//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				if (this->solver->val(this->scheduleTimeLiterals.at({v, tau})) < 0) {
 					continue;
 				}
@@ -433,13 +455,15 @@ namespace HatScheT {
 	void SATMinRegScheduler::createLiterals() {
 		for (auto &v : this->g.Vertices()) {
 			// schedule time literals
-			for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+			//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
+			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->scheduleTimeLiteralCounter++;
 				this->scheduleTimeLiterals[{v, tau}] = ++this->literalCounter;
 			}
 			// variable and register binding literals
 			if (this->hasOutgoingEdges.at(v)) {
-				for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
+				//for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
+				for (int tau=this->earliestStartTime.at(v); tau<= this->latestVariableReadTime.at(v); tau++) {
 					// variable literals
 					this->variableLiteralCounter++;
 					this->variableLiterals[{v, tau}] = ++this->literalCounter;
@@ -480,6 +504,98 @@ namespace HatScheT {
 			throw Exception("SATMinRegScheduler: specified illegal number of registers -> #Regs must be >= 0 but #Regs = "+std::to_string(newRegMax)+" was given");
 		}
 		this->regMax = newRegMax;
+	}
+
+	void SATMinRegScheduler::calculateLatestStartTimes() {
+		// use ALAP scheduler without resource constraints to calc latest start times
+		std::map<const Resource*, int> originalLimits;
+		for (auto &r : this->resourceModel.Resources()) {
+			originalLimits[r] = r->getLimit();
+			r->setLimit(UNLIMITED, false); // disable errors during set limit function
+		}
+		ALAPScheduler alapScheduler(this->g, this->resourceModel);
+		alapScheduler.schedule();
+		if (!alapScheduler.getScheduleFound()) {
+			throw Exception("SATMinRegScheduler: failed to compute latest start times - that should never happen");
+		}
+		auto alapSL = alapScheduler.getScheduleLength();
+		auto alapStartTimes = alapScheduler.getSchedule();
+		for (auto &v : this->g.Vertices()) {
+			auto diff = alapSL - alapStartTimes.at(v);
+			this->latestStartTime[v] = this->maxLatencyConstraint - diff;
+		}
+		// set resource limits back to original values
+		for (auto &r : this->resourceModel.Resources()) {
+			r->setLimit(originalLimits.at(r));
+		}
+	}
+
+	void SATMinRegScheduler::calculateEarliestStartTimes() {
+#ifdef USE_SCALP // USE_SCALP
+		if (this->sdcSolverWishlist.empty()) {
+			this->sdcSolverWishlist = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+		}
+		// use SDC-solver to calculate earliest start time for the given vertex
+		ScaLP::Solver s(this->sdcSolverWishlist);
+		// variables
+		std::map<Vertex*, ScaLP::Variable> vars;
+		for (auto &v : this->g.Vertices()) {
+			vars[v] = ScaLP::newIntegerVariable(v->getName(), 0, this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v));
+		}
+		// dependencies
+		for (auto &e : this->g.Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto c = vars.at(vDst) + (this->II * e->getDistance()) - (vars.at(vSrc) + this->resourceModel.getVertexLatency(vSrc) + e->getDelay()) >= 0;
+			s.addConstraint(c);
+		}
+		for (auto &v : this->g.Vertices()) {
+			this->earliestStartTime[v] = this->calculateEarliestStartTime(v, &s, vars);
+		}
+#else
+		// use ASAP scheduler without resource constraints if ScaLP is unavailable
+		// this should produce values that are a bit too small in general
+		// especially in presence of recurrences
+		// but (and this is a big but), using ASAP is WAY faster than solving multiple SDC problems
+		std::map<const Resource*, int> originalLimits;
+		for (auto &r : this->resourceModel.Resources()) {
+			originalLimits[r] = r->getLimit();
+			r->setLimit(UNLIMITED, false); // disable errors during set limit function
+		}
+		ASAPScheduler asapScheduler(this->g, this->resourceModel);
+		asapScheduler.schedule();
+		if (!asapScheduler.getScheduleFound()) {
+			throw Exception("SATMinRegScheduler: failed to compute earliest start times - that should never happen");
+		}
+		auto asapSL = asapScheduler.getScheduleLength();
+		auto asapStartTimes = asapScheduler.getSchedule();
+		for (auto &v : this->g.Vertices()) {
+			this->earliestStartTime[v] = asapStartTimes.at(v);
+		}
+		// set resource limits back to original values
+		for (auto &r : this->resourceModel.Resources()) {
+			r->setLimit(originalLimits.at(r));
+		}
+#endif
+	}
+
+#ifdef USE_SCALP
+	int SATMinRegScheduler::calculateEarliestStartTime(Vertex *v, ScaLP::Solver *s, const std::map<Vertex*, ScaLP::Variable> &vars) {
+		// override objective to minimize vertex start time
+		s->setObjective(ScaLP::minimize(vars.at(v)));
+		// solve
+		auto stat = s->solve();
+		// check if solution was found
+		if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
+			return 0;
+		}
+		// return solution
+		return (int)round(s->getResult().objectiveValue);
+	}
+#endif
+
+	void SATMinRegScheduler::setSolverWishlist(const list<std::string> &newSolverWishlist) {
+		this->sdcSolverWishlist = newSolverWishlist;
 	}
 }
 #endif
