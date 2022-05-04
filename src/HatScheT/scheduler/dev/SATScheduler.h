@@ -47,6 +47,9 @@ namespace HatScheT {
 		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
 		void calcMinLatency();
 		void calcMaxLatency();
+		void calculateLatestStartTimes();
+		void calculateLatestStartTimeDifferences();
+		void calculateEarliestStartTimes();
 
 		void initScheduler();
 		void setUpSolver();
@@ -83,6 +86,9 @@ namespace HatScheT {
 		std::map<std::pair<Vertex*, int>, int> bindingLiterals;
 		std::set<int> latencyAttempts;
 		LatencyOptimizationStrategy los;
+		std::map<Vertex*, int> earliestStartTime;
+		std::map<Vertex*, int> latestStartTime;
+		std::map<Vertex*, int> latestStartTimeDifferences;
 	};
 }
 #endif //USE_CADICAL
