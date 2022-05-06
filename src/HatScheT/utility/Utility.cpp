@@ -1359,7 +1359,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 						auto edgeDistance = e->getDistance();
 						for (int sampleCnt=0; sampleCnt<edgeDistance; sampleCnt++) {
 							if (srcSample == 0) {
-								srcSample = samples;
+								srcSample = samples-1;
 								delta++;
 							}
 							else {
@@ -1411,15 +1411,17 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto *vDst = &e->getVertexDst();
 			auto *rSrc = rm->getResource(vSrc);
 			auto *rDst = rm->getResource(vDst);
-			for (int s=0; s<samples; s++) {
-				int sSrc = s;
+			auto lSrc = rSrc->getLatency();
+			for (int sDst=0; sDst<samples; sDst++) {
+				int sSrc = sDst;
 				int delta = 0;
 				for (int i=0; i<e->getDistance(); i++) {
 					if (sSrc == 0) {
-						sSrc = samples;
+						sSrc = samples-1;
+						delta++;
 					}
 					else {
-						// todo here.
+						sSrc--;
 					}
 				}
 				int tSrc;
@@ -1427,19 +1429,25 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				int bSrc;
 				int bDst;
 				try {
-					tSrc = schedule.at(s).at(vSrc);
-					tDst = schedule.at(s).at(vDst);
-					bSrc = binding.at(s).at(vSrc);
-					bDst = binding.at(s).at(vDst);
+					tSrc = schedule.at(sSrc).at(vSrc);
+					tDst = schedule.at(sDst).at(vDst);
+					bSrc = binding.at(sSrc).at(vSrc);
+					bDst = binding.at(sDst).at(vDst);
 				}
 				catch (std::out_of_range&) {
 					// invalid schedule/binding -> unable to calculate #regs
 					return -1;
 				}
-
+				auto lifetime = tDst + (delta * modulo) - (tSrc + lSrc);
+				if (lifetime > resourceLifetimes.at({rSrc, bSrc})) {
+					resourceLifetimes.at({rSrc, bSrc}) = lifetime;
+				}
 			}
 		}
 		int minNumRegs = 0;
+		for (auto &it : resourceLifetimes) {
+			minNumRegs += it.second;
+		}
 		return minNumRegs;
 	}
 
