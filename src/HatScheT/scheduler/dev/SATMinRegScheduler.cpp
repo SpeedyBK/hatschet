@@ -14,7 +14,8 @@ namespace HatScheT {
 #define CADICAL_SAT 10
 
 	SATMinRegScheduler::SATMinRegScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0), numRegs(-1) {
+		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0), numRegs(-1),
+		  ros(RegisterOptimizationStrategy::SQRT), skipFirstRegAttempt(true), sqrtJumpLength(-1) {
 		this->II = -1;
 		this->scheduleFound = false;
 		this->optimalResult = false;
@@ -39,16 +40,20 @@ namespace HatScheT {
 	void SATMinRegScheduler::schedule() {
 		this->initScheduler();
 		if (!this->quiet) {
-			auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			std::cout << "SATMinRegScheduler: trying candidate II=" << this->II << " at time " << 	std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+			auto currentTime0 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			std::cout << "SATMinRegScheduler: trying candidate II=" << this->II << " at time " << 	std::put_time(std::localtime(&currentTime0), "%Y-%m-%d %X") << std::endl;
 		}
 
-		if (!this->quiet) {
-			std::cout << "SATMinRegScheduler: candidate II=" << this->II << std::endl;
-		}
 		bool breakByTimeout = false;
 		this->terminator = CaDiCalTerminator((double)this->solverTimeout);
-		for (this->candidateNumRegs = this->regMax; this->candidateNumRegs >= 0; this->candidateNumRegs--) {
+		bool lastAttemptSuccess = false;
+		this->candidateNumRegs = -1;
+		//for (this->candidateNumRegs = this->regMax; this->candidateNumRegs >= 0; this->candidateNumRegs--) {
+		while (this->computeNewNumRegistersSuccess(lastAttemptSuccess)) {
+			//if (!this->quiet) {
+				auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATMinRegScheduler: trying candidate #Regs=" << this->candidateNumRegs << " at time " << 	std::put_time(std::localtime(&currentTime1), "%Y-%m-%d %X") << std::endl;
+			//}
 			if (!this->quiet) {
 				std::cout << "SATMinRegScheduler: resetting containers" << std::endl;
 			}
@@ -80,8 +85,8 @@ namespace HatScheT {
 				std::cout << "  '" << this->variableConstraintClauseCounter << "' variable constraint clauses" << std::endl;
 				std::cout << "  '" << this->registerBindingConstraintClauseCounter << "' register binding constraint clauses" << std::endl;
 				std::cout << "  '" << this->registerOverlapConstraintClauseCounter << "' register overlap constraint clauses" << std::endl;
-				auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cout << "  current time: " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+				auto currentTime2 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cout << "  current time: " << std::put_time(std::localtime(&currentTime2), "%Y-%m-%d %X") << std::endl;
 			}
 			auto elapsedTime = this->terminator.getElapsedTime();
 			if (!this->quiet) {
@@ -101,19 +106,19 @@ namespace HatScheT {
 			auto stat = this->solver->solve();
 			elapsedTime = this->terminator.getElapsedTime();
 			this->solvingTime += elapsedTime;
-			auto success = stat == CADICAL_SAT;
+			lastAttemptSuccess = stat == CADICAL_SAT;
 			if (!this->quiet) {
 				std::cout << "SATMinRegScheduler: finished solving with status '" <<
-									(success?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
+									(lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
 									<< " sec (total: " << this->solvingTime << " sec)" << std::endl;
 			}
-			if(!success) {
-				if (!this->quiet) {
-					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cout << "SATMinRegScheduler: failed to find solution for II=" << this->II << " and SL="
+			if(!lastAttemptSuccess) {
+				//if (!this->quiet) {
+					auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cerr << "SATMinRegScheduler: failed to find solution for II=" << this->II << " and SL="
 										<< this->maxLatencyConstraint << " and #Regs=" << this->candidateNumRegs << " at "
-										<< std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
-				}
+										<< std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+				//}
 				// check if it was due to a timeout
 				if (elapsedTime >= this->solverTimeout) {
 					// timeout when solving
@@ -124,30 +129,22 @@ namespace HatScheT {
 					breakByTimeout = true;
 					break;
 				}
-				// schedule attempt failed
-				// -> we either found the optimum during our last run
-				// -> or the problem is infeasible for the given II, SL and #Regs
+				// schedule attempt failed :(
 				if (!this->quiet) {
 					std::cout << "SATMinRegScheduler: #Regs=" << this->candidateNumRegs
 						<< " is infeasible" << std::endl;
-					if (this->scheduleFound) {
-						std::cout << " - the optimum number of registers is " << this->candidateNumRegs+1 << std::endl;
-					}
-					else {
-						std::cout << " - the problem is infeasible for II = " << this->II << ", schedule length = " << this->maxLatencyConstraint << " and #Regs <= " << this->regMax << std::endl;
-					}
 				}
-				break;
+				continue;
 			}
 			this->scheduleFound = true;
 			this->numRegs = this->candidateNumRegs;
 			this->fillSolutionStructure();
-			if (!this->quiet) {
-				auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cout << "SATMinRegScheduler: found solution for II=" << this->II << " and SL="
+			//if (!this->quiet) {
+				auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATMinRegScheduler: found solution for II=" << this->II << " and SL="
 									<< this->maxLatencyConstraint << " and #Regs=" << this->candidateNumRegs << " at "
-									<< std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
-			}
+									<< std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
+			//}
 		}
 		this->optimalResult = !breakByTimeout;
 	}
@@ -163,12 +160,19 @@ namespace HatScheT {
 		if (this->maxLatencyConstraint < 0) {
 			throw Exception("SATMinRegScheduler: need to specify latency limit!");
 		}
+		// handle II
+		if (this->minII > 0) {
+			// maybe min II was set instead of actual II?
+			this->II = this->minII;
+		}
 		if (this->II <= 0.0) {
 			throw Exception("SATMinRegScheduler: need to specify II!");
 		}
+		// handle register limit
 		if (this->regMax < 0) {
 			throw Exception("SATMinRegScheduler: need to specify an upper bound for the number of registers! (e.g. by calculating the minimum number of registers for another schedule)");
 		}
+		// handle resource limitations
 		for (auto &v : this->g.Vertices()) {
 			auto r = this->resourceModel.getResource(v);
 			this->vertexIsUnlimited[v] = r->isUnlimited();
@@ -211,6 +215,11 @@ namespace HatScheT {
 				  << this->latestStartTime.at(v) << std::endl;
 			}
 		}
+		// init num register search space
+		this->registerAttempts.clear();
+		this->registerUpperBound = this->regMax;
+		this->registerLowerBound = 0;
+		this->sqrtJumpLength = (int)round(sqrt(this->regMax));
 	}
 
 	void SATMinRegScheduler::resetContainer() {
@@ -407,7 +416,7 @@ namespace HatScheT {
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 					std::cout << "    t=" << tau << " - " << this->solver->val(this->scheduleTimeLiterals.at({v, tau})) << std::endl;
 				}
-				if (!this->vertexIsUnlimited.at(v)) {
+				if (!this->vertexIsUnlimited.at(v) and this->resourceLimit.at(v) != 1) {
 					for (int l=0; l< this->resourceLimit.at(v); l++) {
 						std::cout << "    b=" << l << " - " << this->solver->val(this->bindingLiterals.at({v, l})) << std::endl;
 					}
@@ -417,7 +426,8 @@ namespace HatScheT {
 					std::cout << "    z=" << tau << " - " << this->solver->val(this->variableLiterals.at({v, tau})) << std::endl;
 				}
 			}
-			for (auto reg=0; reg< this->regMax; reg++) {
+			//for (auto reg=0; reg< this->regMax; reg++) {
+			for (auto reg=0; reg< this->candidateNumRegs; reg++) {
 				std::cout << "  register " << reg << std::endl;
 				for (auto &v : this->g.Vertices()) {
 					std::cout << "    vertex " << v->getName() << std::endl;
@@ -490,13 +500,6 @@ namespace HatScheT {
 
 	int SATMinRegScheduler::getNumRegs() const {
 		return this->numRegs;
-	}
-
-	void SATMinRegScheduler::setII(const int &newII) {
-		if (newII <= 0) {
-			throw Exception("SATMinRegScheduler: specified illegal II -> II must be > 0 but II = "+std::to_string(newII)+" was given");
-		}
-		this->II = newII;
 	}
 
 	void SATMinRegScheduler::setRegMax(const int &newRegMax) {
@@ -596,6 +599,119 @@ namespace HatScheT {
 
 	void SATMinRegScheduler::setSolverWishlist(const list<std::string> &newSolverWishlist) {
 		this->sdcSolverWishlist = newSolverWishlist;
+	}
+
+	void
+	SATMinRegScheduler::setLatencyOptimizationStrategy(const SATMinRegScheduler::RegisterOptimizationStrategy &newRos) {
+		this->ros = newRos;
+	}
+
+	bool SATMinRegScheduler::computeNewNumRegistersSuccess(const bool &lastSchedulingAttemptSuccessful) {
+		switch (this->ros) {
+			case RegisterOptimizationStrategy::LINEAR: {
+				if (this->candidateNumRegs < 0) {
+					// first try
+					if (this->skipFirstRegAttempt and this->registerUpperBound > this->registerLowerBound) {
+						// skip first attempt for the number of registers
+						this->candidateNumRegs = this->registerUpperBound - 1;
+					} else {
+						// do not skip first possible value for the number of registers
+						this->candidateNumRegs = this->registerUpperBound;
+					}
+					return true;
+				} else {
+					// not first try
+					if (lastSchedulingAttemptSuccessful) {
+						// last attempt was successful
+						if (this->candidateNumRegs == this->registerLowerBound) {
+							// reached optimum -> stop searching
+							return false;
+						} else {
+							// set new upper bound
+							this->registerUpperBound = this->candidateNumRegs;
+							// keep iterating towards lower bound
+							this->candidateNumRegs--;
+							return true;
+						}
+					} else {
+						// last attempt was not successful
+						// -> we either reached the optimum or we encountered a timeout...
+						return false;
+					}
+				}
+			}
+			case RegisterOptimizationStrategy::SQRT: {
+				if (this->candidateNumRegs < 0) {
+					// first try
+					if (this->skipFirstRegAttempt and this->registerUpperBound > 0) {
+						// skip first attempt for the number of registers
+						this->candidateNumRegs = this->registerUpperBound - this->sqrtJumpLength;
+					} else {
+						// do not skip first possible value for the number of registers
+						this->candidateNumRegs = this->registerUpperBound;
+					}
+					return true;
+				} else {
+					// not first try
+					if (lastSchedulingAttemptSuccessful) {
+						// last attempt was successful
+						if (this->candidateNumRegs == this->registerLowerBound) {
+							// reached optimum -> stop searching
+							return false;
+						} else {
+							// set new upper bound
+							this->registerUpperBound = this->candidateNumRegs;
+							// keep jumping towards lower bound
+							this->candidateNumRegs -= this->sqrtJumpLength;
+							if (this->candidateNumRegs < this->registerLowerBound) this->candidateNumRegs = this->registerLowerBound;
+							return true;
+						}
+					} else {
+						// last attempt was not successful
+						if (this->candidateNumRegs == this->registerUpperBound - 1) {
+							// reached optimum -> stop searching
+							return false;
+						} else {
+							// keep iterating towards upper bound
+							this->candidateNumRegs++;
+							return true;
+						}
+					}
+				}
+			}
+			case RegisterOptimizationStrategy::LOGARITHMIC: {
+				if (this->candidateNumRegs < 0) {
+					// first try
+					if (this->skipFirstRegAttempt and this->registerUpperBound > 0) {
+						// skip first attempt for the number of registers
+						this->candidateNumRegs = this->registerUpperBound/2;
+					}
+					else {
+						// do not skip first possible value for the number of registers
+						this->candidateNumRegs = this->registerUpperBound;
+					}
+					this->registerAttempts.insert(this->candidateNumRegs);
+					return true;
+				}
+				else {
+					// not first try
+					if (lastSchedulingAttemptSuccessful) {
+						// last attempt was a success
+						this->registerUpperBound = this->candidateNumRegs;
+						this->candidateNumRegs = floor(((float)this->candidateNumRegs + (float)this->registerLowerBound) / 2.0);
+					}
+					else {
+						// last attempt was a fail
+						this->registerLowerBound = this->candidateNumRegs;
+						this->candidateNumRegs = ceil(((float)this->candidateNumRegs + (float)this->registerUpperBound) / 2.0);
+					}
+					auto successPair = this->registerAttempts.insert(this->candidateNumRegs);
+					return successPair.second;
+				}
+			}
+		}
+		// whoops, something went wrong... ABORT!
+		return false;
 	}
 }
 #endif

@@ -22,15 +22,21 @@ namespace HatScheT {
 
 	class SATMinRegScheduler : public SchedulerBase, public ModuloSchedulerBase {
 	public:
+		enum RegisterOptimizationStrategy {
+			LINEAR,
+			SQRT,
+			LOGARITHMIC
+		};
 		SATMinRegScheduler(Graph& g, ResourceModel &resourceModel);
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		int getNumRegs() const;
-		void setII(const int& newII);
 		void setRegMax(const int& newRegMax);
 		void setSolverWishlist(const std::list<std::string>& newSolverWishlist);
+		void setLatencyOptimizationStrategy(const RegisterOptimizationStrategy &newRos);
 
 	private:
+		bool computeNewNumRegistersSuccess(const bool &lastSchedulingAttemptSuccessful);
 		void initScheduler();
 		void setUpSolver();
 		void resetContainer();
@@ -41,19 +47,25 @@ namespace HatScheT {
 		void calculateEarliestStartTimes();
 #ifdef USE_SCALP
 		int calculateEarliestStartTime(Vertex* v, ScaLP::Solver *s, const std::map<Vertex*, ScaLP::Variable> &vars);
-		void setUpEarliestStartTimeSolver(ScaLP::Solver *s);
 #endif
 
 		bool optimalResult;
 		int candidateNumRegs;
 		int numRegs;
 		int regMax;
+		int registerUpperBound;
+		int registerLowerBound;
 
 		unsigned int solverTimeout;
 
 		double solvingTime;
 		std::unique_ptr<CaDiCaL::Solver> solver;
 		CaDiCalTerminator terminator;
+
+		RegisterOptimizationStrategy ros;
+		bool skipFirstRegAttempt;
+		int sqrtJumpLength;
+		std::set<int> registerAttempts;
 
 		int literalCounter;
 		int scheduleTimeLiteralCounter;

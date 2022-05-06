@@ -38,6 +38,10 @@ namespace HatScheT
 class Utility
 {
 public:
+	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const int &modulo);
+	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const int &II);
+	static int calcMinNumChainRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const std::vector<std::map<const Vertex*, int>> &binding, const int &modulo);
+	static int calcMinNumChainRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const std::map<const Vertex*, int> &binding, const int &II);
 	/*!
 	 * converts the register chain binding container into the general one
 	 * @param g graph

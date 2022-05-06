@@ -31,17 +31,18 @@ namespace HatScheT {
 
 	class SATScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
-		const int linearJumpLength = 5; // todo: replace by sqrt(latMax - latMin)?
 		enum LatencyOptimizationStrategy {
 			REVERSE_LINEAR,
 			LINEAR,
 			LINEAR_JUMP,
+			LINEAR_JUMP_LOG,
 			LOGARITHMIC
 		};
 		SATScheduler(Graph& g, ResourceModel &resourceModel);
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
+		int linearJumpLength;
 
 	private:
 		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);

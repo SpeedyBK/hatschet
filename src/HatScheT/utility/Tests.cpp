@@ -3489,7 +3489,7 @@ namespace HatScheT {
 		// now minimize the number of registers for the given II and latency limit
 		SATMinRegScheduler s(g, rm);
 		s.setQuiet(false);
-		s.setII(II);
+		s.overrideII(II);
 		s.setMaxLatencyConstraint(SL);
 		s.setRegMax(numRegs);
 		s.setSolverTimeout(600);
