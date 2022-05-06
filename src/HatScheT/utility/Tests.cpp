@@ -2867,6 +2867,7 @@ namespace HatScheT {
 
 
   bool Tests::treeBindTest() {
+#ifdef USE_SCALP
 		// create scheduling problem
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
@@ -2978,9 +2979,13 @@ namespace HatScheT {
 		std::cout << "ILP-based implementation register costs: " << ilpBind.registerCosts << std::endl;
 
 		return (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts) and (treeNum2x1Muxs == ilpNum2x1Muxs);
+#else
+    return true;
+#endif //USE_SCALP
   }
 
 	bool Tests::treeBindCommutativeTest() {
+#ifdef USE_SCALP
 		// create scheduling problem
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
@@ -3085,6 +3090,9 @@ namespace HatScheT {
 		std::cout << "ILP-based implementation register costs: " << ilpBind.registerCosts << std::endl;
 
 		return (ilpBind.registerCosts == treeBind.registerCosts) and (ilpBind.multiplexerCosts == treeBind.multiplexerCosts) and (treeNum2x1Muxs == ilpNum2x1Muxs);
+#else
+	    return true;
+#endif //USE_SCALP
 	}
 
 	bool Tests::fccmPaperTest() {

@@ -123,8 +123,8 @@ ENDIF(CADICAL_H AND CADICAL_LIB)
 ####################
 #Find Z3-SMT
 ####################
-#Has to be changed, when Z3 is installed completely
-set(Z3_DIR "/home/bkessler/Repositories/z3_install/usr/local/lib64/cmake/z3/")
+message(STATUS "Z3_PREFIX_PATH=${Z3_PREFIX_PATH}")
+set(Z3_DIR ${Z3_PREFIX_PATH})
 
 find_package(Z3
         CONFIG
@@ -137,7 +137,6 @@ find_package(Z3
         )
 
 IF(${Z3_FOUND})
-    #message(STATUS "Z3_FOUND: ${Z3_FOUND}")
     message(STATUS "Z3_FOUND!")
     message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
     message(STATUS "Z3_DIR: ${Z3_DIR}")

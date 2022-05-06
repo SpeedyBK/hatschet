@@ -5,6 +5,7 @@
 #ifndef HATSCHET_TREEBIND_H
 #define HATSCHET_TREEBIND_H
 
+#ifdef USE_SCALP
 #include <HatScheT/Graph.h>
 #include <HatScheT/ResourceModel.h>
 #include <HatScheT/utility/Binding.h>
@@ -305,5 +306,6 @@ namespace HatScheT {
     std::map<std::pair<const Resource*, int>, int> numOperationsOnFU;
   };
 }
+#endif //USE_SCALP
 
 #endif //HATSCHET_TREEBIND_H
