@@ -15,8 +15,7 @@ namespace HatScheT {
 
 	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel)
 		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
-		  los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
-		  latencyUpperBound(-1) {
+		  los(LatencyOptimizationStrategy::LINEAR_JUMP), latencyLowerBound(-1), latencyUpperBound(-1) {
 		this->II = -1;
 		this->timeouts = 0;
 		this->scheduleFound = false;
@@ -43,10 +42,10 @@ namespace HatScheT {
 	void SATScheduler::schedule() {
 		this->initScheduler();
 		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
-			//if (!this->quiet) {
+			if (!this->quiet) {
 				auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cerr << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
-			//}
+				std::cout << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+			}
 
 			if (!this->quiet) {
 				std::cout << "SATScheduler: candidate II=" << this->candidateII << std::endl;
@@ -111,10 +110,10 @@ namespace HatScheT {
 					  << " sec (total: " << this->solvingTime << " sec)" << std::endl;
 				}
 				if(!lastAttemptSuccess) {
-					//if (!this->quiet) {
+					if (!this->quiet) {
 						auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-						std::cerr << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
-					//}
+						std::cout << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+					}
 					// check if it was due to a timeout
 					if (elapsedTime >= this->solverTimeout) {
 						// timeout when solving
@@ -134,10 +133,10 @@ namespace HatScheT {
 				this->scheduleFound = true;
 				this->II = this->candidateII;
 				this->fillSolutionStructure();
-				//if (!this->quiet) {
+				if (!this->quiet) {
 					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cerr << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
-				//}
+					std::cout << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+				}
 			}
 			this->optimalResult = !breakByTimeout;
 			if (breakByTimeout) {
@@ -201,10 +200,6 @@ namespace HatScheT {
 		// latency bounds
 		this->calcMinLatency();
 		this->calcMaxLatency();
-		// jump length for latency minimization strategy
-		if (this->linearJumpLength <= 0) {
-			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency));
-		}
 		// handle max latency constraint
 		if (this->maxLatencyConstraint < 0 or this->maxLatency < this->maxLatencyConstraint) {
 			this->maxLatencyConstraint = this->maxLatency;
@@ -514,7 +509,7 @@ namespace HatScheT {
 				}
 				else if (lastSchedulingAttemptSuccessful) {
 					// check if we found the optimum
-					if (this->candidateLatency == this->latencyLowerBound) return false;
+					if (this->candidateLatency == this->latencyLowerBound+1) return false;
 					// we already got a valid solution
 					// adjust upper bound
 					this->latencyUpperBound = this->candidateLatency;
@@ -524,53 +519,13 @@ namespace HatScheT {
 				else {
 					// check if we found the optimum
 					if (this->scheduleFound) return false;
-					// check if II is infeasible
-					if (this->candidateLatency >= this->latencyUpperBound) return false;
 					// looks like we are still searching for a valid solution
 					// adjust lower bound
-					this->latencyLowerBound = this->candidateLatency+1;
+					this->latencyLowerBound = this->candidateLatency;
 					this->candidateLatency += this->linearJumpLength;
 					if (this->candidateLatency > this->latencyUpperBound) this->candidateLatency = this->latencyUpperBound;
 				}
 				return true;
-			}
-			case LINEAR_JUMP_LOG: {
-				// this is the same as the linear jump one, but we are using a logarithmic search
-				// once we have found a solution (i.e., a "good" upper bound on the latency)
-				if (this->candidateLatency < 0) {
-					// first attempt: try minimum latency
-					this->candidateLatency = this->latencyLowerBound;
-					return true;
-				}
-				else if (this->scheduleFound) {
-					// we got a solution -> do binary search to find optimum
-					if (lastSchedulingAttemptSuccessful) {
-						// last scheduling attempt was a success
-						this->latencyUpperBound = this->candidateLatency;
-						// -> floor(mean(lower bound, last latency))
-						this->candidateLatency = floor(((double)this->candidateLatency + (double)this->latencyLowerBound) / 2.0);
-					}
-					else {
-						// last scheduling attempt was a fail
-						this->latencyLowerBound = this->candidateLatency+1;
-						// -> ceil(mean(upper bound, last latency))
-						this->candidateLatency = ceil(((double)this->candidateLatency + (double)this->latencyUpperBound) / 2.0);
-					}
-					auto successPair = this->latencyAttempts.insert(this->candidateLatency);
-					return successPair.second;
-				}
-				else {
-					// we do not have a solution, yet
-					// check if II is infeasible
-					if (this->candidateLatency >= this->latencyUpperBound) return false;
-					// looks like we are still searching for a valid solution
-					// -> keep jumping, baby
-					// adjust lower bound
-					this->latencyLowerBound = this->candidateLatency+1;
-					this->candidateLatency += this->linearJumpLength;
-					if (this->candidateLatency > this->latencyUpperBound) this->candidateLatency = this->latencyUpperBound;
-					return true;
-				}
 			}
 			case LOGARITHMIC: {
 				if (this->candidateLatency < 0) {

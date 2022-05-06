@@ -11,29 +11,29 @@ namespace HatScheT {
 																										 std::vector<std::map<const Vertex *, int>> &binding, int samples,
 																										 int modulo, std::vector<fuConnection> fuConnections) :
 		Writer(path), schedule(schedule), binding(binding), samples(samples), modulo(modulo), graphPath(""), rmPath(""),
-		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1), minNumRegs(-1), minNumRegsChain(-1), minII(-1)
-	{}
+		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1) {
+
+	}
 
 	ScheduleAndBindingWriter::ScheduleAndBindingWriter(std::string path, std::map<Vertex *, int> &schedule,
 																										 std::map<const Vertex *, int> &binding, int II,
 																										 std::vector<fuConnection> fuConnections) :
 		Writer(path), schedule({schedule}), binding({binding}), samples(1), modulo(II), graphPath(""), rmPath(""),
-		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1), minNumRegs(-1), minNumRegsChain(-1), minII(-1)
-	{}
+		fuConnections(fuConnections), solvingTime(-1.0), scheduleLength(-1) {
+
+	}
 
 	void ScheduleAndBindingWriter::write() {
 		// handle errors
 		if(this->path.empty()) {
 			throw HatScheT::Exception("ScheduleAndBindingWriter::write: specify path -> currently empty");
 		}
-		/*
 		if(this->samples<1) {
 			throw HatScheT::Exception("ScheduleAndBindingWriter::write: invalid number of samples provided ("+to_string(this->samples)+")");
 		}
 		if(this->modulo<1) {
 			throw HatScheT::Exception("ScheduleAndBindingWriter::write: invalid cycle length provided ("+to_string(this->modulo)+")");
 		}
-		 */
 		if(this->samples != this->binding.size()) {
 			throw HatScheT::Exception("ScheduleAndBindingWriter::write: invalid binding container provided (#samples="+to_string(this->samples)+", binding size="+to_string(this->binding.size())+")");
 		}
@@ -86,15 +86,6 @@ namespace HatScheT {
 		}
 		if(this->scheduleLength >= 0) {
 			file << "# scheduleLength " << this->scheduleLength << std::endl;
-		}
-		if (this->minNumRegs >= 0) {
-			file << "# minNumRegs " << this->minNumRegs << std::endl;
-		}
-		if (this->minNumRegsChain >= 0) {
-			file << "# minNumRegsChain " << this->minNumRegsChain << std::endl;
-		}
-		if (this->minII >= 0) {
-			file << "# minII " << this->minII << std::endl;
 		}
 		if(this->samples==1) {
 			// integer II -> information about sample can be omitted

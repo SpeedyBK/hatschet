@@ -15,6 +15,35 @@ namespace HatScheT {
 	class ScheduleAndBindingReader {
 	public:
 		/*!
+		 * this defines a connection between two FUs when multiplexer port assignment is performed
+		 */
+		struct fuConnection {
+			/*!
+			 * source resource name
+			 */
+			std::string resourceSrc;
+			/*!
+			 * source fu number
+			 */
+			int fuSrc;
+			/*!
+			 * destination resource name
+			 */
+			std::string resourceDst;
+			/*!
+			 * destination fu number
+			 */
+			int fuDst;
+			/*!
+			 * destination input port number
+			 */
+			int port;
+			/*!
+			 * number of lifetime regs of that connection
+			 */
+			int lifetimeRegs;
+		};
+		/*!
 		 * constructor
 		 * @param g graph belonging to the file that we want to read
 		 * @param rm resource model belonging to the file that we want to read
@@ -24,56 +53,51 @@ namespace HatScheT {
 		 * read file and store contents
 		 * @param filepath
 		 */
-		void read(const std::string &filepath);
+		void read(std::string filepath);
 		/*!
 		 * @return true if it's a rational-II schedule and false if it's an integer-II schedule
 		 */
-		bool isRatII() const;
+		bool isRatII();
 		/*!
 		 * get schedule when we just read an integer-II schedule file
 		 * @return
 		 */
-		std::map<Vertex*,int> getIntegerIISchedule() const;
+		std::map<Vertex*,int> getIntegerIISchedule();
 		/*!
 		 * get schedule when we just read a rational-II schedule file
 		 * @return
 		 */
-		std::vector<std::map<Vertex*,int>> getRationalIISchedule() const;
+		std::vector<std::map<Vertex*,int>> getRationalIISchedule();
 		/*!
 		 * get binding when we just read an integer-II schedule file
 		 * @return
 		 */
-		std::map<Vertex*,int> getIntegerIIBinding() const;
+		std::map<Vertex*,int> getIntegerIIBinding();
 		/*!
 		 * get schedule when we just read a rational-II schedule file
 		 * @return
 		 */
-		std::vector<std::map<Vertex*,int>> getRationalIIBinding() const;
+		std::vector<std::map<Vertex*,int>> getRationalIIBinding();
+		/*!
+		 * get connections between FUs if that info was present in the file we just read
+		 * @return
+		 */
+		std::vector<fuConnection> getFUConnections();
 		/*!
 		 * get number of samples in rational-II schedule
 		 * @return
 		 */
-		int getSamples() const;
+		int getSamples();
 		/*!
 		 * get cycle length in rational-II schedule
 		 * @return
 		 */
-		int getModulo() const;
+		int getModulo();
 		/*!
 		 * get initiation interval
 		 * @return
 		 */
-		double getII() const;
-		/*!
-		 * get schedule length
-		 * @return
-		 */
-		int getScheduleLength() const;
-		/*!
-		 * get minimum number of registers
-		 * @return
-		 */
-		int getMinNumRegs() const ;
+		double getII();
 
 	private:
 		/*!
@@ -98,6 +122,10 @@ namespace HatScheT {
 		 */
 		std::vector<std::map<Vertex*,int>> binding;
 		/*!
+		 * fu connection container
+		 */
+		std::vector<fuConnection> fuConnections;
+		/*!
 		 * number of samples in rat-II schedule
 		 */
 		int samples;
@@ -109,14 +137,6 @@ namespace HatScheT {
 		 * initiation interval
 		 */
 		double II;
-		/*!
-		 * length of the schedule that we just read
-		 */
-		int scheduleLength;
-		/*!
-		 * minimum number of registers needed to implement this schedule
-		 */
-		int minNumRegs;
 	};
 }
 

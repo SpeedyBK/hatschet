@@ -59,11 +59,6 @@ public:
    * @return
    */
   double getResMinII(){return this->resMinII;}
-  /*!
-   * override the default minimum II
-   * -> this can be useful e.g. if you want to schedule for one specific II
-   */
-  void overrideII(const double &newII){this->minII = newII;}
 protected:
   /*!
    * \brief minII lower bound for II

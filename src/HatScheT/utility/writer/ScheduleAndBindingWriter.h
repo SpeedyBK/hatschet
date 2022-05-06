@@ -85,38 +85,8 @@ namespace HatScheT {
 		 * @param newScheduleLength new value for the schedule length
 		 */
 		void setScheduleLength(const int & newScheduleLength) { this->scheduleLength = newScheduleLength; }
-		/*!
-		 * sets the minimum number of registers to implement the schedule
-		 * @param newMinNumRegs new value for the minimum number of registers
-		 */
-		void setMinNumRegs(const int & newMinNumRegs) { this->minNumRegs = newMinNumRegs; }
-		/*!
-		 * sets the minimum number of registers to implement the schedule
-		 * @param newMinNumRegs new value for the minimum number of registers
-		 */
-		void setMinNumRegsChain(const int & newMinNumRegsChain) { this->minNumRegsChain = newMinNumRegsChain; }
-		/*!
-		 * sets the minimum II
-		 * @param newMinNumRegs new value for the minimum II
-		 */
-		void setMinII(const double & newMinII) { this->minII = newMinII; }
 
 	private:
-		/*!
-		 * minimum II for this graph and resource model
-		 */
-		double minII;
-		/*!
-		 * minimum number of registers needed to implement this schedule
-		 * -> maximum number of concurrently alive variables in any time step mod cycle length (= II/modulo for intII/ratII)
-		 */
-		int minNumRegs;
-		/*!
-		 * minimum number of registers needed to implement this schedule
-		 * when implementing registers as register chains after FUs
-		 * -> maximum lifetime of all variables produced by that FU
-		 */
-		int minNumRegsChain;
 		/*!
 		 * schedule length = max (t_i + D_i of all vertices i in the schedule)
 		 */
