@@ -1,0 +1,32 @@
+// File generated:  Fri May  6 14:23:22 2022
+
+digraph DAG {
+vertex1[label="1\n",fontsize=10,shape=circle];
+vertex2[label="2\n",fontsize=10,shape=circle];
+vertex3[label="3\n",fontsize=10,shape=circle];
+vertex4[label="4\n",fontsize=10,shape=circle];
+vertex5[label="5\n",fontsize=10,shape=circle];
+vertex6[label="6\n",fontsize=10,shape=circle];
+vertex7[label="7\n",fontsize=10,shape=circle,style="filled", color="black",fillcolor="red"];
+vertex8[label="8\n",fontsize=10,shape=circle];
+vertex9[label="9\n",fontsize=10,shape=circle,style="filled", color="black",fillcolor="red"];
+vertex10[label="10\n",fontsize=10,shape=circle];
+vertex11[label="11\n",fontsize=10,shape=circle,style="filled", color="black",fillcolor="red"];
+vertex12[label="12\n",fontsize=10,shape=circle];
+vertex1 -> vertex2 [label="",fontsize=12]
+vertex1 -> vertex11 [label="",fontsize=12]
+vertex2 -> vertex3 [label="",fontsize=12]
+vertex2 -> vertex7 [label="",fontsize=12]
+vertex3 -> vertex4 [label="",fontsize=12]
+vertex4 -> vertex5 [label="",fontsize=12]
+vertex5 -> vertex6 [label="",fontsize=12]
+vertex7 -> vertex8 [label="",fontsize=12]
+vertex8 -> vertex9 [label="",fontsize=12]
+vertex10 -> vertex11 [label="",fontsize=12]
+vertex11 -> vertex12 [label="",fontsize=12]
+vertex12 -> vertex9 [label="",fontsize=12]
+vertex3 -> vertex5 [label="1",fontsize=12]
+vertex3 -> vertex6 [label="1",fontsize=12]
+vertex4 -> vertex6 [label="1",fontsize=12]
+vertex6 -> vertex9 [label="1",fontsize=12]
+}

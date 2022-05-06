@@ -120,6 +120,36 @@ ELSE(CADICAL_H AND CADICAL_LIB)
 ENDIF(CADICAL_H AND CADICAL_LIB)
 
 
+####################
+#Find Z3-SMT
+####################
+#Has to be changes, when Z3 is installed completely
+set(Z3_DIR "/home/bkessler/Repositories/z3_install/usr/local/lib64/cmake/z3/")
+
+find_package(Z3
+        REQUIRED
+        CONFIG
+        # `NO_DEFAULT_PATH` is set so that -DZ3_DIR has to be passed to find Z3.
+        # This should prevent us from accidentally picking up an installed
+        # copy of Z3. This is here to benefit Z3's build system when building
+        # this project. When making your own project you probably shouldn't
+        # use this option.
+        NO_DEFAULT_PATH
+        )
+
+IF(${Z3_FOUND})
+    #message(STATUS "Z3_FOUND: ${Z3_FOUND}")
+    message(STATUS "Z3_FOUND!")
+    message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
+    message(STATUS "Z3_DIR: ${Z3_DIR}")
+    add_definitions(-DUSE_Z3)
+ELSE(${Z3_FOUND})
+    message(STATUS "Could not find Z3 (...). Please specify path by setting Z3_PREFIX_PATH (-DZ3_PREFIX_PATH=<path to Z3 install dir>)")
+ENDIF(${Z3_FOUND})
+
+####################
+#SRC and Headerfiles
+####################
 set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
@@ -274,21 +304,19 @@ src/HatScheT/scheduler/dev/SATMinRegScheduler.cpp
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})
-
 add_executable(hatschet-bin src/hatschet.cpp)
 set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
 target_link_libraries(hatschet-bin hatschet)
+
 IF (SCALP_H AND SCALP_LIB)
-target_link_libraries(hatschet-bin ${SCALP_LIB})
+    target_link_libraries(hatschet-bin ${SCALP_LIB})
 ENDIF (SCALP_H AND SCALP_LIB)
 IF (XERCESC_H AND XERCESC_LIB)
-target_link_libraries(hatschet-bin ${XERCESC_LIB})
+    target_link_libraries(hatschet-bin ${XERCESC_LIB})
 ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
-target_link_libraries(hatschet-bin ${CADICAL_LIB})
+    target_link_libraries(hatschet-bin ${CADICAL_LIB})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
 include_directories(src/)
@@ -305,6 +333,33 @@ IF (CADICAL_H AND CADICAL_LIB)
 include_directories(${CADICAL_H})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
+####################
+#Z3 related
+####################
+IF(${Z3_FOUND})
+    target_link_libraries(hatschet-bin ${Z3_LIBRARIES})
+ENDIF(${Z3_FOUND})
+
+IF(${Z3_FOUND})
+    include_directories(${Z3_CXX_INCLUDE_DIRS})
+    target_compile_options(hatschet-bin PRIVATE ${Z3_COMPONENT_CXX_FLAGS})
+ENDIF(${Z3_FOUND})
+
+if (CMAKE_SYSTEM_NAME MATCHES "[Ww]indows")
+    # On Windows we need to copy the Z3 libraries
+    # into the same directory as the executable
+    # so that they can be found.
+    foreach (z3_lib ${Z3_LIBRARIES})
+        message(STATUS "Adding copy rule for ${z3_lib}")
+        add_custom_command(TARGET hatschet-bin
+                POST_BUILD
+                COMMAND
+                ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${z3_lib}>
+                $<TARGET_FILE_DIR:cpp_example>
+                )
+    endforeach()
+endif()
 
 ####################
 # HaTScheTConfig.cmake
@@ -346,12 +401,15 @@ add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
 add_test("treeBind" "./hatschet" "--test=TREEBIND")
 add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
 add_test("congBind" "./hatschet" "--test=ILPBASEDINTIIBINDINGCONG")
+ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 
 IF(CADICAL_H AND CADICAL_LIB)
-add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
+    add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
 ENDIF(CADICAL_H AND CADICAL_LIB)
 
-ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
+IF(${Z3_FOUND})
+    add_test("Z3" "./hatschet" "--test=Z3")
+ENDIF(${Z3_FOUND})
 
 ####################
 # example project

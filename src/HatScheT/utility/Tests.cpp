@@ -69,6 +69,10 @@
 #include "cadical.hpp"
 #endif
 
+#ifdef USE_Z3
+#include <z3++.h>
+#endif
+
 
 namespace HatScheT {
 
@@ -3526,4 +3530,39 @@ namespace HatScheT {
 		std::cout << "Passed test :)" << std::endl;
 		return true;
 	}
+
+  bool Tests::z3Test() {
+	  #ifdef USE_Z3
+	      /*!
+          * Demonstration of how Z3 can be used to prove validity of
+          * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
+          */
+	      using namespace z3;
+
+          std::cout << "de-Morgan example\n";
+
+          context c;
+
+          expr x = c.bool_const("x");
+          expr y = c.bool_const("y");
+          expr conjecture = (!(x && y)) == (!x || !y);
+
+          solver s(c);
+          // adding the negation of the conjecture as a constraint.
+          s.add(!conjecture);
+          std::cout << s << "\n";
+          std::cout << s.to_smt2();
+          std::cout << s.check() << "\n";
+          switch (s.check()) {
+              case unsat:   std::cout << "\nDe-Morgan is valid\n"; break;
+              case sat:     std::cout << "\nDe-Morgan is not valid\n"; return false;
+              default:      std::cout << "\nunknown\n"; return false;
+          }
+
+          return true;
+      #else
+          //Z3 not active! Test function disabled!
+          return true;
+	  #endif
+  }
 }

@@ -1,0 +1,12 @@
+/home/opt/clion/clion-2020.3/bin/cmake/linux/bin/cmake -G "CodeBlocks - Unix Makefiles" /home/bkessler/Repositories/hatschet
+-- Found ScaLP: /opt/scalp/include,/opt/scalp/lib/libScaLP.so
+-- Found XercesC Lib: /usr/lib64/libxerces-c.so
+-- Found XercesC Headers: /usr/include
+-- Found XercesC: GraphML parser will be available
+-- Found CaDiCaL Lib: /opt/cadical/lib/libcadical.a and Headers: /opt/cadical/include
+-- Z3_FOUND!
+-- Found Z3 4.8.17.0
+-- Z3_DIR: /home/bkessler/Repositories/z3_install/usr/local/lib64/cmake/z3/
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/bkessler/Repositories/hatschet

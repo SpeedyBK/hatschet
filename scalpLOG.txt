@@ -1,0 +1,53 @@
+MINIMIZE
+  SuperINGO
+SUBJECT TO
+  -Add + CMult1 <= -4.000000
+  -Add + Subt1 <= -5.000000
+  -CMult + Const <= -1.000000
+  -CMult1 + Constant2 <= -1.000000
+  -CMult2 + Const2 <= -1.000000
+  -CMult3 + Const3 <= -1.000000
+  Add - Subt <= -5.000000
+  CMult - Subt <= -4.000000
+  CMult2 - Subt1 <= -4.000000
+  CMult3 - Subt1 <= -4.000000
+  -Out_y + Subt <= -5.000000
+  -In_x + SuperINGO >= 1.000000
+  -Add + SuperINGO >= 5.000000
+  -CMult + SuperINGO >= 4.000000
+  -CMult1 + SuperINGO >= 4.000000
+  -CMult2 + SuperINGO >= 4.000000
+  -CMult3 + SuperINGO >= 4.000000
+  -Const + SuperINGO >= 1.000000
+  -Const2 + SuperINGO >= 1.000000
+  -Const3 + SuperINGO >= 1.000000
+  -Constant2 + SuperINGO >= 1.000000
+  -Subt + SuperINGO >= 5.000000
+  -Subt1 + SuperINGO >= 5.000000
+  -Out_x(0) + SuperINGO >= 1.000000
+  -Out_x(1) + SuperINGO >= 1.000000
+  -Out_x(2) + SuperINGO >= 1.000000
+  -Out_x(3) + SuperINGO >= 1.000000
+  -Out_y + SuperINGO >= 1.000000
+BOUNDS
+BINARY
+GENERAL
+  Add
+  CMult
+  CMult1
+  CMult2
+  CMult3
+  Const
+  Const2
+  Const3
+  Constant2
+  In_x
+  Out_x(0)
+  Out_x(1)
+  Out_x(2)
+  Out_x(3)
+  Out_y
+  Subt
+  Subt1
+  SuperINGO
+END

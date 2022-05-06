@@ -1,0 +1,5 @@
+string(REPLACE "/HaTScheTConfig.cmake" "" PREFIX ${CMAKE_CURRENT_LIST_FILE})
+set(HaTScheT_INCLUDE_DIRS "${PREFIX}/src/" /opt/scalp/include /usr/include)
+set(HaTScheT_LIBRARIES "${PREFIX}/libhatschet.a" /opt/scalp/lib/libScaLP.so /usr/lib64/libxerces-c.so)
+unset(PREFIX)
+set(HaTScheT_FOUND TRUE)
