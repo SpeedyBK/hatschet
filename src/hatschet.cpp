@@ -35,6 +35,7 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
+#include <HatScheT/utility/reader/ScheduleAndBindingReader.h>
 
 #ifdef USE_XERCESC
 #include <HatScheT/utility/reader/GraphMLGraphReader.h>
@@ -72,6 +73,7 @@
 
 #ifdef USE_CADICAL
 #include <HatScheT/scheduler/dev/SATScheduler.h>
+#include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
 #endif
 
 /**
@@ -114,6 +116,7 @@ void print_short_help() {
 	std::cout << "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)" << std::endl;
 	std::cout << "                            RATIONALIIMODULOSDC: Sixth experimental rational II scheduler (SDC based heuristic)" << std::endl;
 	std::cout << "                            SAT: Experimental integer II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)" << std::endl;
+	std::cout << "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -124,6 +127,7 @@ void print_short_help() {
   std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
 	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
 	std::cout << "--writeLPFile=[0/1]       Write LP file (only available for some schedulers; default: 0)" << std::endl;
+	std::cout << "--set_bounds=[string]     Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file" << std::endl;
   std::cout << std::endl;
   std::cout << "Options for ILP-based schedulers:" << std::endl;
   std::cout << std::endl;
@@ -131,7 +135,13 @@ void print_short_help() {
   std::cout << "--timeout=[int]           ILP solver timeout in seconds (default: -1, no timeout)" << std::endl;
   std::cout << "--threads=[int]           Number of threads for the ILP solver (default: 1)" << std::endl;
   std::cout << "--show_ilp_solver_output  Shows the ILP solver output" << std::endl;
-  std::cout << std::endl;
+	std::cout << std::endl;
+	std::cout << "Options for iterative schedulers:" << std::endl;
+	std::cout << "--max_runs=[int]  maximum number of allowed iterations (default: -1, no limit)" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Options for register minimization schedulers:" << std::endl;
+	std::cout << "--max_regs=[int]  maximum number of registers to allocate (default: -1, no limit)" << std::endl;
+	std::cout << std::endl;
   std::cout << "Options for ILP-based rational II scheduling:" << std::endl;
   std::cout << "--samples=[int]           Demanded samples per modulo" << std::endl;
   std::cout << "--modulo=[int]            Demanded clock cycles for the repeating schedule" << std::endl;
@@ -149,11 +159,16 @@ int main(int argc, char *args[]) {
   int timeout=-1; //default -1 means no timeout
   int maxLatency=-1;
   bool quiet=true;
+	int maxRuns = -1;
 
   //variables for Rational II scheduling
   int samples = -1; //default
   int modulo = -1; //default
   bool uniform = true; //default
+
+  // variables for min reg schedulers
+  int targetII = -1;
+  int maxRegs = -1;
 
   //flag to enable mux optimal binding
   //experimental
@@ -162,7 +177,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {SAT, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {SAT, SATMINREG, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -173,7 +188,8 @@ int main(int argc, char *args[]) {
   std::string targetFile="";
   std::string dotFile="";
   std::string htmlFile="";
-  std::string scheduleFile="";
+	std::string scheduleFile="";
+	std::string inputScheduleFile="";
 
   if(argc <= 1) {
       print_short_help();
@@ -191,9 +207,18 @@ int main(int argc, char *args[]) {
     //parse command line
     for (int i = 1; i < argc; i++) {
       char* value;
-      if(getCmdParameter(args[i],"--timeout=",value)) {
-        timeout = atol(value);
-      }
+			if(getCmdParameter(args[i],"--timeout=",value)) {
+				timeout = atol(value);
+			}
+			else if(getCmdParameter(args[i],"--max_runs=",value)) {
+				maxRuns = atol(value);
+			}
+			else if(getCmdParameter(args[i],"--max_regs=",value)) {
+				maxRegs = atol(value);
+			}
+			else if(getCmdParameter(args[i],"--set_bounds=",value)) {
+				inputScheduleFile = std::string(value);
+			}
       else if(getCmdParameter(args[i],"--threads=",value)) {
         threads = atol(value);
       }
@@ -275,6 +300,9 @@ int main(int argc, char *args[]) {
         }
 				else if(schedulerSelectionStr == "sat") {
 					schedulerSelection = SAT;
+				}
+				else if(schedulerSelectionStr == "satminreg") {
+					schedulerSelection = SATMINREG;
 				}
         else if(schedulerSelectionStr == "ul") {
           schedulerSelection = UL;
@@ -404,12 +432,14 @@ int main(int argc, char *args[]) {
         exit(-1);
       }
     }
+
     //output major settings:
     std::cout << "settings:" << std::endl;
     std::cout << "graph model=" << graphMLFile << endl;
     std::cout << "resource model=" << resourceModelFile << endl;
     std::cout << "target=" << targetFile << endl;
-    std::cout << "timeout=" << timeout << std::endl;
+		std::cout << "timeout=" << timeout << std::endl;
+		std::cout << "maxRuns=" << maxRuns << std::endl;
     std::cout << "threads=" << threads << std::endl;
 		std::cout << "quiet=" << quiet << std::endl;
 		std::cout << "writeLPFile=" << writeLPFile << std::endl;
@@ -426,6 +456,9 @@ int main(int argc, char *args[]) {
 				break;
 			case SAT:
 				cout << "SAT";
+				break;
+			case SATMINREG:
+				cout << "SATMINREG";
 				break;
       case MOOVAC:
         cout << "MOOVAC";
@@ -513,6 +546,17 @@ int main(int argc, char *args[]) {
       throw HatScheT::Exception("Empty Resource Model Provided for graph parsing! Provide a valid resource model using --resource=");
     }
 
+		// read schedule file with upper bounds for latency/registers/II if necessary
+		if (!inputScheduleFile.empty()) {
+			HatScheT::ScheduleAndBindingReader sbr(&g, &rm);
+			sbr.read(inputScheduleFile);
+			if (!sbr.isRatII()) {
+				targetII = (int)sbr.getII();
+			}
+			maxLatency = sbr.getScheduleLength();
+			maxRegs = sbr.getMinNumRegs();
+		}
+
     if(dotFile != "") {
       cout << "Writing to dotfile " << dotFile << endl;
       HatScheT::DotWriter dw(dotFile, &g, &rm);
@@ -570,6 +614,14 @@ int main(int argc, char *args[]) {
 					if(timeout > 0) ((HatScheT::SATScheduler*) scheduler)->setSolverTimeout(timeout);
 					if(maxLatency > 0) ((HatScheT::SATScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
       		break;
+				case SATMINREG:
+					scheduler = new HatScheT::SATMinRegScheduler(g, rm);
+					isModuloScheduler=true;
+					if(timeout > 0) ((HatScheT::SATMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::SATMinRegScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					if(maxRegs > 0) ((HatScheT::SATMinRegScheduler*) scheduler)->setRegMax(maxRegs);
+					if(targetII > 0) ((HatScheT::SATMinRegScheduler*) scheduler)->overrideII(targetII);
+					break;
 #endif
 #ifdef USE_SCALP
         case MOOVAC:
@@ -585,6 +637,10 @@ int main(int argc, char *args[]) {
           scheduler = new HatScheT::MoovacMinRegScheduler(g,rm, solverWishList);
           if(timeout > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverTimeout(timeout);
           if(maxLatency > 0) ((HatScheT::MoovacMinRegScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					if(targetII > 0) {
+						((HatScheT::MoovacMinRegScheduler*) scheduler)->overrideII(targetII);
+						((HatScheT::MoovacMinRegScheduler*) scheduler)->setMaxRuns(1);
+					}
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setThreads(threads);
           ((HatScheT::MoovacMinRegScheduler*) scheduler)->setSolverQuiet(solverQuiet);
           break;
@@ -754,6 +810,14 @@ int main(int argc, char *args[]) {
           throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
       }
 
+      // set max runs
+      if (maxRuns > 0) {
+      	auto iterativeSchedulerBase = dynamic_cast<HatScheT::IterativeSchedulerBase*>(scheduler);
+      	if (iterativeSchedulerBase != nullptr) {
+      		iterativeSchedulerBase->setMaxRuns(maxRuns);
+      	}
+      }
+
 #ifdef USE_SCALP
       // set writeILPFile
 			auto ilpSchedulerBase = dynamic_cast<HatScheT::ILPSchedulerBase*>(scheduler);
@@ -826,20 +890,24 @@ int main(int argc, char *args[]) {
 				std::map<const HatScheT::Vertex*, int> intIIBindings;
 				std::vector<std::map<HatScheT::Vertex*, int>> ratIISchedule;
 				std::vector<std::map<const HatScheT::Vertex*, int>> ratIIBindings;
+				int minNumRegs = -1;
       	if (scheduler->getScheduleFound()) {
 #ifdef USE_SCALP
 					if (ratIILayer == nullptr) {
 						// integer II modulo scheduler
 						intIISchedule = scheduler->getSchedule();
 						intIIBindings = scheduler->getBindings();
+						minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, intIISchedule, (int)scheduler->getII());
 					} else {
 						// rational II modulo scheduler
 						ratIISchedule = ratIILayer->getStartTimeVector();
 						ratIIBindings = ratIILayer->getRationalIIBindings();
+						minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, ratIISchedule, ratIILayer->getM_Found());
 					}
 #else
 					intIISchedule = scheduler->getSchedule();
 					intIIBindings = scheduler->getBindings();
+					minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, intIISchedule, (int)scheduler->getII());
 #endif //USE_SCALP
 				}
 				std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
@@ -853,9 +921,11 @@ int main(int argc, char *args[]) {
 #else
 				sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings, (int)scheduler->getII()));
 #endif //USE_SCALP
+      	sBWriter->setMinII(HatScheT::Utility::calcMinII(HatScheT::Utility::calcResMII(&rm), HatScheT::Utility::calcRecMII(&g, &rm)));
 				sBWriter->setRMPath(resourceModelFile);
 				sBWriter->setGraphPath(graphMLFile);
 				sBWriter->setScheduleLength(scheduler->getScheduleLength());
+				sBWriter->setMinNumRegs(minNumRegs);
 				sBWriter->setSolvingTime(schedulingTime);
 				sBWriter->write();
       }
