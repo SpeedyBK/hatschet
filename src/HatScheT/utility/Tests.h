@@ -280,5 +280,11 @@ public:
 	 */
 	static bool satSchedulerTest();
 
+	/*!
+	 * test functionality of Z3 Theorem Prover
+	 * @return if test was passed
+	 */
+    static bool z3Test();
+
 };
 }
