@@ -1,3 +1,4 @@
+#ifdef USE_SCALP
 #include "TreeBind.h"
 #include <HatScheT/utility/Exception.h>
 #include <stdexcept>
@@ -1200,3 +1201,4 @@ namespace HatScheT {
 		}
 	}
 }
+#endif //USE_SCALP
