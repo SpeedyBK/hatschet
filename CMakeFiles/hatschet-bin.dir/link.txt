@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11    -rdynamic CMakeFiles/hatschet-bin.dir/src/hatschet.cpp.o  -o hatschet  -Wl,-rpath,/opt/scalp/lib:/home/bkessler/Repositories/z3_install/usr/local/lib64: libhatschet.a /opt/scalp/lib/libScaLP.so -lxerces-c /opt/cadical/lib/libcadical.a /home/bkessler/Repositories/z3_install/usr/local/lib64/libz3.so.4.8.17.0 

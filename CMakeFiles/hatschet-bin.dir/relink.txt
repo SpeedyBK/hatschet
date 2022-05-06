@@ -1,1 +1,0 @@
-/usr/bin/c++    -std=c++11    CMakeFiles/hatschet-bin.dir/src/hatschet.cpp.o  -o CMakeFiles/CMakeRelink.dir/hatschet -rdynamic libhatschet.a /opt/scalp/lib/libScaLP.so -lxerces-c /opt/cadical/lib/libcadical.a 

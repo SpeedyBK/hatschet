@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11    -rdynamic CMakeFiles/example-bin.dir/example/example.cpp.o  -o example-bin  -Wl,-rpath,/opt/scalp/lib libhatschet.a /opt/scalp/lib/libScaLP.so 
