@@ -419,7 +419,7 @@ int main(int argc, char *args[]) {
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
-		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
+				if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -896,6 +896,7 @@ int main(int argc, char *args[]) {
 				std::vector<std::map<HatScheT::Vertex*, int>> ratIISchedule;
 				std::vector<std::map<const HatScheT::Vertex*, int>> ratIIBindings;
 				int minNumRegs = -1;
+				int minNumRegsChain = -1;
       	if (scheduler->getScheduleFound()) {
 #ifdef USE_SCALP
 					if (ratIILayer == nullptr) {
@@ -903,16 +904,19 @@ int main(int argc, char *args[]) {
 						intIISchedule = scheduler->getSchedule();
 						intIIBindings = scheduler->getBindings();
 						minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, intIISchedule, (int)scheduler->getII());
+						minNumRegsChain = HatScheT::Utility::calcMinNumChainRegs(&g, &rm, intIISchedule, intIIBindings, (int)scheduler->getII());
 					} else {
 						// rational II modulo scheduler
 						ratIISchedule = ratIILayer->getStartTimeVector();
 						ratIIBindings = ratIILayer->getRationalIIBindings();
 						minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, ratIISchedule, ratIILayer->getM_Found());
+						minNumRegsChain = HatScheT::Utility::calcMinNumChainRegs(&g, &rm, ratIISchedule, ratIIBindings, ratIILayer->getM_Found());
 					}
 #else
 					intIISchedule = scheduler->getSchedule();
 					intIIBindings = scheduler->getBindings();
 					minNumRegs = HatScheT::Utility::calcMinNumRegs(&g, &rm, intIISchedule, (int)scheduler->getII());
+					minNumRegsChain = HatScheT::Utility::calcMinNumChainRegs(&g, &rm, intIISchedule, intIIBindings, (int)scheduler->getII());
 #endif //USE_SCALP
 				}
 				std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
@@ -931,6 +935,7 @@ int main(int argc, char *args[]) {
 				sBWriter->setGraphPath(graphMLFile);
 				sBWriter->setScheduleLength(scheduler->getScheduleLength());
 				sBWriter->setMinNumRegs(minNumRegs);
+				sBWriter->setMinNumRegsChain(minNumRegsChain);
 				sBWriter->setSolvingTime(schedulingTime);
 				sBWriter->write();
       }
