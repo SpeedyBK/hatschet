@@ -76,6 +76,10 @@
 #include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
 #endif
 
+#ifdef USE_Z3
+// toDo - Will be added soon.
+#endif
+
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -415,6 +419,7 @@ int main(int argc, char *args[]) {
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
+		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
