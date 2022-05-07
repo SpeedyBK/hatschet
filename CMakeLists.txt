@@ -182,10 +182,8 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/utility/FibonacciHeap.h
-src/HatScheT/utility/SDCSolver.cpp 
-src/HatScheT/utility/SDCSolver.h
-)
+src/HatScheT/utility/SDCSolver.cpp
+src/HatScheT/scheduler/dev/SMT/SMTModScheduler.cpp )
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -254,7 +252,9 @@ src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/dev/SATScheduler.h
 src/HatScheT/scheduler/dev/SATMinRegScheduler.h
-)
+src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
+src/HatScheT/utility/SDCSolver.h
+src/HatScheT/utility/FibonacciHeap.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES

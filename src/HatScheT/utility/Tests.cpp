@@ -18,6 +18,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <ctime>
+#include <iomanip>
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/TreeBind.h"
 #include "HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h"
@@ -64,6 +66,7 @@
 #include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
 #include <HatScheT/scheduler/dev/SATScheduler.h>
 #include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -2080,22 +2083,44 @@ namespace HatScheT {
 	bool Tests::fibonacciTest() {
 
 		cout << "INSERT AND EXTRACT_MIN TEST:" << endl << endl;
-
+        clock_t start, end;
+        double times[4];
 		const int arraysize = 20; //should be an even number
 		int numbers[arraysize];
 		int sorted_numbers_from_heap[arraysize];
+		int sorted_numbers_from_mapsort[arraysize];
+        int sorted_numbers_from_std_sort[arraysize];
 
 		srand(time(nullptr));
 		for (int i = 0; i < arraysize; i++) {
-			numbers[i] = rand() % 100;
+			numbers[i] = rand() % 10000;
 		}
 		cout << "Numbers generates..." << endl;
 		for (int i : numbers) {
 			cout << i << " ";
 		}
 
-		/////// Insert and Extract_min Test Begin ///////
+		/////// MapSort - Who knows if that exists allready? //////
+        start = clock();
+		map<int,list<int>>mapSortMap;
+		for(auto &it : numbers){
+		    mapSortMap[it].push_back(it);
+		}
 
+		int h = 0;
+		for(auto &it : mapSortMap){
+		    while (!it.second.empty()){
+		        sorted_numbers_from_mapsort[h] = it.second.back();
+		        it.second.pop_back();
+		        h++;
+		    }
+		}
+		end = clock();
+        times[0] = double(end - start) / double(CLOCKS_PER_SEC);
+        cout << endl << "MapSort done..." << endl;
+
+		/////// Insert and Extract_min Test Begin ///////
+        start = clock();
 		//Creating a new Heap and fill it with numbers-Arrays content.
 		auto *FIB = new FibonacciHeap<int>;
 		for (int i : numbers) {
@@ -2108,10 +2133,23 @@ namespace HatScheT {
 			sorted_numbers_from_heap[j] = FIB->get_extract_min();
 			j++;
 		}
+        end = clock();
+        times[1] = double(end - start) / double(CLOCKS_PER_SEC);
+		cout << "Heap done..." << endl;
 
-		cout << endl << "Heap done..." << endl;
+		//Sort with std::sort
+		start = clock();
+		//Sort
+		for (int l = 0; l < arraysize; l++) {
+            sorted_numbers_from_std_sort[l] = numbers[l];
+        }
+		std::sort(sorted_numbers_from_std_sort, sorted_numbers_from_std_sort+arraysize);
+        end = clock();
+        times[2] = double(end - start) / double(CLOCKS_PER_SEC);
+        cout << "STD::Sort done..." << endl;
 
-		//Sort the numbers Array with a simple Bubble Sort
+        start = clock();
+        //Sort the numbers Array with a simple Bubble Sort
 		for (int k = arraysize; k > 1; --k) {
 			for (int j = 0; j < k - 1; ++j) {
 				if (numbers[j] > numbers[j + 1]) {
@@ -2121,23 +2159,47 @@ namespace HatScheT {
 				}
 			}
 		}
-
+        end = clock();
+        times[3] = double(end - start) / double(CLOCKS_PER_SEC);
 		cout << "Bubble Sort done..." << endl;
 
 		//Display Results:
+        cout << endl << "Sorted array by MapSort:" << endl;
+        for (int it : sorted_numbers_from_mapsort) {
+            cout << it << " ";
+        }
 		cout << endl << "Sorted array by F-Heap:" << endl;
 		for (int it : sorted_numbers_from_heap) {
 			cout << it << " ";
 		}
+        cout << endl << "Sorted array by std::sort:" << endl;
+        for (int it : sorted_numbers_from_std_sort) {
+            cout << it << " ";
+        }
 		cout << endl << "Sorted array by Bubble Sort:" << endl;
 		for (int it : numbers) {
 			cout << it << " ";
 		}
 
+		cout << endl;
+
 		if (0 != memcmp(sorted_numbers_from_heap, numbers, sizeof(numbers))) {
 			cout << endl << "Test failed!" << endl;
 			return false;
 		}
+        if (0 != memcmp(sorted_numbers_from_std_sort, numbers, sizeof(numbers))) {
+            cout << endl << "Test failed!" << endl;
+            return false;
+        }
+        if (0 != memcmp(sorted_numbers_from_mapsort, numbers, sizeof(numbers))) {
+            cout << endl << "Test failed!" << endl;
+            return false;
+        }
+
+		cout << "Map-Sort: " << fixed << times[0] << setprecision(5) << " sec " << endl;
+        cout << "Fibbo-Heap: " << fixed << times[1] << setprecision(5) << " sec " << endl;
+        cout << "STD-Sort: " << fixed << times[2] << setprecision(5) << " sec " << endl;
+        cout << "Bubble-Sort: " << fixed << times[3] << setprecision(5) << " sec " << endl;
 
 		/////// Insert and Extract_min Test End ///////
 
@@ -3572,5 +3634,63 @@ namespace HatScheT {
           //Z3 not active! Test function disabled!
           return true;
 	  #endif
+  }
+
+  bool Tests::smtModSchedulerTest() {
+      #ifdef USE_Z3
+
+	      HatScheT::Graph g;
+	      HatScheT::ResourceModel rm;
+
+          auto &green = rm.makeResource("green", 5, 1, 1);
+
+	      Vertex &o0 = g.createVertex(0);
+	      Vertex &o1 = g.createVertex(1);
+          Vertex &o2 = g.createVertex(2);
+          Vertex &o3 = g.createVertex(3);
+          Vertex &o4 = g.createVertex(4);
+          Vertex &o5 = g.createVertex(5);
+          Vertex &o6 = g.createVertex(6);
+
+          rm.registerVertex(&o0, &green);
+          rm.registerVertex(&o1, &green);
+          rm.registerVertex(&o2, &green);
+          rm.registerVertex(&o3, &green);
+          rm.registerVertex(&o4, &green);
+          rm.registerVertex(&o5, &green);
+          rm.registerVertex(&o6, &green);
+
+          g.createEdge(o0, o1, 0);
+          g.createEdge(o1, o2, 0);
+          g.createEdge(o2, o3, 0);
+          g.createEdge(o3, o1, 2);
+          g.createEdge(o0, o5, 0);
+          g.createEdge(o4, o1, 0);
+          g.createEdge(o4, o5, 0);
+          g.createEdge(o5, o6, 0);
+          g.createEdge(o6, o5, 2);
+          g.createEdge(o6, o3, 0);
+
+	      auto smt = SMTModScheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+	      smt.schedule();
+	      int ii = (int)smt.getII();
+	      cout << "II: " << ii << endl;
+	      auto sched = smt.getSchedule();
+
+          for(auto it : sched) {
+              std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+          }
+
+          auto valid = verifyModuloSchedule(g, rm, sched, ii);
+          if (!valid) {
+              std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
+              return false;
+          }
+          std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-)" << std::endl;
+          return true;
+      #else
+	      cout << "Z3 Solver not found, test disabled."
+	      return true;
+      #endif
   }
 }

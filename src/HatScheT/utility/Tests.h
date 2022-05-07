@@ -286,5 +286,11 @@ public:
 	 */
     static bool z3Test();
 
+    /*!
+     * test functionality of smtModScheduler
+     * @return if test was passed
+     */
+    static bool smtModSchedulerTest();
+
 };
 }
