@@ -25,6 +25,11 @@ namespace HatScheT {
      */
     virtual void schedule();
 
+    /*!
+     * Handmade Schedule for development.
+     */
+    void handmadeSchedule();
+
   protected:
     /*!
      * not needed

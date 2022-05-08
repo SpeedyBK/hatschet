@@ -3642,7 +3642,7 @@ namespace HatScheT {
 	      HatScheT::Graph g;
 	      HatScheT::ResourceModel rm;
 
-          auto &green = rm.makeResource("green", 5, 1, 1);
+          auto &green = rm.makeResource("green", UNLIMITED, 1, 1);
 
 	      Vertex &o0 = g.createVertex(0);
 	      Vertex &o1 = g.createVertex(1);
@@ -3651,6 +3651,7 @@ namespace HatScheT {
           Vertex &o4 = g.createVertex(4);
           Vertex &o5 = g.createVertex(5);
           Vertex &o6 = g.createVertex(6);
+          Vertex &o7 = g.createVertex(7);
 
           rm.registerVertex(&o0, &green);
           rm.registerVertex(&o1, &green);
@@ -3659,6 +3660,7 @@ namespace HatScheT {
           rm.registerVertex(&o4, &green);
           rm.registerVertex(&o5, &green);
           rm.registerVertex(&o6, &green);
+          rm.registerVertex(&o7, &green);
 
           g.createEdge(o0, o1, 0);
           g.createEdge(o1, o2, 0);
@@ -3670,16 +3672,23 @@ namespace HatScheT {
           g.createEdge(o5, o6, 0);
           g.createEdge(o6, o5, 2);
           g.createEdge(o6, o3, 0);
+          g.createEdge(o7, o5, 0);
 
 	      auto smt = SMTModScheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
-	      smt.schedule();
+
 	      int ii = (int)smt.getII();
 	      cout << "II: " << ii << endl;
-	      auto sched = smt.getSchedule();
 
-          for(auto it : sched) {
+          smt.handmadeSchedule();
+          auto sched = smt.getSchedule();
+
+          cout << endl;
+          for(auto &it : sched) {
               std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
           }
+
+          ii = (int)smt.getII();
+          cout << "II: " << ii << endl;
 
           auto valid = verifyModuloSchedule(g, rm, sched, ii);
           if (!valid) {
