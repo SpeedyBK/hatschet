@@ -419,12 +419,12 @@ int main(int argc, char *args[]) {
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
-<<<<<<< HEAD
+
 		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 		if(str=="SMT" && !HatScheT::Tests::smtModSchedulerTest()) exit(-1);
-=======
-				if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
->>>>>>> a75aaf2a765cb7f1b08a047eee3b6e62ec5e2350
+
+		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
+
 
         #else
         throw HatScheT::Exception("ScaLP not active! Test function disabled!");
