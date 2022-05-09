@@ -40,8 +40,6 @@ namespace HatScheT {
 
   void SMTModScheduler::handmadeSchedule() {
 
-      II = minII;
-      II = 0;
       cout << "Starting with II = " << II << endl;
 
       z3::context c;
@@ -87,14 +85,27 @@ namespace HatScheT {
       z3::model m = _s.get_model();
       std::cout << "solution\n" << m;
 
-      this->startTimes = {{&g.getVertexByName("vertex_0"), m.eval(z).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_1"), m.eval(y).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_2"), m.eval(x).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_3"), m.eval(w).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_4"), m.eval(v).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_5"), m.eval(u).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_6"), m.eval(t).get_numeral_int()+2},
-                          {&g.getVertexByName("vertex_7"), m.eval(s).get_numeral_int()+2}};
+      this->startTimes = {{&g.getVertexByName("vertex_0"), m.eval(z).get_numeral_int()},
+                          {&g.getVertexByName("vertex_1"), m.eval(y).get_numeral_int()},
+                          {&g.getVertexByName("vertex_2"), m.eval(x).get_numeral_int()},
+                          {&g.getVertexByName("vertex_3"), m.eval(w).get_numeral_int()},
+                          {&g.getVertexByName("vertex_4"), m.eval(v).get_numeral_int()},
+                          {&g.getVertexByName("vertex_5"), m.eval(u).get_numeral_int()},
+                          {&g.getVertexByName("vertex_6"), m.eval(t).get_numeral_int()},
+                          {&g.getVertexByName("vertex_7"), m.eval(s).get_numeral_int()}};
+
+      int min = INT32_MAX;
+      for (auto &it : startTimes){
+          if (it.second < min){
+              min = it.second;
+          }
+      }
+
+      for (auto &it: startTimes){
+          it.second += abs(min);
+      }
+
+
 
   }
 }

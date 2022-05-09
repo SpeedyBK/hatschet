@@ -3474,6 +3474,7 @@ namespace HatScheT {
 	}
 
 	bool Tests::satSchedulerTest() {
+#ifdef USE_CADICAL
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
 
@@ -3563,7 +3564,7 @@ namespace HatScheT {
 		// now minimize the number of registers for the given II and latency limit
 		SATMinRegScheduler s(g, rm);
 		s.setQuiet(false);
-		s.setII(II);
+		s.overrideII(II);
 		s.setMaxLatencyConstraint(SL);
 		s.setRegMax(numRegs);
 		s.setSolverTimeout(600);
@@ -3599,6 +3600,10 @@ namespace HatScheT {
 		}
 		std::cout << "Passed test :)" << std::endl;
 		return true;
+#else
+		std::cout << "Enable CaDiCaL for SAT-based schedulers" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::z3Test() {

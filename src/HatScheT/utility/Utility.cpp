@@ -1339,4 +1339,120 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
     }
     return max(1.0, minII); // RecMII could be 0 if instance has no loops
   }
+
+	int Utility::calcMinNumRegs(Graph *g, ResourceModel *rm, const std::vector<std::map<Vertex *, int>> &schedule, const int &modulo) {
+		if (schedule.empty()) return 0;
+		if (modulo <= 0) return 0;
+		int samples = (int)schedule.size();
+		std::map<int, int> numAlive;
+		for (auto &vSrc : g->Vertices()) {
+			for (auto s=0; s<samples; s++) {
+				auto tSrc = schedule.at(s).at(vSrc);
+				auto lSrc = rm->getVertexLatency(vSrc);
+				auto latestReadTime = tSrc + lSrc;
+				for (auto &e : g->Edges()) {
+					if (&e->getVertexSrc() != vSrc) continue;
+					auto vDst = &e->getVertexDst();
+					for (auto dstSample=0; dstSample<samples; dstSample++) {
+						auto srcSample = dstSample;
+						auto delta = 0;
+						auto edgeDistance = e->getDistance();
+						for (int sampleCnt=0; sampleCnt<edgeDistance; sampleCnt++) {
+							if (srcSample == 0) {
+								srcSample = samples-1;
+								delta++;
+							}
+							else {
+								srcSample--;
+							}
+						}
+						if (srcSample != s) continue;
+						auto tDst = schedule.at(dstSample).at(vDst);
+						auto readTime = tDst + (delta * modulo);
+						if (readTime > latestReadTime) latestReadTime = readTime;
+					}
+				}
+				for (int t=tSrc+lSrc+1; t<=latestReadTime; t++) {
+					numAlive[t % (int)modulo]++;
+				}
+			}
+		}
+		auto minNumRegs = 0;
+		for (auto &it : numAlive) {
+			if (it.second > minNumRegs) minNumRegs = it.second;
+		}
+		return minNumRegs;
+	}
+
+	int Utility::calcMinNumRegs(Graph *g, ResourceModel *rm, const std::map<Vertex *, int> &schedule, const int &II) {
+		return Utility::calcMinNumRegs(g, rm, std::vector<std::map<Vertex*, int>>(1, schedule), II);
+	}
+
+	int Utility::calcMinNumChainRegs(Graph *g, ResourceModel *rm, const vector<std::map<Vertex *, int>> &schedule,
+																	 const vector<std::map<const Vertex *, int>> &binding, const int &modulo) {
+		if (schedule.empty()) return 0;
+		if (modulo <= 0) return 0;
+		int samples = (int)schedule.size();
+		std::map<const Resource*, int> resourceLimits;
+		std::map<std::pair<const Resource*, int>, int> resourceLifetimes;
+		for (auto &r : rm->Resources()) {
+			if (r->isUnlimited()) {
+				resourceLimits[r] = (int)rm->getNumVerticesRegisteredToResource(r);
+			}
+			else {
+				resourceLimits[r] = r->getLimit();
+			}
+			for (int l=0; l<resourceLimits.at(r); l++) {
+				resourceLifetimes[{r, l}] = 0;
+			}
+		}
+		for (auto &e : g->Edges()) {
+			auto *vSrc = &e->getVertexSrc();
+			auto *vDst = &e->getVertexDst();
+			auto *rSrc = rm->getResource(vSrc);
+			auto *rDst = rm->getResource(vDst);
+			auto lSrc = rSrc->getLatency();
+			for (int sDst=0; sDst<samples; sDst++) {
+				int sSrc = sDst;
+				int delta = 0;
+				for (int i=0; i<e->getDistance(); i++) {
+					if (sSrc == 0) {
+						sSrc = samples-1;
+						delta++;
+					}
+					else {
+						sSrc--;
+					}
+				}
+				int tSrc;
+				int tDst;
+				int bSrc;
+				int bDst;
+				try {
+					tSrc = schedule.at(sSrc).at(vSrc);
+					tDst = schedule.at(sDst).at(vDst);
+					bSrc = binding.at(sSrc).at(vSrc);
+					bDst = binding.at(sDst).at(vDst);
+				}
+				catch (std::out_of_range&) {
+					// invalid schedule/binding -> unable to calculate #regs
+					return -1;
+				}
+				auto lifetime = tDst + (delta * modulo) - (tSrc + lSrc);
+				if (lifetime > resourceLifetimes.at({rSrc, bSrc})) {
+					resourceLifetimes.at({rSrc, bSrc}) = lifetime;
+				}
+			}
+		}
+		int minNumRegs = 0;
+		for (auto &it : resourceLifetimes) {
+			minNumRegs += it.second;
+		}
+		return minNumRegs;
+	}
+
+	int Utility::calcMinNumChainRegs(Graph *g, ResourceModel *rm, const map<Vertex *, int> &schedule,
+																	 const map<const Vertex *, int> &binding, const int &II) {
+		return Utility::calcMinNumChainRegs(g, rm, std::vector<std::map<Vertex*, int>>(1, schedule), std::vector<std::map<const Vertex*, int>>(1, binding), II);
+	}
 }
