@@ -3412,6 +3412,7 @@ namespace HatScheT {
 	}
 
 	bool Tests::satSchedulerTest() {
+#ifdef USE_CADICAL
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
 
@@ -3537,6 +3538,10 @@ namespace HatScheT {
 		}
 		std::cout << "Passed test :)" << std::endl;
 		return true;
+#else
+		std::cout << "Enable CaDiCaL for SAT-based schedulers" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::z3Test() {
