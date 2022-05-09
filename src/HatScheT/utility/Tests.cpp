@@ -3705,7 +3705,7 @@ namespace HatScheT {
           std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-)" << std::endl;
           return true;
       #else
-	      cout << "Z3 Solver not found, test disabled."
+	      cout << "Z3 Solver not found, test disabled." << std::endl;
 	      return true;
       #endif
   }
