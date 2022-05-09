@@ -539,6 +539,7 @@ namespace HatScheT {
 			this->sdcSolverWishlist = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
 		}
 		// use SDC-solver to calculate earliest start time for the given vertex
+		// without resource constraints
 		ScaLP::Solver s(this->sdcSolverWishlist);
 		// variables
 		std::map<Vertex*, ScaLP::Variable> vars;
@@ -557,7 +558,7 @@ namespace HatScheT {
 		}
 #else
 		// use ASAP scheduler without resource constraints if ScaLP is unavailable
-		// this should produce values that are a bit too small in general
+		// this should produce values that might be a bit too small in general
 		// especially in presence of recurrences
 		// but (and this is a big but), using ASAP is WAY faster than solving multiple SDC problems
 		std::map<const Resource*, int> originalLimits;
@@ -672,8 +673,12 @@ namespace HatScheT {
 							// reached optimum -> stop searching
 							return false;
 						} else {
-							// keep iterating towards upper bound
-							this->candidateNumRegs++;
+							// update lower bound
+							this->registerLowerBound = this->candidateNumRegs + 1;
+							// start iterating again from upper bound
+							// but set jump length to 1
+							this->sqrtJumpLength = 1;
+							this->candidateNumRegs = this->registerUpperBound - 1;
 							return true;
 						}
 					}
