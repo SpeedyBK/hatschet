@@ -1790,6 +1790,8 @@ namespace HatScheT {
 			HatScheT::UnrollRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 			rii.setIntIIScheduler(SchedulerType::SUCHAHANZALEK);
 			rii.setQuiet(false);
+			rii.setSolverTimeout(30);
+			rii.setThreads(1);
 			rii.schedule();
 			auto valid = rii.getScheduleValid();
 			if (!valid) {

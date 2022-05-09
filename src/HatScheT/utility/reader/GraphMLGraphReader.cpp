@@ -216,7 +216,7 @@ void GraphMLGraphReader::readGraph(const char *path)
   }
   catch (const XMLException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "graphMLReader.parseGraph: " << message << endl;
+    cout << "graphMLReader.parseGraph: Error while initializing: " << message << endl;
   }
 
   const char* xmlFile = path;
@@ -246,13 +246,13 @@ void GraphMLGraphReader::readGraph(const char *path)
   catch (const XMLException& toCatch) {
 
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "graphMLReader.parseGraph: " << message << endl;
+    cout << "graphMLReader.parseGraph: XMLException while parsing: " << message << endl;
 
 
   }
   catch (const SAXParseException& toCatch) {
     char* message = XMLString::transcode(toCatch.getMessage());
-    cout << "graphMLReader.parseGraph: " << message << endl;
+    cout << "graphMLReader.parseGraph: SAXParseException: " << message << endl;
 
   }
   catch (const HatScheT::Exception& e){
