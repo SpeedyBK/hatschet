@@ -7,6 +7,7 @@
 
 #pragma once
 
+#ifdef USE_Z3
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
@@ -66,4 +67,5 @@ namespace HatScheT {
 
 }
 
+#endif //USE_Z3
 #endif //HATSCHET_SMTMODSCHEDULER_H

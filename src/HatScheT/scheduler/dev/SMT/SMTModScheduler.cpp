@@ -2,6 +2,7 @@
 // Created by bkessler on 5/7/22.
 //
 
+#ifdef USE_Z3
 #include "SMTModScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Exception.h"
@@ -231,3 +232,6 @@ namespace HatScheT {
       return {edgesWithoutWeight, edgesWithWeight};
   }
 }
+
+#endif
+
