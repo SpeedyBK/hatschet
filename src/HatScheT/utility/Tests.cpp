@@ -3649,7 +3649,7 @@ namespace HatScheT {
 	      HatScheT::Graph g;
 	      HatScheT::ResourceModel rm;
 
-          auto &green = rm.makeResource("green", UNLIMITED, 1, 1);
+          auto &green = rm.makeResource("green", 2, 1, 1);
 
 	      Vertex &o0 = g.createVertex(0);
 	      Vertex &o1 = g.createVertex(1);
@@ -3681,6 +3681,7 @@ namespace HatScheT {
           g.createEdge(o6, o3, 0);
           g.createEdge(o7, o5, 0);
 
+          //TODO ILP-Solvers not needed.
           SMTModScheduler smt(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
 	      int ii = (int)smt.getII();
@@ -3710,5 +3711,134 @@ namespace HatScheT {
 	      cout << "Z3 Solver not found, test disabled." << std::endl;
 	      return true;
       #endif
+  }
+
+  //TODO Remove Test
+  bool Tests::smtVsED97Test() {
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      clock_t start, end;
+
+      /*HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/origami/iir_biquRM.xml";
+      string graphStr = "benchmarks/origami/iir_biqu.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      for (auto &it : rm.Resources()){
+          it->setLimit(UNLIMITED);
+      }*/
+
+
+      auto &green = rm.makeResource("Green", UNLIMITED, 2, 1);
+
+      Vertex &o0 = g.createVertex(0);
+      Vertex &o1 = g.createVertex(1);
+      Vertex &o2 = g.createVertex(2);
+      Vertex &o3 = g.createVertex(3);
+      Vertex &o4 = g.createVertex(4);
+      Vertex &o5 = g.createVertex(5);
+      Vertex &o6 = g.createVertex(6);
+      Vertex &o7 = g.createVertex(7);
+      Vertex &o8 = g.createVertex(8);
+      Vertex &o9 = g.createVertex(9);
+      Vertex &o10 = g.createVertex(10);
+      Vertex &o12 = g.createVertex(11);
+      Vertex &o13 = g.createVertex(12);
+      Vertex &o14 = g.createVertex(13);
+      Vertex &o15 = g.createVertex(14);
+      Vertex &o16 = g.createVertex(15);
+
+      rm.registerVertex(&o0, &green);
+      rm.registerVertex(&o1, &green);
+      rm.registerVertex(&o2, &green);
+      rm.registerVertex(&o3, &green);
+      rm.registerVertex(&o4, &green);
+      rm.registerVertex(&o5, &green);
+      rm.registerVertex(&o6, &green);
+      rm.registerVertex(&o7, &green);
+      rm.registerVertex(&o8, &green);
+      rm.registerVertex(&o9, &green);
+      rm.registerVertex(&o10, &green);
+      rm.registerVertex(&o12, &green);
+      rm.registerVertex(&o13, &green);
+      rm.registerVertex(&o14, &green);
+      rm.registerVertex(&o15, &green);
+      rm.registerVertex(&o16, &green);
+
+
+      g.createEdge(o0, o1, 0);
+      g.createEdge(o1, o2, 0);
+      g.createEdge(o2, o3, 0);
+      g.createEdge(o3, o4, 0);
+      g.createEdge(o4, o0, 1);
+
+      g.createEdge(o0, o5, 0);
+      g.createEdge(o5, o6, 0);
+      g.createEdge(o6, o7, 0);
+      g.createEdge(o7, o8, 0);
+      g.createEdge(o8, o0, 1);
+
+      g.createEdge(o2, o9, 0);
+      g.createEdge(o9, o10, 0);
+      g.createEdge(o10, o14, 0);
+      g.createEdge(o14, o12, 0);
+      g.createEdge(o12, o2, 1);
+
+      g.createEdge(o7, o13, 0);
+      g.createEdge(o13, o14, 0);
+      g.createEdge(o14, o15, 0);
+      g.createEdge(o15, o16, 0);
+      g.createEdge(o16, o7, 1);
+
+
+      EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+      SMTModScheduler smt(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+
+      es.setQuiet(true);
+      start = clock();
+      es.schedule();
+      end = clock();
+      cout << es.getII() << endl;
+      auto sched = es.getSchedule();
+      auto ii = es.getII();
+      auto valid = verifyModuloSchedule(g, rm, sched, ii);
+      for (auto &it : sched){
+          cout << it.first->getName() << " : " << it.second << endl;
+      }
+      if (!valid) {
+          std::cout << "Tests::ED97Scheduler: invalid modulo schedule found" << std::endl;
+      }else {
+          std::cout << "Tests::ED97Scheduler: valid modulo schedule found. :-) II=" << ii  << std::endl << setprecision(5);
+      }
+
+      cout << "Time taken by ED97 is : " << fixed
+           << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
+      cout << " sec " << endl;
+
+      smt.setQuiet(true);
+      start = clock();
+      smt.schedule();
+      end = clock();
+      sched = smt.getSchedule();
+
+      for (auto &it : sched){
+          cout << it.first->getName() << " : " << it.second << endl;
+      }
+
+      ii = smt.getII();
+
+      valid = verifyModuloSchedule(g, rm, sched, ii);
+      if (!valid) {
+          std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
+          return false;
+      }
+      std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) II=" << ii << std::endl;
+      cout << "Time taken by smt is : " << fixed
+           << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
+      cout << " sec " << endl;
+      return true;
   }
 }
