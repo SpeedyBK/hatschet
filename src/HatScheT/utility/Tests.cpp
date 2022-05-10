@@ -3681,12 +3681,14 @@ namespace HatScheT {
           g.createEdge(o6, o3, 0);
           g.createEdge(o7, o5, 0);
 
-	      auto smt = SMTModScheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+          SMTModScheduler smt(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
 	      int ii = (int)smt.getII();
 	      cout << "II: " << ii << endl;
 
-          smt.handmadeSchedule();
+	      smt.setQuiet(false);
+	      smt.schedule();
+
           auto sched = smt.getSchedule();
 
           cout << endl;
