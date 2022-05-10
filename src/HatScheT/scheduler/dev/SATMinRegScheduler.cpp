@@ -8,6 +8,7 @@
 #include <cmath>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/utility/Utility.h>
 
 #ifdef USE_CADICAL
 namespace HatScheT {
@@ -48,6 +49,7 @@ namespace HatScheT {
 		this->terminator = CaDiCalTerminator((double)this->solverTimeout);
 		bool lastAttemptSuccess = false;
 		this->candidateNumRegs = -1;
+		double elapsedTime = 0.0;
 		//for (this->candidateNumRegs = this->regMax; this->candidateNumRegs >= 0; this->candidateNumRegs--) {
 		while (this->computeNewNumRegistersSuccess(lastAttemptSuccess)) {
 			//if (!this->quiet) {
@@ -88,11 +90,10 @@ namespace HatScheT {
 				auto currentTime2 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				std::cout << "  current time: " << std::put_time(std::localtime(&currentTime2), "%Y-%m-%d %X") << std::endl;
 			}
-			auto elapsedTime = this->terminator.getElapsedTime();
+			elapsedTime = this->terminator.getElapsedTime();
 			if (!this->quiet) {
 				std::cout << "SATMinRegScheduler: time is " << elapsedTime << "sec after constructing the problem" << std::endl;
 			}
-			this->solvingTime += elapsedTime;
 			if (elapsedTime >= this->solverTimeout) {
 				// timeout after problem construction!
 				if (!this->quiet) {
@@ -103,9 +104,12 @@ namespace HatScheT {
 				break;
 			}
 			// start solving
+			//if (!this->quiet) {
+				auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATMinRegScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+			//}
 			auto stat = this->solver->solve();
 			elapsedTime = this->terminator.getElapsedTime();
-			this->solvingTime += elapsedTime;
 			lastAttemptSuccess = stat == CADICAL_SAT;
 			if (!this->quiet) {
 				std::cout << "SATMinRegScheduler: finished solving with status '" <<
@@ -114,10 +118,10 @@ namespace HatScheT {
 			}
 			if(!lastAttemptSuccess) {
 				//if (!this->quiet) {
-					auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 					std::cerr << "SATMinRegScheduler: failed to find solution for II=" << this->II << " and SL="
 										<< this->maxLatencyConstraint << " and #Regs=" << this->candidateNumRegs << " at "
-										<< std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+										<< std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
 				//}
 				// check if it was due to a timeout
 				if (elapsedTime >= this->solverTimeout) {
@@ -140,12 +144,13 @@ namespace HatScheT {
 			this->numRegs = this->candidateNumRegs;
 			this->fillSolutionStructure();
 			//if (!this->quiet) {
-				auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				auto currentTime5 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				std::cerr << "SATMinRegScheduler: found solution for II=" << this->II << " and SL="
 									<< this->maxLatencyConstraint << " and #Regs=" << this->candidateNumRegs << " at "
-									<< std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
+									<< std::put_time(std::localtime(&currentTime5), "%Y-%m-%d %X") << std::endl;
 			//}
 		}
+		this->solvingTime += elapsedTime;
 		this->optimalResult = !breakByTimeout;
 	}
 
@@ -455,6 +460,9 @@ namespace HatScheT {
 		for (auto &v : this->g.Vertices()) {
 			this->startTimes[v] = *this->startTimesContainer.at(v).begin();
 		}
+		// override candidate register limit in case the scheduler found a solution for which the register limit
+		// which is smaller than the given one (unlikely I guess, but who knows...)
+		this->candidateNumRegs = Utility::calcMinNumRegs(&this->g, &this->resourceModel, this->startTimes, (int)this->II);
 	}
 
 	void SATMinRegScheduler::setUpSolver() {
