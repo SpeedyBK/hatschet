@@ -157,9 +157,28 @@ void EichenbergerDavidson97Scheduler::setObjective()
   if (maxLatencyConstraint >= 0)
     solver->addConstraint(ss <= maxLatencyConstraint);
 
-  for (auto *i : g.Vertices())
+  for (auto *i : g.Vertices()) {
+    // nfiege: this is not enough!
+    // sometimes (with this functionality) there is no connection to the supersink
+    // -> imagine two vertices being connected in a loop with one of the two edges having a distance > 0
+    // then, the source vertex of that edge must also be connected to the supersink!
+    /*
     if (g.isSinkVertex(i))
       solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+      */
+
+    // now, let's do it correctly
+    bool skipMe = false;
+    for (auto &e : g.Edges()) {
+      if (&e->getVertexSrc() != i or e->getDistance() == 0) continue;
+      skipMe = true;
+      break;
+    }
+    if (skipMe) {
+      continue;
+    }
+    solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+  }
 
   solver->setObjective(ScaLP::minimize(ss));
 }

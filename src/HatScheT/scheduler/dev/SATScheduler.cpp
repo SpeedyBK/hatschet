@@ -44,8 +44,8 @@ namespace HatScheT {
 		this->initScheduler();
 		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
 			//if (!this->quiet) {
-				auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cerr << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+				auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime1), "%Y-%m-%d %X") << std::endl;
 			//}
 
 			if (!this->quiet) {
@@ -57,6 +57,7 @@ namespace HatScheT {
 			this->latencyUpperBound = this->maxLatency;
 			bool lastAttemptSuccess = false;
 			bool breakByTimeout = false;
+			double elapsedTime = 0.0;
 			this->terminator = CaDiCalTerminator((double)this->solverTimeout);
 			while (this->computeNewLatencySuccess(lastAttemptSuccess)) {
 				if (!this->quiet) {
@@ -84,14 +85,13 @@ namespace HatScheT {
 					std::cout << "  '" << this->resourceConstraintClauseCounter << "' resource constraint clauses" << std::endl;
 					std::cout << "  '" << this->scheduleTimeConstraintClauseCounter << "' schedule time constraint clauses" << std::endl;
 					std::cout << "  '" << this->bindingConstraintClauseCounter << "' binding constraint clauses" << std::endl;
-					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cout << "  current time: " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+					auto currentTime2 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cout << "  current time: " << std::put_time(std::localtime(&currentTime2), "%Y-%m-%d %X") << std::endl;
 				}
-				auto elapsedTime = this->terminator.getElapsedTime();
+				elapsedTime = this->terminator.getElapsedTime();
 				if (!this->quiet) {
 					std::cout << "SATScheduler: time is " << elapsedTime << "sec after constructing the problem" << std::endl;
 				}
-				this->solvingTime += elapsedTime;
 				if (elapsedTime >= this->solverTimeout) {
 					// timeout after problem construction!
 					if (!this->quiet) {
@@ -101,9 +101,12 @@ namespace HatScheT {
 					break;
 				}
 				// start solving
+				//if (!this->quiet) {
+					auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cerr << "SATMinRegScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+				//}
 				auto stat = this->solver->solve();
 				elapsedTime = this->terminator.getElapsedTime();
-				this->solvingTime += elapsedTime;
 				lastAttemptSuccess = stat == CADICAL_SAT;
 				if (!this->quiet) {
 					std::cout << "SATScheduler: finished solving with status '" <<
@@ -112,8 +115,8 @@ namespace HatScheT {
 				}
 				if(!lastAttemptSuccess) {
 					//if (!this->quiet) {
-						auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-						std::cerr << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+						auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+						std::cerr << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
 					//}
 					// check if it was due to a timeout
 					if (elapsedTime >= this->solverTimeout) {
@@ -135,10 +138,11 @@ namespace HatScheT {
 				this->II = this->candidateII;
 				this->fillSolutionStructure();
 				//if (!this->quiet) {
-					auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cerr << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %X") << std::endl;
+					auto currentTime5 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cerr << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime5), "%Y-%m-%d %X") << std::endl;
 				//}
 			}
+			this->solvingTime += elapsedTime;
 			this->optimalResult = !breakByTimeout;
 			if (breakByTimeout) {
 				this->timeouts++;
@@ -427,6 +431,9 @@ namespace HatScheT {
 			}
 			this->binding[v] = b;
 		}
+		// override candidate latency in case the scheduler found a solution with a schedule length
+		// which is smaller than the given candidate latency (unlikely I guess, but who knows...)
+		this->candidateLatency = this->getScheduleLength();
 	}
 
 	void SATScheduler::setUpSolver() {
