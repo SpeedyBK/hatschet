@@ -403,6 +403,7 @@ ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 
 IF(CADICAL_H AND CADICAL_LIB)
     add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
+    add_test("SATScheduler" "./hatschet" "--test=SATSCHEDULER")
 ENDIF(CADICAL_H AND CADICAL_LIB)
 
 IF(${Z3_FOUND})
