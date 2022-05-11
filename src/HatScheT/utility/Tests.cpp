@@ -3649,7 +3649,7 @@ namespace HatScheT {
 	      HatScheT::Graph g;
 	      HatScheT::ResourceModel rm;
 
-          auto &green = rm.makeResource("green", 2, 1, 1);
+          auto &green = rm.makeResource("green", 10, 1, 1);
 
 	      Vertex &o0 = g.createVertex(0);
 	      Vertex &o1 = g.createVertex(1);
@@ -3681,8 +3681,7 @@ namespace HatScheT {
           g.createEdge(o6, o3, 0);
           g.createEdge(o7, o5, 0);
 
-          //TODO ILP-Solvers not needed.
-          SMTModScheduler smt(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+          SMTModScheduler smt(g, rm);
 
 	      int ii = (int)smt.getII();
 	      cout << "II: " << ii << endl;
@@ -3795,7 +3794,7 @@ namespace HatScheT {
 
 
       EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
-      SMTModScheduler smt(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+      SMTModScheduler smt(g, rm);
 
       es.setQuiet(true);
       start = clock();

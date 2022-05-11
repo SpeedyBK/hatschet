@@ -9,36 +9,29 @@
 
 #ifdef USE_Z3
 #include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
+#include <utility>
 #include <vector>
 
 #include <z3++.h>
 
 namespace HatScheT {
 
-  class SMTModScheduler : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
+  class SMTModScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
 
   public:
 
-    SMTModScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    SMTModScheduler(Graph& g, ResourceModel &resourceModel);
     /*!
      * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
      */
-    virtual void schedule();
+    void schedule() override;
 
 
   protected:
-    /*!
-     * not needed
-     */
-    virtual void setObjective(){}
-    virtual void resetContainer(){}
-    virtual void constructProblem() {/* unused */}
 
-    void buildDataStructure();
-
+    void build_Data_Structure();
 
     /*!
      * Problem Context, needed for Z3-Solver;
@@ -59,8 +52,7 @@ namespace HatScheT {
     /*!
      * This Function creates a vector of expressions. Each expression is corresponding to a t_variable of vertex.
      */
-    vector<z3::expr> creating_t_Variables();
-
+    void create_t_Variables();
     /*!
      * Data Dependency Constraints correspond to the edges in the data flow graph. tj - ti >= Li - II * dij
      * t_. are the t_variables for each vertex, Li is the latency for vertex i. II is obvious. dij is the distance of
@@ -77,7 +69,7 @@ namespace HatScheT {
     pair <vector<z3::expr>, vector<z3::expr>> build_Dependency_Constraints();
 
     /* ----------------------------------------- *
-     *  b_variables and MRM                      *
+     *  b_variables and MRT                      *
      * ----------------------------------------- */
     /* Data Structure:
      *
@@ -93,12 +85,49 @@ namespace HatScheT {
      * ------------------------------
      * V4  |  x  |     |     |      | sum = 1
      * ------------------------------
-     *       Sum   Sum   Sum    Sum
-     *       <=FU  <=FU  <=FU   <=FU
+     *       Sum   Sum   Sum   Sum
+     *       <=FU  <=FU  <=FU  <=FU
      *
      * For each constrained resource there will be
      * one layer like the one above.
      */
+
+    /*!
+     * B_Variables are used to model Resourceconstraints. For now im using a struct to be able to crosscheck the
+     * corresponding Vertex, Resource and Moduloslot.
+     */
+    struct b_variable{
+      b_variable(int i, z3::expr bVar) : iislot(i),  b_var(std::move(bVar)) {}
+      string resourcename = "unused";
+      string vertexname;
+      int iislot;
+      z3::expr b_var;
+    };
+    /*!
+     * 3-Dimentional Matrix to store all B_Variables in a way like shown above.
+     */
+    vector<vector<vector<b_variable>>> b_variables;
+    /*!
+     * Maps Vertices to the index in B_Variable Matrix
+     */
+    map<Vertex*, int> vertex_to_b_vairable_index;
+    /*!
+     * Maps Resources to the index in B_Variable Matrix
+     */
+    map<Resource*, int> resource_to_b_vairable_index;
+    /*!
+     * Function to create B_Variables.
+     * It itterates over Resources, Moduloslots and Vertices to store the Variables in the 3D Matrix above.
+     */
+    void create_b_variables();
+    /*!
+     * Getter for B_Variables, by Vertex, Resource and Moduloslot.
+     */
+    b_variable* get_b_var(Vertex* v, Resource* r, int slot);
+    /*!
+     * Print Methode.
+     */
+    void print_b_variables();
 
     /* ----------------------------------------- *
      *  I don't know                             *

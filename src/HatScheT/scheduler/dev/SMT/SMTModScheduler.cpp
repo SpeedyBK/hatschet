@@ -7,54 +7,49 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Exception.h"
 
-#include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include <z3++.h>
 
 #include <iostream>
 #include <map>
-#include <limits>
 #include <cmath>
 
 namespace HatScheT {
 
-  SMTModScheduler::SMTModScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist)
-      : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+  SMTModScheduler::SMTModScheduler(Graph &g, ResourceModel &resourceModel)
+      : SchedulerBase(g, resourceModel) {
       // reset previous solutions
       II = -1;
       this->timeouts = 0;
       startTimes.clear();
       scheduleFound = false;
-      optimalResult = true;
       computeMinII(&g, &resourceModel);
       minII = ceil(minII);
       computeMaxII(&g, &resourceModel);
       quiet = true;
   }
 
-  void SMTModScheduler::buildDataStructure() {
-
-      this->t_Variables = creating_t_Variables();
+  void SMTModScheduler::build_Data_Structure() {
+      if(!quiet){ cout << "Creating Data Structure..." << endl; }
+      create_t_Variables();
       this->data_Dependency_Constraints = build_Dependency_Constraints();
+      create_b_variables();
 
   }
 
-  vector<z3::expr> SMTModScheduler::creating_t_Variables() {
+  void SMTModScheduler::create_t_Variables() {
       if (!quiet) { cout << "Creating Vertex Expressions (t_i - Variables):" << endl;
                     cout << "Index: Vertex: Expression:" << endl;}
 
-      vector <z3::expr> t_VariablesVector;
       int i = 0;
       for (auto &it : g.Vertices()) {
           if (!quiet) { cout << i << ": " << it->getName() << " : "; }
           std::stringstream expr_name;
           expr_name << it->getName();
-          t_VariablesVector.push_back(c.int_const(expr_name.str().c_str()));
+          t_Variables.push_back(c.int_const(expr_name.str().c_str()));
           vertex_t_Variables_Map.insert({it, i});
           i++;
-          if (!quiet) { cout << t_VariablesVector.back() << endl; }
+          if (!quiet) { cout << t_Variables.back() << endl; }
       }
-
-      return t_VariablesVector;
   }
 
   pair <vector<z3::expr>, vector<z3::expr>> SMTModScheduler::build_Dependency_Constraints(){
@@ -90,52 +85,100 @@ namespace HatScheT {
       return {edgesWithoutDistance, edgesWithDistance};
   }
 
+  void SMTModScheduler::create_b_variables() {
 
+      vector<vector<b_variable>> collumn;
+      vector<b_variable> line;
 
+      if (!quiet) { cout << "Creating b_variables:" << endl; }
+
+      int r = 0;
+      for (const auto &res : resourceModel.Resources()){
+          if (res->getLimit() == UNLIMITED){
+              continue;
+          }
+          resource_to_b_vairable_index[res] = r;
+          r++;
+          for (int tau = 0; tau < this->II; tau++){
+              int v = 0;
+              for(const auto &ver : g.Vertices()){
+                    vertex_to_b_vairable_index[ver] = v;
+                    std::stringstream expr_name;
+                    expr_name.clear();
+                    expr_name << "[" << ver->getName() << "] [" << tau << "] [" << res->getName() << "]";
+                    z3::expr e(c.bool_const(expr_name.str().c_str()));
+                    b_variable b(tau, e);
+                    b.vertexname = ver->getName();
+                    b.resourcename = res->getName();
+                    line.push_back(b);
+                    v++;
+              }
+              collumn.push_back(line);
+              line.clear();
+          }
+          b_variables.push_back(collumn);
+          collumn.clear();
+      }
+  }
+
+  SMTModScheduler::b_variable *SMTModScheduler::get_b_var(Vertex *v, Resource *r, int slot) {
+      return &b_variables.at(resource_to_b_vairable_index[r]).at(slot).at(vertex_to_b_vairable_index[v]); //LOL
+  }
+
+  void SMTModScheduler::print_b_variables() {
+      for (const auto &res : resourceModel.Resources()){
+          if (res->getLimit() == UNLIMITED){
+              continue;
+          }
+          for (int tau = 0; tau < this->II; tau++){
+              for(const auto &ver : g.Vertices()){
+                  cout << get_b_var(ver, res, tau)->b_var << endl;
+              }
+          }
+      }
+  }
 
   void SMTModScheduler::schedule() {
 
+      z3::solver s(c);
+
       II = minII;
 
-      buildDataStructure();
-
-      for (const auto &[ExpressionIndex, Edge] : exprToEdgeMap){
-          cout << ExpressionIndex << " : " << Edge->getId() << endl;
-      }
-
-      throw(HatScheT::Exception("Bums"));
-
-      if(!quiet){ cout << "Starting with II = " << II << endl; }
-/*
-
-      auto dependencies = createDependencyConstraints(startTimesVector);
+      build_Data_Structure();
 
       if (!quiet) {
+          print_b_variables();
           cout << "Expressions without weight:" << endl;
-          for (auto it : dependencies.first) {
+          for (auto &it : data_Dependency_Constraints.first) {
               cout << it << endl;
           }
           cout << "Expressions with weight:" << endl;
-          for (auto it : dependencies.second) {
+          for (auto &it : data_Dependency_Constraints.second) {
               cout << it << endl;
           }
       }
 
-      if(!quiet){ cout << "Adding Expressions without weight to solver." << endl; }
-      z3::solver s(c);
+      //TODO Mach weg, den Quatsch
+      z3::expr_vector bums (c);
+      for (auto &it : g.Vertices()){
+          bums.push_back(get_b_var(it, resourceModel.getResource("green"), 0)->b_var);
+      }
 
-      for (auto it : dependencies.first){
+      s.add(sum(bums) > 5);
+
+      if(!quiet){ cout << "Adding Expressions without weight to solver." << endl; }
+      for (auto &it : data_Dependency_Constraints.first){
           s.add(it);
       }
 
-      if(!quiet){ cout << "Adding Expressions without weight to solver." << endl; }
+      if(!quiet){ cout << "Adding Expressions with weight to solver." << endl; }
       auto satisfiable = s.check();
       if(!quiet){ cout << "solving... " << satisfiable << endl; }
       if(!quiet){ cout << "Creating Fallback-Point." << endl; }
       s.push();
 
       if(!quiet){ cout << "Adding Expressions with weight to solver." << endl; }
-      for (auto it : dependencies.second){
+      for (auto &it : data_Dependency_Constraints.second){
           s.add(it);
       }
       satisfiable = s.check();
@@ -149,23 +192,22 @@ namespace HatScheT {
           s.push();
           for (auto &it : exprToEdgeMap){
               cout << "Edge ID : "<< it.second->getId() << endl;
-              z3::expr e = (  startTimesVector[it.second->getVertexDst().getId()]
-                            - startTimesVector[it.second->getVertexSrc().getId()]
+              z3::expr e = (  t_Variables[it.second->getVertexDst().getId()]
+                            - t_Variables[it.second->getVertexSrc().getId()]
                             + (int) II * it.second->getDistance()
                             >= resourceModel.getVertexLatency(&it.second->getVertexSrc()));
               s.add(e);
           }
           satisfiable = s.check();
           if(!quiet){ cout << s << "\n" << "solving... " << satisfiable << "\n"; }
-          //TODO Has to be changed;
           if (II > maxII) { break; }
       }
 
       z3::model m = s.get_model();
       if(!quiet){ std::cout << "solution\n" << m << "\n \n"; }
 
-      for (auto &it : vertexToExprMap){
-          startTimes.insert({it.first , m.eval(startTimesVector[it.second]).get_numeral_int()});
+      for (auto &it : vertex_t_Variables_Map){
+          startTimes.insert({it.first , m.eval(t_Variables[it.second]).get_numeral_int()});
       }
 
       int min = INT32_MAX;
@@ -178,30 +220,7 @@ namespace HatScheT {
       for (auto &it: startTimes) {
           it.second += abs(min);
       }
-
-*/
-
   }
-
-/*  z3::expr_vector SMTModScheduler::creatingStartTimesVec() {
-      if (!quiet) { cout << "Creating Vertex Expressions:" << endl; }
-
-      //Creating one z3::expr per Vertex and storing in an expr_vector;
-      z3::expr_vector startTimesVector (c);
-      int i = 0;
-      for (auto &it : g.Vertices()) {
-          if (!quiet) { cout << i << ": " << it->getName() << " : "; }
-          std::stringstream expr_name;
-          expr_name << it->getName();
-          startTimesVector.push_back(c.int_const(expr_name.str().c_str()));
-          vertexToExprMap.insert({it, i});
-          i++;
-          if (!quiet) { cout << startTimesVector.back() << endl; }
-      }
-
-      return startTimesVector;
-  }*/
-
 }
 
 #endif
