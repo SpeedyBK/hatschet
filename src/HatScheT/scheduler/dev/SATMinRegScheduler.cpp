@@ -259,12 +259,9 @@ namespace HatScheT {
 				std::cout << "SATMinRegScheduler: creating dependency constraint for edge '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
 			}
 			auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-			auto lDst = this->resourceModel.getVertexLatency(vDst);
 			auto distance = e->getDistance();
 			auto delay = e->getDelay();
-			//for (int tau1=0; tau1 <= this->maxLatencyConstraint - lSrc; tau1++) {
 			for (int tau1=this->earliestStartTime.at(vSrc); tau1 <= this->latestStartTime.at(vSrc); tau1++) {
-				//for (int tau2=0; tau2 <= this->maxLatencyConstraint - lDst; tau2++) {
 				for (int tau2=this->earliestStartTime.at(vDst); tau2 <= this->latestStartTime.at(vDst); tau2++) {
 					// dependency constraint
 					if (tau2 + (distance * this->II) - tau1 - lSrc - delay < 0) {
@@ -297,7 +294,6 @@ namespace HatScheT {
 			auto limit = r->getLimit();
 			auto bindingTrivial = limit == 1;
 			if (limit == UNLIMITED) continue;
-			auto lat = r->getLatency();
 			for (int l=0; l<limit; l++) {
 				if (!this->quiet) {
 					std::cout << "SATMinRegScheduler: creating resource constraints for resource '" << r->getName() << "' instance '" << l << "'" << std::endl;
@@ -316,11 +312,9 @@ namespace HatScheT {
 							b2 = this->bindingLiterals.at({v2, l});
 						}
 						for (int x=0; x<this->II; x++) {
-							//for (int tau1=0; tau1<= this->maxLatencyConstraint - lat; tau1++) {
 							for (int tau1=this->earliestStartTime.at(v1); tau1<= this->latestStartTime.at(v1); tau1++) {
 								if (tau1 % (int)this->II != x) continue;
 								auto t1 = this->scheduleTimeLiterals.at({v1, tau1});
-								//for (int tau2=0; tau2<= this->maxLatencyConstraint - lat; tau2++) {
 								for (int tau2=this->earliestStartTime.at(v2); tau2<= this->latestStartTime.at(v2); tau2++) {
 									if (tau2 % (int)this->II != x) continue;
 									auto t2 = this->scheduleTimeLiterals.at({v2, tau2});
@@ -346,8 +340,6 @@ namespace HatScheT {
 				std::cout << "SATMinRegScheduler: creating schedule time constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// schedule time
-			auto lat = this->resourceModel.getVertexLatency(v);
-			//for (int tau=0; tau<= this->maxLatencyConstraint - lat; tau++) {
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->solver->add(this->scheduleTimeLiterals.at({v, tau}));
 			}
@@ -358,7 +350,6 @@ namespace HatScheT {
 				if (!this->quiet) {
 					std::cout << "SATMinRegScheduler: creating register binding constraints for vertex '" << v->getName() << "'" << std::endl;
 				}
-				//for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestVariableReadTime.at(v); tau++) {
 					this->solver->add(-this->variableLiterals.at({v, tau}));
 					for (int reg=0; reg < this->candidateNumRegs; reg++) {
@@ -387,10 +378,8 @@ namespace HatScheT {
 				for (auto &v2 : this->g.Vertices()) {
 					if (v1->getId() > v2->getId()) continue; // only create overlap constraints once
 					if (!this->hasOutgoingEdges.at(v2)) continue; // skip vertices without outputs
-					//for (int tau1=0; tau1<= this->latestVariableReadTime.at(v1); tau1++) {
 					for (int tau1=this->earliestStartTime.at(v1); tau1<= this->latestVariableReadTime.at(v1); tau1++) {
 						if (tau1 % (int)this->II != gamma) continue;
-						//for (int tau2=0; tau2<= this->latestVariableReadTime.at(v2); tau2++) {
 						for (int tau2=this->earliestStartTime.at(v2); tau2<= this->latestVariableReadTime.at(v2); tau2++) {
 							if (tau2 % (int)this->II != gamma) continue;
 							if (v1 == v2 and tau1 == tau2) continue;
@@ -417,7 +406,6 @@ namespace HatScheT {
 			std::cout << "SATMinRegScheduler: CaDiCaL solution: " << std::endl;
 			for (auto &v : this->g.Vertices()) {
 				std::cout << "  vertex " << v->getName() << std::endl;
-				//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 					std::cout << "    t=" << tau << " - " << this->solver->val(this->scheduleTimeLiterals.at({v, tau})) << std::endl;
 				}
@@ -426,17 +414,14 @@ namespace HatScheT {
 						std::cout << "    b=" << l << " - " << this->solver->val(this->bindingLiterals.at({v, l})) << std::endl;
 					}
 				}
-				//for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
 				for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
 					std::cout << "    z=" << tau << " - " << this->solver->val(this->variableLiterals.at({v, tau})) << std::endl;
 				}
 			}
-			//for (auto reg=0; reg< this->regMax; reg++) {
 			for (auto reg=0; reg< this->candidateNumRegs; reg++) {
 				std::cout << "  register " << reg << std::endl;
 				for (auto &v : this->g.Vertices()) {
 					std::cout << "    vertex " << v->getName() << std::endl;
-					//for (int tau=0; tau<this->latestVariableReadTime.at(v); tau++) {
 					for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
 						std::cout << "      r=" << tau << " - " << this->solver->val(this->registerBindingLiterals.at({v, tau, reg})) << std::endl;
 					}
@@ -446,7 +431,6 @@ namespace HatScheT {
 		this->startTimesContainer.clear();
 		for (auto &v : this->g.Vertices()) {
 			// schedule time
-			//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				if (this->solver->val(this->scheduleTimeLiterals.at({v, tau})) < 0) {
 					continue;
@@ -473,14 +457,12 @@ namespace HatScheT {
 	void SATMinRegScheduler::createLiterals() {
 		for (auto &v : this->g.Vertices()) {
 			// schedule time literals
-			//for (int tau=0; tau<= this->maxLatencyConstraint - this->resourceModel.getVertexLatency(v); tau++) {
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->scheduleTimeLiteralCounter++;
 				this->scheduleTimeLiterals[{v, tau}] = ++this->literalCounter;
 			}
 			// variable and register binding literals
 			if (this->hasOutgoingEdges.at(v)) {
-				//for (int tau=0; tau<= this->latestVariableReadTime.at(v); tau++) {
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestVariableReadTime.at(v); tau++) {
 					// variable literals
 					this->variableLiteralCounter++;

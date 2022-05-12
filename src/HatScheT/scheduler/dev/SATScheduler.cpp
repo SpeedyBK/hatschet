@@ -180,7 +180,13 @@ namespace HatScheT {
 		// ACM Transactions on Reconfigurable Technology and Systems, vol. 12, no. 2, p. 26.
 		this->maxLatency = 0;
 		for (auto &v : this->g.Vertices()) {
-			this->maxLatency += this->resourceModel.getVertexLatency(v);
+			int maxChainingDelay = 0;
+			for (auto &e : this->g.Edges()) {
+				if (&e->getVertexSrc() != v) continue;
+				auto d = e->getDelay();
+				if (d > maxChainingDelay) maxChainingDelay = d;
+			}
+			this->maxLatency += (this->resourceModel.getVertexLatency(v) + maxChainingDelay);
 		}
 		for (auto &r : this->resourceModel.Resources()) {
 			if (r->isUnlimited()) continue;
@@ -273,7 +279,6 @@ namespace HatScheT {
 				std::cout << "SATScheduler: creating dependency constraint for edge '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
 			}
 			auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-			auto lDst = this->resourceModel.getVertexLatency(vDst);
 			auto distance = e->getDistance();
 			auto delay = e->getDelay();
 			for (int tau1=this->earliestStartTime.at(vSrc); tau1 <= this->latestStartTime.at(vSrc); tau1++) {
@@ -299,8 +304,6 @@ namespace HatScheT {
 			auto limit = r->getLimit();
 			auto bindingTrivial = limit == 1;
 			if (limit == UNLIMITED) continue;
-			//auto limit = r->isUnlimited()?(int)this->resourceModel.getNumVerticesRegisteredToResource(r):r->getLimit();
-			auto lat = r->getLatency();
 			for (int l=0; l<limit; l++) {
 				if (!this->quiet) {
 					std::cout << "SATScheduler: creating resource constraints for resource '" << r->getName() << "' instance '" << l << "'" << std::endl;
@@ -649,7 +652,6 @@ namespace HatScheT {
 		if (!asapScheduler.getScheduleFound()) {
 			throw Exception("SATScheduler: failed to compute earliest start times - that should never happen");
 		}
-		auto asapSL = asapScheduler.getScheduleLength();
 		auto asapStartTimes = asapScheduler.getSchedule();
 		for (auto &v : this->g.Vertices()) {
 			this->earliestStartTime[v] = asapStartTimes.at(v);
@@ -657,7 +659,8 @@ namespace HatScheT {
 		// set resource limits back to original values
 		for (auto &r : this->resourceModel.Resources()) {
 			r->setLimit(originalLimits.at(r));
-		}	}
+		}
+	}
 
 	CaDiCalTerminator::CaDiCalTerminator(double timeout)
 		: maxTime(timeout), timerStart(std::chrono::steady_clock::now()) {}
