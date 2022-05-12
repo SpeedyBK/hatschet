@@ -123,11 +123,21 @@ namespace HatScheT {
     /*!
      * Getter for B_Variables, by Vertex, Resource and Moduloslot.
      */
-    b_variable* get_b_var(Vertex* v, Resource* r, int slot);
+    b_variable* get_b_var(Vertex* v, const Resource *r, int slot);
+
+    static void add_Constraints_to_solver(z3::solver &s, vector<z3::expr, allocator<z3::expr>> &eVec);
+
+    void add_one_slot_constraints_to_solver(z3::solver &s);
+
+    void add_resource_limit_constraint_to_solver(z3::solver &s);
+
+    void add_linking_constraints_to_solver(z3::solver &s);
     /*!
      * Print Methode.
      */
     void print_b_variables();
+
+    void print_data_dependency_Constraints();
 
     /* ----------------------------------------- *
      *  I don't know                             *

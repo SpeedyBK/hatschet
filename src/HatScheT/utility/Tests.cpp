@@ -3649,7 +3649,7 @@ namespace HatScheT {
 	      HatScheT::Graph g;
 	      HatScheT::ResourceModel rm;
 
-          auto &green = rm.makeResource("green", 10, 1, 1);
+          auto &green = rm.makeResource("green", 2, 1, 1);
 
 	      Vertex &o0 = g.createVertex(0);
 	      Vertex &o1 = g.createVertex(1);
@@ -3731,7 +3731,7 @@ namespace HatScheT {
       }*/
 
 
-      auto &green = rm.makeResource("Green", UNLIMITED, 2, 1);
+      auto &green = rm.makeResource("Green", 2, 2, 1);
 
       Vertex &o0 = g.createVertex(0);
       Vertex &o1 = g.createVertex(1);
@@ -3817,7 +3817,7 @@ namespace HatScheT {
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
 
-      smt.setQuiet(true);
+      smt.setQuiet(false);
       start = clock();
       smt.schedule();
       end = clock();

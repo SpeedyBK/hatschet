@@ -77,6 +77,7 @@
 #endif
 
 #ifdef USE_Z3
+#include <z3++.h>
 // toDo - Will be added soon.
 #endif
 
