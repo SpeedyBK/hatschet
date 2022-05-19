@@ -5,6 +5,7 @@
 #include "OptimalIntegerIIBindingCong.h"
 #include <ScaLP/Solver.h>
 #include <cmath>
+#include <chrono>
 
 namespace HatScheT {
 
@@ -25,6 +26,11 @@ namespace HatScheT {
 				std::cout << "  " << it.first->getName() << " (" << it.first->getId() << ") - " << it.second << std::endl;
 			}
 		}
+
+		//////////////////////////////////////
+		// start timer for ILP construction //
+		//////////////////////////////////////
+		auto timerStart = std::chrono::steady_clock::now();
 
 		///////////////////////////////////////////////
 		// find conflicting operations and variables //
@@ -178,6 +184,11 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "Minimum number of needed registers = " << minRegs << std::endl;
 		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		///////////////////
 		// set up solver //
@@ -210,7 +221,11 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "Created x_i_k variables" << std::endl;
 		}
-		s.showLP(); // this line does nothing - only for debugging
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		// boolean variables whether variable of v_i is bound to register l (y_i_l)
 		std::map<std::pair<int,int>,ScaLP::Variable> y_i_l;
@@ -230,7 +245,11 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "Created y_i_l variables" << std::endl;
 		}
-		s.showLP(); // this line does nothing - only for debugging
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		// boolean variables for each FU -> register connection (c_r_k_l) for each resource type r
 		std::map<std::pair<std::string,std::pair<int,int>>,ScaLP::Variable> c_r_k_l;
@@ -248,7 +267,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created c_r_k_l variables" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		// number of inputs of each resource type
@@ -288,7 +311,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created a_r_n_k_l variables" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		// boolean variables for each FU -> FU connection for each port of that FU (needed for edges with lifetime=0) (b_r1_r2_k1_k2_n)
@@ -328,7 +355,11 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "Created b_r1_r2_k1_k2_n variables" << std::endl;
 		}
-		s.showLP(); // this line does nothing - only for debugging
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		// number of MUX inputs for each FU and each port (m_r_k_n)
 		std::map<std::pair<std::string,std::pair<int,int>>,ScaLP::Variable> m_r_k_n;
@@ -359,7 +390,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created m_r_k_n variables" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		// number of MUX inputs for each register (w_l)
@@ -372,7 +407,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created w_l variables" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		////////////////////////
@@ -394,7 +433,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created x_i_k=1 constraints" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		// each variable is bound to one resource (if registers are needed)
@@ -410,6 +453,11 @@ namespace HatScheT {
 					t += y_i_l[{i,l}];
 				}
 				s.addConstraint(t == 1);
+			}
+			if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+				// timeout -> leave binding empty
+				this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+				return;
 			}
 		}
 
@@ -455,10 +503,14 @@ namespace HatScheT {
 					}
 				}
 			}
+			if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+				// timeout -> leave binding empty
+				this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+				return;
+			}
 		}
 		if (!this->quiet) {
 			std::cout << "Created resource overlap constraints" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
 		}
 
 		// no overlaps in registers (variable conflict graph)
@@ -493,11 +545,14 @@ namespace HatScheT {
 					std::cout << "created constraint " << constr << std::endl;
 				}
 			}
+			if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+				// timeout -> leave binding empty
+				this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+				return;
+			}
 		}
 		if (!this->quiet) {
 			std::cout << "Created register overlap constraints" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
-			std::cout << "#q# 0" << std::endl;
 		}
 
 		// A) for edges with lifetime > 0
@@ -550,10 +605,14 @@ namespace HatScheT {
 					throw HatScheT::Exception("Could not find port assignment for edge '"+vSrc->getName()+"' -> '"+vDst->getName()+"'");
 				}
 			}
+			if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+				// timeout -> leave binding empty
+				this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+				return;
+			}
 		}
 		if (!this->quiet) {
 			std::cout << "Created edge constraints for lifetime > 0" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
 		}
 
 		// B) for edges with lifetime = 0
@@ -596,10 +655,14 @@ namespace HatScheT {
 					}
 				}
 			}
+			if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+				// timeout -> leave binding empty
+				this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+				return;
+			}
 		}
 		if (!this->quiet) {
 			std::cout << "Created edge constraints for lifetime = 0" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
 		}
 
 		// calculate number of MUX inputs per port for each FU (m_r_k_n)
@@ -632,7 +695,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created number of resource mux input constraints" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		// calculate number of MUX inputs per port for each register
@@ -651,7 +718,11 @@ namespace HatScheT {
 		}
 		if (!this->quiet) {
 			std::cout << "Created number of register mux input constraints" << std::endl;
-			s.showLP(); // this line does nothing - only for debugging
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		///////////////////////////////
@@ -692,6 +763,11 @@ namespace HatScheT {
 			std::cout << "Created objective" << std::endl;
 		}
 		s.setObjective(ScaLP::minimize(obj));
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		///////////
 		// solve //
