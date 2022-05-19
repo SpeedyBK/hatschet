@@ -13,6 +13,7 @@
 #include <HatScheT/base/IterativeSchedulerBase.h>
 #include <utility>
 #include <vector>
+#include <deque>
 
 #include <z3++.h>
 
@@ -44,7 +45,7 @@ namespace HatScheT {
     /*!
      * t_variables are the starttimes of operations represented by a vertex in our dataflow graph.
      */
-    vector<z3::expr> t_Variables;
+    deque<z3::expr> t_Variables;
     /*!
      * Mapping Vertices to the index of the corresponding expression in the t_vairables Vector.
      */
@@ -58,7 +59,7 @@ namespace HatScheT {
      * t_. are the t_variables for each vertex, Li is the latency for vertex i. II is obvious. dij is the distance of
      * the edge from vertex i to vertex j.
      */
-    pair <vector<z3::expr>, vector<z3::expr>> data_Dependency_Constraints;
+    pair <deque<z3::expr>, deque<z3::expr>> data_Dependency_Constraints;
     /*!
      * This Function uses the t_variables to create the data dependency constraints.
      * @return It returns two vectors of z3::expr. The first vector corresponds with the edges without distance,
@@ -66,7 +67,7 @@ namespace HatScheT {
      * This is done to create fallback points for the SMT-Solver, to remove constraints depending on II, then increment
      * II and push those constraints back in the Solver.
      */
-    pair <vector<z3::expr>, vector<z3::expr>> build_Dependency_Constraints();
+    pair <deque<z3::expr>, deque<z3::expr>> build_Dependency_Constraints();
 
     /* ----------------------------------------- *
      *  b_variables and MRT                      *
@@ -106,7 +107,7 @@ namespace HatScheT {
     /*!
      * 3-Dimentional Matrix to store all B_Variables in a way like shown above.
      */
-    vector<vector<vector<b_variable>>> b_variables;
+    deque<deque<deque<b_variable>>> b_variables;
     /*!
      * Maps Vertices to the index in B_Variable Matrix
      */
@@ -125,7 +126,7 @@ namespace HatScheT {
      */
     b_variable* get_b_var(Vertex* v, const Resource *r, int slot);
 
-    static void add_Constraints_to_solver(z3::solver &s, vector<z3::expr, allocator<z3::expr>> &eVec);
+    static void add_Constraints_to_solver(z3::solver &s, deque<z3::expr, allocator<z3::expr>> &eVec);
 
     void add_one_slot_constraints_to_solver(z3::solver &s);
 

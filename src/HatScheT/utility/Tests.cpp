@@ -3719,78 +3719,60 @@ namespace HatScheT {
 
       clock_t start, end;
 
-      /*HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_biquRM.xml";
-      string graphStr = "benchmarks/origami/iir_biqu.graphml";
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/origami/fir_SHIRM.xml";
+      string graphStr = "benchmarks/origami/fir_SHI.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      for (auto &it : rm.Resources()){
+      /*for (auto &it : rm.Resources()){
           it->setLimit(UNLIMITED);
       }*/
 
+      //Simple IIR-Filter:
+      /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
+      auto &Product = rm.makeResource("Product", 1, 1, 1);
+      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
+      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
 
-      auto &green = rm.makeResource("Green", 2, 2, 1);
+      Vertex &IN = g.createVertex(0);
+      Vertex &SUM_0 = g.createVertex(1);
+      Vertex &PROD_1 = g.createVertex(2);
+      Vertex &PROD_0 = g.createVertex(3);
+      Vertex &CONST_A = g.createVertex(4);
+      Vertex &CONST_B = g.createVertex(5);
+      Vertex &SUM_1 = g.createVertex(6);
+      Vertex &OUT = g.createVertex(7);
 
-      Vertex &o0 = g.createVertex(0);
-      Vertex &o1 = g.createVertex(1);
-      Vertex &o2 = g.createVertex(2);
-      Vertex &o3 = g.createVertex(3);
-      Vertex &o4 = g.createVertex(4);
-      Vertex &o5 = g.createVertex(5);
-      Vertex &o6 = g.createVertex(6);
-      Vertex &o7 = g.createVertex(7);
-      Vertex &o8 = g.createVertex(8);
-      Vertex &o9 = g.createVertex(9);
-      Vertex &o10 = g.createVertex(10);
-      Vertex &o12 = g.createVertex(11);
-      Vertex &o13 = g.createVertex(12);
-      Vertex &o14 = g.createVertex(13);
-      Vertex &o15 = g.createVertex(14);
-      Vertex &o16 = g.createVertex(15);
+      IN.setName("IN");
+      SUM_0.setName("SUM_0");
+      PROD_1.setName("PROD_1");
+      PROD_0.setName("PROD_0");
+      CONST_A.setName("CONST_A");
+      CONST_B.setName("CONST_B");
+      SUM_1.setName("SUM_1");
+      OUT.setName("OUT");
 
-      rm.registerVertex(&o0, &green);
-      rm.registerVertex(&o1, &green);
-      rm.registerVertex(&o2, &green);
-      rm.registerVertex(&o3, &green);
-      rm.registerVertex(&o4, &green);
-      rm.registerVertex(&o5, &green);
-      rm.registerVertex(&o6, &green);
-      rm.registerVertex(&o7, &green);
-      rm.registerVertex(&o8, &green);
-      rm.registerVertex(&o9, &green);
-      rm.registerVertex(&o10, &green);
-      rm.registerVertex(&o12, &green);
-      rm.registerVertex(&o13, &green);
-      rm.registerVertex(&o14, &green);
-      rm.registerVertex(&o15, &green);
-      rm.registerVertex(&o16, &green);
+      rm.registerVertex(&IN, &LoadStore);
+      rm.registerVertex(&SUM_0, &Sum);
+      rm.registerVertex(&PROD_1, &Product);
+      rm.registerVertex(&PROD_0, &Product);
+      rm.registerVertex(&CONST_A, &Constant);
+      rm.registerVertex(&CONST_B, &Constant);
+      rm.registerVertex(&SUM_1, &Sum);
+      rm.registerVertex(&OUT, &LoadStore);
 
-
-      g.createEdge(o0, o1, 0);
-      g.createEdge(o1, o2, 0);
-      g.createEdge(o2, o3, 0);
-      g.createEdge(o3, o4, 0);
-      g.createEdge(o4, o0, 1);
-
-      g.createEdge(o0, o5, 0);
-      g.createEdge(o5, o6, 0);
-      g.createEdge(o6, o7, 0);
-      g.createEdge(o7, o8, 0);
-      g.createEdge(o8, o0, 1);
-
-      g.createEdge(o2, o9, 0);
-      g.createEdge(o9, o10, 0);
-      g.createEdge(o10, o14, 0);
-      g.createEdge(o14, o12, 0);
-      g.createEdge(o12, o2, 1);
-
-      g.createEdge(o7, o13, 0);
-      g.createEdge(o13, o14, 0);
-      g.createEdge(o14, o15, 0);
-      g.createEdge(o15, o16, 0);
-      g.createEdge(o16, o7, 1);
+      g.createEdge(IN, SUM_0, 0);
+      g.createEdge(SUM_0, PROD_0, 1);
+      g.createEdge(SUM_0, PROD_1, 1);
+      g.createEdge(SUM_0, SUM_1, 0);
+      g.createEdge(CONST_B, PROD_1, 0);
+      g.createEdge(CONST_A, PROD_0, 0);
+      g.createEdge(PROD_0, SUM_0, 0);
+      g.createEdge(PROD_1, SUM_1, 0);
+      g.createEdge(SUM_1, OUT, 0);*/
 
 
       EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
@@ -3817,7 +3799,7 @@ namespace HatScheT {
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
 
-      smt.setQuiet(false);
+      smt.setQuiet(true);
       start = clock();
       smt.schedule();
       end = clock();

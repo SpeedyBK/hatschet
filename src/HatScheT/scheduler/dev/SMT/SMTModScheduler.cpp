@@ -52,12 +52,12 @@ namespace HatScheT {
       }
   }
 
-  pair <vector<z3::expr>, vector<z3::expr>> SMTModScheduler::build_Dependency_Constraints(){
+  pair <deque<z3::expr>, deque<z3::expr>> SMTModScheduler::build_Dependency_Constraints(){
 
       if (!quiet) { cout << "\nCreating dependency contraints:" << endl; }
 
-      vector<z3::expr> edgesWithoutDistance;
-      vector<z3::expr> edgesWithDistance;
+      deque<z3::expr> edgesWithoutDistance;
+      deque<z3::expr> edgesWithDistance;
 
       int i = 0;
       for(auto &it : g.Edges()){
@@ -89,8 +89,8 @@ namespace HatScheT {
 
       b_variables.clear();
 
-      vector<vector<b_variable>> collumn;
-      vector<b_variable> line;
+      deque<deque<b_variable>> collumn;
+      deque<b_variable> line;
 
       if (!quiet) { cout << "\nCreating b_variables:" << endl; }
 
@@ -157,13 +157,14 @@ namespace HatScheT {
       }
   }
 
-  void SMTModScheduler::add_Constraints_to_solver(z3::solver &s, vector<z3::expr, allocator<z3::expr>> &eVec) {
+  void SMTModScheduler::add_Constraints_to_solver(z3::solver &s, deque<z3::expr, allocator<z3::expr>> &eVec) {
       for (auto &it : eVec) {
           s.add(it);
       }
   }
 
   void SMTModScheduler::add_one_slot_constraints_to_solver(z3::solver &s) {
+
       for (auto &it : g.Vertices()) {
           z3::expr_vector one_Slot_Constraint(c);
           for (int i = 0; i < II; i++) {
@@ -171,9 +172,13 @@ namespace HatScheT {
                   one_Slot_Constraint.push_back(get_b_var(it, resourceModel.getResource(it), i)->b_var);
               }
           }
-          z3::expr e = sum(one_Slot_Constraint) == 1;
-          if(!quiet){ cout << e << endl; }
-          s.add(e);
+          if (!quiet){ cout << "One Slot Constraint Size:" << one_Slot_Constraint.size() << endl; }
+          if (!resourceModel.getResource(it)->isUnlimited()) {
+              z3::expr e = sum(one_Slot_Constraint) == 1;
+              if (!quiet) { cout << e << endl; }
+              s.add(e);
+          }
+
       }
   }
 
@@ -198,25 +203,29 @@ namespace HatScheT {
   }
 
   void SMTModScheduler::add_linking_constraints_to_solver(z3::solver &s) {
-      for(auto &it : g.Vertices()){
-          std::stringstream expr_name;
+      for(auto &it : g.Vertices()) {
+          if (!resourceModel.getResource(it)->isUnlimited()) {
+              std::stringstream expr_name;
 
-          expr_name << "y_" << it->getId();
-          z3::expr y(c.int_const(expr_name.str().c_str()));
-          z3::expr yII = (y * (int)II);
-          z3::expr_vector b_times_tau_vec(c);
-          z3::expr zero(c.int_val(0));
-          z3::expr one(c.int_val(1));
+              expr_name << "y_" << it->getId();
+              z3::expr y(c.int_const(expr_name.str().c_str()));
+              z3::expr yII = (y * (int) II);
+              z3::expr_vector b_times_tau_vec(c);
+              z3::expr zero(c.int_val(0));
+              z3::expr one(c.int_val(1));
 
-          for(int i = 0; i < (int)II; i++){
-              z3::expr b = get_b_var(it, resourceModel.getResource(it), i)->b_var;
-              z3::expr bi = z3::ite(b, one, zero);
-              z3::expr bii = (bi * i);// Wirft error.
-              b_times_tau_vec.push_back(bii);
+              for (int i = 0; i < (int) II; i++) {
+
+                  z3::expr b = get_b_var(it, resourceModel.getResource(it), i)->b_var;
+                  z3::expr bi = z3::ite(b, one, zero);
+                  z3::expr bii = (bi * i);// Wirft error.
+                  b_times_tau_vec.push_back(bii);
+
+              }
+
+              z3::expr sum_of_b_times_tau = sum(b_times_tau_vec);
+              s.add(t_Variables.at(vertex_t_Variables_Map.at(it)) == yII + sum_of_b_times_tau);
           }
-
-          z3::expr sum_of_b_times_tau = sum(b_times_tau_vec);
-          s.add(t_Variables.at(vertex_t_Variables_Map.at(it)) == yII + sum_of_b_times_tau );
       }
   }
 
@@ -263,7 +272,7 @@ namespace HatScheT {
           if(!quiet){ cout << "II:" << II << endl; }
           s.push();
           for (auto &it : exprToEdgeMap){
-              cout << "Edge ID : "<< it.second->getId() << endl;
+              if (!quiet){cout << "Edge ID : "<< it.second->getId() << endl;}
               z3::expr e = (  t_Variables[it.second->getVertexDst().getId()]
                             - t_Variables[it.second->getVertexSrc().getId()]
                             + (int) II * it.second->getDistance()
