@@ -25,7 +25,8 @@
 namespace HatScheT
 {
 
-ModuloSchedulerBase::ModuloSchedulerBase(){
+ModuloSchedulerBase::ModuloSchedulerBase() :
+	firstObjectiveOptimal(false), secondObjectiveOptimal(false) {
 
 }
 
@@ -37,6 +38,10 @@ void ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm, Target* t) {
 
 void ModuloSchedulerBase::computeMaxII(Graph *g, ResourceModel *rm) {
   this->maxII = Utility::calcMaxII(g, rm);
+}
+
+std::pair<bool, bool> ModuloSchedulerBase::getObjectivesOptimal() const {
+	return std::make_pair(this->firstObjectiveOptimal, this->secondObjectiveOptimal);
 }
 
 }

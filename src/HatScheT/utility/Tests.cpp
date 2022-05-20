@@ -1753,7 +1753,7 @@ namespace HatScheT {
 		cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
 		return false;
 #else
-		std::list<SchedulerType> intIISchedulers = {ED97, MODULOSDC, MOOVAC, SUCHAHANZALEK};
+		std::list<SchedulerType> intIISchedulers = {ED97, MODULOSDC, MOOVAC, SUCHAHANZALEK, SAT};
 		for (auto intIIScheduler : intIISchedulers) {
 			std::string schedulerName;
 
@@ -1774,6 +1774,10 @@ namespace HatScheT {
 					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: SUCHAHANZALEK" << std::endl;
 					schedulerName = "SUCHAHANZALEK";
 					break;
+				case SAT:
+					std::cout << "Tests::uniformRationalIISchedulerTest: intII scheduler: SAT" << std::endl;
+					schedulerName = "SAT";
+					break;
 			}
 
 			HatScheT::ResourceModel rm;
@@ -1788,7 +1792,7 @@ namespace HatScheT {
 			readerGraph.readGraph(graphStr.c_str());
 
 			HatScheT::UnrollRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-			rii.setIntIIScheduler(SchedulerType::SUCHAHANZALEK);
+			rii.setIntIIScheduler(intIIScheduler);
 			rii.setQuiet(false);
 			rii.setSolverTimeout(30);
 			rii.setThreads(1);

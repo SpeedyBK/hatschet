@@ -71,6 +71,8 @@ namespace HatScheT {
 
 		// header
 		file << "# II " << ((double)this->modulo)/((double)this->samples) << std::endl;
+		file << "# firstObjectiveOptimal " << this->objectivesOptimal.first << std::endl;
+		file << "# secondObjectiveOptimal " << this->objectivesOptimal.second << std::endl;
 		if(this->samples!=1) {
 			file << "# samples " << this->samples << std::endl;
 			file << "# modulo " << this->modulo << std::endl;

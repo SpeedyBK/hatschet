@@ -61,11 +61,15 @@ void EichenbergerDavidson97Scheduler::schedule()
     throw HatScheT::Exception("Inconsistent II bounds");
 
   bool feasible = false;
+  // let's be optimistic and set them to false on timeout
+  this->firstObjectiveOptimal = true;
+  this->secondObjectiveOptimal = true;
   for (int candII = minII; candII <= maxII; ++candII) {
     bool proven = false;
     scheduleAttempt(candII, feasible, proven);
     scheduleFound |= feasible;
     optimalResult &= proven;
+    secondObjectiveOptimal = proven;
     if (feasible) {
       II = candII;
       auto solution = solver->getResult().values;
@@ -80,7 +84,7 @@ void EichenbergerDavidson97Scheduler::schedule()
       }
       break;
     }
-    if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
+    if(!feasible and !this->quiet) cout << "  II" << candII << " : " << this->stat << endl;
   }
   if(scheduleFound == false) this->II = -1;
   if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
@@ -118,7 +122,10 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   if(this->solvingTime == -1.0) this->solvingTime = 0.0;
   this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
-  if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) this->timeouts++;
+  if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
+    this->firstObjectiveOptimal = false;
+    this->timeouts++;
+  }
   feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
   proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;
 }

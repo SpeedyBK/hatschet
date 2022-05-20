@@ -146,6 +146,10 @@ namespace HatScheT {
 			this->optimalResult = !breakByTimeout;
 			if (breakByTimeout) {
 				this->timeouts++;
+				this->secondObjectiveOptimal = false;
+				if (!this->scheduleFound) {
+					this->firstObjectiveOptimal = false;
+				}
 			}
 			if (this->scheduleFound) {
 				// schedule attempt finished :)
@@ -208,6 +212,8 @@ namespace HatScheT {
 		// solution info
 		this->scheduleFound = false;
 		this->optimalResult = false;
+		this->firstObjectiveOptimal = true;
+		this->secondObjectiveOptimal = true;
 		// latency bounds
 		this->calcMinLatency();
 		this->calcMaxLatency();
