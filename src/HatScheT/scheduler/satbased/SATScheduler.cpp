@@ -58,7 +58,7 @@ namespace HatScheT {
 			bool lastAttemptSuccess = false;
 			bool breakByTimeout = false;
 			double elapsedTime = 0.0;
-			this->terminator = CaDiCalTerminator((double)this->solverTimeout);
+			this->terminator = CaDiCaLTerminator((double)this->solverTimeout);
 			while (this->computeNewLatencySuccess(lastAttemptSuccess)) {
 				if (!this->quiet) {
 					std::cout << "SATScheduler: resetting containers" << std::endl;
@@ -666,22 +666,6 @@ namespace HatScheT {
 		for (auto &r : this->resourceModel.Resources()) {
 			r->setLimit(originalLimits.at(r));
 		}
-	}
-
-	CaDiCalTerminator::CaDiCalTerminator(double timeout)
-		: maxTime(timeout), timerStart(std::chrono::steady_clock::now()) {}
-
-	bool CaDiCalTerminator::terminate() {
-		return this->getElapsedTime() >= this->maxTime;
-	}
-
-	void CaDiCalTerminator::reset(double newTimeout) {
-		this->timerStart = std::chrono::steady_clock::now();
-		this->maxTime = newTimeout;
-	}
-
-	double CaDiCalTerminator::getElapsedTime() const {
-		return chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - this->timerStart).count() / 1000.0;
 	}
 }
 #endif

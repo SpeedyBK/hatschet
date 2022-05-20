@@ -14,20 +14,9 @@
 #include <map>
 #include <utility>
 #include <memory>
-#include <chrono>
+#include <HatScheT/scheduler/satbased/CaDiCaLTerminator.h>
 
 namespace HatScheT {
-
-	class CaDiCalTerminator : public CaDiCaL::Terminator {
-	public:
-		explicit CaDiCalTerminator(double timeout);
-		bool terminate () override;
-		void reset(double newTimeout);
-		double getElapsedTime() const;
-	private:
-		double maxTime;
-		std::chrono::steady_clock::time_point timerStart;
-	};
 
 	class SATScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
@@ -71,7 +60,7 @@ namespace HatScheT {
 
 		double solvingTime;
 		std::unique_ptr<CaDiCaL::Solver> solver;
-		CaDiCalTerminator terminator;
+		CaDiCaLTerminator terminator;
 
 		int literalCounter;
 		int scheduleTimeLiteralCounter;
