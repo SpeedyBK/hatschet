@@ -77,6 +77,7 @@
 #endif
 
 #ifdef USE_Z3
+#include <z3++.h>
 // toDo - Will be added soon.
 #endif
 
@@ -422,8 +423,8 @@ int main(int argc, char *args[]) {
 
 		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 		if(str=="SMT" && !HatScheT::Tests::smtModSchedulerTest()) exit(-1);
+        if(str == "SMTED97" && !HatScheT::Tests::smtVsED97Test()) exit(-1);
 
-		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 
 
         #else

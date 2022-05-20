@@ -292,5 +292,11 @@ public:
      */
     static bool smtModSchedulerTest();
 
+    /*!
+     * test functionality of smtModScheduler
+     * @return if test was passed
+     */
+    static bool smtVsED97Test();
+
 };
 }
