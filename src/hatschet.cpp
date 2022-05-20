@@ -72,8 +72,8 @@
 #endif
 
 #ifdef USE_CADICAL
-#include <HatScheT/scheduler/dev/SATScheduler.h>
-#include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #endif
 
 #ifdef USE_Z3

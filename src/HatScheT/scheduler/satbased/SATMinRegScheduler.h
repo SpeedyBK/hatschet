@@ -13,7 +13,7 @@
 #include <utility>
 #include <memory>
 #include <chrono>
-#include <HatScheT/scheduler/dev/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
 #ifdef USE_SCALP
 #include <ScaLP/Solver.h>
 #endif // USE_SCALP

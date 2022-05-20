@@ -64,8 +64,8 @@
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
 #include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
-#include <HatScheT/scheduler/dev/SATScheduler.h>
-#include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
 
 #ifdef USE_CADICAL

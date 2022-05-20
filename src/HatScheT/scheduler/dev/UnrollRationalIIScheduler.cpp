@@ -14,7 +14,7 @@
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #ifdef USE_CADICAL
-#include "HatScheT/scheduler/dev/SATScheduler.h"
+#include "HatScheT/scheduler/satbased/SATScheduler.h"
 #endif
 
 namespace HatScheT {
