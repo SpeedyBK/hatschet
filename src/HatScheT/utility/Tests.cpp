@@ -3718,6 +3718,7 @@ namespace HatScheT {
 
   //TODO Remove Test
   bool Tests::smtVsED97Test() {
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -3825,5 +3826,8 @@ namespace HatScheT {
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
       return true;
+#else
+      return true;
+#endif
   }
 }
