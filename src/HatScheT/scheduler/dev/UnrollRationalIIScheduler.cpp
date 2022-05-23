@@ -5,7 +5,7 @@
 #include "UnrollRationalIIScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
-#include "math.h"
+#include <cmath>
 
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -13,6 +13,9 @@
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
+#ifdef USE_CADICAL
+#include "HatScheT/scheduler/dev/SATScheduler.h"
+#endif
 
 namespace HatScheT {
 
@@ -174,6 +177,16 @@ namespace HatScheT {
 				((HatScheT::PBScheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
 				((HatScheT::PBScheduler*) schedulerBase)->setMaxRuns(1);
 				break;
+    	case SchedulerType::SAT:
+#ifdef USE_CADICAL
+    	schedulerBase = new HatScheT::SATScheduler(g_unrolled, rm_unrolled);
+				if(this->solverTimeout > 0) ((HatScheT::SATScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+				if(this->maxLatencyConstraint > 0)
+					((HatScheT::SATScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+				((HatScheT::SATScheduler*) schedulerBase)->setMaxRuns(1);
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATScheduler");
+#endif
     }
 
     schedulerBase->setQuiet(this->quiet);

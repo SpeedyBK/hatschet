@@ -64,7 +64,20 @@ public:
    * -> this can be useful e.g. if you want to schedule for one specific II
    */
   void overrideII(const double &newII){this->minII = newII;}
+	/*!
+	 * getter for proven optimality flags for first and second optimization objective
+	 * @return {firstObjectiveOptimal, secondObjectiveOptimal}
+	 */
+	std::pair<bool, bool> getObjectivesOptimal() const;
 protected:
+	/*!
+	 * indicates whether the first optimization objective is proven to be optimal (usually the II)
+	 */
+	bool firstObjectiveOptimal;
+	/*!
+	 * indicates whether the second optimization objective is proven to be optimal (usually the schedule length)
+	 */
+	bool secondObjectiveOptimal;
   /*!
    * \brief minII lower bound for II
    */

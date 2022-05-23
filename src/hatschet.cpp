@@ -926,6 +926,11 @@ int main(int argc, char *args[]) {
 #endif //USE_SCALP
 				}
 				std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
+      	auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase*>(scheduler);
+      	std::pair<bool, bool> objectivesOptimal(false, false);
+      	if (modSchedBase != nullptr) {
+      		objectivesOptimal = modSchedBase->getObjectivesOptimal();
+      	}
 #ifdef USE_SCALP
       	if (ratIILayer == nullptr) {
 					sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings, (int)scheduler->getII()));
@@ -943,6 +948,7 @@ int main(int argc, char *args[]) {
 				sBWriter->setMinNumRegs(minNumRegs);
 				sBWriter->setMinNumRegsChain(minNumRegsChain);
 				sBWriter->setSolvingTime(schedulingTime);
+				sBWriter->setObjectivesOptimal(objectivesOptimal);
 				sBWriter->write();
       }
 

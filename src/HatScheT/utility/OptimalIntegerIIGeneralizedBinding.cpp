@@ -5,6 +5,7 @@
 #include <sstream>
 #include "OptimalIntegerIIGeneralizedBinding.h"
 #include "HatScheT/utility/Utility.h"
+#include <chrono>
 
 namespace HatScheT {
 	OptimalIntegerIIGeneralizedBinding::OptimalIntegerIIGeneralizedBinding(
@@ -16,6 +17,11 @@ namespace HatScheT {
 
 	void OptimalIntegerIIGeneralizedBinding::bind() {
 		if (!this->quiet) std::cout << "OptimalIntegerIIGeneralizedBinding::bind: let's go!" << std::endl;
+
+		//////////////////////////////////////
+		// start timer for ILP construction //
+		//////////////////////////////////////
+		auto timerStart = std::chrono::steady_clock::now();
 
 		//////////////////////
 		// check for errors //
@@ -289,6 +295,11 @@ namespace HatScheT {
 				F[{v, fuIdx}] = ScaLP::newBinaryVariable(name.str());
 			}
 		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		/////////////////////////////////
 		// variable location variables //
@@ -318,6 +329,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created variable location variables" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		//////////////////////////
 		// connection variables //
@@ -368,6 +384,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created connection variables" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		//////////////////////////////
 		// register usage variables //
@@ -382,6 +403,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created register variables" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		/////////////////////////////////////////
 		// operator source selection variables //
@@ -415,6 +441,11 @@ namespace HatScheT {
 				}
 			}
 			if(!this->quiet) std::cout << "created operator source selection variables" << std::endl;
+		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
 		}
 
 		/////////////////////////////////////////
@@ -456,6 +487,11 @@ namespace HatScheT {
 			}
 			if(!this->quiet) std::cout << "created register source selection variables" << std::endl;
 		}
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		///////////////////////////////////////////////////////////////////////////////
 		// constraints that each operation is bound to exactly/at least one operator //
@@ -473,6 +509,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created operator constraints" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////
 		// constraints that each variable is bound to exactly/at least one register in each time step //
@@ -499,6 +540,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created register constraints" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		///////////////////////////////////
 		// operator conflict constraints //
@@ -533,6 +579,11 @@ namespace HatScheT {
 			}
 		}
 		if(!this->quiet) std::cout << "created operator conflict constraints" << std::endl;
+		if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+			// timeout -> leave binding empty
+			this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+			return;
+		}
 
 		///////////////////////////////////
 		// register conflict constraints //
@@ -576,6 +627,11 @@ namespace HatScheT {
 								}
 							}
 						}
+						if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+							// timeout -> leave binding empty
+							this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+							return;
+						}
 					}
 				}
 			}
@@ -596,6 +652,11 @@ namespace HatScheT {
 					}
 					auto tVar = it.second;
 					solver.addConstraint(tVar - regVar <= 0);
+				}
+				if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+					// timeout -> leave binding empty
+					this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+					return;
 				}
 			}
 		}
@@ -668,6 +729,11 @@ namespace HatScheT {
 							}
 						}
 					}
+					if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+						// timeout -> leave binding empty
+						this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+						return;
+					}
 				}
 			}
 			if(!this->quiet) std::cout << "created unique register source selection constraints" << std::endl;
@@ -710,6 +776,11 @@ namespace HatScheT {
 						}
 					}
 				}
+				if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+					// timeout -> leave binding empty
+					this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+					return;
+				}
 			}
 			if(!this->quiet) std::cout << "created operator source selection implication constraints" << std::endl;
 		}
@@ -751,6 +822,11 @@ namespace HatScheT {
 								}
 							}
 						}
+					}
+					if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+						// timeout -> leave binding empty
+						this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+						return;
 					}
 				}
 			}
@@ -808,6 +884,11 @@ namespace HatScheT {
 							}
 						}
 					}
+					if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+						// timeout -> leave binding empty
+						this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+						return;
+					}
 				}
 			}
 		}
@@ -861,6 +942,11 @@ namespace HatScheT {
 							solver.addConstraint(regSrcVar + fuDstVar - connectionVar <= 1);
 						}
 					}
+				}
+				if (chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0 > this->timeBudget) {
+					// timeout -> leave binding empty
+					this->solutionStatus = "TIMEOUT_CONSTRUCTION";
+					return;
 				}
 			}
 		}

@@ -100,8 +100,17 @@ namespace HatScheT {
 		 * @param newMinNumRegs new value for the minimum II
 		 */
 		void setMinII(const double & newMinII) { this->minII = newMinII; }
+		/*!
+		 * sets this->objectivesOptimal
+		 * @param o new value for this->objectivesOptimal
+		 */
+		void setObjectivesOptimal(const std::pair<bool, bool> o) { this->objectivesOptimal = o; }
 
 	private:
+		/*!
+		 * tracks whether the first and second optimization objectives (usually II and schedule length) are proven optimal
+		 */
+		std::pair<bool, bool> objectivesOptimal;
 		/*!
 		 * minimum II for this graph and resource model
 		 */

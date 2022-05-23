@@ -120,6 +120,11 @@ void MoovacScheduler::schedule()
     cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
   }
 
+  // track optimality
+  this->firstObjectiveOptimal = true;
+  this->secondObjectiveOptimal = true;
+  this->optimalResult = false;
+  // iterative search for optimum II
   while(this->II <= this->maxII) {
     if(this->quiet == false) cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
     this->resetContainer();
@@ -143,8 +148,12 @@ void MoovacScheduler::schedule()
     if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
       this->timeouts++;
       timeoutOccured = true;
+      this->firstObjectiveOptimal = false;
     }
-    if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) this->optimalResult = true;
+    if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) {
+    	this->optimalResult = true;
+    }
+    this->secondObjectiveOptimal = this->optimalResult;
 
     if(scheduleFound == false) (this->II)++;
     else break;

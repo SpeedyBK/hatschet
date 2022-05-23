@@ -35,6 +35,7 @@ namespace HatScheT {
     if (minII >= maxII) maxII = (int) minII + 1;
     this->budgedEmptyCounter = 0;
     this->initialBudget = 0;
+    this->secondObjectiveOptimal = false; // unable to prove latency-optimality with this algorithm
   }
 
   void ModSDC::schedule() {
@@ -95,6 +96,7 @@ namespace HatScheT {
       }
       this->resetContainer();
     }
+    this->firstObjectiveOptimal = this->II == this->minII; // II is only proven to be optimal if it is equal to minII
     if (failed == true) this->II = -1;
   }
 
