@@ -218,7 +218,7 @@ namespace HatScheT {
 
                   z3::expr b = get_b_var(it, resourceModel.getResource(it), i)->b_var;
                   z3::expr bi = z3::ite(b, one, zero);
-                  z3::expr bii = (bi * i);// Wirft error.
+                  z3::expr bii = (bi * i);
                   b_times_tau_vec.push_back(bii);
 
               }
@@ -271,6 +271,10 @@ namespace HatScheT {
           II = II + 1;
           if(!quiet){ cout << "II:" << II << endl; }
           s.push();
+          create_b_variables();
+          add_one_slot_constraints_to_solver(s);
+          add_resource_limit_constraint_to_solver(s);
+          add_linking_constraints_to_solver(s);
           for (auto &it : exprToEdgeMap){
               if (!quiet){cout << "Edge ID : "<< it.second->getId() << endl;}
               z3::expr e = (  t_Variables[it.second->getVertexDst().getId()]
@@ -278,12 +282,8 @@ namespace HatScheT {
                             + (int) II * it.second->getDistance()
                             >= resourceModel.getVertexLatency(&it.second->getVertexSrc()));
               s.add(e);
+              satisfiable = s.check();
           }
-          create_b_variables();
-          add_one_slot_constraints_to_solver(s);
-          add_resource_limit_constraint_to_solver(s);
-          add_linking_constraints_to_solver(s);
-          satisfiable = s.check();
           if(!quiet){ cout << s << "\n" << "solving... " << satisfiable << "\n"; }
           if (II > maxII) { break; }
       }
