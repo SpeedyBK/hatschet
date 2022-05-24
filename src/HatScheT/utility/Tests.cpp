@@ -3719,11 +3719,11 @@ namespace HatScheT {
   //TODO Remove Test
   bool Tests::smtVsED97Test() {
 #ifdef USE_Z3
+
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
       clock_t start, end;
-
 
       HatScheT::XMLResourceReader readerRes(&rm);
       string resStr = "benchmarks/origami/fir_SHIRM.xml";
@@ -3731,10 +3731,6 @@ namespace HatScheT {
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
-
-      /*for (auto &it : rm.Resources()){
-          it->setLimit(UNLIMITED);
-      }*/
 
       //Simple IIR-Filter:
       /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
@@ -3804,7 +3800,7 @@ namespace HatScheT {
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
 
-      smt.setQuiet(true);
+      smt.setQuiet(false);
       start = clock();
       smt.schedule();
       end = clock();
@@ -3825,6 +3821,7 @@ namespace HatScheT {
       cout << "Time taken by smt is : " << fixed
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
+
       return true;
 #else
       return true;
