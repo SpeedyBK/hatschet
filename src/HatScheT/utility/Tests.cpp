@@ -65,6 +65,8 @@
 #include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
+#include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
 
@@ -3514,7 +3516,7 @@ namespace HatScheT {
 		g.createEdge(g5, r4, 0);
 
 		SATScheduler m(g, rm);
-		m.setQuiet(false);
+		m.setQuiet(true);
 		m.setMaxRuns(1);
 		m.setSolverTimeout(300);
 
@@ -3572,7 +3574,7 @@ namespace HatScheT {
 
 		// now minimize the number of registers for the given II and latency limit
 		SATMinRegScheduler s(g, rm);
-		s.setQuiet(false);
+		s.setQuiet(true);
 		s.overrideII(II);
 		s.setMaxLatencyConstraint(SL);
 		s.setRegMax(numRegs);
@@ -3587,6 +3589,14 @@ namespace HatScheT {
 		auto &minRegSchedule = s.getSchedule();
 		auto minRegII = s.getII();
 		auto minRegSL = s.getScheduleLength();
+		if (minRegII != expectedII) {
+			std::cout << "Expected II = " << expectedII << " but got II = " << minRegII << std::endl;
+			return false;
+		}
+		if (minRegSL != expectedSL) {
+			std::cout << "Expected schedule length = " << expectedSL << " but got schedule length = " << minRegSL << std::endl;
+			return false;
+		}
 		auto minRegNumRegs = s.getNumRegs();
 		std::cout << "min reg II = " << minRegII << ", schedule length = " << minRegSL << " and #Regs = " << minRegNumRegs << std::endl;
 		std::cout << "min reg schedule: " << std::endl;
@@ -3607,6 +3617,73 @@ namespace HatScheT {
 			std::cout << "Invalid min reg schedule" << std::endl;
 			return false;
 		}
+
+		// now do an SCC-based schedule
+		SATSCCScheduler satSCC(g, rm, minRegII);
+		satSCC.setQuiet(true);
+		satSCC.schedule();
+
+		if (!satSCC.getScheduleFound()) {
+			std::cout << "SATSCCScheduler failed to find solution - test failed!" << std::endl;
+			return false;
+		}
+		auto &sccSchedule = satSCC.getSchedule();
+		auto sccII = satSCC.getII();
+		auto sccSL = satSCC.getScheduleLength();
+		std::cout << "SCC II = " << sccII << " and schedule length = " << sccSL << std::endl;
+		std::cout << "SCC schedule: " << std::endl;
+		for (auto &it : sccSchedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		if (sccII < 1) {
+			std::cout << "Invalid SCC II" << std::endl;
+			return false;
+		}
+		if (sccII != expectedII) {
+			std::cout << "Expected II = " << expectedII << " but got II = " << sccII << std::endl;
+			return false;
+		}
+		auto sccValid = verifyModuloSchedule(g, rm, sccSchedule, sccII);
+		if (!valid) {
+			std::cout << "Invalid SCC schedule" << std::endl;
+			return false;
+		}
+
+		// and also a combined one
+		SATCombinedScheduler satCom(g, rm);
+		satCom.setQuiet(true);
+		satCom.schedule();
+
+		if (!satCom.getScheduleFound()) {
+			std::cout << "SATCombinedScheduler failed to find solution - test failed!" << std::endl;
+			return false;
+		}
+		auto &comSchedule = satCom.getSchedule();
+		auto comII = satCom.getII();
+		auto comSL = satCom.getScheduleLength();
+		std::cout << "COM II = " << comII << " and schedule length = " << comSL << std::endl;
+		std::cout << "COM schedule: " << std::endl;
+		for (auto &it : comSchedule) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+		if (comII < 1) {
+			std::cout << "Invalid COM II" << std::endl;
+			return false;
+		}
+		if (comII != expectedII) {
+			std::cout << "Expected II = " << expectedII << " but got II = " << comII << std::endl;
+			return false;
+		}
+		if (comSL != expectedSL) {
+			std::cout << "Expected schedule length = " << expectedSL << " but got schedule length = " << comSL << std::endl;
+			return false;
+		}
+		auto comValid = verifyModuloSchedule(g, rm, comSchedule, comII);
+		if (!valid) {
+			std::cout << "Invalid COM schedule" << std::endl;
+			return false;
+		}
+
 		std::cout << "Passed test :)" << std::endl;
 		return true;
 #else

@@ -13,7 +13,7 @@
 namespace HatScheT {
 #define CADICAL_SAT 10
 
-	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel)
+	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
 		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
 		  los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
 		  latencyUpperBound(-1) {
@@ -21,9 +21,16 @@ namespace HatScheT {
 		this->timeouts = 0;
 		this->scheduleFound = false;
 		this->optimalResult = false;
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
+		if (II >= 0) {
+			this->minII = II;
+			this->maxII = II;
+			this->maxRuns = 1;
+		}
+		else {
+			computeMinII(&g, &resourceModel);
+			this->minII = ceil(this->minII);
+			computeMaxII(&g, &resourceModel);
+		}
 
 		this->solvingTime = -1.0;
 		this->candidateII = -1;
@@ -103,7 +110,7 @@ namespace HatScheT {
 				// start solving
 				//if (!this->quiet) {
 					auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cerr << "SATMinRegScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+					std::cerr << "SATScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
 				//}
 				auto stat = this->solver->solve();
 				elapsedTime = this->terminator.getElapsedTime();
@@ -160,6 +167,8 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calcMinLatency() {
+		// check if min latency was set by user
+		if (this->minLatency >= 0) return;
 		// unconstrained ASAP scheduler for lower limit on achievable latency
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -178,6 +187,8 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calcMaxLatency() {
+		// check if max latency was set by user
+		if (this->maxLatency >= 0) return;
 		// use upper limit from Equation (6) in:
 		// [1] J. Oppermann, M. Reuter-Oppermann, L. Sommer, A. Koch, and O. Sinnen,
 		// ‘Exact and Practical Modulo Scheduling for High-Level Synthesis’,
@@ -624,6 +635,15 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calculateLatestStartTimeDifferences() {
+		// check if latest start time differences were set by user
+		bool foundAll = true;
+		for (auto &v : this->g.Vertices()) {
+			if (this->latestStartTimeDifferences.find(v) == this->latestStartTimeDifferences.end()) {
+				foundAll = false;
+				break;
+			}
+		}
+		if (foundAll) return;
 		// use ALAP scheduler without resource constraints to calc latest start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -633,7 +653,7 @@ namespace HatScheT {
 		ALAPScheduler alapScheduler(this->g, this->resourceModel);
 		alapScheduler.schedule();
 		if (!alapScheduler.getScheduleFound()) {
-			throw Exception("SATMinRegScheduler: failed to compute latest start times - that should never happen");
+			throw Exception("SATScheduler: failed to compute latest start times - that should never happen");
 		}
 		auto alapSL = alapScheduler.getScheduleLength();
 		auto alapStartTimes = alapScheduler.getSchedule();
@@ -647,6 +667,15 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calculateEarliestStartTimes() {
+		// check if earliest start times were set by user
+		bool foundAll = true;
+		for (auto &v : this->g.Vertices()) {
+			if (this->earliestStartTime.find(v) == this->earliestStartTime.end()) {
+				foundAll = false;
+				break;
+			}
+		}
+		if (foundAll) return;
 		// use ASAP scheduler without resource constraints for lower bounds on start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -666,6 +695,19 @@ namespace HatScheT {
 		for (auto &r : this->resourceModel.Resources()) {
 			r->setLimit(originalLimits.at(r));
 		}
+	}
+
+	void SATScheduler::setTargetLatency(const int &newTargetLatency) {
+		this->minLatency = newTargetLatency;
+		this->maxLatency = newTargetLatency;
+	}
+
+	void SATScheduler::setEarliestStartTimes(const map<Vertex *, int> &newEarliestStartTimes) {
+		this->earliestStartTime = newEarliestStartTimes;
+	}
+
+	void SATScheduler::setLatestStartTimeDifferences(const map<Vertex *, int> &newLatestStartTimeDifferences) {
+		this->latestStartTimeDifferences = newLatestStartTimeDifferences;
 	}
 }
 #endif

@@ -251,9 +251,10 @@ src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/satbased/SATScheduler.h
+src/HatScheT/scheduler/satbased/SATSCCScheduler.h
+src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
-src/HatScheT/scheduler/satbased/SATSCCScheduler.h
 src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h)
@@ -299,9 +300,10 @@ IF (CADICAL_H AND CADICAL_LIB)
 list(APPEND HatScheT_SOURCES
 src/HatScheT/scheduler/dev/SDSScheduler.cpp
 src/HatScheT/scheduler/satbased/SATScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
+src/HatScheT/scheduler/satbased/SATCombinedScheduler.cpp
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.cpp
-src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
 )
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
