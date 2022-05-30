@@ -33,11 +33,10 @@ namespace HatScheT {
       create_t_Variables();
       this->data_Dependency_Constraints = build_Dependency_Constraints();
       create_b_variables();
-
   }
 
   void SMTModScheduler::create_t_Variables() {
-      if (!quiet) { cout << "\nCreating vertex expressions (t_i - variables):" << endl;
+      if (!quiet) { cout << "\nCreating t - variables:" << endl;
                     cout << "Index: vertex: expression:" << endl;}
 
       int i = 0;
@@ -54,32 +53,36 @@ namespace HatScheT {
 
   pair <deque<z3::expr>, deque<z3::expr>> SMTModScheduler::build_Dependency_Constraints(){
 
-      if (!quiet) { cout << "\nCreating dependency contraints:" << endl; }
+      if (!quiet) { cout << "\nCreating dependency contraints..." << endl; }
 
       deque<z3::expr> edgesWithoutDistance;
       deque<z3::expr> edgesWithDistance;
 
       int i = 0;
       for(auto &it : g.Edges()){
-          if (!quiet) {
-              cout << t_Variables[vertex_t_Variables_Map[&it->getVertexDst()]] << " - "
-                   << t_Variables[vertex_t_Variables_Map[&it->getVertexSrc()]] << " + "
-                   << (int) II << " * " << it->getDistance() << " >= "
-                   << resourceModel.getVertexLatency(&it->getVertexSrc()) << endl;
-          }
           if (it->getDistance() == 0){
-              z3::expr e = (  t_Variables[vertex_t_Variables_Map[&it->getVertexDst()]]
-                              - t_Variables[vertex_t_Variables_Map[&it->getVertexSrc()]]
-                              >= resourceModel.getVertexLatency(&it->getVertexSrc()));
+              std::stringstream expr_name;
+              expr_name << "Edge_" << it->getId();
+              z3::expr e (c.int_const(expr_name.str().c_str()));
+              e = (  t_Variables.at(vertex_t_Variables_Map.at(&it->getVertexDst()))
+                   - t_Variables.at(vertex_t_Variables_Map.at(&it->getVertexSrc()))
+                   >= resourceModel.getVertexLatency(&it->getVertexSrc()));
+              //if (!quiet) { cout << e << endl; }
               edgesWithoutDistance.push_back(e);
+              expr_name.clear();
           }else{
-              z3::expr e = (  t_Variables[vertex_t_Variables_Map[&it->getVertexDst()]]
-                              - t_Variables[vertex_t_Variables_Map[&it->getVertexSrc()]]
-                              + (int) II * it->getDistance()
-                              >= resourceModel.getVertexLatency(&it->getVertexSrc()));
+              std::stringstream expr_name;
+              expr_name << "Edge_" << it->getId();
+              z3::expr e (c.int_const(expr_name.str().c_str()));
+              e = (  t_Variables.at(vertex_t_Variables_Map.at(&it->getVertexDst()))
+                   - t_Variables.at(vertex_t_Variables_Map.at(&it->getVertexSrc()))
+                   + (int) II * it->getDistance()
+                   >= resourceModel.getVertexLatency(&it->getVertexSrc()));
+              //if (!quiet) { cout << e << endl; }
               edgesWithDistance.push_back(e);
               exprToEdgeMap.insert({i, it});
               i++;
+              expr_name.clear();
           }
       }
       return {edgesWithoutDistance, edgesWithDistance};
@@ -93,6 +96,7 @@ namespace HatScheT {
       deque<b_variable> line;
 
       if (!quiet) { cout << "\nCreating b_variables:" << endl; }
+      if (!quiet) { cout << "Vertex: Moduloslot: Resource:\n"; }
 
       int r = 0;
       for (const auto &res : resourceModel.Resources()){
@@ -147,11 +151,11 @@ namespace HatScheT {
   }
 
   void SMTModScheduler::print_data_dependency_Constraints() {
-      cout << "\nExpressions without distance:" << endl;
+      cout << "\nDependency Constraints (not II-Dependent):" << endl;
       for (auto &it : data_Dependency_Constraints.first) {
           cout << it << endl;
       }
-      cout << "\nExpressions with distance:" << endl;
+      cout << "\nDependency Constraints (II-Dependent):" << endl;
       for (auto &it : data_Dependency_Constraints.second) {
           cout << it << endl;
       }
@@ -172,7 +176,7 @@ namespace HatScheT {
                   one_Slot_Constraint.push_back(get_b_var(it, resourceModel.getResource(it), i)->b_var);
               }
           }
-          if (!quiet){ cout << "One Slot Constraint Size:" << one_Slot_Constraint.size() << endl; }
+          if (!quiet) { cout << "One Slot Constraint Size:" << one_Slot_Constraint.size() << endl; }
           if (!resourceModel.getResource(it)->isUnlimited()) {
               z3::expr e = sum(one_Slot_Constraint) == 1;
               if (!quiet) { cout << e << endl; }
@@ -189,13 +193,14 @@ namespace HatScheT {
               for (int i = 0; i < II; i++) {
                   z3::expr_vector resource_limit_constraint(c);
                   for (auto &it : g.Vertices()) {
-                      if (!resourceModel.getResource(it)->isUnlimited()) {
+                      if (resourceModel.getResource(it)==rit) { //Du alte drecksau... fick dich!
                           resource_limit_constraint.push_back(
                               get_b_var(it, resourceModel.getResource(it), i)->b_var);
                       }
                   }
-                  z3::expr e = sum(resource_limit_constraint) <= rit->getLimit();
-                  if(!quiet){ cout << e << endl; }
+                  z3::expr e = c.bool_val("Sum"); //TODO ...
+                  e = sum(resource_limit_constraint) <= rit->getLimit();
+                  if (!quiet) { cout << e << endl; }
                   s.add(e);
               }
           }
@@ -203,33 +208,47 @@ namespace HatScheT {
   }
 
   void SMTModScheduler::add_linking_constraints_to_solver(z3::solver &s) {
+      int count = 0;
       for(auto &it : g.Vertices()) {
           if (!resourceModel.getResource(it)->isUnlimited()) {
               std::stringstream expr_name;
 
               expr_name << "y_" << it->getId();
-              z3::expr y(c.int_const(expr_name.str().c_str()));
-              z3::expr yII = (y * (int) II);
+              z3::expr y(c.int_const(expr_name.str().c_str()) * (int) II);
               z3::expr_vector b_times_tau_vec(c);
               z3::expr zero(c.int_val(0));
               z3::expr one(c.int_val(1));
 
-              for (int i = 0; i < (int) II; i++) {
-
-                  z3::expr b = get_b_var(it, resourceModel.getResource(it), i)->b_var;
-                  z3::expr bi = z3::ite(b, one, zero);
-                  z3::expr bii = (bi * i);// Wirft error.
-                  b_times_tau_vec.push_back(bii);
-
+              for (int i = 1; i < (int) II; i++) {
+                  std::stringstream name;
+                  name << "Li_" << count;
+                  count++;
+                  z3::expr bi(c.int_const(name.str().c_str()));
+                  bi = (z3::ite(get_b_var(it, resourceModel.getResource(it), i)->b_var, one, zero) * i);
+                  b_times_tau_vec.push_back(bi);
               }
 
               z3::expr sum_of_b_times_tau = sum(b_times_tau_vec);
-              s.add(t_Variables.at(vertex_t_Variables_Map.at(it)) == yII + sum_of_b_times_tau);
+              s.add(t_Variables.at(vertex_t_Variables_Map.at(it)) == y + sum_of_b_times_tau);
           }
       }
   }
 
+  void SMTModScheduler::create_and_add_latency_constraints(z3::solver &s) {
+      int maxlat = INT32_MIN;
+      int minlat = INT32_MAX;
+      for (auto &it : startTimes){
+          it.second > maxlat ? maxlat = it.second : maxlat = maxlat;
+          it.second < minlat ? minlat = it.second : minlat = minlat;
+      }
+      for(auto &it : t_Variables){
+          s.add(it < maxlat && it >= minlat);
+      }
+  }
+
   void SMTModScheduler::schedule() {
+
+      int bums = 0;
 
       z3::solver s(c);
 
@@ -242,15 +261,16 @@ namespace HatScheT {
           print_data_dependency_Constraints();
       }
 
-      if (!quiet) { cout << "\nAdding dependency constraints without distance to solver." << endl; }
+      if (!quiet) { cout << "\nAdding dependency constraints (not II-Dependent) to solver." << endl; }
       add_Constraints_to_solver(s, data_Dependency_Constraints.first);
 
       auto satisfiable = s.check();
+      if (!quiet) { cout << "\n" << s.get_model() << "\n"; }
       if (!quiet) { cout << "\nsolving... " << satisfiable << endl; }
       if (!quiet) { cout << "Creating fallback-point." << endl; }
       s.push();
 
-      if (!quiet) { cout << "\nAdding dependency constraints with distance to solver." << endl; }
+      if (!quiet) { cout << "\nAdding dependency constraints (not II-Dependent) to solver." << endl; }
       add_Constraints_to_solver(s, data_Dependency_Constraints.second);
 
       if (!quiet) { cout << "\nAdding 'only-one-mod-slot-per-resource-constrained-operation'-constraints to solver" << endl; }
@@ -261,31 +281,33 @@ namespace HatScheT {
 
       if (!quiet) { cout << "\nAdding linking-constraints to solver" << endl; }
       add_linking_constraints_to_solver(s);
-
+      if (!quiet) { cout << "II:" << II << endl; }
       satisfiable = s.check();
-      if(!quiet){ cout << "\nsolving... " << satisfiable << endl;  }
+      if (!quiet) { cout << s << "\n" << "solving... " << satisfiable << "\n"; }
 
       while (satisfiable != z3::sat) {
           s.pop();
-          if(!quiet){ cout << s << "\n" << "solving... " << satisfiable << "\n"; }
-          II = II + 1;
-          if(!quiet){ cout << "II:" << II << endl; }
           s.push();
+          if (!quiet) { cout << s << "\n" << "solving... " << satisfiable << "\n"; }
+          II = II + 1;
+          if (!quiet) { cout << "II:" << II << endl; }
+          create_b_variables();
+          add_one_slot_constraints_to_solver(s);
+          add_resource_limit_constraint_to_solver(s);
+          add_linking_constraints_to_solver(s);
+          if (!quiet) { cout << endl; }
           for (auto &it : exprToEdgeMap){
-              if (!quiet){cout << "Edge ID : "<< it.second->getId() << endl;}
               z3::expr e = (  t_Variables[it.second->getVertexDst().getId()]
                             - t_Variables[it.second->getVertexSrc().getId()]
                             + (int) II * it.second->getDistance()
                             >= resourceModel.getVertexLatency(&it.second->getVertexSrc()));
               s.add(e);
+              satisfiable = s.check();
+              if (!quiet) { cout << satisfiable << endl; }
+              if (satisfiable == z3::unsat){ break; }
           }
-          create_b_variables();
-          add_one_slot_constraints_to_solver(s);
-          add_resource_limit_constraint_to_solver(s);
-          add_linking_constraints_to_solver(s);
-          satisfiable = s.check();
           if(!quiet){ cout << s << "\n" << "solving... " << satisfiable << "\n"; }
-          if (II > maxII) { break; }
+          if (II > maxII) { throw(HatScheT::Exception("No Schedule found.")); }
       }
 
       z3::model m = s.get_model();
@@ -295,15 +317,36 @@ namespace HatScheT {
           startTimes.insert({it.first , m.eval(t_Variables[it.second]).get_numeral_int()});
       }
 
+      if(!quiet){ cout << "Schedule found... mimimizing latency... " << "\n"; }
+      s.push();
+      while (satisfiable == z3::sat){
+          m = s.get_model();
+          startTimes.clear();
+          for (auto &it : vertex_t_Variables_Map){
+              startTimes.insert({it.first , m.eval(t_Variables[it.second]).get_numeral_int()});
+              if (!quiet) { cout << startTimes.at(it.first) << endl; }
+          }
+          cout << endl;
+          s.pop();
+          s.push();
+          create_and_add_latency_constraints(s);
+          satisfiable = s.check();
+      }
+
       int min = INT32_MAX;
       for (auto &it : startTimes) {
           if (it.second < min) {
               min = it.second;
           }
       }
-
-      for (auto &it: startTimes) {
-          it.second += abs(min);
+      if (min < 0) {
+          for (auto &it: startTimes) {
+              it.second += abs(min);
+          }
+      }else{
+          for (auto &it: startTimes) {
+              it.second -= abs(min);
+          }
       }
   }
 }

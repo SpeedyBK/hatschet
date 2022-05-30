@@ -133,6 +133,14 @@ namespace HatScheT {
     void add_resource_limit_constraint_to_solver(z3::solver &s);
 
     void add_linking_constraints_to_solver(z3::solver &s);
+
+    /*!
+     * Minimizing Latency
+     */
+    deque<z3::expr> latency_constraints;
+
+    void create_and_add_latency_constraints(z3::solver &s);
+
     /*!
      * Print Methode.
      */
