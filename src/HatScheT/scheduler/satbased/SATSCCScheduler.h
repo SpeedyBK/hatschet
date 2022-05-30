@@ -29,6 +29,7 @@ namespace HatScheT {
 
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;
+		void initMRT();
 		void computeSCCs();
 		void computeSCCSchedule();
 		void computeEarliestAndLatestStartTimes();

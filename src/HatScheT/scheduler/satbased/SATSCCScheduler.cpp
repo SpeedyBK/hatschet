@@ -21,6 +21,7 @@ namespace HatScheT {
 	void SATSCCScheduler::schedule() {
 		this->solvingTime = 0.0;
 		auto timerStart = std::chrono::steady_clock::now();
+		this->initMRT();
 		this->computeSCCs();
 		this->computeEarliestAndLatestStartTimes();
 		this->computeSCCSchedule();
@@ -119,7 +120,7 @@ namespace HatScheT {
 			auto t = sccSchedule.at(v);
 			this->relativeSchedule[origV] = t;
 			auto r = this->resourceModel.getResource(origV);
-			if (!r->isUnlimited()) this->MRT[r][t % (int)this->II]++;
+			if (!r->isUnlimited()) this->MRT.at(r).at(t % (int)this->II)++;
 		}
 	}
 
@@ -143,9 +144,9 @@ namespace HatScheT {
 						auto rLim = r->getLimit();
 						for (int i=0; i<this->II; i++) {
 							auto slot = (asapTime + i) % (int)this->II;
-							if (this->MRT.at(r)[slot] < rLim) {
+							if (this->MRT.at(r).at(slot) < rLim) {
 								offsetTime = i;
-								this->MRT.at(r)[slot]++;
+								this->MRT.at(r).at(slot)++;
 								break;
 							}
 						}
@@ -273,10 +274,6 @@ namespace HatScheT {
 	void SATSCCScheduler::postProcessSchedule() {
 		double minTime = std::numeric_limits<double>::infinity();
 		for (auto &it : this->startTimes) {
-			if (!this->g.isSourceVertex(it.first)) {
-				// skip non-sources
-				continue;
-			}
 			minTime = std::min(minTime, (double)it.second);
 		}
 		if (minTime == 0) {
@@ -398,6 +395,15 @@ namespace HatScheT {
 		// adjust max latency if the user also requested a maximum latency
 		if (this->maxLatencyConstraint >= 0) {
 			this->sccGraphMaxLat = min(this->sccGraphMaxLat, this->maxLatencyConstraint);
+		}
+	}
+
+	void SATSCCScheduler::initMRT() {
+		for (auto &r : this->resourceModel.Resources()) {
+			if (r->isUnlimited()) continue;
+			for (int i=0; i<this->II; i++) {
+				this->MRT[r][i] = 0;
+			}
 		}
 	}
 }
