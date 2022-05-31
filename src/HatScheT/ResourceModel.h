@@ -365,13 +365,6 @@ public:
    * \return `v`'s latency
    * \throws Exception if vertex is not registered
    */
-  int getVertexLatency(Vertex* v) const;
-  /*!
-   * \brief Convenience method to get the given vertex's latency
-   * \param v the vertex
-   * \return `v`'s latency
-   * \throws Exception if vertex is not registered
-   */
   int getVertexLatency(const Vertex* v) const;
   /*!
    * \brief determines the maximum latency of all registered latencies

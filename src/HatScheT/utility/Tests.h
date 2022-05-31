@@ -279,24 +279,17 @@ public:
 	 * @return if test was passed
 	 */
 	static bool satSchedulerTest();
-
 	/*!
 	 * test functionality of Z3 Theorem Prover
 	 * @return if test was passed
 	 */
 	static bool z3Test();
-
-    /*!
-     * test functionality of smtModScheduler
-     * @return if test was passed
-     */
-    static bool smtModSchedulerTest();
-
     /*!
      * test functionality of smtModScheduler
      * @return if test was passed
      */
     static bool smtVsED97Test();
 
-};
+    static bool smtSmart();
+  };
 }
