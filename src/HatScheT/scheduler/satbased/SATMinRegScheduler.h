@@ -13,7 +13,7 @@
 #include <utility>
 #include <memory>
 #include <chrono>
-#include <HatScheT/scheduler/dev/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/CaDiCaLTerminator.h>
 #ifdef USE_SCALP
 #include <ScaLP/Solver.h>
 #endif // USE_SCALP
@@ -60,7 +60,7 @@ namespace HatScheT {
 
 		double solvingTime;
 		std::unique_ptr<CaDiCaL::Solver> solver;
-		CaDiCalTerminator terminator;
+		CaDiCaLTerminator terminator;
 
 		RegisterOptimizationStrategy ros;
 		bool skipFirstRegAttempt;

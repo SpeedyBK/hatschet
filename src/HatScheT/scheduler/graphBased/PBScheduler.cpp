@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <map>
 #include <cmath>
+#include <limits>
 
 namespace HatScheT {
 	PBScheduler::PBScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
@@ -414,13 +415,13 @@ namespace HatScheT {
 	}
 
 	void PBScheduler::postProcessSchedule() {
-		int minTime = 0x7FFFFFFF; // max int
+		double minTime = std::numeric_limits<double>::infinity();
 		for (auto &it : this->startTimes) {
 			if (!this->g.isSourceVertex(it.first)) {
 				// skip non-sources
 				continue;
 			}
-			minTime = std::min(minTime, it.second);
+			minTime = std::min(minTime, (double)it.second);
 		}
 		if (minTime == 0) {
 			// do nothing if earliest schedule time is 0
@@ -430,7 +431,7 @@ namespace HatScheT {
 			std::cout << "PBScheduler::postProcessSchedule: detected minimum schedule time = " << minTime << std::endl;
 		}
 		for (auto v : this->g.Vertices()) {
-			this->startTimes[v] -= minTime;
+			this->startTimes[v] -= (int)minTime;
 		}
 	}
 

@@ -46,7 +46,7 @@ namespace HatScheT {
 		}
 
 		bool breakByTimeout = false;
-		this->terminator = CaDiCalTerminator((double)this->solverTimeout);
+		this->terminator = CaDiCaLTerminator((double)this->solverTimeout);
 		bool lastAttemptSuccess = false;
 		this->candidateNumRegs = -1;
 		double elapsedTime = 0.0;

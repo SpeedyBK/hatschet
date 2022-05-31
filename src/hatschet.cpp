@@ -72,8 +72,10 @@
 #endif
 
 #ifdef USE_CADICAL
-#include <HatScheT/scheduler/dev/SATScheduler.h>
-#include <HatScheT/scheduler/dev/SATMinRegScheduler.h>
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
+#include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #endif
 
 #ifdef USE_Z3
@@ -121,6 +123,8 @@ void print_short_help() {
 	std::cout << "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)" << std::endl;
 	std::cout << "                            RATIONALIIMODULOSDC: Sixth experimental rational II scheduler (SDC based heuristic)" << std::endl;
 	std::cout << "                            SAT: Experimental integer II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)" << std::endl;
+	std::cout << "                            SATSCC: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components (uses CaDiCaL as backend)" << std::endl;
+	std::cout << "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)" << std::endl;
 	std::cout << "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
@@ -182,7 +186,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {SAT, SATMINREG, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {SAT, SATSCC, SATCOMBINED, SATMINREG, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -308,6 +312,12 @@ int main(int argc, char *args[]) {
 				}
 				else if(schedulerSelectionStr == "satminreg") {
 					schedulerSelection = SATMINREG;
+				}
+				else if(schedulerSelectionStr == "satscc") {
+					schedulerSelection = SATSCC;
+				}
+				else if(schedulerSelectionStr == "satcombined") {
+					schedulerSelection = SATCOMBINED;
 				}
         else if(schedulerSelectionStr == "ul") {
           schedulerSelection = UL;
@@ -471,6 +481,12 @@ int main(int argc, char *args[]) {
 			case SATMINREG:
 				cout << "SATMINREG";
 				break;
+			case SATSCC:
+				cout << "SATSCC";
+				break;
+			case SATCOMBINED:
+				cout << "SATCOMBINED";
+				break;
       case MOOVAC:
         cout << "MOOVAC";
         break;
@@ -625,6 +641,18 @@ int main(int argc, char *args[]) {
 					if(timeout > 0) ((HatScheT::SATScheduler*) scheduler)->setSolverTimeout(timeout);
 					if(maxLatency > 0) ((HatScheT::SATScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
       		break;
+				case SATCOMBINED:
+					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
+					isModuloScheduler=true;
+					if(timeout > 0) ((HatScheT::SATCombinedScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::SATCombinedScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATSCC:
+					scheduler = new HatScheT::SATSCCScheduler(g, rm, targetII);
+					isModuloScheduler=true;
+					if(timeout > 0) ((HatScheT::SATSCCScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::SATSCCScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
 				case SATMINREG:
 					scheduler = new HatScheT::SATMinRegScheduler(g, rm);
 					isModuloScheduler=true;
