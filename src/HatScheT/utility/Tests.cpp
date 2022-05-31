@@ -3620,7 +3620,7 @@ namespace HatScheT {
 
 		// now do an SCC-based schedule
 		SATSCCScheduler satSCC(g, rm, minRegII);
-		satSCC.setQuiet(true);
+		satSCC.setQuiet(false);
 		satSCC.schedule();
 
 		if (!satSCC.getScheduleFound()) {
