@@ -392,7 +392,7 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "SATScheduler: CaDiCaL solution: " << std::endl;
 			for (auto &v : this->g.Vertices()) {
-				std::cout << "  vertex " << v->getName() << std::endl;
+				std::cout << "  vertex " << v->getName() << " (latency=" << this->resourceModel.getVertexLatency(v) << ")" << std::endl;
 				// times
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 					std::cout << "    t=" << tau << " - " << this->solver->val(this->scheduleTimeLiterals.at({v, tau})) << std::endl;
@@ -644,6 +644,7 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) return;
+		std::cout << "#q# CALCULATING LATEST START TIME DIFFERENCES" << std::endl;
 		// use ALAP scheduler without resource constraints to calc latest start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -659,6 +660,7 @@ namespace HatScheT {
 		auto alapStartTimes = alapScheduler.getSchedule();
 		for (auto &v : this->g.Vertices()) {
 			this->latestStartTimeDifferences[v] = alapSL - alapStartTimes.at(v);
+			std::cout << "#q# DIFF = " << this->latestStartTimeDifferences[v] << " = " << alapSL << "-" << alapStartTimes.at(v) << std::endl;
 		}
 		// set resource limits back to original values
 		for (auto &r : this->resourceModel.Resources()) {
@@ -671,12 +673,14 @@ namespace HatScheT {
 		bool foundAll = true;
 		for (auto &v : this->g.Vertices()) {
 			if (this->earliestStartTime.find(v) == this->earliestStartTime.end()) {
+				std::cout << "#q# FAILED TO FIND EARLIEST START TIME FOR VERTEX " << v->getName() << std::endl;
 				foundAll = false;
 				break;
 			}
 		}
 		if (foundAll) return;
 		// use ASAP scheduler without resource constraints for lower bounds on start times
+		std::cout << "#q# CALCULATING EARLIEST START TIMES" << std::endl;
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
 			originalLimits[r] = r->getLimit();
@@ -703,10 +707,27 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::setEarliestStartTimes(const map<Vertex *, int> &newEarliestStartTimes) {
+		std::cout << "#q# SETTING EARLIEST START TIMES" << std::endl;
+		bool foundAll = true;
+		for (auto &v : this->g.Vertices()) {
+			if (newEarliestStartTimes.find(v) == newEarliestStartTimes.end()) {
+				std::cout << "SATScheduler::setEarliestStartTimes: Warning: failed to find earliest start time for vertex '" << v->getName() << "' -> skipping assignment!" << std::endl;
+				foundAll = false;
+			}
+		}
+		if (!foundAll) return;
 		this->earliestStartTime = newEarliestStartTimes;
 	}
 
 	void SATScheduler::setLatestStartTimeDifferences(const map<Vertex *, int> &newLatestStartTimeDifferences) {
+		bool foundAll = true;
+		for (auto &v : this->g.Vertices()) {
+			if (newLatestStartTimeDifferences.find(v) == newLatestStartTimeDifferences.end()) {
+				std::cout << "SATScheduler::setLatestStartTimeDifferences: Warning: failed to find earliest start time for vertex '" << v->getName() << "' -> skipping assignment!" << std::endl;
+				foundAll = false;
+			}
+		}
+		if (!foundAll) return;
 		this->latestStartTimeDifferences = newLatestStartTimeDifferences;
 	}
 }

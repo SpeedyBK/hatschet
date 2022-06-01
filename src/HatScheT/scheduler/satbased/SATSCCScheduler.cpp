@@ -427,15 +427,76 @@ namespace HatScheT {
 			}
 			auto results = s.getResult().values;
 			int minSCCLat = (int)std::round(results.at(supersink));
+			if (!this->quiet) {
+				std::cout << "SATSCCScheduler: min SCC latency = " << minSCCLat << std::endl;
+			}
+			// calculate min times
+			s.reset();
+			ScaLP::Term minVarSum;
+			for (auto &v : sccVertices) {
+				auto var = t.at(v);
+				minVarSum += var;
+				auto l = this->resourceModel.getVertexLatency(v);
+				s.addConstraint(var <= minSCCLat-l);
+			}
+			for (auto &e : sccEdges) {
+				auto vSrc = &e->getVertexSrc();
+				auto vDst = &e->getVertexDst();
+				auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
+			}
+			s.setObjective(ScaLP::minimize(minVarSum));
+			stat = s.solve();
+			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
+				throw Exception("SATSCCScheduler: failed to compute min times for SCC");
+			}
+			results = s.getResult().values;
+			std::unordered_map<Vertex*, int> minTimes;
+			for (auto &v : sccVertices) {
+				minTimes[v] = (int) std::round(results[t.at(v)]);
+			}
+
+			// calculate max times
+			s.reset();
+			ScaLP::Term maxVarSum;
+			for (auto &v : sccVertices) {
+				auto var = t.at(v);
+				maxVarSum += var;
+				auto l = this->resourceModel.getVertexLatency(v);
+				s.addConstraint(var <= minSCCLat-l);
+			}
+			for (auto &e : sccEdges) {
+				auto vSrc = &e->getVertexSrc();
+				auto vDst = &e->getVertexDst();
+				auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
+			}
+			s.setObjective(ScaLP::maximize(maxVarSum));
+			stat = s.solve();
+			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
+				throw Exception("SATSCCScheduler: failed to compute max times for SCC");
+			}
+			results = s.getResult().values;
+			std::unordered_map<Vertex*, int> maxTimes;
+			for (auto &v : sccVertices) {
+				maxTimes[v] = (int) std::round(results[t.at(v)]);
+			}
+
+			// from min and max times compute sources and sinks
 			std::vector<Vertex*> sources;
 			std::vector<Vertex*> sinks;
 			for (auto &v : sccVertices) {
-				auto vT = (int) std::round(results[t.at(v)]);
-				if (vT == 0) {
+				if (maxTimes.at(v) == 0) {
 					sources.emplace_back(v);
+					if (!this->quiet) {
+						std::cout << "SATSCCScheduler: vertex '" << v->getName() << "' is a source" << std::endl;
+					}
 				}
-				if (vT + this->resourceModel.getVertexLatency(v) == minSCCLat) {
+				if (minTimes.at(v) + this->resourceModel.getVertexLatency(v) == minSCCLat) {
 					sinks.emplace_back(v);
+					if (!this->quiet) {
+						std::cout << "SATSCCScheduler: vertex '" << v->getName() << "' is a sink" << std::endl;
+					}
 				}
 			}
 			// use sources and sinks to compute max SCC latency
@@ -463,7 +524,7 @@ namespace HatScheT {
 			}
 			results = s.getResult().values;
 			int maxSCCLat = (int)std::round(results.at(supersink));
-			return maxSCCLat;
+			return 3;
 		};
 
 		this->sccGraphMaxLat = 0;
@@ -644,6 +705,12 @@ namespace HatScheT {
 			// latest start time
 			if (this->latestStartTimes.find(v) == this->latestStartTimes.end()) this->latestStartTimes[v] = this->sccGraphMaxLat - this->resourceModel.getVertexLatency(v);
 			this->latestStartTimeDifferences[v] = this->sccGraphMaxLat - this->latestStartTimes.at(v);
+			if (!this->quiet) {
+				std::cout << "SATSCCScheduler: vertex '" << v->getName() << "':" << std::endl;
+				std::cout << "  earliest start time: " << this->earliestStartTimes.at(v) << std::endl;
+				std::cout << "  latest start time: " << this->latestStartTimes.at(v) << std::endl;
+				std::cout << "  latest start time diff: " << this->latestStartTimeDifferences.at(v) << std::endl;
+			}
 		}
 	}
 

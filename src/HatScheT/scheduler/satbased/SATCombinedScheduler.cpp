@@ -52,7 +52,6 @@ namespace HatScheT {
 				}
 				else {
 					// II infeasible
-					std::cout << "#q# SCC-BASED SCHEDULER PROVED II = " << this->candidateII << " INFEASIBLE" << std::endl;
 					this->firstObjectiveOptimal = true;
 				}
 				// try next II
