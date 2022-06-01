@@ -644,7 +644,6 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) return;
-		std::cout << "#q# CALCULATING LATEST START TIME DIFFERENCES" << std::endl;
 		// use ALAP scheduler without resource constraints to calc latest start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -660,7 +659,6 @@ namespace HatScheT {
 		auto alapStartTimes = alapScheduler.getSchedule();
 		for (auto &v : this->g.Vertices()) {
 			this->latestStartTimeDifferences[v] = alapSL - alapStartTimes.at(v);
-			std::cout << "#q# DIFF = " << this->latestStartTimeDifferences[v] << " = " << alapSL << "-" << alapStartTimes.at(v) << std::endl;
 		}
 		// set resource limits back to original values
 		for (auto &r : this->resourceModel.Resources()) {
@@ -673,14 +671,12 @@ namespace HatScheT {
 		bool foundAll = true;
 		for (auto &v : this->g.Vertices()) {
 			if (this->earliestStartTime.find(v) == this->earliestStartTime.end()) {
-				std::cout << "#q# FAILED TO FIND EARLIEST START TIME FOR VERTEX " << v->getName() << std::endl;
 				foundAll = false;
 				break;
 			}
 		}
 		if (foundAll) return;
 		// use ASAP scheduler without resource constraints for lower bounds on start times
-		std::cout << "#q# CALCULATING EARLIEST START TIMES" << std::endl;
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
 			originalLimits[r] = r->getLimit();
@@ -707,7 +703,6 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::setEarliestStartTimes(const map<Vertex *, int> &newEarliestStartTimes) {
-		std::cout << "#q# SETTING EARLIEST START TIMES" << std::endl;
 		bool foundAll = true;
 		for (auto &v : this->g.Vertices()) {
 			if (newEarliestStartTimes.find(v) == newEarliestStartTimes.end()) {

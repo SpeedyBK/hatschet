@@ -25,6 +25,7 @@ namespace HatScheT {
 		auto timerStart = std::chrono::steady_clock::now();
 		this->initMRT();
 		this->computeSCCs();
+		this->createSCCGraphAndRM();
 		this->computeEarliestAndLatestStartTimes();
 		this->computeSCCSchedule();
 		if (!this->scheduleFound) {
@@ -91,49 +92,6 @@ namespace HatScheT {
 	}
 
 	void SATSCCScheduler::computeSCCSchedule() {
-		// graph and resource model for scc graph
-		Graph sccG;
-		ResourceModel sccR;
-		// insert vertices into scc graph
-		for(auto scc : sccs) {
-			// insert scc into tempG
-			// insert vertices into tempG
-			auto vertices = scc->getVerticesOfSCC();
-			// skip trivial SCCs
-			if (vertices.size() < 2) continue;
-			for (auto v : vertices) {
-				auto &newV = sccG.createVertex(v->getId());
-				this->vertexToSCCVertexMap[v] = &newV;
-				this->sccVertexToVertexMap[&newV] = v;
-				this->sccVertexToSCCMap[&newV] = scc;
-			}
-			// insert edges into tempG
-			for (auto e : scc->getSCCEdges()) {
-				auto src = this->vertexToSCCVertexMap.at(&e->getVertexSrc());
-				auto dst = this->vertexToSCCVertexMap.at(&e->getVertexDst());
-				auto &newE = sccG.createEdge(*src, *dst, e->getDistance(), e->getDependencyType());
-				newE.setDelay(e->getDelay());
-			}
-		}
-
-		// generate resource model
-		for(auto v : this->g.Vertices()) {
-			// skip vertices that are only in trivial SCCs
-			if(this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue;
-			// get resource of vertex
-			auto res = this->resourceModel.getResource(v);
-			Resource* newRes;
-			// only create new resource if it does not already exist
-			try {
-				newRes = sccR.getResource(res->getName());
-			}
-			catch(HatScheT::Exception&) {
-				newRes = &sccR.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
-			}
-			// register vertex of tempG to new resource
-			sccR.registerVertex(this->vertexToSCCVertexMap.at(v),newRes);
-		}
-
 		// check if there are even any non-trivial SCCs
 		if (sccG.getNumberOfVertices() == 0) {
 			this->scheduleFound = true;
@@ -371,8 +329,9 @@ namespace HatScheT {
 					auto maxLoopLength = loopDistance * (int)this->II;
 					for (auto &e : path) {
 						auto *vSrc = &e->getVertexSrc();
-						this->earliestStartTimes[vSrc] = 0;
-						this->latestStartTimes[vSrc] = std::max(this->latestStartTimes[vSrc], maxLoopLength - this->resourceModel.getVertexLatency(vSrc));
+						auto sccV = this->vertexToSCCVertexMap.at(vSrc);
+						this->earliestStartTimes[sccV] = 0;
+						this->latestStartTimes[sccV] = std::max(this->latestStartTimes[sccV], maxLoopLength - this->resourceModel.getVertexLatency(vSrc));
 					}
 					if (!this->quiet) {
 						std::cout << "  loop distance: " << loopDistance << std::endl;
@@ -524,7 +483,7 @@ namespace HatScheT {
 			}
 			results = s.getResult().values;
 			int maxSCCLat = (int)std::round(results.at(supersink));
-			return 3;
+			return maxSCCLat;
 		};
 
 		this->sccGraphMaxLat = 0;
@@ -564,9 +523,11 @@ namespace HatScheT {
 			sccLat = getMaxSCCLatency(sccVertices, sccEdges);
 			std::cout << "  SCC latency = " << sccLat << " (dTotal*II = " << totalDistance << "*" << this->II << ")" << std::endl;
 			for (auto &v : sccVertices) {
-				this->earliestStartTimes[v] = 0;
-				this->latestStartTimes[v] = sccLat - this->resourceModel.getVertexLatency(v);
-				this->latestStartTimeDifferences[v] = this->resourceModel.getVertexLatency(v);
+				if (this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue; // skip trivial SCCs
+				auto sccV = this->vertexToSCCVertexMap.at(v);
+				this->earliestStartTimes[sccV] = 0;
+				this->latestStartTimes[sccV] = sccLat - this->resourceModel.getVertexLatency(v);
+				this->latestStartTimeDifferences[sccV] = this->resourceModel.getVertexLatency(v);
 			}
 #else
 			// perform DFS starting at each vertex of the SCC
@@ -700,16 +661,18 @@ namespace HatScheT {
 		}
 		// define remaining stuff
 		for (auto &v : this->g.Vertices()) {
+			if (this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue; // skip non-SCC vertices
+			auto sccV = this->vertexToSCCVertexMap.at(v);
 			// earliest start time
-			if (this->earliestStartTimes.find(v) == this->earliestStartTimes.end()) this->earliestStartTimes[v] = 0;
+			if (this->earliestStartTimes.find(sccV) == this->earliestStartTimes.end()) this->earliestStartTimes[sccV] = 0;
 			// latest start time
-			if (this->latestStartTimes.find(v) == this->latestStartTimes.end()) this->latestStartTimes[v] = this->sccGraphMaxLat - this->resourceModel.getVertexLatency(v);
-			this->latestStartTimeDifferences[v] = this->sccGraphMaxLat - this->latestStartTimes.at(v);
+			if (this->latestStartTimes.find(sccV) == this->latestStartTimes.end()) this->latestStartTimes[sccV] = this->sccGraphMaxLat - this->resourceModel.getVertexLatency(v);
+			this->latestStartTimeDifferences[sccV] = this->sccGraphMaxLat - this->latestStartTimes.at(sccV);
 			if (!this->quiet) {
-				std::cout << "SATSCCScheduler: vertex '" << v->getName() << "':" << std::endl;
-				std::cout << "  earliest start time: " << this->earliestStartTimes.at(v) << std::endl;
-				std::cout << "  latest start time: " << this->latestStartTimes.at(v) << std::endl;
-				std::cout << "  latest start time diff: " << this->latestStartTimeDifferences.at(v) << std::endl;
+				std::cout << "SATSCCScheduler: vertex '" << sccV->getName() << "':" << std::endl;
+				std::cout << "  earliest start time: " << this->earliestStartTimes.at(sccV) << std::endl;
+				std::cout << "  latest start time: " << this->latestStartTimes.at(sccV) << std::endl;
+				std::cout << "  latest start time diff: " << this->latestStartTimeDifferences.at(sccV) << std::endl;
 			}
 		}
 	}
@@ -720,6 +683,48 @@ namespace HatScheT {
 			for (int i=0; i<this->II; i++) {
 				this->MRT[r][i] = 0;
 			}
+		}
+	}
+
+	void SATSCCScheduler::createSCCGraphAndRM() {
+		// insert vertices into scc graph
+		for(auto scc : this->sccs) {
+			// insert scc into tempG
+			// insert vertices into tempG
+			auto vertices = scc->getVerticesOfSCC();
+			// skip trivial SCCs
+			if (vertices.size() < 2) continue;
+			for (auto v : vertices) {
+				auto &newV = this->sccG.createVertex(v->getId());
+				this->vertexToSCCVertexMap[v] = &newV;
+				this->sccVertexToVertexMap[&newV] = v;
+				this->sccVertexToSCCMap[&newV] = scc;
+			}
+			// insert edges into tempG
+			for (auto e : scc->getSCCEdges()) {
+				auto src = this->vertexToSCCVertexMap.at(&e->getVertexSrc());
+				auto dst = this->vertexToSCCVertexMap.at(&e->getVertexDst());
+				auto &newE = this->sccG.createEdge(*src, *dst, e->getDistance(), e->getDependencyType());
+				newE.setDelay(e->getDelay());
+			}
+		}
+
+		// generate resource model
+		for(auto v : this->g.Vertices()) {
+			// skip vertices that are only in trivial SCCs
+			if(this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue;
+			// get resource of vertex
+			auto res = this->resourceModel.getResource(v);
+			Resource* newRes;
+			// only create new resource if it does not already exist
+			try {
+				newRes = this->sccR.getResource(res->getName());
+			}
+			catch(HatScheT::Exception&) {
+				newRes = &this->sccR.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+			}
+			// register vertex of tempG to new resource
+			this->sccR.registerVertex(this->vertexToSCCVertexMap.at(v),newRes);
 		}
 	}
 }
