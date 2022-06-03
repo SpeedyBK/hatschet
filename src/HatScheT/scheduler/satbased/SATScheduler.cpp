@@ -688,7 +688,7 @@ namespace HatScheT {
 			throw Exception("SATScheduler: failed to compute earliest start times - that should never happen");
 		}
 		auto asapStartTimes = asapScheduler.getSchedule();
-		for (auto &v : this->g.Vertices()) {
+		for (auto &v : this->g.Vertices()) {                            // Why loop, and not just this->earliestStartTimes = asapScheduler.getSchedule()? (Benjamin)
 			this->earliestStartTime[v] = asapStartTimes.at(v);
 		}
 		// set resource limits back to original values
