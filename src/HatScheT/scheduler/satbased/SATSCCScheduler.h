@@ -29,12 +29,16 @@ namespace HatScheT {
 
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;
+		void initMRT();
 		void computeSCCs();
-		void computeSCCSchedule();
+		void createSCCGraphAndRM();
 		void computeEarliestAndLatestStartTimes();
+		void computeSCCSchedule();
 		void orderSCCs();
 		void computeFinalSchedule();
 		void postProcessSchedule();
+		Graph sccG;
+		ResourceModel sccR;
 		unsigned int solverTimeout;
 		double solvingTime;
 		bool IIFeasible;

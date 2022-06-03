@@ -121,14 +121,22 @@ namespace HatScheT {
 
       if (!visited[VertexMap[Stack.top()]]) {
         auto *scc = new SCC(*g);
-        sccVector.push_back(scc);
-        sccVector[sccVector.size()-1]->setId(i);
-        sccVector[sccVector.size()-1]->setName("SCC_");
+        sccVector.emplace_back(scc);
+        scc->setId(i);
+        scc->setName("SCC_");
         dfs(VertexMap[Stack.top()]);
         scc->findSCCEdges(); // let the scc find its edges inside the original graph
         //cout << "Size of SCCVector is " << sccVector.size() << endl;
-        if(!this->quiet) cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
-        if(!this->quiet) cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
+        if(!this->quiet) {
+          cout << scc->getName() << scc->getId();
+          cout << " Has " << scc->getNumberOfVertices() << " Vertices and " << scc->getSCCEdges().size() << " Edges:" << endl;
+          for (auto &v : scc->getVerticesOfSCC()) {
+            cout << "  " << v->getName() << endl;
+          }
+          for (auto &e : scc->getSCCEdges()) {
+            cout << "  " << e->getVertexSrcName() << " -> " << e->getVertexDstName() << endl;
+          }
+        }
         i++;
       }
 
