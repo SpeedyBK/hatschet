@@ -182,8 +182,7 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/utility/SDCSolver.cpp
-src/HatScheT/scheduler/dev/SMT/SMTModScheduler.cpp )
+src/HatScheT/utility/SDCSolver.cpp)
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -257,7 +256,8 @@ src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
 src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
-src/HatScheT/utility/FibonacciHeap.h)
+src/HatScheT/utility/FibonacciHeap.h
+        src/HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -292,8 +292,7 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/OptimalIntegerIIBinding.cpp
 src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
-src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
-)
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
 
 IF (CADICAL_H AND CADICAL_LIB)
@@ -306,6 +305,12 @@ src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.cpp
 )
 ENDIF (CADICAL_H AND CADICAL_LIB)
+
+IF(${Z3_FOUND})
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/scheduler/dev/SMT/SMTModScheduler.cpp
+            src/HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.cpp)
+ENDIF(${Z3_FOUND})
 
 add_library(hatschet ${HatScheT_SOURCES})
 add_executable(hatschet-bin src/hatschet.cpp)

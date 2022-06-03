@@ -69,6 +69,7 @@
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3727,75 +3728,6 @@ namespace HatScheT {
 	  #endif
   }
 
-  bool Tests::smtModSchedulerTest() {
-      #ifdef USE_Z3
-
-	      HatScheT::Graph g;
-	      HatScheT::ResourceModel rm;
-
-          auto &green = rm.makeResource("green", 2, 1, 1);
-
-	      Vertex &o0 = g.createVertex(0);
-	      Vertex &o1 = g.createVertex(1);
-          Vertex &o2 = g.createVertex(2);
-          Vertex &o3 = g.createVertex(3);
-          Vertex &o4 = g.createVertex(4);
-          Vertex &o5 = g.createVertex(5);
-          Vertex &o6 = g.createVertex(6);
-          Vertex &o7 = g.createVertex(7);
-
-          rm.registerVertex(&o0, &green);
-          rm.registerVertex(&o1, &green);
-          rm.registerVertex(&o2, &green);
-          rm.registerVertex(&o3, &green);
-          rm.registerVertex(&o4, &green);
-          rm.registerVertex(&o5, &green);
-          rm.registerVertex(&o6, &green);
-          rm.registerVertex(&o7, &green);
-
-          g.createEdge(o0, o1, 0);
-          g.createEdge(o1, o2, 0);
-          g.createEdge(o2, o3, 0);
-          g.createEdge(o3, o1, 2);
-          g.createEdge(o0, o5, 0);
-          g.createEdge(o4, o1, 0);
-          g.createEdge(o4, o5, 0);
-          g.createEdge(o5, o6, 0);
-          g.createEdge(o6, o5, 2);
-          g.createEdge(o6, o3, 0);
-          g.createEdge(o7, o5, 0);
-
-          SMTModScheduler smt(g, rm);
-
-	      int ii = (int)smt.getII();
-	      cout << "II: " << ii << endl;
-
-	      smt.setQuiet(false);
-	      smt.schedule();
-
-          auto sched = smt.getSchedule();
-
-          cout << endl;
-          for(auto &it : sched) {
-              std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
-          }
-
-          ii = (int)smt.getII();
-          cout << "II: " << ii << endl;
-
-          auto valid = verifyModuloSchedule(g, rm, sched, ii);
-          if (!valid) {
-              std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
-              return false;
-          }
-          std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-)" << std::endl;
-          return true;
-      #else
-	      cout << "Z3 Solver not found, test disabled." << std::endl;
-	      return true;
-      #endif
-  }
-
   //TODO Remove Test
   bool Tests::smtVsED97Test() {
 #ifdef USE_Z3
@@ -3806,8 +3738,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/fir_SHIRM.xml";
-      string graphStr = "benchmarks/origami/fir_SHI.graphml";
+      string resStr = "benchmarks/origami/iir_sos4RM.xml";
+      string graphStr = "benchmarks/origami/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3853,18 +3785,20 @@ namespace HatScheT {
       g.createEdge(CONST_A, PROD_0, 0);
       g.createEdge(PROD_0, SUM_0, 0);
       g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);*/
+      g.createEdge(SUM_1, OUT, 0);
 
+      HatScheT::DotWriter dw("beispiel.dot", &g, &rm);
+      dw.setDisplayNames(true);
+      dw.write();*/
 
       EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
-      SMTModScheduler smt(g, rm);
 
       es.setQuiet(true);
       start = clock();
       es.schedule();
       end = clock();
-      cout << es.getII() << endl;
       auto sched = es.getSchedule();
+      cout << "Min II: "<< es.getMinII() << endl;
       auto ii = es.getII();
       auto valid = verifyModuloSchedule(g, rm, sched, ii);
       for (auto &it : sched){
@@ -3880,29 +3814,107 @@ namespace HatScheT {
            << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
       cout << " sec " << endl;
 
-      smt.setQuiet(false);
-      start = clock();
-      smt.schedule();
-      end = clock();
-      sched = smt.getSchedule();
+      vector <double> times;
+      for (int i = 0; i < 8; i++) {
+          if (i != 7){
+              times.push_back(0);
+              continue;
+          }
+          auto smt = new SMTModScheduler(g, rm);
+          smt->setQuiet(true);
+          smt->set_encoding_mode(encodingMode::pbeq);
+          smt->set_mode(i);
+          start = clock();
+          smt->schedule();
+          end = clock();
+          sched = smt->getSchedule();
 
-      for (auto &it : sched){
-          cout << it.first->getName() << " : " << it.second << endl;
+          for (auto &it : sched) {
+              cout << it.first->getName() << " : " << it.second % (int)smt->getII() << endl;
+          }
+
+          ii = smt->getII();
+
+          valid = verifyModuloSchedule(g, rm, sched, ii);
+          if (!valid) {
+              std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
+          } else {
+              std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) II=" << ii << std::endl;
+          }
+          cout << "Time taken by smt mode " << i << " is : " << fixed
+               << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
+          cout << " sec " << endl;
+          times.push_back(double(end - start) / double(CLOCKS_PER_SEC));
+          delete smt;
       }
 
-      ii = smt.getII();
-
-      valid = verifyModuloSchedule(g, rm, sched, ii);
-      if (!valid) {
-          std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
-          return false;
+      cout << endl;
+      int j = 0;
+      for (auto &it : times){
+          cout << j << ": " << it << endl;
+          j++;
       }
-      std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) II=" << ii << std::endl;
-      cout << "Time taken by smt is : " << fixed
-           << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
-      cout << " sec " << endl;
 
+      return valid;
+#else
       return true;
+#endif
+  }
+
+  bool Tests::smtSmart() {
+#ifdef USE_Z3
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      clock_t start, end;
+
+      //Simple IIR-Filter:
+      auto &Sum = rm.makeResource("Sum", 1, 1, 1);
+      auto &Product = rm.makeResource("Product", 1, 1, 1);
+      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
+      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
+
+      Vertex &IN = g.createVertex(0);
+      Vertex &SUM_0 = g.createVertex(1);
+      Vertex &PROD_1 = g.createVertex(2);
+      Vertex &PROD_0 = g.createVertex(3);
+      Vertex &CONST_A = g.createVertex(4);
+      Vertex &CONST_B = g.createVertex(5);
+      Vertex &SUM_1 = g.createVertex(6);
+      Vertex &OUT = g.createVertex(7);
+
+      IN.setName("IN");
+      SUM_0.setName("SUM_0");
+      PROD_1.setName("PROD_1");
+      PROD_0.setName("PROD_0");
+      CONST_A.setName("CONST_A");
+      CONST_B.setName("CONST_B");
+      SUM_1.setName("SUM_1");
+      OUT.setName("OUT");
+
+      rm.registerVertex(&IN, &LoadStore);
+      rm.registerVertex(&SUM_0, &Sum);
+      rm.registerVertex(&PROD_1, &Product);
+      rm.registerVertex(&PROD_0, &Product);
+      rm.registerVertex(&CONST_A, &Constant);
+      rm.registerVertex(&CONST_B, &Constant);
+      rm.registerVertex(&SUM_1, &Sum);
+      rm.registerVertex(&OUT, &LoadStore);
+
+      g.createEdge(IN, SUM_0, 0);
+      g.createEdge(SUM_0, PROD_0, 1);
+      g.createEdge(SUM_0, PROD_1, 1);
+      g.createEdge(SUM_0, SUM_1, 0);
+      g.createEdge(CONST_B, PROD_1, 0);
+      g.createEdge(CONST_A, PROD_0, 0);
+      g.createEdge(PROD_0, SUM_0, 0);
+      g.createEdge(PROD_1, SUM_1, 0);
+      g.createEdge(SUM_1, OUT, 0);
+
+      SMTSmartieScheduler sss(g, rm);
+      sss.schedule();
+
+      return false;
 #else
       return true;
 #endif

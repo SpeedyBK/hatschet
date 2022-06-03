@@ -19,6 +19,8 @@
 
 namespace HatScheT {
 
+  enum class encodingMode {ite, pbeq, somethingElse};
+
   class SMTModScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
 
   public:
@@ -27,8 +29,13 @@ namespace HatScheT {
     /*!
      * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
      */
+    ~SMTModScheduler() override = default;
+
     void schedule() override;
 
+    void set_encoding_mode(encodingMode e) { this->encode = e; }
+
+    void set_mode(int i) { this->mode = i; }
 
   protected:
 
@@ -134,13 +141,9 @@ namespace HatScheT {
 
     void add_linking_constraints_to_solver(z3::solver &s);
 
-    /*!
-     * Minimizing Latency
-     */
-    deque<z3::expr> latency_constraints;
-
     void create_and_add_latency_constraints(z3::solver &s);
 
+    void set_max_latency(z3::solver &s, int maxLat);
     /*!
      * Print Methode.
      */
@@ -155,6 +158,12 @@ namespace HatScheT {
      * Mapping the index of an Expression in expr_vector to the corresponsing Edge.
      */
     map<int, Edge*> exprToEdgeMap;
+
+    int maxLatency;
+
+    encodingMode encode;
+
+    int mode;
 
   };
 
