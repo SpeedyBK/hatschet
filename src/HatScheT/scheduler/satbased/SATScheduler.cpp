@@ -164,6 +164,7 @@ namespace HatScheT {
 				break;
 			}
 		}
+		this->restoreResourceLimits();
 	}
 
 	void SATScheduler::calcMinLatency() {
@@ -266,6 +267,8 @@ namespace HatScheT {
 		// upper and lower bounds
 		this->calculateEarliestStartTimes();
 		this->calculateLatestStartTimeDifferences();
+		// simplify resource limits to save variables/clauses
+		this->simplifyResourceLimits();
 	}
 
 	void SATScheduler::resetContainer() {
@@ -635,6 +638,7 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calculateLatestStartTimeDifferences() {
+		/*
 		// check if latest start time differences were set by user
 		bool foundAll = true;
 		for (auto &v : this->g.Vertices()) {
@@ -644,6 +648,7 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) return;
+		 */
 		// use ALAP scheduler without resource constraints to calc latest start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -657,8 +662,20 @@ namespace HatScheT {
 		}
 		auto alapSL = alapScheduler.getScheduleLength();
 		auto alapStartTimes = alapScheduler.getSchedule();
+		if (!this->quiet) {
+			std::cout << "SATScheduler: ALAP schedule length = " << alapSL << std::endl;
+		}
 		for (auto &v : this->g.Vertices()) {
-			this->latestStartTimeDifferences[v] = alapSL - alapStartTimes.at(v);
+			try {
+				auto lstd = this->latestStartTimeDifferences.at(v);
+				if (!this->quiet) {
+					std::cout << "SATScheduler: vertex '" << v->getName() << "': user max time diff = '" << lstd << "', ALAP max time diff = '" << alapSL - alapStartTimes.at(v) << "'" << std::endl;
+				}
+				this->latestStartTimeDifferences[v] = std::min(lstd ,alapSL - alapStartTimes.at(v));
+			}
+			catch (std::out_of_range&) {
+				this->latestStartTimeDifferences[v] = alapSL - alapStartTimes.at(v);
+			}
 		}
 		// set resource limits back to original values
 		for (auto &r : this->resourceModel.Resources()) {
@@ -667,6 +684,7 @@ namespace HatScheT {
 	}
 
 	void SATScheduler::calculateEarliestStartTimes() {
+		/*
 		// check if earliest start times were set by user
 		bool foundAll = true;
 		for (auto &v : this->g.Vertices()) {
@@ -676,6 +694,7 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) return;
+		 */
 		// use ASAP scheduler without resource constraints for lower bounds on start times
 		std::map<const Resource*, int> originalLimits;
 		for (auto &r : this->resourceModel.Resources()) {
@@ -689,7 +708,14 @@ namespace HatScheT {
 		}
 		auto asapStartTimes = asapScheduler.getSchedule();
 		for (auto &v : this->g.Vertices()) {
-			this->earliestStartTime[v] = asapStartTimes.at(v);
+			try {
+				// check if earliest start time was set by user
+				this->earliestStartTime[v] = max(asapStartTimes.at(v), this->earliestStartTime.at(v));
+			}
+			catch (std::out_of_range&) {
+				// just use the calculated one by the ASAP scheduler
+				this->earliestStartTime[v] = asapStartTimes.at(v);
+			}
 		}
 		// set resource limits back to original values
 		for (auto &r : this->resourceModel.Resources()) {
@@ -724,6 +750,28 @@ namespace HatScheT {
 		}
 		if (!foundAll) return;
 		this->latestStartTimeDifferences = newLatestStartTimeDifferences;
+	}
+
+	void SATScheduler::simplifyResourceLimits() {
+		for (auto &r : this->resourceModel.Resources()) {
+			auto limit = r->getLimit();
+			if (limit == UNLIMITED) continue; // skip unlimited resources because this is the dream scenario anyways
+			auto numVertices = this->resourceModel.getNumVerticesRegisteredToResource(r);
+			if (numVertices <= limit) {
+				// save original limit to restore it later
+				this->originalResourceLimits[r] = limit;
+				// resource limit can be ignored
+				r->setLimit(UNLIMITED, false);
+			}
+		}
+	}
+
+	void SATScheduler::restoreResourceLimits() {
+		for (auto &r : this->resourceModel.Resources()) {
+			if (this->originalResourceLimits.find(r) == this->originalResourceLimits.end()) continue; // limit was not changed
+			auto lim = this->originalResourceLimits.at(r);
+			r->setLimit(lim, false);
+		}
 	}
 }
 #endif

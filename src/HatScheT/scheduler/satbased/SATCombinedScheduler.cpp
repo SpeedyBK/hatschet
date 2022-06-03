@@ -62,6 +62,9 @@ namespace HatScheT {
 				// sanity check for timeout
 				continue;
 			}
+			if (!this->quiet) {
+				std::cout << "SATCombinedScheduler: SAT-based SCC scheduler found solution for II=" << this->candidateII << " and schedule length " << lat << std::endl;
+			}
 			auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
 			// refine latency with normal scheduler
 			SATScheduler s2(this->g, this->resourceModel, this->candidateII);
@@ -77,6 +80,9 @@ namespace HatScheT {
 				this->startTimes = s2.getSchedule();
 				// check if it's latency-optimal
 				this->secondObjectiveOptimal = s2.getObjectivesOptimal().second;
+				if (!this->quiet) {
+					std::cout << "SATCombinedScheduler: SAT scheduler refined schedule length to " << s2.getScheduleLength() << std::endl;
+				}
 			}
 			break;
 		}

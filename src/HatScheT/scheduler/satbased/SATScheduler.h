@@ -43,6 +43,8 @@ namespace HatScheT {
 		void calculateLatestStartTimes();
 		void calculateLatestStartTimeDifferences();
 		void calculateEarliestStartTimes();
+		void simplifyResourceLimits();
+		void restoreResourceLimits();
 
 		void initScheduler();
 		void setUpSolver();
@@ -82,6 +84,7 @@ namespace HatScheT {
 		std::map<Vertex*, int> earliestStartTime;
 		std::map<Vertex*, int> latestStartTime;
 		std::map<Vertex*, int> latestStartTimeDifferences;
+		std::map<const Resource*, int> originalResourceLimits;
 	};
 }
 #endif //USE_CADICAL

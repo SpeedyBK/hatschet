@@ -46,7 +46,20 @@ namespace HatScheT {
 		// use kosaraju scc finder to find sccs
 		KosarajuSCC k(this->g);
 		k.setQuiet(this->quiet);
-		this->sccs = k.getSCCs();
+		//this->sccs = k.getSCCs();
+		auto tempSCCs = k.getSCCs();
+		// sort SCCs by size
+		while(!tempSCCs.empty()) {
+			// find largest SCC
+			auto largestSCCIt = tempSCCs.begin();
+			for (auto it = largestSCCIt; it != tempSCCs.end(); it++) {
+				if ((*it)->getNumberOfVertices() > (*largestSCCIt)->getNumberOfVertices()) largestSCCIt = it;
+			}
+			// put it into this->sccs
+			this->sccs.emplace_back(*largestSCCIt);
+			// delete it from tempSCCs
+			tempSCCs.erase(largestSCCIt);
+		}
 		// sanity check
 		/*
 		for (auto &e : this->g.Edges()) {
@@ -352,6 +365,8 @@ namespace HatScheT {
 			visited.at(v) = false;
 		};
 
+		int maxSCCLatencyCounter = 0;
+
 		auto getMaxSCCLatency = [&](const list<Vertex*> &sccVertices, const list<Edge*> &sccEdges) {
 			// check if solution is trivial
 			if (sccVertices.size() == 1 or sccEdges.empty()) {
@@ -363,13 +378,21 @@ namespace HatScheT {
 				return maxSCCLatency;
 			}
 			// use SDC schedule without resource constraints with ScaLP
-			// compute min latency of SCC
 			ScaLP::Solver s({"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 			std::unordered_map<Vertex*, ScaLP::Variable> t;
 			auto supersink = ScaLP::newIntegerVariable("supersink", 0.0, ScaLP::INF());
+			auto supersource = ScaLP::newIntegerVariable("supersource", -ScaLP::INF(), 0.0);
+			ScaLP::status stat;
+			std::map<ScaLP::Variable, double> results;
 			for (auto &v : sccVertices) {
-				auto var = ScaLP::newIntegerVariable(v->getName(), 0.0, ScaLP::INF());
-				t[v] = var;
+				t[v] = ScaLP::newIntegerVariable(v->getName(), 0.0, ScaLP::INF());
+			}
+			std::vector<Vertex*> sources;
+			std::vector<Vertex*> sinks;
+			// compute min latency of SCC
+			/*
+			for (auto &v : sccVertices) {
+				auto var = t.at(v);
 				auto l = this->resourceModel.getVertexLatency(v);
 				s.addConstraint(supersink - var >= l);
 			}
@@ -380,11 +403,11 @@ namespace HatScheT {
 				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
 			}
 			s.setObjective(ScaLP::minimize(supersink));
-			auto stat = s.solve();
+			stat = s.solve();
 			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
 				throw Exception("SATSCCScheduler: failed to compute min schedule length for SCC");
 			}
-			auto results = s.getResult().values;
+			results = s.getResult().values;
 			int minSCCLat = (int)std::round(results.at(supersink));
 			if (!this->quiet) {
 				std::cout << "SATSCCScheduler: min SCC latency = " << minSCCLat << std::endl;
@@ -440,36 +463,60 @@ namespace HatScheT {
 			for (auto &v : sccVertices) {
 				maxTimes[v] = (int) std::round(results[t.at(v)]);
 			}
+			*/
 
 			// from min and max times compute sources and sinks
-			std::vector<Vertex*> sources;
-			std::vector<Vertex*> sinks;
 			for (auto &v : sccVertices) {
-				if (maxTimes.at(v) == 0) {
+				bool canBeSource = true;
+				bool canBeSink = true;
+				for (auto &e : sccEdges) {
+					// it is not a source if it the sink of any edge with zero distance
+					if (v == &e->getVertexDst() and (e->isDataEdge() and e->getDistance() == 0)) {
+						canBeSource = false;
+					}
+					// it is not a sink if it the source of any edge with zero distance
+					if (v == &e->getVertexSrc() and (e->isDataEdge() and e->getDistance() == 0)) {
+						canBeSink = false;
+					}
+				}
+				if (canBeSource) { //  and maxTimes.at(v) == 0
 					sources.emplace_back(v);
 					if (!this->quiet) {
 						std::cout << "SATSCCScheduler: vertex '" << v->getName() << "' is a source" << std::endl;
 					}
 				}
-				if (minTimes.at(v) + this->resourceModel.getVertexLatency(v) == minSCCLat) {
+				if (canBeSink) { //  and minTimes.at(v) + this->resourceModel.getVertexLatency(v) == minSCCLat
 					sinks.emplace_back(v);
 					if (!this->quiet) {
 						std::cout << "SATSCCScheduler: vertex '" << v->getName() << "' is a sink" << std::endl;
 					}
 				}
 			}
+
 			// use sources and sinks to compute max SCC latency
 			s.reset();
-			auto supersource = ScaLP::newIntegerVariable("supersource", -ScaLP::INF(), 0.0);
+			std::unordered_map<Vertex*, ScaLP::Variable> supersourceActivators;
+			ScaLP::Term sourceTerm;
+			std::unordered_map<Vertex*, ScaLP::Variable> supersinkActivators;
+			ScaLP::Term sinkTerm;
+			double bigM = 1000000.0; // something huge... -> maybe think about something that always works
 			for (auto &v : sources) {
+				auto actVar = ScaLP::newBinaryVariable("source_var_"+v->getName());
+				supersourceActivators[v] = actVar;
+				sourceTerm += actVar;
 				auto var = t.at(v);
-				s.addConstraint(supersource - var >= 0);
+				s.addConstraint((bigM * (1-actVar)) + supersource - var >= 0);
 			}
+			s.addConstraint(sourceTerm >= 1);
 			for (auto &v : sinks) {
+				auto actVar = ScaLP::newBinaryVariable("sink_var_"+v->getName());
+				supersinkActivators[v] = actVar;
+				sinkTerm += actVar;
 				auto var = t.at(v);
 				auto l = this->resourceModel.getVertexLatency(v);
-				s.addConstraint(supersink - var <= l);
+				s.addConstraint(-(bigM * (1-actVar)) + supersink - var <= l);
 			}
+			s.addConstraint(sinkTerm >= 1);
 			for (auto &e : sccEdges) {
 				auto vSrc = &e->getVertexSrc();
 				auto vDst = &e->getVertexDst();
@@ -482,8 +529,19 @@ namespace HatScheT {
 				throw Exception("SATSCCScheduler: failed to compute max schedule length for SCC (status: "+ScaLP::showStatus(stat)+")");
 			}
 			results = s.getResult().values;
-			int maxSCCLat = (int)std::round(results.at(supersink));
-			return maxSCCLat;
+			int maxSCCLat = 0;
+			for (auto &v : sccVertices) {
+				auto var = t.at(v);
+				auto l = this->resourceModel.getVertexLatency(v);
+				auto tV = round(results.at(var)) + l;
+				if (tV > maxSCCLat) maxSCCLat = tV;
+			}
+			if (maxSCCLatencyCounter < this->II-1) {
+				maxSCCLatencyCounter++;
+			}
+
+			//return 7;
+			return maxSCCLat + maxSCCLatencyCounter;
 		};
 
 		this->sccGraphMaxLat = 0;
