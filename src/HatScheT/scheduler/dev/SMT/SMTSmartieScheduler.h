@@ -27,9 +27,9 @@ namespace HatScheT {
 
   protected:
 
-    int upperBound;
+    int latencyUpperBound;
     int min_Latency;
-    int offset;
+    int max_Latency;
 
     iiSearchMethod iiSM;
     vector<int>II_space;
@@ -44,6 +44,8 @@ namespace HatScheT {
 
     void find_earliest_start_times();
     void find_latest_start_times();
+
+    void calcMaxLatency();
 
     int ii_binary_search(z3::check_result result);
     int ii_linear_search(z3::check_result result);

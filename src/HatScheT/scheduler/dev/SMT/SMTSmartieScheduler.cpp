@@ -29,21 +29,32 @@ namespace HatScheT {
       computeMaxII(&g, &resourceModel);
 
       quiet = true;
-      iiSM = iiSearchMethod::binary;
+      iiSM = iiSearchMethod::linear;
 
       for (int i = (int)minII; i <= (int)maxII; i++){
           this->II_space.push_back(i);
       }
       II_space_index = 0;
 
-      this->upperBound = 0;
+      this->latencyUpperBound = -1;
       this->min_Latency = 0;
-      this->offset = 125;
+      this->max_Latency = -1;
       this->maxRuns = INT32_MAX;
 
   }
 
   void SMTSmartieScheduler::schedule() {
+
+    /*!
+      IN : 1
+      SUM_0 : 2
+      PROD_1 : 2
+      PROD_0 : 1
+      CONST_A : 0
+      CONST_B : 0
+      SUM_1 : 3
+      OUT : 4
+    */
 
       clock_t start, end;
 
@@ -51,10 +62,21 @@ namespace HatScheT {
       auto sati = z3::unknown;
       z3::model m(c);
 
+      calcMaxLatency();
+
       find_earliest_start_times();
+      latencyUpperBound=min_Latency;//g.getNumberOfVertices()*test - 130; //ToDo: Kann minLat < minII sein?
+      if (latencyUpperBound < (int)minII){
+          latencyUpperBound = (int)minII;
+          min_Latency = (int)minII;
+      }
       find_latest_start_times();
-      upperBound = min_Latency + offset;
-      cout << upperBound << endl;
+
+      if (!quiet) { cout << "Max-Latency : " << max_Latency << endl; }
+      if (!quiet) { cout << "Min-Latency : " << min_Latency << endl; }
+      if (!quiet) { cout << "First-Try-Latency : " << latencyUpperBound << endl; }
+      if (!quiet) { cout << "Num of Vertcies: " << g.getNumberOfVertices() << endl; }
+      if (!quiet) { cout << "Num of Edges: " << g.getNumberOfEdges() << endl; }
 
       int candidateII;
       int candidateIIOLD;
@@ -71,24 +93,40 @@ namespace HatScheT {
               break;
           }
           if (!quiet) { cout << "Trying II: " << candidateII << endl; }
-          s.reset();
-          generate_b_variables();
-          //if (!quiet) { print_b_variables(); }
+          for (int lat = min_Latency; lat < max_Latency; lat++) {
+              latencyUpperBound = lat;
+              find_latest_start_times();
+              if (!quiet) { cout << "Trying Max-Latency-Bound: " << lat << endl; }
+              s.reset();
+              if (!quiet) { cout << "Generating b-variables... " << endl; }
+              generate_b_variables();
+              //if (!quiet) { print_b_variables(); }
 
-          prohibit_to_early_starts_and_add(s);
-          prohibit_to_late_starts_and_add(s);
+              if (!quiet) { cout << "Prohibit early starts... " << endl; }
+              prohibit_to_early_starts_and_add(s);
+              if (!quiet) { cout << "Prohibit late starts... " << endl; }
+              prohibit_to_late_starts_and_add(s);
 
-          add_one_slot_constraints_to_solver(s);
-          add_resource_limit_constraint_to_solver(s, candidateII);
+              if (!quiet) { cout << "Add one-slot-constraints... " << endl; }
+              add_one_slot_constraints_to_solver(s);
+              if (!quiet) { cout << "Add resource-constraints... " << endl; }
+              add_resource_limit_constraint_to_solver(s, candidateII);
 
-          set_b_variables(s, candidateII);
-          start = clock();
-          sati = s.check();
-          end = clock();
-          if(!quiet) {
-              cout << "-->" << sati << "<--" << endl << "Solving Time: " << fixed
-                   << double(end - start) / double(CLOCKS_PER_SEC)
-                   << setprecision(5) << " sec " << endl;
+              if (!quiet) { cout << "Add dependency-constraints... " << endl; }
+              set_b_variables(s, candidateII);
+
+              if (!quiet) { cout << "Solving... " << endl; }
+              start = clock();
+              sati = s.check();
+              end = clock();
+              if (!quiet) {
+                  cout << "-->" << sati << "<--" << endl << "Solving Time: " << fixed
+                       << double(end - start) / double(CLOCKS_PER_SEC)
+                       << setprecision(5) << " sec " << endl;
+              }
+              if (sati == z3::sat){
+                  break;
+              }
           }
           i++;
       }
@@ -96,8 +134,9 @@ namespace HatScheT {
       II = candidateIIOLD;
       //cout << s << endl << "--------------------------------" <<endl;
       m = s.get_model();
-      print_solution(m);
+      //print_solution(m);
       parse_schedule(m);
+      this->scheduleFound = true;
   }
 
   void SMTSmartieScheduler::find_earliest_start_times() {
@@ -127,10 +166,18 @@ namespace HatScheT {
 
       ALAPScheduler alap(g, resourceModel);
       alap.schedule();
-      this->latest_start_times = alap.getSchedule();
+      //this->latest_start_times = alap.getSchedule();
+      auto alap_schedule = alap.getSchedule();
+      auto alap_schedule_length = alap.getScheduleLength();
+      latest_start_times = alap_schedule;
 
       for (auto &it: latest_start_times) {
-          it.second += offset;
+          /*if (!quiet) {
+              cout << "Bobble: " << it.first->getName() << " | "
+                   << it.second - alap_schedule_length + this->latencyUpperBound
+                   << " UpperBound: " << this->latencyUpperBound << endl;
+          }*/
+          this->latest_start_times.at(it.first) = it.second - alap_schedule_length + this->latencyUpperBound;
       }
 
       for (auto &r : resourceModel.Resources()) {
@@ -138,9 +185,43 @@ namespace HatScheT {
       }
   }
 
+  void SMTSmartieScheduler::calcMaxLatency() {
+      // check if max latency was set by user
+      if (this->max_Latency >= 0) return;
+      // use upper limit from Equation (6) in:
+      // [1] J. Oppermann, M. Reuter-Oppermann, L. Sommer, A. Koch, and O. Sinnen,
+      // ‘Exact and Practical Modulo Scheduling for High-Level Synthesis’,
+      // ACM Transactions on Reconfigurable Technology and Systems, vol. 12, no. 2, p. 26.
+      this->max_Latency = 0;
+      for (auto &v : this->g.Vertices()) {
+          int maxChainingDelay = 0;
+          for (auto &e : this->g.Edges()) {
+              if (&e->getVertexSrc() != v) {
+                  continue;
+              }
+              auto d = e->getDelay();
+              if (d > maxChainingDelay) {
+                  maxChainingDelay = d;
+              }
+          }
+          this->max_Latency += (this->resourceModel.getVertexLatency(v) + maxChainingDelay);
+      }
+      for (auto &r : this->resourceModel.Resources()) {
+          if (r->isUnlimited()) {
+              continue;
+          }
+          auto numRegistrations = this->resourceModel.getNumVerticesRegisteredToResource(r);
+          auto limit = (float) r->getLimit();
+          for (int i = 0; i < numRegistrations; i++) {
+              this->max_Latency += (int) floor((float) i / limit);
+          }
+      }
+      if (!quiet) { cout << "Max Latency: " << max_Latency << endl; }
+  }
+
   void SMTSmartieScheduler::prohibit_to_early_starts_and_add(z3::solver &s) {
       for (auto &v : g.Vertices()){
-          for (int i = 0; i < upperBound; i++){
+          for (int i = 0; i < latencyUpperBound; i++){
               if (i < earliest_start_times.at(v)){
                   s.add(!*get_b_variable(v, i));
               }
@@ -150,8 +231,9 @@ namespace HatScheT {
 
   void SMTSmartieScheduler::prohibit_to_late_starts_and_add(z3::solver &s) {
       for (auto &v : g.Vertices()){
-          for (int i = 0; i < upperBound; i++){
-              if (i > latest_start_times.at(v)+offset){
+          for (int i = 0; i < latencyUpperBound; i++){
+              //if (i > latest_start_times.at(v)+offset){
+              if (i > latest_start_times.at(v)){
                   s.add(!*get_b_variable(v, i));
               }
           }
@@ -160,12 +242,17 @@ namespace HatScheT {
 
   z3::expr *SMTSmartieScheduler::get_b_variable(Vertex *v, int i) {
       auto key = std::make_pair(v, i);
-      return &b_variables.at(key);
+      try {
+          return &b_variables.at(key);
+      }catch(std::out_of_range&){
+          cout << "Out_of_Range: " << v->getName() << " - " << i << endl;
+          throw (HatScheT::Exception("SMT Scheduler: get_b_variable std::out_of_range"));
+      }
   }
 
   void SMTSmartieScheduler::generate_b_variables() {
       for (auto &it : g.Vertices()){
-          for (int i = 0; i < upperBound; i++){
+          for (int i = 0; i < latencyUpperBound; i++){
               auto key = std::make_pair(it, i);
               std::stringstream name;
               name << it->getName() << "->" << i;
@@ -184,8 +271,8 @@ namespace HatScheT {
           auto lSrc = this->resourceModel.getVertexLatency(vSrc);
           auto distance = e->getDistance();
           auto delay = e->getDelay();
-          for(int ti = 0; ti < upperBound; ti++){
-              for (int tj = 0; tj < upperBound; tj++){
+          for(int ti = 0; ti < latencyUpperBound; ti++){
+              for (int tj = 0; tj < latencyUpperBound; tj++){
                   if (tj + distance * candidateII - ti - lSrc - delay >= 0){
                       //No Conflict... Do nothing
                       continue;
@@ -202,13 +289,24 @@ namespace HatScheT {
       for (auto &it : g.Vertices()){
           if (!resourceModel.getResource(it)->isUnlimited()) {
               vector<int> coefficients;
-              coefficients.reserve(upperBound);
+              coefficients.reserve(latencyUpperBound);
               z3::expr_vector b_expressions(c);
-              for (int i = 0; i < upperBound; i++) {
+              for (int i = 0; i < latencyUpperBound; i++) {
                   coefficients.push_back(1);
                   b_expressions.push_back(*get_b_variable(it, i));
               }
               s.add(z3::pbeq(b_expressions, &coefficients[0], 1));
+              coefficients.clear();
+              coefficients.shrink_to_fit();
+          }else{
+              vector<int> coefficients;
+              coefficients.reserve(latencyUpperBound);
+              z3::expr_vector b_expressions(c);
+              for (int i = 0; i < latencyUpperBound; i++) {
+                  coefficients.push_back(1);
+                  b_expressions.push_back(*get_b_variable(it, i));
+              }
+              s.add(z3::atleast(b_expressions, 1));
               coefficients.clear();
               coefficients.shrink_to_fit();
           }
@@ -224,13 +322,14 @@ namespace HatScheT {
               set<const Vertex *> vSet = resourceModel.getVerticesOfResource(it);
               z3::expr_vector b_expressions(c);
               for (auto &vIt : vSet) {
-                  for (int j = 0; j < upperBound; j++) {
+                  for (int j = 0; j < latencyUpperBound; j++) {
                       if ((j % candidateII) != i) {
                           continue;
                       }
                       b_expressions.push_back(*get_b_variable((Vertex *) vIt, j));
                   }
               }
+              //cout << b_expressions.size() << "Type: " << it->getName() << "Limit: " << it->getLimit() << "i: " << i << endl;
               s.add(z3::atmost(b_expressions, it->getLimit()));
           }
       }
@@ -238,7 +337,7 @@ namespace HatScheT {
 
   void SMTSmartieScheduler::print_b_variables() {
       for (auto &it:g.Vertices()){
-          for (int i = 0; i < upperBound; i++){
+          for (int i = 0; i < latencyUpperBound; i++){
               cout << *get_b_variable(it, i) << endl;
           }
       }
@@ -246,7 +345,7 @@ namespace HatScheT {
 
   void SMTSmartieScheduler::print_solution(z3::model &m) {
       for (auto &it : g.Vertices()){
-          for (int i = 0; i < upperBound; i++) {
+          for (int i = 0; i < latencyUpperBound; i++) {
               auto val = m.eval(*get_b_variable(it, i));
               if (val.is_true()){
                   cout << it->getName() << " - " << i << ": " <<  val << endl;
@@ -257,7 +356,7 @@ namespace HatScheT {
 
   void SMTSmartieScheduler::parse_schedule(z3::model &m) {
       for (auto &it : g.Vertices()){
-          for (int i = 0; i < upperBound; i++) {
+          for (int i = 0; i < latencyUpperBound; i++) {
               auto val = m.eval(*get_b_variable(it, i));
               if (val.is_true()){
                   this->startTimes[it] = i;

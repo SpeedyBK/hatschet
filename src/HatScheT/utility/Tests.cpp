@@ -3738,8 +3738,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_sos4RM.xml";
-      string graphStr = "benchmarks/origami/iir_sos4.graphml";
+      string resStr = "benchmarks/origami/iir_sos16RM.xml";
+      string graphStr = "benchmarks/origami/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3869,8 +3869,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/mat_invRM.xml";
-      string graphStr = "benchmarks/origami/mat_inv.graphml";
+      string resStr = "benchmarks/origami/iir_sos16RM.xml";
+      string graphStr = "benchmarks/origami/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3918,36 +3918,9 @@ namespace HatScheT {
       g.createEdge(PROD_1, SUM_1, 0);
       g.createEdge(SUM_1, OUT, 0);*/
 
-      ASAPScheduler asap(g, rm);
-      asap.schedule();
-      HatScheT::Utility::printSchedule(asap.getSchedule());
-
-      /*EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
-
-      es.setQuiet(true);
-      start = clock();
-      es.schedule();
-      end = clock();
-      auto sched = es.getSchedule();
-      cout << "Min II: "<< es.getMinII() << endl;
-      auto ii = es.getII();
-      auto valid = verifyModuloSchedule(g, rm, sched, ii);
-      for (auto &it : sched){
-          cout << it.first->getName() << " : " << it.second << endl;
-      }
-      if (!valid) {
-          std::cout << "Tests::ED97Scheduler: invalid modulo schedule found" << std::endl;
-      }else {
-          std::cout << "Tests::ED97Scheduler: valid modulo schedule found. :-) II=" << ii  << std::endl << setprecision(5);
-      }
-
-      cout << "Time taken by ED97 is : " << fixed
-           << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
-      cout << " sec " << endl;*/
-
       SMTSmartieScheduler sss(g, rm);
       sss.setIISearchMethod(SMTSmartieScheduler::iiSearchMethod::linear);
-      sss.setMaxRuns(10);
+      sss.setMaxRuns(1);
       sss.setQuiet(false);
       sss.schedule();
       auto sched = sss.getSchedule();

@@ -80,6 +80,7 @@
 
 #ifdef USE_Z3
 #include <z3++.h>
+#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
 // toDo - Will be added soon.
 #endif
 
@@ -126,6 +127,7 @@ void print_short_help() {
 	std::cout << "                            SATSCC: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components (uses CaDiCaL as backend)" << std::endl;
 	std::cout << "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)" << std::endl;
 	std::cout << "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)" << std::endl;
+    std::cout << "                            SMT: Experimental uses SMT-formulation and Z3 Backend" << std::endl;
   std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
   std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
   std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -186,7 +188,7 @@ int main(int argc, char *args[]) {
   bool solverQuiet=true;
   bool writeLPFile=false;
 
-  enum SchedulersSelection {SAT, SATSCC, SATCOMBINED, SATMINREG, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
+  enum SchedulersSelection {SMT, SAT, SATSCC, SATCOMBINED, SATMINREG, ASAP, ALAP, UL, MOOVAC, MOOVACMINREG, RAMS, ED97, SH11, SH11RA, MODULOSDC, MODULOSDCFIEGE, RATIONALIIMODULOSDC, RATIONALII, UNROLLRATIONALII, UNIFORMRATIONALII, NONUNIFORMRATIONALII, RATIONALIIMODULOQ, RATIONALIISCCQ, RATIONALIIFIMMEL, SUGRREDUCTION, ASAPRATIONALII, NONE};
   SchedulersSelection schedulerSelection = NONE;
   string schedulerSelectionStr;
 
@@ -306,6 +308,9 @@ int main(int argc, char *args[]) {
         }
         else if(schedulerSelectionStr == "alap") {
           schedulerSelection = ALAP;
+        }
+        else if(schedulerSelectionStr == "smt") {
+            schedulerSelection = SMT;
         }
 				else if(schedulerSelectionStr == "sat") {
 					schedulerSelection = SAT;
@@ -487,6 +492,9 @@ int main(int argc, char *args[]) {
 			case SATCOMBINED:
 				cout << "SATCOMBINED";
 				break;
+        case SMT:
+            cout << "SMT";
+            break;
       case MOOVAC:
         cout << "MOOVAC";
         break;
@@ -826,6 +834,14 @@ int main(int argc, char *args[]) {
           scheduler = subgrred;
           break;
         }
+#ifdef USE_Z3
+          case SMT:
+              scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
+              isModuloScheduler=true;
+              if(timeout > 0) ((HatScheT::SATScheduler*) scheduler)->setSolverTimeout(timeout);
+              if(maxLatency > 0) ((HatScheT::SATScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+              break;
+#endif
 #else
         case MOOVAC:
         case MOOVACMINREG:
