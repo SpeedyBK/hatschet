@@ -434,17 +434,16 @@ int main(int argc, char *args[]) {
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
+        #else
+        throw HatScheT::Exception("ScaLP not active! Test function disabled!");
+        #endif
+
         #ifdef USE_Z3
-		if(str== "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
+        if(str== "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
         if(str == "SMTED97" && !HatScheT::Tests::smtVsED97Test()) exit(-1);
         if(str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
         #else
-        throw HatScheT::Exception("z3 not active! Test function disabled!");
-        #endif
-
-
-        #else
-        throw HatScheT::Exception("ScaLP not active! Test function disabled!");
+        //throw HatScheT::Exception("z3 not active! Test function disabled!"); //TODO Check that with Nico.
         #endif
 
         exit(0);
