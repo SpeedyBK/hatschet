@@ -81,7 +81,6 @@
 #ifdef USE_Z3
 #include <z3++.h>
 #include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
-// toDo - Will be added soon.
 #endif
 
 /**
@@ -435,11 +434,13 @@ int main(int argc, char *args[]) {
 				if(str=="FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if(str=="MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if(str=="SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
-
-		if(str=="Z3" && !HatScheT::Tests::z3Test()) exit(-1);
+        #ifdef USE_Z3
+		if(str== "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
         if(str == "SMTED97" && !HatScheT::Tests::smtVsED97Test()) exit(-1);
         if(str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
-
+        #else
+        throw HatScheT::Exception("z3 not active! Test function disabled!");
+        #endif
 
 
         #else
@@ -835,12 +836,15 @@ int main(int argc, char *args[]) {
           break;
         }
 #ifdef USE_Z3
-          case SMT:
-              scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
-              isModuloScheduler=true;
-              if(timeout > 0) ((HatScheT::SATScheduler*) scheduler)->setSolverTimeout(timeout);
-              if(maxLatency > 0) ((HatScheT::SATScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
-              break;
+        case SMT:
+             scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
+             isModuloScheduler=true;
+             if(timeout > 0) ((HatScheT::SMTSmartieScheduler*) scheduler)->setSolverTimeout(timeout);
+             break;
+#else
+        case SMT:
+             throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP and z3 library. Please build with SCALP.");
+             break;
 #endif
 #else
         case MOOVAC:

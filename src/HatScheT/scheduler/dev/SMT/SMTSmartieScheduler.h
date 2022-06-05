@@ -25,6 +25,9 @@ namespace HatScheT {
 
     void setIISearchMethod(iiSearchMethod iism){ this->iiSM = iism; }
 
+    void setSolverTimeout(unsigned seconds);
+
+
   protected:
 
     int latencyUpperBound;

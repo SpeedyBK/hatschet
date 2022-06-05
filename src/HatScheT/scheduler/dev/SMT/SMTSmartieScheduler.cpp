@@ -20,8 +20,7 @@ namespace HatScheT {
 
   SMTSmartieScheduler::SMTSmartieScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
       // reset previous solutions
-      II = -1;
-      this->timeouts = 0;
+      this->timeouts = -1;
       startTimes.clear();
       scheduleFound = false;
       computeMinII(&g, &resourceModel);
@@ -58,9 +57,14 @@ namespace HatScheT {
 
       clock_t start, end;
 
+      //Setting up z3:
       z3::solver s(c);
       auto sati = z3::unknown;
       z3::model m(c);
+      z3::params p(c);
+      if (timeouts > 0) { p.set(":timeout", timeouts); }
+      cout << p << endl;
+      s.set(p);
 
       calcMaxLatency();
 
@@ -426,6 +430,10 @@ namespace HatScheT {
           II_space_index++;
           return II_space.at(index);
       }
+  }
+
+  void SMTSmartieScheduler::setSolverTimeout(unsigned int seconds) {
+      this->timeouts = seconds*1000;
   }
 }
 #endif
