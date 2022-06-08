@@ -28,14 +28,14 @@ namespace HatScheT {
       computeMaxII(&g, &resourceModel);
 
       quiet = true;
-      iiSM = iiSearchMethod::binary;
+      iiSM = iiSearchMethod::linear;
       for (int i = (int)minII; i <= (int)maxII; i++){
           this->II_space.push_back(i);
       }
       II_space_index = 0;
 
       latSM = latSearchMethod::linear;
-
+      this->latency_space_index = 0;
       this->candidateLatency = -1;
       this->min_Latency = 0;
       this->max_Latency = -1;
@@ -67,13 +67,12 @@ namespace HatScheT {
       cout << p << endl;
       s.set(p);
 
-      //ToDo: Kann minLat < minII sein?
       //Calculating Latency-Space:
       calcMaxLatency();
       find_earliest_start_times();
       calcLatencySpace();
       if (latSM == latSearchMethod::linear) { candidateLatency = lat_linear_search(sati); }
-      if (latSM == latSearchMethod::binary) { /*WIP*/ }
+      if (latSM == latSearchMethod::binary) { candidateLatency = lat_binary_search(sati); }
       find_latest_start_times();
 
       if (!quiet) { cout << "Max-Latency : " << max_Latency << endl; }
@@ -93,11 +92,13 @@ namespace HatScheT {
               break;
           }
           if (!quiet) { cout << "Trying II: " << candidateII << endl; }
-          /*!--------------------------------------------------------------------------------------*/
           while (candidateLatency != -1){
-          // In die Schleife muss noch irgendwo ein Break.
               if (latSM == latSearchMethod::linear) { candidateLatency = lat_linear_search(sati); }
-              if (latSM == latSearchMethod::binary) { /*WIP*/ }
+              if (latSM == latSearchMethod::binary) { candidateLatency = lat_binary_search(sati); }
+
+              if (candidateLatency == -1) {
+                  break;
+              }
 
               find_latest_start_times();
               if (!quiet) { cout << "Trying Latency: " << candidateLatency << endl; }
@@ -133,7 +134,6 @@ namespace HatScheT {
                   break;
               }
           }
-          /*!--------------------------------------------------------------------------------------*/
           i++;
       }
 
@@ -455,10 +455,16 @@ namespace HatScheT {
       }else if (result == z3::unknown){
           return latency_Space.at(0);
       }else{
-          int index = latency_space_index;
           latency_space_index++;
-          return latency_Space.at(index);
+          return latency_Space.at(latency_space_index);
       }
+  }
+
+  int SMTSmartieScheduler::lat_binary_search(z3::check_result result) {
+      for (auto &i : latency_Space){
+          cout << i << endl;
+      }
+      return -1;
   }
 
   void SMTSmartieScheduler::calcLatencySpace() {
