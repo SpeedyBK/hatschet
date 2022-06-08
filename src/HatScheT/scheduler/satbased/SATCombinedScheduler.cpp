@@ -42,6 +42,12 @@ namespace HatScheT {
 				this->II = this->candidateII;
 				this->secondObjectiveOptimal = false;
 				this->startTimes = s1.getSchedule();
+				if (!this->quiet) {
+					std::cout << "SATCombinedScheduler: found initial schedule with SCC heuristic:" << std::endl;
+					for (auto &v : this->g.Vertices()) {
+						std::cout << "  " << v->getName() << " - " << this->startTimes.at(v) << std::endl;
+					}
+				}
 				lat = s1.getScheduleLength();
 			}
 			else {

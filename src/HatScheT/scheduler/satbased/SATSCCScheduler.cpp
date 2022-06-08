@@ -106,14 +106,14 @@ namespace HatScheT {
 
 	void SATSCCScheduler::computeSCCSchedule() {
 		// check if there are even any non-trivial SCCs
-		if (sccG.getNumberOfVertices() == 0) {
+		if (this->sccG.getNumberOfVertices() == 0) {
 			this->scheduleFound = true;
 			this->IIFeasible = true;
 			return;
 		}
 
 		// schedule graph with SAT-based scheduler
-		SATScheduler s(sccG, sccR, (int)this->II);
+		SATScheduler s(this->sccG, this->sccR, (int)this->II);
 		s.setQuiet(this->quiet);
 		s.setSolverTimeout(this->solverTimeout);
 		s.setEarliestStartTimes(this->earliestStartTimes);
@@ -130,7 +130,7 @@ namespace HatScheT {
 		this->IIFeasible = true;
 		this->relativeSchedule.clear();
 		auto sccSchedule = s.getSchedule();
-		for (auto &v : sccG.Vertices()) {
+		for (auto &v : this->sccG.Vertices()) {
 			auto origV = this->sccVertexToVertexMap.at(v);
 			auto t = sccSchedule.at(v);
 			this->relativeSchedule[origV] = t;

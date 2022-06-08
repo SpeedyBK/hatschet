@@ -250,6 +250,7 @@ src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/satbased/SATScheduler.h
+src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATSCCScheduler.h
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
@@ -299,6 +300,7 @@ IF (CADICAL_H AND CADICAL_LIB)
 list(APPEND HatScheT_SOURCES
 src/HatScheT/scheduler/dev/SDSScheduler.cpp
 src/HatScheT/scheduler/satbased/SATScheduler.cpp
+src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.cpp
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp

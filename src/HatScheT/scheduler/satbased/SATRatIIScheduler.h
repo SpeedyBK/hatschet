@@ -1,14 +1,13 @@
 //
-// Created by nfiege on 4/21/22.
+// Created by nfiege on 6/3/22.
 //
 
-#ifndef HATSCHET_SATSCHEDULER_H
-#define HATSCHET_SATSCHEDULER_H
-
+#ifndef HATSCHET_SATRATIISCHEDULER_H
+#define HATSCHET_SATRATIISCHEDULER_H
 #ifdef USE_CADICAL
 #include <cadical.hpp>
 #include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
 #include <string>
 #include <map>
@@ -18,7 +17,7 @@
 
 namespace HatScheT {
 
-	class SATScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+	class SATRatIIScheduler : public RationalIISchedulerLayer {
 	public:
 		enum LatencyOptimizationStrategy {
 			REVERSE_LINEAR,
@@ -27,14 +26,13 @@ namespace HatScheT {
 			LINEAR_JUMP_LOG,
 			LOGARITHMIC
 		};
-		SATScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
-		void schedule() override;
+		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel);
+		void scheduleIteration() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
 		void setTargetLatency(const int &newTargetLatency);
 		void setEarliestStartTimes(const std::map<Vertex*, int> &newEarliestStartTimes);
 		void setLatestStartTimeDifferences(const std::map<Vertex*, int> &newLatestStartTimeDifferences);
-		void setBreakOnFeasible(const bool &newBreakOnFeasible);
 		int linearJumpLength;
 
 	private:
@@ -47,6 +45,7 @@ namespace HatScheT {
 		void simplifyResourceLimits();
 		void restoreResourceLimits();
 
+		void calcDeltaMins();
 		void initScheduler();
 		void setUpSolver();
 		void resetContainer();
@@ -54,9 +53,7 @@ namespace HatScheT {
 		void createClauses();
 		void fillSolutionStructure();
 
-		bool breakOnFeasible;
 		bool optimalResult;
-		int candidateII;
 		int candidateLatency;
 		int minLatency;
 		int maxLatency;
@@ -80,14 +77,17 @@ namespace HatScheT {
 		std::map<Vertex*, int> resourceLimit;
 		std::map<Vertex*, bool> vertexIsUnlimited;
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeLiterals;
-		std::map<std::pair<Vertex*, int>, int> bindingLiterals;
+		std::map<std::tuple<Vertex*, int, int>, int> bindingLiterals;
 		std::set<int> latencyAttempts;
 		LatencyOptimizationStrategy los;
 		std::map<Vertex*, int> earliestStartTime;
 		std::map<Vertex*, int> latestStartTime;
 		std::map<Vertex*, int> latestStartTimeDifferences;
 		std::map<const Resource*, int> originalResourceLimits;
+
+		std::vector<int> initiationIntervals;
+		std::map<unsigned int,unsigned int> deltaMins;
 	};
 }
 #endif //USE_CADICAL
-#endif //HATSCHET_SATSCHEDULER_H
+#endif //HATSCHET_SATRATIISCHEDULER_H
