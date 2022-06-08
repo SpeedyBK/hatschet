@@ -25,6 +25,7 @@
 #include "Edge.h"
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <set>
 
 namespace HatScheT
@@ -174,6 +175,34 @@ public:
    * \return a set containing `v`'s predecessors
    */
   set<Vertex*> getPredecessors(const Vertex *v) const;
+
+  /*!
+   * \brief getter for all outgoing edges of a given vertex
+   * @param v vertex
+   * @return the outgoing edges
+   */
+  std::set<Edge*>& getOutgoingEdges(const Vertex* v);
+
+  /*!
+   * \brief getter for all incoming edges of a given vertex
+   * @param v vertex
+   * @return the incoming edges
+   */
+  std::set<Edge*>& getIncomingEdges(const Vertex* v);
+
+  /*!
+   * \brief getter for the number of outgoing edges of a given vertex
+   * @param v vertex
+   * @return the number of outgoing edges
+   */
+  size_t getNumOutgoingEdges(const Vertex* v) const;
+
+  /*!
+   * \brief getter for the number of incoming edges of a given vertex
+   * @param v vertex
+   * @return the number of incoming edges
+   */
+  size_t getNumIncomingEdges(const Vertex* v) const;
   /*!
    * \brief sets the graph name
    * \param s the new name
@@ -260,6 +289,16 @@ protected:
    * \brief The container for edges
    */
   std::set<Edge*> edges;
+
+  /*!
+   * \brief stores all edges that go into a given vertex (i.e., where it is the dst vertex)
+   */
+  std::unordered_map<const Vertex*, std::set<Edge*>> incomingEdges;
+
+  /*!
+   * \brief stores all edges that go out of a given vertex (i.e., where it is the src vertex)
+   */
+  std::unordered_map<const Vertex*, std::set<Edge*>> outgoingEdges;
 
   /*!
    * \brief This int is used to track the next valid vertex ID

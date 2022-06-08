@@ -82,6 +82,8 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::Dependen
   }
 
   edges.insert(e);
+  outgoingEdges[&Vsrc].insert(e);
+  incomingEdges[&Vdst].insert(e);
   return *e;
 }
 
@@ -201,5 +203,41 @@ ostream& operator<<(ostream& os, const Graph& g){
 
   return os;
 }
+
+  std::set<Edge *> &Graph::getOutgoingEdges(const Vertex *v) {
+      try {
+          return this->outgoingEdges.at(v);
+      }
+      catch (std::out_of_range &) {
+          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+      }
+  }
+
+  std::set<Edge *> &Graph::getIncomingEdges(const Vertex *v) {
+      try {
+          return this->incomingEdges.at(v);
+      }
+      catch (std::out_of_range &) {
+          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+      }
+  }
+
+  size_t Graph::getNumOutgoingEdges(const Vertex *v) const {
+      try {
+          return this->outgoingEdges.at(v).size();
+      }
+      catch (std::out_of_range &) {
+          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+      }
+  }
+
+  size_t Graph::getNumIncomingEdges(const Vertex *v) const {
+      try {
+          return this->incomingEdges.at(v).size();
+      }
+      catch (std::out_of_range &) {
+          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+      }
+  }
 
 }

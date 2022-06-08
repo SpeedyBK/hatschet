@@ -3868,15 +3868,15 @@ namespace HatScheT {
 
       clock_t start, end;
 
-      /*HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_sos16RM.xml";
-      string graphStr = "benchmarks/origami/iir_sos16.graphml";
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/origami/iir_sos8RM.xml";
+      string graphStr = "benchmarks/origami/iir_sos8.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());*/
+      readerGraph.readGraph(graphStr.c_str());
 
       //Simple IIR-Filter:
-      auto &Sum = rm.makeResource("Sum", 1, 1, 1);
+      /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
       auto &Product = rm.makeResource("Product", 1, 1, 1);
       auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
       auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
@@ -3916,7 +3916,7 @@ namespace HatScheT {
       g.createEdge(CONST_A, PROD_0, 0);
       g.createEdge(PROD_0, SUM_0, 0);
       g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);
+      g.createEdge(SUM_1, OUT, 0);*/
 
       SMTSmartieScheduler sss(g, rm);
       sss.setIISearchMethod(SMTSmartieScheduler::iiSearchMethod::linear);

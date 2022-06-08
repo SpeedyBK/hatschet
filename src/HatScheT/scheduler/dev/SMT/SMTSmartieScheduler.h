@@ -18,6 +18,7 @@ namespace HatScheT {
   public:
 
     enum class iiSearchMethod {linear, binary};
+    enum class latSearchMethod {linear, binary};
 
     SMTSmartieScheduler(Graph &g, ResourceModel &resourceModel);
 
@@ -30,13 +31,17 @@ namespace HatScheT {
 
   protected:
 
-    int latencyUpperBound;
+    latSearchMethod latSM;
+    int candidateLatency;
+    int latency_space_index;
     int min_Latency;
     int max_Latency;
 
     iiSearchMethod iiSM;
     vector<int>II_space;
     int II_space_index;
+
+    vector<int>latency_Space;
 
     z3::context c;
 
@@ -49,9 +54,13 @@ namespace HatScheT {
     void find_latest_start_times();
 
     void calcMaxLatency();
+    void calcLatencySpace();
 
     int ii_binary_search(z3::check_result result);
     int ii_linear_search(z3::check_result result);
+
+    int lat_binary_search(z3::check_result result);
+    int lat_linear_search(z3::check_result result);
 
     void generate_b_variables();
     void set_b_variables(z3::solver& s, const int &candidateII);
