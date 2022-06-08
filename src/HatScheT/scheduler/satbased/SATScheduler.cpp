@@ -692,7 +692,9 @@ namespace HatScheT {
 			try {
 				auto lstd = this->latestStartTimeDifferences.at(v);
 				if (!this->quiet) {
-					std::cout << "SATScheduler: vertex '" << v->getName() << "': user max time diff = '" << lstd << "', ALAP max time diff = '" << alapSL - alapStartTimes.at(v) << "'" << std::endl;
+					std::cout << "SATScheduler: vertex '" << v->getName() << "': user max time diff = '"
+					          << lstd << "', ALAP max time diff = '" << alapSL - alapStartTimes.at(v) << "'"
+					          << std::endl;
 				}
 				this->latestStartTimeDifferences[v] = std::min(lstd ,alapSL - alapStartTimes.at(v));
 			}

@@ -421,6 +421,7 @@ ENDIF(CADICAL_H AND CADICAL_LIB)
 
 IF(${Z3_FOUND})
     add_test("Z3" "./hatschet" "--test=Z3")
+    add_test("SMTScheduler" "./hatschet" "--test=SMTSMART")
 ENDIF(${Z3_FOUND})
 
 ####################

@@ -10,7 +10,7 @@
 # (Please run this script from the 'example' directory)
 #
 
-cd ..; build/hatschet \
+cd ..; ./hatschet \
     --graph=example/example.graphml \
     --resource=example/example_RM.xml \
     --scheduler=MOOVAC \
