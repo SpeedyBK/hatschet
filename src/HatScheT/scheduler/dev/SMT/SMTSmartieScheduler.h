@@ -47,6 +47,7 @@ namespace HatScheT {
 
     map<Vertex*, int> earliest_start_times;
     map<Vertex*, int> latest_start_times;
+    map<pair<Vertex*, int>, bool> start_times_simplification;
 
     map<std::pair<Vertex*, int>, z3::expr> b_variables;
 

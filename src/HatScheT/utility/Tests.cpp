@@ -3738,8 +3738,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_sos16RM.xml";
-      string graphStr = "benchmarks/origami/iir_sos16.graphml";
+      string resStr = "benchmarks/origami/fir_genRM.xml";
+      string graphStr = "benchmarks/origami/fir_gen.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3869,19 +3869,23 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_sos8RM.xml";
-      string graphStr = "benchmarks/origami/iir_sos8.graphml";
+      string resStr = "benchmarks/origami/iir_sos16RM.xml";
+      string graphStr = "benchmarks/origami/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
+      HatScheT::DotWriter dw("mat_inv.dot", &g, &rm);
+      dw.setDisplayNames(true);
+      dw.write();
+
       //Simple IIR-Filter:
       /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
       auto &Product = rm.makeResource("Product", 1, 1, 1);
-      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
-      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
+      //auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
+      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);*/
 
-      Vertex &IN = g.createVertex(0);
+      /*Vertex &IN = g.createVertex(0);
       Vertex &SUM_0 = g.createVertex(1);
       Vertex &PROD_1 = g.createVertex(2);
       Vertex &PROD_0 = g.createVertex(3);
@@ -3922,10 +3926,13 @@ namespace HatScheT {
       sss.setIISearchMethod(SMTSmartieScheduler::iiSearchMethod::linear);
       sss.setQuiet(false);
       sss.setSolverTimeout(100);
+      sss.setMaxRuns(10);
+      start = clock();
       sss.schedule();
+      end = clock();
       auto sched = sss.getSchedule();
 
-
+      cout << "Done in " << fixed << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5) << " sec " << endl;
       auto valid = verifyModuloSchedule(g, rm, sched, (int)sss.getII());
       if (!valid) {
           std::cout << "Tests::smtModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
