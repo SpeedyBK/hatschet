@@ -34,7 +34,6 @@ namespace HatScheT {
 		void setTargetLatency(const int &newTargetLatency);
 		void setEarliestStartTimes(const std::map<Vertex*, int> &newEarliestStartTimes);
 		void setLatestStartTimeDifferences(const std::map<Vertex*, int> &newLatestStartTimeDifferences);
-		void setBreakOnFeasible(const bool &newBreakOnFeasible);
 		int linearJumpLength;
 
 	private:
@@ -54,8 +53,8 @@ namespace HatScheT {
 		void createClauses();
 		void fillSolutionStructure();
 
-		bool breakOnFeasible;
 		bool optimalResult;
+		bool enableIIBasedLatencyLowerBound;
 		int candidateII;
 		int candidateLatency;
 		int minLatency;
@@ -72,15 +71,21 @@ namespace HatScheT {
 		int literalCounter;
 		int scheduleTimeLiteralCounter;
 		int bindingLiteralCounter;
+		int timeOverlapLiteralCounter;
+		int bindingOverlapLiteralCounter;
 		int clauseCounter;
 		int dependencyConstraintClauseCounter;
 		int resourceConstraintClauseCounter;
 		int scheduleTimeConstraintClauseCounter;
 		int bindingConstraintClauseCounter;
+		int timeOverlapClauseCounter;
+		int bindingOverlapClauseCounter;
 		std::map<Vertex*, int> resourceLimit;
 		std::map<Vertex*, bool> vertexIsUnlimited;
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeLiterals;
 		std::map<std::pair<Vertex*, int>, int> bindingLiterals;
+		std::map<std::pair<Vertex*, Vertex*>, int> timeOverlapLiterals;
+		std::map<std::pair<Vertex*, Vertex*>, int> bindingOverlapLiterals;
 		std::set<int> latencyAttempts;
 		LatencyOptimizationStrategy los;
 		std::map<Vertex*, int> earliestStartTime;

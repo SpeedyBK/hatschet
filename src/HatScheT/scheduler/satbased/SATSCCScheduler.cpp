@@ -4,6 +4,7 @@
 
 #include "SATSCCScheduler.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <algorithm>
@@ -580,12 +581,19 @@ namespace HatScheT {
 #if 1 // 1: max latency; 0: DFS
 			sccLat = getMaxSCCLatency(sccVertices, sccEdges);
 			std::cout << "  SCC latency = " << sccLat << " (dTotal*II = " << totalDistance << "*" << this->II << ")" << std::endl;
+			// std::pair<std::map<Vertex*, int>, std::map<Vertex*, int>> getMinMaxSCCStartTimes(const std::list<Vertex*> &sccVertices, const std::list<Edge*> &sccEdges, const int &maxLat);
+			auto minMaxSCCStartTimes = this->getMinMaxSCCStartTimes(sccVertices, sccEdges, sccLat);
 			for (auto &v : sccVertices) {
 				if (this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue; // skip trivial SCCs
 				auto sccV = this->vertexToSCCVertexMap.at(v);
+				this->earliestStartTimes[sccV] = minMaxSCCStartTimes.first.at(v);
+				this->latestStartTimes[sccV] = minMaxSCCStartTimes.second.at(v);
+				this->latestStartTimeDifferences[sccV] = sccLat - minMaxSCCStartTimes.second.at(v);
+				/*
 				this->earliestStartTimes[sccV] = 0;
 				this->latestStartTimes[sccV] = sccLat - this->resourceModel.getVertexLatency(v);
 				this->latestStartTimeDifferences[sccV] = this->resourceModel.getVertexLatency(v);
+				 */
 			}
 #else
 			// perform DFS starting at each vertex of the SCC
@@ -784,6 +792,89 @@ namespace HatScheT {
 			// register vertex of tempG to new resource
 			this->sccR.registerVertex(this->vertexToSCCVertexMap.at(v),newRes);
 		}
+	}
+
+	std::pair<std::map<Vertex *, int>, std::map<Vertex *, int>>
+	SATSCCScheduler::getMinMaxSCCStartTimes(const list<Vertex *> &sccVertices, const list<Edge *> &sccEdges,
+																					const int &maxLat) {
+		/*
+		// use resource-unconstrained ASAP and ALAP schedulers to get earliest and latest start times of that SCC
+		// build resource model
+		ResourceModel singleSCCRM;
+		for (auto &r : this->resourceModel.Resources()) {
+			auto &newR = singleSCCRM.makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
+			newR.setLimit(UNLIMITED, false);
+		}
+		// build graph
+		Graph singleSCCGraph;
+		for (auto &v : sccVertices) {
+			auto &newV = singleSCCGraph.createVertex(v->getId());
+			newV.setName(v->getName());
+			singleSCCRM.registerVertex(&newV, singleSCCRM.getResource(this->resourceModel.getResource(v)->getName()));
+		}
+		for (auto &e : sccEdges) {
+			auto &newE = singleSCCGraph.createEdge(singleSCCGraph.getVertexByName(e->getVertexSrcName()),singleSCCGraph.getVertexByName(e->getVertexDstName()),e->getDistance(),e->getDependencyType());
+			newE.setDelay(e->getDelay());
+		}
+		// calc ASAP schedule
+		std::map<Vertex*, int> earliestSCCStartTimes;
+		ASAPScheduler asap(singleSCCGraph, singleSCCRM);
+		asap.schedule();
+		if (!asap.getScheduleFound()) {
+			throw Exception("SATSCCScheduler::getMinMaxSCCStartTimes: failed to compute ASAP schedule - this should never happen");
+		}
+		auto asapTimes = asap.getSchedule();
+		for (auto &v : sccVertices) {
+			auto *sccV = &singleSCCGraph.getVertexByName(v->getName());
+			auto t = asapTimes.at(sccV);
+			earliestSCCStartTimes[v] = t;
+		}
+		// calc ALAP schedule
+		std::map<Vertex*, int> latestSCCStartTimes;
+		ALAPScheduler alap(singleSCCGraph, singleSCCRM);
+		alap.schedule();
+		if (!alap.getScheduleFound()) {
+			throw Exception("SATSCCScheduler::getMinMaxSCCStartTimes: failed to compute ALAP schedule - this should never happen");
+		}
+		auto alapTimes = alap.getSchedule();
+		auto alapScheduleLength = alap.getScheduleLength();
+		for (auto &v : sccVertices) {
+			auto *sccV = &singleSCCGraph.getVertexByName(v->getName());
+			auto t = alapTimes.at(sccV);
+			auto diff = alapScheduleLength - t;
+			latestSCCStartTimes[v] = maxLat - diff;
+		}
+		 */
+		ScaLP::Solver s({"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+		std::map<Vertex*, ScaLP::Variable> vars;
+		ScaLP::Term varSum;
+		for (auto &v : sccVertices) {
+			auto var = ScaLP::newIntegerVariable(v->getName(), 0.0, maxLat - this->resourceModel.getVertexLatency(v));
+			varSum += var;
+			vars[v] = var;
+		}
+		for (auto &e : sccEdges) {
+			auto vSrc = &e->getVertexSrc();
+			auto vDst = &e->getVertexDst();
+			auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+			s.addConstraint(vars.at(vDst) + (e->getDistance() * this->II) - (vars.at(vSrc) + lSrc + e->getDelay()) >= 0.0);
+		}
+		s.setObjective(ScaLP::minimize(varSum));
+		s.solve();
+		auto results = s.getResult().values;
+		std::map<Vertex*, int> earliestSCCStartTimes;
+		for (auto &v : sccVertices) {
+			earliestSCCStartTimes[v] = (int)std::round(results.at(vars.at(v)));
+		}
+		s.setObjective(ScaLP::maximize(varSum));
+		s.solve();
+		results = s.getResult().values;
+		std::map<Vertex*, int> latestSCCStartTimes;
+		for (auto &v : sccVertices) {
+			latestSCCStartTimes[v] = (int)std::round(results.at(vars.at(v)));
+		}
+		// return results
+		return {earliestSCCStartTimes, latestSCCStartTimes};
 	}
 }
 #endif

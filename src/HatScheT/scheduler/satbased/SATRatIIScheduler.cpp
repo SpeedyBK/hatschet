@@ -330,39 +330,32 @@ namespace HatScheT {
 				}
 				for (auto &v1 : this->g.Vertices()) {
 					if (this->resourceModel.getResource(v1) != r) continue;
-					auto b1 = -1;
-					// loop over samples of v1
-					for (int s1 = 0; s1 < this->samples; s1++) {
-						if (!bindingTrivial) {
-							b1 = this->bindingLiterals.at({v1, l, s1});
-						}
-						for (auto &v2 : this->g.Vertices()) {
-							if (this->resourceModel.getResource(v2) != r) continue;
-							if (v1->getId() >= v2->getId()) continue;
-							auto b2 = -1;
-							// loop over samples of v2
-							for (int s2 = 0; s2 < this->samples; s2++) {
+					for (auto &v2 : this->g.Vertices()) {
+						if (this->resourceModel.getResource(v2) != r) continue;
+						if (v1->getId() >= v2->getId()) continue;
+						for (auto s1=0; s1<this->samples; s1++) {
+							auto b1 = -1;
+							if (!bindingTrivial) {
+								b1 = this->bindingLiterals.at({v1, l, s1});
+							}
+							for (auto s2=0; s2<this->samples; s2++) {
+								auto b2 = -1;
 								if (!bindingTrivial) {
 									b2 = this->bindingLiterals.at({v2, l, s2});
 								}
-								for (int x = 0; x < this->modulo; x++) {
-									for (int tau1Temp = this->earliestStartTime.at(v1);
-											 tau1Temp <= this->latestStartTime.at(v1); tau1Temp++) {
-										auto tau1 = tau1Temp + s1;
-										if (tau1 % this->modulo != x) continue;
-										auto t1 = this->scheduleTimeLiterals.at({v1, tau1});
-										for (int tau2Temp = this->earliestStartTime.at(v2);
-												 tau2Temp <= this->latestStartTime.at(v2); tau2Temp++) {
-											auto tau2 = tau2Temp + s2;
-											if (tau2 % this->modulo != x) continue;
-											auto t2 = this->scheduleTimeLiterals.at({v2, tau2});
-											this->solver->add(-t1);
-											this->solver->add(-t2);
-											if (!bindingTrivial) this->solver->add(-b1);
-											if (!bindingTrivial) this->solver->add(-b2);
-											this->solver->add(0);
-											this->resourceConstraintClauseCounter++;
-										}
+								for (auto tau1=this->earliestStartTime.at(v1); tau1<=this->latestStartTime.at(v1); tau1++) {
+									auto startTime1 = tau1 + this->latencySequence.at(s1);
+									auto t1 = this->scheduleTimeLiterals.at({v1, tau1});
+									for (auto tau2=this->earliestStartTime.at(v2); tau2<=this->latestStartTime.at(v2); tau2++) {
+										auto startTime2 = tau2 + this->latencySequence.at(s2);
+										if (startTime1 % this->modulo != startTime2 % this->modulo) continue;
+										auto t2 = this->scheduleTimeLiterals.at({v2, tau2});
+										this->solver->add(-t1);
+										this->solver->add(-t2);
+										if (!bindingTrivial) this->solver->add(-b1);
+										if (!bindingTrivial) this->solver->add(-b2);
+										this->solver->add(0);
+										this->resourceConstraintClauseCounter++;
 									}
 								}
 							}

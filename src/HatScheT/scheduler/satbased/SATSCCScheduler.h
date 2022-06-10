@@ -33,6 +33,7 @@ namespace HatScheT {
 		void computeSCCs();
 		void createSCCGraphAndRM();
 		void computeEarliestAndLatestStartTimes();
+		std::pair<std::map<Vertex*, int>, std::map<Vertex*, int>> getMinMaxSCCStartTimes(const std::list<Vertex*> &sccVertices, const std::list<Edge*> &sccEdges, const int &maxLat);
 		void computeSCCSchedule();
 		void orderSCCs();
 		void computeFinalSchedule();
