@@ -17,17 +17,15 @@ namespace HatScheT {
 
   public:
 
-    enum class iiSearchMethod {linear, binary};
     enum class latSearchMethod {linear, binary};
 
     SMTSmartieScheduler(Graph &g, ResourceModel &resourceModel);
 
     void schedule() override;
 
-    void setIISearchMethod(iiSearchMethod iism){ this->iiSM = iism; }
-
     void setSolverTimeout(unsigned seconds);
 
+    void setLatencySearchMethod(latSearchMethod lsm){ this->latSM = lsm; }
 
   protected:
 
@@ -36,12 +34,10 @@ namespace HatScheT {
     int latency_space_index;
     int min_Latency;
     int max_Latency;
+    vector<int>latency_Space;
 
-    iiSearchMethod iiSM;
     vector<int>II_space;
     int II_space_index;
-
-    vector<int>latency_Space;
 
     z3::context c;
 
@@ -57,7 +53,6 @@ namespace HatScheT {
     void calcMaxLatency();
     void calcLatencySpace();
 
-    int ii_binary_search(z3::check_result result);
     int ii_linear_search(z3::check_result result);
 
     int lat_binary_search(z3::check_result result);
@@ -71,10 +66,15 @@ namespace HatScheT {
     void prohibit_to_early_starts_and_add(z3::solver &s);
     void prohibit_to_late_starts_and_add(z3::solver &s);
 
+    bool unsat_check_shortcut();
+
     void add_one_slot_constraints_to_solver(z3::solver &s);
     void add_resource_limit_constraint_to_solver(z3::solver &s, int candidateII);
 
     void print_solution(z3::model &m);
+    void print_ASAP_ALAP_restictions();
+    void print_latency_space(int l_index, int r_index);
+
     void parse_schedule(z3::model &m);
 
   };
