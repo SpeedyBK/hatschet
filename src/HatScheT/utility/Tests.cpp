@@ -69,7 +69,7 @@
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
-#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3923,8 +3923,8 @@ namespace HatScheT {
       g.createEdge(SUM_1, OUT, 0);*/
 
 
-      SMTSmartieScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTSmartieScheduler::latSearchMethod::linear);
+      SMTBinaryScheduler sss(g, rm);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::linear);
       sss.setQuiet(false);
       sss.setSolverTimeout(100);
       sss.setMaxRuns(10);

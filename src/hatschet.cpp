@@ -87,7 +87,7 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
 
 #endif
 
@@ -896,9 +896,9 @@ int main(int argc, char *args[]) {
                 }
 #ifdef USE_Z3
                 case SMT:
-                    scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
+                    scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTSmartieScheduler *) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
 #else
                     case SMT:

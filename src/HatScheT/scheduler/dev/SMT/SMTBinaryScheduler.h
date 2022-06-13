@@ -1,5 +1,5 @@
-#ifndef HATSCHET_SMTSMARTIESCHEDULER_H
-#define HATSCHET_SMTSMARTIESCHEDULER_H
+#ifndef HATSCHET_SMTBINARYSCHEDULER_H
+#define HATSCHET_SMTBINARYSCHEDULER_H
 
 #pragma once
 
@@ -13,13 +13,13 @@
 
 namespace HatScheT {
 
-  class SMTSmartieScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
+  class SMTBinaryScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
 
   public:
 
     enum class latSearchMethod {linear, binary};
 
-    SMTSmartieScheduler(Graph &g, ResourceModel &resourceModel);
+    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel);
 
     void schedule() override;
 
@@ -82,4 +82,4 @@ namespace HatScheT {
 }
 
 #endif //USE_Z3
-#endif //HATSCHET_SMTSMARTIESCHEDULER_H
+#endif //HATSCHET_SMTBINARYSCHEDULER_H
