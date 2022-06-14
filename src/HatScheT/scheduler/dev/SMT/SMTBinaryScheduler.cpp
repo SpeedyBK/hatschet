@@ -209,7 +209,7 @@ namespace HatScheT {
           }
       }
 
-      max_Latency = (resMaxLat) * (int)g.getNumberOfVertices();
+      max_Latency = (resMaxLat+1) * (int)g.getNumberOfVertices();
       if (!quiet) { cout << "Max Latency: " << max_Latency << endl; }
   }
 
