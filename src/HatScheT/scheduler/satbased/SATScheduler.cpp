@@ -789,7 +789,6 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) {
-			std::cout << "#q# found all latest!" << std::endl;
 			return;
 		}
 
@@ -840,7 +839,6 @@ namespace HatScheT {
 			}
 		}
 		if (foundAll) {
-			std::cout << "#q# found all earliest!" << std::endl;
 			return;
 		}
 
