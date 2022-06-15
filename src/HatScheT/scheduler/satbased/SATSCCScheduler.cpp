@@ -840,8 +840,6 @@ namespace HatScheT {
 						std::cout << "SATSCCScheduler: found basic SCC" << std::endl;
 					}
 					this->numBasicSCCs++;
-					//this->basicSCCG.resize(this->numBasicSCCs);
-					//this->basicSCCR.resize(this->numBasicSCCs);
 					this->basicSCCG.emplace_back(std::make_shared<Graph>());
 					this->basicSCCR.emplace_back(std::make_shared<ResourceModel>());
 					auto g = this->basicSCCG.back();
@@ -852,7 +850,6 @@ namespace HatScheT {
 						auto &newV = g->createVertex(v->getId());
 						this->vertexToSCCVertexMap[v] = &newV;
 						this->sccVertexToVertexMap[&newV] =v;
-						this->sccVertexToSCCMap[&newV] = scc;
 					}
 					// put edges into graph
 					for (auto &e : scc->getSCCEdges()) {
@@ -887,7 +884,6 @@ namespace HatScheT {
 						auto &newV = this->complexSCCG.createVertex(v->getId());
 						this->vertexToSCCVertexMap[v] = &newV;
 						this->sccVertexToVertexMap[&newV] = v;
-						this->sccVertexToSCCMap[&newV] = scc;
 					}
 					// insert edges into scc graph
 					for (auto &e : scc->getSCCEdges()) {
