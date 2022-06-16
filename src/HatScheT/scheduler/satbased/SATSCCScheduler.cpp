@@ -4,6 +4,7 @@
 
 #include "SATSCCScheduler.h"
 #include <HatScheT/scheduler/ASAPScheduler.h>
+#include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <algorithm>
@@ -11,8 +12,9 @@
 #include <cmath>
 #include <chrono>
 #include <unordered_map>
-#include <ScaLP/Solver.h>
 #ifdef USE_CADICAL
+#ifdef USE_SCALP
+#include <ScaLP/Solver.h>
 namespace HatScheT {
 
 	SATSCCScheduler::SATSCCScheduler(Graph &g, ResourceModel &resourceModel, int II) :
@@ -25,13 +27,14 @@ namespace HatScheT {
 		auto timerStart = std::chrono::steady_clock::now();
 		this->initMRT();
 		this->computeSCCs();
-		this->createSCCGraphAndRM();
+		this->createSCCGraphsAndRMs();
 		this->computeEarliestAndLatestStartTimes();
-		this->computeSCCSchedule();
+		this->computeComplexSCCSchedule();
 		if (!this->scheduleFound) {
 			this->solvingTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0;
 			return;
 		}
+		this->computeBasicSCCSchedules();
 		this->orderSCCs();
 		this->computeFinalSchedule();
 		this->postProcessSchedule();
@@ -104,16 +107,19 @@ namespace HatScheT {
 		 */
 	}
 
-	void SATSCCScheduler::computeSCCSchedule() {
+	void SATSCCScheduler::computeComplexSCCSchedule() {
 		// check if there are even any non-trivial SCCs
-		if (sccG.getNumberOfVertices() == 0) {
+		if (this->complexSCCG.getNumberOfVertices() == 0) {
 			this->scheduleFound = true;
 			this->IIFeasible = true;
 			return;
 		}
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: start computing complex SCC schedule now" << std::endl;
+		}
 
 		// schedule graph with SAT-based scheduler
-		SATScheduler s(sccG, sccR, (int)this->II);
+		SATScheduler s(this->complexSCCG, this->complexSCCR, (int)this->II);
 		s.setQuiet(this->quiet);
 		s.setSolverTimeout(this->solverTimeout);
 		s.setEarliestStartTimes(this->earliestStartTimes);
@@ -122,15 +128,21 @@ namespace HatScheT {
 		s.schedule();
 		this->scheduleFound = s.getScheduleFound();
 		if (!this->scheduleFound) {
+			if (!this->quiet) {
+				std::cout << "SATSCCScheduler: failed to find schedule for II=" << this->II << std::endl;
+			}
 			this->II = -1;
 			this->IIFeasible = s.getTimeouts() > 0; // can't tell if II is feasible when the solver encounters a timeout :(
 			return;
+		}
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: found schedule for II=" << this->II << std::endl;
 		}
 		// get results
 		this->IIFeasible = true;
 		this->relativeSchedule.clear();
 		auto sccSchedule = s.getSchedule();
-		for (auto &v : sccG.Vertices()) {
+		for (auto &v : this->complexSCCG.Vertices()) {
 			auto origV = this->sccVertexToVertexMap.at(v);
 			auto t = sccSchedule.at(v);
 			this->relativeSchedule[origV] = t;
@@ -140,62 +152,116 @@ namespace HatScheT {
 	}
 
 	void SATSCCScheduler::computeFinalSchedule() {
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: start computing final schedule" << std::endl;
+		}
 		for (auto &stage : this->topologicallySortedSCCs) {
 			for (auto &scc : stage) {
-				if (scc->getNumberOfVertices() == 1) {
-					// trivial SCC -> schedule ASAP (while respecting resource constraints)
-					auto v = scc->getVerticesOfSCC().front();
-					int asapTime = 0;
-					for (auto &e : this->g.Edges()) {
-						if (&e->getVertexDst() != v) continue;
-						auto vSrc = &e->getVertexSrc();
-						auto tSrc = this->startTimes.at(vSrc);
-						auto t = tSrc + e->getDelay() - (this->II * e->getDistance()) + this->resourceModel.getVertexLatency(vSrc);
-						if (t > asapTime) asapTime = t;
+				if (!this->quiet) {
+					std::cout << "SATSCCScheduler: next SCC contains following vertices:" << std::endl;
+					for (auto &it : scc->getVerticesOfSCC()) {
+						std::cout << "  " << it->getName() << std::endl;
 					}
-					auto r = this->resourceModel.getResource(v);
-					auto offsetTime = 0;
-					if (!r->isUnlimited()) {
-						auto rLim = r->getLimit();
-						for (int i=0; i<this->II; i++) {
-							auto slot = (asapTime + i) % (int)this->II;
-							if (this->MRT.at(r).at(slot) < rLim) {
-								offsetTime = i;
-								this->MRT.at(r).at(slot)++;
-								break;
+				}
+				auto sccType = scc->getSccType(&this->resourceModel);
+				switch (sccType) {
+					case scctype::trivial: {
+						if (!this->quiet) {
+							std::cout << "SCC type: trivial" << std::endl;
+						}
+						// schedule ASAP (while respecting resource constraints)
+						auto v = scc->getVerticesOfSCC().front();
+						int asapTime = 0;
+						for (auto &e : this->g.Edges()) {
+							if (&e->getVertexDst() != v) continue;
+							auto vSrc = &e->getVertexSrc();
+							auto tSrc = this->startTimes.at(vSrc);
+							auto t = tSrc + e->getDelay() - (this->II * e->getDistance()) + this->resourceModel.getVertexLatency(vSrc);
+							if (t > asapTime) asapTime = t;
+						}
+						auto r = this->resourceModel.getResource(v);
+						auto offsetTime = 0;
+						if (!r->isUnlimited()) {
+							auto rLim = r->getLimit();
+							for (int i=0; i<this->II; i++) {
+								auto slot = (asapTime + i) % (int)this->II;
+								if (this->MRT.at(r).at(slot) < rLim) {
+									offsetTime = i;
+									this->MRT.at(r).at(slot)++;
+									break;
+								}
 							}
 						}
+						this->startTimes[v] = asapTime + offsetTime;
+						break;
 					}
-					this->startTimes[v] = asapTime + offsetTime;
-					continue;
-				}
-				int maxMinOffset = 0;
-				auto verticesOfSCC = scc->getVerticesOfSCC();
-				for (auto e : this->g.Edges()) {
-					if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexDst()) == verticesOfSCC.end()) {
-						// skip edges that do not have an SCC vertex as sink
-						continue;
+					case scctype::basic: {
+						if (!this->quiet) {
+							std::cout << "SCC type: basic" << std::endl;
+						}
+						int maxMinOffset = 0;
+						auto verticesOfSCC = scc->getVerticesOfSCC();
+						for (auto e : this->g.Edges()) {
+							if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexDst()) == verticesOfSCC.end()) {
+								// skip edges that do not have an SCC vertex as sink
+								continue;
+							}
+							if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexSrc()) != verticesOfSCC.end()) {
+								// skip edges that have an SCC vertex as source
+								continue;
+							}
+							auto vSrc = &e->getVertexSrc();
+							auto tSrc = this->startTimes.at(vSrc);
+							auto distance = e->getDistance();
+							auto delay = e->getDelay();
+							auto minOffset = (int)(tSrc + this->resourceModel.getVertexLatency(vSrc) + delay - distance * this->II);
+							minOffset = std::max(minOffset, 0); // do not let the minimum offset be negative to prevent negative starting times
+							maxMinOffset = std::max(maxMinOffset, minOffset);
+						}
+						// offset every vertex by the minimum offset
+						for (auto vSrc : verticesOfSCC) {
+							auto tSrc = (int)this->relativeSchedule.at(vSrc) + maxMinOffset;
+							this->startTimes[vSrc] = tSrc;
+						}
+						break;
 					}
-					if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexSrc()) != verticesOfSCC.end()) {
-						// skip edges that have an SCC vertex as source
-						continue;
+					case scctype::complex: {
+						if (!this->quiet) {
+							std::cout << "SCC type: complex" << std::endl;
+						}
+						int maxMinOffset = 0;
+						auto verticesOfSCC = scc->getVerticesOfSCC();
+						for (auto e : this->g.Edges()) {
+							if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexDst()) == verticesOfSCC.end()) {
+								// skip edges that do not have an SCC vertex as sink
+								continue;
+							}
+							if (std::find(verticesOfSCC.begin(), verticesOfSCC.end(), &e->getVertexSrc()) != verticesOfSCC.end()) {
+								// skip edges that have an SCC vertex as source
+								continue;
+							}
+							auto vSrc = &e->getVertexSrc();
+							auto vDst = &e->getVertexDst();
+							auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+							auto tSrc = this->startTimes.at(vSrc);
+							auto tDstRel = this->relativeSchedule.at(vDst);
+							auto distance = e->getDistance();
+							auto delay = e->getDelay();
+							//auto minOffset = (int) std::ceil(((double) tSrc + lSrc - delay) / ((double)this->II)) - distance;
+							auto minOffset = (int) std::ceil(((double) tSrc - tDstRel + lSrc + delay - (distance * this->II)) / (this->II));
+							minOffset = std::max(minOffset, 0); // do not let the minimum offset be negative to prevent negative starting times
+							maxMinOffset = std::max(maxMinOffset, minOffset);
+						}
+						// offset every vertex by the minimum offset
+						for (auto vSrc : verticesOfSCC) {
+							auto tSrc = (int)this->relativeSchedule.at(vSrc) + (maxMinOffset * this->II);
+							this->startTimes[vSrc] = tSrc;
+						}
+						break;
 					}
-					auto vSrc = &e->getVertexSrc();
-					auto tSrc = this->startTimes.at(vSrc);
-					auto distance = e->getDistance();
-					auto delay = e->getDelay();
-					auto minOffset = (int) std::ceil(((double) tSrc + this->resourceModel.getVertexLatency(vSrc) - delay) / ((double)this->II)) - distance;
-					minOffset = std::max(minOffset, 0); // do not let the minimum offset be negative to prevent negative starting times
-					maxMinOffset = std::max(maxMinOffset, minOffset);
-				}
-				// offset every vertex by the minimum offset
-				for (auto vSrc : verticesOfSCC) {
-					/*
-					auto vSCCSrc = this->vertexToSCCVertexMap.at(vSrc);
-					auto tSrc = (int)this->relativeSchedule.at(vSCCSrc) + (maxMinOffset * this->II);
-					 */
-					auto tSrc = (int)this->relativeSchedule.at(vSrc) + (maxMinOffset * this->II);
-					this->startTimes[vSrc] = tSrc;
+					default: {
+						throw HatScheT::Exception("SATSCCScheduler: detected unknown SCC type while computing final schedule");
+					}
 				}
 			}
 		}
@@ -206,7 +272,10 @@ namespace HatScheT {
 	}
 
 	void SATSCCScheduler::orderSCCs() {
-// topologically sort sccs based on an asap schedule
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: start topologically sorting SCCs" << std::endl;
+		}
+		// topologically sort sccs based on an asap schedule
 		// create resource model
 		ResourceModel sccRm;
 		auto res = &sccRm.makeResource("res",UNLIMITED,1);
@@ -580,12 +649,19 @@ namespace HatScheT {
 #if 1 // 1: max latency; 0: DFS
 			sccLat = getMaxSCCLatency(sccVertices, sccEdges);
 			std::cout << "  SCC latency = " << sccLat << " (dTotal*II = " << totalDistance << "*" << this->II << ")" << std::endl;
+			// std::pair<std::map<Vertex*, int>, std::map<Vertex*, int>> getMinMaxSCCStartTimes(const std::list<Vertex*> &sccVertices, const std::list<Edge*> &sccEdges, const int &maxLat);
+			auto minMaxSCCStartTimes = this->getMinMaxSCCStartTimes(sccVertices, sccEdges, sccLat);
 			for (auto &v : sccVertices) {
 				if (this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue; // skip trivial SCCs
 				auto sccV = this->vertexToSCCVertexMap.at(v);
+				this->earliestStartTimes[sccV] = minMaxSCCStartTimes.first.at(v);
+				this->latestStartTimes[sccV] = minMaxSCCStartTimes.second.at(v);
+				this->latestStartTimeDifferences[sccV] = sccLat - minMaxSCCStartTimes.second.at(v);
+				/*
 				this->earliestStartTimes[sccV] = 0;
 				this->latestStartTimes[sccV] = sccLat - this->resourceModel.getVertexLatency(v);
 				this->latestStartTimeDifferences[sccV] = this->resourceModel.getVertexLatency(v);
+				 */
 			}
 #else
 			// perform DFS starting at each vertex of the SCC
@@ -744,46 +820,223 @@ namespace HatScheT {
 		}
 	}
 
-	void SATSCCScheduler::createSCCGraphAndRM() {
+	void SATSCCScheduler::createSCCGraphsAndRMs() {
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: creating SCC graphs and resource models now" << std::endl;
+		}
+		this->numBasicSCCs = 0;
 		// insert vertices into scc graph
 		for(auto scc : this->sccs) {
-			// insert scc into tempG
-			// insert vertices into tempG
-			auto vertices = scc->getVerticesOfSCC();
-			// skip trivial SCCs
-			if (vertices.size() < 2) continue;
-			for (auto v : vertices) {
-				auto &newV = this->sccG.createVertex(v->getId());
-				this->vertexToSCCVertexMap[v] = &newV;
-				this->sccVertexToVertexMap[&newV] = v;
-				this->sccVertexToSCCMap[&newV] = scc;
-			}
-			// insert edges into tempG
-			for (auto e : scc->getSCCEdges()) {
-				auto src = this->vertexToSCCVertexMap.at(&e->getVertexSrc());
-				auto dst = this->vertexToSCCVertexMap.at(&e->getVertexDst());
-				auto &newE = this->sccG.createEdge(*src, *dst, e->getDistance(), e->getDependencyType());
-				newE.setDelay(e->getDelay());
+			auto sccType = scc->getSccType(&this->resourceModel);
+			switch (sccType) {
+				case scctype::trivial: {
+					if (!this->quiet) {
+						std::cout << "SATSCCScheduler: skipping trivial SCC" << std::endl;
+					}
+					continue;
+				}
+				case scctype::basic: {
+					if (!this->quiet) {
+						std::cout << "SATSCCScheduler: found basic SCC" << std::endl;
+					}
+					this->numBasicSCCs++;
+					this->basicSCCG.emplace_back(std::make_shared<Graph>());
+					this->basicSCCR.emplace_back(std::make_shared<ResourceModel>());
+					auto g = this->basicSCCG.back();
+					auto rm = this->basicSCCR.back();
+					auto vertices = scc->getVerticesOfSCC();
+					// put vertices into graph
+					for (auto v : vertices) {
+						auto &newV = g->createVertex(v->getId());
+						this->vertexToSCCVertexMap[v] = &newV;
+						this->sccVertexToVertexMap[&newV] =v;
+					}
+					// put edges into graph
+					for (auto &e : scc->getSCCEdges()) {
+						auto &src = this->vertexToSCCVertexMap.at(&e->getVertexSrc());
+						auto &dst = this->vertexToSCCVertexMap.at(&e->getVertexDst());
+						auto &newE = g->createEdge(*src, *dst, e->getDistance(), e->getDependencyType());
+						newE.setDelay(e->getDelay());
+					}
+					// handle resources
+					for (auto &v : vertices) {
+						auto res = this->resourceModel.getResource(v);
+						Resource* newRes;
+						// only create new resource if it does not already exist
+						try {
+							newRes = rm->getResource(res->getName());
+						}
+						catch(HatScheT::Exception&) {
+							newRes = &rm->makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
+						}
+						// register vertex of tempG to new resource
+						rm->registerVertex(this->vertexToSCCVertexMap.at(v), newRes);
+					}
+					break;
+				}
+				case scctype::complex: {
+					if (!this->quiet) {
+						std::cout << "SATSCCScheduler: found complex SCC" << std::endl;
+					}
+					// insert vertices into scc graph
+					auto vertices = scc->getVerticesOfSCC();
+					for (auto v : vertices) {
+						auto &newV = this->complexSCCG.createVertex(v->getId());
+						this->vertexToSCCVertexMap[v] = &newV;
+						this->sccVertexToVertexMap[&newV] = v;
+					}
+					// insert edges into scc graph
+					for (auto &e : scc->getSCCEdges()) {
+						auto &src = this->vertexToSCCVertexMap.at(&e->getVertexSrc());
+						auto &dst = this->vertexToSCCVertexMap.at(&e->getVertexDst());
+						auto &newE = this->complexSCCG.createEdge(*src, *dst, e->getDistance(), e->getDependencyType());
+						newE.setDelay(e->getDelay());
+					}
+					// handle resources
+					for (auto &v : vertices) {
+						auto res = this->resourceModel.getResource(v);
+						Resource* newRes;
+						// only create new resource if it does not already exist
+						try {
+							newRes = this->complexSCCR.getResource(res->getName());
+						}
+						catch(HatScheT::Exception&) {
+							newRes = &this->complexSCCR.makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
+						}
+						// register vertex of tempG to new resource
+						this->complexSCCR.registerVertex(this->vertexToSCCVertexMap.at(v), newRes);
+					}
+					break;
+				}
+				default: {
+					throw Exception("SATSCCScheduler: unknown SCC type");
+				}
 			}
 		}
+	}
 
-		// generate resource model
-		for(auto v : this->g.Vertices()) {
-			// skip vertices that are only in trivial SCCs
-			if(this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue;
-			// get resource of vertex
-			auto res = this->resourceModel.getResource(v);
-			Resource* newRes;
-			// only create new resource if it does not already exist
-			try {
-				newRes = this->sccR.getResource(res->getName());
+	std::pair<std::map<Vertex *, int>, std::map<Vertex *, int>>
+	SATSCCScheduler::getMinMaxSCCStartTimes(const list<Vertex *> &sccVertices, const list<Edge *> &sccEdges,
+																					const int &maxLat) {
+		/*
+		// use resource-unconstrained ASAP and ALAP schedulers to get earliest and latest start times of that SCC
+		// build resource model
+		ResourceModel singleSCCRM;
+		for (auto &r : this->resourceModel.Resources()) {
+			auto &newR = singleSCCRM.makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
+			newR.setLimit(UNLIMITED, false);
+		}
+		// build graph
+		Graph singleSCCGraph;
+		for (auto &v : sccVertices) {
+			auto &newV = singleSCCGraph.createVertex(v->getId());
+			newV.setName(v->getName());
+			singleSCCRM.registerVertex(&newV, singleSCCRM.getResource(this->resourceModel.getResource(v)->getName()));
+		}
+		for (auto &e : sccEdges) {
+			auto &newE = singleSCCGraph.createEdge(singleSCCGraph.getVertexByName(e->getVertexSrcName()),singleSCCGraph.getVertexByName(e->getVertexDstName()),e->getDistance(),e->getDependencyType());
+			newE.setDelay(e->getDelay());
+		}
+		// calc ASAP schedule
+		std::map<Vertex*, int> earliestSCCStartTimes;
+		ASAPScheduler asap(singleSCCGraph, singleSCCRM);
+		asap.schedule();
+		if (!asap.getScheduleFound()) {
+			throw Exception("SATSCCScheduler::getMinMaxSCCStartTimes: failed to compute ASAP schedule - this should never happen");
+		}
+		auto asapTimes = asap.getSchedule();
+		for (auto &v : sccVertices) {
+			auto *sccV = &singleSCCGraph.getVertexByName(v->getName());
+			auto t = asapTimes.at(sccV);
+			earliestSCCStartTimes[v] = t;
+		}
+		// calc ALAP schedule
+		std::map<Vertex*, int> latestSCCStartTimes;
+		ALAPScheduler alap(singleSCCGraph, singleSCCRM);
+		alap.schedule();
+		if (!alap.getScheduleFound()) {
+			throw Exception("SATSCCScheduler::getMinMaxSCCStartTimes: failed to compute ALAP schedule - this should never happen");
+		}
+		auto alapTimes = alap.getSchedule();
+		auto alapScheduleLength = alap.getScheduleLength();
+		for (auto &v : sccVertices) {
+			auto *sccV = &singleSCCGraph.getVertexByName(v->getName());
+			auto t = alapTimes.at(sccV);
+			auto diff = alapScheduleLength - t;
+			latestSCCStartTimes[v] = maxLat - diff;
+		}
+		 */
+		ScaLP::Solver s({"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+		std::map<Vertex*, ScaLP::Variable> vars;
+		ScaLP::Term varSum;
+		for (auto &v : sccVertices) {
+			auto var = ScaLP::newIntegerVariable(v->getName(), 0.0, maxLat - this->resourceModel.getVertexLatency(v));
+			varSum += var;
+			vars[v] = var;
+		}
+		for (auto &e : sccEdges) {
+			auto vSrc = &e->getVertexSrc();
+			auto vDst = &e->getVertexDst();
+			auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+			s.addConstraint(vars.at(vDst) + (e->getDistance() * this->II) - (vars.at(vSrc) + lSrc + e->getDelay()) >= 0.0);
+		}
+		s.setObjective(ScaLP::minimize(varSum));
+		s.solve();
+		auto results = s.getResult().values;
+		std::map<Vertex*, int> earliestSCCStartTimes;
+		for (auto &v : sccVertices) {
+			earliestSCCStartTimes[v] = (int)std::round(results.at(vars.at(v)));
+		}
+		s.setObjective(ScaLP::maximize(varSum));
+		s.solve();
+		results = s.getResult().values;
+		std::map<Vertex*, int> latestSCCStartTimes;
+		for (auto &v : sccVertices) {
+			latestSCCStartTimes[v] = (int)std::round(results.at(vars.at(v)));
+		}
+		// return results
+		return {earliestSCCStartTimes, latestSCCStartTimes};
+	}
+
+	void SATSCCScheduler::computeBasicSCCSchedules() {
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: start computing basic SCC schedule now" << std::endl;
+		}
+		for (int i=0; i<this->numBasicSCCs; i++) {
+			auto g = this->basicSCCG.at(i);
+			auto rm = this->basicSCCR.at(i);
+			if (!this->quiet) {
+				std::cout << "SATSCCScheduler: found basic SCC with following vertices" << std::endl;
 			}
-			catch(HatScheT::Exception&) {
-				newRes = &this->sccR.makeResource(res->getName(),res->getLimit(),res->getLatency(),res->getBlockingTime());
+			std::unordered_map<Vertex*, ScaLP::Variable> vars;
+			ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink", 0.0, ScaLP::INF());
+			auto solver = ScaLP::Solver({"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+			for (auto &v : g->Vertices()) {
+				if (!this->quiet) {
+					std::cout << "  " << v->getName() << std::endl;
+				}
+				auto var = ScaLP::newIntegerVariable(v->getName(), 0.0, ScaLP::INF());
+				vars[v] = var;
+				solver.addConstraint(supersink - var >= rm->getVertexLatency(v));
 			}
-			// register vertex of tempG to new resource
-			this->sccR.registerVertex(this->vertexToSCCVertexMap.at(v),newRes);
+			for (auto &e : g->Edges()) {
+				auto *vSrc = &e->getVertexSrc();
+				auto *vDst = &e->getVertexDst();
+				auto varSrc = vars.at(vSrc);
+				auto varDst = vars.at(vDst);
+				solver.addConstraint(varDst - varSrc >= rm->getVertexLatency(vSrc) + e->getDelay() - (e->getDistance() * this->II));
+			}
+			solver.setObjective(ScaLP::minimize(supersink));
+			solver.solve();
+			auto result = solver.getResult().values;
+			for (auto &v : g->Vertices()) {
+				auto var = vars.at(v);
+				auto t = std::round(result.at(var));
+				auto originalV = this->sccVertexToVertexMap.at(v);
+				this->relativeSchedule[originalV] = t;
+			}
 		}
 	}
 }
-#endif
+#endif // USE_SCALP
+#endif // USE_CADICAL

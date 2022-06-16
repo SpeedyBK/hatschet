@@ -27,8 +27,8 @@ HatScheT::scctype HatScheT::SCC::getSccType(ResourceModel* rm) {
     return trivial;
   }
   list<Vertex*> VerticesOfSCC = this->getVerticesOfSCC();
-  for (auto &it:VerticesOfSCC) {
-    if (rm->getResource(it)->getLimit() != -1) {
+  for (auto &it : VerticesOfSCC) {
+    if (rm->getResource(it)->getLimit() != UNLIMITED) {
       return complex;
     }
   }
@@ -94,6 +94,7 @@ list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() {
 }
 
 void HatScheT::SCC::findSCCEdges() {
+	this->sccEdges.clear();
 	for (auto &eIt : g->Edges()){
 		bool srcVertexInSCC = false;
 		bool dstVertexInSCC = false;

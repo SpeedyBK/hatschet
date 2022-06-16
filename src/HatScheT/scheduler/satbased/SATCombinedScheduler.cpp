@@ -42,6 +42,12 @@ namespace HatScheT {
 				this->II = this->candidateII;
 				this->secondObjectiveOptimal = false;
 				this->startTimes = s1.getSchedule();
+				if (!this->quiet) {
+					std::cout << "SATCombinedScheduler: found initial schedule with SCC heuristic:" << std::endl;
+					for (auto &v : this->g.Vertices()) {
+						std::cout << "  " << v->getName() << " - " << this->startTimes.at(v) << std::endl;
+					}
+				}
 				lat = s1.getScheduleLength();
 			}
 			else {
@@ -60,7 +66,12 @@ namespace HatScheT {
 			auto sccTime = s1.getSolvingTime();
 			if (sccTime > this->solverTimeout) {
 				// sanity check for timeout
-				continue;
+				if (s1.getScheduleFound()) {
+					break;
+				}
+				else {
+					continue;
+				}
 			}
 			if (!this->quiet) {
 				std::cout << "SATCombinedScheduler: SAT-based SCC scheduler found solution for II=" << this->candidateII << " and schedule length " << lat << std::endl;

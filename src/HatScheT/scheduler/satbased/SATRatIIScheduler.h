@@ -1,14 +1,13 @@
 //
-// Created by nfiege on 4/21/22.
+// Created by nfiege on 6/3/22.
 //
 
-#ifndef HATSCHET_SATSCHEDULER_H
-#define HATSCHET_SATSCHEDULER_H
-
+#ifndef HATSCHET_SATRATIISCHEDULER_H
+#define HATSCHET_SATRATIISCHEDULER_H
 #ifdef USE_CADICAL
 #include <cadical.hpp>
 #include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
 #include <string>
 #include <map>
@@ -18,7 +17,7 @@
 
 namespace HatScheT {
 
-	class SATScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+	class SATRatIIScheduler : public RationalIISchedulerLayer {
 	public:
 		enum LatencyOptimizationStrategy {
 			REVERSE_LINEAR,
@@ -27,8 +26,8 @@ namespace HatScheT {
 			LINEAR_JUMP_LOG,
 			LOGARITHMIC
 		};
-		SATScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
-		void schedule() override;
+		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel);
+		void scheduleIteration() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
 		void setTargetLatency(const int &newTargetLatency);
@@ -46,6 +45,7 @@ namespace HatScheT {
 		void simplifyResourceLimits();
 		void restoreResourceLimits();
 
+		void calcDeltaMins();
 		void initScheduler();
 		void setUpSolver();
 		void resetContainer();
@@ -54,8 +54,6 @@ namespace HatScheT {
 		void fillSolutionStructure();
 
 		bool optimalResult;
-		bool enableIIBasedLatencyLowerBound;
-		int candidateII;
 		int candidateLatency;
 		int minLatency;
 		int maxLatency;
@@ -71,28 +69,25 @@ namespace HatScheT {
 		int literalCounter;
 		int scheduleTimeLiteralCounter;
 		int bindingLiteralCounter;
-		int timeOverlapLiteralCounter;
-		int bindingOverlapLiteralCounter;
 		int clauseCounter;
 		int dependencyConstraintClauseCounter;
 		int resourceConstraintClauseCounter;
 		int scheduleTimeConstraintClauseCounter;
 		int bindingConstraintClauseCounter;
-		int timeOverlapClauseCounter;
-		int bindingOverlapClauseCounter;
 		std::map<Vertex*, int> resourceLimit;
 		std::map<Vertex*, bool> vertexIsUnlimited;
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeLiterals;
-		std::map<std::pair<Vertex*, int>, int> bindingLiterals;
-		std::map<std::pair<Vertex*, Vertex*>, int> timeOverlapLiterals;
-		std::map<std::pair<Vertex*, Vertex*>, int> bindingOverlapLiterals;
+		std::map<std::tuple<Vertex*, int, int>, int> bindingLiterals;
 		std::set<int> latencyAttempts;
 		LatencyOptimizationStrategy los;
 		std::map<Vertex*, int> earliestStartTime;
 		std::map<Vertex*, int> latestStartTime;
 		std::map<Vertex*, int> latestStartTimeDifferences;
 		std::map<const Resource*, int> originalResourceLimits;
+
+		std::vector<int> initiationIntervals;
+		std::map<unsigned int,unsigned int> deltaMins;
 	};
 }
 #endif //USE_CADICAL
-#endif //HATSCHET_SATSCHEDULER_H
+#endif //HATSCHET_SATRATIISCHEDULER_H
