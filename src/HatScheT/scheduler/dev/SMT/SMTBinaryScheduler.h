@@ -29,13 +29,11 @@ namespace HatScheT {
      * \brief schedule main method that runs the algorithm and determines a schedule
      */
     void schedule() override;
-
     /*!
      * Sets a timeout for Z3 for each check.
      * @param seconds
      */
     void setSolverTimeout(unsigned seconds);
-
     /*!
      * Enum to set the method to find the best possible latency.
      * linear: Incremental starting at min. latency. Checking after each increment.
@@ -44,7 +42,6 @@ namespace HatScheT {
      * - Needs less checks than the linear methode to show, that a design can not be scheduled for a given II
      */
     enum class latSearchMethod { linear, binary };
-
     /*!
      * Function to set latency-search-method, default is linear.
      * @param lsm (latency-search-method)
@@ -107,6 +104,12 @@ namespace HatScheT {
      */
     int lat_binary_search(z3::check_result result);
     /*!
+     * Containts the information, if the binary search is called the first time.
+     */
+    bool binary_search_init;
+    int left_index{};
+    int right_index{};
+    /*!
      * Linear (incremental) search for the optimal latency.
      * @param result from the previous z3 check. (SAT, UNSAT, UNKOWN)
      * @return next candidate latency, or -1 if the search is completed.
@@ -131,6 +134,10 @@ namespace HatScheT {
      * ToDo: Add something if search space is exhausted.
      */
     int ii_linear_search(z3::check_result result);
+    /*!
+     * Containts the information, if the II-Search is called the first time.
+     */
+    bool ii_search_init;
 
     /*!---------------------------
      * Stuff needed to set up z3.
@@ -212,6 +219,7 @@ namespace HatScheT {
     void print_ASAP_ALAP_restictions();
     void print_latency_space(int l_index, int r_index);
     void print_b_variables();
+    static z3::check_result test_binary_search(int value_to_check, int target_value);
     /*!
      * Gets model m if z3 returns sat and extracts the schedule from this model.
      * @param z3::model &m

@@ -33,12 +33,17 @@ namespace HatScheT {
       }
       II_space_index = 0;
 
-      latSM = latSearchMethod::linear;
+      latSM = latSearchMethod::binary;
       if (latSM == latSearchMethod::linear) { this->latency_space_index = 0; }
       this->candidateLatency = -1;
       this->min_Latency = 0;
       this->max_Latency = -1;
       this->maxRuns = INT32_MAX;
+      this->left_index = 0;
+      this->right_index = 0;
+
+      binary_search_init = true;
+      ii_search_init = true;
 
   }
 
@@ -93,6 +98,7 @@ namespace HatScheT {
           if (!quiet) { cout << "Trying II: " << candidateII << endl; }
           calcLatencySpace();
           while (true){
+              cout << " -------------------------------- " << endl;
               if (latSM == latSearchMethod::linear) { candidateLatency = lat_linear_search(sati); }
               if (latSM == latSearchMethod::binary) { candidateLatency = lat_binary_search(sati); }
 
@@ -140,6 +146,10 @@ namespace HatScheT {
                   cout << "-->" << sati << "<--" << endl << "Solving Time: " << fixed
                        << double(end - start) / double(CLOCKS_PER_SEC)
                        << setprecision(5) << " sec " << endl;
+              }
+              if (sati == z3::sat){
+                  m = s.get_model();
+                  parse_schedule(m);
               }
               if (latSM == latSearchMethod::linear) {
                   if (sati == z3::sat) {
@@ -209,7 +219,8 @@ namespace HatScheT {
           }
       }
 
-      max_Latency = (resMaxLat+1) * (int)g.getNumberOfVertices();
+      //max_Latency = (resMaxLat+1) * (int)g.getNumberOfVertices();
+      max_Latency = min_Latency + II_space.at(0);
       if (!quiet) { cout << "Max Latency: " << max_Latency << endl; }
   }
 
@@ -374,7 +385,13 @@ namespace HatScheT {
       if (result == z3::sat) {
           return -1;
       }else if (result == z3::unknown){
-          return II_space.at(0);
+          if (ii_search_init) {
+              ii_search_init = false;
+              return II_space.at(0);
+          }
+          int index = II_space_index;
+          II_space_index++;
+          return II_space.at(index);
       }else{
           int index = II_space_index;
           II_space_index++;
@@ -405,8 +422,8 @@ namespace HatScheT {
       if (min_Latency < (int)minII){
           min_Latency = (int)minII;
       }
-      latency_Space.reserve(max_Latency - min_Latency);
-      for (int i = min_Latency; i < max_Latency; i++){
+      latency_Space.reserve((max_Latency - min_Latency)+1);
+      for (int i = min_Latency; i <= max_Latency; i++){
           latency_Space.push_back(i);
       }
   }
@@ -432,6 +449,39 @@ namespace HatScheT {
   }
 
   int SMTBinaryScheduler::lat_binary_search(z3::check_result satisfiable) {
+      //if (!quiet) { print_latency_space(0, (int)latency_Space.size()); }
+      if (binary_search_init) {
+          if (!quiet) { cout << "Init Binary Search..." << endl; }
+          binary_search_init = false;
+          latency_space_index = (int)latency_Space.size()/2;
+          left_index = 0;
+          right_index = (int)latency_Space.size()-1;
+          return latency_Space.at(latency_space_index);
+      }
+      if (left_index < right_index) {
+          switch (satisfiable) {
+              case z3::sat:
+                  //cout << "--> Sat <--" << endl;
+                  right_index = latency_space_index;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+              case z3::unsat:
+                  //cout << "--> Unsat <--" << endl;
+                  left_index = latency_space_index + 1;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+              case z3::unknown:
+                  //cout << "--> Unknown <--" << endl;
+                  left_index = latency_space_index + 1;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+          }
+          //if (!quiet) { cout << "Left Index: " << left_index << " Right Index: " << right_index << endl; }
+          //if (!quiet) { cout << "Index: " << latency_space_index << endl; }
+          //if (!quiet) { cout << "Returnvalue: " << latency_Space.at(latency_space_index) << endl; }
+          return latency_Space.at(latency_space_index);
+      }
+      binary_search_init = true;
       return -1;
   }
 
@@ -440,6 +490,13 @@ namespace HatScheT {
           cout << latency_Space.at(i) << " ";
       }
       cout << endl;
+  }
+
+  z3::check_result SMTBinaryScheduler::test_binary_search(int value_to_check, int target_value) {
+      if (value_to_check < target_value){
+          return z3::unsat;
+      }
+      return z3::sat;
   }
 
 }
