@@ -233,10 +233,28 @@ namespace HatScheT {
 		//init latency sequence, init intervals, deltaMin containers
 		this->initiationIntervals = RationalIISchedulerLayer::getOptimalInitiationIntervalSequence(this->samples,this->modulo,this->quiet);
 		this->latencySequence = RationalIISchedulerLayer::getLatencySequenceFromInitiationIntervals(this->initiationIntervals,this->modulo);
+		if (!this->quiet) {
+			std::cout << "SATRatIIScheduler: initiation intervals = <";
+			for (auto &it : this->initiationIntervals) {
+				std::cout << " " << it;
+			}
+			std::cout << " >" << std::endl;
+			std::cout << "SATRatIIScheduler: latency sequence = <";
+			for (auto &it : this->latencySequence) {
+				std::cout << " " << it;
+			}
+			std::cout << " >" << std::endl;
+		}
 		calcDeltaMins();
 		// upper and lower bounds
 		this->calculateEarliestStartTimes();
 		this->calculateLatestStartTimeDifferences();
+		if (!this->quiet) {
+			std::cout << "SATRatIIScheduler: calculated earliest start times and latest start time diffs:" << std::endl;
+			for (auto &v : this->g.Vertices()) {
+				std::cout << "  " << v->getName() << " tMin=" << this->earliestStartTime.at(v) << ", diff=" << this->latestStartTimeDifferences.at(v) << std::endl;
+			}
+		}
 		// simplify resource limits to save variables/clauses
 		this->simplifyResourceLimits();
 	}
@@ -349,13 +367,13 @@ namespace HatScheT {
 							if (this->terminator.terminate()) {
 								return;
 							}
-							auto tau1 = tau1Temp + this->latencySequence.at(s1);
+							auto tau1 = tau1Temp + this->initiationIntervals.at(s1);
 							for (auto tau2Temp = this->earliestStartTime.at(v2); tau2Temp <= this->latestStartTime.at(v2); tau2Temp++) {
-								auto tau2 = tau2Temp + this->latencySequence.at(s2);
+								auto tau2 = tau2Temp + this->initiationIntervals.at(s2);
 								if (tau1 % this->modulo != tau2 % this->modulo) continue;
 								this->solver->add(-this->timeOverlapLiterals.at({v1, s1, v2, s2}));
-								this->solver->add(-this->scheduleTimeLiterals.at({v1, tau1}));
-								this->solver->add(-this->scheduleTimeLiterals.at({v2, tau2}));
+								this->solver->add(-this->scheduleTimeLiterals.at({v1, tau1Temp}));
+								this->solver->add(-this->scheduleTimeLiterals.at({v2, tau2Temp}));
 								this->solver->add(0);
 								this->timeOverlapClauseCounter++;
 							}
@@ -448,34 +466,45 @@ namespace HatScheT {
 			this->startTimes[v] = t;
 			this->startTimesVector.resize(this->samples);
 			for (auto s=0; s<this->samples; s++) {
-				this->startTimesVector[s][v] = t + this->latencySequence[s];
+				this->startTimesVector[s][v] = t + this->initiationIntervals[s];
 			}
 			// binding
-			if (this->vertexIsUnlimited.at(v)) {
-				// assign unlimited vertices unique FUs
-				auto *r = this->resourceModel.getResource(v);
-				this->binding[v] = unlimitedResourceCounter[r]++; // assign FU and increment counter
-				continue;
-			}
-			if (this->resourceLimit.at(v) == 1) {
-				// assign trivial bindings
-				this->binding[v] = 0;
-				continue;
-			}
 			this->ratIIbindings.resize(this->samples);
+			auto *r = this->resourceModel.getResource(v);
 			for (int s=0; s<this->samples; s++) {
-				auto b = -1;
-				for (int l=0; l<this->resourceLimit.at(v); l++) {
-					if (this->solver->val(this->bindingLiterals.at({v, l, s})) < 0) {
-						continue;
+				if (r->isUnlimited()) {
+					// assign unlimited vertices unique FUs
+					this->ratIIbindings[s][v] = unlimitedResourceCounter[r];
+					if (s == 0) {
+						this->binding[v] = unlimitedResourceCounter[r];
 					}
-					b = l;
-					break;
+					// increment counter
+					unlimitedResourceCounter[r]++;
 				}
-				if (b < 0) {
-					throw Exception("Failed to find binding for vertex '"+v->getName()+"' in sample '"+std::to_string(s)+"' - that should never happen!");
+				else if (r->getLimit() == 1) {
+					// assign trivial bindings
+					this->ratIIbindings[s][v] = 0;
+					if (s == 0) {
+						this->binding[v] = 0;
+					}
 				}
-				this->ratIIbindings[s][v] = b;
+				else {
+					auto b = -1;
+					for (int l=0; l<this->resourceLimit.at(v); l++) {
+						if (this->solver->val(this->bindingLiterals.at({v, l, s})) < 0) {
+							continue;
+						}
+						b = l;
+						break;
+					}
+					if (b < 0) {
+						throw Exception("Failed to find binding for vertex '"+v->getName()+"' in sample '"+std::to_string(s)+"' - that should never happen!");
+					}
+					this->ratIIbindings[s][v] = b;
+					if (s == 0) {
+						this->binding[v] = b;
+					}
+				}
 			}
 		}
 		// override candidate latency in case the scheduler found a solution with a schedule length
@@ -702,6 +731,7 @@ namespace HatScheT {
 			r->setLimit(UNLIMITED, false); // disable errors during set limit function
 		}
 		ALAPScheduler alapScheduler(this->g, this->resourceModel);
+		alapScheduler.setQuiet(this->quiet);
 		alapScheduler.schedule();
 		if (!alapScheduler.getScheduleFound()) {
 			throw Exception("SATRatIIScheduler: failed to compute latest start times - that should never happen");
@@ -710,6 +740,9 @@ namespace HatScheT {
 		auto alapStartTimes = alapScheduler.getSchedule();
 		if (!this->quiet) {
 			std::cout << "SATRatIIScheduler: ALAP schedule length = " << alapSL << std::endl;
+			for (auto &v : this->g.Vertices()) {
+				std::cout << "  " << v->getName() << " - " << alapStartTimes.at(v) << " (lat=" << this->resourceModel.getVertexLatency(v) << ")" << std::endl;
+			}
 		}
 		for (auto &v : this->g.Vertices()) {
 			try {
@@ -803,7 +836,7 @@ namespace HatScheT {
 			auto limit = r->getLimit();
 			if (limit == UNLIMITED) continue; // skip unlimited resources because this is the dream scenario anyways
 			auto numVertices = this->resourceModel.getNumVerticesRegisteredToResource(r);
-			if (numVertices <= limit) {
+			if (numVertices * this->samples <= limit) {
 				// save original limit to restore it later
 				this->originalResourceLimits[r] = limit;
 				// resource limit can be ignored

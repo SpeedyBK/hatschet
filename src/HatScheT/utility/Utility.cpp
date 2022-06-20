@@ -1397,7 +1397,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		std::map<std::pair<const Resource*, int>, int> resourceLifetimes;
 		for (auto &r : rm->Resources()) {
 			if (r->isUnlimited()) {
-				resourceLimits[r] = (int)rm->getNumVerticesRegisteredToResource(r);
+				resourceLimits[r] = (int)rm->getNumVerticesRegisteredToResource(r) * samples;
 			}
 			else {
 				resourceLimits[r] = r->getLimit();
@@ -1427,15 +1427,18 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				int tSrc;
 				int tDst;
 				int bSrc;
-				int bDst;
 				try {
 					tSrc = schedule.at(sSrc).at(vSrc);
 					tDst = schedule.at(sDst).at(vDst);
 					bSrc = binding.at(sSrc).at(vSrc);
-					bDst = binding.at(sDst).at(vDst);
 				}
 				catch (std::out_of_range&) {
 					// invalid schedule/binding -> unable to calculate #regs
+					return -1;
+				}
+				if (bSrc >= resourceLimits.at(rSrc)) {
+					// invalid binding provided -> unable to calculate #regs
+					std::cout << "Detected invalid binding for vertex '" << vSrc->getName() << "': FU index is '" << bSrc << "' but resource limit is " << resourceLimits.at(rSrc) << std::endl;
 					return -1;
 				}
 				auto lifetime = tDst + (delta * modulo) - (tSrc + lSrc);
