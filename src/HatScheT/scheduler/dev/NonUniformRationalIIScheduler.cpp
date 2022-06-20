@@ -98,7 +98,7 @@ namespace HatScheT
 			for(auto s=0; s<this->samples; ++s) {
 				this->bVariables[v].emplace_back(std::vector<ScaLP::Variable>());
 				for(auto m=0; m<this->modulo; ++m) {
-					auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(s)+"_"+to_string(m));
+					auto var = ScaLP::newBinaryVariable("b_"+v->getName()+"_"+to_string(s)+"_"+to_string(m));
 					this->bVariables[v][s].emplace_back(var);
 				}
 			}

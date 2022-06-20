@@ -132,6 +132,9 @@ namespace HatScheT
 	void UniformRationalIISchedulerNew::fillTContainer() {
 		// create one time variable for each vertex in the graph
 		for(auto &v : this->g.Vertices()) {
+			if (!this->quiet) {
+				std::cout << "UniformRationalIISchedulerNew::fillTContainer: creating variable '" << v->getName() << "'" << std::endl;
+			}
 			// check if initial solution was given and act accordingly
 			if(this->initialSolutionRatII.empty()) {
 				auto var = ScaLP::newIntegerVariable(v->getName());
@@ -149,14 +152,17 @@ namespace HatScheT
 	void UniformRationalIISchedulerNew::fillBContainer() {
 		for(auto &v : this->g.Vertices()) {
 			for(auto m=0; m<this->modulo; ++m) {
+				if (!this->quiet) {
+					std::cout << "UniformRationalIISchedulerNew::fillTContainer: creating variable '" << "b_"+v->getName()+"_"+to_string(m) << "'" << std::endl;
+				}
 				// check if initial solution was given and act accordingly
 				if(this->initialSolutionRatII.empty()) {
-					auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m));
+					auto var = ScaLP::newBinaryVariable("b_"+v->getName()+"_"+to_string(m));
 					this->bVariables[v].emplace_back(var);
 				}
 				else {
 					bool initVal = (this->initialSolutionRatII[0][v] % this->modulo == 0);
-					auto var = ScaLP::newBinaryVariable(v->getName()+"_"+to_string(m),0,1,initVal);
+					auto var = ScaLP::newBinaryVariable("b_"+v->getName()+"_"+to_string(m),0,1,initVal);
 					this->bVariables[v].emplace_back(var);
 				}
 			}
@@ -174,6 +180,9 @@ namespace HatScheT
 	void UniformRationalIISchedulerNew::setModuloConstraints() {
 		for(auto &v : this->g.Vertices()) {
 			ScaLP::Variable k_v = nullptr;
+			if (!this->quiet) {
+				std::cout << "UniformRationalIISchedulerNew::fillTContainer: creating variable '" << "k_"+v->getName() << "'" << std::endl;
+			}
 			// create remainder variable k_v and check if initial solution was given and act accordingly
 			if(this->initialSolutionRatII.empty()) {
 				k_v = ScaLP::newIntegerVariable("k_"+v->getName());
