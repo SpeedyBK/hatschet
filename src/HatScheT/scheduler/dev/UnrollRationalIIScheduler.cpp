@@ -15,6 +15,7 @@
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
+#include "HatScheT/scheduler/satbased/SATCombinedScheduler.h"
 #endif
 
 namespace HatScheT {
@@ -120,6 +121,8 @@ namespace HatScheT {
         this->startTimesVector[s][v] = round(schedUnrolled[vertexUnrolled]);
       }
     }
+    // fill start times container with start times for the first sample
+    this->startTimes = startTimesVector[0];
   }
 
 	void UnrollRationalIIScheduler::scheduleIteration() {
@@ -187,10 +190,27 @@ namespace HatScheT {
 #else
 				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATScheduler");
 #endif
+			case SchedulerType::SATCOMBINED:
+#ifdef USE_CADICAL
+				schedulerBase = new HatScheT::SATCombinedScheduler(g_unrolled, rm_unrolled);
+				if(this->solverTimeout > 0) ((HatScheT::SATCombinedScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+				if(this->maxLatencyConstraint > 0)
+					((HatScheT::SATCombinedScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+				((HatScheT::SATCombinedScheduler*) schedulerBase)->setMaxRuns(1);
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATCombinedScheduler");
+#endif
     }
 
     schedulerBase->setQuiet(this->quiet);
     schedulerBase->schedule();
+
+    auto moduloSchedulerBase = (HatScheT::ModuloSchedulerBase*) schedulerBase;
+    std::pair<bool, bool> objectivesOptimal = {false, false};
+    if (moduloSchedulerBase != nullptr) {
+    	objectivesOptimal = moduloSchedulerBase->getObjectivesOptimal();
+    }
+    this->secondObjectiveOptimal = objectivesOptimal.second;
 
     switch(this->scheduler) {
       case SchedulerType::MOOVAC:
@@ -213,6 +233,56 @@ namespace HatScheT {
 				this->stat = ((HatScheT::PBScheduler*) schedulerBase)->getScaLPStatus();
 				this->solvingTime = ((HatScheT::PBScheduler*) schedulerBase)->getSolvingTime();
 				break;
+    	case SchedulerType::SAT:
+    		if (this->scheduleFound) {
+					if (this->secondObjectiveOptimal) {
+						this->stat = ScaLP::status::OPTIMAL;
+					}
+					else {
+						this->stat = ScaLP::status::TIMEOUT_FEASIBLE;
+					}
+    		}
+    		else {
+    			if (objectivesOptimal.first) {
+						this->stat = ScaLP::status::INFEASIBLE;
+    			}
+    			else {
+						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
+    			}
+    		}
+				this->solvingTime = ((HatScheT::SATScheduler*) schedulerBase)->getSolvingTime();
+    		break;
+			case SchedulerType::SATCOMBINED:
+				if (this->scheduleFound) {
+					if (this->secondObjectiveOptimal) {
+						this->stat = ScaLP::status::OPTIMAL;
+					}
+					else {
+						this->stat = ScaLP::status::TIMEOUT_FEASIBLE;
+					}
+				}
+				else {
+					if (objectivesOptimal.first) {
+						this->stat = ScaLP::status::INFEASIBLE;
+					}
+					else {
+						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
+					}
+				}
+				this->solvingTime = ((HatScheT::SATCombinedScheduler*) schedulerBase)->getSolvingTime();
+				break;
+    }
+
+    // track optimality of first objective (i.e., II)
+    if (this->stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
+    	this->firstObjectiveOptimal = false;
+    }
+		// track optimality of second objective (i.e., schedule length)
+    if (this->stat == ScaLP::status::OPTIMAL) {
+    	this->secondObjectiveOptimal = true;
+    }
+    else {
+    	this->secondObjectiveOptimal = false;
     }
 
     if(schedulerBase->getScheduleFound() == true) {

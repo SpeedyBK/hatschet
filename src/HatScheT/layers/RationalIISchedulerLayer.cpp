@@ -273,6 +273,10 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			cout << "------------------------" << endl;
 		}
 
+		// keep track of optimality
+		this->firstObjectiveOptimal = true;
+		this->secondObjectiveOptimal = true;
+
 		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),this->s_max,this->maxRuns);
 		if(msQueue.empty()) {
 			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));

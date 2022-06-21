@@ -307,6 +307,18 @@ namespace HatScheT
 
 		if(!this->quiet) cout << "Finished solving: " << stat << endl;
 
+		// track optimality of first objective (i.e., II)
+		if (this->stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
+			this->firstObjectiveOptimal = false;
+		}
+		// track optimality of second objective (i.e., schedule length)
+		if (this->stat == ScaLP::status::OPTIMAL) {
+			this->secondObjectiveOptimal = true;
+		}
+		else {
+			this->secondObjectiveOptimal = false;
+		}
+
 		//check result and act accordingly
 		if(stat==ScaLP::status::FEASIBLE || stat==ScaLP::status::OPTIMAL || stat==ScaLP::status::TIMEOUT_FEASIBLE) {
 			this->r = this->solver->getResult();

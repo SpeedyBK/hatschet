@@ -527,6 +527,7 @@ namespace HatScheT {
 	}
 
 	void SCCQScheduler::scheduleIteration() {
+		this->secondObjectiveOptimal = false; // we can't guarantee anything about the schedule length with this scheduler
 		if (!this->quiet) {
 			std::cout << "SCC Q SCHEDULER graph: " << std::endl;
 			std::cout << this->g << std::endl;
@@ -561,6 +562,7 @@ namespace HatScheT {
 			this->startTimesVector.clear();
 			this->end = clock();
 			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			this->firstObjectiveOptimal = false;
 			// free memory
 			for(auto scc : sccs) {
 				delete scc;
@@ -585,8 +587,18 @@ namespace HatScheT {
 		bool scheduleSuccess = this->determineStartTimes(sccs, sccSchedule);
 		if(!scheduleSuccess) {
 			this->scheduleFound = false;
+			this->II = -1;
+			this->modulo = -1;
+			this->samples = -1;
 			this->startTimes.clear();
 			this->startTimesVector.clear();
+			this->firstObjectiveOptimal = false;
+			this->end = clock();
+			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			// free memory
+			for(auto scc : sccs) {
+				delete scc;
+			}
 			return;
 		}
 

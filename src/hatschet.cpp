@@ -135,7 +135,7 @@ void print_short_help() {
 		<< "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules"
 		<< std::endl;
 	std::cout
-		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules"
+		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which does not guarantee uniformity"
 		<< std::endl;
 	std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
 	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)"
@@ -848,6 +848,9 @@ int main(int argc, char *args[]) {
 					if (modulo > 0) ((HatScheT::UnrollRationalIIScheduler *) scheduler)->setModulo(modulo);
 					((HatScheT::UnrollRationalIIScheduler *) scheduler)->setThreads(threads);
 					((HatScheT::UnrollRationalIIScheduler *) scheduler)->setSolverQuiet(solverQuiet);
+#ifdef USE_CADICAL
+					((HatScheT::UnrollRationalIIScheduler *) scheduler)->setIntIIScheduler(HatScheT::SchedulerType::SATCOMBINED);
+#endif
 					break;
 				case UNIFORMRATIONALII:
 					isRationalIIScheduler = true;
