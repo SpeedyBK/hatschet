@@ -20,7 +20,7 @@
 
 namespace HatScheT {
 
-  UnrollRationalIIScheduler::UnrollRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist)
+  UnrollRationalIIScheduler::UnrollRationalIIScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int M, int S)
   : RationalIISchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist), solverWishlist(solverWishlist),
     scheduler(ED97)
   {
@@ -39,6 +39,7 @@ namespace HatScheT {
 
   }
 
+  /*
   void UnrollRationalIIScheduler::unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s) {
     Graph *new_g = &g_unrolled;
     ResourceModel *new_rm = &rm_unrolled;
@@ -53,7 +54,7 @@ namespace HatScheT {
 
       vector<Vertex *> v_mapping;
 
-      if (new_rm->resourceExists(r->getName()) == true) {
+      if (new_rm->resourceExists(r->getName())) {
         r_new = new_rm->getResource(r->getName());
       } else {
         r_new = &new_rm->makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
@@ -86,12 +87,11 @@ namespace HatScheT {
           auto index = sampleIndexOffset.first;
           auto newDistance = sampleIndexOffset.second / this->modulo;
           new_g->createEdge(*v_src_mappings[index], *v_dst_mappings[i], newDistance, e->getDependencyType());
-
-
         }
       }
     }
   }
+   */
 
   void UnrollRationalIIScheduler::fillSolutionStructure(SchedulerBase* scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled) {
     auto schedUnrolled =  scheduler->getSchedule();
@@ -130,7 +130,9 @@ namespace HatScheT {
     ResourceModel rm_unrolled;
 
     //unroll the input graph according to s and m
-    this->unroll(g_unrolled, rm_unrolled, this->samples);
+    std::map<Vertex*, std::vector<Vertex*>> vertexMappings;
+    Utility::unroll(&g_unrolled, &rm_unrolled, this->samples, this->modulo, &this->g, &this->resourceModel, &vertexMappings);
+    //this->unroll(g_unrolled, rm_unrolled, this->samples);
 
     HatScheT::SchedulerBase *schedulerBase;
 

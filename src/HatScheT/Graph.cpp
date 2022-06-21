@@ -240,4 +240,18 @@ ostream& operator<<(ostream& os, const Graph& g){
       }
   }
 
+	void Graph::reset() {
+		this->maxVertexId = 0;
+		for (auto &v : this->vertices) {
+			delete v;
+		}
+		this->vertices.clear();
+		for (auto &e : this->edges) {
+			delete e;
+		}
+		this->edges.clear();
+		this->incomingEdges.clear();
+		this->outgoingEdges.clear();
+	}
+
 }

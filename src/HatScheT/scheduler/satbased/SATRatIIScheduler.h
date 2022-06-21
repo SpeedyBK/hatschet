@@ -26,7 +26,7 @@ namespace HatScheT {
 			LINEAR_JUMP_LOG,
 			LOGARITHMIC
 		};
-		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel);
+		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel, int M=-1, int S=-1);
 		void scheduleIteration() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);

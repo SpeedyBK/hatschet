@@ -56,6 +56,14 @@ public:
    * copy constructor is forbidden for this class
    */
    Graph(const Graph&) = delete;
+   /*!
+    * resets the graph to its default state
+    * -> clear all vertices and edges
+    * -> reset all counters
+    * -> clear all helper containers
+    * -> but keep the name
+    */
+   void reset();
   /*!
    * Creates a vertex, assigns a non-existing id and inserts it in the graph
    *G

@@ -38,6 +38,7 @@ namespace HatScheT
 class Utility
 {
 public:
+	static void unroll(Graph* gUnroll, ResourceModel* rmUnroll, const int &numSamples, const int &cycleLength, Graph* g, ResourceModel* rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const int &modulo);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const int &II);
 	static int calcMinNumChainRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const std::vector<std::map<const Vertex*, int>> &binding, const int &modulo);

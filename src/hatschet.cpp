@@ -79,10 +79,11 @@
 #ifdef USE_CADICAL
 
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
-#include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
+#include <HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h>
 
 #endif
 
@@ -150,16 +151,19 @@ void print_short_help() {
 		<< "                            SAT: Experimental integer II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
+		<< "                            SATRATII: Experimental rational II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)"
+		<< std::endl;
+	std::cout
 		<< "                            SATSCC: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
 		<< "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
+		<< "                            SATCOMBINEDRATII: Experimental rational II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATRATII: Experimental rational II scheduler based on Boolean Satisfiability (uses CaDiCaL as backend)"
+		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout << "                            SMT: Experimental uses SMT-formulation and Z3 Backend" << std::endl;
 	std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
@@ -241,6 +245,7 @@ int main(int argc, char *args[]) {
 		SAT,
 		SATSCC,
 		SATCOMBINED,
+		SATCOMBINEDRATII,
 		SATMINREG,
 		SATRATII,
 		ASAP,
@@ -372,6 +377,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SATSCC;
 				} else if (schedulerSelectionStr == "satcombined") {
 					schedulerSelection = SATCOMBINED;
+				} else if (schedulerSelectionStr == "satcombinedratii") {
+					schedulerSelection = SATCOMBINEDRATII;
 				} else if (schedulerSelectionStr == "satratii") {
 					schedulerSelection = SATRATII;
 				} else if (schedulerSelectionStr == "ul") {
@@ -543,6 +550,9 @@ int main(int argc, char *args[]) {
 			case SATCOMBINED:
 				cout << "SATCOMBINED";
 				break;
+			case SATCOMBINEDRATII:
+				cout << "SATCOMBINEDRATII";
+				break;
 			case SATRATII:
 				cout << "SATRATII";
 				break;
@@ -710,12 +720,25 @@ int main(int argc, char *args[]) {
 					if (timeout > 0) ((HatScheT::SATScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0) ((HatScheT::SATScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
+				case SATRATII:
+					scheduler = new HatScheT::SATRatIIScheduler(g, rm);
+					isRationalIIScheduler = true;
+					if (timeout > 0) ((HatScheT::SATRatIIScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::SATRatIIScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
 				case SATCOMBINED:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATCOMBINEDRATII:
+					scheduler = new HatScheT::SATCombinedRatIIScheduler(g, rm);
+					isRationalIIScheduler = true;
+					if (timeout > 0) ((HatScheT::SATCombinedRatIIScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0)
+						((HatScheT::SATCombinedRatIIScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
 				case SATSCC:
 					scheduler = new HatScheT::SATSCCScheduler(g, rm, targetII);
@@ -731,12 +754,6 @@ int main(int argc, char *args[]) {
 						((HatScheT::SATMinRegScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					if (maxRegs > 0) ((HatScheT::SATMinRegScheduler *) scheduler)->setRegMax(maxRegs);
 					if (targetII > 0) ((HatScheT::SATMinRegScheduler *) scheduler)->overrideII(targetII);
-					break;
-				case SATRATII:
-					scheduler = new HatScheT::SATRatIIScheduler(g, rm);
-					isRationalIIScheduler = true;
-					if (timeout > 0) ((HatScheT::SATRatIIScheduler *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0) ((HatScheT::SATRatIIScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
 #endif
 #ifdef USE_SCALP

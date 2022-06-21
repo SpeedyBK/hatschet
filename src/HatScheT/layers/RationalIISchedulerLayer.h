@@ -31,7 +31,7 @@ namespace HatScheT {
  */
 	class RationalIISchedulerLayer : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
-		RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel);
+		RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel, int M=-1, int S=-1);
 
 		/*!
 		 * schedule function - since the core of this function is the same for all rational II schedulers,

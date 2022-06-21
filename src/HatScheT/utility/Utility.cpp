@@ -1458,4 +1458,46 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 																	 const map<const Vertex *, int> &binding, const int &II) {
 		return Utility::calcMinNumChainRegs(g, rm, std::vector<std::map<Vertex*, int>>(1, schedule), std::vector<std::map<const Vertex*, int>>(1, binding), II);
 	}
+
+	void Utility::unroll(Graph *gUnroll, ResourceModel *rmUnroll, const int &numSamples, const int &cycleLength, Graph *g,
+											ResourceModel *rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings) {
+		// clear vertex mappings just to be safe
+		vertexMappings->clear();
+		// unroll vertices
+		for (auto &v : g->Vertices()) {
+			const HatScheT::Resource *r = rm->getResource(v);
+			Resource *r_new;
+			vector<Vertex *> v_mapping(numSamples);
+			if (rmUnroll->resourceExists(r->getName())) {
+				r_new = rmUnroll->getResource(r->getName());
+			} else {
+				r_new = &rmUnroll->makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
+			}
+			for (int i = 0; i < numSamples; i++) {
+				Vertex *v_new = &gUnroll->createVertex();
+				v_new->setName(v->getName() + "_" + to_string(i));
+				rmUnroll->registerVertex(v_new, r_new);
+				v_mapping[i] = v_new;
+			}
+			(*vertexMappings)[v] = v_mapping;
+		}
+		// unroll edges
+		for (auto e : g->Edges()) {
+			Vertex *v_src = &e->getVertexSrc();
+			Vertex *v_dst = &e->getVertexDst();
+			vector<Vertex *> v_src_mappings = vertexMappings->at(v_src);
+			vector<Vertex *> v_dst_mappings = vertexMappings->at(v_dst);
+			for (int i = 0; i < v_src_mappings.size(); i++) {
+				if (e->getDistance() == 0)
+					gUnroll->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
+				else {
+					int distance = e->getDistance();
+					auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance, i, numSamples, cycleLength);
+					auto index = sampleIndexOffset.first;
+					auto newDistance = sampleIndexOffset.second / cycleLength;
+					gUnroll->createEdge(*v_src_mappings[index], *v_dst_mappings[i], newDistance, e->getDependencyType());
+				}
+			}
+		}
+	}
 }

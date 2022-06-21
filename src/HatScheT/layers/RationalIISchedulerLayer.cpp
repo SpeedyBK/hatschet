@@ -26,7 +26,7 @@
 namespace HatScheT
 {
 
-RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel) :
+RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel, int M, int S) :
 	SchedulerBase(g, resourceModel), latencySequence() {
   this->modulo = -1;
   this->samples = -1;
@@ -42,10 +42,18 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->scheduleValid = false;
 	this->verifySolution = true;
 
-	this->computeMinII(&this->g, &this->resourceModel);
+	pair<int, int> frac;
+	if (M <= 0 and S <= 0) {
+		// no M/S given by user
+		this->computeMinII(&this->g, &this->resourceModel);
+		frac = Utility::splitRational(this->minII);
+	}
+	else {
+		// M/S given by user
+		this->minII = ((double)M) / ((double)S);
+		frac = {M, S};
+	}
 	this->integerMinII = (int)ceil(this->minII);
-
-	pair<int, int> frac = Utility::splitRational(this->minII);
 
 	if(!this->quiet) {
 		cout << "rational min II is " << this->minII << endl;
