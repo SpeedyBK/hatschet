@@ -124,6 +124,18 @@ public:
    */
   bool isSinkVertex(Vertex* v);
   /*!
+   * \brief determines whether the given vertex has not a single outgoing edge with a distance of zero
+   * \param v the vertex to inspect
+   * \return true if v has no outgoing edges with distance=0
+   */
+  bool hasNoNonZeroDistanceOutgoingEdges(Vertex* v);
+	/*!
+	 * \brief determines whether the given vertex has not a single incoming edge with a distance of zero
+	 * \param v the vertex to inspect
+	 * \return true if v has no incoming edges with distance=0
+	 */
+  bool hasNoNonZeroDistanceIncomingEdges(Vertex* v);
+  /*!
    * \brief looks up the vertex with the given ID
    * \param id the ID to find
    * \return the vertex matching the given ID

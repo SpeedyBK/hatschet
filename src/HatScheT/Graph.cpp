@@ -59,6 +59,10 @@ Vertex& Graph::createVertex(int id){
   Vertex *v = new Vertex(id);
   vertices.insert(v);
 
+  // init trackers for incoming and outgoing edges
+	this->incomingEdges[v] = {};
+	this->outgoingEdges[v] = {};
+
   //keep maxVertexId consistent
   if(this->maxVertexId < v->getId()) this->maxVertexId = this->getMaxVertexId()+1;
 
@@ -88,6 +92,7 @@ Edge& Graph::createEdge(Vertex &Vsrc, Vertex &Vdst, int distance, Edge::Dependen
 }
 
 bool Graph::isSourceVertex(Vertex *v){
+	/*
   for(auto it:this->edges){
     Edge* e = it;
     Vertex* dstV = &e->getVertexDst();
@@ -96,9 +101,12 @@ bool Graph::isSourceVertex(Vertex *v){
   }
 
   return true;
+	 */
+	return this->getNumIncomingEdges(v) == 0;
 }
 
 bool Graph::isSinkVertex(Vertex *v){
+	/*
   for(auto it:this->edges){
     Edge* e = it;
     Vertex* srcV = &e->getVertexSrc();
@@ -107,6 +115,34 @@ bool Graph::isSinkVertex(Vertex *v){
   }
 
   return true;
+	 */
+	return this->getNumOutgoingEdges(v) == 0;
+}
+
+bool Graph::hasNoNonZeroDistanceOutgoingEdges(Vertex *v) {
+	try {
+		for (auto &e : this->outgoingEdges.at(v)) {
+			if (e->getDistance() != 0) return false;
+		}
+		return true;
+	}
+	catch (std::out_of_range&) {
+		// vertex has no outgoing edges
+		return true;
+	}
+}
+
+bool Graph::hasNoNonZeroDistanceIncomingEdges(Vertex *v) {
+	try {
+		for (auto &e : this->incomingEdges.at(v)) {
+			if (e->getDistance() != 0) return false;
+		}
+		return true;
+	}
+	catch (std::out_of_range&) {
+		// vertex has no outgoing edges
+		return true;
+	}
 }
 
 bool Graph::isEmpty(){
@@ -218,7 +254,7 @@ ostream& operator<<(ostream& os, const Graph& g){
           return this->incomingEdges.at(v);
       }
       catch (std::out_of_range &) {
-          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+          throw Exception("Graph::getIncomingEdges: requested invalid vertex");
       }
   }
 
@@ -227,7 +263,7 @@ ostream& operator<<(ostream& os, const Graph& g){
           return this->outgoingEdges.at(v).size();
       }
       catch (std::out_of_range &) {
-          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+          throw Exception("Graph::getNumOutgoingEdges: requested invalid vertex");
       }
   }
 
@@ -236,7 +272,7 @@ ostream& operator<<(ostream& os, const Graph& g){
           return this->incomingEdges.at(v).size();
       }
       catch (std::out_of_range &) {
-          throw Exception("Graph::getOutgoingEdges: requested invalid vertex");
+          throw Exception("Graph::getNumIncomingEdges: requested invalid vertex");
       }
   }
 

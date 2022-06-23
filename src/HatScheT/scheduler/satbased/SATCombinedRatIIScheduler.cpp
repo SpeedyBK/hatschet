@@ -75,6 +75,7 @@ namespace HatScheT {
 		auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
 		// refine latency with normal scheduler
 		SATRatIIScheduler s2(this->g, this->resourceModel, this->modulo, this->samples);
+		s2.setMaxRuns(1);
 		s2.setSolverTimeout(satTimeout);
 		s2.setQuiet(this->quiet);
 		if (this->maxLatencyConstraint >= 0) {

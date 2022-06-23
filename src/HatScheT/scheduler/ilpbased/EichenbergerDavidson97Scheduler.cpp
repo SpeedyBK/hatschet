@@ -175,17 +175,8 @@ void EichenbergerDavidson97Scheduler::setObjective()
       */
 
     // now, let's do it correctly
-    bool skipMe = false;
-    for (auto &e : g.Edges()) {
-      if (&e->getVertexSrc() == i and e->getDistance() == 0) {
-      	// the given vertex has an outgoing edge with a distance of 0
-      	// no need to connect it to the supersink!
-				skipMe = true;
-				break;
-      }
-    }
-    if (skipMe) continue;
-    solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+    if (g.hasNoNonZeroDistanceOutgoingEdges(i))
+    	solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
   }
   solver->setObjective(ScaLP::minimize(ss));
 }

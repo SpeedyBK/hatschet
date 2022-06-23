@@ -350,10 +350,10 @@ namespace HatScheT {
 							freeSlot = this->mrt.insertVertex(vertices.front(),vertexStartTime%this->modulo);
 						if(!this->quiet) {
 							std::cout << "    slot is " << (freeSlot?string(""):string("not ")) << "free" << std::endl;
-							if(!freeSlot) {
+							/*if(!freeSlot) {
 								std::cout << "    MRT" << std::endl;
 								this->mrt.print();
-							}
+							}*/
 						}
 						while(!freeSlot) {
 							++vertexStartTime;
@@ -390,6 +390,10 @@ namespace HatScheT {
 
 			// debugging
 			if(!this->quiet) {
+				std::cout << "Final start times after scheduling SCC" << sccId << ":" << std::endl;
+				for (auto &it : this->startTimes) {
+					std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+				}
 				std::cout << "MRT after scheduling SCC" << sccId << ":" << std::endl;
 				this->mrt.print();
 			}

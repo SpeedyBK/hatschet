@@ -37,7 +37,7 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->s_max = -1;
 
 	this->maxLatencyConstraint = -1;
-	this->maxRuns = 1;
+	this->maxRuns = 10;
 	this->minRatIIFound = false;
 	this->scheduleValid = false;
 	this->verifySolution = true;
@@ -321,56 +321,17 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			std::cout << "RationalIISchedulerLayer::verifySchedule: start verifier for II=" << this->m_found << "/" << this->s_found << std::endl;
 
 		if(this->g.isEmpty()) return true;
-		////////////////////////////////////////////////////////////////////
-		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //
-		////////////////////////////////////////////////////////////////////
-
-		// unroll graph and create corresponding resource model
-		auto g_rm_unrolled = Utility::unrollGraph(&this->g, &this->resourceModel, this->samples);
-		auto &g_unroll = *g_rm_unrolled.first;
-		auto &rm_unroll = *g_rm_unrolled.second;
-
-		std::map<Vertex*, int> unrolledSchedule;
-		for(unsigned int s=0; s<this->samples; ++s) {
-			for(auto it : this->startTimesVector[s]) {
-				Vertex* v = nullptr;
-				for(auto vIt : g_unroll.Vertices()) {
-					if(vIt->getName() == it.first->getName() + "_" + to_string(s))
-						v = vIt;
-				}
-
-				unrolledSchedule[v] = it.second;
-			}
-		}
-		if(!this->quiet) {
-			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED GRAPH:" << std::endl;
-			std::cout << g_unroll << std::endl;
-			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
-			std::cout << rm_unroll << std::endl;
-		}
-		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
-		delete &g_unroll;
-		delete &rm_unroll;
 
 		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
 
 		if(!this->quiet) {
-			if(verifyUnrolled)
-				std::cout << "Integer II schedule for unrolled graph is verified" << std::endl;
-			else
-				std::cout << "Integer II schedule for unrolled graph is NOT verified" << std::endl;
-
 			if(verifyOriginal)
 				std::cout << "Rational II schedule for original graph is verified" << std::endl;
 			else
 				std::cout << "Rational II schedule for original graph is NOT verified" << std::endl;
 		}
 
-		if(verifyOriginal != verifyUnrolled) {
-			std::cout << "RationalIISchedulerLayer::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
-		}
-
-		return verifyUnrolled and verifyOriginal;
+		return verifyOriginal;
 	}
 
 	std::map<Edge *, vector<int> > RationalIISchedulerLayer::getRatIILifeTimes() {
