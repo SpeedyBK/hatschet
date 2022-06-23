@@ -369,9 +369,10 @@ public:
  /*!
   * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
   * @param g is the graph to transpose
-  * @return transposed graph
+  * @param gT is the transposed graph
+  * @return a mapping from originalVertex -> transposedVertex
   */
-  static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
+  static std::map<Vertex*, Vertex*> transposeGraph(Graph *g, Graph* h);
 
   /*!
    * Checks if graph g has cycles. https://www.geeksforgeeks.org/detect-cycle-in-a-graph/

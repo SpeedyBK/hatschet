@@ -752,9 +752,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
     return std::make_pair(sampleIndex,offset);
   }
 
-  std::pair<Graph*, map<Vertex*, Vertex*> >  Utility::transposeGraph(Graph *g) {
+  std::map<Vertex*, Vertex*> Utility::transposeGraph(Graph *g, Graph* h) {
 
-    auto *h = new Graph();
     std::map<Vertex*,Vertex*> m;
 
     //Copy all verticies from graph g to graph h. And creating a map with the corresponding verticies.
@@ -765,11 +764,12 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
     //Creating the edges
     for (auto E:g->Edges()){
-      h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
+      auto &newE = h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
+      newE.setDelay(E->getDelay());
     }
 
 
-    return make_pair(h,m);
+    return m;
   }
 
   bool Utility::iscyclic(Graph *g) {
