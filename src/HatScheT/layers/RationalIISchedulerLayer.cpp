@@ -68,26 +68,12 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 
 int RationalIISchedulerLayer::getScheduleLength() {
 	int latency = 0;
-
-	for(auto it : this->startTimesVector) {
-		int min = -1;
-		int max = 0;
-
-		for(auto it2 : it) {
-		  //init
-			if(min == -1) min = it2.second;
-
-			if(it2.second < min)
-				min = it2.second;
-			if(it2.second + this->resourceModel.getVertexLatency(it2.first) > max)
-				max = it2.second + this->resourceModel.getVertexLatency(it2.first);
+	for (auto &it : this->startTimesVector) {
+		for (auto &it2 : it) {
+			auto tEnd = it2.second + this->resourceModel.getVertexLatency(it2.first);
+			if (tEnd > latency) latency = tEnd;
 		}
-
-		int l = max - min;
-
-		if(l > latency) latency = l;
 	}
-
 	return latency;
 }
 
