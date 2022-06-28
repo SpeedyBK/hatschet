@@ -111,3 +111,19 @@ void HatScheT::SCC::findSCCEdges() {
 		}
 	}
 }
+
+void HatScheT::SCC::printInfo() {
+	std::cout << "Printing info about " << this->getName() << " (ID " << this->getId() << ")" << std::endl;
+	std::cout << "  SCC vertices:" << std::endl;
+	for (auto &v : this->verticesOfSCC) {
+		std::cout << "    " << v->getName() << std::endl;
+	}
+	std::cout << "  SCC edges:" << std::endl;
+	for (auto &e : this->sccEdges) {
+		std::cout << "    '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "'" << std::endl;
+	}
+	std::cout << "  connected SCCs:" << std::endl;
+	for (auto &scc : this->connectedSCCs) {
+		std::cout << "    " << scc->getName() << " (ID " << scc->getId() << ")" << std::endl;
+	}
+}

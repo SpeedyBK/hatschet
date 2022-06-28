@@ -21,7 +21,7 @@ namespace HatScheT {
     return oss << e.msg;
   }
 
-  ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw) :
+  ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II) :
     SchedulerBase(g, rm), ILPSchedulerBase(sw),
     priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
     pType(PriorityHandler::priorityType::SUBSEQUALAP), budget(-1), uniqueVariableName(""),
@@ -29,9 +29,17 @@ namespace HatScheT {
     scheduleLength(-1), scalpStatus(ScaLP::status::UNKNOWN) {
 
     this->solverQuiet = true;
-    this->computeMinII(&this->g, &resourceModel);
-    this->minII = ceil(this->minII);
-    this->computeMaxII(&g, &resourceModel);
+		if (II <= 0) {
+			computeMinII(&g, &resourceModel);
+			this->minII = ceil(this->minII);
+			computeMaxII(&g, &resourceModel);
+		}
+		else {
+			this->minII = II;
+			this->maxII = II;
+			this->resMinII = II;
+			this->recMinII = II;
+		}
     if (minII >= maxII) maxII = (int) minII + 1;
     this->budgedEmptyCounter = 0;
     this->initialBudget = 0;

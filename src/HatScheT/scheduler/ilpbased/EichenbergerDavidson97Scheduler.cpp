@@ -30,16 +30,25 @@
 namespace HatScheT
 {
 
-EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
+  : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
   // reset previous solutions
-  II = -1;
+  this->II = -1;
   this->timeouts = 0;
   startTimes.clear();
   scheduleFound = false;
   optimalResult = true;
-  computeMinII(&g, &resourceModel);
-  minII = ceil(minII);
-  computeMaxII(&g, &resourceModel);
+  if (II <= 0) {
+    computeMinII(&g, &resourceModel);
+    this->minII = ceil(this->minII);
+    computeMaxII(&g, &resourceModel);
+  }
+  else {
+    this->minII = II;
+    this->maxII = II;
+    this->resMinII = II;
+    this->recMinII = II;
+  }
 }
 
 void EichenbergerDavidson97Scheduler::schedule()

@@ -131,14 +131,20 @@ namespace HatScheT {
 
     //unroll the input graph according to s and m
     std::map<Vertex*, std::vector<Vertex*>> vertexMappings;
-    Utility::unroll(&g_unrolled, &rm_unrolled, this->samples, this->modulo, &this->g, &this->resourceModel, &vertexMappings);
+    if (!this->quiet) {
+    	std::cout << "UnrollRationalIIScheduler: start unrolling graph by a factor of '" << this->samples << "' now" << std::endl;
+    }
+    Utility::unroll(&g_unrolled, &rm_unrolled, this->samples, this->modulo, &this->g, &this->resourceModel, &vertexMappings, this->quiet);
     //this->unroll(g_unrolled, rm_unrolled, this->samples);
+		if (!this->quiet) {
+			std::cout << "UnrollRationalIIScheduler: finished unrolling - start scheduling now" << std::endl;
+		}
 
     HatScheT::SchedulerBase *schedulerBase;
 
     switch (this->scheduler) {
       case SchedulerType::MOOVAC:
-        schedulerBase = new HatScheT::MoovacScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        schedulerBase = new HatScheT::MoovacScheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
         if(this->solverTimeout > 0) ((HatScheT::MoovacScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
           ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -147,7 +153,7 @@ namespace HatScheT {
         ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::MODULOSDC:
-        schedulerBase = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist);
+        schedulerBase = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
         if(this->solverTimeout > 0) ((HatScheT::ModSDC*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
           ((HatScheT::ModSDC*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -156,7 +162,7 @@ namespace HatScheT {
         ((HatScheT::ModSDC*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::ED97:
-        schedulerBase = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        schedulerBase = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
         if(this->solverTimeout > 0) ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
           ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -165,7 +171,7 @@ namespace HatScheT {
         ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::SUCHAHANZALEK:
-        schedulerBase = new HatScheT::SuchaHanzalek11Scheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+        schedulerBase = new HatScheT::SuchaHanzalek11Scheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
         if(this->solverTimeout > 0) ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
           ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -174,7 +180,7 @@ namespace HatScheT {
         ((HatScheT::SuchaHanzalek11Scheduler*) schedulerBase)->setMaxRuns(1);
         break;
     	case SchedulerType::PBS:
-				schedulerBase = new HatScheT::PBScheduler(g_unrolled,rm_unrolled, this->solverWishlist);
+				schedulerBase = new HatScheT::PBScheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
 				if(this->solverTimeout > 0) ((HatScheT::PBScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
 				if(this->maxLatencyConstraint > 0)
 					((HatScheT::PBScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -184,7 +190,7 @@ namespace HatScheT {
 				break;
     	case SchedulerType::SAT:
 #ifdef USE_CADICAL
-    	schedulerBase = new HatScheT::SATScheduler(g_unrolled, rm_unrolled);
+    	schedulerBase = new HatScheT::SATScheduler(g_unrolled, rm_unrolled, this->modulo);
 				if(this->solverTimeout > 0) ((HatScheT::SATScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
 				if(this->maxLatencyConstraint > 0)
 					((HatScheT::SATScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -194,7 +200,7 @@ namespace HatScheT {
 #endif
 			case SchedulerType::SATCOMBINED:
 #ifdef USE_CADICAL
-				schedulerBase = new HatScheT::SATCombinedScheduler(g_unrolled, rm_unrolled);
+				schedulerBase = new HatScheT::SATCombinedScheduler(g_unrolled, rm_unrolled, this->modulo);
 				if(this->solverTimeout > 0) ((HatScheT::SATCombinedScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
 				if(this->maxLatencyConstraint > 0)
 					((HatScheT::SATCombinedScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);

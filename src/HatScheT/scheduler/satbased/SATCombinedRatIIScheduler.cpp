@@ -7,7 +7,7 @@
 #ifdef USE_CADICAL
 #ifdef USE_SCALP
 #include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
-#include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h>
 namespace HatScheT {
 
 	SATCombinedRatIIScheduler::SATCombinedRatIIScheduler(Graph &g, ResourceModel &resourceModel)
@@ -19,28 +19,20 @@ namespace HatScheT {
 	void SATCombinedRatIIScheduler::scheduleIteration() {
 		this->initScheduler();
 		// prove II infeasible or compute valid schedule with SCC-based scheduler
-		SATSCCScheduler s1(this->unrolledGraph, this->unrolledResourceModel, this->modulo);
+		//SATSCCRatIIScheduler s1(this->unrolledGraph, this->unrolledResourceModel, this->modulo, this->samples);
+		SATSCCRatIIScheduler s1(this->g, this->resourceModel, this->modulo, this->samples);
 		s1.setSolverTimeout(this->solverTimeout);
 		s1.setQuiet(this->quiet);
 		s1.setMaxLatencyConstraint(this->maxLatencyConstraint);
+		s1.disableVerifier();
 		s1.schedule();
 		int lat;
 		if (s1.getScheduleFound()) {
 			// found schedule for II
 			this->scheduleFound = true;
 			this->secondObjectiveOptimal = false;
-			auto sccStartTimes = s1.getSchedule();
-			this->startTimesVector.resize(this->samples);
-			for (auto &v : this->g.Vertices()) {
-				for (int s=0; s<this->samples; s++) {
-					auto *vUnrolled = this->vertexMappings.at(v).at(s);
-					auto t = sccStartTimes.at(vUnrolled);
-					this->startTimesVector.at(s)[v] = t;
-					if (s==0) {
-						this->startTimes[v] = t;
-					}
-				}
-			}
+			this->startTimes = s1.getSchedule();
+			this->startTimesVector = s1.getStartTimeVector();
 			lat = s1.getScheduleLength();
 			if (!this->quiet) {
 				std::cout << "SATCombinedRatIIScheduler: found initial schedule with schedule length " << lat << " using the SCC heuristic:" << std::endl;
@@ -82,6 +74,7 @@ namespace HatScheT {
 			lat = min(this->maxLatencyConstraint, lat);
 		}
 		s2.setMaxLatencyConstraint(lat);
+		s2.disableVerifier();
 		s2.schedule();
 		if (s2.getScheduleFound()) {
 			// ayy we got a schedule :)
@@ -102,7 +95,7 @@ namespace HatScheT {
 		this->unrolledGraph.reset();
 		this->unrolledResourceModel.reset();
 		// unroll the graph + resource model
-		Utility::unroll(&this->unrolledGraph, &this->unrolledResourceModel, this->samples, this->modulo, &this->g, &this->resourceModel, &this->vertexMappings);
+		//Utility::unroll(&this->unrolledGraph, &this->unrolledResourceModel, this->samples, this->modulo, &this->g, &this->resourceModel, &this->vertexMappings);
 	}
 
 	void SATCombinedRatIIScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {

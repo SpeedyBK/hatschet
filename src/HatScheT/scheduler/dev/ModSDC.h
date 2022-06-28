@@ -86,7 +86,7 @@ namespace HatScheT {
      * @param rm resource model
      * @param sw solver wishlist
      */
-    ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw);
+    ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II=-1);
 
     /*!
      * @brief destructor

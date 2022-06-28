@@ -28,11 +28,15 @@ namespace HatScheT {
 		this->literalCounter = -1;
 		this->scheduleTimeLiteralCounter = -1;
 		this->bindingLiteralCounter = -1;
+		this->timeOverlapLiteralCounter = -1;
+		this->bindingOverlapLiteralCounter = -1;
 		this->clauseCounter = -1;
 		this->dependencyConstraintClauseCounter = -1;
 		this->resourceConstraintClauseCounter = -1;
 		this->scheduleTimeConstraintClauseCounter = -1;
 		this->bindingConstraintClauseCounter = -1;
+		this->timeOverlapClauseCounter = -1;
+		this->bindingOverlapClauseCounter = -1;
 	}
 
 	void SATRatIIScheduler::scheduleIteration() {
@@ -66,6 +70,18 @@ namespace HatScheT {
 				std::cout << "SATRatIIScheduler: creating literals" << std::endl;
 			}
 			this->createLiterals();
+			elapsedTime = this->terminator.getElapsedTime();
+			if (!this->quiet) {
+				std::cout << "SATRatIIScheduler: time is " << elapsedTime << "sec after creating literals" << std::endl;
+			}
+			if (elapsedTime >= this->solverTimeout) {
+				// timeout during problem construction!
+				if (!this->quiet) {
+					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec) - total elapsed time: " << this->solvingTime << "sec" << std::endl;
+				}
+				breakByTimeout = true;
+				break;
+			}
 			if (!this->quiet) {
 				std::cout << "SATRatIIScheduler: creating clauses" << std::endl;
 			}
@@ -75,10 +91,14 @@ namespace HatScheT {
 									<< this->clauseCounter << "' clauses" << std::endl;
 				std::cout << "  '" << this->scheduleTimeLiteralCounter << "' schedule time literals" << std::endl;
 				std::cout << "  '" << this->bindingLiteralCounter << "' binding literals" << std::endl;
+				std::cout << "  '" << this->timeOverlapLiteralCounter << "' schedule time overlap literals" << std::endl;
+				std::cout << "  '" << this->bindingOverlapLiteralCounter << "' binding overlap literals" << std::endl;
 				std::cout << "  '" << this->dependencyConstraintClauseCounter << "' dependency constraint clauses" << std::endl;
 				std::cout << "  '" << this->resourceConstraintClauseCounter << "' resource constraint clauses" << std::endl;
 				std::cout << "  '" << this->scheduleTimeConstraintClauseCounter << "' schedule time constraint clauses" << std::endl;
 				std::cout << "  '" << this->bindingConstraintClauseCounter << "' binding constraint clauses" << std::endl;
+				std::cout << "  '" << this->timeOverlapClauseCounter << "' schedule time overlap clauses" << std::endl;
+				std::cout << "  '" << this->bindingOverlapClauseCounter << "' binding overlap clauses" << std::endl;
 				auto currentTime2 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 				std::cout << "  current time: " << std::put_time(std::localtime(&currentTime2), "%Y-%m-%d %X") << std::endl;
 			}
@@ -87,7 +107,7 @@ namespace HatScheT {
 				std::cout << "SATRatIIScheduler: time is " << elapsedTime << "sec after constructing the problem" << std::endl;
 			}
 			if (elapsedTime >= this->solverTimeout) {
-				// timeout after problem construction!
+				// timeout during problem construction!
 				if (!this->quiet) {
 					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec) - total elapsed time: " << this->solvingTime << "sec" << std::endl;
 				}
@@ -267,11 +287,15 @@ namespace HatScheT {
 		this->literalCounter = 0;
 		this->scheduleTimeLiteralCounter = 0;
 		this->bindingLiteralCounter = 0;
+		this->timeOverlapLiteralCounter = 0;
+		this->bindingOverlapLiteralCounter = 0;
 		this->clauseCounter = 0;
 		this->dependencyConstraintClauseCounter = 0;
 		this->resourceConstraintClauseCounter = 0;
 		this->scheduleTimeConstraintClauseCounter = 0;
 		this->bindingConstraintClauseCounter = 0;
+		this->timeOverlapClauseCounter = 0;
+		this->bindingOverlapClauseCounter = 0;
 		this->calculateLatestStartTimes();
 	}
 
@@ -419,7 +443,8 @@ namespace HatScheT {
 			}
 		}
 		this->clauseCounter = this->dependencyConstraintClauseCounter + this->resourceConstraintClauseCounter +
-													this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter;
+													this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter +
+													this->timeOverlapClauseCounter + this->bindingOverlapClauseCounter;
 	}
 
 	void SATRatIIScheduler::fillSolutionStructure() {
@@ -475,18 +500,12 @@ namespace HatScheT {
 				if (r->isUnlimited()) {
 					// assign unlimited vertices unique FUs
 					this->ratIIbindings[s][v] = unlimitedResourceCounter[r];
-					if (s == 0) {
-						this->binding[v] = unlimitedResourceCounter[r];
-					}
 					// increment counter
 					unlimitedResourceCounter[r]++;
 				}
 				else if (r->getLimit() == 1) {
 					// assign trivial bindings
 					this->ratIIbindings[s][v] = 0;
-					if (s == 0) {
-						this->binding[v] = 0;
-					}
 				}
 				else {
 					auto b = -1;
@@ -501,15 +520,32 @@ namespace HatScheT {
 						throw Exception("Failed to find binding for vertex '"+v->getName()+"' in sample '"+std::to_string(s)+"' - that should never happen!");
 					}
 					this->ratIIbindings[s][v] = b;
-					if (s == 0) {
-						this->binding[v] = b;
-					}
 				}
 			}
 		}
+		this->startTimes = this->startTimesVector.at(0);
+		this->binding = this->ratIIbindings.at(0);
 		// override candidate latency in case the scheduler found a solution with a schedule length
 		// which is smaller than the given candidate latency (unlikely I guess, but who knows...)
-		this->candidateLatency = this->getScheduleLength();
+		auto actualLatency = 0;
+		for (auto &v : this->g.Vertices()) {
+			auto tV = this->startTimesVector.at(0).at(v);
+			auto lV = this->resourceModel.getVertexLatency(v);
+			auto t = tV + lV;
+			if (t > actualLatency) actualLatency = t;
+		}
+		if (actualLatency > this->candidateLatency) {
+			std::cout << "requested candidate latency: " << this->candidateLatency << std::endl;
+			std::cout << "scheduler computed schedule for latency: " << actualLatency << std::endl;
+			for (auto s=0; s<this->samples; s++) {
+				std::cout << "  s=" << s << std::endl;
+				for (auto &v : this->g.Vertices()) {
+					std::cout << "    " << v->getName() << " - " << this->startTimesVector.at(s).at(v) << std::endl;
+				}
+			}
+			throw HatScheT::Exception("SATRatIIScheduler computed infeasible solution - this should never happen!");
+		}
+		this->candidateLatency = actualLatency;
 	}
 
 	void SATRatIIScheduler::setUpSolver() {
@@ -520,10 +556,18 @@ namespace HatScheT {
 	void SATRatIIScheduler::createLiterals() {
 		// time and binding variables
 		for (auto &v : this->g.Vertices()) {
+			// check timeout
+			if (this->terminator.terminate()) {
+				return;
+			}
 			// schedule time variables
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->scheduleTimeLiteralCounter++;
 				this->scheduleTimeLiterals[{v, tau}] = ++this->literalCounter;
+			}
+			// check timeout
+			if (this->terminator.terminate()) {
+				return;
 			}
 			// binding variables
 			if (this->vertexIsUnlimited.at(v) or this->resourceLimit.at(v)==1) continue;
@@ -543,6 +587,10 @@ namespace HatScheT {
 				if (v2->getId() <= v1->getId()) continue;
 				if (this->resourceModel.getResource(v1) != this->resourceModel.getResource(v2)) continue;
 				for (int s1=0; s1<this->samples; s1++) {
+					// check timeout
+					if (this->terminator.terminate()) {
+						return;
+					}
 					for (int s2=0; s2<this->samples; s2++) {
 						this->timeOverlapLiteralCounter++;
 						this->timeOverlapLiterals[{v1, s1, v2, s2}] = ++this->literalCounter;
@@ -619,7 +667,7 @@ namespace HatScheT {
 				}
 				else if (lastSchedulingAttemptSuccessful) {
 					// check if we found the optimum
-					if (this->candidateLatency == this->latencyLowerBound) return false;
+					if (this->candidateLatency <= this->latencyLowerBound) return false;
 					// we already got a valid solution
 					// adjust upper bound
 					this->latencyUpperBound = this->candidateLatency;

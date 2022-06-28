@@ -9,16 +9,24 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 namespace HatScheT {
 
-	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel)
+	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
 		: SchedulerBase(g,resourceModel), solverTimeout(300)
 	{
 		this->II = -1;
 		this->timeouts = 0;
 		this->scheduleFound = false;
 		this->optimalResult = false;
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
+		if (II <= 0) {
+			computeMinII(&g, &resourceModel);
+			this->minII = ceil(this->minII);
+			computeMaxII(&g, &resourceModel);
+		}
+		else {
+			this->minII = II;
+			this->maxII = II;
+			this->resMinII = II;
+			this->recMinII = II;
+		}
 		this->solvingTime = -1.0;
 		this->candidateII = -1;
 	}

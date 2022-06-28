@@ -17,17 +17,25 @@
 
 namespace HatScheT {
 	PBScheduler::PBScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel,
-		std::list<std::string> solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist),
-		sw(solverWishlist) {
+		std::list<std::string> solverWishlist, int II) : SchedulerBase(g, resourceModel),
+		ILPSchedulerBase(solverWishlist), sw(solverWishlist) {
 		// reset previous solutions
 		this->II = -1;
 		this->timeouts = 0;
 		this->startTimes.clear();
 		this->scheduleFound = false;
 		this->optimalResult = true;
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
+		if (II <= 0) {
+			computeMinII(&g, &resourceModel);
+			this->minII = ceil(this->minII);
+			computeMaxII(&g, &resourceModel);
+		}
+		else {
+			this->minII = II;
+			this->maxII = II;
+			this->resMinII = II;
+			this->recMinII = II;
+		}
 	}
 
 	void PBScheduler::schedule() {

@@ -38,7 +38,7 @@ namespace HatScheT
 class Utility
 {
 public:
-	static void unroll(Graph* gUnroll, ResourceModel* rmUnroll, const int &numSamples, const int &cycleLength, Graph* g, ResourceModel* rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings);
+	static void unroll(Graph* gUnroll, ResourceModel* rmUnroll, const int &numSamples, const int &cycleLength, Graph* g, ResourceModel* rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings, const bool &quiet = true);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const int &modulo);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const int &II);
 	static int calcMinNumChainRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const std::vector<std::map<const Vertex*, int>> &binding, const int &modulo);
@@ -358,14 +358,18 @@ public:
   */
  static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings,
    ResourceModel* rm, int modulo, vector<int> initIntervalls);
-    /*!
-		 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
-     * this is needed for data dependency constraints
-		 * @param distance
-		 * @param sample
-		 * @return
-		 */
-    static std::pair<int, int> getSampleIndexAndOffset(int distance, int sample, int samples, int modulo);
+	/*!
+	 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
+	 * this is needed for data dependency constraints
+	 * @param distance
+	 * @param sample
+	 * @return
+	 */
+	static std::pair<int, int> getSampleIndexAndOffset(int distance, const int &sample, const int &samples, const int &modulo);
+	/*!
+	 * same as above but this returns the distance of the edge in the unrolled graph instead of the offset for scheduling
+	 */
+	static std::pair<int, int> getSampleIndexAndDistance(int distance, const int &sample, const int &samples);
  /*!
   * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
   * @param g is the graph to transpose

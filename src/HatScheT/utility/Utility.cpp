@@ -36,796 +36,789 @@
 #include "HatScheT/scheduler/ASAPScheduler.h"
 
 #ifdef USE_SCALP
+
 #include "HatScheT/base/ILPSchedulerBase.h"
 #include "HatScheT/scheduler/ilpbased/ASAPILPScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/ULScheduler.h"
+
 #endif
 
 namespace HatScheT {
 
-int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g)
-{
-  int count = 0;
-  for(auto it=g->verticesBegin(); it!= g->verticesEnd(); ++it){
-      Vertex* v = *it;
-      const Resource* r = rm->getResource(v);
-      if(r->getLimit()>0) count++;
-  }
-  return count;
-}
+	int Utility::getNoOfResConstrVertices(ResourceModel *rm, Graph *g) {
+		int count = 0;
+		for (auto it = g->verticesBegin(); it != g->verticesEnd(); ++it) {
+			Vertex *v = *it;
+			const Resource *r = rm->getResource(v);
+			if (r->getLimit() > 0) count++;
+		}
+		return count;
+	}
 
-bool Utility::everyVertexisRegistered(HatScheT::Graph &g, HatScheT::ResourceModel &rm) {
-  for(auto it = g.verticesBegin(); it != g.verticesEnd(); ++it){
-    Vertex* v = *it;
+	bool Utility::everyVertexisRegistered(HatScheT::Graph &g, HatScheT::ResourceModel &rm) {
+		for (auto it = g.verticesBegin(); it != g.verticesEnd(); ++it) {
+			Vertex *v = *it;
 
-    rm.getResource(v);
-  }
-  return true;
-}
+			rm.getResource(v);
+		}
+		return true;
+	}
 
-int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v)
-{
-  int no=0;
+	int Utility::getNoOfInputsWithoutRegs(Graph *g, const Vertex *v) {
+		int no = 0;
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it)
-  {
-    Edge* e = *it;
-    Vertex* dstV = &e->getVertexDst();
+		for (auto it = g->edgesBegin(); it != g->edgesEnd(); ++it) {
+			Edge *e = *it;
+			Vertex *dstV = &e->getVertexDst();
 
-    if(dstV==v && e->getDistance()==0) no++;
-  }
+			if (dstV == v && e->getDistance() == 0) no++;
+		}
 
-  return no;
-}
+		return no;
+	}
 
-int Utility::getNoOfInputs(Graph *g, const Vertex *v)
-{
-  int no=0;
+	int Utility::getNoOfInputs(Graph *g, const Vertex *v) {
+		int no = 0;
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd(); ++it)
-  {
-    Edge* e = *it;
-    Vertex* dstV = &e->getVertexDst();
+		for (auto it = g->edgesBegin(); it != g->edgesEnd(); ++it) {
+			Edge *e = *it;
+			Vertex *dstV = &e->getVertexDst();
 
-    if(dstV==v) no++;
-  }
+			if (dstV == v) no++;
+		}
 
-  return no;
-}
+		return no;
+	}
 
-int Utility::getNoOfOutputsWithoutDistance(Graph *g, const Vertex *v)
-{
-  int outputs = 0;
+	int Utility::getNoOfOutputsWithoutDistance(Graph *g, const Vertex *v) {
+		int outputs = 0;
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
-  {
-    Edge* e = *it;
-    Vertex* vSrc = &e->getVertexSrc();
+		for (auto it = g->edgesBegin(); it != g->edgesEnd(); ++it) {
+			Edge *e = *it;
+			Vertex *vSrc = &e->getVertexSrc();
 
-    if(vSrc==v && e->getDistance()==0) outputs++;
-  }
+			if (vSrc == v && e->getDistance() == 0) outputs++;
+		}
 
-  return outputs;
-}
+		return outputs;
+	}
 
-int Utility::getNoOfOutputs(Graph *g, const Vertex *v)
-{
-  int outputs = 0;
+	int Utility::getNoOfOutputs(Graph *g, const Vertex *v) {
+		int outputs = 0;
 
-  for(auto it=g->edgesBegin(); it!=g->edgesEnd();++it)
-  {
-    Edge* e = *it;
-    Vertex* vSrc = &e->getVertexSrc();
+		for (auto it = g->edgesBegin(); it != g->edgesEnd(); ++it) {
+			Edge *e = *it;
+			Vertex *vSrc = &e->getVertexSrc();
 
-    if(vSrc==v) outputs++;
-  }
+			if (vSrc == v) outputs++;
+		}
 
-  return outputs;
-}
+		return outputs;
+	}
 
-int Utility::getCyclesOfLongestPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm, double II) {
-  int length = 0;
+	int Utility::getCyclesOfLongestPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm, double II) {
+		int length = 0;
 
-  //identify inputs
-  vector<Vertex*> inputs;
-  for(auto it = g->verticesBegin(); it != g->verticesEnd(); ++it){
-    Vertex* v = *it;
+		//identify inputs
+		vector<Vertex *> inputs;
+		for (auto it = g->verticesBegin(); it != g->verticesEnd(); ++it) {
+			Vertex *v = *it;
 
-    if(g->getPredecessors(v).size() == 0) inputs.push_back(v);
-  }
+			if (g->getPredecessors(v).size() == 0) inputs.push_back(v);
+		}
 
-  // check if there are vertices, which only have input edges with distance>0
-  if(inputs.empty()) {
-    for(auto v : g->Vertices()) {
-      bool pushMeBack = true;
-      for(auto e : g->Edges()) {
-        if(&e->getVertexDst() != v) continue;
-        if(e->getDistance()<1) {
-          pushMeBack = false;
-          break;
-        }
-      }
-      if(pushMeBack) inputs.emplace_back(v);
-    }
-  }
+		// check if there are vertices, which only have input edges with distance>0
+		if (inputs.empty()) {
+			for (auto v : g->Vertices()) {
+				bool pushMeBack = true;
+				for (auto e : g->Edges()) {
+					if (&e->getVertexDst() != v) continue;
+					if (e->getDistance() < 1) {
+						pushMeBack = false;
+						break;
+					}
+				}
+				if (pushMeBack) inputs.emplace_back(v);
+			}
+		}
 
-  //find seed edges
-  vector<const Edge*> seeds;
-  //iterate over inputs
-  for(auto it = inputs.begin(); it != inputs.end(); ++it){
-    Vertex* in = *it;
+		//find seed edges
+		vector<const Edge *> seeds;
+		//iterate over inputs
+		for (auto it = inputs.begin(); it != inputs.end(); ++it) {
+			Vertex *in = *it;
 
-    set<Vertex*> succ = g->getSuccessors(in);
+			set<Vertex *> succ = g->getSuccessors(in);
 
-    for(auto it2 : succ) {
-      list<const Edge*> s = g->getEdges(in,it2);
+			for (auto it2 : succ) {
+				list<const Edge *> s = g->getEdges(in, it2);
 
-      for(auto it3 : s) {
-        seeds.push_back(it3);
-      }
-    }
-  }
+				for (auto it3 : s) {
+					seeds.push_back(it3);
+				}
+			}
+		}
 
-  //start recursion
-  for(auto it : seeds) {
-    vector<Vertex*> visited;
-    int l = rm->getVertexLatency(&it->getVertexSrc());
-    l += std::ceil(II*it->getDistance());
-    Utility::cycle(it, visited, l, g, rm, II);
+		//start recursion
+		for (auto it : seeds) {
+			vector<Vertex *> visited;
+			int l = rm->getVertexLatency(&it->getVertexSrc());
+			l += std::ceil(II * it->getDistance());
+			Utility::cycle(it, visited, l, g, rm, II);
 
-    if(l > length) length = l;
-  }
+			if (l > length) length = l;
+		}
 
-  return length;
-}
+		return length;
+	}
 
-void Utility::cycle(const HatScheT::Edge *e, vector<HatScheT::Vertex *>& visited, int &currLength, Graph* g, ResourceModel* rm, double II) {
-  Vertex* succ = &e->getVertexDst();
+	void Utility::cycle(const HatScheT::Edge *e, vector<HatScheT::Vertex *> &visited, int &currLength, Graph *g,
+											ResourceModel *rm, double II) {
+		Vertex *succ = &e->getVertexDst();
 
-  //check whether succ was already visited (cycle ends)
-  for(auto it : visited) {
-    if(succ == it)
-      return;
-  }
+		//check whether succ was already visited (cycle ends)
+		for (auto it : visited) {
+			if (succ == it)
+				return;
+		}
 
-  //put to visited
-  visited.push_back(succ);
-  //increase length
-  currLength += rm->getVertexLatency(succ);
+		//put to visited
+		visited.push_back(succ);
+		//increase length
+		currLength += rm->getVertexLatency(succ);
 
-  //collect all outgoing edges
-  set<Vertex*> s = g->getSuccessors(succ);
-  vector<const Edge*> outgoing;
-  for(auto it : s) {
-    list<const Edge*> o = g->getEdges(succ, it);
+		//collect all outgoing edges
+		set<Vertex *> s = g->getSuccessors(succ);
+		vector<const Edge *> outgoing;
+		for (auto it : s) {
+			list<const Edge *> o = g->getEdges(succ, it);
 
-    for(auto it2 : o) {
-      outgoing.push_back(it2);
-    }
-  }
+			for (auto it2 : o) {
+				outgoing.push_back(it2);
+			}
+		}
 
-  //check if outport found
-  if(outgoing.size() == 0) return;
+		//check if outport found
+		if (outgoing.size() == 0) return;
 
-  //continue recursion
-  for(auto it : outgoing) {
-    currLength += std::ceil(II*it->getDistance());
-    Utility::cycle(it, visited, currLength, g, rm, II);
-  }
-}
+		//continue recursion
+		for (auto it : outgoing) {
+			currLength += std::ceil(II * it->getDistance());
+			Utility::cycle(it, visited, currLength, g, rm, II);
+		}
+	}
 
-bool Utility::IIisRational(double II) {
-  double intpart;
-  if(modf(II, &intpart) != 0.0) {
-    return true;
-  }
-  return false;
-}
+	bool Utility::IIisRational(double II) {
+		double intpart;
+		if (modf(II, &intpart) != 0.0) {
+			return true;
+		}
+		return false;
+	}
 
-double Utility::calcMinII(double minResII, double minRecII)
-{
-  if(minResII>minRecII) return minResII;
+	double Utility::calcMinII(double minResII, double minRecII) {
+		if (minResII > minRecII) return minResII;
 
-  return minRecII;
-}
+		return minRecII;
+	}
+
 #ifdef USE_SCALP
-double Utility::calcResMII(ResourceModel *rm, Target* t)
-{
-  double resMII = 1.0f;
-  //standard case without using a hardware target
-  if(t == nullptr){
-    for(auto it=rm->resourcesBegin(); it!=rm->resourcesEnd(); ++it){
-      Resource* r = *it;
-      //skip unlimited resources
-      if(r->getLimit()==-1)continue;
-      int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
-      int avSlots = r->getLimit();
 
-      if(avSlots<=0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
-      double tempMax = ((double)opsUsingR)/((double)avSlots); // + (double)(opsUsingR % avSlots != 0); < -- ?? patrick
+	double Utility::calcResMII(ResourceModel *rm, Target *t) {
+		double resMII = 1.0f;
+		//standard case without using a hardware target
+		if (t == nullptr) {
+			for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+				Resource *r = *it;
+				//skip unlimited resources
+				if (r->getLimit() == -1)continue;
+				int opsUsingR = rm->getNumVerticesRegisteredToResource(r);
+				int avSlots = r->getLimit();
 
-      if(tempMax>resMII) resMII=tempMax;
-    }
-  }
-  //a target is provided
-  else{
-    //throw Exception("Utility.calcResMII: ERROR calculating resMinII using a target is not supported yet");
-    cout << "Utility.calcResMII: WARNING calculating resMinII using a target is not supported yet" << endl;
-  }
+				if (avSlots <= 0) throw HatScheT::Exception("Utility.calcResMII: avSlots <= 0 : " + to_string(avSlots));
+				double tempMax =
+					((double) opsUsingR) / ((double) avSlots); // + (double)(opsUsingR % avSlots != 0); < -- ?? patrick
 
-  return resMII;
-}
+				if (tempMax > resMII) resMII = tempMax;
+			}
+		}
+			//a target is provided
+		else {
+			//throw Exception("Utility.calcResMII: ERROR calculating resMinII using a target is not supported yet");
+			cout << "Utility.calcResMII: WARNING calculating resMinII using a target is not supported yet" << endl;
+		}
 
-int Utility::getILPASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
-  HatScheT::ASAPScheduler a(*g,*rm);
-  a.schedule();
-  int criticalPath = a.getScheduleLength();
+		return resMII;
+	}
 
-  ASAPILPScheduler asap(*g,*rm,  {"CPLEX", "Gurobi", "SCIP"});
-  asap.setMaxLatencyConstraint(criticalPath);
-  asap.schedule();
+	int Utility::getILPASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+		HatScheT::ASAPScheduler a(*g, *rm);
+		a.schedule();
+		int criticalPath = a.getScheduleLength();
 
-  return asap.getScheduleLength();
-}
+		ASAPILPScheduler asap(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+		asap.setMaxLatencyConstraint(criticalPath);
+		asap.schedule();
 
-int Utility::getASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
-  HatScheT::ASAPScheduler a(*g,*rm);
-  a.schedule();
+		return asap.getScheduleLength();
+	}
 
-  return a.getScheduleLength();
-}
+	int Utility::getASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+		HatScheT::ASAPScheduler a(*g, *rm);
+		a.schedule();
 
-int Utility::getASAPNoHCScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
-  map<HatScheT::Resource*, int> limits;
+		return a.getScheduleLength();
+	}
 
-  //save old limits
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    HatScheT::Resource* r = *it;
-    limits.insert(make_pair(r, r->getLimit()));
+	int Utility::getASAPNoHCScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+		map<HatScheT::Resource *, int> limits;
 
-    r->setLimit(-1);
-  }
+		//save old limits
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			HatScheT::Resource *r = *it;
+			limits.insert(make_pair(r, r->getLimit()));
 
-  //determine schedule
-  ASAPScheduler asap(*g,*rm);
-  asap.schedule();
-  int lat = asap.getScheduleLength();
+			r->setLimit(-1);
+		}
 
-  //restore old limits
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    HatScheT::Resource* r = *it;
+		//determine schedule
+		ASAPScheduler asap(*g, *rm);
+		asap.schedule();
+		int lat = asap.getScheduleLength();
 
-    r->setLimit(limits[r]);
-  }
+		//restore old limits
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			HatScheT::Resource *r = *it;
 
-  return lat;
-}
+			r->setLimit(limits[r]);
+		}
 
-int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
-  map<Resource*, int> restoreLimits;
-  //set all resource unlimited for critical path calculation, store old values
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    Resource* r = *it;
-    if(r->isUnlimited() == true) continue;
+		return lat;
+	}
 
-    restoreLimits.insert(make_pair(r,r->getLimit()));
-    r->setLimit(-1);
-  }
+	int Utility::getCriticalPath(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
+		map<Resource *, int> restoreLimits;
+		//set all resource unlimited for critical path calculation, store old values
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			Resource *r = *it;
+			if (r->isUnlimited() == true) continue;
 
-  //do critical path calculation
-  ASAPScheduler asap(*g,*rm);
-  asap.schedule();
-  int limitlat = asap.getScheduleLength();
+			restoreLimits.insert(make_pair(r, r->getLimit()));
+			r->setLimit(-1);
+		}
 
-  ASAPILPScheduler ilp(*g,*rm,  {"CPLEX", "Gurobi", "SCIP"});
-  ilp.setMaxLatencyConstraint(limitlat);
-  ilp.schedule();
+		//do critical path calculation
+		ASAPScheduler asap(*g, *rm);
+		asap.schedule();
+		int limitlat = asap.getScheduleLength();
 
-  int criticalPath = ilp.getScheduleLength();
+		ASAPILPScheduler ilp(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+		ilp.setMaxLatencyConstraint(limitlat);
+		ilp.schedule();
 
-  //restore old resource model
-  for(auto it = restoreLimits.begin(); it != restoreLimits.end(); ++it){
-    Resource* r = it->first;
-    r->setLimit(it->second);
-  }
+		int criticalPath = ilp.getScheduleLength();
 
-  return criticalPath;
-}
+		//restore old resource model
+		for (auto it = restoreLimits.begin(); it != restoreLimits.end(); ++it) {
+			Resource *r = it->first;
+			r->setLimit(it->second);
+		}
 
-  pair<int,int> Utility::splitRational(double x) {
-    //int[] A =new int[12];
-    //int[] B = new int[12];
-    //int[] k = new int[12];
-    int A0 = 1;
-    int A1 = 0;
-    int B0 = 0;
-    int B1 = 1;
-    for(int i = 0; i <1000; i++) {
-      //k[i+2] = (int) ((double)1/x);
-      int k = (int) ((double)1/x);
-      //A[i+2] = A[i] + k[i+2] * A[i+1];
-      int temp = A1;
-      A1 = A0 + k*A1;
-      A0 = temp;
-      //B[i+2] = B[i] + k[i+2] * B[i+1];
-      temp = B1;
-      B1 = B0 + k*B1;
-      B0 = temp;
-      x = ((double)1/x) - k;
-      if (abs(x)<=1.0E-3) {
-        return make_pair(A1,B1);
-      };
-    }
+		return criticalPath;
+	}
 
-    return make_pair(0,0);
-  }
+	pair<int, int> Utility::splitRational(double x) {
+		//int[] A =new int[12];
+		//int[] B = new int[12];
+		//int[] k = new int[12];
+		int A0 = 1;
+		int A1 = 0;
+		int B0 = 0;
+		int B1 = 1;
+		for (int i = 0; i < 1000; i++) {
+			//k[i+2] = (int) ((double)1/x);
+			int k = (int) ((double) 1 / x);
+			//A[i+2] = A[i] + k[i+2] * A[i+1];
+			int temp = A1;
+			A1 = A0 + k * A1;
+			A0 = temp;
+			//B[i+2] = B[i] + k[i+2] * B[i+1];
+			temp = B1;
+			B1 = B0 + k * B1;
+			B0 = temp;
+			x = ((double) 1 / x) - k;
+			if (abs(x) <= 1.0E-3) {
+				return make_pair(A1, B1);
+			};
+		}
 
-  int Utility::safeRoundDown(double x) {
-    if (x>=0) {
-      double error = x - (int) x;
-      if (error < 0.999) return (int) x;
-      return (int) ceil(x);
-    }
-    double error = (int) x -x;
-    if (error < 0.001) return (int) x;
-    return (int) floor(x);
-  }
+		return make_pair(0, 0);
+	}
 
-int Utility::calcAbsolutMaxII(Graph *g, ResourceModel *rm) {
-  map<Resource*, int> limit_map;
+	int Utility::safeRoundDown(double x) {
+		if (x >= 0) {
+			double error = x - (int) x;
+			if (error < 0.999) return (int) x;
+			return (int) ceil(x);
+		}
+		double error = (int) x - x;
+		if (error < 0.001) return (int) x;
+		return (int) floor(x);
+	}
 
-  //store initial values
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    Resource* r = *it;
+	int Utility::calcAbsolutMaxII(Graph *g, ResourceModel *rm) {
+		map<Resource *, int> limit_map;
 
-    limit_map.insert(make_pair(r, r->getLimit()));
+		//store initial values
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			Resource *r = *it;
 
-    //set temporarily to limit 1
-    if(r->getName() != "special_virtual") r->setLimit(1);
-  }
+			limit_map.insert(make_pair(r, r->getLimit()));
 
-  //determine minimum possible latency
-  HatScheT::ASAPScheduler asap(*g,*rm);
-  asap.schedule();
-  int criticalPath = asap.getScheduleLength();
+			//set temporarily to limit 1
+			if (r->getName() != "special_virtual") r->setLimit(1);
+		}
 
-  if(g->getNumberOfVertices() > 200) {
-    if(!HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getII())) {
-      throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
-    }
-  }
+		//determine minimum possible latency
+		HatScheT::ASAPScheduler asap(*g, *rm);
+		asap.schedule();
+		int criticalPath = asap.getScheduleLength();
 
-  else {
-    //get optimal critical path using asap ilp scheduler
-    HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-    asapilp->setMaxLatencyConstraint(criticalPath);
-    asapilp->schedule();
-    criticalPath = asapilp->getScheduleLength();
+		if (g->getNumberOfVertices() > 200) {
+			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), asap.getII())) {
+				throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
+			}
+		} else {
+			//get optimal critical path using asap ilp scheduler
+			HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+			asapilp->setMaxLatencyConstraint(criticalPath);
+			asapilp->schedule();
+			criticalPath = asapilp->getScheduleLength();
 
-    delete asapilp;
+			delete asapilp;
 
-    //error in non ilp-based asap detected
-    //starting new asap ilp
-    if (criticalPath <= 0) {
-      HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-      asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * (rm->getMaxLatency() + 1));
-      asapilp->schedule();
-      criticalPath = asapilp->getScheduleLength();
+			//error in non ilp-based asap detected
+			//starting new asap ilp
+			if (criticalPath <= 0) {
+				HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+				asapilp->setMaxLatencyConstraint(g->getNumberOfVertices() * (rm->getMaxLatency() + 1));
+				asapilp->schedule();
+				criticalPath = asapilp->getScheduleLength();
 
-      delete asapilp;
-    }
-  }
+				delete asapilp;
+			}
+		}
 
-  //restore values
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    Resource* r = *it;
-    r->setLimit(limit_map[r]);
-  }
+		//restore values
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			Resource *r = *it;
+			r->setLimit(limit_map[r]);
+		}
 
-  return criticalPath;
-}
+		return criticalPath;
+	}
 
-int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
-  //determine minimum possible latency
-  HatScheT::ASAPScheduler asap(*g,*rm);
-  asap.schedule();
-  int criticalPath = asap.getScheduleLength();
+	int Utility::calcMaxII(Graph *g, ResourceModel *rm) {
+		//determine minimum possible latency
+		HatScheT::ASAPScheduler asap(*g, *rm);
+		asap.schedule();
+		int criticalPath = asap.getScheduleLength();
 
-  if(g->getNumberOfVertices() > 200) {
-    if(!HatScheT::verifyModuloSchedule(*g,*rm, asap.getSchedule(),asap.getII())) {
-      throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
-    }
-    return criticalPath;
-  }
+		if (g->getNumberOfVertices() > 200) {
+			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), asap.getII())) {
+				throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
+			}
+			return criticalPath;
+		}
 
-  //get optimal critical path using asap ilp scheduler
-  auto asapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-  asapilp.setMaxLatencyConstraint(criticalPath);
-  asapilp.schedule();
-  criticalPath = asapilp.getScheduleLength();
+		//get optimal critical path using asap ilp scheduler
+		auto asapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+		asapilp.setMaxLatencyConstraint(criticalPath);
+		asapilp.schedule();
+		criticalPath = asapilp.getScheduleLength();
 
-  //error in non ilp-based asap detected
-  //starting new asap ilp
-  if(criticalPath <= 0){
-    auto newasapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
-    newasapilp.setMaxLatencyConstraint(g->getNumberOfVertices() * ( rm->getMaxLatency() + 1));
-    newasapilp.schedule();
-    criticalPath = newasapilp.getScheduleLength();
-  }
+		//error in non ilp-based asap detected
+		//starting new asap ilp
+		if (criticalPath <= 0) {
+			auto newasapilp = HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
+			newasapilp.setMaxLatencyConstraint(g->getNumberOfVertices() * (rm->getMaxLatency() + 1));
+			newasapilp.schedule();
+			criticalPath = newasapilp.getScheduleLength();
+		}
 
-  return criticalPath;
-}
+		return criticalPath;
+	}
 
-double Utility::calcRecMII(Graph *g, ResourceModel *rm)
-{
-  ScaLP::Solver solver({"Gurobi", "CPLEX"});
+	double Utility::calcRecMII(Graph *g, ResourceModel *rm) {
+		ScaLP::Solver solver({"Gurobi", "CPLEX"});
 
-  // construct decision variables
-  auto II = ScaLP::newRealVariable("II", 0, ScaLP::INF());
-  std::map<Vertex *, ScaLP::Variable> t;
-  for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
-    auto v = *it;
-    t[v] = ScaLP::newRealVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
-  }
+		// construct decision variables
+		auto II = ScaLP::newRealVariable("II", 0, ScaLP::INF());
+		std::map<Vertex *, ScaLP::Variable> t;
+		for (auto it = g->verticesBegin(), end = g->verticesEnd(); it != end; it++) {
+			auto v = *it;
+			t[v] = ScaLP::newRealVariable("t_" + to_string(v->getId()), 0, std::numeric_limits<int>::max());
+		}
 
-  // construct constraints
-  for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
-    auto e = *it;
-    auto i = &e->getVertexSrc();
-    auto j = &e->getVertexDst();
+		// construct constraints
+		for (auto it = g->edgesBegin(), end = g->edgesEnd(); it != end; it++) {
+			auto e = *it;
+			auto i = &e->getVertexSrc();
+			auto j = &e->getVertexDst();
 
-    solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance()*II)) <= 0);
-  }
+			solver << ((t[i] + rm->getVertexLatency(i) + e->getDelay() - t[j] - (e->getDistance() * II)) <= 0);
+		}
 
-  // construct objective
-  solver.setObjective(ScaLP::minimize(II));
+		// construct objective
+		solver.setObjective(ScaLP::minimize(II));
 
-  auto status = solver.solve();
-  if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
-    cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
-    cout << "Utility.calcRecMII: ScaLP::STATUS " << status << endl;
-    throw HatScheT::Exception("RecMII computation failed!");
-  }
+		auto status = solver.solve();
+		if (status != ScaLP::status::OPTIMAL && status != ScaLP::status::FEASIBLE) {
+			cout << "Utility.calcRecMII: ERROR No solution found!" << endl;
+			cout << "Utility.calcRecMII: ScaLP::STATUS " << status << endl;
+			throw HatScheT::Exception("RecMII computation failed!");
+		}
 
-  return max(1.0, (double)(solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
-}
+		return max(1.0, (double) (solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+	}
 
 #endif
-int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes)
-{
-  int sum = 0;
 
-  for(auto & startTime : startTimes){
-    sum+=startTime.second;
-  }
+	int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes) {
+		int sum = 0;
 
-  return sum;
-}
+		for (auto &startTime : startTimes) {
+			sum += startTime.second;
+		}
 
-bool Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel* rm, const Resource *r, Vertex *checkV, int timeStep)
-{
-  //unlimited
-  if(r->getLimit()==-1) return true;
+		return sum;
+	}
 
-  int instancesUsed = 0;
+	bool
+	Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV,
+														 int timeStep) {
+		//unlimited
+		if (r->getLimit() == -1) return true;
 
-  for(auto & startTime : startTimes){
-    if(startTime.second == timeStep){
-      Vertex* v = startTime.first;
-      if(checkV != v && rm->getResource(v) == r) instancesUsed++;
-    }
-  }
+		int instancesUsed = 0;
 
-  if(instancesUsed < r->getLimit()) return true;
-  return false;
-}
+		for (auto &startTime : startTimes) {
+			if (startTime.second == timeStep) {
+				Vertex *v = startTime.first;
+				if (checkV != v && rm->getResource(v) == r) instancesUsed++;
+			}
+		}
 
-bool Utility::edgeIsInGraph(Graph *g, const Edge *e)
-{
-  for(auto iterE : g->Edges()){
-    if(iterE==e) return true;
-  }
-  return false;
-}
+		if (instancesUsed < r->getLimit()) return true;
+		return false;
+	}
 
-bool Utility::isInput(Graph *g, Vertex *v)
-{
-  for(auto e : g->Edges()){
-      Vertex* vDst = &e->getVertexDst();
+	bool Utility::edgeIsInGraph(Graph *g, const Edge *e) {
+		for (auto iterE : g->Edges()) {
+			if (iterE == e) return true;
+		}
+		return false;
+	}
 
-      if(v==vDst && e->getDistance()==0) return false;
-  }
+	bool Utility::isInput(Graph *g, Vertex *v) {
+		for (auto e : g->Edges()) {
+			Vertex *vDst = &e->getVertexDst();
 
-  return true;
-}
+			if (v == vDst && e->getDistance() == 0) return false;
+		}
 
-bool Utility::existEdgeBetweenVertices(Graph* g, Vertex* Vsrc, Vertex* Vdst)
-{
-    for(auto iterE : g->Edges()){
-        Vertex* iterSrc = &iterE->getVertexSrc();
-        Vertex* iterDst = &iterE->getVertexDst();
+		return true;
+	}
 
-        if ((iterSrc==Vsrc) && (iterDst==Vdst)){
-            return true;
-        }
-        if ((iterSrc==Vdst) && (iterDst==Vsrc)){
-            return true;
-        }
-    }
-    return false;
-}
+	bool Utility::existEdgeBetweenVertices(Graph *g, Vertex *Vsrc, Vertex *Vdst) {
+		for (auto iterE : g->Edges()) {
+			Vertex *iterSrc = &iterE->getVertexSrc();
+			Vertex *iterDst = &iterE->getVertexDst();
+
+			if ((iterSrc == Vsrc) && (iterDst == Vdst)) {
+				return true;
+			}
+			if ((iterSrc == Vdst) && (iterDst == Vsrc)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 
-bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2)
-{
-  vector<Vertex*> occ1Set = occ1->getVertices();
+	bool Utility::occurrencesAreConflictFree(Occurrence *occ1, Occurrence *occ2) {
+		vector<Vertex *> occ1Set = occ1->getVertices();
 
-  for(auto it:occ1Set){
-    Vertex* v = it;
+		for (auto it:occ1Set) {
+			Vertex *v = it;
 
-    if(!occ2->vertexIsNew(v)){
-      return false;
-    }
-  }
-  return true;
-}
+			if (!occ2->vertexIsNew(v)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v)
-{
-  vector<Vertex*> vVec = occ->getVertices();
+	bool Utility::vertexInOccurrence(Occurrence *occ, Vertex *v) {
+		vector<Vertex *> vVec = occ->getVertices();
 
-  for(auto vIter : vVec){
-    if(vIter==v) return true;
-  }
-  return false;
-}
+		for (auto vIter : vVec) {
+			if (vIter == v) return true;
+		}
+		return false;
+	}
 
-bool Utility::resourceModelAndTargetValid(HatScheT::ResourceModel &rm, HatScheT::Target &t) {
-  for(auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it){
-    Resource* r  = *it;
-    //skip unlimited resources
-    //TODO: is this still valid?? valid in this context?? (patrick)
-    //if(r->getLimit() == -1) continue;
-    map<string,double>& costs = r->getHardwareCosts();
+	bool Utility::resourceModelAndTargetValid(HatScheT::ResourceModel &rm, HatScheT::Target &t) {
+		for (auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it) {
+			Resource *r = *it;
+			//skip unlimited resources
+			//TODO: is this still valid?? valid in this context?? (patrick)
+			//if(r->getLimit() == -1) continue;
+			map<string, double> &costs = r->getHardwareCosts();
 
-    for(auto & cost : costs) {
-      if (!t.elementExists(cost.first)) {
-        cout << "Utility.resourceModelAndTargetValid: ERROR demanded hardware element '" << cost.first << "' of resource '" << r->getName() << "' is not available on this target:" << endl;
-        cout << t << endl;
-        return false;
-      }
-    }
-  }
+			for (auto &cost : costs) {
+				if (!t.elementExists(cost.first)) {
+					cout << "Utility.resourceModelAndTargetValid: ERROR demanded hardware element '" << cost.first
+							 << "' of resource '" << r->getName() << "' is not available on this target:" << endl;
+					cout << t << endl;
+					return false;
+				}
+			}
+		}
 
-  return true;
-}
+		return true;
+	}
 
-int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel& rm, Resource *r)
-{
-  int opsUsed=0;
-  //unlimited resources used in paralell
-  if(r->getLimit()<=0){
-    return rm.getNumVerticesRegisteredToResource(r);
-  }
+	int Utility::calcUsedOperationsOfBinding(map<const Vertex *, int> &binding, ResourceModel &rm, Resource *r) {
+		int opsUsed = 0;
+		//unlimited resources used in paralell
+		if (r->getLimit() <= 0) {
+			return rm.getNumVerticesRegisteredToResource(r);
+		}
 
-  vector<bool> usedOp;
-  usedOp.resize(r->getLimit());
-  for(int i=0;i<usedOp.size();i++){
-    usedOp[i]=false;
-  }
+		vector<bool> usedOp;
+		usedOp.resize(r->getLimit());
+		for (int i = 0; i < usedOp.size(); i++) {
+			usedOp[i] = false;
+		}
 
-  for(auto it:binding){
-    const Vertex* v = it.first;
-    if(rm.getResource(v)==r){
-      int bind = binding[v];
-      usedOp[bind]=true;
-    }
-  }
+		for (auto it:binding) {
+			const Vertex *v = it.first;
+			if (rm.getResource(v) == r) {
+				int bind = binding[v];
+				usedOp[bind] = true;
+			}
+		}
 
-  for(int i=0;i<usedOp.size();i++){
-    if(usedOp[i]) opsUsed++;
-  }
+		for (int i = 0; i < usedOp.size(); i++) {
+			if (usedOp[i]) opsUsed++;
+		}
 
-  return opsUsed;
-}
+		return opsUsed;
+	}
 
-void Utility::printBinding(map<const Vertex *, int> &binding, ResourceModel& rm)
-{
-  cout << "-------Print Binding Start-------" << endl;
-  for(auto it:binding){
-    const Vertex* v = it.first;
-    const Resource* r = rm.getResource(v);
-    cout << "Vertex " << v->getName() << " bound to unit " << it.second << " of Resource " << r->getName() <<" with limit " << r->getLimit() << endl;
-  }
-  cout << "-------Print Binding Finished-------" << endl;
-}
+	void Utility::printBinding(map<const Vertex *, int> &binding, ResourceModel &rm) {
+		cout << "-------Print Binding Start-------" << endl;
+		for (auto it:binding) {
+			const Vertex *v = it.first;
+			const Resource *r = rm.getResource(v);
+			cout << "Vertex " << v->getName() << " bound to unit " << it.second << " of Resource " << r->getName()
+					 << " with limit " << r->getLimit() << endl;
+		}
+		cout << "-------Print Binding Finished-------" << endl;
+	}
 
-void Utility::printSchedule(map<Vertex *, int> &schedule)
-{
-  cout << "Utility::printSchedule: Start" << endl;
-  for(auto it:schedule){
-    Vertex* v = it.first;
-    cout << "Scheduled " << v->getName() << " at " << it.second << endl;
-  }
-  cout << "Utility::printSchedule: Finished" << endl;
-}
+	void Utility::printSchedule(map<Vertex *, int> &schedule) {
+		cout << "Utility::printSchedule: Start" << endl;
+		for (auto it:schedule) {
+			Vertex *v = it.first;
+			cout << "Scheduled " << v->getName() << " at " << it.second << endl;
+		}
+		cout << "Utility::printSchedule: Finished" << endl;
+	}
 
-bool Utility::allInputsAreRegisters(Graph *g, Vertex *v)
-{
-  for(auto it=g->edgesBegin(); it!= g->edgesEnd(); ++it){
-    Edge* e = *it;
-    if(e->getDistance()==0 && &e->getVertexDst()==v) return false;
-  }
-  return true;
-}
+	bool Utility::allInputsAreRegisters(Graph *g, Vertex *v) {
+		for (auto it = g->edgesBegin(); it != g->edgesEnd(); ++it) {
+			Edge *e = *it;
+			if (e->getDistance() == 0 && &e->getVertexDst() == v) return false;
+		}
+		return true;
+	}
 
-bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v)
-{
-  set<Occurrence*> occSet = occS->getOccurrences();
+	bool Utility::vertexInOccurrenceSet(OccurrenceSet *occS, Vertex *v) {
+		set<Occurrence *> occSet = occS->getOccurrences();
 
-  for(auto it:occSet){
-    Occurrence* occIter = it;
+		for (auto it:occSet) {
+			Occurrence *occIter = it;
 
-    if(Utility::vertexInOccurrence(occIter,v)) return true;
-  }
-  return false;
-}
+			if (Utility::vertexInOccurrence(occIter, v)) return true;
+		}
+		return false;
+	}
 
-bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2)
-{
-  set<Occurrence*> occs1Set = occs1->getOccurrences();
-  set<Occurrence*> occs2Set = occs2->getOccurrences();
+	bool Utility::occurenceSetsAreConflictFree(OccurrenceSet *occs1, OccurrenceSet *occs2) {
+		set<Occurrence *> occs1Set = occs1->getOccurrences();
+		set<Occurrence *> occs2Set = occs2->getOccurrences();
 
-  for(auto it:occs1Set){
-    Occurrence* occ = it;
-    for(auto it2:occs2Set){
-      Occurrence* occ2 = it2;
+		for (auto it:occs1Set) {
+			Occurrence *occ = it;
+			for (auto it2:occs2Set) {
+				Occurrence *occ2 = it2;
 
-      if(!Utility::occurrencesAreConflictFree(occ,occ2)) return false;
-    }
-  }
+				if (!Utility::occurrencesAreConflictFree(occ, occ2)) return false;
+			}
+		}
 
-  return true;
-}
+		return true;
+	}
 
-void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<const HatScheT::Vertex *, int> > ratIIbindings,
-                                 HatScheT::ResourceModel *rm, int modulo, vector<int> initIntervalls) {
-  for(auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it){
-    const Resource* r = *it;
+	void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched,
+																	 vector<map<const HatScheT::Vertex *, int> > ratIIbindings,
+																	 HatScheT::ResourceModel *rm, int modulo, vector<int> initIntervalls) {
+		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
+			const Resource *r = *it;
 
-    //operation start time -> operation, unit
-    map<int,vector< pair<string,int> > > MRT;
+			//operation start time -> operation, unit
+			map<int, vector<pair<string, int> > > MRT;
 
-    //insert MRT information over modulo slots
-    for(int i = 0; i < modulo; i++){
-      vector<pair<string, int> > slot;
-      for(auto it : sched){
-        auto v = it.first;
-        if(r != rm->getResource(v)) continue;
+			//insert MRT information over modulo slots
+			for (int i = 0; i < modulo; i++) {
+				vector<pair<string, int> > slot;
+				for (auto it : sched) {
+					auto v = it.first;
+					if (r != rm->getResource(v)) continue;
 
-        //track the offset for the samples
-        int offset=0;
-        //iterate over samples
-        for(int j = 0; j < initIntervalls.size(); j++){
-          //increase offset
-          if(j>0) offset+=initIntervalls[j-1];
+					//track the offset for the samples
+					int offset = 0;
+					//iterate over samples
+					for (int j = 0; j < initIntervalls.size(); j++) {
+						//increase offset
+						if (j > 0) offset += initIntervalls[j - 1];
 
-          int moduloTime = (it.second+offset) % modulo;
+						int moduloTime = (it.second + offset) % modulo;
 
-          if(moduloTime != i) continue;
-          slot.push_back(make_pair(v->getName() + "_s" + to_string(j), ratIIbindings[j][v]));
-        }
-      }
-      MRT.insert(make_pair(i,slot));
-    }
+						if (moduloTime != i) continue;
+						slot.push_back(make_pair(v->getName() + "_s" + to_string(j), ratIIbindings[j][v]));
+					}
+				}
+				MRT.insert(make_pair(i, slot));
+			}
 
-    //do the printing
-    cout << "-----" << endl;
-    cout << "MRT after binding for resource " << r->getName() << " (limit " << r->getLimit() << ")" << endl;
-    for(auto &itMrt:MRT){
-      cout << to_string(itMrt.first) << ": ";
+			//do the printing
+			cout << "-----" << endl;
+			cout << "MRT after binding for resource " << r->getName() << " (limit " << r->getLimit() << ")" << endl;
+			for (auto &itMrt:MRT) {
+				cout << to_string(itMrt.first) << ": ";
 
-      for(auto &it2:itMrt.second){
-        cout << "(" << it2.first << ", unit " << to_string(it2.second) << ") ";
-      }
-      if(itMrt.second.empty()) cout << "-----";
-      cout << endl;
-    }
-    cout << "-----" << endl;
-  }
-}
+				for (auto &it2:itMrt.second) {
+					cout << "(" << it2.first << ", unit " << to_string(it2.second) << ") ";
+				}
+				if (itMrt.second.empty()) cout << "-----";
+				cout << endl;
+			}
+			cout << "-----" << endl;
+		}
+	}
 
-  std::pair<int, int> Utility::getSampleIndexAndOffset(int distance, int sample, int samples, int modulo) {
-    int sampleIndex = sample;
-    int offset = 0;
-    while(distance>0) {
-      if(sampleIndex==0) {
-        sampleIndex = samples-1;
-        offset += modulo;
-      }
-      else {
-        --sampleIndex;
-      }
-      --distance;
-    }
-    return std::make_pair(sampleIndex,offset);
-  }
+	std::pair<int, int>
+	Utility::getSampleIndexAndOffset(int distance, const int &sample, const int &samples, const int &modulo) {
+		auto sAndD = Utility::getSampleIndexAndDistance(distance, sample, samples);
+		return std::make_pair(sAndD.first, sAndD.second * modulo);
+	}
 
-  std::map<Vertex*, Vertex*> Utility::transposeGraph(Graph *g, Graph* h) {
+	std::pair<int, int> Utility::getSampleIndexAndDistance(int distance, const int &sample, const int &samples) {
+		// trivial case
+		if (distance == 0) return {sample, 0};
+		// non-trivial case
+		int sampleIndex = sample;
+		int newDistance = 0;
+		while (distance > 0) {
+			if (sampleIndex == 0) {
+				sampleIndex = samples - 1;
+				newDistance++;
+			} else {
+				--sampleIndex;
+			}
+			--distance;
+		}
+		return std::make_pair(sampleIndex, newDistance);
+	}
 
-    std::map<Vertex*,Vertex*> m;
+	std::map<Vertex *, Vertex *> Utility::transposeGraph(Graph *g, Graph *h) {
 
-    //Copy all verticies from graph g to graph h. And creating a map with the corresponding verticies.
-    //(gVertex : hVertex).
-    for (auto V:g->Vertices()){
-      m[V] = &h->createVertex(V->getId());
-    }
+		std::map<Vertex *, Vertex *> m;
 
-    //Creating the edges
-    for (auto E:g->Edges()){
-      auto &newE = h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(), E->getDependencyType());
-      newE.setDelay(E->getDelay());
-    }
+		//Copy all verticies from graph g to graph h. And creating a map with the corresponding verticies.
+		//(gVertex : hVertex).
+		for (auto V:g->Vertices()) {
+			m[V] = &h->createVertex(V->getId());
+		}
+
+		//Creating the edges
+		for (auto E:g->Edges()) {
+			auto &newE = h->createEdge(*m[&E->getVertexDst()], *m[&E->getVertexSrc()], E->getDistance(),
+																 E->getDependencyType());
+			newE.setDelay(E->getDelay());
+		}
 
 
-    return m;
-  }
+		return m;
+	}
 
-  bool Utility::iscyclic(Graph *g) {
+	bool Utility::iscyclic(Graph *g) {
 
-    map <Vertex*, bool> visited;
-    map <Vertex*, bool> recStack;
+		map<Vertex *, bool> visited;
+		map<Vertex *, bool> recStack;
 
-    for (auto &v : g->Vertices()){
-      visited[v] = false;
-      recStack[v] = false;
-    }
+		for (auto &v : g->Vertices()) {
+			visited[v] = false;
+			recStack[v] = false;
+		}
 
-    for (auto &it : g->Vertices()){
-      if (iscyclicHelper(g, it, visited, recStack)){
-        return true;
-      }
-    }
+		for (auto &it : g->Vertices()) {
+			if (iscyclicHelper(g, it, visited, recStack)) {
+				return true;
+			}
+		}
 
-    return false;
-  }
+		return false;
+	}
 
-  bool Utility::iscyclicHelper(Graph *g, Vertex *V, map<Vertex *, bool> &visited, map<Vertex *, bool> &recStack) {
+	bool Utility::iscyclicHelper(Graph *g, Vertex *V, map<Vertex *, bool> &visited, map<Vertex *, bool> &recStack) {
 
-    if (!visited[V]) {
+		if (!visited[V]) {
 
-      visited[V] = true;
-      recStack[V] = true;
+			visited[V] = true;
+			recStack[V] = true;
 
-      for (auto &it : g->getSuccessors(V)) {
-        if (!visited[it] && iscyclicHelper(g, it, visited, recStack)){
-          return true;
-        }
-        else if (recStack[it]){
-          return true;
-        }
-      }
-    }
+			for (auto &it : g->getSuccessors(V)) {
+				if (!visited[it] && iscyclicHelper(g, it, visited, recStack)) {
+					return true;
+				} else if (recStack[it]) {
+					return true;
+				}
+			}
+		}
 
-    recStack[V] = false;
-    return false;
+		recStack[V] = false;
+		return false;
 
-  }
+	}
 
 	int Utility::hFunction(double n, double M, int tau) {
-		if(tau == 0) return (int)ceil(n/M);
+		if (tau == 0) return (int) ceil(n / M);
 		else return hFunction(n - ceil(n / M), M - 1, tau - 1);
 	}
 
-	double Utility::getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph *g, ResourceModel *rm, int numRegsWithPossibleMuxInputs) {
+	double Utility::getNumberOfEquivalent2x1Muxs(int numFUConnections, Graph *g, ResourceModel *rm,
+																							 int numRegsWithPossibleMuxInputs) {
 		for (auto &r : rm->Resources()) {
 			// number of FUs for this resource
 			int numFUs;
 			if (r->isUnlimited()) {
 				numFUs = rm->getNumVerticesRegisteredToResource(r);
-			}
-			else {
+			} else {
 				numFUs = r->getLimit();
 			}
 			// number of inputs for each FU
@@ -858,8 +851,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		int maxConnections = 0;
 		int maxMuxs = 0;
 		// upper bound for the number of registers
-		std::map<const HatScheT::Vertex*, int> sortedLifetimesVertices;
-		std::map<const HatScheT::Resource*, std::list<int>> sortedLifetimesResources;
+		std::map<const HatScheT::Vertex *, int> sortedLifetimesVertices;
+		std::map<const HatScheT::Resource *, std::list<int>> sortedLifetimesResources;
 		try {
 			for (auto &e : g->Edges()) {
 				if (!e->isDataEdge()) continue;
@@ -886,21 +879,20 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				int numIt;
 				if (res->isUnlimited()) {
 					numIt = rm->getNumVerticesRegisteredToResource(res);
-				}
-				else {
+				} else {
 					numIt = res->getLimit();
 				}
 				auto &sortedStuff = it.second;
 				auto listIt = sortedStuff.end();
 				int regs = 0;
-				for (int i=0; i<numIt; i++) {
+				for (int i = 0; i < numIt; i++) {
 					listIt--;
 					regs += (*listIt);
 				}
 				maxRegs += regs;
 			}
 		}
-		catch (std::out_of_range&) {
+		catch (std::out_of_range &) {
 			throw Exception("Utility::getMaxRegsAndMuxs: allocation or schedule corrupt");
 		}
 		// upper bound for the number of interconnect lines
@@ -909,7 +901,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			maxConnections += 1;
 		}
 		// calculate upper bound for multiplexers from upper bound of interconnect lines
-		maxMuxs = (int)HatScheT::Utility::getNumberOfEquivalent2x1Muxs(maxConnections, g, rm);
+		maxMuxs = (int) HatScheT::Utility::getNumberOfEquivalent2x1Muxs(maxConnections, g, rm);
 		return {maxRegs, maxMuxs};
 	}
 
@@ -940,13 +932,15 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 	bool Utility::iequals(const std::string &s1, const std::string &s2) {
 		auto sz = s1.size();
 		if (s2.size() != sz) return false;
-		for (unsigned int i=0; i<sz; i++) {
+		for (unsigned int i = 0; i < sz; i++) {
 			if (std::tolower(s1[i]) != std::tolower(s2[i])) return false;
 		}
 		return true;
 	}
 
-	Binding::BindingContainer Utility::convertBindingContainer(Graph* g, ResourceModel* rm, const int &II, const Binding::RegChainBindingContainer &bChain, std::map<Vertex*, int> sched) {
+	Binding::BindingContainer Utility::convertBindingContainer(Graph *g, ResourceModel *rm, const int &II,
+																														 const Binding::RegChainBindingContainer &bChain,
+																														 std::map<Vertex *, int> sched) {
 		Binding::BindingContainer b;
 
 		// trivial copies
@@ -966,8 +960,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		}
 
 		// calc lifetimes for all vertices
-		std::map<Vertex*, int> vertexLifetimes;
-		std::map<Edge*, int> edgeLifetimes;
+		std::map<Vertex *, int> vertexLifetimes;
+		std::map<Edge *, int> edgeLifetimes;
 		for (auto &e : g->Edges()) {
 			auto *vSrc = &e->getVertexSrc();
 			auto *vDst = &e->getVertexDst();
@@ -1010,8 +1004,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		}
 
 		// enable all registers in all timesteps
-		for (int regIndex=0; regIndex<registerCounter; regIndex++) {
-			for (int i=0; i<II; i++) {
+		for (int regIndex = 0; regIndex < registerCounter; regIndex++) {
+			for (int i = 0; i < II; i++) {
 				b.registerEnableTimes[regIndex].insert(i);
 			}
 		}
@@ -1033,7 +1027,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				if (std::get<5>(c) != dstPort) continue;
 				return &c;
 			}
-			conn->push_front({srcRes,srcFU,srcPort,dstRes,dstFU,dstPort,{}});
+			conn->push_front({srcRes, srcFU, srcPort, dstRes, dstFU, dstPort, {}});
 			return &conn->front();
 		};
 		// start with FU->register and register->register connections
@@ -1070,7 +1064,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				std::get<6>(*cFUReg).insert(t);
 			}
 			 */
-			for (int t=0; t<II; t++) {
+			for (int t = 0; t < II; t++) {
 				std::get<6>(*cFUReg).insert(t);
 			}
 
@@ -1078,7 +1072,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			if (numRegs <= 1) continue;
 
 			// create register->register connections
-			for (int i=0; i<numRegs-1; i++) {
+			for (int i = 0; i < numRegs - 1; i++) {
 				/*
 				std::set<int> updatedVariableProductionTimes;
 				for (auto &vFu : bChain.resourceBindings) {
@@ -1092,13 +1086,13 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 					updatedVariableProductionTimes.insert((productionTime + i + 1) % II);
 				}
 				 */
-				auto *cRegReg = checkConnection(&b.connections, "register", regOffset+i, 0, "register", regOffset+i+1, 0);
+				auto *cRegReg = checkConnection(&b.connections, "register", regOffset + i, 0, "register", regOffset + i + 1, 0);
 				/*
 				for (auto t : updatedVariableProductionTimes) {
 					std::get<6>(*cRegReg).insert(t);
 				}
 				 */
-				for (int t=0; t<II; t++) {
+				for (int t = 0; t < II; t++) {
 					std::get<6>(*cRegReg).insert(t);
 				}
 
@@ -1138,8 +1132,7 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 				for (auto t : variableReadTimes) {
 					std::get<6>(*cRegFU).insert(t);
 				}
-			}
-			else {
+			} else {
 				// FU -> FU
 				std::set<int> variablePassTimes;
 				for (auto &e : g->Edges()) {
@@ -1148,10 +1141,10 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 					auto *vSrc = &e->getVertexSrc();
 					auto *vDst = &e->getVertexDst();
 					if (rm->getResource(vSrc)->getName() != rSrcName or
-					  rm->getResource(vDst)->getName() != rDstName or
-					  bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
-						bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
-						bChain.portAssignments.at(e) != dstPort) {
+							rm->getResource(vDst)->getName() != rDstName or
+							bChain.resourceBindings.at(vSrc->getName()) != fuSrcIndex or
+							bChain.resourceBindings.at(vDst->getName()) != fuDstIndex or
+							bChain.portAssignments.at(e) != dstPort) {
 						continue;
 					}
 					variablePassTimes.insert(sched.at(vDst) % II);
@@ -1169,7 +1162,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		// debugging
 		std::cout << "FU bindings:" << std::endl;
 		for (auto &it : bChain.resourceBindings) {
-			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' (" << it.second << ")" << std::endl;
+			std::cout << "  '" << it.first << "' -> '" << rm->getResource(&g->getVertexByName(it.first))->getName() << "' ("
+								<< it.second << ")" << std::endl;
 		}
 		std::cout << "connections in register chain binding container:" << std::endl;
 		for (auto &connection : bChain.fuConnections) {
@@ -1179,7 +1173,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto fuDstIndex = connection.first.second.second;
 			auto numRegs = connection.second.first;
 			auto dstPort = connection.second.second;
-			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << " over " << numRegs << " registers" << std::endl;
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") -> '" << rDstName << "' (" << fuDstIndex << ") port "
+								<< dstPort << " over " << numRegs << " registers" << std::endl;
 		}
 
 		std::cout << "connections in general binding container:" << std::endl;
@@ -1190,7 +1185,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto rDstName = std::get<3>(connection);
 			auto fuDstIndex = std::get<4>(connection);
 			auto dstPort = std::get<5>(connection);
-			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") port " << srcPort << " -> '" << rDstName << "' (" << fuDstIndex << ") port " << dstPort << std::endl;
+			std::cout << "  '" << rSrcName << "' (" << fuSrcIndex << ") port " << srcPort << " -> '" << rDstName << "' ("
+								<< fuDstIndex << ") port " << dstPort << std::endl;
 			for (auto t : std::get<6>(connection)) {
 				std::cout << "    active in t=" << t << std::endl;
 			}
@@ -1208,104 +1204,104 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 	}
 
 	// Todo: fix bugs before usage - this does not work, yet!
-  double Utility::calcRecMIIDFS(Graph *g, ResourceModel *rm) {
-    double minII = 0.0;
-    for (auto &vStart : g->Vertices()) {
-      // start a DFS originating from this vertex and check for loops
-      // this container tracks the current path through the graph
-      // for convenience we always start with a nullptr that stands for the start of the path
-      // each element consists of the following tuple:
-      //   [0] the vertex
-      //   [1] the cumulative distance until this vertex
-      //   [2] the cumulative delay until this vertex (INCLUDING its own delay)
-      // here, delay = vertexLatency + edgeDelay (edgeDelay != 0 for chaining edges)
-      std::vector<std::tuple<Vertex*, double, double>> path = {{nullptr, 0.0, 0.0}};
-      // this container tracks the stack that controls the DFS
-      // each element consists of the following pair:
-      //   [0] the vertex on the stack
-      //   [1] its input
-      //   [2] the distance on the edge from the input to the vertex on the stack
-      //   [3] the delay on the edge from the input to the vertex on the stack (delay defined as above)
-      std::list<std::tuple<Vertex*, Vertex*, double, double>> stack{{vStart, nullptr, 0.0, 0.0}};
-      while (!stack.empty()) {
-        // get current element from stack
-        auto stackTuple = stack.front();
-        auto *currVertex = std::get<0>(stackTuple);
-        auto *lastVertex = std::get<1>(stackTuple);
-        auto additionalDistance = std::get<2>(stackTuple);
-        auto additionalDelay = std::get<3>(stackTuple);
-        stack.pop_front();
-        // check if we have to re-calculate the path (that happens after we found a recurrence or the end on a path)
-        if (std::get<0>(path.back()) != lastVertex) {
-          std::vector<std::tuple<Vertex*, double, double>> newPath;
-          for (auto &it : path) {
-            newPath.emplace_back(it);
-            if (std::get<0>(it) == lastVertex) break;
-          }
-          path = newPath;
-        }
-        // check if we found a loop
-        bool foundLoop = false;
-        for (auto &it : path) {
-          if (std::get<0>(it) != currVertex) {
-            continue;
-          }
-          foundLoop = true;
-          auto q = std::get<2>(it) / std::get<1>(it);
-          std::cout << "found loop with q = " << q << " = " << std::get<2>(it) << "/" << std::get<1>(it) << std::endl;
-          if (q > minII) {
-            minII = q;
-          }
-          break;
-        }
-        // continue with next iteration if we find a loop
-        if (foundLoop) {
-          continue;
-        }
-        // get last path element
-        auto lastPathTuple = path.back();
-        // insert current element into path
-        double newDistance = std::get<1>(lastPathTuple) + additionalDistance;
-        double newDelay = std::get<2>(lastPathTuple) + additionalDelay;
-        path.emplace_back(currVertex, newDistance, newDelay);
-        // loop over outgoing edges and put everything we can find on the stack
-        for (auto &e : g->Edges()) {
-          auto *vSrc = &e->getVertexSrc();
-          if (vSrc != currVertex) continue;
-          auto *vDst = &e->getVertexDst();
-          double edgeDistance = e->getDistance();
-          double edgeDelay = e->getDelay() + rm->getVertexLatency(vSrc);
-          std::tuple<Vertex*, Vertex*, double, double> nextStackElement{vDst, vSrc, edgeDistance, edgeDelay};
-          stack.emplace_front(nextStackElement);
-        }
-      }
-    }
-    return max(1.0, minII); // RecMII could be 0 if instance has no loops
-  }
+	double Utility::calcRecMIIDFS(Graph *g, ResourceModel *rm) {
+		double minII = 0.0;
+		for (auto &vStart : g->Vertices()) {
+			// start a DFS originating from this vertex and check for loops
+			// this container tracks the current path through the graph
+			// for convenience we always start with a nullptr that stands for the start of the path
+			// each element consists of the following tuple:
+			//   [0] the vertex
+			//   [1] the cumulative distance until this vertex
+			//   [2] the cumulative delay until this vertex (INCLUDING its own delay)
+			// here, delay = vertexLatency + edgeDelay (edgeDelay != 0 for chaining edges)
+			std::vector<std::tuple<Vertex *, double, double>> path = {{nullptr, 0.0, 0.0}};
+			// this container tracks the stack that controls the DFS
+			// each element consists of the following pair:
+			//   [0] the vertex on the stack
+			//   [1] its input
+			//   [2] the distance on the edge from the input to the vertex on the stack
+			//   [3] the delay on the edge from the input to the vertex on the stack (delay defined as above)
+			std::list<std::tuple<Vertex *, Vertex *, double, double>> stack{{vStart, nullptr, 0.0, 0.0}};
+			while (!stack.empty()) {
+				// get current element from stack
+				auto stackTuple = stack.front();
+				auto *currVertex = std::get<0>(stackTuple);
+				auto *lastVertex = std::get<1>(stackTuple);
+				auto additionalDistance = std::get<2>(stackTuple);
+				auto additionalDelay = std::get<3>(stackTuple);
+				stack.pop_front();
+				// check if we have to re-calculate the path (that happens after we found a recurrence or the end on a path)
+				if (std::get<0>(path.back()) != lastVertex) {
+					std::vector<std::tuple<Vertex *, double, double>> newPath;
+					for (auto &it : path) {
+						newPath.emplace_back(it);
+						if (std::get<0>(it) == lastVertex) break;
+					}
+					path = newPath;
+				}
+				// check if we found a loop
+				bool foundLoop = false;
+				for (auto &it : path) {
+					if (std::get<0>(it) != currVertex) {
+						continue;
+					}
+					foundLoop = true;
+					auto q = std::get<2>(it) / std::get<1>(it);
+					std::cout << "found loop with q = " << q << " = " << std::get<2>(it) << "/" << std::get<1>(it) << std::endl;
+					if (q > minII) {
+						minII = q;
+					}
+					break;
+				}
+				// continue with next iteration if we find a loop
+				if (foundLoop) {
+					continue;
+				}
+				// get last path element
+				auto lastPathTuple = path.back();
+				// insert current element into path
+				double newDistance = std::get<1>(lastPathTuple) + additionalDistance;
+				double newDelay = std::get<2>(lastPathTuple) + additionalDelay;
+				path.emplace_back(currVertex, newDistance, newDelay);
+				// loop over outgoing edges and put everything we can find on the stack
+				for (auto &e : g->Edges()) {
+					auto *vSrc = &e->getVertexSrc();
+					if (vSrc != currVertex) continue;
+					auto *vDst = &e->getVertexDst();
+					double edgeDistance = e->getDistance();
+					double edgeDelay = e->getDelay() + rm->getVertexLatency(vSrc);
+					std::tuple<Vertex *, Vertex *, double, double> nextStackElement{vDst, vSrc, edgeDistance, edgeDelay};
+					stack.emplace_front(nextStackElement);
+				}
+			}
+		}
+		return max(1.0, minII); // RecMII could be 0 if instance has no loops
+	}
 
-	int Utility::calcMinNumRegs(Graph *g, ResourceModel *rm, const std::vector<std::map<Vertex *, int>> &schedule, const int &modulo) {
+	int Utility::calcMinNumRegs(Graph *g, ResourceModel *rm, const std::vector<std::map<Vertex *, int>> &schedule,
+															const int &modulo) {
 		if (schedule.empty()) return 0;
 		if (modulo <= 0) return 0;
-		int samples = (int)schedule.size();
+		int samples = (int) schedule.size();
 		std::map<int, int> numAlive;
 		for (auto &vSrc : g->Vertices()) {
-			for (auto s=0; s<samples; s++) {
+			for (auto s = 0; s < samples; s++) {
 				auto tSrc = schedule.at(s).at(vSrc);
 				auto lSrc = rm->getVertexLatency(vSrc);
 				auto latestReadTime = tSrc + lSrc;
 				for (auto &e : g->Edges()) {
 					if (&e->getVertexSrc() != vSrc) continue;
 					auto vDst = &e->getVertexDst();
-					for (auto dstSample=0; dstSample<samples; dstSample++) {
+					for (auto dstSample = 0; dstSample < samples; dstSample++) {
 						auto srcSample = dstSample;
 						auto delta = 0;
 						auto edgeDistance = e->getDistance();
-						for (int sampleCnt=0; sampleCnt<edgeDistance; sampleCnt++) {
+						for (int sampleCnt = 0; sampleCnt < edgeDistance; sampleCnt++) {
 							if (srcSample == 0) {
-								srcSample = samples-1;
+								srcSample = samples - 1;
 								delta++;
-							}
-							else {
+							} else {
 								srcSample--;
 							}
 						}
@@ -1315,8 +1311,8 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 						if (readTime > latestReadTime) latestReadTime = readTime;
 					}
 				}
-				for (int t=tSrc+lSrc+1; t<=latestReadTime; t++) {
-					numAlive[t % (int)modulo]++;
+				for (int t = tSrc + lSrc + 1; t <= latestReadTime; t++) {
+					numAlive[t % (int) modulo]++;
 				}
 			}
 		}
@@ -1328,24 +1324,23 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 	}
 
 	int Utility::calcMinNumRegs(Graph *g, ResourceModel *rm, const std::map<Vertex *, int> &schedule, const int &II) {
-		return Utility::calcMinNumRegs(g, rm, std::vector<std::map<Vertex*, int>>(1, schedule), II);
+		return Utility::calcMinNumRegs(g, rm, std::vector<std::map<Vertex *, int>>(1, schedule), II);
 	}
 
 	int Utility::calcMinNumChainRegs(Graph *g, ResourceModel *rm, const vector<std::map<Vertex *, int>> &schedule,
 																	 const vector<std::map<const Vertex *, int>> &binding, const int &modulo) {
 		if (schedule.empty()) return 0;
 		if (modulo <= 0) return 0;
-		int samples = (int)schedule.size();
-		std::map<const Resource*, int> resourceLimits;
-		std::map<std::pair<const Resource*, int>, int> resourceLifetimes;
+		int samples = (int) schedule.size();
+		std::map<const Resource *, int> resourceLimits;
+		std::map<std::pair<const Resource *, int>, int> resourceLifetimes;
 		for (auto &r : rm->Resources()) {
 			if (r->isUnlimited()) {
-				resourceLimits[r] = (int)rm->getNumVerticesRegisteredToResource(r) * samples;
-			}
-			else {
+				resourceLimits[r] = (int) rm->getNumVerticesRegisteredToResource(r) * samples;
+			} else {
 				resourceLimits[r] = r->getLimit();
 			}
-			for (int l=0; l<resourceLimits.at(r); l++) {
+			for (int l = 0; l < resourceLimits.at(r); l++) {
 				resourceLifetimes[{r, l}] = 0;
 			}
 		}
@@ -1355,15 +1350,14 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 			auto *rSrc = rm->getResource(vSrc);
 			auto *rDst = rm->getResource(vDst);
 			auto lSrc = rSrc->getLatency();
-			for (int sDst=0; sDst<samples; sDst++) {
+			for (int sDst = 0; sDst < samples; sDst++) {
 				int sSrc = sDst;
 				int delta = 0;
-				for (int i=0; i<e->getDistance(); i++) {
+				for (int i = 0; i < e->getDistance(); i++) {
 					if (sSrc == 0) {
-						sSrc = samples-1;
+						sSrc = samples - 1;
 						delta++;
-					}
-					else {
+					} else {
 						sSrc--;
 					}
 				}
@@ -1375,13 +1369,14 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 					tDst = schedule.at(sDst).at(vDst);
 					bSrc = binding.at(sSrc).at(vSrc);
 				}
-				catch (std::out_of_range&) {
+				catch (std::out_of_range &) {
 					// invalid schedule/binding -> unable to calculate #regs
 					return -1;
 				}
 				if (bSrc >= resourceLimits.at(rSrc)) {
 					// invalid binding provided -> unable to calculate #regs
-					std::cout << "Detected invalid binding for vertex '" << vSrc->getName() << "': FU index is '" << bSrc << "' but resource limit is " << resourceLimits.at(rSrc) << std::endl;
+					std::cout << "Detected invalid binding for vertex '" << vSrc->getName() << "': FU index is '" << bSrc
+										<< "' but resource limit is " << resourceLimits.at(rSrc) << std::endl;
 					return -1;
 				}
 				auto lifetime = tDst + (delta * modulo) - (tSrc + lSrc);
@@ -1399,21 +1394,28 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 
 	int Utility::calcMinNumChainRegs(Graph *g, ResourceModel *rm, const map<Vertex *, int> &schedule,
 																	 const map<const Vertex *, int> &binding, const int &II) {
-		return Utility::calcMinNumChainRegs(g, rm, std::vector<std::map<Vertex*, int>>(1, schedule), std::vector<std::map<const Vertex*, int>>(1, binding), II);
+		return Utility::calcMinNumChainRegs(g, rm, std::vector<std::map<Vertex *, int>>(1, schedule),
+																				std::vector<std::map<const Vertex *, int>>(1, binding), II);
 	}
 
 	void Utility::unroll(Graph *gUnroll, ResourceModel *rmUnroll, const int &numSamples, const int &cycleLength, Graph *g,
-											ResourceModel *rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings) {
+											 ResourceModel *rm, std::map<Vertex *, std::vector<Vertex *>> *vertexMappings,
+											 const bool &quiet) {
 		// clear vertex mappings just to be safe
 		vertexMappings->clear();
 		// unroll vertices
 		for (auto &v : g->Vertices()) {
+			if (!quiet) {
+				std::cout << "Utility::unroll: unrolling vertex '" << v->getName() << "'" << std::endl;
+			}
 			const HatScheT::Resource *r = rm->getResource(v);
 			Resource *r_new;
 			vector<Vertex *> v_mapping(numSamples);
-			if (rmUnroll->resourceExists(r->getName())) {
+			try {
 				r_new = rmUnroll->getResource(r->getName());
-			} else {
+			}
+			catch (Exception &) {
+				// resource does not exist yet -> create it
 				r_new = &rmUnroll->makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
 			}
 			for (int i = 0; i < numSamples; i++) {
@@ -1428,17 +1430,22 @@ void Utility::printRationalIIMRT(map<HatScheT::Vertex *, int> sched, vector<map<
 		for (auto e : g->Edges()) {
 			Vertex *v_src = &e->getVertexSrc();
 			Vertex *v_dst = &e->getVertexDst();
+			if (!quiet) {
+				std::cout << "Utility::unroll: unrolling edge '" << v_src->getName() << "' -> '" << v_dst->getName() << "'"
+									<< std::endl;
+			}
 			vector<Vertex *> v_src_mappings = vertexMappings->at(v_src);
 			vector<Vertex *> v_dst_mappings = vertexMappings->at(v_dst);
 			for (int i = 0; i < v_src_mappings.size(); i++) {
-				if (e->getDistance() == 0)
-					gUnroll->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
-				else {
+				if (e->getDistance() == 0) {
+					auto &newE = gUnroll->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
+					newE.setDelay(e->getDelay());
+				} else {
 					int distance = e->getDistance();
-					auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance, i, numSamples, cycleLength);
-					auto index = sampleIndexOffset.first;
-					auto newDistance = sampleIndexOffset.second / cycleLength;
-					gUnroll->createEdge(*v_src_mappings[index], *v_dst_mappings[i], newDistance, e->getDependencyType());
+					auto sampleIndexDistance = Utility::getSampleIndexAndDistance(distance, i, numSamples);
+					auto &newE = gUnroll->createEdge(*v_src_mappings[sampleIndexDistance.first], *v_dst_mappings[i],
+																					 sampleIndexDistance.second, e->getDependencyType());
+					newE.setDelay(e->getDelay());
 				}
 			}
 		}

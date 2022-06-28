@@ -311,14 +311,24 @@ protected:
   std::set<Edge*> edges;
 
   /*!
+   * \brief A mapping between vertices and their IDs
+   */
+	std::map<int, Vertex*> verticesById;
+
+	/*!
+	 * \brief A mapping between edges and their IDs
+	 */
+	std::map<int, Edge*> edgesById;
+
+  /*!
    * \brief stores all edges that go into a given vertex (i.e., where it is the dst vertex)
    */
-  std::unordered_map<const Vertex*, std::set<Edge*>> incomingEdges;
+  std::map<const Vertex*, std::set<Edge*>> incomingEdges;
 
   /*!
    * \brief stores all edges that go out of a given vertex (i.e., where it is the src vertex)
    */
-  std::unordered_map<const Vertex*, std::set<Edge*>> outgoingEdges;
+  std::map<const Vertex*, std::set<Edge*>> outgoingEdges;
 
   /*!
    * \brief This int is used to track the next valid vertex ID

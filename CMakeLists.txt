@@ -252,6 +252,7 @@ src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/satbased/SATScheduler.h
 src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATSCCScheduler.h
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
 src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
@@ -303,6 +304,7 @@ src/HatScheT/scheduler/dev/SDSScheduler.cpp
 src/HatScheT/scheduler/satbased/SATScheduler.cpp
 src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.cpp
 src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp

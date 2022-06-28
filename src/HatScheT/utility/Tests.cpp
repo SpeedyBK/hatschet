@@ -1756,7 +1756,7 @@ namespace HatScheT {
 		cout << "Tests::uniformRationalIISchedulerTest: XERCESC parsing library is not active! This test is disabled!" << endl;
 		return false;
 #else
-		std::list<SchedulerType> intIISchedulers = {ED97, MODULOSDC, MOOVAC, SUCHAHANZALEK};
+		std::list<SchedulerType> intIISchedulers = {ED97, MODULOSDC, MOOVAC};
 #ifdef USE_CADICAL
 		intIISchedulers.emplace_back(SAT);
 #endif
