@@ -26,7 +26,7 @@ namespace HatScheT {
 			LINEAR_JUMP_LOG,
 			LOGARITHMIC
 		};
-		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel);
+		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel, int M=-1, int S=-1);
 		void scheduleIteration() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
@@ -69,15 +69,21 @@ namespace HatScheT {
 		int literalCounter;
 		int scheduleTimeLiteralCounter;
 		int bindingLiteralCounter;
+		int timeOverlapLiteralCounter;
+		int bindingOverlapLiteralCounter;
 		int clauseCounter;
 		int dependencyConstraintClauseCounter;
 		int resourceConstraintClauseCounter;
 		int scheduleTimeConstraintClauseCounter;
 		int bindingConstraintClauseCounter;
+		int timeOverlapClauseCounter;
+		int bindingOverlapClauseCounter;
 		std::map<Vertex*, int> resourceLimit;
 		std::map<Vertex*, bool> vertexIsUnlimited;
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeLiterals;
 		std::map<std::tuple<Vertex*, int, int>, int> bindingLiterals;
+		std::map<std::tuple<Vertex*, int, Vertex*, int>, int> timeOverlapLiterals;
+		std::map<std::tuple<Vertex*, int, Vertex*, int>, int> bindingOverlapLiterals;
 		std::set<int> latencyAttempts;
 		LatencyOptimizationStrategy los;
 		std::map<Vertex*, int> earliestStartTime;

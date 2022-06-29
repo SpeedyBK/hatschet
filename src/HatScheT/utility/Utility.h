@@ -38,6 +38,7 @@ namespace HatScheT
 class Utility
 {
 public:
+	static void unroll(Graph* gUnroll, ResourceModel* rmUnroll, const int &numSamples, const int &cycleLength, Graph* g, ResourceModel* rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings, const bool &quiet = true);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const int &modulo);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const int &II);
 	static int calcMinNumChainRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const std::vector<std::map<const Vertex*, int>> &binding, const int &modulo);
@@ -89,19 +90,6 @@ public:
 	 * @return number of interconnect lines between FUs
 	 */
 	static double getNumberOfFUConnections(int num2x1Muxs, Graph* g, ResourceModel* rm);
-	/*!
-	 * unroll graph with factor samples
-	 * "in C-language" this corresponds to modifying a for loop such that the number of iterations is divided by S
-	 * and S iterations of the original loop are calculated within one iteration of the new loop
-	 * vertex names are appended with "_s" with s = 0, ..., samples-1
-	 * e.g. original vertex name = asdf and samples = 3
-	 * => created vertices: asdf_0, asdf_1, asdf_2
-	 * @param g original graph
-	 * @param resourceModel original resource model
-	 * @param samples unroll factor
-	 * @return a pair of (new constructed) graph and the corresponding resource model
-	 */
-	static std::pair<Graph*, ResourceModel*> unrollGraph(Graph* g, ResourceModel* resourceModel, int samples);
 	/*!
 	 * selects a random element from a container
 	 * function definition put into header to prevent linker problems in an easy way
@@ -370,20 +358,25 @@ public:
   */
  static void printRationalIIMRT(map<Vertex*, int> sched, vector<std::map<const Vertex*,int> > ratIIbindings,
    ResourceModel* rm, int modulo, vector<int> initIntervalls);
-    /*!
-		 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
-     * this is needed for data dependency constraints
-		 * @param distance
-		 * @param sample
-		 * @return
-		 */
-    static std::pair<int, int> getSampleIndexAndOffset(int distance, int sample, int samples, int modulo);
+	/*!
+	 * for a rational II schedule this returns the sample index and the offset between two samples depending on the edge distance
+	 * this is needed for data dependency constraints
+	 * @param distance
+	 * @param sample
+	 * @return
+	 */
+	static std::pair<int, int> getSampleIndexAndOffset(int distance, const int &sample, const int &samples, const int &modulo);
+	/*!
+	 * same as above but this returns the distance of the edge in the unrolled graph instead of the offset for scheduling
+	 */
+	static std::pair<int, int> getSampleIndexAndDistance(int distance, const int &sample, const int &samples);
  /*!
   * Returns the tranposed graph of g and a map which maps the vertices of the transposed graph to the vertices of g.
   * @param g is the graph to transpose
-  * @return transposed graph
+  * @param gT is the transposed graph
+  * @return a mapping from originalVertex -> transposedVertex
   */
-  static std::pair<Graph*, map<Vertex*, Vertex*> > transposeGraph(Graph *g);
+  static std::map<Vertex*, Vertex*> transposeGraph(Graph *g, Graph* h);
 
   /*!
    * Checks if graph g has cycles. https://www.geeksforgeeks.org/detect-cycle-in-a-graph/

@@ -252,13 +252,15 @@ src/HatScheT/scheduler/dev/SDSScheduler.h
 src/HatScheT/scheduler/satbased/SATScheduler.h
 src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATSCCScheduler.h
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
+src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
 src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
-        src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h)
+src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -302,7 +304,9 @@ src/HatScheT/scheduler/dev/SDSScheduler.cpp
 src/HatScheT/scheduler/satbased/SATScheduler.cpp
 src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATCombinedScheduler.cpp
+src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.cpp
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.cpp
 )

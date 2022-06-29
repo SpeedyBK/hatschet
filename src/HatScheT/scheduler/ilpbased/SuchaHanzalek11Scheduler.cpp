@@ -29,18 +29,28 @@
 namespace HatScheT
 {
 
-SuchaHanzalek11Scheduler::SuchaHanzalek11Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) { }
+SuchaHanzalek11Scheduler::SuchaHanzalek11Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
+	: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+	this->II = -1;
+	scheduleFound = false;
+	optimalResult = true;
+	if (II <= 0) {
+		computeMinII(&g, &resourceModel);
+		this->minII = ceil(this->minII);
+		computeMaxII(&g, &resourceModel);
+	}
+	else {
+		this->minII = II;
+		this->maxII = II;
+		this->resMinII = II;
+		this->recMinII = II;
+	}
+}
 
 void SuchaHanzalek11Scheduler::schedule()
 {
   // reset previous solutions
-  II = -1;
-  startTimes.clear();
-  scheduleFound = false;
-  optimalResult = true;
-  computeMinII(&g, &resourceModel);
-  minII = ceil(minII);
-  computeMaxII(&g, &resourceModel);
+	startTimes.clear();
 
   std::cout << "SH11: min/maxII = " << minII << " " << maxII << std::endl;
 

@@ -28,6 +28,7 @@ namespace HatScheT {
 			LOGARITHMIC
 		};
 		SATScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
+		double getSolvingTime() const { return this->solvingTime; }
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);

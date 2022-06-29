@@ -26,7 +26,7 @@
 namespace HatScheT
 {
 
-RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel) :
+RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel, int M, int S) :
 	SchedulerBase(g, resourceModel), latencySequence() {
   this->modulo = -1;
   this->samples = -1;
@@ -37,15 +37,23 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 	this->s_max = -1;
 
 	this->maxLatencyConstraint = -1;
-	this->maxRuns = 1;
+	this->maxRuns = 10;
 	this->minRatIIFound = false;
 	this->scheduleValid = false;
 	this->verifySolution = true;
 
-	this->computeMinII(&this->g, &this->resourceModel);
+	pair<int, int> frac;
+	if (M <= 0 and S <= 0) {
+		// no M/S given by user
+		this->computeMinII(&this->g, &this->resourceModel);
+		frac = Utility::splitRational(this->minII);
+	}
+	else {
+		// M/S given by user
+		this->minII = ((double)M) / ((double)S);
+		frac = {M, S};
+	}
 	this->integerMinII = (int)ceil(this->minII);
-
-	pair<int, int> frac = Utility::splitRational(this->minII);
 
 	if(!this->quiet) {
 		cout << "rational min II is " << this->minII << endl;
@@ -60,26 +68,12 @@ RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &reso
 
 int RationalIISchedulerLayer::getScheduleLength() {
 	int latency = 0;
-
-	for(auto it : this->startTimesVector) {
-		int min = -1;
-		int max = 0;
-
-		for(auto it2 : it) {
-		  //init
-			if(min == -1) min = it2.second;
-
-			if(it2.second < min)
-				min = it2.second;
-			if(it2.second + this->resourceModel.getVertexLatency(it2.first) > max)
-				max = it2.second + this->resourceModel.getVertexLatency(it2.first);
+	for (auto &it : this->startTimesVector) {
+		for (auto &it2 : it) {
+			auto tEnd = it2.second + this->resourceModel.getVertexLatency(it2.first);
+			if (tEnd > latency) latency = tEnd;
 		}
-
-		int l = max - min;
-
-		if(l > latency) latency = l;
 	}
-
 	return latency;
 }
 
@@ -273,6 +267,10 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			cout << "------------------------" << endl;
 		}
 
+		// keep track of optimality
+		this->firstObjectiveOptimal = true;
+		this->secondObjectiveOptimal = true;
+
 		auto msQueue = RationalIISchedulerLayer::getRationalIIQueue(this->s_start,this->m_start,(int)ceil(double(m_start)/double(s_start)),this->s_max,this->maxRuns);
 		if(msQueue.empty()) {
 			throw HatScheT::Exception("RationalIISchedulerLayer::schedule: empty M / S queue for mMin / sMin="+to_string(this->m_start)+" / "+to_string(this->s_start));
@@ -309,56 +307,17 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			std::cout << "RationalIISchedulerLayer::verifySchedule: start verifier for II=" << this->m_found << "/" << this->s_found << std::endl;
 
 		if(this->g.isEmpty()) return true;
-		////////////////////////////////////////////////////////////////////
-		// VERIFY UNROLLED GRAPH WITH INTEGER II MODULO SCHEDULE VERIFIER //
-		////////////////////////////////////////////////////////////////////
-
-		// unroll graph and create corresponding resource model
-		auto g_rm_unrolled = Utility::unrollGraph(&this->g, &this->resourceModel, this->samples);
-		auto &g_unroll = *g_rm_unrolled.first;
-		auto &rm_unroll = *g_rm_unrolled.second;
-
-		std::map<Vertex*, int> unrolledSchedule;
-		for(unsigned int s=0; s<this->samples; ++s) {
-			for(auto it : this->startTimesVector[s]) {
-				Vertex* v = nullptr;
-				for(auto vIt : g_unroll.Vertices()) {
-					if(vIt->getName() == it.first->getName() + "_" + to_string(s))
-						v = vIt;
-				}
-
-				unrolledSchedule[v] = it.second;
-			}
-		}
-		if(!this->quiet) {
-			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED GRAPH:" << std::endl;
-			std::cout << g_unroll << std::endl;
-			std::cout << "RationalIISchedulerLayer::verifySchedule: UNROLLED RESOURCE MODEL:" << std::endl;
-			std::cout << rm_unroll << std::endl;
-		}
-		bool verifyUnrolled = verifyModuloSchedule(g_unroll,rm_unroll,unrolledSchedule,this->modulo);
-		delete &g_unroll;
-		delete &rm_unroll;
 
 		bool verifyOriginal = verifyRationalIIModuloSchedule(this->g,this->resourceModel,this->startTimesVector,this->samples,this->modulo);
 
 		if(!this->quiet) {
-			if(verifyUnrolled)
-				std::cout << "Integer II schedule for unrolled graph is verified" << std::endl;
-			else
-				std::cout << "Integer II schedule for unrolled graph is NOT verified" << std::endl;
-
 			if(verifyOriginal)
 				std::cout << "Rational II schedule for original graph is verified" << std::endl;
 			else
 				std::cout << "Rational II schedule for original graph is NOT verified" << std::endl;
 		}
 
-		if(verifyOriginal != verifyUnrolled) {
-			std::cout << "RationalIISchedulerLayer::verifySchedule: ATTENTION! Verifier for unrolled graph is not identical to rational II verifier! Rational II verifier is buggy!" << std::endl;
-		}
-
-		return verifyUnrolled and verifyOriginal;
+		return verifyOriginal;
 	}
 
 	std::map<Edge *, vector<int> > RationalIISchedulerLayer::getRatIILifeTimes() {

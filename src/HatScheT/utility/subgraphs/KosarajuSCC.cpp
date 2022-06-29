@@ -27,7 +27,6 @@ namespace HatScheT {
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
 
     this->g = &g;
-    this->gT = nullptr;
 
   }
 
@@ -64,7 +63,7 @@ namespace HatScheT {
 
     //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
     //already visited.
-    for (auto e:this->gT->Edges()) {
+    for (auto e:this->gT.Edges()) {
       if (&e->getVertexSrc() == V) {
 
         //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
@@ -101,14 +100,11 @@ namespace HatScheT {
     if(!this->quiet) cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
     //Getting the transposed graph of g. And a map, which maps the Vertices of g to the Vertices of gT.
-    auto graphMap = Utility::transposeGraph(g);
-    this->gT = graphMap.first;
-    this->VertexMap = graphMap.second;
-
+		this->VertexMap = Utility::transposeGraph(this->g, &this->gT);
 
     //Marking all Vertices of the transposed graph as unvisited
     visited.clear();
-    for (auto v:this->gT->Vertices()) {
+    for (auto v:this->gT.Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 

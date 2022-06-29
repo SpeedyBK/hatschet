@@ -86,7 +86,7 @@ namespace HatScheT {
     /*!
      * Tranposed Graph of g
      */
-    Graph* gT; //Transposed Graph
+    Graph gT; //Transposed Graph
 
     /*!
      * Mappings between the Vertices of g and gT.

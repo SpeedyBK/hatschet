@@ -25,11 +25,20 @@
 namespace HatScheT
 {
 
-MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
+MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
+  : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist)
 {
-  this->computeMinII(&g,&resourceModel);
-  this->minII = ceil(this->minII);
-  this->computeMaxII(&g,&resourceModel);
+  if (II <= 0) {
+    computeMinII(&g, &resourceModel);
+    this->minII = ceil(this->minII);
+    computeMaxII(&g, &resourceModel);
+  }
+  else {
+    this->minII = II;
+    this->maxII = II;
+    this->resMinII = II;
+    this->recMinII = II;
+  }
   if (this->minII >= this->maxII) this->maxII = this->minII+1;
   this->SLMax = 0;
 }

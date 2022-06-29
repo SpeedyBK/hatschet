@@ -285,6 +285,13 @@ public:
    */
   ResourceModel(const ResourceModel&) = delete;
   /*!
+   * resets a resource model to its default state
+   * -> clear resources
+   * -> clear registrations
+   * -> clear helper containers
+   */
+  void reset();
+  /*!
    * \brief operator <<
    * \param os
    * \param rm

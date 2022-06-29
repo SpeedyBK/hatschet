@@ -38,7 +38,7 @@ namespace HatScheT
 class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
-  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
   /*!
    * \brief schedule the schedule method of moocav will try to find the smallest possible II respecting the minII/maxII bounds iteratively.
    * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.

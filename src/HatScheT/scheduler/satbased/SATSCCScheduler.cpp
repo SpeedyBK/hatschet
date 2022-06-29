@@ -46,6 +46,9 @@ namespace HatScheT {
 	}
 
 	void SATSCCScheduler::computeSCCs() {
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: computing SCCs now" << std::endl;
+		}
 		// use kosaraju scc finder to find sccs
 		KosarajuSCC k(this->g);
 		k.setQuiet(this->quiet);
@@ -60,6 +63,7 @@ namespace HatScheT {
 			}
 			// put it into this->sccs
 			this->sccs.emplace_back(*largestSCCIt);
+			this->sccs.back()->setName("SCC_"+std::to_string(this->sccs.back()->getId()));
 			// delete it from tempSCCs
 			tempSCCs.erase(largestSCCIt);
 		}
@@ -105,6 +109,9 @@ namespace HatScheT {
 			}
 		}
 		 */
+		if (!this->quiet) {
+			std::cout << "SATSCCScheduler: finished computing SCCs" << std::endl;
+		}
 	}
 
 	void SATSCCScheduler::computeComplexSCCSchedule() {
@@ -287,7 +294,7 @@ namespace HatScheT {
 			// create a vertex for each scc
 			auto sccVertex = &sccG.createVertex(scc->getId());
 			if(!this->quiet) {
-				std::cout << "SATSCCScheduler::orderSCCs: created vertex with id " << sccVertex->getId() << std::endl;
+				std::cout << "SATSCCScheduler::orderSCCs: created vertex with id " << sccVertex->getId() << " for '" << scc->getName() << "' (" << scc << ")" << std::endl;
 			}
 			sccRm.registerVertex(sccVertex, res);
 			vertexSCCMap[sccVertex] = scc;
@@ -384,11 +391,11 @@ namespace HatScheT {
 		 * std::map<SCC*, int> sccMaxLat;
 		 * int sccGraphMaxLat;
 		 */
-		std::unordered_map<Vertex*, std::vector<Edge*>> outgoingEdges;
+		std::map<Vertex*, std::vector<Edge*>> outgoingEdges;
 #if 1
 		int sccLat;
 		int loopCounter;
-		std::unordered_map<Vertex*, bool> visited;
+		std::map<Vertex*, bool> visited;
 		std::list<Edge*> path;
 		std::function<void(Vertex*, Vertex*, int)> dfs = [&](Vertex* v, Vertex* start, int level) -> void {
 			if (visited.at(v)) {
@@ -448,7 +455,7 @@ namespace HatScheT {
 			}
 			// use SDC schedule without resource constraints with ScaLP
 			ScaLP::Solver s({"Gurobi", "CPLEX", "LPSolve", "SCIP"});
-			std::unordered_map<Vertex*, ScaLP::Variable> t;
+			std::map<Vertex*, ScaLP::Variable> t;
 			auto supersink = ScaLP::newIntegerVariable("supersink", 0.0, ScaLP::INF());
 			auto supersource = ScaLP::newIntegerVariable("supersource", -ScaLP::INF(), 0.0);
 			ScaLP::status stat;
@@ -502,7 +509,7 @@ namespace HatScheT {
 				throw Exception("SATSCCScheduler: failed to compute min times for SCC");
 			}
 			results = s.getResult().values;
-			std::unordered_map<Vertex*, int> minTimes;
+			std::map<Vertex*, int> minTimes;
 			for (auto &v : sccVertices) {
 				minTimes[v] = (int) std::round(results[t.at(v)]);
 			}
@@ -528,7 +535,7 @@ namespace HatScheT {
 				throw Exception("SATSCCScheduler: failed to compute max times for SCC");
 			}
 			results = s.getResult().values;
-			std::unordered_map<Vertex*, int> maxTimes;
+			std::map<Vertex*, int> maxTimes;
 			for (auto &v : sccVertices) {
 				maxTimes[v] = (int) std::round(results[t.at(v)]);
 			}
@@ -564,9 +571,9 @@ namespace HatScheT {
 
 			// use sources and sinks to compute max SCC latency
 			s.reset();
-			std::unordered_map<Vertex*, ScaLP::Variable> supersourceActivators;
+			std::map<Vertex*, ScaLP::Variable> supersourceActivators;
 			ScaLP::Term sourceTerm;
-			std::unordered_map<Vertex*, ScaLP::Variable> supersinkActivators;
+			std::map<Vertex*, ScaLP::Variable> supersinkActivators;
 			ScaLP::Term sinkTerm;
 			double bigM = 1000000.0; // something huge... -> maybe think about something that always works
 			for (auto &v : sources) {
@@ -646,10 +653,7 @@ namespace HatScheT {
 									<< sccVertices.size() << " vertices and " << sccEdges.size() << " edges (" << dataEdgeCounter
 									<< " data edges)" << std::endl;
 			}
-#if 1 // 1: max latency; 0: DFS
 			sccLat = getMaxSCCLatency(sccVertices, sccEdges);
-			std::cout << "  SCC latency = " << sccLat << " (dTotal*II = " << totalDistance << "*" << this->II << ")" << std::endl;
-			// std::pair<std::map<Vertex*, int>, std::map<Vertex*, int>> getMinMaxSCCStartTimes(const std::list<Vertex*> &sccVertices, const std::list<Edge*> &sccEdges, const int &maxLat);
 			auto minMaxSCCStartTimes = this->getMinMaxSCCStartTimes(sccVertices, sccEdges, sccLat);
 			for (auto &v : sccVertices) {
 				if (this->vertexToSCCVertexMap.find(v) == this->vertexToSCCVertexMap.end()) continue; // skip trivial SCCs
@@ -657,25 +661,7 @@ namespace HatScheT {
 				this->earliestStartTimes[sccV] = minMaxSCCStartTimes.first.at(v);
 				this->latestStartTimes[sccV] = minMaxSCCStartTimes.second.at(v);
 				this->latestStartTimeDifferences[sccV] = sccLat - minMaxSCCStartTimes.second.at(v);
-				/*
-				this->earliestStartTimes[sccV] = 0;
-				this->latestStartTimes[sccV] = sccLat - this->resourceModel.getVertexLatency(v);
-				this->latestStartTimeDifferences[sccV] = this->resourceModel.getVertexLatency(v);
-				 */
 			}
-#else
-			// perform DFS starting at each vertex of the SCC
-			loopCounter = 0;
-			for (auto &v : sccVertices) {
-				if (!this->quiet) {
-					std::cout << "  starting DFS at vertex " << v->getName() << std::endl;
-				}
-				dfs(v, v, 0);
-			}
-			if (!this->quiet) {
-				std::cout << "  found " << loopCounter << " loops" << std::endl;
-			}
-#endif
 			// set maximum latency of the whole graph if needed
 			this->sccMaxLat[scc] = sccLat;
 			if (sccLat > this->sccGraphMaxLat) this->sccGraphMaxLat = sccLat;
@@ -1008,7 +994,7 @@ namespace HatScheT {
 			if (!this->quiet) {
 				std::cout << "SATSCCScheduler: found basic SCC with following vertices" << std::endl;
 			}
-			std::unordered_map<Vertex*, ScaLP::Variable> vars;
+			std::map<Vertex*, ScaLP::Variable> vars;
 			ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink", 0.0, ScaLP::INF());
 			auto solver = ScaLP::Solver({"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 			for (auto &v : g->Vertices()) {

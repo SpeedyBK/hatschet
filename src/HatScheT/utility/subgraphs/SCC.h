@@ -115,6 +115,11 @@ namespace HatScheT {
      */
     void printVertexStatus();
 
+    /*!
+     * prints info about vertices and edges of this SCC -> used for debugging
+     */
+    void printInfo();
+
 
   private:
 

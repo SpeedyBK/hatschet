@@ -27,7 +27,7 @@ namespace HatScheT {
 		 * @param resourceModel
 		 * @param solverWishlist
 		 */
-		PBScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+		PBScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
 		/*!
 		 * \brief Attempts to schedule the given instances
 		 */

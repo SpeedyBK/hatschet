@@ -339,4 +339,17 @@ int ResourceModel::getVertexLatency(const Vertex *v) const
   throw HatScheT::Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
 }
 
+	void ResourceModel::reset() {
+		for (auto &r : this->resources) {
+			delete r;
+		}
+		this->resources.clear();
+		for (auto &t : this->tables) {
+			delete t;
+		}
+		this->tables.clear();
+		this->registrations.clear();
+		this->reverseRegistrations.clear();
+	}
+
 }

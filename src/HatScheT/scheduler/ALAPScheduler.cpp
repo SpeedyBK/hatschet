@@ -33,72 +33,86 @@ ALAPScheduler::ALAPScheduler(Graph &g, ResourceModel &resourceModel) : Scheduler
 
 void ALAPScheduler::schedule()
 {
-  std::stack<Vertex*> stack;
-  std::map<Vertex*,int> ouput_counts;
+	std::stack<Vertex*> stack;
+	std::map<Vertex*,int> ouput_counts;
 
-  //initialize vertices
-  for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
-    Vertex* v = *it;
-    this->startTimes.emplace(v,1);
+	//initialize vertices
+	for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
+		Vertex* v = *it;
+		this->startTimes.emplace(v,1);
 
-    int outputCount = Utility::getNoOfOutputsWithoutDistance(&this->g,v);
-    ouput_counts.emplace(v,outputCount);
+		int outputCount = Utility::getNoOfOutputsWithoutDistance(&this->g,v);
+		ouput_counts.emplace(v,outputCount);
 
-    // put nodes without outport to the stack, start ALAP schedule with them
-    if(outputCount==0)
-    {
-      //check for limited resources with no inputs
-      int time = 0;
-      const Resource* r = this->resourceModel.getResource(v);
-      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time)  == false) {
-        time--;
-      }
+		// put nodes without outport to the stack, start ALAP schedule with them
+		if(outputCount==0)
+		{
+			//check for limited resources with no inputs
+			const Resource* r = this->resourceModel.getResource(v);
+			int time = 0 - r->getLatency();
+			while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time)  == false) {
+				time--;
+			}
 
-      this->startTimes[v] = time;
-      stack.push(v);
-    }
-  }
+			this->startTimes[v] = time;
+			stack.push(v);
+		}
+	}
 
-  //schedule
-  while(stack.empty()==false){
-    Vertex* v = stack.top();
-    stack.pop();
+	//schedule
+	while(stack.empty()==false){
+		Vertex* v = stack.top();
+		stack.pop();
 
-    set<Vertex*> procVertices = this->g.getPredecessors(v);
+		set<Vertex*> procVertices = this->g.getPredecessors(v);
 
-    for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
-      Vertex* procV = *it;
-      const Resource* r = this->resourceModel.getResource(procV);
-      std::list<const Edge *> edges = this->g.getEdges(procV, v);
+		for(auto it=procVertices.begin(); it!=procVertices.end(); ++it){
+			Vertex* procV = *it;
+			const Resource* r = this->resourceModel.getResource(procV);
+			std::list<const Edge *> edges = this->g.getEdges(procV, v);
 
-      //algorithmic delays are considered as inputs to the circuit
-      for (auto it = edges.begin(); it != edges.end(); ++it) {
-        const Edge *e = *it;
-        if (e->getDistance() > 0) {
-          continue;
-        }
+			//algorithmic delays are considered as inputs to the circuit
+			for (auto it = edges.begin(); it != edges.end(); ++it) {
+				const Edge *e = *it;
+				if (e->getDistance() > 0) {
+					continue;
+				}
 
-        //set start time
-        int time = std::min(this->startTimes[v] - r->getLatency() - e->getDelay(), this->startTimes[procV]);
+				//set start time
+				int time = std::min(this->startTimes[v] - r->getLatency() - e->getDelay(), this->startTimes[procV]);
 
-        while (Utility::resourceAvailable(this->startTimes, &this->resourceModel, r, v, time) == false) {
-          time--;
-        }
+				while (Utility::resourceAvailable(this->startTimes, &this->resourceModel, r, v, time) == false) {
+					time--;
+				}
 
-        this->startTimes[procV] = time;
-        ouput_counts[procV]--;
-        // if there are no more outputs left, add to the stack
-        if (ouput_counts[procV] == 0) {
-          stack.push(procV);
-        }
-      }
-    }
-  }
+				this->startTimes[procV] = time;
+				ouput_counts[procV]--;
+				// if there are no more outputs left, add to the stack
+				if (ouput_counts[procV] == 0) {
+					stack.push(procV);
+				}
+			}
+		}
+	}
 
-  int offset=0;
+	if (!this->quiet) {
+		std::cout << "ALAPScheduler: finished computing schedule (subject to offset):" << std::endl;
+		for (auto &v : this->g.Vertices()) {
+			std::cout << "  " << v->getName() << " - " << this->startTimes.at(v) << std::endl;
+		}
+	}
 
-  for(const auto &p:this->startTimes) offset = std::min(offset,p.second);
-  for(auto &p:this->startTimes) p.second -=offset;
+	int offset=0;
+
+	for(const auto &p:this->startTimes) offset = std::min(offset,p.second);
+	for(auto &p:this->startTimes) p.second -=offset;
+
+	if (!this->quiet) {
+		std::cout << "ALAPScheduler: finished applying offset (" << offset << "):" << std::endl;
+		for (auto &v : this->g.Vertices()) {
+			std::cout << "  " << v->getName() << " - " << this->startTimes.at(v) << std::endl;
+		}
+	}
 
   this->II = this->getScheduleLength();
   //if(this->II >= 1) this->scheduleFound = true; // nfiege: why should II >= 1 be necessary?!

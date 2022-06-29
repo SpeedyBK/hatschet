@@ -19,7 +19,8 @@
 namespace HatScheT {
 	class SATCombinedScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
-		SATCombinedScheduler(Graph& g, ResourceModel &resourceModel);
+		SATCombinedScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
+		double getSolvingTime() const { return this->solvingTime; }
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 	private:

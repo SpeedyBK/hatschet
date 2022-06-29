@@ -30,16 +30,25 @@
 namespace HatScheT
 {
 
-EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+EichenbergerDavidson97Scheduler::EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
+  : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
   // reset previous solutions
-  II = -1;
+  this->II = -1;
   this->timeouts = 0;
   startTimes.clear();
   scheduleFound = false;
   optimalResult = true;
-  computeMinII(&g, &resourceModel);
-  minII = ceil(minII);
-  computeMaxII(&g, &resourceModel);
+  if (II <= 0) {
+    computeMinII(&g, &resourceModel);
+    this->minII = ceil(this->minII);
+    computeMaxII(&g, &resourceModel);
+  }
+  else {
+    this->minII = II;
+    this->maxII = II;
+    this->resMinII = II;
+    this->recMinII = II;
+  }
 }
 
 void EichenbergerDavidson97Scheduler::schedule()
@@ -175,17 +184,8 @@ void EichenbergerDavidson97Scheduler::setObjective()
       */
 
     // now, let's do it correctly
-    bool skipMe = false;
-    for (auto &e : g.Edges()) {
-      if (&e->getVertexSrc() == i and e->getDistance() == 0) {
-      	// the given vertex has an outgoing edge with a distance of 0
-      	// no need to connect it to the supersink!
-				skipMe = true;
-				break;
-      }
-    }
-    if (skipMe) continue;
-    solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+    if (g.hasNoNonZeroDistanceOutgoingEdges(i))
+    	solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
   }
   solver->setObjective(ScaLP::minimize(ss));
 }

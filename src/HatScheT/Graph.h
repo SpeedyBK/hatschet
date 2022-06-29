@@ -56,6 +56,14 @@ public:
    * copy constructor is forbidden for this class
    */
    Graph(const Graph&) = delete;
+   /*!
+    * resets the graph to its default state
+    * -> clear all vertices and edges
+    * -> reset all counters
+    * -> clear all helper containers
+    * -> but keep the name
+    */
+   void reset();
   /*!
    * Creates a vertex, assigns a non-existing id and inserts it in the graph
    *G
@@ -115,6 +123,18 @@ public:
    * \return true if v has no outgoing edges, false otherwise
    */
   bool isSinkVertex(Vertex* v);
+  /*!
+   * \brief determines whether the given vertex has not a single outgoing edge with a distance of zero
+   * \param v the vertex to inspect
+   * \return true if v has no outgoing edges with distance=0
+   */
+  bool hasNoNonZeroDistanceOutgoingEdges(Vertex* v);
+	/*!
+	 * \brief determines whether the given vertex has not a single incoming edge with a distance of zero
+	 * \param v the vertex to inspect
+	 * \return true if v has no incoming edges with distance=0
+	 */
+  bool hasNoNonZeroDistanceIncomingEdges(Vertex* v);
   /*!
    * \brief looks up the vertex with the given ID
    * \param id the ID to find
@@ -291,14 +311,24 @@ protected:
   std::set<Edge*> edges;
 
   /*!
+   * \brief A mapping between vertices and their IDs
+   */
+	std::map<int, Vertex*> verticesById;
+
+	/*!
+	 * \brief A mapping between edges and their IDs
+	 */
+	std::map<int, Edge*> edgesById;
+
+  /*!
    * \brief stores all edges that go into a given vertex (i.e., where it is the dst vertex)
    */
-  std::unordered_map<const Vertex*, std::set<Edge*>> incomingEdges;
+  std::map<const Vertex*, std::set<Edge*>> incomingEdges;
 
   /*!
    * \brief stores all edges that go out of a given vertex (i.e., where it is the src vertex)
    */
-  std::unordered_map<const Vertex*, std::set<Edge*>> outgoingEdges;
+  std::map<const Vertex*, std::set<Edge*>> outgoingEdges;
 
   /*!
    * \brief This int is used to track the next valid vertex ID
