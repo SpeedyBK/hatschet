@@ -3,7 +3,7 @@
 //
 
 #ifdef USE_Z3
-#include "SMTSmartieScheduler.h"
+#include "SMTBinaryScheduler.h"
 #include "HatScheT/utility/Exception.h"
 
 #include "HatScheT/scheduler/ASAPScheduler.h"
@@ -18,7 +18,7 @@
 
 namespace HatScheT {
 
-  SMTSmartieScheduler::SMTSmartieScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
+  SMTBinaryScheduler::SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
       // reset previous solutions
       this->timeouts = -1;
       startTimes.clear();
@@ -28,22 +28,26 @@ namespace HatScheT {
       computeMaxII(&g, &resourceModel);
 
       quiet = true;
-      iiSM = iiSearchMethod::linear;
       for (int i = (int)minII; i <= (int)maxII; i++){
           this->II_space.push_back(i);
       }
       II_space_index = 0;
 
-      latSM = latSearchMethod::linear;
-      this->latency_space_index = 0;
+      latSM = latSearchMethod::binary;
+      if (latSM == latSearchMethod::linear) { this->latency_space_index = 0; }
       this->candidateLatency = -1;
       this->min_Latency = 0;
       this->max_Latency = -1;
       this->maxRuns = INT32_MAX;
+      this->left_index = 0;
+      this->right_index = 0;
+
+      binary_search_init = true;
+      ii_search_init = true;
 
   }
 
-  void SMTSmartieScheduler::schedule() {
+  void SMTBinaryScheduler::schedule() {
 
       cout << "Rec-Min-II: " << recMinII << endl;
       cout << "Res-Min-II: " << resMinII << endl;
@@ -71,8 +75,8 @@ namespace HatScheT {
       s.set(p);
 
       //Calculating Latency-Space:
-      calcMaxLatency();
       find_earliest_start_times();
+      calcMaxLatency();
       calcLatencySpace();
       find_latest_start_times();
 
@@ -86,8 +90,7 @@ namespace HatScheT {
       int i = 0;
       while (i < maxRuns) {
           candidateIIOLD = candidateII;
-          if (iiSM == iiSearchMethod::binary) { candidateII = ii_binary_search(sati); }
-          if (iiSM == iiSearchMethod::linear) { candidateII = ii_linear_search(sati); }
+          candidateII = ii_linear_search(sati);
 
           if (candidateII == -1){
               break;
@@ -95,6 +98,7 @@ namespace HatScheT {
           if (!quiet) { cout << "Trying II: " << candidateII << endl; }
           calcLatencySpace();
           while (true){
+              cout << " -------------------------------- " << endl;
               if (latSM == latSearchMethod::linear) { candidateLatency = lat_linear_search(sati); }
               if (latSM == latSearchMethod::binary) { candidateLatency = lat_binary_search(sati); }
 
@@ -102,6 +106,7 @@ namespace HatScheT {
                   candidateLatency = 0;
                   break;
               }
+
               if (!quiet) { cout << "Trying Latency: " << candidateLatency << endl; }
               find_latest_start_times();
               if (!quiet) { cout << "Generating b-variables... " << endl; }
@@ -116,14 +121,23 @@ namespace HatScheT {
               if (!quiet) { cout << "Prohibit late starts... " << endl; }
               prohibit_to_late_starts_and_add(s);
 
+              if (unsat_check_shortcut()){
+                  sati = z3::unsat;
+                  continue;
+              }
+
+              //if (!quiet) { print_ASAP_ALAP_restictions(); }
+
               if (!quiet) { cout << "Add one-slot-constraints... " << endl; }
               add_one_slot_constraints_to_solver(s);
+
               if (!quiet) { cout << "Add resource-constraints... " << endl; }
               add_resource_limit_constraint_to_solver(s, candidateII);
 
               if (!quiet) { cout << "Add dependency-constraints... " << endl; }
               set_b_variables(s, candidateII);
 
+              if (!quiet) { cout << "System of " << s.assertions().size() << " assertions..." << endl; }
               if (!quiet) { cout << "Solving... " << endl; }
               start = clock();
               sati = s.check();
@@ -134,7 +148,13 @@ namespace HatScheT {
                        << setprecision(5) << " sec " << endl;
               }
               if (sati == z3::sat){
-                  break;
+                  m = s.get_model();
+                  parse_schedule(m);
+              }
+              if (latSM == latSearchMethod::linear) {
+                  if (sati == z3::sat) {
+                      break;
+                  }
               }
           }
           i++;
@@ -148,12 +168,12 @@ namespace HatScheT {
       this->scheduleFound = true;
   }
 
-  void SMTSmartieScheduler::find_earliest_start_times() {
+  void SMTBinaryScheduler::find_earliest_start_times() {
 
       map<Resource*, int> original_limits;
       for(auto &r : resourceModel.Resources()){
           original_limits[r] = r->getLimit();
-          r->setLimit(UNLIMITED);
+          r->setLimit(UNLIMITED, false);
       }
 
       ASAPScheduler asap(g, resourceModel);
@@ -162,71 +182,36 @@ namespace HatScheT {
       this->min_Latency = asap.getScheduleLength();
 
       for(auto &r : resourceModel.Resources()){
-          r->setLimit(original_limits.at(r));
+          r->setLimit(original_limits.at(r), false);
       }
   }
 
-  void SMTSmartieScheduler::find_latest_start_times() {
+  void SMTBinaryScheduler::find_latest_start_times() {
       map<Resource*, int> original_limits;
       for(auto &r : resourceModel.Resources()){
           original_limits[r] = r->getLimit();
-          r->setLimit(UNLIMITED);
+          r->setLimit(UNLIMITED, false);
       }
 
       ALAPScheduler alap(g, resourceModel);
       alap.schedule();
-      //this->latest_start_times = alap.getSchedule();
       auto alap_schedule = alap.getSchedule();
       auto alap_schedule_length = alap.getScheduleLength();
       latest_start_times = alap_schedule;
 
       for (auto &it: latest_start_times) {
-          /*if (!quiet) {
-              cout << "Bobble: " << it.first->getName() << " | "
-                   << it.second - alap_schedule_length + this->candidateLatency
-                   << " UpperBound: " << this->candidateLatency << endl;
-          }*/
           this->latest_start_times.at(it.first) = it.second - alap_schedule_length + this->candidateLatency;
       }
 
       for (auto &r : resourceModel.Resources()) {
-          r->setLimit(original_limits.at(r));
+          r->setLimit(original_limits.at(r), false);
       }
   }
 
-  void SMTSmartieScheduler::calcMaxLatency() {
+  void SMTBinaryScheduler::calcMaxLatency() {
       // check if max latency was set by user
       if (this->max_Latency >= 0) return;
-      // use upper limit from Equation (6) in:
-      // [1] J. Oppermann, M. Reuter-Oppermann, L. Sommer, A. Koch, and O. Sinnen,
-      // ‘Exact and Practical Modulo Scheduling for High-Level Synthesis’,
-      // ACM Transactions on Reconfigurable Technology and Systems, vol. 12, no. 2, p. 26.
       this->max_Latency = 0;
-      /*for (auto &v : this->g.Vertices()) {
-          int maxChainingDelay = 0;
-          for (auto &e : this->g.Edges()) {
-              if (&e->getVertexSrc() != v) {
-                  continue;
-              }
-              auto d = e->getDelay();
-              if (d > maxChainingDelay) {
-                  maxChainingDelay = d;
-              }
-          }
-          this->max_Latency += (this->resourceModel.getVertexLatency(v));
-      }
-      for (auto &r : this->resourceModel.Resources()) {
-          if (r->isUnlimited()) {
-              continue;
-          }
-          auto numRegistrations = this->resourceModel.getNumVerticesRegisteredToResource(r);
-          auto limit = (float) r->getLimit();
-          for (int i = 0; i < numRegistrations; i++) {
-              this->max_Latency += (int) floor((float) i / limit);
-          }
-      }
-      if (!quiet) { cout << "Max Latency: " << max_Latency << endl; }*/
-
       int resMaxLat = 0;
       for (auto &r : resourceModel.Resources()){
           if (r->getLatency() > resMaxLat){
@@ -234,11 +219,12 @@ namespace HatScheT {
           }
       }
 
-      max_Latency = (resMaxLat + 1) * (int)g.getNumberOfVertices();
+      //max_Latency = (resMaxLat+1) * (int)g.getNumberOfVertices();
+      max_Latency = min_Latency + II_space.at(0);
       if (!quiet) { cout << "Max Latency: " << max_Latency << endl; }
   }
 
-  void SMTSmartieScheduler::prohibit_to_early_starts_and_add(z3::solver &s) {
+  void SMTBinaryScheduler::prohibit_to_early_starts_and_add(z3::solver &s) {
       start_times_simplification.clear();
       for (auto &v : g.Vertices()){
           for (int i = 0; i < candidateLatency; i++){
@@ -252,7 +238,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::prohibit_to_late_starts_and_add(z3::solver &s) {
+  void SMTBinaryScheduler::prohibit_to_late_starts_and_add(z3::solver &s) {
       for (auto &v : g.Vertices()){
           for (int i = 0; i < candidateLatency; i++){
               //if (i > latest_start_times.at(v)+offset){
@@ -264,7 +250,7 @@ namespace HatScheT {
       }
   }
 
-  z3::expr *SMTSmartieScheduler::get_b_variable(Vertex *v, int i) {
+  z3::expr *SMTBinaryScheduler::get_b_variable(Vertex *v, int i) {
       auto key = std::make_pair(v, i);
       try {
           return &b_variables.at(key);
@@ -274,7 +260,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::generate_b_variables() {
+  void SMTBinaryScheduler::generate_b_variables() {
       b_variables.clear();
       for (auto &it : g.Vertices()){
           for (int i = 0; i < candidateLatency; i++){
@@ -287,7 +273,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::set_b_variables(z3::solver &s, const int &candidateII) {
+  void SMTBinaryScheduler::set_b_variables(z3::solver &s, const int &candidateII) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
 
       for (auto &e : g.Edges()) {
@@ -316,23 +302,28 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::add_one_slot_constraints_to_solver(z3::solver &s) {
+  void SMTBinaryScheduler::add_one_slot_constraints_to_solver(z3::solver &s) {
       for (auto &it : g.Vertices()) {
 
           vector<int> coefficients;
           coefficients.reserve(candidateLatency);
           z3::expr_vector b_expressions(c);
           for (int i = 0; i < candidateLatency; i++) {
+              if (!start_times_simplification.at(std::make_pair((Vertex *)it, i))){
+                  continue;
+              }
               coefficients.push_back(1);
               b_expressions.push_back(*get_b_variable(it, i));
           }
-          s.add(z3::pbeq(b_expressions, &coefficients[0], 1));
+          if (!b_expressions.empty()) {
+              s.add(z3::pbeq(b_expressions, &coefficients[0], 1));
+          }
           coefficients.clear();
           coefficients.shrink_to_fit();
       }
   }
 
-  void SMTSmartieScheduler::add_resource_limit_constraint_to_solver(z3::solver &s, int candidateII) {
+  void SMTBinaryScheduler::add_resource_limit_constraint_to_solver(z3::solver &s, int candidateII) {
       for (auto &it : resourceModel.Resources()) {
           if (it->isUnlimited()) {
               continue;
@@ -345,16 +336,22 @@ namespace HatScheT {
                       if ((j % candidateII) != i) {
                           continue;
                       }
+                      if (!start_times_simplification.at(std::make_pair((Vertex*)vIt, j))){
+                          continue;
+                      }
                       b_expressions.push_back(*get_b_variable((Vertex *) vIt, j));
                   }
               }
-              //cout << b_expressions.size() << "Type: " << it->getName() << "Limit: " << it->getLimit() << "i: " << i << endl;
-              s.add(z3::atmost(b_expressions, it->getLimit()));
+              /*cout << b_expressions.size() << " Type: " << it->getName() << " Limit: " << it->getLimit() << " i: " << i
+                   << endl;*/
+              if (!b_expressions.empty()) {
+                  s.add(z3::atmost(b_expressions, it->getLimit()));
+              }
           }
       }
   }
 
-  void SMTSmartieScheduler::print_b_variables() {
+  void SMTBinaryScheduler::print_b_variables() {
       for (auto &it:g.Vertices()){
           for (int i = 0; i < candidateLatency; i++){
               cout << *get_b_variable(it, i) << endl;
@@ -362,7 +359,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::print_solution(z3::model &m) {
+  void SMTBinaryScheduler::print_solution(z3::model &m) {
       for (auto &it : g.Vertices()){
           for (int i = 0; i < candidateLatency; i++) {
               auto val = m.eval(*get_b_variable(it, i));
@@ -373,7 +370,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::parse_schedule(z3::model &m) {
+  void SMTBinaryScheduler::parse_schedule(z3::model &m) {
       for (auto &it : g.Vertices()){
           for (int i = 0; i < candidateLatency; i++) {
               auto val = m.eval(*get_b_variable(it, i));
@@ -384,62 +381,17 @@ namespace HatScheT {
       }
   }
 
-  int SMTSmartieScheduler::ii_binary_search(z3::check_result result) {
-      if (II_space.size() > 2) {
-          if (result == z3::unknown) {
-              II_space_index = (int) (II_space.size() / 2);
-              return II_space.at(II_space_index);
-          } else if (result == z3::unsat) {
-              //In this case, we know, that we have to search in the right half of our Array. Excluding the last Value.
-              vector<int> temp;
-              temp.resize(II_space.size() - (II_space_index));
-              for (int i = II_space_index; i < II_space.size(); i++) {
-                  temp.at(i - (II_space_index)) = II_space.at(i);
-              }
-              II_space.clear();
-              II_space.resize(temp.size());
-              II_space = temp;
-              II_space_index = floor(II_space.size() / 2);
-              return II_space.at(II_space_index);
-          } else if (result == z3::sat) {
-              //In this case, we know, that we have to search in the left half of our Array. Including the last Value.
-              vector<int> temp;
-              temp.resize(II_space_index + 1);
-              for (int i = 0; i <= II_space_index; i++) {
-                  temp.at(i) = II_space.at(i);
-              }
-              II_space.clear();
-              II_space.resize(temp.size());
-              II_space = temp;
-              II_space_index = floor(II_space.size() / 2);
-              return II_space.at(II_space_index);
-          }
-      } else if (II_space.size() == 2) {
-          int val = 0;
-          if (result == z3::sat) {
-              val = II_space.at(0);
-          } else {
-              val = II_space.at(1);
-          }
-          II_space.clear();
-          II_space.shrink_to_fit();
-          return val;
-      }else if(II_space.size() == 1){
-          int val = II_space.at(0);
-          II_space.clear();
-          II_space.shrink_to_fit();
-          return val;
-      }else{
-          return -1;
-      }
-      throw (HatScheT::Exception("SMT-Scheduler, II-Binary search, this should never happen!"));
-  }
-
-  int SMTSmartieScheduler::ii_linear_search(z3::check_result result) {
+  int SMTBinaryScheduler::ii_linear_search(z3::check_result result) {
       if (result == z3::sat) {
           return -1;
       }else if (result == z3::unknown){
-          return II_space.at(0);
+          if (ii_search_init) {
+              ii_search_init = false;
+              return II_space.at(0);
+          }
+          int index = II_space_index;
+          II_space_index++;
+          return II_space.at(index);
       }else{
           int index = II_space_index;
           II_space_index++;
@@ -447,11 +399,11 @@ namespace HatScheT {
       }
   }
 
-  void SMTSmartieScheduler::setSolverTimeout(unsigned int seconds) {
+  void SMTBinaryScheduler::setSolverTimeout(unsigned int seconds) {
       this->timeouts = seconds*1000;
   }
 
-  int SMTSmartieScheduler::lat_linear_search(z3::check_result result) {
+  int SMTBinaryScheduler::lat_linear_search(z3::check_result result) {
       if (result == z3::sat) {
           return -1;
       }
@@ -464,69 +416,89 @@ namespace HatScheT {
       return latency_Space.at(temp);
   }
 
-  int SMTSmartieScheduler::lat_binary_search(z3::check_result result) {
-      //todo has to be fixed
-      if (latency_Space.size() > 2) {
-          if (result == z3::unknown) {
-              latency_space_index = (int) (latency_Space.size() / 8);
-              return latency_Space.at(latency_space_index);
-          } else if (result == z3::unsat) {
-              //In this case, we know, that we have to search in the right half of our Array. Excluding the last Value.
-              vector<int> temp;
-              temp.resize(latency_Space.size() - (latency_space_index));
-              for (int i = latency_space_index; i < latency_Space.size(); i++) {
-                  temp.at(i - (latency_space_index)) = latency_Space.at(i);
-              }
-              latency_Space.clear();
-              latency_Space.resize(temp.size());
-              latency_Space = temp;
-              latency_space_index = floor(latency_Space.size() / 2);
-              return latency_Space.at(latency_space_index);
-          } else if (result == z3::sat) {
-              //In this case, we know, that we have to search in the left half of our Array. Including the last Value.
-              vector<int> temp;
-              temp.resize(latency_space_index + 1);
-              for (int i = 0; i <= latency_space_index; i++) {
-                  temp.at(i) = latency_Space.at(i);
-              }
-              latency_Space.clear();
-              latency_Space.resize(temp.size());
-              latency_Space = temp;
-              latency_space_index = floor(latency_Space.size() / 2);
-              return latency_Space.at(latency_space_index);
-          }
-      } else if (latency_Space.size() == 2) {
-          int val = 0;
-          if (result == z3::sat) {
-              val = latency_Space.at(0);
-          } else {
-              val = latency_Space.at(1);
-          }
-          latency_Space.clear();
-          latency_Space.shrink_to_fit();
-          return val;
-      }else if(latency_Space.size() == 1){
-          int val = latency_Space.at(0);
-          latency_Space.clear();
-          latency_Space.shrink_to_fit();
-          return val;
-      }else{
-          return -1;
-      }
-      throw (HatScheT::Exception("SMT-Scheduler, II-Binary search, this should never happen!"));
-  }
-
-  void SMTSmartieScheduler::calcLatencySpace() {
+  void SMTBinaryScheduler::calcLatencySpace() {
       latency_Space.clear();
       latency_Space.shrink_to_fit();
       if (min_Latency < (int)minII){
           min_Latency = (int)minII;
       }
-      latency_Space.reserve(max_Latency - min_Latency);
-      for (int i = min_Latency; i < max_Latency; i++){
+      latency_Space.reserve((max_Latency - min_Latency)+1);
+      for (int i = min_Latency; i <= max_Latency; i++){
           latency_Space.push_back(i);
       }
   }
+
+  void SMTBinaryScheduler::print_ASAP_ALAP_restictions() {
+      for (auto &it : start_times_simplification){
+          cout << it.first.first->getName() << " <" << it.first.second << "> " << it.second << endl;
+      }
+  }
+
+  bool SMTBinaryScheduler::unsat_check_shortcut() {
+      for (auto &vIt : g.Vertices()){
+          int count = 0;
+          for(int lIt = 0; lIt < candidateLatency; lIt++){
+              //cout << vIt->getName() << " <" << lIt << "> " << endl; //(int)start_times_simplification.at(std::make_pair((Vertex*)vIt, lIt)) << endl;
+              count += (int)start_times_simplification.at(std::make_pair(vIt, lIt));
+          }
+          if (count == 0){
+              return true;
+          }
+      }
+      return false;
+  }
+
+  int SMTBinaryScheduler::lat_binary_search(z3::check_result satisfiable) {
+      //if (!quiet) { print_latency_space(0, (int)latency_Space.size()); }
+      if (binary_search_init) {
+          if (!quiet) { cout << "Init Binary Search..." << endl; }
+          binary_search_init = false;
+          latency_space_index = (int)latency_Space.size()/2;
+          left_index = 0;
+          right_index = (int)latency_Space.size()-1;
+          return latency_Space.at(latency_space_index);
+      }
+      if (left_index < right_index) {
+          switch (satisfiable) {
+              case z3::sat:
+                  //cout << "--> Sat <--" << endl;
+                  right_index = latency_space_index;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+              case z3::unsat:
+                  //cout << "--> Unsat <--" << endl;
+                  left_index = latency_space_index + 1;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+              case z3::unknown:
+                  //cout << "--> Unknown <--" << endl;
+                  left_index = latency_space_index + 1;
+                  latency_space_index = left_index + (right_index-left_index)/2;
+                  break;
+          }
+          //if (!quiet) { cout << "Left Index: " << left_index << " Right Index: " << right_index << endl; }
+          //if (!quiet) { cout << "Index: " << latency_space_index << endl; }
+          //if (!quiet) { cout << "Returnvalue: " << latency_Space.at(latency_space_index) << endl; }
+          return latency_Space.at(latency_space_index);
+      }
+      binary_search_init = true;
+      return -1;
+  }
+
+  void SMTBinaryScheduler::print_latency_space(int l_index, int r_index) {
+      for (int i = l_index; i < r_index; i++){
+          cout << latency_Space.at(i) << " ";
+      }
+      cout << endl;
+  }
+
+  z3::check_result SMTBinaryScheduler::test_binary_search(int value_to_check, int target_value) {
+      if (value_to_check < target_value){
+          return z3::unsat;
+      }
+      return z3::sat;
+  }
+
 }
 #endif
 

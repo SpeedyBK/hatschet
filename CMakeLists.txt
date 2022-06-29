@@ -260,7 +260,7 @@ src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
 src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
-src/HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h)
+src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -315,7 +315,7 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 IF(${Z3_FOUND})
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/dev/SMT/SMTModScheduler.cpp
-            src/HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.cpp)
+            src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.cpp)
 ENDIF(${Z3_FOUND})
 
 add_library(hatschet ${HatScheT_SOURCES})

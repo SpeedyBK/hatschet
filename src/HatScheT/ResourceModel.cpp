@@ -123,7 +123,7 @@ bool ResourceModel::resourceExists(std::string name) {
 
 void Resource::setLimit(int l, const bool &safe)
 {
-  if(safe and this->name=="special_loop" and l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
+  if(safe and this->name=="special_loop" and l!=1) throw Exception(this->name + ".setLimit: ERROR it is not allowed to limit other than 1 to this resource!");
   if(this->blockingTime==0 && l!=-1) {
     cout << this->name << ".setLimit: WARNING setting this resource limit to a limited value and a blocking time of 0 was detected! Blocking time set to 1!";
     this->blockingTime = 1;

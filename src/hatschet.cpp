@@ -90,7 +90,7 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
 
 #endif
 
@@ -501,8 +501,6 @@ int main(int argc, char *args[]) {
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 				if (str == "SMTED97" && !HatScheT::Tests::smtVsED97Test()) exit(-1);
 				if (str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
-#else
-				//throw HatScheT::Exception("z3 not active! Test function disabled!"); //TODO Check that with Nico.
 #endif
 
 				exit(0);
@@ -932,11 +930,19 @@ int main(int argc, char *args[]) {
 					break;
 				}
 #ifdef USE_Z3
+<<<<<<< HEAD
 					case SMT:
 							scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
 							isModuloScheduler = true;
 							if (timeout > 0) ((HatScheT::SMTSmartieScheduler *) scheduler)->setSolverTimeout(timeout);
 							break;
+=======
+                case SMT:
+                    scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
+                    isModuloScheduler = true;
+                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler *) scheduler)->setSolverTimeout(timeout);
+                    break;
+>>>>>>> 7cc9e817e6a356e1c546309c2febdec1d0090654
 #else
 				case SMT:
 					throw HatScheT::Exception("scheduler " + schedulerSelectionStr +

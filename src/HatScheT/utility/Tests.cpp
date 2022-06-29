@@ -69,7 +69,7 @@
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
-#include <HatScheT/scheduler/dev/SMT/SMTSmartieScheduler.h>
+#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3738,8 +3738,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/fir_genRM.xml";
-      string graphStr = "benchmarks/origami/fir_gen.graphml";
+      string resStr = "benchmarks/origami/r2_fftRM.xml";
+      string graphStr = "benchmarks/origami/r2_fft.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3868,24 +3868,24 @@ namespace HatScheT {
 
       clock_t start, end;
 
-      HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/iir_sos16RM.xml";
-      string graphStr = "benchmarks/origami/iir_sos16.graphml";
+      /*HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM8.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
+      readerGraph.readGraph(graphStr.c_str());*/
 
-      HatScheT::DotWriter dw("mat_inv.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("mat_inv.dot", &g, &rm);
       dw.setDisplayNames(true);
-      dw.write();
+      dw.write();*/
 
       //Simple IIR-Filter:
-      /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
+      auto &Sum = rm.makeResource("Sum", 1, 1, 1);
       auto &Product = rm.makeResource("Product", 1, 1, 1);
-      //auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
-      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);*/
+      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
+      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
 
-      /*Vertex &IN = g.createVertex(0);
+      Vertex &IN = g.createVertex(0);
       Vertex &SUM_0 = g.createVertex(1);
       Vertex &PROD_1 = g.createVertex(2);
       Vertex &PROD_0 = g.createVertex(3);
@@ -3920,13 +3920,13 @@ namespace HatScheT {
       g.createEdge(CONST_A, PROD_0, 0);
       g.createEdge(PROD_0, SUM_0, 0);
       g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);*/
-
-      SMTSmartieScheduler sss(g, rm);
-      sss.setIISearchMethod(SMTSmartieScheduler::iiSearchMethod::linear);
+      g.createEdge(SUM_1, OUT, 0);
+      
+      SMTBinaryScheduler sss(g, rm);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::binary);
       sss.setQuiet(false);
-      sss.setSolverTimeout(100);
-      sss.setMaxRuns(10);
+      sss.setSolverTimeout(600);
+      //sss.setMaxRuns(10);
       start = clock();
       sss.schedule();
       end = clock();
