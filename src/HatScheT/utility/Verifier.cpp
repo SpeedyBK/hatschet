@@ -321,36 +321,21 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
   }
 
   /* 2)  modulo resource constraints*/
-  for (auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it) {
-    Resource *r = *it;
-    //unlimited
-    if (r->getLimit() == -1) continue;
-
-    //iterate over every timestep
-    //TODO resource limit in timestep mod m !!
-    for (int timeStep = 0; timeStep <= modulo; timeStep++) {
-      int instancesUsed = 0;
-      //iterate over schedules
-      for (auto S : schedule) {
-
-        //iterate over vertices
-        for (auto it2 = g.verticesBegin(); it2 != g.verticesEnd(); ++it2) {
-          Vertex *v = *it2;
-          //vertex of other resource
-          if (rm.getResource(v) != r) continue;
-          //other timestep assigned
-          if ((S[v] % modulo) != timeStep) continue;
-          else instancesUsed++;
-        }
-      }
-
-      if (instancesUsed > r->getLimit()) {
-        cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << modulo << ": used "
-             << instancesUsed << " of " << r->getLimit() << endl;
-        return false;
-      }
-    }
-  }
+	std::map<const Resource*, std::map<int, int>> resInstancesUsed;
+	for (auto &v : g.Vertices()) {
+		auto r = rm.getResource(v);
+		if (r->isUnlimited()) continue;
+		for (int s=0; s<samples; s++) {
+			auto t = schedule[s][v];
+			auto m = t % modulo;
+			resInstancesUsed[r][m]++;
+			if (resInstancesUsed[r][m] > r->getLimit()) {
+				cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << t << " mod " << modulo << " = " << m << ": used "
+						 << resInstancesUsed[r][m] << " of " << r->getLimit() << endl;
+				return false;
+			}
+		}
+	}
 
   return true;
 }
