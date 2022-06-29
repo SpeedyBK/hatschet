@@ -40,6 +40,7 @@ namespace HatScheT {
       }
       II_space_index = 0;
 
+      s_pref = schedule_preference::MOD_ASAP;
       latSM = latSearchMethod::binary;
       this->latency_space_index = 0;
       this->candidateLatency = -1;
@@ -78,6 +79,7 @@ namespace HatScheT {
       //Calculating Latency-Space:
       find_earliest_start_times();
       calcMaxLatency();
+      if (scheduleFound){ return; }
       calcLatencySpace();
       find_latest_start_times();
 
@@ -219,6 +221,7 @@ namespace HatScheT {
   void SMTBinaryScheduler::calcMaxLatency() {
 
       calc_max_latency_with_sdc(g, resourceModel);
+      if (scheduleFound){ return; }
 
       // check if max latency was set by user
       if (this->maxLatencyConstraint >= 0) {
@@ -698,7 +701,7 @@ namespace HatScheT {
       //    r->setLimit(UNLIMITED);
       //}
 
-      //Create SDC-Graph:
+      //Create SDC-Graphs:
       Graph sdc_graph_alap;
       Graph sdc_graph_asap;
       unordered_map<Vertex*, int> vertex_Latency_alap;
@@ -811,8 +814,10 @@ namespace HatScheT {
           }
       }
 
-      cout << "Transposed Helper Graph:" << endl << sdc_graph_alap << endl;
-      cout << "Helper Graph:" << endl << sdc_graph_asap << endl;
+      if ( !quiet ) {
+          cout << "Transposed Helper Graph:" << endl << sdc_graph_alap << endl;
+          cout << "Helper Graph:" << endl << sdc_graph_asap << endl;
+      }
 
       auto min = std::min_element(vertex_distance_alap.begin(), vertex_distance_alap.end(), [](const pair<Vertex*,int> &x, const pair<Vertex*, int> &y) {
           return x.second < y.second;
@@ -824,46 +829,66 @@ namespace HatScheT {
       startTimes_alap.clear();
       startTimes_asap.clear();
 
-      cout << "Latest possible Starttimes:" << endl;
+      if ( !quiet ) { cout << "Latest possible Starttimes:" << endl; }
       for (auto &it : vertex_distance_alap) {
           if (it.first == &helper_alap){
               continue;
           }
           it.second += abs(min);
           startTimes_alap[new_to_old_vertex_alap[it.first]]=it.second;
-          cout << it.first->getName() << ": " << it.second << endl;
+          if ( !quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
-      auto valid = verifyModuloSchedule(gr, resM, startTimes_alap, II_space.at(II_space_index));
+      auto valid_alap = verifyModuloSchedule(gr, resM, startTimes_alap, II_space.at(II_space_index));
       string validstr;
-      if (valid) { validstr = "True"; } else { validstr = "False"; }
-      cout << "------------------------------------------------------------" << endl;
-      cout << "Valid Mod. Schedule for unlimited Ressources: " << validstr << " / II: " << II_space.at(II_space_index) << endl;
-      cout << "------------------------------------------------------------" << endl;
-
-      cout << "Earliest possible Starttimes:" << endl;
+      if ( !quiet ) {
+          if (valid_alap) { validstr = "True"; } else { validstr = "False"; }
+          cout << "------------------------------------------------------------" << endl;
+          cout << "Valid Mod. Schedule for unlimited Ressources: " << validstr << " / II: " << II_space.at(II_space_index) << endl;
+          cout << "------------------------------------------------------------" << endl;
+          cout << "Earliest possible Starttimes:" << endl;
+      }
       for (auto &it : vertex_distance_asap) {
-          if (it.first == &helper_asap){
+          if (it.first == &helper_asap) {
               continue;
           }
           it.second = abs(it.second);
-          startTimes_asap[new_to_old_vertex_asap[it.first]]=it.second;
-          cout << it.first->getName() << ": " << it.second << endl;
+          startTimes_asap[new_to_old_vertex_asap[it.first]] = it.second;
+          if (!quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
-      valid = verifyModuloSchedule(gr, resM, startTimes_asap, II_space.at(II_space_index));
-      if (valid) { validstr = "True"; } else { validstr = "False"; }
-      cout << "------------------------------------------------------------" << endl;
-      cout << "Valid Mod. Schedule for unlimited Ressources: " << validstr << " / II: " << II_space.at(II_space_index) << endl;
-      cout << "------------------------------------------------------------" << endl;
+      auto valid_asap = verifyModuloSchedule(gr, resM, startTimes_asap, II_space.at(II_space_index));
+      if (!quiet) {
+          if (valid_asap) { validstr = "True"; } else { validstr = "False"; }
+          cout << "------------------------------------------------------------" << endl;
+          cout << "Valid Mod. Schedule for unlimited Ressources: " << validstr << " / II: " << II_space.at(II_space_index) << endl;
+          cout << "------------------------------------------------------------" << endl;
 
-      cout << "Successful deleted Helper_Vertex_ALAP: " << vertex_distance_alap.erase(&helper_alap) << endl;
-      cout << "Successful deleted Helper_Vertex_ASAP: " << vertex_distance_asap.erase(&helper_asap) << endl;
+          cout << "Successful deleted Helper_Vertex_ALAP: " << vertex_distance_alap.erase(&helper_alap) << endl;
+          cout << "Successful deleted Helper_Vertex_ASAP: " << vertex_distance_asap.erase(&helper_asap) << endl;
 
-      cout << "SDC-ALAP-Latency: " << getScheduleLatency(vertex_distance_alap, new_to_old_vertex_alap) << endl;
-      cout << "SDC-ASAP-Latency: " << getScheduleLatency(vertex_distance_asap, new_to_old_vertex_asap) << endl;
+          cout << "SDC-ALAP-Latency: " << getScheduleLatency(vertex_distance_alap, new_to_old_vertex_alap) << endl;
+          cout << "SDC-ASAP-Latency: " << getScheduleLatency(vertex_distance_asap, new_to_old_vertex_asap) << endl;
+      }
 
-      throw(HatScheT::Exception("Abort"));
+
+      if (valid_asap and s_pref == schedule_preference::MOD_ASAP) {
+          II = (double)II_space.at(II_space_index);
+          scheduleFound = true;
+          startTimes = startTimes_asap;
+      } else if (valid_alap and s_pref == schedule_preference::MOD_ALAP) {
+          II = (double)II_space.at(II_space_index);
+          scheduleFound = true;
+          startTimes = startTimes_alap;
+      } else if (valid_asap){
+          II = (double)II_space.at(II_space_index);
+          scheduleFound = true;
+          startTimes = startTimes_asap;
+      } else if (valid_alap){
+          II = (double)II_space.at(II_space_index);
+          scheduleFound = true;
+          startTimes = startTimes_alap;
+      }
   }
 
   int SMTBinaryScheduler::getScheduleLatency(unordered_map<Vertex *, int> &vertex_latency,

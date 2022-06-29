@@ -3924,7 +3924,7 @@ namespace HatScheT {
 
       SMTBinaryScheduler sss(g, rm);
       sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::binary);
-      sss.setQuiet(false);
+      sss.setQuiet(true);
       //sss.setSolverTimeout(600);
       //sss.set_design_name(resStr);
       start = clock();

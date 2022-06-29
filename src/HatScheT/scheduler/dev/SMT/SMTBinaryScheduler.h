@@ -52,6 +52,9 @@ namespace HatScheT {
 
     void set_design_name(string s){ this->design_name = s; }
 
+    enum class schedule_preference {MOD_ASAP, MOD_ALAP};
+    void set_schedule_preference(schedule_preference pref) { this->s_pref = pref; }
+
   protected:
 
     /*!------------------------
@@ -97,6 +100,7 @@ namespace HatScheT {
      */
     void calcMaxLatency();
     void calc_max_latency_with_sdc(Graph &g, ResourceModel &resM);
+    schedule_preference s_pref;
 
     int getScheduleLatency(unordered_map<Vertex*, int> &vertex_latency, unordered_map<Vertex*, Vertex*> &newtoold);
     /*!
