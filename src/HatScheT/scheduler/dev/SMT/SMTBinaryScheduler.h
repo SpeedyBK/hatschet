@@ -8,6 +8,8 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
 #include <utility>
+#include <deque>
+#include <cmath>
 
 #include <z3++.h>
 
@@ -41,12 +43,14 @@ namespace HatScheT {
      * binary: Binary search for the optimal latency
      * - Needs less checks than the linear methode to show, that a design can not be scheduled for a given II
      */
-    enum class latSearchMethod { linear, binary };
+    enum class latSearchMethod { linear, binary , reverse_linear};
     /*!
      * Function to set latency-search-method, default is linear.
      * @param lsm (latency-search-method)
      */
     void setLatencySearchMethod(latSearchMethod lsm) { this->latSM = lsm; }
+
+    void set_design_name(string s){ this->design_name = s; }
 
   protected:
 
@@ -90,9 +94,11 @@ namespace HatScheT {
     void find_latest_start_times();
     /*!
      * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
-     * ToDo: Have to find something better.
      */
     void calcMaxLatency();
+    void calc_max_latency_with_sdc(Graph &g, ResourceModel &resM);
+
+    int getScheduleLatency(unordered_map<Vertex*, int> &vertex_latency, unordered_map<Vertex*, Vertex*> &newtoold);
     /*!
      * \brief Creates the latency space vector.
      */
@@ -107,14 +113,18 @@ namespace HatScheT {
      * Containts the information, if the binary search is called the first time.
      */
     bool binary_search_init;
-    int left_index{};
-    int right_index{};
+    int left_index;
+    int right_index;
     /*!
      * Linear (incremental) search for the optimal latency.
      * @param result from the previous z3 check. (SAT, UNSAT, UNKOWN)
      * @return next candidate latency, or -1 if the search is completed.
      */
     int lat_linear_search(z3::check_result result);
+
+    int lat_reverse_linear_search(z3::check_result result);
+
+    bool reverse_search_init;
 
     /*!------------------
      * II related stuff
@@ -213,13 +223,16 @@ namespace HatScheT {
      */
     void add_resource_limit_constraint_to_solver(z3::solver &s, int candidateII);
     /*!-------------------------------
-     *  Print Methods (for debugging)
+     *  Print and Debugging Methods
      *-------------------------------*/
     void print_solution(z3::model &m);
     void print_ASAP_ALAP_restictions();
     void print_latency_space(int l_index, int r_index);
     void print_b_variables();
     static z3::check_result test_binary_search(int value_to_check, int target_value);
+
+    string design_name;
+    void write_solving_times_to_file(deque<double> &times);
     /*!
      * Gets model m if z3 returns sat and extracts the schedule from this model.
      * @param z3::model &m
