@@ -930,19 +930,12 @@ int main(int argc, char *args[]) {
 					break;
 				}
 #ifdef USE_Z3
-<<<<<<< HEAD
-					case SMT:
-							scheduler = new HatScheT::SMTSmartieScheduler(g, rm);
-							isModuloScheduler = true;
-							if (timeout > 0) ((HatScheT::SMTSmartieScheduler *) scheduler)->setSolverTimeout(timeout);
-							break;
-=======
                 case SMT:
                     scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
                     isModuloScheduler = true;
                     if (timeout > 0) ((HatScheT::SMTBinaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
->>>>>>> 7cc9e817e6a356e1c546309c2febdec1d0090654
+
 #else
 				case SMT:
 					throw HatScheT::Exception("scheduler " + schedulerSelectionStr +

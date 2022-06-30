@@ -86,21 +86,19 @@ namespace HatScheT {
      */
     int candidateLatency;
     /*!
-     * \brief Determines the earliest possible start-times for each vertex by creating an ASAP-Schedule without
-     * ressource-constraints. Also used to calculate minimal latency.
-     */
-    void find_earliest_start_times();
-    /*!
      * \brief Determines the latest possible start-times for each vertex by creating an ALAP-Schedule without
      * ressource-constraints.
      */
-    void find_latest_start_times();
+    void update_latest_start_times();
     /*!
      * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
      */
-    void calcMaxLatency();
-    void calc_max_latency_with_sdc(Graph &g, ResourceModel &resM);
+    void calc_Max_Latency_Estimation();
+    pair <map<Vertex*,int>, map<Vertex*, int>> calc_ASAP_and_ALAP_mod_Schedule_with_sdc(Graph &g, ResourceModel &resM);
     schedule_preference s_pref;
+    int mod_asap_length;
+    int mod_alap_length;
+    static bool verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
 
     int getScheduleLatency(unordered_map<Vertex*, int> &vertex_latency, unordered_map<Vertex*, Vertex*> &newtoold);
     /*!
