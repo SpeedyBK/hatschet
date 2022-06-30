@@ -268,7 +268,6 @@ int main(int argc, char *args[]) {
 		RATIONALIISCCQ,
 		RATIONALIIFIMMEL,
 		SUGRREDUCTION,
-		ASAPRATIONALII,
 		NONE
 	};
 	SchedulersSelection schedulerSelection = NONE;
@@ -962,7 +961,6 @@ int main(int argc, char *args[]) {
 					case RATIONALIIFIMMEL:
 					case RATIONALIIMODULOQ:
 					case RATIONALIISCCQ:
-					case ASAPRATIONALII:
 						throw HatScheT::Exception("scheduler " + schedulerSelectionStr + " not available without SCALP library. Please build with SCALP.");
 						break;
 #endif //USE_SCALP

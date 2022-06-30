@@ -195,6 +195,7 @@ namespace HatScheT {
 				if(this->maxLatencyConstraint > 0)
 					((HatScheT::SATScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
 				((HatScheT::SATScheduler*) schedulerBase)->setMaxRuns(1);
+				((HatScheT::SATScheduler*) schedulerBase)->setLatencyOptimizationStrategy(SATScheduler::LatencyOptimizationStrategy::REVERSE_LINEAR);
 #else
 				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATScheduler");
 #endif
