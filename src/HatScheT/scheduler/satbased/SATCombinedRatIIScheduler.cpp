@@ -3,11 +3,11 @@
 //
 
 #include "SATCombinedRatIIScheduler.h"
-#include <HatScheT/utility/Utility.h>
 #ifdef USE_CADICAL
 #ifdef USE_SCALP
 #include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h>
+#include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 namespace HatScheT {
 
 	SATCombinedRatIIScheduler::SATCombinedRatIIScheduler(Graph &g, ResourceModel &resourceModel)
@@ -56,19 +56,19 @@ namespace HatScheT {
 			// try next II
 			return;
 		}
-		auto sccTime = s1.getSolvingTime();
-		if (sccTime > this->solverTimeout) {
+		auto elapsedSchedulingTime = s1.getSolvingTime();
+		if (elapsedSchedulingTime > this->solverTimeout) {
 			// sanity check for timeout
 			return;
 		}
 		if (!this->quiet) {
 			std::cout << "SATCombinedRatIIScheduler: SAT-based SCC scheduler found solution for II=" << this->modulo << "/" << this->samples << " and schedule length " << lat << std::endl;
 		}
-		auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
+		auto schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
 		// refine latency with normal scheduler
 		SATRatIIScheduler s2(this->g, this->resourceModel, this->modulo, this->samples);
 		s2.setMaxRuns(1);
-		s2.setSolverTimeout(satTimeout);
+		s2.setSolverTimeout(schedulerTimeout);
 		s2.setQuiet(this->quiet);
 		if (this->maxLatencyConstraint >= 0) {
 			lat = min(this->maxLatencyConstraint, lat);
@@ -80,10 +80,40 @@ namespace HatScheT {
 			// ayy we got a schedule :)
 			this->startTimes = s2.getSchedule();
 			this->startTimesVector = s2.getStartTimeVector();
+			lat = s2.getScheduleLength();
 			// check if it's latency-optimal
 			this->secondObjectiveOptimal = s2.getObjectivesOptimal().second;
 			if (!this->quiet) {
-				std::cout << "SATCombinedRatIIScheduler: SAT scheduler refined schedule length to " << s2.getScheduleLength() << std::endl;
+				std::cout << "SATCombinedRatIIScheduler: uniform scheduler refined schedule length to " << lat << std::endl;
+			}
+		}
+		elapsedSchedulingTime += s2.getSolvingTime();
+		if (elapsedSchedulingTime > this->solverTimeout) {
+			// sanity check for timeout
+			return;
+		}
+		schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
+		// refine latency even more with unrolling-based scheduler (this drops uniformity)
+		UnrollRationalIIScheduler s3(this->g, this->resourceModel, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, this->modulo, this->samples);
+		s3.setIntIIScheduler(SchedulerType::SAT);
+		s3.setMaxRuns(1);
+		s3.setSolverTimeout(schedulerTimeout);
+		s3.setQuiet(this->quiet);
+		if (this->maxLatencyConstraint >= 0) {
+			lat = min(this->maxLatencyConstraint, lat);
+		}
+		s3.setMaxLatencyConstraint(lat-1);
+		s3.disableVerifier();
+		s3.schedule();
+		if (s3.getScheduleFound()) {
+			// ayy we got a schedule :)
+			this->startTimes = s3.getSchedule();
+			this->startTimesVector = s3.getStartTimeVector();
+			lat = s3.getScheduleLength();
+			// check if it's latency-optimal
+			this->secondObjectiveOptimal = s3.getObjectivesOptimal().second;
+			if (!this->quiet) {
+				std::cout << "SATCombinedRatIIScheduler: unrolling-based nonuniform scheduler refined schedule length to " << lat << std::endl;
 			}
 		}
 	}

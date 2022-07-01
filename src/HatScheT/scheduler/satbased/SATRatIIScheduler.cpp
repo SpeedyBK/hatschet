@@ -900,5 +900,9 @@ namespace HatScheT {
 			r->setLimit(lim, false);
 		}
 	}
+
+	double SATRatIIScheduler::getSolvingTime() const {
+		return this->solvingTime;
+	}
 }
 #endif

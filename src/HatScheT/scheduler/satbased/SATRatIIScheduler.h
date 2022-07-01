@@ -33,6 +33,7 @@ namespace HatScheT {
 		void setTargetLatency(const int &newTargetLatency);
 		void setEarliestStartTimes(const std::map<Vertex*, int> &newEarliestStartTimes);
 		void setLatestStartTimeDifferences(const std::map<Vertex*, int> &newLatestStartTimeDifferences);
+		double getSolvingTime() const;
 		int linearJumpLength;
 
 	private:
