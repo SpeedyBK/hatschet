@@ -3869,8 +3869,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3923,10 +3923,10 @@ namespace HatScheT {
       g.createEdge(SUM_1, OUT, 0);*/
 
       SMTBinaryScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::linear);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::binary);
       sss.set_schedule_preference(SMTBinaryScheduler::schedule_preference::MOD_ASAP);
       sss.setQuiet(false);
-      //sss.setSolverTimeout(600);
+      //sss.setSolverTimeout(60);
       //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();

@@ -39,7 +39,7 @@ namespace HatScheT {
       II_space_index = 0;
 
       s_pref = schedule_preference::MOD_ASAP;
-      latSM = latSearchMethod::linear;
+      latSM = latSearchMethod::binary;
       this->latency_space_index = 0;
       this->candidateLatency = -1;
       this->min_Latency = 0;
@@ -72,10 +72,11 @@ namespace HatScheT {
       z3::solver s(c);
       auto sati = z3::unknown;
       z3::model m(c);
-      z3::params p(c);
-      if (timeouts > 0) { p.set(":timeout", timeouts); }
-      cout << p << endl;
-      s.set(p);
+      //z3::params p(c);
+      //if (timeouts > 0) { p.set(":timeout", timeouts); }
+      //cout << p << endl;
+      //s.set(p);
+      int time_budget = (int)timeouts;
 
       //Setting up stuff for scheduling loop
       int candidateII = 0;
@@ -129,7 +130,7 @@ namespace HatScheT {
 
               //Reseting solver and add timeout, before pushing in stuff.
               s.reset();
-              s.set(p);
+              //s.set(p);
 
               //Reducing Seach Space.
               if (!quiet) { cout << "Prohibit early starts... " << endl; }
@@ -166,9 +167,33 @@ namespace HatScheT {
                        << double(end - start) / double(CLOCKS_PER_SEC)
                        << setprecision(5) << " sec " << endl;
               }
+              time_budget -= (int)(double(end - start) / double(CLOCKS_PER_SEC))*1000;
+              if (time_budget < 0){
+                  if (sati == z3::sat){
+                      //A schedule for given II is found, and II can only get worse,
+                      //so we return the schedule and we are done.
+                      m = s.get_model();
+                      this->scheduleFound = true;
+                      this->II = II_space.at(II_space_index);
+                      parse_schedule(m);
+                      return;
+                  }else{
+                      if (scheduleFound){
+                          //If there is a schedule from an earlier iteration,
+                          //We return this schedule.
+                          return;
+                      }
+                      //No Schedule is found on this itteration and before, so we increment
+                      //II and try again, time budget is set back to the original timeout.
+                      time_budget = (int) timeouts;
+                      break;
+                  }
+              }
+
               if (sati == z3::sat){
                   m = s.get_model();
                   this->scheduleFound = true;
+                  this->II = II_space.at(II_space_index);
                   parse_schedule(m);
               }
               if (latSM == latSearchMethod::linear) {
