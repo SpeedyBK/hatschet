@@ -71,7 +71,7 @@ namespace HatScheT {
      * This Function uses the t_variables to create the data dependency constraints.
      * @return It returns two vectors of z3::expr. The first vector corresponds with the edges without distance,
      * since they do not depend on the given II. The second vector corresponds with the with distance which depend on II.
-     * This is done to create fallback points for the SMT-Solver, to remove constraints depending on II, then increment
+     * This is done to create fallback points for the smtbased-Solver, to remove constraints depending on II, then increment
      * II and push those constraints back in the Solver.
      */
     pair <deque<z3::expr>, deque<z3::expr>> build_Dependency_Constraints();

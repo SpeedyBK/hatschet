@@ -284,12 +284,8 @@ public:
 	 * @return if test was passed
 	 */
 	static bool z3Test();
-    /*!
-     * test functionality of smtModScheduler
-     * @return if test was passed
-     */
-    static bool smtVsED97Test();
 
     static bool smtSmart();
+
   };
 }

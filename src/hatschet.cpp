@@ -90,7 +90,7 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
 
 #endif
 
@@ -165,7 +165,7 @@ void print_short_help() {
 	std::cout
 		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
-	std::cout << "                            SMT: Experimental uses SMT-formulation and Z3 Backend" << std::endl;
+	std::cout << "                            smtbased: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
 	std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
 	std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
 	std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)"
@@ -498,7 +498,6 @@ int main(int argc, char *args[]) {
 
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
-				if (str == "SMTED97" && !HatScheT::Tests::smtVsED97Test()) exit(-1);
 				if (str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
 #endif
 
@@ -554,7 +553,7 @@ int main(int argc, char *args[]) {
 				cout << "SATRATII";
 				break;
 			case SMT:
-				cout << "SMT";
+				cout << "smtbased";
 				break;
 			case MOOVAC:
 				cout << "MOOVAC";

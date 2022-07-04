@@ -20,7 +20,7 @@ namespace HatScheT {
   public:
 
     /*!
-     * @brief SMT-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
+     * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
      * backend.
      * @param g graph
      * @param rm resource model
@@ -234,7 +234,7 @@ namespace HatScheT {
     static z3::check_result test_binary_search(int value_to_check, int target_value);
 
     string design_name;
-    void write_solving_times_to_file(deque<double> &times);
+    void write_solving_times_to_file(deque<double> &times, int x);
     /*!
      * Gets model m if z3 returns sat and extracts the schedule from this model.
      * @param z3::model &m
