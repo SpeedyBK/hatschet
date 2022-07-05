@@ -57,6 +57,10 @@ namespace HatScheT {
 			return;
 		}
 		auto elapsedSchedulingTime = s1.getSolvingTime();
+		this->solvingTime = elapsedSchedulingTime;
+		if (!this->quiet) {
+			std::cout << "SATCombinedRatIIScheduler: elapsed time after SCC scheduler: " << elapsedSchedulingTime << std::endl;
+		}
 		if (elapsedSchedulingTime > this->solverTimeout) {
 			// sanity check for timeout
 			return;
@@ -65,7 +69,7 @@ namespace HatScheT {
 			std::cout << "SATCombinedRatIIScheduler: SAT-based SCC scheduler found solution for II=" << this->modulo << "/" << this->samples << " and schedule length " << lat << std::endl;
 		}
 		auto schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
-		// refine latency with normal scheduler
+		// refine latency with exact uniform scheduler
 		SATRatIIScheduler s2(this->g, this->resourceModel, this->modulo, this->samples);
 		s2.setMaxRuns(1);
 		s2.setSolverTimeout(schedulerTimeout);
@@ -88,12 +92,16 @@ namespace HatScheT {
 			}
 		}
 		elapsedSchedulingTime += s2.getSolvingTime();
+		this->solvingTime = elapsedSchedulingTime;
+		if (!this->quiet) {
+			std::cout << "SATCombinedRatIIScheduler: elapsed time after exact uniform scheduler: " << elapsedSchedulingTime << std::endl;
+		}
 		if (elapsedSchedulingTime > this->solverTimeout) {
 			// sanity check for timeout
 			return;
 		}
 		schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
-		// refine latency even more with unrolling-based scheduler (this drops uniformity)
+		// refine latency even more with unrolling-based exact nonuniform scheduler
 		UnrollRationalIIScheduler s3(this->g, this->resourceModel, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, this->modulo, this->samples);
 		s3.setIntIIScheduler(SchedulerType::SAT);
 		s3.setMaxRuns(1);
@@ -115,6 +123,11 @@ namespace HatScheT {
 			if (!this->quiet) {
 				std::cout << "SATCombinedRatIIScheduler: unrolling-based nonuniform scheduler refined schedule length to " << lat << std::endl;
 			}
+		}
+		elapsedSchedulingTime += s3.getSolvingTime();
+		this->solvingTime = elapsedSchedulingTime;
+		if (!this->quiet) {
+			std::cout << "SATCombinedRatIIScheduler: elapsed time after exact nonuniform scheduler: " << elapsedSchedulingTime << std::endl;
 		}
 	}
 
