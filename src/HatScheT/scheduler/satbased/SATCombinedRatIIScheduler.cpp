@@ -8,6 +8,7 @@
 #include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h>
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
+#include <cmath>
 namespace HatScheT {
 
 	SATCombinedRatIIScheduler::SATCombinedRatIIScheduler(Graph &g, ResourceModel &resourceModel)
@@ -68,7 +69,7 @@ namespace HatScheT {
 		if (!this->quiet) {
 			std::cout << "SATCombinedRatIIScheduler: SAT-based SCC scheduler found solution for II=" << this->modulo << "/" << this->samples << " and schedule length " << lat << std::endl;
 		}
-		auto schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
+		auto schedulerTimeout = (unsigned int)std::ceil(this->solverTimeout - elapsedSchedulingTime);
 		// refine latency with exact uniform scheduler
 		SATRatIIScheduler s2(this->g, this->resourceModel, this->modulo, this->samples);
 		s2.setMaxRuns(1);
@@ -100,7 +101,7 @@ namespace HatScheT {
 			// sanity check for timeout
 			return;
 		}
-		schedulerTimeout = (unsigned int)(this->solverTimeout - elapsedSchedulingTime);
+		schedulerTimeout = (unsigned int)std::ceil(this->solverTimeout - elapsedSchedulingTime);
 		// refine latency even more with unrolling-based exact nonuniform scheduler
 		UnrollRationalIIScheduler s3(this->g, this->resourceModel, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, this->modulo, this->samples);
 		s3.setIntIIScheduler(SchedulerType::SAT);
