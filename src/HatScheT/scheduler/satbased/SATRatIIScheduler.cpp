@@ -77,7 +77,7 @@ namespace HatScheT {
 			if (elapsedTime >= this->solverTimeout) {
 				// timeout during problem construction!
 				if (!this->quiet) {
-					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec) - total elapsed time: " << this->solvingTime << "sec" << std::endl;
+					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec)" << std::endl;
 				}
 				breakByTimeout = true;
 				break;
@@ -109,7 +109,7 @@ namespace HatScheT {
 			if (elapsedTime >= this->solverTimeout) {
 				// timeout during problem construction!
 				if (!this->quiet) {
-					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec) - total elapsed time: " << this->solvingTime << "sec" << std::endl;
+					std::cout << "SATRatIIScheduler: encountered timeout after " << elapsedTime << "sec (time budget was " << this->solverTimeout << "sec)" << std::endl;
 				}
 				breakByTimeout = true;
 				break;
@@ -125,7 +125,7 @@ namespace HatScheT {
 			if (!this->quiet) {
 				std::cout << "SATRatIIScheduler: finished solving with status '" <<
 									(lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
-									<< " sec (total: " << this->solvingTime << " sec)" << std::endl;
+									<< " sec" << std::endl;
 			}
 			if(!lastAttemptSuccess) {
 				//if (!this->quiet) {
@@ -226,6 +226,7 @@ namespace HatScheT {
 		this->optimalResult = false;
 		this->firstObjectiveOptimal = true;
 		this->secondObjectiveOptimal = true;
+		this->solvingTime = 0.0;
 		// latency bounds
 		this->calcMinLatency();
 		this->calcMaxLatency();
