@@ -3736,15 +3736,15 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone/adpcm/graph19_RM.xml";
-      string graphStr = "benchmarks/ChStone/adpcm/graph19.graphml";
+      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      HatScheT::DotWriter dw("adcpm.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("adcpm.dot", &g, &rm);
       dw.setDisplayNames(true);
-      dw.write();
+      dw.write();*/
 
       //Simple IIR-Filter:
       /*auto &Sum = rm.makeResource("Sum", 1, 3, 1);
@@ -3791,10 +3791,10 @@ namespace HatScheT {
 
       SMTBinaryScheduler sss(g, rm);
       sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::binary);
-      sss.set_schedule_preference(SMTBinaryScheduler::schedule_preference::MOD_ASAP);
+      sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
-      sss.setSolverTimeout(600);
-      sss.set_design_name(resStr);
+      sss.setSolverTimeout(1000);
+      //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();
       end = clock();

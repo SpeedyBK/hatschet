@@ -77,7 +77,7 @@ namespace HatScheT {
     pair <deque<z3::expr>, deque<z3::expr>> build_Dependency_Constraints();
 
     /* ----------------------------------------- *
-     *  b_variables and MRT                      *
+     *  bVariables and MRT                      *
      * ----------------------------------------- */
     /* Data Structure:
      *
