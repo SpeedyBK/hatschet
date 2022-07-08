@@ -43,7 +43,7 @@ namespace HatScheT {
      * binary: Binary search for the optimal latency
      * - Needs less checks than the linear methode to show, that a design can not be scheduled for a given II
      */
-    enum class latSearchMethod { linear, binary , reverse_linear};
+    enum class latSearchMethod { LINEAR, BINARY , REVERSE_LINEAR };
     /*!
      * Function to set latency-search-method, default is linear.
      * @param lsm (latency-search-method)

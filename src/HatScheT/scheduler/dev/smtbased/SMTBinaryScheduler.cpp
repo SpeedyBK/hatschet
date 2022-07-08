@@ -30,14 +30,14 @@ namespace HatScheT {
       minII = ceil(minII);
       computeMaxII(&g, &resourceModel);
 
-      quiet = true;
-      for (int i = (int)minII; i <= (int)maxII; i++){
+      for (int i = (int)minII; i <= (int)maxII+1; i++){
           this->iiSpace.push_back(i);
       }
       iiSpaceIndex = 0;
 
       sPref = schedulePreference::MOD_ASAP;
-      latSM = latSearchMethod::binary;
+      latSM = latSearchMethod::BINARY;
+      this->quiet = true;
       this->latencySpaceIndex = 0;
       this->candidateLatency = -1;
       this->minLatency = 0;
@@ -55,6 +55,8 @@ namespace HatScheT {
 
       designName = "";
       timeBudget = INT32_MAX;
+      firstObjectiveOptimal = true;
+      secondObjectiveOptimal = true;
 
   }
 
@@ -96,7 +98,7 @@ namespace HatScheT {
           candidateIIOLD = candidateII;
           candidateII = iiLinearSearch(sati);
 
-          //If feasible -> break
+          //If feasible or iiSpace exhausted -> break
           if (candidateII == -1){
               break;
           }
@@ -117,9 +119,9 @@ namespace HatScheT {
           while (true){
               if ( !quiet ) { cout << " -------------------------------- " << endl; }
               int old_latency = candidateLatency;
-              if (latSM == latSearchMethod::linear) { candidateLatency = latLinearSearch(sati); }
-              if (latSM == latSearchMethod::binary) { candidateLatency = latBinarySearch(sati); }
-              if (latSM == latSearchMethod::reverse_linear) { candidateLatency = latReverseLinearSearch(sati); }//toDo: Does not work yet
+              if (latSM == latSearchMethod::LINEAR) { candidateLatency = latLinearSearch(sati); }
+              if (latSM == latSearchMethod::BINARY) { candidateLatency = latBinarySearch(sati); }
+              if (latSM == latSearchMethod::REVERSE_LINEAR) { candidateLatency = latReverseLinearSearch(sati); }//toDo: Does not work yet
 
               if (candidateLatency == -1 or old_latency == candidateLatency ) {
                   candidateLatency = 0;
@@ -183,7 +185,7 @@ namespace HatScheT {
               if (!quiet) {
                   cout << "-->" << sati << "<--" << endl;
                   //cout << "reason unknown: " << s.reason_unknown() << endl;
-                  cout << "Solving Time: " << fixed << t
+                  cout << "Solving Time: " << fixed << (double) t / 1000
                        << setprecision(5) << " sec " << endl;
               }
               if (!quiet) { cout << "TimeBudget: " << timeBudget << endl; }
@@ -207,6 +209,7 @@ namespace HatScheT {
                       if ((int)timeouts > 0) {
                           timeBudget = (int) timeouts;
                       }
+                      firstObjectiveOptimal = false;
                       break;
                   }
               }
@@ -215,7 +218,7 @@ namespace HatScheT {
                   this->scheduleFound = true;
                   this->II = iiSpace.at(iiSpaceIndex);
                   parseSchedule(m);
-                  if (latSM == latSearchMethod::linear) {
+                  if (latSM == latSearchMethod::LINEAR) {
                       break;
                   }
               }
@@ -225,7 +228,7 @@ namespace HatScheT {
 
       II = candidateIIOLD;
 
-      if (!verifyModuloScheduleSMT(this->g, this->resourceModel, startTimes, II)){
+      if (!verifyModuloScheduleSMT(this->g, this->resourceModel, startTimes, (int)II)){
           throw (HatScheT::Exception("Schedule not valid!"));
       }
   }
@@ -730,7 +733,7 @@ namespace HatScheT {
           }
       }
 
-      if (latSM == latSearchMethod::linear){
+      if (latSM == latSearchMethod::LINEAR){
           return z3::sat;
       }
       return s.check();
@@ -795,7 +798,7 @@ namespace HatScheT {
                       s.add(!*getBvariable(vSrc, ti) || !*getBvariable(vDst, tj));
                       if (i % 10000 == 0) {
                           start = clock();
-                          if (latSM != latSearchMethod::linear) {
+                          if (latSM != latSearchMethod::LINEAR) {
                               satisfiable = s.check();
                           }else{
                               satisfiable = z3::sat;
@@ -812,6 +815,7 @@ namespace HatScheT {
                           if (timeBudget < 0){
                               cerr << "Timeout! Candidate II: " << candidateII
                                    << " Candidate Latency: " << candidateLatency << endl;
+                              secondObjectiveOptimal = false;
                               return z3::unsat;
                           }
                       }
@@ -853,17 +857,21 @@ namespace HatScheT {
               iiSearchInit = false;
               return iiSpace.at(0);
           }
-          int index = iiSpaceIndex;
-          if (iiSpaceIndex < iiSpace.size() - 1) {
+          if (iiSpaceIndex < iiSpace.size()) {
               iiSpaceIndex++;
+              if (iiSpaceIndex == iiSpace.size()){
+                  return -1;
+              }
           }
-          return iiSpace.at(index);
+          return iiSpace.at(iiSpaceIndex);
       }else{
-          int index = iiSpaceIndex;
-          if (iiSpaceIndex < iiSpace.size() - 1) {
+          if (iiSpaceIndex < iiSpace.size()) {
               iiSpaceIndex++;
+              if (iiSpaceIndex == iiSpace.size()){
+                  return -1;
+              }
           }
-          return iiSpace.at(index);
+          return iiSpace.at(iiSpaceIndex);
       }
   }
 
