@@ -70,6 +70,7 @@
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
 #include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
+#include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3951,4 +3952,94 @@ namespace HatScheT {
       return true;
 #endif
   }
+
+	bool Tests::satBinding() {
+		// create scheduling problem
+		HatScheT::ResourceModel rm;
+		HatScheT::Graph g;
+
+		// model and alloc to read
+		std::string model = "splin_pf";
+		int alloc = 2;
+		string resStr = "benchmarks/Origami_Pareto/" + model + "/RM" + std::to_string(alloc) + ".xml";
+		string graphStr = "benchmarks/Origami_Pareto/" + model + "/" + model + ".graphml";
+
+		// read resource model
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+
+		// read graph
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		// print input
+		std::cout << g << std::endl;
+		std::cout << rm << std::endl;
+
+		// compute some port assignments
+		std::map<Edge*, int> portAssignments;
+		for (auto &v : g.Vertices()) {
+			auto incomingEdges = g.getIncomingEdges(v);
+			int i=0;
+			for (auto &e : incomingEdges) {
+				portAssignments[e] = i++;
+			}
+		}
+
+		// schedule that badboy
+		std::list<std::string> sw = {"Gurobi", "CPLEX", "SCIP", "LPSolve"};
+		int timeout = 300;
+		std::map<Vertex*,int> sched;
+		std::vector<std::map<Vertex*,int>> ratIISched;
+		double intII = 2.0;
+		double ratII = 1.5;
+		int samples = 2;
+		int modulo = 3;
+
+		ModSDC scheduler(g,rm,sw);
+		scheduler.setQuiet(true);
+		scheduler.setSolverTimeout(timeout);
+		scheduler.schedule();
+		sched = scheduler.getSchedule();
+		intII = scheduler.getII();
+
+		std::cout << "Integer-II Schedule:" << std::endl;
+		for(auto it : sched) {
+			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+		}
+
+		// specify commutative operation types
+		std::set<const Resource*> commutativeOps;
+		commutativeOps.insert(rm.getResource("Product"));
+		commutativeOps.insert(rm.getResource("AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O"));
+		commutativeOps.clear(); // disable commutativity
+
+		auto b2 = Binding::getILPBasedIntIIBinding(sched, &g, &rm, (int)intII, -1, 1, portAssignments, -1.0, -1.0, commutativeOps, {}, timeout, true);
+		std::cout << "Optimal #Regs = " << b2.registerCosts << " and #Connections = " << b2.multiplexerCosts << std::endl;
+
+		OptimalIntegerIISATBinding b(&g, &rm, sched, (int)intII, portAssignments, commutativeOps);
+		b.setFirstObjective(OptimalIntegerIISATBinding::firstObjectiveRegMin_t);
+		b.setQuiet(false);
+		b.setTimeout(timeout);
+		b.bind();
+		Binding::RegChainBindingContainer b1;
+		b.getBinding(&b1);
+
+		auto upperLimits = Utility::getMaxRegsAndMuxs(&g, &rm, sched, (int)intII);
+		auto upperLimitRegs = upperLimits.first;
+		auto upperLimitMuxs = upperLimits.second;
+		auto upperLimitConnections = Utility::getNumberOfFUConnections(upperLimitMuxs, &g, &rm);
+		std::cout << "Upper limits: #Regs = " << upperLimits.first << " and #Connections = " << upperLimitConnections << " and #MUXs = " << upperLimitMuxs << std::endl;
+		std::cout << "SAT computed #Regs = " << b1.registerCosts << " and #Connections = " << b1.multiplexerCosts << std::endl;
+		std::cout << "ILP computed #Regs = " << b2.registerCosts << " and #Connections = " << b2.multiplexerCosts << std::endl;
+
+		auto valid = b1.registerCosts == b2.registerCosts and b1.multiplexerCosts == b2.multiplexerCosts;
+		if (valid) {
+			std::cout << "TEST PASSED!" << std::endl;
+		}
+		else {
+			std::cout << "TEST FAILED!" << std::endl;
+		}
+		return valid;
+	}
 }

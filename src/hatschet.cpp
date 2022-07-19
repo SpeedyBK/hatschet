@@ -492,6 +492,7 @@ int main(int argc, char *args[]) {
 				if (str == "FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
 				if (str == "MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
+				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif

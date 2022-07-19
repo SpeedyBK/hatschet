@@ -291,5 +291,7 @@ public:
     static bool smtVsED97Test();
 
     static bool smtSmart();
+
+    static bool satBinding();
   };
 }
