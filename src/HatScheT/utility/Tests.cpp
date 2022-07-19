@@ -68,8 +68,8 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/dev/SMT/SMTModScheduler.h>
-#include <HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTModScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 
 #ifdef USE_CADICAL
@@ -3729,139 +3729,6 @@ namespace HatScheT {
 	  #endif
   }
 
-  //TODO Remove Test
-  bool Tests::smtVsED97Test() {
-#ifdef USE_Z3
-
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
-
-      clock_t start, end;
-
-      HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/origami/r2_fftRM.xml";
-      string graphStr = "benchmarks/origami/r2_fft.graphml";
-      readerRes.readResourceModel(resStr.c_str());
-      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
-
-      //Simple IIR-Filter:
-      /*auto &Sum = rm.makeResource("Sum", 1, 1, 1);
-      auto &Product = rm.makeResource("Product", 1, 1, 1);
-      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
-      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
-
-      Vertex &IN = g.createVertex(0);
-      Vertex &SUM_0 = g.createVertex(1);
-      Vertex &PROD_1 = g.createVertex(2);
-      Vertex &PROD_0 = g.createVertex(3);
-      Vertex &CONST_A = g.createVertex(4);
-      Vertex &CONST_B = g.createVertex(5);
-      Vertex &SUM_1 = g.createVertex(6);
-      Vertex &OUT = g.createVertex(7);
-
-      IN.setName("IN");
-      SUM_0.setName("SUM_0");
-      PROD_1.setName("PROD_1");
-      PROD_0.setName("PROD_0");
-      CONST_A.setName("CONST_A");
-      CONST_B.setName("CONST_B");
-      SUM_1.setName("SUM_1");
-      OUT.setName("OUT");
-
-      rm.registerVertex(&IN, &LoadStore);
-      rm.registerVertex(&SUM_0, &Sum);
-      rm.registerVertex(&PROD_1, &Product);
-      rm.registerVertex(&PROD_0, &Product);
-      rm.registerVertex(&CONST_A, &Constant);
-      rm.registerVertex(&CONST_B, &Constant);
-      rm.registerVertex(&SUM_1, &Sum);
-      rm.registerVertex(&OUT, &LoadStore);
-
-      g.createEdge(IN, SUM_0, 0);
-      g.createEdge(SUM_0, PROD_0, 1);
-      g.createEdge(SUM_0, PROD_1, 1);
-      g.createEdge(SUM_0, SUM_1, 0);
-      g.createEdge(CONST_B, PROD_1, 0);
-      g.createEdge(CONST_A, PROD_0, 0);
-      g.createEdge(PROD_0, SUM_0, 0);
-      g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);
-
-      HatScheT::DotWriter dw("beispiel.dot", &g, &rm);
-      dw.setDisplayNames(true);
-      dw.write();*/
-
-      EichenbergerDavidson97Scheduler es(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
-
-      es.setQuiet(true);
-      start = clock();
-      es.schedule();
-      end = clock();
-      auto sched = es.getSchedule();
-      cout << "Min II: "<< es.getMinII() << endl;
-      auto ii = es.getII();
-      auto valid = verifyModuloSchedule(g, rm, sched, ii);
-      for (auto &it : sched){
-          cout << it.first->getName() << " : " << it.second << endl;
-      }
-      if (!valid) {
-          std::cout << "Tests::ED97Scheduler: invalid modulo schedule found" << std::endl;
-      }else {
-          std::cout << "Tests::ED97Scheduler: valid modulo schedule found. :-) II=" << ii  << std::endl << setprecision(5);
-      }
-
-      cout << "Time taken by ED97 is : " << fixed
-           << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
-      cout << " sec " << endl;
-
-      vector <double> times;
-      for (int i = 0; i < 8; i++) {
-          if (i != 7){
-              times.push_back(0);
-              continue;
-          }
-          auto smt = new SMTModScheduler(g, rm);
-          smt->setQuiet(true);
-          smt->set_encoding_mode(encodingMode::pbeq);
-          smt->set_mode(i);
-          start = clock();
-          smt->schedule();
-          end = clock();
-          sched = smt->getSchedule();
-
-          for (auto &it : sched) {
-              cout << it.first->getName() << " : " << it.second << endl;
-          }
-
-          ii = smt->getII();
-
-          valid = verifyModuloSchedule(g, rm, sched, ii);
-          if (!valid) {
-              std::cout << "Tests::smtModScheduler: invalid modulo schedule found" << std::endl;
-          } else {
-              std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) II=" << ii << std::endl;
-          }
-          cout << "Time taken by smt mode " << i << " is : " << fixed
-               << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5);
-          cout << " sec " << endl;
-          times.push_back(double(end - start) / double(CLOCKS_PER_SEC));
-          delete smt;
-      }
-
-      cout << endl;
-      int j = 0;
-      for (auto &it : times){
-          cout << j << ": " << it << endl;
-          j++;
-      }
-
-      return valid;
-#else
-      return true;
-#endif
-  }
-
   bool Tests::smtSmart() {
 #ifdef USE_Z3
       HatScheT::Graph g;
@@ -3869,20 +3736,20 @@ namespace HatScheT {
 
       clock_t start, end;
 
-      /*HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());*/
+      readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("fir_gen.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("adcpm.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
       //Simple IIR-Filter:
-      auto &Sum = rm.makeResource("Sum", 1, 1, 1);
-      auto &Product = rm.makeResource("Product", 1, 1, 1);
+      /*auto &Sum = rm.makeResource("Sum", 1, 3, 1);
+      auto &Product = rm.makeResource("Product", 1, 4, 1);
       auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
       auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
 
@@ -3921,13 +3788,13 @@ namespace HatScheT {
       g.createEdge(CONST_A, PROD_0, 0);
       g.createEdge(PROD_0, SUM_0, 0);
       g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);
+      g.createEdge(SUM_1, OUT, 0);*/
 
       SMTBinaryScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::binary);
-      sss.set_schedule_preference(SMTBinaryScheduler::schedule_preference::MOD_ASAP);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
+      sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
-      //sss.setSolverTimeout(60);
+      sss.setSolverTimeout(1000);
       //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();
