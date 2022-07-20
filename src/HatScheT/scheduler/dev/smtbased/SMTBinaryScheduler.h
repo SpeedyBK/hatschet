@@ -91,14 +91,16 @@ namespace HatScheT {
     /*!
      * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
      */
-    void calcMaxLatencyEstimation();
+    void calcLatencyEstimation();
+    void calcMaxLatencyEstimation(int currentII);
+    void calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII);
     pair <map<Vertex*,int>, map<Vertex*, int>> calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM);
     schedulePreference sPref;
     int modAsapLength;
     int modAlapLength;
     bool verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
 
-    int getScheduleLatency(unordered_map<Vertex*, int> &vertex_latency, unordered_map<Vertex*, Vertex*> &newtoold);
+    int getScheduleLatency(unordered_map<Vertex*, int> &vertexLatency, unordered_map<Vertex*, Vertex*> &newToOld);
     /*!
      * \brief Creates the latency space vector.
      */
@@ -231,7 +233,7 @@ namespace HatScheT {
     void print_ASAP_ALAP_restictions();
     void print_latency_space(int l_index, int r_index);
     void print_b_variables();
-    void print_possible_starttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
+    void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
     void set_design_name(string s){ this->designName = s; }
 

@@ -80,9 +80,9 @@ namespace HatScheT {
       auto sati = z3::unknown;
       z3::model m(c);
       z3::params p(c);
-      //if (timeouts > 0) { p.set(":timeout", timeouts); }
+      if (timeouts > 0) { p.set("timeout", timeouts); }
       if (!quiet) { cout << p << endl; }
-      //s.set(p);
+      s.set(p);
       if ((int) timeouts > 0) {
           timeBudget = (int) timeouts;
       }
@@ -106,10 +106,9 @@ namespace HatScheT {
           if (!quiet) { cout << "Trying II: " << candidateII << endl; }
 
           //Calculating minimum latency and maximum latency-estimation:
-          calcMaxLatencyEstimation();
+          calcLatencyEstimation();
           //If valid schedule already found, just return.
           if (scheduleFound){ return; }
-
           if (!quiet) { cout << "Max-Latency : " << maxLatency << endl; }
           if (!quiet) { cout << "Min-Latency : " << minLatency << endl; }
           //Setting up latency-search-space for latency-search-loop
@@ -138,7 +137,7 @@ namespace HatScheT {
 
               //Reseting solver and add timeout, before pushing in stuff.
               s.reset();
-              //s.set(p);
+              s.set(p);
 
               //Reducing Seach Space.
               if (!quiet) { cout << "Prohibit early starts... " << endl; }
@@ -236,7 +235,7 @@ namespace HatScheT {
   /*!-------------------*
    * Latency Estimation *
    * -------------------*/
-  void SMTBinaryScheduler::calcMaxLatencyEstimation() {
+  void SMTBinaryScheduler::calcLatencyEstimation() {
 
       //Check if max latency was set by user
       if (this->maxLatencyConstraint >= 0) {
@@ -247,9 +246,9 @@ namespace HatScheT {
       int resMaxLat = 0;
 
       //Getting the current II mainly for better readability
-      int current_II;
+      int currentII;
       try {
-          current_II = iiSpace.at(iiSpaceIndex);
+          currentII = iiSpace.at(iiSpaceIndex);
       }catch (std::out_of_range&){
           for (auto &it : iiSpace){
               cout << it << " ";
@@ -264,31 +263,48 @@ namespace HatScheT {
       earliestStartTimes = aslap.first;
       latestStartTimes = aslap.second;
 
+      if ( !quiet ) {
+          cout << "*------------------------*" << endl;
+          cout << "* Max Latency Estimation *" << endl;
+          cout << "*------------------------*" << endl;
+      }
+      calcMaxLatencyEstimation(currentII);
+      if ( !quiet ) {
+          cout << "*------------------------*" << endl;
+          cout << "* Min Latency Estimation *" << endl;
+          cout << "*------------------------*" << endl;
+      }
+      calcMinLatencyEstimation(aslap, currentII);
+
+  }
+
+  void SMTBinaryScheduler::calcMaxLatencyEstimation(int currentII) {
+
       //Algorithm to estimate max latency based on earliest and latest possible start times
       //as well as on ressource constraints.
-      map<pair<Vertex*, int>, bool> vertex_timeslot;
+      map<pair<Vertex*, int>, bool> vertexTimeslot;
       unordered_map<Vertex*, bool> checked;
 
       //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
       //based on dependency constraints.
       for (auto &v : g.Vertices()){
           checked.insert(std::make_pair(v,false));
-          int t_asap = earliestStartTimes.at(v);
-          int t_alap = latestStartTimes.at(v);
-          for (int i = 0; i < t_asap; i++){
-              vertex_timeslot[{v, i}] = false;
+          int tAsap = earliestStartTimes.at(v);
+          int tAlap = latestStartTimes.at(v);
+          for (int i = 0; i < tAsap; i++){
+              vertexTimeslot[{v, i}] = false;
           }
-          for (int i = t_asap; i <= t_alap; i++){
-              vertex_timeslot[{v, i}] = true;
+          for (int i = tAsap; i <= tAlap; i++){
+              vertexTimeslot[{v, i}] = true;
           }
-          for (int i = t_alap + 1; i < modAsapLength; i++){
-              vertex_timeslot[{v, i}] = false;
+          for (int i = tAlap + 1; i < modAsapLength; i++){
+              vertexTimeslot[{v, i}] = false;
           }
       }
 
       if ( !quiet ) {
-          print_possible_starttimes(vertex_timeslot);
-          cout << endl << "------------------------------------------------------------------" << endl;
+          printPossibleStarttimes(vertexTimeslot);
+          cout << endl << "------------------------------------------------------------------" << endl << endl;
       }
 
       //Trys to satisfy ressource constraints. If they can not be satisfied, there will be operations
@@ -297,30 +313,30 @@ namespace HatScheT {
           if (r->isUnlimited()){
               continue;
           }
-          vector<int>used_FU_in_Modslot;
-          used_FU_in_Modslot.resize(current_II);
+          vector<int>usedFuInModslot;
+          usedFuInModslot.resize(currentII);
           for (int i = 0; i < modAsapLength; i++){
               for (auto &cvp : resourceModel.getVerticesOfResource(r)){
                   auto v = (Vertex*) cvp;
-                  if (!vertex_timeslot.at(std::make_pair(v, i))){
+                  if (!vertexTimeslot.at(std::make_pair(v, i))){
                       continue;
                   }
                   //Check conflicts with other mod-slots.
-                  if (used_FU_in_Modslot.at(i%current_II) < r->getLimit() and !checked.at(v)){
+                  if (usedFuInModslot.at(i % currentII) < r->getLimit() and !checked.at(v)){
                       //Check vertex and count up used Resources:
                       checked.at(v) = true;
-                      used_FU_in_Modslot.at(i % current_II)++;
+                      usedFuInModslot.at(i % currentII)++;
                       continue;
                   }
                   //Set vertices, of Resource in the same timeslot to 0, because there are no more FUs.
-                  vertex_timeslot.at(std::make_pair(v, i)) = false;
+                  vertexTimeslot.at(std::make_pair(v, i)) = false;
               }
           }
-          used_FU_in_Modslot.clear();
-          used_FU_in_Modslot.shrink_to_fit();
+          usedFuInModslot.clear();
+          usedFuInModslot.shrink_to_fit();
       }
       //Counting the not scheduled operations to expand the schedule by that amount.
-      deque<int>critical_ressources;
+      deque<int>criticalRessources;
       for (auto &r : resourceModel.Resources()) {
           if (r->isUnlimited()){
               continue;
@@ -329,23 +345,84 @@ namespace HatScheT {
           for (auto &v : resourceModel.getVerticesOfResource(r)) {
               int count = 0;
               for (int i = 0; i < modAsapLength; i++) {
-                  count += (int)vertex_timeslot.at(std::make_pair((Vertex*)v, i));
+                  count += (int)vertexTimeslot.at(std::make_pair((Vertex*)v, i));
               }
               if (count == 0){
                   count2++;
               }
           }
-          critical_ressources.push_back(count2);
+          criticalRessources.push_back(count2);
       }
 
-      int maximum = *std::max_element(critical_ressources.begin(),critical_ressources.end());
+      int maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
 
       if ( !quiet ) {
-          print_possible_starttimes(vertex_timeslot);
+          printPossibleStarttimes(vertexTimeslot);
       }
 
       maxLatency = maximum + modAsapLength;
-      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + modAsapLength << endl; }
+      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + modAsapLength << endl << endl; }
+
+  }
+
+  void SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
+
+      //Algorithm to estimate min latency based on earliest and latest possible start times
+      //as well as on ressource constraints.
+      map<pair<Vertex*, int>, bool> vertexTimeslot;
+      unordered_map<Vertex*, bool> checked;
+
+      //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
+      //based on dependency constraints.
+      for (auto &v : g.Vertices()){
+          checked.insert(std::make_pair(v,false));
+          int t_asap = aslap.first.at(v);
+          int t_alap = aslap.second.at(v);
+          for (int i = 0; i < t_asap; i++){
+              vertexTimeslot[{v, i}] = false;
+          }
+          for (int i = t_asap; i <= t_alap; i++){
+              vertexTimeslot[{v, i}] = true;
+          }
+          for (int i = t_alap + 1; i < modAsapLength; i++){
+              vertexTimeslot[{v, i}] = false;
+          }
+      }
+
+      if ( !quiet ) {
+          printPossibleStarttimes(vertexTimeslot);
+          cout << endl << "------------------------------------------------------------------" << endl << endl;
+      }
+
+      // Schedules all operation with satisfied resource constraints. So we can get a requiered min. latency
+      // for a schedule
+      for (auto &r : resourceModel.Resources()){
+          if (r->isUnlimited()){
+              continue;
+          }
+          vector<int>usedFuInModslot;
+          usedFuInModslot.resize(currentII);
+          int localModAsapLength = modAsapLength;
+          for (int i = 0; i < localModAsapLength; i++){
+              for (auto &cvpFirst : resourceModel.getVerticesOfResource(r)){
+                  auto v = (Vertex*) cvpFirst;
+                  if (!vertexTimeslot.at({v, i})){
+                      continue;
+                  }
+                  for (auto &cvpSecond : resourceModel.getVerticesOfResource(r)){
+                      if (cvpFirst == cvpSecond){
+                          continue;
+                      }
+                      //toDo: Write something usefull!
+                  }
+              }
+          }
+          usedFuInModslot.clear();
+          usedFuInModslot.shrink_to_fit();
+      }
+
+
+      throw(HatScheT::Exception("Stop here..."));
   }
 
   pair <map<Vertex*,int>, map<Vertex*, int>> SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM) {
@@ -353,41 +430,41 @@ namespace HatScheT {
       // Create SDC-Graphs (Transposed with Helper for ALAP-Starttimes
       // and original with Helper for ASAP-Starttimes) as well as a mapping
       // to the Vertices of our original Graph:
-      Graph sdc_graph_alap;
-      Graph sdc_graph_asap;
-      unordered_map<Vertex*, int> vertex_Latency_alap;
-      unordered_map<Vertex*, int>vertex_distance_alap;
-      unordered_map<Vertex*, Vertex*> old_to_new_vertex_alap;
-      unordered_map<Vertex*, Vertex*> new_to_old_vertex_alap;
-      unordered_map<Vertex*, int> vertex_Latency_asap;
-      unordered_map<Vertex*, int> vertex_distance_asap;
-      unordered_map<Vertex*, Vertex*> old_to_new_vertex_asap;
-      unordered_map<Vertex*, Vertex*> new_to_old_vertex_asap;
+      Graph sdcGraphAlap;
+      Graph sdcGraphAsap;
+      unordered_map<Vertex*, int> vertexLatencyAlap;
+      unordered_map<Vertex*, int>vertexDistanceAlap;
+      unordered_map<Vertex*, Vertex*> oldToNewVertexAlap;
+      unordered_map<Vertex*, Vertex*> newToOldVertexAlap;
+      unordered_map<Vertex*, int> vertexLatencyAsap;
+      unordered_map<Vertex*, int> vertexDistanceAsap;
+      unordered_map<Vertex*, Vertex*> oldToNewVertexAsap;
+      unordered_map<Vertex*, Vertex*> newToOldVertexAsap;
 
       for (auto &v : g.Vertices()){
-          Vertex* v_sdc_alap = &sdc_graph_alap.createVertex(v->getId());
-          Vertex* v_sdc_asap = &sdc_graph_asap.createVertex(v->getId());
-          v_sdc_alap->setName(v->getName());
-          v_sdc_asap->setName(v->getName());
-          vertex_Latency_alap[v_sdc_alap] = resM.getVertexLatency(v);
-          vertex_Latency_asap[v_sdc_asap] = resM.getVertexLatency(v);
-          old_to_new_vertex_alap[v] = v_sdc_alap;
-          old_to_new_vertex_asap[v] = v_sdc_asap;
-          new_to_old_vertex_alap[v_sdc_alap] = v;
-          new_to_old_vertex_asap[v_sdc_asap] = v;
+          Vertex* vSdcAlap = &sdcGraphAlap.createVertex(v->getId());
+          Vertex* vSdcAsap = &sdcGraphAsap.createVertex(v->getId());
+          vSdcAlap->setName(v->getName());
+          vSdcAsap->setName(v->getName());
+          vertexLatencyAlap[vSdcAlap] = resM.getVertexLatency(v);
+          vertexLatencyAsap[vSdcAsap] = resM.getVertexLatency(v);
+          oldToNewVertexAlap[v] = vSdcAlap;
+          oldToNewVertexAsap[v] = vSdcAsap;
+          newToOldVertexAlap[vSdcAlap] = v;
+          newToOldVertexAsap[vSdcAsap] = v;
       }
 
       for (auto &e : g.Edges()){
-          auto v_src_alap = old_to_new_vertex_alap.at(&e->getVertexSrc());
-          auto v_src_asap = old_to_new_vertex_asap.at(&e->getVertexSrc());
-          auto v_dst_alap = old_to_new_vertex_alap.at(&e->getVertexDst());
-          auto v_dst_asap = old_to_new_vertex_asap.at(&e->getVertexDst());
-          sdc_graph_alap.createEdge(*v_dst_alap, *v_src_alap, -vertex_Latency_alap.at(v_src_alap)
-                                                              - e->getDelay()
-                                                              + e->getDistance() * this->iiSpace.at(iiSpaceIndex));
-          sdc_graph_asap.createEdge(*v_src_asap, *v_dst_asap, -vertex_Latency_asap.at(v_src_asap)
-                                                              - e->getDelay()
-                                                              + e->getDistance() * this->iiSpace.at(iiSpaceIndex));
+          auto vSrcAlap = oldToNewVertexAlap.at(&e->getVertexSrc());
+          auto vSrcAsap = oldToNewVertexAsap.at(&e->getVertexSrc());
+          auto vDstAlap = oldToNewVertexAlap.at(&e->getVertexDst());
+          auto vDstAsap = oldToNewVertexAsap.at(&e->getVertexDst());
+          sdcGraphAlap.createEdge(*vDstAlap, *vSrcAlap, -vertexLatencyAlap.at(vSrcAlap)
+                                                        - e->getDelay()
+                                                        + e->getDistance() * this->iiSpace.at(iiSpaceIndex));
+          sdcGraphAsap.createEdge(*vSrcAsap, *vDstAsap, -vertexLatencyAsap.at(vSrcAsap)
+                                                        - e->getDelay()
+                                                        + e->getDistance() * this->iiSpace.at(iiSpaceIndex));
 
       }
 
@@ -395,25 +472,25 @@ namespace HatScheT {
       //Create Helper Vertex and connect it to all other Vertices with distance 0:
       //Initialization of Bellmann-Ford Algorithm with INT_MAX for all Vertices except Helper
       //to solve the SDC-System:
-      Vertex& helper_alap = sdc_graph_alap.createVertex();
-      Vertex& helper_asap = sdc_graph_asap.createVertex();
-      helper_alap.setName("Helper" + to_string(helper_alap.getId()));
-      helper_asap.setName("Helper" + to_string(helper_asap.getId()));
-      for (auto &v : sdc_graph_alap.Vertices()){
-          if (v == &helper_alap){
-              vertex_distance_alap[&helper_alap] = 0;
+      Vertex& helperAlap = sdcGraphAlap.createVertex();
+      Vertex& helperAsap = sdcGraphAsap.createVertex();
+      helperAlap.setName("Helper" + to_string(helperAlap.getId()));
+      helperAsap.setName("Helper" + to_string(helperAsap.getId()));
+      for (auto &v : sdcGraphAlap.Vertices()){
+          if (v == &helperAlap){
+              vertexDistanceAlap[&helperAlap] = 0;
               continue;
           }
-          sdc_graph_alap.createEdge(helper_alap, *v, 0);
-          vertex_distance_alap[v] = INT32_MAX;
+          sdcGraphAlap.createEdge(helperAlap, *v, 0);
+          vertexDistanceAlap[v] = INT32_MAX;
       }
-      for (auto &v : sdc_graph_asap.Vertices()){
-          if (v == &helper_asap){
-              vertex_distance_asap[&helper_asap] = 0;
+      for (auto &v : sdcGraphAsap.Vertices()){
+          if (v == &helperAsap){
+              vertexDistanceAsap[&helperAsap] = 0;
               continue;
           }
-          sdc_graph_asap.createEdge(helper_asap, *v, 0);
-          vertex_distance_asap[v] = INT32_MAX;
+          sdcGraphAsap.createEdge(helperAsap, *v, 0);
+          vertexDistanceAsap[v] = INT32_MAX;
       }
 
       //Bellmann-Ford Step 2:
@@ -421,15 +498,15 @@ namespace HatScheT {
       //A simple shortest path from src to any other vertex can have
       //at-most |V| - 1 edges
       try {
-          unsigned int num_of_vertices_alap = sdc_graph_alap.getNumberOfVertices();
-          for (int i = 0; i < num_of_vertices_alap - 1; i++) {
-              for (auto &e : sdc_graph_alap.Edges()) {
+          unsigned int numOfVerticesAlap = sdcGraphAlap.getNumberOfVertices();
+          for (int i = 0; i < numOfVerticesAlap - 1; i++) {
+              for (auto &e : sdcGraphAlap.Edges()) {
                   auto t = &e->getVertexSrc();
                   auto u = &e->getVertexDst();
                   int weight = e->getDistance();
-                  if ((vertex_distance_alap.at(t) != INT32_MAX) &&
-                      (vertex_distance_alap.at(t) + weight < vertex_distance_alap.at(u))) {
-                      vertex_distance_alap.at(u) = vertex_distance_alap.at(t) + weight;
+                  if ((vertexDistanceAlap.at(t) != INT32_MAX) &&
+                      (vertexDistanceAlap.at(t) + weight < vertexDistanceAlap.at(u))) {
+                      vertexDistanceAlap.at(u) = vertexDistanceAlap.at(t) + weight;
                   }
               }
           }
@@ -437,15 +514,15 @@ namespace HatScheT {
           throw (std::out_of_range("SMT_Sheduler: calcAsapAndAlapModScheduleWithSdc(), Bellmann-Ford, Step 2, ALAP Loop"));
       }
       try{
-          unsigned int num_of_vertices_asap = sdc_graph_asap.getNumberOfVertices();
-          for (int i = 0; i < num_of_vertices_asap - 1; i++) {
-              for (auto &e : sdc_graph_asap.Edges()) {
+          unsigned int numOfVerticesAsap = sdcGraphAsap.getNumberOfVertices();
+          for (int i = 0; i < numOfVerticesAsap - 1; i++) {
+              for (auto &e : sdcGraphAsap.Edges()) {
                   auto t = &e->getVertexSrc();
                   auto u = &e->getVertexDst();
                   int weight = e->getDistance();
-                  if ((vertex_distance_asap.at(t) != INT32_MAX) &&
-                      (vertex_distance_asap.at(t) + weight < vertex_distance_asap.at(u))) {
-                      vertex_distance_asap.at(u) = vertex_distance_asap.at(t) + weight;
+                  if ((vertexDistanceAsap.at(t) != INT32_MAX) &&
+                      (vertexDistanceAsap.at(t) + weight < vertexDistanceAsap.at(u))) {
+                      vertexDistanceAsap.at(u) = vertexDistanceAsap.at(t) + weight;
                   }
               }
           }
@@ -454,86 +531,86 @@ namespace HatScheT {
       }
 
       //Checking for negativ Cycles:
-      for (auto &e : sdc_graph_alap.Edges()){
+      for (auto &e : sdcGraphAlap.Edges()){
           auto t = &e->getVertexSrc();
           auto u = &e->getVertexDst();
           int weight = e->getDistance();
-          if ((vertex_distance_alap.at(t) != INT32_MAX) && (vertex_distance_alap.at(t) + weight < vertex_distance_alap.at(u))){
+          if ((vertexDistanceAlap.at(t) != INT32_MAX) && (vertexDistanceAlap.at(t) + weight < vertexDistanceAlap.at(u))){
               cout << "Negative Cycle Detected ALAP:" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
               throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
           }
       }
-      for (auto &e : sdc_graph_asap.Edges()){
+      for (auto &e : sdcGraphAsap.Edges()){
           auto t = &e->getVertexSrc();
           auto u = &e->getVertexDst();
           int weight = e->getDistance();
-          if ((vertex_distance_asap.at(t) != INT32_MAX) && (vertex_distance_asap.at(t) + weight < vertex_distance_asap.at(u))){
+          if ((vertexDistanceAsap.at(t) != INT32_MAX) && (vertexDistanceAsap.at(t) + weight < vertexDistanceAsap.at(u))){
               cout << "Negative Cycle Detected ASAP" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
               throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
           }
       }
 
-      if ( !quiet ) {
-          cout << "Transposed Helper Graph:" << endl << sdc_graph_alap << endl;
-          cout << "Helper Graph:" << endl << sdc_graph_asap << endl;
-      }
+      /*if ( !quiet ) {
+          cout << "Transposed Helper Graph:" << endl << sdcGraphAlap << endl;
+          cout << "Helper Graph:" << endl << sdcGraphAsap << endl;
+      }*/
 
-      auto min = std::min_element(vertex_distance_alap.begin(), vertex_distance_alap.end(), [](const pair<Vertex*,int> &x, const pair<Vertex*, int> &y) {
+      auto min = std::min_element(vertexDistanceAlap.begin(), vertexDistanceAlap.end(), [](const pair<Vertex*,int> &x, const pair<Vertex*, int> &y) {
         return x.second < y.second;
       })->second;
 
       map<Vertex*, int> startTimes_alap;
-      map<Vertex*, int> startTimes_asap;
+      map<Vertex*, int> startTimesAsap;
 
       if ( !quiet ) { cout << "Latest possible Starttimes:" << endl; }
-      for (auto &it : vertex_distance_alap) {
+      for (auto &it : vertexDistanceAlap) {
           //Removing HELPER_ALAP-Vertex from ALAP-Starttimes:
-          if (it.first == &helper_alap){
+          if (it.first == &helperAlap){
               continue;
           }
           it.second += abs(min);
-          startTimes_alap[new_to_old_vertex_alap[it.first]]=it.second;
+          startTimes_alap[newToOldVertexAlap[it.first]]=it.second;
           if ( !quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       //Checking if we are lucky and MOD-ALAP-Starttimes are already a valig modulo schedule:
-      auto valid_alap = verifyModuloScheduleSMT(g, resM, startTimes_alap, iiSpace.at(iiSpaceIndex));
+      auto validAlap = verifyModuloScheduleSMT(g, resM, startTimes_alap, iiSpace.at(iiSpaceIndex));
       string validstr;
       if ( !quiet ) {
-          if (valid_alap) { validstr = "True"; } else { validstr = "False"; }
+          if (validAlap) { validstr = "True"; } else { validstr = "False"; }
           cout << "---------------------------------------------------------" << endl;
           cout << "Valid Mod. Schedule for given Ressources: " << validstr << " / II: " << iiSpace.at(iiSpaceIndex) << endl;
           cout << "---------------------------------------------------------" << endl;
           cout << "Earliest possible Starttimes:" << endl;
       }
-      for (auto &it : vertex_distance_asap) {
+      for (auto &it : vertexDistanceAsap) {
           //Removing HELPER_ASAP-Vertex from ALAP-Starttimes:
-          if (it.first == &helper_asap) {
+          if (it.first == &helperAsap) {
               continue;
           }
           it.second = abs(it.second);
-          startTimes_asap[new_to_old_vertex_asap[it.first]] = it.second;
+          startTimesAsap[newToOldVertexAsap[it.first]] = it.second;
           if (!quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       //Checking if we are lucky and MOD-ASAP-Starttimes are already a valig modulo schedule:
-      auto valid_asap = verifyModuloScheduleSMT(g, resM, startTimes_asap, iiSpace.at(iiSpaceIndex));
+      auto validAsap = verifyModuloScheduleSMT(g, resM, startTimesAsap, iiSpace.at(iiSpaceIndex));
       if (!quiet) {
-          if (valid_asap) { validstr = "True"; } else { validstr = "False"; }
+          if (validAsap) { validstr = "True"; } else { validstr = "False"; }
           cout << "---------------------------------------------------------" << endl;
           cout << "Valid Mod. Schedule for given Ressources: " << validstr << " / II: " << iiSpace.at(iiSpaceIndex) << endl;
           cout << "---------------------------------------------------------" << endl;
       }
 
-      auto success = vertex_distance_alap.erase(&helper_alap);
+      auto success = vertexDistanceAlap.erase(&helperAlap);
       if ( !quiet and success){
           cout << "Successful deleted Helper_Vertex_ALAP: True" << endl;
       }else if ( !quiet ){
           cout << "Successful deleted Helper_Vertex_ALAP: False" << endl;
       }
-      success = vertex_distance_asap.erase(&helper_asap);
+      success = vertexDistanceAsap.erase(&helperAsap);
       if ( !quiet and success){
           cout << "Successful deleted Helper_Vertex_ASAP: True" << endl;
       }else if ( !quiet ){
@@ -542,9 +619,9 @@ namespace HatScheT {
 
       //Saving schedule length
       if (!quiet) { cout << endl << "MOD_ALAP: " << endl; }
-      modAlapLength = getScheduleLatency(vertex_distance_alap, new_to_old_vertex_alap);
+      modAlapLength = getScheduleLatency(vertexDistanceAlap, newToOldVertexAlap);
       if (!quiet) { cout << endl << "MOD_ASAP: " << endl; }
-      modAsapLength = getScheduleLatency(vertex_distance_asap, new_to_old_vertex_asap);
+      modAsapLength = getScheduleLatency(vertexDistanceAsap, newToOldVertexAsap);
       if (!quiet) { cout << "SDC-ALAP-Latency: " << modAlapLength << endl; }
       if (!quiet) { cout << "SDC-ASAP-Latency: " << modAsapLength << endl; }
       if (modAsapLength != modAlapLength ){
@@ -553,19 +630,19 @@ namespace HatScheT {
       minLatency = modAsapLength;
 
       //If a valid schedule is already found, just returning it.
-      if (valid_asap and sPref == schedulePreference::MOD_ASAP) {
+      if (validAsap and sPref == schedulePreference::MOD_ASAP) {
           II = (double)iiSpace.at(iiSpaceIndex);
           scheduleFound = true;
-          startTimes = startTimes_asap;
-      } else if (valid_alap and sPref == schedulePreference::MOD_ALAP) {
+          startTimes = startTimesAsap;
+      } else if (validAlap and sPref == schedulePreference::MOD_ALAP) {
           II = (double)iiSpace.at(iiSpaceIndex);
           scheduleFound = true;
           startTimes = startTimes_alap;
-      } else if (valid_asap){
+      } else if (validAsap){
           II = (double)iiSpace.at(iiSpaceIndex);
           scheduleFound = true;
-          startTimes = startTimes_asap;
-      } else if (valid_alap){
+          startTimes = startTimesAsap;
+      } else if (validAlap){
           II = (double)iiSpace.at(iiSpaceIndex);
           scheduleFound = true;
           startTimes = startTimes_alap;
@@ -573,21 +650,21 @@ namespace HatScheT {
 
       //If no valid schedule is found, we continue our latency estimation with the found
       //MOD-ASAP- and MOD-ALAP-Starttimes
-      return {startTimes_asap, startTimes_alap};
+      return {startTimesAsap, startTimes_alap};
   }
 
-  int SMTBinaryScheduler::getScheduleLatency(unordered_map<Vertex *, int> &vertex_latency,
-                                             unordered_map<Vertex *, Vertex *> &newtoold) {
+  int SMTBinaryScheduler::getScheduleLatency(unordered_map<Vertex *, int> &vertexLatency,
+                                             unordered_map<Vertex *, Vertex *> &newToOld) {
       int maxTime = -1;
-      for (std::pair<Vertex *, int> vtPair : vertex_latency) {
+      for (std::pair<Vertex *, int> vtPair : vertexLatency) {
           try {
               Vertex *v = vtPair.first;
-              if ((vtPair.second + resourceModel.getVertexLatency(newtoold.at(v))) > maxTime) {
-                  maxTime = (vtPair.second + resourceModel.getVertexLatency(newtoold.at(v)));
+              if ((vtPair.second + resourceModel.getVertexLatency(newToOld.at(v))) > maxTime) {
+                  maxTime = (vtPair.second + resourceModel.getVertexLatency(newToOld.at(v)));
                   //Debugging:
                   if (!quiet) {
                       cout << vtPair.first->getName() << ": " << vtPair.second << " + "
-                           << resourceModel.getVertexLatency(newtoold.at(v)) << " = " << maxTime << endl;
+                           << resourceModel.getVertexLatency(newToOld.at(v)) << " = " << maxTime << endl;
                   }
               }
           }catch(std::out_of_range&){
@@ -708,7 +785,6 @@ namespace HatScheT {
   }
 
   z3::check_result SMTBinaryScheduler::addResourceLimitConstraintToSolver(z3::solver &s, int candidateII) {
-      int count = 0;
       for (auto &it : resourceModel.Resources()) {
           if (it->isUnlimited()) {
               continue;
@@ -1049,7 +1125,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::print_possible_starttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot) {
+  void SMTBinaryScheduler::printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot) {
       for (auto &r : resourceModel.Resources()) {
           if (r->isUnlimited()) {
               continue;
