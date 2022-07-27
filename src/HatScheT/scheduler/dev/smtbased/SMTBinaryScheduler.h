@@ -7,7 +7,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.h>
+
 #include <utility>
 #include <deque>
 #include <queue>

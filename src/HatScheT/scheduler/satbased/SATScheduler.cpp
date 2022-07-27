@@ -11,7 +11,6 @@
 
 #ifdef USE_CADICAL
 namespace HatScheT {
-#define CADICAL_SAT 10
 #define NEW_RESOURCE_CONSTRAINTS 1
 
 	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
