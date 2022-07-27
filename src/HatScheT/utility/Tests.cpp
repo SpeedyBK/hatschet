@@ -3826,7 +3826,7 @@ namespace HatScheT {
 		HatScheT::Graph g;
 
 		// model and alloc to read
-		std::string model = "splin_pf";
+		std::string model = "fir_gen";
 		int alloc = 2;
 		string resStr = "benchmarks/Origami_Pareto/" + model + "/RM" + std::to_string(alloc) + ".xml";
 		string graphStr = "benchmarks/Origami_Pareto/" + model + "/" + model + ".graphml";

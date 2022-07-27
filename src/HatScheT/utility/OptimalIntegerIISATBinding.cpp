@@ -474,8 +474,8 @@ namespace HatScheT {
 				if (!this->quiet) {
 					std::cout << "Solver returned with status '" << status << "'" << std::endl;
 				}
-				bool sat = status == CADICAL_SAT;
-				if (sat) {
+
+				if (status == CADICAL_SAT) {
 					if (!this->quiet) {
 						std::cout << "OptimalIntegerIISATBinding: SAT solver proved feasibility" << std::endl;
 					}
@@ -561,7 +561,7 @@ namespace HatScheT {
 					}
 				}
 				else {
-					if (!this->quiet) {
+					if (status == CADICAL_UNSAT and !this->quiet) {
 						std::cout << "OptimalIntegerIISATBinding: SAT solver proved infeasibility" << std::endl;
 					}
 					// adjust lower bound
@@ -747,6 +747,7 @@ namespace HatScheT {
 		}
 		int lifetimeRegsMin = 0;
 		for (auto &r : this->rm->Resources()) {
+			this->registerBreakPoints[r].first = lifetimeRegsMin;
 			int lifeMin = 0;
 			auto &l = reverseSortedResourceLifetimes[r];
 			int mod = this->II;
@@ -762,8 +763,9 @@ namespace HatScheT {
 				std::advance(it,1);
 			}
 			lifetimeRegsMin += lifeMin;
+			this->registerBreakPoints[r].second = lifetimeRegsMin-1;
 		}
-		this->registerBounds.first = lifetimeRegsMin;
+		this->numReservedRegisters = this->registerBounds.first = lifetimeRegsMin;
 
 		// mux: use the number of connection types or the total number of FU inputs as lower bound (whatever is larger)
 		int totalNumFUInputs = 0;
@@ -870,11 +872,17 @@ namespace HatScheT {
 		if (maxNumRegs != UNLIMITED) {
 			for (auto &r : this->rm->Resources()) {
 				auto lim = this->resourceLimits[r];
+				auto &regBP = this->registerBreakPoints[r];
 				for (int fu=0; fu<lim; fu++) {
 					auto rIdxPair = std::make_pair(r, fu);
 					auto maxLife = this->maxResourceLifetimes[rIdxPair];
 					for (int l=1; l<=maxLife; l++) {
-						for (int reg=0; reg<maxNumRegs; reg++) {
+						//for (int reg=0; reg<maxNumRegs; reg++) {
+						for (int reg=regBP.first; reg<=regBP.second; reg++) {
+							this->lifetimeRegBindingVars[{r, fu, l, reg}] = ++this->variableCounter;
+							this->lifetimeRegBindingVarCounter++;
+						}
+						for (int reg=this->numReservedRegisters+1; reg<maxNumRegs; reg++) {
 							this->lifetimeRegBindingVars[{r, fu, l, reg}] = ++this->variableCounter;
 							this->lifetimeRegBindingVarCounter++;
 						}
@@ -944,7 +952,13 @@ namespace HatScheT {
 					for (auto l=1; l<=life; l++) {
 						//std::string clause = "not("+std::to_string(opVar)+")";
 						this->solver->add(-opVar);
-						for (auto reg=0; reg<maxNumRegs; reg++) {
+						//for (auto reg=0; reg<maxNumRegs; reg++) {
+						auto &regBP = this->registerBreakPoints[p.first];
+						for (int reg=regBP.first; reg <= regBP.second; reg++) { // reserved registers for that resource
+							//clause += " + " + std::to_string(this->lifetimeRegBindingVars[{p.first, p.second, l, reg}]);
+							this->solver->add(this->lifetimeRegBindingVars[{p.first, p.second, l, reg}]);
+						}
+						for (int reg=this->numReservedRegisters+1; reg < maxNumRegs; reg++) { // shared registers between all resources
 							//clause += " + " + std::to_string(this->lifetimeRegBindingVars[{p.first, p.second, l, reg}]);
 							this->solver->add(this->lifetimeRegBindingVars[{p.first, p.second, l, reg}]);
 						}
@@ -960,6 +974,7 @@ namespace HatScheT {
 #if 1
 			for (auto ri : this->rm->Resources()) {
 				auto limi = this->resourceLimits[ri];
+				auto &regBP = this->registerBreakPoints[ri];
 				for (auto fui=0; fui<limi; fui++) {
 					auto pi = this->fuIndexMap[{ri, fui}];
 					auto maxLifei = this->maxResourceLifetimes[{ri, fui}];
@@ -968,11 +983,22 @@ namespace HatScheT {
 						for (auto fuj=0; fuj<limj; fuj++) {
 							auto pj = this->fuIndexMap[{rj, fuj}];
 							auto maxLifej = this->maxResourceLifetimes[{rj, fuj}];
-							for (int reg=0; reg<maxNumRegs; reg++) {
-								for (int li=1; li<=maxLifei; li++) {
-									auto ai = this->lifetimeRegBindingVars[{ri, fui, li, reg}];
-									for (int lj=1; lj<=maxLifej; lj++) {
-										if (pi == pj and li == lj) continue;
+							for (int li=1; li<=maxLifei; li++) {
+								for (int lj=1; lj<=maxLifej; lj++) {
+									if (pi == pj and li == lj) continue;
+									if (ri == rj) {
+										for (int reg=regBP.first; reg<=regBP.second; reg++) {
+											auto ai = this->lifetimeRegBindingVars[{ri, fui, li, reg}];
+											auto aj = this->lifetimeRegBindingVars[{rj, fuj, lj, reg}];
+											this->solver->add(-ai);
+											this->solver->add(-aj);
+											this->solver->add(0);
+											this->clauseCounter++;
+											this->noRegisterConflictsClauseCounter++;
+										}
+									}
+									for (int reg=this->numReservedRegisters+1; reg<maxNumRegs; reg++) { // shared registers
+										auto ai = this->lifetimeRegBindingVars[{ri, fui, li, reg}];
 										auto aj = this->lifetimeRegBindingVars[{rj, fuj, lj, reg}];
 										this->solver->add(-ai);
 										this->solver->add(-aj);

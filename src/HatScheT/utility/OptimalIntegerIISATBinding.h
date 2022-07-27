@@ -85,6 +85,16 @@ namespace HatScheT {
 
 	private:
 		/*!
+		 * minimum number of registers for all resources
+		 */
+		int numReservedRegisters;
+		/*!
+		 * reserved register spaces for all resources
+		 * -> do not need to share many registers between different resources
+		 * -> this prunes the search space BY A LOT!
+		 */
+		std::map<const Resource*, std::pair<int, int>> registerBreakPoints;
+		/*!
 		 * calculate and define lower bounds according to graph and resource model
 		 */
 		void defineLowerBounds();
