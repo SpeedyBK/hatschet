@@ -182,7 +182,7 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/utility/SDCSolver.cpp)
+src/HatScheT/utility/SDCSolver.cpp src/HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.cpp src/HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.h)
 
 
 set(HatScheT_HEADERS
@@ -261,7 +261,8 @@ src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
 src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
-src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h )
+src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -316,7 +317,8 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 IF(${Z3_FOUND})
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp)
+            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.cpp)
 ENDIF(${Z3_FOUND})
 
 add_library(hatschet ${HatScheT_SOURCES})

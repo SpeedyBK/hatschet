@@ -117,19 +117,19 @@ namespace HatScheT {
           //Latency-search-loop
           while (true){
               if ( !quiet ) { cout << " -------------------------------- " << endl; }
-              int old_latency = candidateLatency;
+              int oldLatency = candidateLatency;
               if (latSM == latSearchMethod::LINEAR) { candidateLatency = latLinearSearch(sati); }
               if (latSM == latSearchMethod::BINARY) { candidateLatency = latBinarySearch(sati); }
               if (latSM == latSearchMethod::REVERSE_LINEAR) { candidateLatency = latReverseLinearSearch(sati); }//toDo: Does not work yet
 
-              if (candidateLatency == -1 or old_latency == candidateLatency ) {
+              if (candidateLatency == -1 or oldLatency == candidateLatency ) {
                   candidateLatency = 0;
                   break;
               }
 
               if (!quiet) { cout << "Trying Latency: " << candidateLatency << endl; }
               //Updating latest start times with candidate latency
-              updateLatestStartTimes();
+              updateLatestStartTimes(oldLatency);
               //Generating debendency constraints for z3-prover.
               if (!quiet) { cout << "Generating b-variables... " << endl; }
               generateBvariables();
@@ -274,8 +274,27 @@ namespace HatScheT {
           cout << "* Min Latency Estimation *" << endl;
           cout << "*------------------------*" << endl;
       }
-      calcMinLatencyEstimation(aslap, currentII);
 
+      //SMTBinaryUtils SmtUtil(earliestStartTimes, latestStartTimes, resourceModel, currentII, minLatency);
+      //SmtUtil.mainfunc();
+      //TODO CHECK THAT
+      int i = 0;
+      clock_t start, end;
+      start = clock();
+      while (true) {
+          i++;
+          auto feasilbe = calcMinLatencyEstimation(aslap, currentII);
+          if (feasilbe or (i == 10)){
+              break;
+          }
+          for (auto &it : aslap.second){
+              it.second++;
+          }
+          minLatency++;
+      }
+      end = clock();
+      cout << "Done in " << fixed << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5) << " sec " << endl;
+      throw(HatScheT::Exception("Stop here..."));
   }
 
   void SMTBinaryScheduler::calcMaxLatencyEstimation(int currentII) {
@@ -297,7 +316,7 @@ namespace HatScheT {
           for (int i = tAsap; i <= tAlap; i++){
               vertexTimeslot[{v, i}] = true;
           }
-          for (int i = tAlap + 1; i < modAsapLength; i++){
+          for (int i = tAlap + 1; i < minLatency; i++){
               vertexTimeslot[{v, i}] = false;
           }
       }
@@ -365,17 +384,15 @@ namespace HatScheT {
 
   }
 
-  void SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
+  bool SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
 
       //Algorithm to estimate min latency based on earliest and latest possible start times
       //as well as on ressource constraints.
       map<pair<Vertex*, int>, bool> vertexTimeslot;
-      unordered_map<Vertex*, bool> checked;
 
       //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
       //based on dependency constraints.
       for (auto &v : g.Vertices()){
-          checked.insert(std::make_pair(v,false));
           int t_asap = aslap.first.at(v);
           int t_alap = aslap.second.at(v);
           for (int i = 0; i < t_asap; i++){
@@ -384,7 +401,7 @@ namespace HatScheT {
           for (int i = t_asap; i <= t_alap; i++){
               vertexTimeslot[{v, i}] = true;
           }
-          for (int i = t_alap + 1; i < modAsapLength; i++){
+          for (int i = t_alap + 1; i < minLatency; i++){
               vertexTimeslot[{v, i}] = false;
           }
       }
@@ -396,33 +413,210 @@ namespace HatScheT {
 
       // Schedules all operation with satisfied resource constraints. So we can get a requiered min. latency
       // for a schedule
-      for (auto &r : resourceModel.Resources()){
-          if (r->isUnlimited()){
+      for (auto &r : resourceModel.Resources()) {
+          if (r->isUnlimited()) {
               continue;
           }
-          vector<int>usedFuInModslot;
+          vector<int> usedFuInModslot;
           usedFuInModslot.resize(currentII);
-          int localModAsapLength = modAsapLength;
-          for (int i = 0; i < localModAsapLength; i++){
-              for (auto &cvpFirst : resourceModel.getVerticesOfResource(r)){
-                  auto v = (Vertex*) cvpFirst;
-                  if (!vertexTimeslot.at({v, i})){
+          map<Vertex *, int> availibleSlots;
+          auto verticesOfThisResource = resourceModel.getVerticesOfResource(r);
+          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
+          //Zählen wie viele potentielle Zeitslots existieren.
+          for (auto &cvp : verticesOfThisResource) {
+              auto vp = (Vertex*) cvp;
+              availibleSlots[vp] = 0;
+              for (int i = 0; i < minLatency; i++) {
+                  if (!vertexTimeslot.at({vp, i})) {
                       continue;
                   }
-                  for (auto &cvpSecond : resourceModel.getVerticesOfResource(r)){
-                      if (cvpFirst == cvpSecond){
-                          continue;
+                  usedFuInModslot.at(i % currentII)++;
+                  availibleSlots.at(vp)++;
+              }
+          }
+          //Debugging Ausgaben
+          cout << r->getName() << " Used FUs: ";
+          for (auto &it : usedFuInModslot) {
+              cout << it << " ";
+          }
+          cout << endl;
+          cout << "Available Slots: " << endl;
+          for (auto &it : availibleSlots) {
+              cout << it.first->getName() << ": " << it.second << endl;
+          }
+          cout << endl;
+
+          //Preprocessing: Problem auf einen Iteration Interval Reduzieren.
+          for (int x = 0; x < currentII; x++) {
+              for (auto &cvp : verticesOfThisResource) {
+                  auto vp = (Vertex*) cvp;
+                  if (vertexTimeslot.at({vp, x})) {
+                      for (int i = x + 1; i < minLatency; i++) {
+                          if ((i % currentII) != x) {
+                              continue;
+                          }
+                          vertexTimeslot.at({vp, i}) = false;
                       }
-                      //toDo: Write something usefull!
+                  } else {
+                      for (int i = x + 1; i < minLatency; i++) {
+                          if ((i % currentII) != x) {
+                              continue;
+                          }
+                          if (vertexTimeslot.at({vp, i})) {
+                              vertexTimeslot.at({vp, i}) = false;
+                              vertexTimeslot.at({vp, x}) = true;
+                          }
+                      }
                   }
               }
           }
+          if (!quiet) {
+              cout << "After Preprocessing: " << endl;
+              printPossibleStarttimes(vertexTimeslot);
+              cout << endl << "------------------------------------------------------------------" << endl << endl;
+          }
           usedFuInModslot.clear();
-          usedFuInModslot.shrink_to_fit();
+          usedFuInModslot.resize(currentII);
+          availibleSlots.clear();
+
+          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
+          //Zählen wie viele potentielle Zeitslots existieren.
+          for (auto &cvp : verticesOfThisResource) {
+              auto vp = (Vertex *) cvp;
+              availibleSlots[vp] = 0;
+              for (int x = 0; x < minLatency; x++) {
+                  if (!vertexTimeslot.at({vp, x})) {
+                      continue;
+                  }
+                  usedFuInModslot.at(x % currentII)++;
+                  availibleSlots.at(vp)++;
+              }
+          }
+          //Debugging Ausgaben
+          cout << r->getName() << " Used FUs: ";
+          for (auto &it : usedFuInModslot) {
+              cout << it << " ";
+          }
+          cout << endl;
+          cout << "Available Slots: " << endl;
+          for (auto &it : availibleSlots) {
+              cout << it.first->getName() << ": " << it.second << endl;
+          }
+          cout << endl;
+
+
+          //Überprüfen, ob Resourcenbeschränkungen eingehalten werden.
+          for (int x = 0; x < currentII; x++) {
+              cout << "Checking Slot: " << x << endl;
+              if (usedFuInModslot.at(x) <= r->getLimit()) {
+                  //Kein Konflikt alles gut.
+                  continue;
+              }
+              //Potentieller Konflikt:
+              //Mappings zwischen Operationen und deren Priorität herstellen.
+              //Zudem werden die Operationen in einer Prioritätswarteschlange sortiert.
+              //Je mehr mögliche slots es gibt, desto einfacher lässt sich diese operation wegschedulen.
+              //Es wird also die Operation mit den meisten möglichen Slots gesucht und diese Operation dann
+              //in den Slot mit der geringsten Resourcenauslastung einsortiert.
+              priority_queue<pair<Vertex *, int>, vector<pair<Vertex *, int>>, SmtVertexIntComp> pq;
+              for (auto &cvp : verticesOfThisResource) {
+                  auto vp = (Vertex *) cvp;
+                  pq.push({vp, availibleSlots.at(vp)});
+              }
+              //Benutzte Resourcen im aktuellen Zeitlot merken um festzustellen ob sich dieser weiter verringern lässt.
+              //Ist dies nicht der Fall, kann das als Abbruchbedingung genutzt werden.
+              int usedFUsAtActualSlot = 0;
+
+              //While-Schleife zur Resourcenminimierung. Diese läuft entweder, bis sich keine Minimierung mehr erziehlen lässt,
+              //oder bis die Resourcenlimits erreicht sind.
+              while (usedFuInModslot.at(x) > r->getLimit()) {
+                  cout << "UsedFUs " << usedFuInModslot.at(x) << "-" << usedFUsAtActualSlot << endl;
+                  cout << "Print: " << endl;
+                  printPossibleStarttimes(vertexTimeslot);
+                  if (usedFuInModslot.at(x) == usedFUsAtActualSlot) {
+                      cout << "break equal" << endl;
+                      break;
+                  }
+                  usedFUsAtActualSlot = usedFuInModslot.at(x);
+                  //Operation mit der größten Anzahl an möglichen Slots wird gesucht und aus dem aktuellen Slot weggescheduled.
+                  vector<pair<Vertex *, int>> tempvec;
+                  while (!pq.empty()) {
+                      cout << " * " << pq.top().first->getName() << "/" << pq.top().second;
+                      tempvec.push_back(pq.top());
+                      pq.pop();
+                  }
+                  cout << endl;
+                  for (auto &it:tempvec) {
+                      pq.push(it);
+                  }
+                  while(!pq.empty()) {
+                      if (usedFuInModslot.at(x) <= r->getLimit()){
+                          break;
+                      }
+                      auto currOp = pq.top();
+                      pq.pop();
+                      Vertex *y = currOp.first;
+                      if (!vertexTimeslot.at({y, x})){
+                          continue;
+                      }
+                      cout << "x/y: " << x << "/" << y->getName() << endl;
+                      priority_queue<pair<int, int>, vector<pair<int, int>>, SmtIntIntComp> fspq;
+                      for (int i = 0; i < usedFuInModslot.size(); i++) {
+                          int temp = (r->getLimit() - usedFuInModslot.at(i)) * (int) vertexTimeslot.at({y, i});
+                          cout << "** " << i << "/" << temp << endl;
+                          fspq.push({i, temp});
+                      }
+                      while (!fspq.empty()) {
+                          auto curr = fspq.top();
+                          fspq.pop();
+                          if (curr.first == x) {
+                              continue;
+                          }
+                          if (vertexTimeslot.at({y, curr.first})) {
+                              if (vertexTimeslot.at({y, x})) {
+                                  cout << x << "/" << y->getName() << " move --> " << curr.first << "/" << y->getName()
+                                       << endl;
+                                  vertexTimeslot.at({y, x}) = false;
+                                  usedFuInModslot.at(x)--;
+                                  availibleSlots.at(y)--;
+                                  printPossibleStarttimes(vertexTimeslot);
+                              }
+                          }
+                      }
+                  }
+              }
+              //Überprüfen of Resourcenbeschränkungen eingehalten werden können.
+              if (usedFuInModslot.at(x) > r->getLimit()){
+                  //Können nicht eingehalten werden, dann abbrechen und latenz erhöhen.
+                  cout << "Konflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
+                  cout << "Not Feasiable..." << endl;
+                  cout << "Increase Latency!" << endl;
+                  return false;
+              }else{
+                  for (auto &cvp : verticesOfThisResource){
+                      auto vp = (Vertex*)cvp;
+                      if (vertexTimeslot.at({vp, x})){
+                          for (int i = 0; i < currentII; i++){
+                              if (i == x){
+                                  continue;
+                              }
+                              if (vertexTimeslot.at({vp,i})) {
+                                  vertexTimeslot.at({vp, i}) = false;
+                                  availibleSlots.at(vp)--;
+                                  usedFuInModslot.at(i)--;
+                              }
+                          }
+                      }
+                  }
+              }
+          }
       }
 
+      printPossibleStarttimes(vertexTimeslot);
 
-      throw(HatScheT::Exception("Stop here..."));
+      //throw(HatScheT::Exception("Stop here..."));
+
+      return true;
   }
 
   pair <map<Vertex*,int>, map<Vertex*, int>> SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM) {
@@ -840,9 +1034,10 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::updateLatestStartTimes() {
+  void SMTBinaryScheduler::updateLatestStartTimes(int oldLatency) {
       for (auto &it: latestStartTimes) {
-          this->latestStartTimes.at(it.first) = it.second - modAlapLength + this->candidateLatency;
+          //cout << it.first->getName() << ": " << it.second << " - " << oldLatency << " + "<< this->candidateLatency << endl;
+          this->latestStartTimes.at(it.first) = it.second - oldLatency + this->candidateLatency;
       }
   }
 
@@ -1126,13 +1321,14 @@ namespace HatScheT {
   }
 
   void SMTBinaryScheduler::printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot) {
+      cout << "MinLAT: " << minLatency << " modASAPLength: " << modAsapLength << endl;
       for (auto &r : resourceModel.Resources()) {
           if (r->isUnlimited()) {
               continue;
           }
           for (auto &v : resourceModel.getVerticesOfResource(r)) {
               cout << setw(18) << v->getName() << ": ";
-              for (int i = 0; i < modAsapLength; i++) {
+              for (int i = 0; i < minLatency; i++) {
                   if (i % iiSpace.at(iiSpaceIndex) == 0) {
                       cout << " ";
                   }
@@ -1153,3 +1349,4 @@ namespace HatScheT {
 
 }
 #endif
+

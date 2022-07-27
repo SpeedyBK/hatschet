@@ -7,8 +7,10 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTBinaryUtils.h>
 #include <utility>
 #include <deque>
+#include <queue>
 #include <cmath>
 
 #include <z3++.h>
@@ -18,6 +20,23 @@ namespace HatScheT {
   class SMTBinaryScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
 
   public:
+
+    struct SmtVertexIntComp {
+      constexpr bool operator()(
+          pair<Vertex*, int> const &a,
+          pair<Vertex*, int> const &b)
+      const noexcept {
+          return a.second < b.second;
+      }
+    };
+    struct SmtIntIntComp {
+      bool operator()(
+          pair<int, int> const &a,
+          pair<int, int> const &b)
+      const noexcept {
+          return a.second < b.second;
+      }
+    };
 
     /*!
      * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
@@ -87,13 +106,13 @@ namespace HatScheT {
      * \brief Determines the latest possible start-times for each vertex by creating an ALAP-Schedule without
      * ressource-constraints.
      */
-    void updateLatestStartTimes();
+    void updateLatestStartTimes(int oldLatency);
     /*!
      * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
      */
     void calcLatencyEstimation();
     void calcMaxLatencyEstimation(int currentII);
-    void calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII);
+    bool calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII);
     pair <map<Vertex*,int>, map<Vertex*, int>> calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM);
     schedulePreference sPref;
     int modAsapLength;
