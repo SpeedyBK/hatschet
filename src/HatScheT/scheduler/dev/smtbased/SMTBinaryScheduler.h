@@ -117,6 +117,8 @@ namespace HatScheT {
     schedulePreference sPref;
     int modAsapLength;
     int modAlapLength;
+    unordered_map<Resource*, bool> checkedResource;
+    int increment;
     bool verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
 
     int getScheduleLatency(unordered_map<Vertex*, int> &vertexLatency, unordered_map<Vertex*, Vertex*> &newToOld);
@@ -142,6 +144,8 @@ namespace HatScheT {
      * @return next candidate latency, or -1 if the search is completed.
      */
     int latLinearSearch(z3::check_result result);
+
+    bool linearSearchInit;
 
     int latReverseLinearSearch(z3::check_result result);
 
@@ -186,6 +190,7 @@ namespace HatScheT {
      * candidate latency.
      */
     map<Vertex*, int> latestStartTimes;
+    map<Vertex*, int> latestStartTimesUpdated;
     /*!
      * \brief Maps each pair of Vertex and start time to a bool. The bool is true if the pair of Vertex and start time is
      * possible and false if it is impossible. The map is used to simplify the cnf for z3 and is created by

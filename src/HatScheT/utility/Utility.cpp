@@ -1452,21 +1452,23 @@ namespace HatScheT {
 	}
 
 	int Utility::getMinLatency(Graph *g, ResourceModel *rm, const map<Vertex *, int> &tMin, const map<Vertex *, int> &tMax,
-														 const int &II, const std::list<std::string> &sw, const unsigned int &timeout) {
+														 const int &II, const std::list<std::string> &sw, const unsigned int &timeout, const int &maxScheduleLength) {
 #ifdef USE_SCALP
 		ScaLP::Solver s{sw};
 		std::map<Vertex*, ScaLP::Variable> y;
 		std::map<std::pair<Vertex*, int>, ScaLP::Variable> b;
 		std::map<Vertex*, ScaLP::Variable> t;
+		int latestEndTime = -1;
 		auto tau = ScaLP::newIntegerVariable("tau", 0, ScaLP::INF());
 		for (auto &v : g->Vertices()) {
 			// check if tMin/tMax are set
 			if (tMin.find(v) == tMin.end() or tMax.find(v) == tMax.end()) {
 				throw Exception("Utility::getMinLatency: tMin/tMax missing for vertex '"+v->getName()+"'");
 			}
-			if (rm->getResource(v)->isUnlimited()) {
+			auto r = rm->getResource(v);
+			if (r->isUnlimited()) {
 				auto &tVar = t[v] = ScaLP::newIntegerVariable("t_"+v->getName(), 0, ScaLP::INF());
-				s.addConstraint(tVar + tau <= tMax.at(v));
+				s.addConstraint(tVar - tau <= tMax.at(v));
 				s.addConstraint(tVar >= tMin.at(v));
 			}
 			else {
@@ -1474,14 +1476,24 @@ namespace HatScheT {
 				ScaLP::Term bSum;
 				ScaLP::Term bSumWeighted;
 				for (int m=0; m<II; m++) {
-					auto &bVar = b[{v, m}] = ScaLP::newBinaryVariable("b_"+v->getName()+std::to_string(m));
+					auto &bVar = b[{v, m}] = ScaLP::newBinaryVariable("b_"+v->getName()+"_"+std::to_string(m));
 					bSum += bVar;
 					bSumWeighted += (m * bVar);
 				}
 				s.addConstraint(bSum == 1);
-				s.addConstraint(bSumWeighted + yVar + tau <= tMax.at(v));
-				s.addConstraint(bSumWeighted + yVar >= tMin.at(v));
+				s.addConstraint(bSumWeighted + II*yVar - tau <= tMax.at(v));
+				s.addConstraint(bSumWeighted + II*yVar >= tMin.at(v));
 			}
+			auto tMaxV = tMax.at(v) + r->getLatency();
+			if (maxScheduleLength != -1 and (latestEndTime == -1 or latestEndTime < tMaxV)) {
+				latestEndTime = tMaxV;
+			}
+		}
+		std::cout << "max schedule length = " << maxScheduleLength << std::endl;
+		std::cout << "latest end time = " << latestEndTime << std::endl;
+		std::cout << "tau max = " << maxScheduleLength - latestEndTime << std::endl;
+		if (maxScheduleLength != -1) {
+			s.addConstraint(tau <= maxScheduleLength - latestEndTime);
 		}
 		for (auto &r : rm->Resources()) {
 			if (r->isUnlimited()) continue;
@@ -1500,6 +1512,7 @@ namespace HatScheT {
 		auto stat = s.solve();
 		if (stat == ScaLP::status::INFEASIBLE or stat == ScaLP::status::TIMEOUT_INFEASIBLE or stat == ScaLP::status::INVALID or stat == ScaLP::status::ERROR or stat == ScaLP::status::INFEASIBLE_OR_UNBOUND or stat == ScaLP::status::UNKNOWN) {
 			std::cout << "ScaLP failed to find latency estimation in " << timeout << " sec" << std::endl;
+			std::cout << "ScaLP status: " << ScaLP::showStatus(stat) << std::endl;
 			return -1;
 		}
 		return (int)std::round(s.getResult().values.at(tau));

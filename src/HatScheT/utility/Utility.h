@@ -49,7 +49,7 @@ public:
 	 * @param timeout timeout in seconds for ILP solver
 	 * @return min latency estimation or -1 if something went terribly wrong (e.g. you requested II < minResII)
 	 */
-	static int getMinLatency(Graph* g, ResourceModel* rm, const std::map<Vertex*, int>& tMin, const std::map<Vertex*, int>& tMax, const int &II, const std::list<std::string> &sw = {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, const unsigned int &timeout = 300);
+	static int getMinLatency(Graph* g, ResourceModel* rm, const std::map<Vertex*, int>& tMin, const std::map<Vertex*, int>& tMax, const int &II, const std::list<std::string> &sw = {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, const unsigned int &timeout = 300, const int &maxScheduleLength=-1);
 	static void unroll(Graph* gUnroll, ResourceModel* rmUnroll, const int &numSamples, const int &cycleLength, Graph* g, ResourceModel* rm, std::map<Vertex*, std::vector<Vertex*>>* vertexMappings, const bool &quiet = true);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::vector<std::map<Vertex*, int>> &schedule, const int &modulo);
 	static int calcMinNumRegs(Graph* g, ResourceModel* rm, const std::map<Vertex*, int> &schedule, const int &II);

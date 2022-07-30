@@ -5,6 +5,7 @@
 #ifdef USE_Z3
 #include "SMTBinaryScheduler.h"
 #include "HatScheT/utility/Exception.h"
+#include "HatScheT/utility/Utility.h"
 
 #include "HatScheT/scheduler/ASAPScheduler.h"
 
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+#include <chrono>
 #include <cmath>
 #include <deque>
 #include <algorithm>
@@ -36,7 +38,7 @@ namespace HatScheT {
       iiSpaceIndex = 0;
 
       sPref = schedulePreference::MOD_ASAP;
-      latSM = latSearchMethod::BINARY;
+      latSM = latSearchMethod::LINEAR;
       this->quiet = true;
       this->latencySpaceIndex = 0;
       this->candidateLatency = -1;
@@ -47,11 +49,13 @@ namespace HatScheT {
       this->rightIndex = 0;
 
       binarySearchInit = true;
+      linearSearchInit = true;
       reverseSearchInit = true;
       iiSearchInit = true;
 
       modAsapLength = 0;
       modAlapLength = 0;
+      increment = 0;
 
       designName = "";
       timeBudget = INT32_MAX;
@@ -103,20 +107,20 @@ namespace HatScheT {
               break;
           }
 
-          if (!quiet) { cout << "Trying II: " << candidateII << endl; }
-
           //Calculating minimum latency and maximum latency-estimation:
           calcLatencyEstimation();
           //If valid schedule already found, just return.
           if (scheduleFound){ return; }
-          if (!quiet) { cout << "Max-Latency : " << maxLatency << endl; }
-          if (!quiet) { cout << "Min-Latency : " << minLatency << endl; }
+          //if (!quiet) { cout << "Max-Latency : " << maxLatency << endl; }
+          //if (!quiet) { cout << "Min-Latency : " << minLatency << endl; }
           //Setting up latency-search-space for latency-search-loop
           calcLatencySpace();
 
           //Latency-search-loop
           while (true){
-              if ( !quiet ) { cout << " -------------------------------- " << endl; }
+              if ( !quiet ) { cout << "*--------------------------*" << endl; }
+              if ( !quiet ) { cout << "* Start scheduling attempt *" << endl; }
+              if ( !quiet ) { cout << "*--------------------------*" << endl; }
               int oldLatency = candidateLatency;
               if (latSM == latSearchMethod::LINEAR) { candidateLatency = latLinearSearch(sati); }
               if (latSM == latSearchMethod::BINARY) { candidateLatency = latBinarySearch(sati); }
@@ -127,7 +131,7 @@ namespace HatScheT {
                   break;
               }
 
-              if (!quiet) { cout << "Trying Latency: " << candidateLatency << endl; }
+              if (!quiet) { cout << "Trying II: " << candidateII << " Trying Latency: " << candidateLatency << endl; }
               //Updating latest start times with candidate latency
               updateLatestStartTimes(oldLatency);
               //Generating debendency constraints for z3-prover.
@@ -183,11 +187,13 @@ namespace HatScheT {
               solving_times.push_back(double(end - start)/ double(CLOCKS_PER_SEC));
               if (!quiet) {
                   cout << "-->" << sati << "<--" << endl;
-                  //cout << "reason unknown: " << s.reason_unknown() << endl;
-                  cout << "Solving Time: " << fixed << (double) t / 1000
-                       << setprecision(5) << " sec " << endl;
+                  cout << "Solving Time: " << fixed << (double) t / 1000 << setprecision(5) << " sec " << endl;
+                  cout << "TimeBudget: " << timeBudget << endl;
+                  cout << "*-------------------------*" << endl;
+                  cout << "* Scheduling attempt done *" << endl;
+                  cout << "*-------------------------*" << endl;
+                  cout << endl;
               }
-              if (!quiet) { cout << "TimeBudget: " << timeBudget << endl; }
               if (timeBudget < 0){
                   if (sati == z3::sat){
                       //A schedule for given II is found, and II can only get worse,
@@ -268,33 +274,55 @@ namespace HatScheT {
           cout << "* Max Latency Estimation *" << endl;
           cout << "*------------------------*" << endl;
       }
+
+      auto startMaxTime = std::chrono::high_resolution_clock::now();
       calcMaxLatencyEstimation(currentII);
+      if (maxLatency < currentII){
+          maxLatency = currentII;
+      }
+      auto endMaxTime = std::chrono::high_resolution_clock::now();
+      auto durationMaxTime = std::chrono::duration_cast<std::chrono::microseconds>(endMaxTime - startMaxTime).count();
+      if (!quiet) { cout << "Done in " << (float)durationMaxTime/1000000 << " seconds." << endl << endl; }
+
       if ( !quiet ) {
           cout << "*------------------------*" << endl;
           cout << "* Min Latency Estimation *" << endl;
           cout << "*------------------------*" << endl;
       }
 
-      //SMTBinaryUtils SmtUtil(earliestStartTimes, latestStartTimes, resourceModel, currentII, minLatency);
-      //SmtUtil.mainfunc();
       //TODO CHECK THAT
-      int i = 0;
-      clock_t start, end;
-      start = clock();
+
+      //auto startTimeClock = std::chrono::high_resolution_clock::now();
+      //int t = Utility::getMinLatency(&g, &resourceModel, aslap.first, aslap.second, currentII, {"Gurobi"}, this->timeouts, this->maxLatency);
+      //cout << "Tau: " << t << " SDC-Latency: " << minLatency << " MinLatency: " << t + minLatency << endl;
+      //auto endTimeClock = std::chrono::high_resolution_clock::now();
+      //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTimeClock - startTimeClock).count();
+      //cout << "Done in " << (float)duration/1000000 << " seconds." << endl;
+      //throw(HatScheT::Exception("Stop here..."));
+      auto startTimeClock2 = std::chrono::high_resolution_clock::now();
+
+      if (currentII > modAsapLength){
+          minLatency = currentII;
+          for (auto &it : aslap.second){
+              it.second = it.second + (currentII - modAsapLength);
+          }
+      }
+
       while (true) {
-          i++;
           auto feasilbe = calcMinLatencyEstimation(aslap, currentII);
-          if (feasilbe or (i == 10)){
+          if (feasilbe or (minLatency >= maxLatency)){
+              cout << "Min Latency: " << minLatency << endl;
               break;
           }
           for (auto &it : aslap.second){
-              it.second++;
+              it.second += increment;
           }
-          minLatency++;
+          minLatency += increment;
       }
-      end = clock();
-      cout << "Done in " << fixed << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5) << " sec " << endl;
-      throw(HatScheT::Exception("Stop here..."));
+      auto endTimeClock2 = std::chrono::high_resolution_clock::now();
+      auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(endTimeClock2 - startTimeClock2).count();
+      if (!quiet) { cout << "Done in " << (float)duration2/1000000 << " seconds." << endl << endl; }
+      //throw(HatScheT::Exception("Stop here..."));
   }
 
   void SMTBinaryScheduler::calcMaxLatencyEstimation(int currentII) {
@@ -321,10 +349,10 @@ namespace HatScheT {
           }
       }
 
-      if ( !quiet ) {
-          printPossibleStarttimes(vertexTimeslot);
-          cout << endl << "------------------------------------------------------------------" << endl << endl;
-      }
+//      if ( !quiet ) {
+//          printPossibleStarttimes(vertexTimeslot);
+//          cout << endl << "------------------------------------------------------------------" << endl << endl;
+//      }
 
       //Trys to satisfy ressource constraints. If they can not be satisfied, there will be operations
       //that can not be scheduled.
@@ -375,13 +403,12 @@ namespace HatScheT {
 
       int maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
 
-      if ( !quiet ) {
-          printPossibleStarttimes(vertexTimeslot);
-      }
+//      if ( !quiet ) {
+//          printPossibleStarttimes(vertexTimeslot);
+//      }
 
       maxLatency = maximum + modAsapLength;
-      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + modAsapLength << endl << endl; }
-
+      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + modAsapLength << endl; }
   }
 
   bool SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
@@ -389,6 +416,10 @@ namespace HatScheT {
       //Algorithm to estimate min latency based on earliest and latest possible start times
       //as well as on ressource constraints.
       map<pair<Vertex*, int>, bool> vertexTimeslot;
+
+      for (auto &r : resourceModel.Resources()){
+          this->checkedResource[r] = false;
+      }
 
       //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
       //based on dependency constraints.
@@ -406,10 +437,10 @@ namespace HatScheT {
           }
       }
 
-      if ( !quiet ) {
-          printPossibleStarttimes(vertexTimeslot);
-          cout << endl << "------------------------------------------------------------------" << endl << endl;
-      }
+//      if ( !quiet ) {
+//          printPossibleStarttimes(vertexTimeslot);
+//          cout << endl << "------------------------------------------------------------------" << endl << endl;
+//      }
 
       // Schedules all operation with satisfied resource constraints. So we can get a requiered min. latency
       // for a schedule
@@ -435,7 +466,7 @@ namespace HatScheT {
               }
           }
           //Debugging Ausgaben
-          cout << r->getName() << " Used FUs: ";
+          /*cout << r->getName() << " Used FUs: ";
           for (auto &it : usedFuInModslot) {
               cout << it << " ";
           }
@@ -444,37 +475,55 @@ namespace HatScheT {
           for (auto &it : availibleSlots) {
               cout << it.first->getName() << ": " << it.second << endl;
           }
-          cout << endl;
+          cout << endl;*/
 
           //Preprocessing: Problem auf einen Iteration Interval Reduzieren.
-          for (int x = 0; x < currentII; x++) {
+          for (int x = 0; x < min(currentII, minLatency); x++) {
               for (auto &cvp : verticesOfThisResource) {
-                  auto vp = (Vertex*) cvp;
+                  auto vp = (Vertex *) cvp;
                   if (vertexTimeslot.at({vp, x})) {
                       for (int i = x + 1; i < minLatency; i++) {
-                          if ((i % currentII) != x) {
-                              continue;
+                          try {
+                              if ((i % currentII) != x) {
+                                  continue;
+                              }
+                              vertexTimeslot.at({vp, i}) = false;
+                          } catch (std::out_of_range &) {
+                              cout << "i: " << i << " Out of Range A" << endl;
+                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
+                                   << " " << x << endl;
+                              cout << "Min. Latency: " << minLatency << endl;
+                              throw (HatScheT::Exception(
+                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range A"));
                           }
-                          vertexTimeslot.at({vp, i}) = false;
                       }
                   } else {
                       for (int i = x + 1; i < minLatency; i++) {
-                          if ((i % currentII) != x) {
-                              continue;
-                          }
-                          if (vertexTimeslot.at({vp, i})) {
-                              vertexTimeslot.at({vp, i}) = false;
-                              vertexTimeslot.at({vp, x}) = true;
+                          try {
+                              if ((i % currentII) != x) {
+                                  continue;
+                              }
+                              if (vertexTimeslot.at({vp, i})) {
+                                  vertexTimeslot.at({vp, i}) = false;
+                                  vertexTimeslot.at({vp, x}) = true;
+                              }
+                          } catch (std::out_of_range &) {
+                              cout << "i: " << i << endl;
+                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
+                                   << " " << x << endl;
+                              cout << "Min. Latency: " << minLatency << endl;
+                              throw (HatScheT::Exception(
+                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range B"));
                           }
                       }
                   }
               }
           }
-          if (!quiet) {
-              cout << "After Preprocessing: " << endl;
-              printPossibleStarttimes(vertexTimeslot);
-              cout << endl << "------------------------------------------------------------------" << endl << endl;
-          }
+//          if (!quiet) {
+//              cout << "After Preprocessing: " << endl;
+//              printPossibleStarttimes(vertexTimeslot);
+//              cout << endl << "------------------------------------------------------------------" << endl << endl;
+//          }
           usedFuInModslot.clear();
           usedFuInModslot.resize(currentII);
           availibleSlots.clear();
@@ -493,7 +542,7 @@ namespace HatScheT {
               }
           }
           //Debugging Ausgaben
-          cout << r->getName() << " Used FUs: ";
+          /*cout << r->getName() << " Used FUs: ";
           for (auto &it : usedFuInModslot) {
               cout << it << " ";
           }
@@ -502,12 +551,12 @@ namespace HatScheT {
           for (auto &it : availibleSlots) {
               cout << it.first->getName() << ": " << it.second << endl;
           }
-          cout << endl;
+          cout << endl;*/
 
 
           //Überprüfen, ob Resourcenbeschränkungen eingehalten werden.
-          for (int x = 0; x < currentII; x++) {
-              cout << "Checking Slot: " << x << endl;
+          for (int x = 0; x < min(currentII, minLatency); x++) {
+              //cout << "Checking Slot: " << x << endl;
               if (usedFuInModslot.at(x) <= r->getLimit()) {
                   //Kein Konflikt alles gut.
                   continue;
@@ -530,10 +579,14 @@ namespace HatScheT {
               //While-Schleife zur Resourcenminimierung. Diese läuft entweder, bis sich keine Minimierung mehr erziehlen lässt,
               //oder bis die Resourcenlimits erreicht sind.
               while (usedFuInModslot.at(x) > r->getLimit()) {
-                  cout << "UsedFUs " << usedFuInModslot.at(x) << "-" << usedFUsAtActualSlot << endl;
-                  cout << "Print: " << endl;
-                  printPossibleStarttimes(vertexTimeslot);
+                  //cout << "UsedFUs " << usedFuInModslot.at(x) << "-" << usedFUsAtActualSlot << endl;
+                  //cout << "Print: " << endl;
+                  //printPossibleStarttimes(vertexTimeslot);
                   if (usedFuInModslot.at(x) == usedFUsAtActualSlot) {
+                      increment = (int)floor(usedFuInModslot.at(x)/r->getLimit()) - r->getLimit();
+                      if (increment < 1){
+                          increment = 1;
+                      }
                       cout << "break equal" << endl;
                       break;
                   }
@@ -541,11 +594,11 @@ namespace HatScheT {
                   //Operation mit der größten Anzahl an möglichen Slots wird gesucht und aus dem aktuellen Slot weggescheduled.
                   vector<pair<Vertex *, int>> tempvec;
                   while (!pq.empty()) {
-                      cout << " * " << pq.top().first->getName() << "/" << pq.top().second;
+                      //cout << " * " << pq.top().first->getName() << "/" << pq.top().second;
                       tempvec.push_back(pq.top());
                       pq.pop();
                   }
-                  cout << endl;
+                  //cout << endl;
                   for (auto &it:tempvec) {
                       pq.push(it);
                   }
@@ -559,11 +612,11 @@ namespace HatScheT {
                       if (!vertexTimeslot.at({y, x})){
                           continue;
                       }
-                      cout << "x/y: " << x << "/" << y->getName() << endl;
+                      //cout << "x/y: " << x << "/" << y->getName() << endl;
                       priority_queue<pair<int, int>, vector<pair<int, int>>, SmtIntIntComp> fspq;
-                      for (int i = 0; i < usedFuInModslot.size(); i++) {
+                      for (int i = 0; i < min((int)usedFuInModslot.size(), minLatency); i++) {
                           int temp = (r->getLimit() - usedFuInModslot.at(i)) * (int) vertexTimeslot.at({y, i});
-                          cout << "** " << i << "/" << temp << endl;
+                          //cout << "** " << i << "/" << temp << endl;
                           fspq.push({i, temp});
                       }
                       while (!fspq.empty()) {
@@ -574,12 +627,12 @@ namespace HatScheT {
                           }
                           if (vertexTimeslot.at({y, curr.first})) {
                               if (vertexTimeslot.at({y, x})) {
-                                  cout << x << "/" << y->getName() << " move --> " << curr.first << "/" << y->getName()
-                                       << endl;
+                                  //cout << x << "/" << y->getName() << " move --> " << curr.first << "/" << y->getName()
+                                  //     << endl;
                                   vertexTimeslot.at({y, x}) = false;
                                   usedFuInModslot.at(x)--;
                                   availibleSlots.at(y)--;
-                                  printPossibleStarttimes(vertexTimeslot);
+                                  //printPossibleStarttimes(vertexTimeslot);
                               }
                           }
                       }
@@ -588,19 +641,19 @@ namespace HatScheT {
               //Überprüfen of Resourcenbeschränkungen eingehalten werden können.
               if (usedFuInModslot.at(x) > r->getLimit()){
                   //Können nicht eingehalten werden, dann abbrechen und latenz erhöhen.
-                  cout << "Konflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
-                  cout << "Not Feasiable..." << endl;
-                  cout << "Increase Latency!" << endl;
+                  cout << "Conflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
+                  cout << "Not Feasiable... Increase Latency!" << endl;
                   return false;
               }else{
+                  checkedResource.at(r) = true;
                   for (auto &cvp : verticesOfThisResource){
                       auto vp = (Vertex*)cvp;
                       if (vertexTimeslot.at({vp, x})){
-                          for (int i = 0; i < currentII; i++){
+                          for (int i = 0; i < min(currentII, minLatency); i++){
                               if (i == x){
                                   continue;
                               }
-                              if (vertexTimeslot.at({vp,i})) {
+                              if (vertexTimeslot.at({vp, i})) {
                                   vertexTimeslot.at({vp, i}) = false;
                                   availibleSlots.at(vp)--;
                                   usedFuInModslot.at(i)--;
@@ -612,7 +665,7 @@ namespace HatScheT {
           }
       }
 
-      printPossibleStarttimes(vertexTimeslot);
+      //printPossibleStarttimes(vertexTimeslot);
 
       //throw(HatScheT::Exception("Stop here..."));
 
@@ -758,7 +811,7 @@ namespace HatScheT {
       map<Vertex*, int> startTimes_alap;
       map<Vertex*, int> startTimesAsap;
 
-      if ( !quiet ) { cout << "Latest possible Starttimes:" << endl; }
+      //if ( !quiet ) { cout << "Latest possible Starttimes:" << endl; }
       for (auto &it : vertexDistanceAlap) {
           //Removing HELPER_ALAP-Vertex from ALAP-Starttimes:
           if (it.first == &helperAlap){
@@ -766,7 +819,7 @@ namespace HatScheT {
           }
           it.second += abs(min);
           startTimes_alap[newToOldVertexAlap[it.first]]=it.second;
-          if ( !quiet) { cout << it.first->getName() << ": " << it.second << endl; }
+          //if ( !quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       //Checking if we are lucky and MOD-ALAP-Starttimes are already a valig modulo schedule:
@@ -777,7 +830,7 @@ namespace HatScheT {
           cout << "---------------------------------------------------------" << endl;
           cout << "Valid Mod. Schedule for given Ressources: " << validstr << " / II: " << iiSpace.at(iiSpaceIndex) << endl;
           cout << "---------------------------------------------------------" << endl;
-          cout << "Earliest possible Starttimes:" << endl;
+          //cout << "Earliest possible Starttimes:" << endl;
       }
       for (auto &it : vertexDistanceAsap) {
           //Removing HELPER_ASAP-Vertex from ALAP-Starttimes:
@@ -786,7 +839,7 @@ namespace HatScheT {
           }
           it.second = abs(it.second);
           startTimesAsap[newToOldVertexAsap[it.first]] = it.second;
-          if (!quiet) { cout << it.first->getName() << ": " << it.second << endl; }
+          //if (!quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       //Checking if we are lucky and MOD-ASAP-Starttimes are already a valig modulo schedule:
@@ -818,6 +871,7 @@ namespace HatScheT {
       modAsapLength = getScheduleLatency(vertexDistanceAsap, newToOldVertexAsap);
       if (!quiet) { cout << "SDC-ALAP-Latency: " << modAlapLength << endl; }
       if (!quiet) { cout << "SDC-ASAP-Latency: " << modAsapLength << endl; }
+      if (!quiet) { cout << endl; }
       if (modAsapLength != modAlapLength ){
           throw (HatScheT::Exception("smtbased-Scheduler, calcAsapAndAlapModScheduleWithSdc(), modAlapLength and not equal"));
       }
@@ -1003,9 +1057,9 @@ namespace HatScheT {
           }
       }
 
-      if (latSM == latSearchMethod::LINEAR){
-          return z3::sat;
-      }
+//      if (latSM == latSearchMethod::LINEAR){
+//          return z3::sat;
+//      }
       return s.check();
   }
 
@@ -1015,7 +1069,7 @@ namespace HatScheT {
           for (int i = 0; i <= candidateLatency; i++){
               if (i < earliestStartTimes.at(v)){
                   startTimesSimplification[std::make_pair(v, i)] = false;
-                  s.add(!*getBvariable(v, i));
+                  //s.add(!*getBvariable(v, i));
               }else{
                   startTimesSimplification[std::make_pair(v, i)] = true;
               }
@@ -1026,25 +1080,27 @@ namespace HatScheT {
   void SMTBinaryScheduler::prohibitToLateStartsAndAdd(z3::solver &s) {
       for (auto &v : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++){
-              if (i > latestStartTimes.at(v)){
+              if (i > latestStartTimesUpdated.at(v)){
                   startTimesSimplification.at(std::make_pair(v, i)) = false;
-                  s.add(!*getBvariable(v, i));
+                  //s.add(!*getBvariable(v, i));
               }
           }
       }
   }
 
   void SMTBinaryScheduler::updateLatestStartTimes(int oldLatency) {
+      latestStartTimesUpdated.clear();
       for (auto &it: latestStartTimes) {
-          //cout << it.first->getName() << ": " << it.second << " - " << oldLatency << " + "<< this->candidateLatency << endl;
-          this->latestStartTimes.at(it.first) = it.second - oldLatency + this->candidateLatency;
+          //cout << it.first->getName() << ": " << it.second << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
+          this->latestStartTimesUpdated[it.first] = it.second + this->candidateLatency - modAsapLength;
+          //cout << it.first->getName() << ": " << latestStartTimesUpdated.at(it.first) << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
       }
   }
 
   z3::check_result SMTBinaryScheduler::setDependencyConstraintsAndAddToSolver(z3::solver &s, const int &candidateII) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       int i = 0;
-      deque<double> sTimes;
+      deque<long> sTimes;
       z3::check_result satisfiable;
       clock_t start, end;
       for (auto &e : g.Edges()) {
@@ -1068,24 +1124,25 @@ namespace HatScheT {
                       //Conflict... Not both Operations in this timeslot;
                       s.add(!*getBvariable(vSrc, ti) || !*getBvariable(vDst, tj));
                       if (i % 10000 == 0) {
-                          start = clock();
-                          if (latSM != latSearchMethod::LINEAR) {
-                              satisfiable = s.check();
-                          }else{
-                              satisfiable = z3::sat;
-                          }
-                          end = clock();
-                          sTimes.push_back(double(end - start) / double(CLOCKS_PER_SEC));
-                          timeBudget -= (int)(sTimes.back() * 1000);
+                          auto start_time = std::chrono::high_resolution_clock::now();
+                          satisfiable = s.check();
+                          auto end_time = std::chrono::high_resolution_clock::now();
+                          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+                          sTimes.push_back(duration);
+                          timeBudget -= (int)(sTimes.back());
                           if( !quiet ) { cout << i << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
-                                              << sTimes.back() << setprecision(5) << " sec "
+                                              << (float)sTimes.back()/1000 << setprecision(5) << " sec "
                                               << "Time Budget: " << timeBudget << endl; }
                           if (satisfiable == z3::unsat){
                               return satisfiable;
                           }
+                          if (satisfiable == z3::unknown){
+                              timeBudget = -1;
+                          }
                           if (timeBudget < 0){
                               cerr << "Timeout! Candidate II: " << candidateII
                                    << " Candidate Latency: " << candidateLatency << endl;
+                              linearSearchInit = true;
                               secondObjectiveOptimal = false;
                               return z3::unsat;
                           }
@@ -1162,6 +1219,10 @@ namespace HatScheT {
   }
 
   int SMTBinaryScheduler::latLinearSearch(z3::check_result result) {
+      if (linearSearchInit){
+          latencySpaceIndex = 0;
+          linearSearchInit = false;
+      }
       if (result == z3::sat) {
           return -1;
       }
