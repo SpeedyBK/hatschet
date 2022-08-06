@@ -3737,8 +3737,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "/home/bkessler/Repositories/hatschet/benchmarks/MachSuite/aes2/graph12_RM.xml";
-      string graphStr = "/home/bkessler/Repositories/hatschet/benchmarks/MachSuite/aes2/graph12.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3909,4 +3909,56 @@ namespace HatScheT {
 		}
 		return valid;
 	}
+
+  bool Tests::utilityLatencyEstimation() {
+#ifdef USE_SCALP
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      double minII = Utility::calcMinII(Utility::calcRecMII(&g, &rm), Utility::calcResMII(&rm));
+
+      cout << "minII: " << minII << endl;
+
+      pair<map<Vertex*, int>, map<Vertex*, int>> aslapTimes = Utility::getSDCAsapAndAlapTimes(&g, &rm, minII, false);
+
+      unordered_map<Vertex*, Vertex*> uglyMap;
+      unordered_map<Vertex*, int> tMaxUnordered;
+      for (auto &v : aslapTimes.second){
+          uglyMap[v.first] = v.first;
+          tMaxUnordered[v.first] = v.second;
+      }
+      int length = Utility::getSDCScheduleLength(tMaxUnordered, uglyMap, &rm);
+
+      auto start_t = std::chrono::high_resolution_clock::now();
+      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII) + length;
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << "Min Latency ILP: " << ilpMinLatency << endl;
+      cout << "Done in " << t << " seconds" << endl;
+
+      start_t = std::chrono::high_resolution_clock::now();
+      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both);
+      end_t = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      t = ((double)duration / 1000);
+
+      cout << "Max Latency: " << latency.second << endl;
+      cout << "Min Latency: " << latency.first << endl;
+      cout << "Done in " << t << " seconds" << endl;
+
+      return latency.first == ilpMinLatency and latency.first < latency.second;
+#else
+      cout << "Not using ScaLP, skipping Test..."
+      return true;
+#endif
+  }
 }

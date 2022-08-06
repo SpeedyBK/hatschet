@@ -338,6 +338,8 @@ namespace HatScheT {
 		 * test functionality of SAT based binding algorithm
 		 * @return if test was passed
 		 */
+		static bool utilityLatencyEstimation();
+
 		static bool satBinding();
 	};
 }

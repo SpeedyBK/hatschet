@@ -21,7 +21,7 @@ namespace HatScheT {
 
   public:
 
-    struct SmtVertexIntComp {
+    struct SmtVertexIntCompLess {
       constexpr bool operator()(
           pair<Vertex*, int> const &a,
           pair<Vertex*, int> const &b)
@@ -29,6 +29,16 @@ namespace HatScheT {
           return a.second < b.second;
       }
     };
+
+    struct SmtVertexIntCompGreater {
+      constexpr bool operator()(
+          pair<Vertex*, int> const &a,
+          pair<Vertex*, int> const &b)
+      const noexcept {
+          return a.second > b.second;
+      }
+    };
+
     struct SmtIntIntComp {
       bool operator()(
           pair<int, int> const &a,
@@ -54,6 +64,9 @@ namespace HatScheT {
      * Sets a timeout for Z3 for each check.
      * @param seconds
      */
+
+    void scheduleTrival(int candidateII);
+
     void setSolverTimeout(unsigned seconds);
     /*!
      * Enum to set the method to find the best possible latency.
@@ -147,10 +160,6 @@ namespace HatScheT {
 
     bool linearSearchInit;
 
-    int latReverseLinearSearch(z3::check_result result);
-
-    bool reverseSearchInit;
-
     /*!------------------
      * II related stuff
      *------------------*/
@@ -166,7 +175,6 @@ namespace HatScheT {
      * Linear (incremental) search for the optimal II.
      * @param result from the previous z3 check. (SAT, UNSAT, UNKOWN)
      * @return next candidate II, or -1 if the search is completed or search space is exhausted.
-     * ToDo: Add something if search space is exhausted.
      */
     int iiLinearSearch(z3::check_result result);
     /*!
@@ -249,7 +257,8 @@ namespace HatScheT {
      */
     z3::check_result addResourceLimitConstraintToSolver(z3::solver &s, int candidateII);
 
-    int timeBudget;
+    int32_t timeBudget;
+    int32_t timeLimit;
     /*!-------------------------------
      *  Print and Debugging Methods
      *-------------------------------*/

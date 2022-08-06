@@ -493,6 +493,7 @@ int main(int argc, char *args[]) {
 				if (str == "MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
 				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
+                if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
@@ -932,7 +933,7 @@ int main(int argc, char *args[]) {
                 case SMT:
                     scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler *) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else

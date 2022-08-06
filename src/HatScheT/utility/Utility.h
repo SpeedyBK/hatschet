@@ -405,6 +405,20 @@ public:
 		 */
 		static int hFunction(double n, double M, int tau);
 
+  static pair<map<Vertex*, int>, map<Vertex*, int>> getSDCAsapAndAlapTimes(Graph* g, ResourceModel* rm, double II, bool quiet = true);
+
+  static int getSDCScheduleLength(unordered_map<Vertex *, int> &vertexLatency, unordered_map<Vertex *, Vertex *> &newToOld,
+                                  ResourceModel* rm, bool quiet = true);
+
+  static int calcMaxLatencyEstimation(Graph* g, ResourceModel* rm, map<Vertex*, int> &tMin, map<Vertex*, int> &tMax,
+                                                     int II, bool quiet = true);
+
+  static bool calcMinLatencyEstimation(Graph* g, ResourceModel* rm, map<Vertex*, int> &tMin, map<Vertex*, int> &tMax, int II,
+                                      int &increment, int &minLatency, int &modAsapLength, bool quiet = true);
+
+  enum class latencyMode {minLatency, maxLatency, both};
+  static pair<int, int> getLatencyEstimation(Graph* g, ResourceModel* rm, double II, latencyMode lm);
+
   private:
 
   /*!
