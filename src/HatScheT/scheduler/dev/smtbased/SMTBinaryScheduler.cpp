@@ -451,34 +451,8 @@ namespace HatScheT {
           if (r->isUnlimited()) {
               continue;
           }
-          vector<int> usedFuInModslot;
-          usedFuInModslot.resize(currentII);
-          map<Vertex *, int> availibleSlots;
+
           auto verticesOfThisResource = resourceModel.getVerticesOfResource(r);
-          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
-          //Zählen wie viele potentielle Zeitslots existieren.
-          for (auto &cvp : verticesOfThisResource) {
-              auto vp = (Vertex*) cvp;
-              availibleSlots[vp] = 0;
-              for (int i = 0; i < minLatency; i++) {
-                  if (!vertexTimeslot.at({vp, i})) {
-                      continue;
-                  }
-                  usedFuInModslot.at(i % currentII)++;
-                  availibleSlots.at(vp)++;
-              }
-          }
-          //Debugging Ausgaben
-          /*cout << r->getName() << " Used FUs: ";
-          for (auto &it : usedFuInModslot) {
-              cout << it << " ";
-          }
-          cout << endl;
-          cout << "Available Slots: " << endl;
-          for (auto &it : availibleSlots) {
-              cout << it.first->getName() << ": " << it.second << endl;
-          }
-          cout << endl;*/
 
           //Preprocessing: Problem auf einen Iteration Interval Reduzieren.
           for (int x = 0; x < min(currentII, minLatency); x++) {
@@ -522,14 +496,10 @@ namespace HatScheT {
                   }
               }
           }
-//          if (!quiet) {
-//              cout << "After Preprocessing: " << endl;
-//              printPossibleStarttimes(vertexTimeslot);
-//              cout << endl << "------------------------------------------------------------------" << endl << endl;
-//          }
-          usedFuInModslot.clear();
+
+          vector<int> usedFuInModslot;
           usedFuInModslot.resize(currentII);
-          availibleSlots.clear();
+          map<Vertex *, int> availibleSlots;
 
           //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
           //Zählen wie viele potentielle Zeitslots existieren.
@@ -544,19 +514,6 @@ namespace HatScheT {
                   availibleSlots.at(vp)++;
               }
           }
-          //Debugging Ausgaben
-          /*cout << r->getName() << " Used FUs: ";
-          for (auto &it : usedFuInModslot) {
-              cout << it << " ";
-          }
-          cout << endl;
-          cout << "Available Slots: " << endl;
-          for (auto &it : availibleSlots) {
-              cout << it.first->getName() << ": " << it.second << endl;
-          }
-          cout << endl;*/
-
-
           //Überprüfen, ob Resourcenbeschränkungen eingehalten werden.
           for (int x = 0; x < min(currentII, minLatency); x++) {
               //cout << "Checking Slot: " << x << endl;
@@ -582,9 +539,6 @@ namespace HatScheT {
               //While-Schleife zur Resourcenminimierung. Diese läuft entweder, bis sich keine Minimierung mehr erziehlen lässt,
               //oder bis die Resourcenlimits erreicht sind.
               while (usedFuInModslot.at(x) > r->getLimit()) {
-                  //cout << "UsedFUs " << usedFuInModslot.at(x) << "-" << usedFUsAtActualSlot << endl;
-                  //cout << "Print: " << endl;
-                  //printPossibleStarttimes(vertexTimeslot);
                   if (usedFuInModslot.at(x) == usedFUsAtActualSlot) {
                       increment = (int)floor(usedFuInModslot.at(x)/r->getLimit()) - r->getLimit();
                       if (increment < 1){
@@ -595,16 +549,6 @@ namespace HatScheT {
                   }
                   usedFUsAtActualSlot = usedFuInModslot.at(x);
                   //Operation mit der größten Anzahl an möglichen Slots wird gesucht und aus dem aktuellen Slot weggescheduled.
-                  vector<pair<Vertex *, int>> tempvec;
-                  while (!pq.empty()) {
-                      //cout << " * " << pq.top().first->getName() << "/" << pq.top().second;
-                      tempvec.push_back(pq.top());
-                      pq.pop();
-                  }
-                  //cout << endl;
-                  for (auto &it:tempvec) {
-                      pq.push(it);
-                  }
                   while(!pq.empty()) {
                       if (usedFuInModslot.at(x) <= r->getLimit()){
                           break;
@@ -615,11 +559,9 @@ namespace HatScheT {
                       if (!vertexTimeslot.at({y, x})){
                           continue;
                       }
-                      //cout << "x/y: " << x << "/" << y->getName() << endl;
                       priority_queue<pair<int, int>, vector<pair<int, int>>, SmtIntIntComp> fspq;
                       for (int i = 0; i < min((int)usedFuInModslot.size(), minLatency); i++) {
                           int temp = (r->getLimit() - usedFuInModslot.at(i)) * (int) vertexTimeslot.at({y, i});
-                          //cout << "** " << i << "/" << temp << endl;
                           fspq.push({i, temp});
                       }
                       while (!fspq.empty()) {
@@ -630,12 +572,9 @@ namespace HatScheT {
                           }
                           if (vertexTimeslot.at({y, curr.first})) {
                               if (vertexTimeslot.at({y, x})) {
-                                  //cout << x << "/" << y->getName() << " move --> " << curr.first << "/" << y->getName()
-                                  //     << endl;
                                   vertexTimeslot.at({y, x}) = false;
                                   usedFuInModslot.at(x)--;
                                   availibleSlots.at(y)--;
-                                  //printPossibleStarttimes(vertexTimeslot);
                               }
                           }
                       }
@@ -667,10 +606,6 @@ namespace HatScheT {
               }
           }
       }
-
-      //printPossibleStarttimes(vertexTimeslot);
-
-      //throw(HatScheT::Exception("Stop here..."));
 
       return true;
   }

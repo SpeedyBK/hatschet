@@ -3517,7 +3517,7 @@ namespace HatScheT {
 		rm.registerVertex(&g5, &green);
 		g.createEdge(g5, r4, 0);
 
-		SATScheduler m(g, rm);
+        SATScheduler m(g, rm);
 		m.setQuiet(true);
 		m.setMaxRuns(1);
 		m.setSolverTimeout(300);
@@ -3743,7 +3743,7 @@ namespace HatScheT {
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("adcpm.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("sos4.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
@@ -3916,15 +3916,15 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
       double minII = Utility::calcMinII(Utility::calcRecMII(&g, &rm), Utility::calcResMII(&rm));
 
-      cout << "minII: " << minII << endl;
+      cout << endl << "Minimum II: " << minII << endl;
 
       pair<map<Vertex*, int>, map<Vertex*, int>> aslapTimes = Utility::getSDCAsapAndAlapTimes(&g, &rm, minII, false);
 
@@ -3937,20 +3937,23 @@ namespace HatScheT {
       int length = Utility::getSDCScheduleLength(tMaxUnordered, uglyMap, &rm);
 
       auto start_t = std::chrono::high_resolution_clock::now();
-      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII) + length;
+      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1) + length;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
 
+      cout << endl << "Result ILP: " << endl;
       cout << "Min Latency ILP: " << ilpMinLatency << endl;
-      cout << "Done in " << t << " seconds" << endl;
+      cout << "Done in " << t << " seconds" << endl << endl;
 
       start_t = std::chrono::high_resolution_clock::now();
-      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both);
+      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both, true);
       end_t = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       t = ((double)duration / 1000);
 
+      cout << endl;
+      cout << "Result custom ( nameless :( ) Algorithm:" << endl;
       cout << "Max Latency: " << latency.second << endl;
       cout << "Min Latency: " << latency.first << endl;
       cout << "Done in " << t << " seconds" << endl;

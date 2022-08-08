@@ -502,7 +502,6 @@ int main(int argc, char *args[]) {
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 				if (str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
 #endif
-
 				exit(0);
 			} else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
 				string str = std::string(value);

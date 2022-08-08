@@ -1453,11 +1453,18 @@ namespace HatScheT {
 		}
 	}
 
-	int Utility::getMinLatency(Graph *g, ResourceModel *rm, const map<Vertex *, int> &tMin, const map<Vertex *, int> &tMax,
-														 const int &II, const std::list<std::string> &sw, const unsigned int &timeout, const int &maxScheduleLength) {
+	int Utility::getMinLatency(Graph *g, ResourceModel *rm,
+                               const map<Vertex *, int> &tMin,
+                               const map<Vertex *, int> &tMax,
+                               const int &II, const std::list<std::string> &sw,
+                               const unsigned int &timeout,
+                               const int &maxScheduleLength,
+                               const int8_t &threads) {
 #ifdef USE_SCALP
 		ScaLP::Solver s{sw};
-		s.threads = 1;
+		if (threads > 0) {
+            s.threads = (uint8_t) threads;
+        }
 		std::map<Vertex*, ScaLP::Variable> y;
 		std::map<std::pair<Vertex*, int>, ScaLP::Variable> b;
 		std::map<Vertex*, ScaLP::Variable> t;
@@ -1524,7 +1531,111 @@ namespace HatScheT {
 #endif
 	}
 
-  pair<map<Vertex*, int>, map<Vertex*, int>> Utility::getSDCAsapAndAlapTimes(Graph* g, ResourceModel* rm, double II, bool quiet) {
+  pair<int, int> Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyMode lm, bool quiet) {
+
+	  // Calculate earliest and latest possible starttimes:
+	  auto aslap = Utility::getSDCAsapAndAlapTimes(g, rm, II, quiet);
+
+	  // Strange stuff which allows me to reuse the getSDCScheduleLength() function... :roll_eyes:
+	  // ToDo: If there is time, we can rewrite getSDCScheduleLength() to get rid of this ugly
+	  //       piece of code.
+	  unordered_map<Vertex*, Vertex*> helperMap;
+      unordered_map<Vertex*, int> tMaxUnordered;
+      for (auto &v : aslap.second){
+          helperMap[v.first] = v.first;
+          tMaxUnordered[v.first] = v.second;
+      }
+
+      // Getting the latency of our SDC-Schedules:
+      int modAsapLength = getSDCScheduleLength(tMaxUnordered, helperMap, rm);
+
+      int increment = 0;
+      int maxLatency = calcMaxLatencyEstimation(g, rm, aslap.first, aslap.second, (int) II);;
+      int minLatency = modAsapLength;
+
+      // lm = maxLatency returns {0, maxLatency}
+      // lm = minLatency returns {minLatency, 0}
+      // lm = minLatency returns {minLatency, maxLatency}
+      switch (lm) {
+          case latencyMode::maxLatency:
+              // Just return maxLatency... looks obvious...
+              return {0, maxLatency};
+
+          case latencyMode::minLatency:
+              // Latency can't be less then II, otherwise it would be possible to just reduce the II.
+              // So minLatency is set to II.
+              if ((int)II > modAsapLength){
+                  minLatency = (int) II;
+                  //Update latest start times.
+                  for (auto &it : aslap.second){
+                      it.second = it.second + (II - modAsapLength);
+                  }
+              }
+              // Latency calculation loop.
+              // Runs untill a solution is found, or if minLatency is
+              while (minLatency < maxLatency){
+                  auto feasilbe = calcMinLatencyEstimation(g, rm,
+                                                           aslap.first,
+                                                           aslap.second,
+                                                           (int)II,
+                                                           increment,
+                                                           minLatency,
+                                                           modAsapLength,
+                                                           quiet);
+                  if (feasilbe){
+                      if (!quiet) { cout << "Min Latency: " << minLatency << endl; }
+                      break;
+                  }
+                  //Adding the calculated increment to latest start times and minLatency.
+                  for (auto &it : aslap.second){
+                      it.second += increment;
+                  }
+                  if (!quiet) { cout << "Min Lat:" << minLatency << " Increment: " << increment << endl; }
+                  minLatency += increment;
+              }
+              return {minLatency, 0};
+
+          case latencyMode::both:
+              // Latency can't be less then II, otherwise it would be possible to just reduce the II.
+              // So minLatency is set to II.
+              if ((int)II > minLatency){
+                  minLatency = (int) II;
+                  //Update latest start times.
+                  for (auto &it : aslap.second){
+                      int temp = it.second;
+                      it.second = it.second + (II - modAsapLength);
+                  }
+              }
+              // Latency calculation loop.
+              // Runs untill a solution is found, or if minLatency is
+              while (minLatency < maxLatency){
+                  auto feasilbe = calcMinLatencyEstimation(g, rm,
+                                                           aslap.first,
+                                                           aslap.second,
+                                                           (int) II,
+                                                           increment,
+                                                           minLatency,
+                                                           modAsapLength,
+                                                           quiet);
+                  if (feasilbe){
+                      if (!quiet) { cout << "Min Latency: " << minLatency << endl; }
+                      break;
+                  }
+                  //Adding the calculated increment to latest start times and minLatency.
+                  for (auto &it : aslap.second){
+                      it.second += increment;
+                  }
+                  if (!quiet) { cout << "Min Lat:" << minLatency << " Increment: " << increment << endl; }
+                  minLatency += increment;
+              }
+              return {minLatency, maxLatency};
+      }
+      throw(HatScheT::Exception("Utility::getLatencyEstimation(): Reached end of the switch-statement."));
+      return {0,0};
+  }
+
+  pair<map<Vertex*, int>, map<Vertex*, int>> Utility::getSDCAsapAndAlapTimes(Graph* g, ResourceModel* rm,
+                                                                             const double &II, bool quiet) {
 
       // Create SDC-Graphs (Transposed with Helper for ALAP-Starttimes
       // and original with Helper for ASAP-Starttimes) as well as a mapping
@@ -1610,7 +1721,7 @@ namespace HatScheT {
               }
           }
       }catch (std::out_of_range&) {
-          throw (std::out_of_range("SMT_Sheduler: calcAsapAndAlapModScheduleWithSdc(), Bellmann-Ford, Step 2, ALAP Loop"));
+          throw (std::out_of_range("Utility: getSDCAsapAndAlapTimes(): Bellmann-Ford, Step 2, ALAP Loop"));
       }
       try{
           unsigned int numOfVerticesAsap = sdcGraphAsap.getNumberOfVertices();
@@ -1626,7 +1737,7 @@ namespace HatScheT {
               }
           }
       } catch (std::out_of_range&) {
-          throw (std::out_of_range("SMT_Sheduler: calcAsapAndAlapModScheduleWithSdc(), Bellmann-Ford, Step 2, ASAP Loop"));
+          throw (std::out_of_range("Utility: getSDCAsapAndAlapTimes(): Bellmann-Ford, Step 2, ASAP Loop"));
       }
 
       //Checking for negativ Cycles:
@@ -1637,7 +1748,7 @@ namespace HatScheT {
           if ((vertexDistanceAlap.at(t) != INT32_MAX) && (vertexDistanceAlap.at(t) + weight < vertexDistanceAlap.at(u))){
               cout << "Negative Cycle Detected ALAP:" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
-              throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
+              throw(HatScheT::Exception("Utility::getSDCAsapAndAlapTimes()"));
           }
       }
       for (auto &e : sdcGraphAsap.Edges()){
@@ -1647,14 +1758,9 @@ namespace HatScheT {
           if ((vertexDistanceAsap.at(t) != INT32_MAX) && (vertexDistanceAsap.at(t) + weight < vertexDistanceAsap.at(u))){
               cout << "Negative Cycle Detected ASAP" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
-              throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
+              throw(HatScheT::Exception("Utility::getSDCAsapAndAlapTimes()"));
           }
       }
-
-      /*if ( !quiet ) {
-          cout << "Transposed Helper Graph:" << endl << sdcGraphAlap << endl;
-          cout << "Helper Graph:" << endl << sdcGraphAsap << endl;
-      }*/
 
       auto min = std::min_element(vertexDistanceAlap.begin(), vertexDistanceAlap.end(), [](const pair<Vertex*,int> &x, const pair<Vertex*, int> &y) {
         return x.second < y.second;
@@ -1663,7 +1769,6 @@ namespace HatScheT {
       map<Vertex*, int> startTimesAlap;
       map<Vertex*, int> startTimesAsap;
 
-      //if ( !quiet ) { cout << "Latest possible Starttimes:" << endl; }
       for (auto &it : vertexDistanceAlap) {
           //Removing HELPER_ALAP-Vertex from ALAP-Starttimes:
           if (it.first == &helperAlap){
@@ -1671,7 +1776,6 @@ namespace HatScheT {
           }
           it.second += abs(min);
           startTimesAlap[newToOldVertexAlap[it.first]]=it.second;
-          //if ( !quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       for (auto &it : vertexDistanceAsap) {
@@ -1681,20 +1785,15 @@ namespace HatScheT {
           }
           it.second = abs(it.second);
           startTimesAsap[newToOldVertexAsap[it.first]] = it.second;
-          //if (!quiet) { cout << it.first->getName() << ": " << it.second << endl; }
       }
 
       auto success = vertexDistanceAlap.erase(&helperAlap);
-      if ( !quiet and success){
-          cout << "Successful deleted Helper_Vertex_ALAP: True" << endl;
-      }else if ( !quiet ){
-          cout << "Successful deleted Helper_Vertex_ALAP: False" << endl;
+      if (!success){
+          throw (HatScheT::Exception("Utility::getSDCAsapAndAlapTimes(): Deleting ALAP-Helper-Vertex failed!"));
       }
       success = vertexDistanceAsap.erase(&helperAsap);
-      if ( !quiet and success){
-          cout << "Successful deleted Helper_Vertex_ASAP: True" << endl;
-      }else if ( !quiet ){
-          cout << "Successful deleted Helper_Vertex_ASAP: False" << endl;
+      if (!success){
+          throw (HatScheT::Exception("Utility::getSDCAsapAndAlapTimes(): Deleting ASAP-Helper-Vertex failed!"));
       }
 
       //Saving schedule length
@@ -1704,7 +1803,7 @@ namespace HatScheT {
       if (!quiet) { cout << "SDC-ASAP-Latency: " << modAsapLength << endl; }
       if (!quiet) { cout << endl; }
       if (modAsapLength != modAlapLength ){
-          throw (HatScheT::Exception("Hatschet::Utility::getSDCAsapAndAlapTimes(), modAlapLength and not equal"));
+          throw (HatScheT::Exception("Hatschet::Utility::getSDCAsapAndAlapTimes(), SDC-ALAP-Latency and SDC-ASAP-Latency not equal"));
       }
 
       //If no valid schedule is found, we continue our latency estimation with the found
@@ -1712,8 +1811,8 @@ namespace HatScheT {
       return {startTimesAsap, startTimesAlap};
   }
 
-  int Utility::getSDCScheduleLength(unordered_map<Vertex *, int> &vertexLatency,
-                                    unordered_map<Vertex *, Vertex *> &newToOld,
+  int Utility::getSDCScheduleLength(const unordered_map<Vertex *, int> &vertexLatency,
+                                    const unordered_map<Vertex *, Vertex *> &newToOld,
                                     ResourceModel* rm, bool quiet) {
       int maxTime = -1;
       for (std::pair<Vertex *, int> vtPair : vertexLatency) {
@@ -1729,33 +1828,36 @@ namespace HatScheT {
               }
           }catch(std::out_of_range&){
               cout << vtPair.first->getName() << ": " << vtPair.second << endl;
-              throw (HatScheT::Exception("Utility::getSDCScheduleLength() OUT_OF_RANGE"));
+              throw (HatScheT::Exception("Utility::getSDCScheduleLength(): OUT_OF_RANGE"));
           }
       }
       return maxTime;
   }
 
   int Utility::calcMaxLatencyEstimation(Graph* g, ResourceModel* rm,
-                                         map<Vertex*, int> &tMin,
-                                         map<Vertex*, int> &tMax,
-                                         int II, bool quiet) {
+                                        const map<Vertex*, int> &tMin,
+                                        const map<Vertex*, int> &tMax,
+                                        const int &II, bool quiet) {
 
-      //Algorithm to estimate max latency based on earliest and latest possible start times
-      //as well as on ressource constraints.
+      // Algorithm to estimate max latency based on earliest and latest possible start times
+      // as well as on ressource constraints.
       map<pair<Vertex*, int>, bool> vertexTimeslot;
       unordered_map<Vertex*, bool> checked;
 
-      unordered_map<Vertex*, Vertex*> uglyMap;
+      // Strange stuff which allows me to reuse the getSDCScheduleLength() function... :roll_eyes:
+      // ToDo: If there is time, we can rewrite getSDCScheduleLength() to get rid of this ugly
+      //       piece of code.
+      unordered_map<Vertex*, Vertex*> helperMap;
       unordered_map<Vertex*, int> tMaxUnordered;
       for (auto &v : tMax){
-          uglyMap[v.first] = v.first;
+          helperMap[v.first] = v.first;
           tMaxUnordered[v.first] = v.second;
       }
 
-      int length = getSDCScheduleLength(tMaxUnordered, uglyMap, rm);
+      int length = getSDCScheduleLength(tMaxUnordered, helperMap, rm);
 
-      //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
-      //based on dependency constraints.
+      // Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,
+      // based on dependency constraints.
       for (auto &v : g->Vertices()){
           checked.insert(std::make_pair(v,false));
           int tAsap = tMin.at(v);
@@ -1771,8 +1873,8 @@ namespace HatScheT {
           }
       }
 
-      //Trys to satisfy ressource constraints. If they can not be satisfied, there will be operations
-      //that can not be scheduled.
+      // Trys to satisfy ressource constraints. If they can not be satisfied, there will be operations
+      // that can not be scheduled.
       for (auto &r : rm->Resources()){
           if (r->isUnlimited()){
               continue;
@@ -1785,14 +1887,14 @@ namespace HatScheT {
                   if (!vertexTimeslot.at(std::make_pair(v, i))){
                       continue;
                   }
-                  //Check conflicts with other mod-slots.
+                  // Check conflicts with other mod-slots.
                   if (usedFuInModslot.at(i % II) < r->getLimit() and !checked.at(v)){
                       //Check vertex and count up used Resources:
                       checked.at(v) = true;
                       usedFuInModslot.at(i % II)++;
                       continue;
                   }
-                  //Set vertices, of Resource in the same timeslot to 0, because there are no more FUs.
+                  // Set vertices of resource in the same timeslot to 0, because there are no more FUs.
                   vertexTimeslot.at(std::make_pair(v, i)) = false;
               }
           }
@@ -1826,76 +1928,16 @@ namespace HatScheT {
       return maxLatency;
   }
 
-  pair<int, int> Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyMode lm) {
-	  auto aslap = Utility::getSDCAsapAndAlapTimes(g, rm, II);
+  bool Utility::calcMinLatencyEstimation(Graph* g, ResourceModel* rm,
+                                         const map<Vertex*, int> &tMin,
+                                         const map<Vertex*, int> &tMax,
+                                         const int &II,
+                                         int &increment,
+                                         int &minLatency,
+                                         int &modAsapLength,
+                                         bool quiet){
 
-	  unordered_map<Vertex*, Vertex*> uglyMap;
-      unordered_map<Vertex*, int> tMaxUnordered;
-      for (auto &v : aslap.second){
-          uglyMap[v.first] = v.first;
-          tMaxUnordered[v.first] = v.second;
-      }
-      int modAsapLength = getSDCScheduleLength(tMaxUnordered, uglyMap, rm);
-
-      int maxLatency = 0;
-      int minLatency = modAsapLength;
-
-      int increment = 0;
-
-      switch (lm) {
-          case latencyMode::maxLatency:
-              return {0, calcMaxLatencyEstimation(g, rm, aslap.first, aslap.second, (int) II)};
-
-          case latencyMode::minLatency:
-              if ((int)II > modAsapLength){
-                  minLatency = (int) II;
-                  for (auto &it : aslap.second){
-                      it.second = it.second + (II - modAsapLength);
-                      cout << it.first->getName() << " - " << it.second << endl;
-                  }
-              }
-              while (true){
-                  auto feasilbe = calcMinLatencyEstimation(g, rm, aslap.first, aslap.second, (int)II, increment, minLatency, modAsapLength);
-                  if (feasilbe){
-                      cout << "Min Latency: " << minLatency << endl;
-                      break;
-                  }
-                  for (auto &it : aslap.second){
-                      it.second += increment;
-                  }
-                  minLatency += increment;
-              }
-              return {minLatency, 0};
-
-          case latencyMode::both:
-              maxLatency = calcMaxLatencyEstimation(g, rm, aslap.first, aslap.second, (int) II);
-              if ((int)II > minLatency){
-                  minLatency = (int) II;
-                  for (auto &it : aslap.second){
-                      int temp = it.second;
-                      it.second = it.second + (II - modAsapLength);
-                  }
-              }
-              while (true){
-                  auto feasilbe = calcMinLatencyEstimation(g, rm, aslap.first, aslap.second, (int) II, increment, minLatency, modAsapLength);
-                  if (feasilbe){
-                      cout << "Min Latency: " << minLatency << endl;
-                      break;
-                  }
-                  for (auto &it : aslap.second){
-                      it.second += increment;
-                  }
-                  cout << "Min Lat:" << minLatency << " Increment: " << increment << endl;
-                  minLatency += increment;
-              }
-              return {minLatency, maxLatency};
-      }
-      return {0,0};
-  }
-
-  bool Utility::calcMinLatencyEstimation(Graph* g, ResourceModel* rm, map<Vertex*, int> &tMin, map<Vertex*, int> &tMax, int II,
-                                        int &increment, int &minLatency, int &modAsapLength, bool quiet){
-
+	  // Comperator to compare pairs of <Vertex*, int>, needed for priority queue (pq).
       struct VertexIntCompLess {
         constexpr bool operator()(
             pair<Vertex*, int> const &a,
@@ -1905,6 +1947,7 @@ namespace HatScheT {
         }
       };
 
+      // Comperator to compare pairs of <int, int>, needed for priority queue (fspq).
       struct IntIntComp {
         bool operator()(
             pair<int, int> const &a,
@@ -1913,8 +1956,10 @@ namespace HatScheT {
             return a.second < b.second;
         }
       };
-      //Algorithm to estimate min latency based on earliest and latest possible start times
-      //as well as on ressource constraints.
+
+      // Algorithm to estimate min latency based on earliest and latest possible start times
+      // as well as on ressource constraints.
+      // It creates a schedule based on SDC-starttimes and on resource contraints.
       map<pair<Vertex*, int>, bool> vertexTimeslot;
       unordered_map<Resource*, bool> checkedResource;
 
@@ -1939,41 +1984,16 @@ namespace HatScheT {
       }
 
       // Schedules all operation with satisfied resource constraints. So we can get a requiered min. latency
-      // for a schedule
+      // for a scheduling.
       for (auto &r : rm->Resources()) {
           if (r->isUnlimited()) {
               continue;
           }
-          vector<int> usedFuInModslot;
-          usedFuInModslot.resize(II);
-          map<Vertex *, int> availibleSlots;
-          auto verticesOfThisResource = rm->getVerticesOfResource(r);
-          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
-          //Zählen wie viele potentielle Zeitslots existieren.
-          for (auto &cvp : verticesOfThisResource) {
-              auto vp = (Vertex*) cvp;
-              availibleSlots[vp] = 0;
-              for (int i = 0; i < minLatency; i++) {
-                  if (!vertexTimeslot.at({vp, i})) {
-                      continue;
-                  }
-                  usedFuInModslot.at(i % II)++;
-                  availibleSlots.at(vp)++;
-              }
-          }
-          //Debugging Ausgaben
-          /*cout << r->getName() << " Used FUs: ";
-          for (auto &it : usedFuInModslot) {
-              cout << it << " ";
-          }
-          cout << endl;
-          cout << "Available Slots: " << endl;
-          for (auto &it : availibleSlots) {
-              cout << it.first->getName() << ": " << it.second << endl;
-          }
-          cout << endl;*/
 
-          //Preprocessing: Problem auf einen Iteration Interval Reduzieren.
+          auto verticesOfThisResource = rm->getVerticesOfResource(r);
+
+          // Preprocessing: Reducing the problem to one itteration interval.
+          // to make sure resource Contraints are satisfied for each modulo slot.
           for (int x = 0; x < min(II, minLatency); x++) {
               for (auto &cvp : verticesOfThisResource) {
                   auto vp = (Vertex *) cvp;
@@ -1986,11 +2006,9 @@ namespace HatScheT {
                               vertexTimeslot.at({vp, i}) = false;
                           } catch (std::out_of_range &) {
                               cout << "i: " << i << " Out of Range A" << endl;
-                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
-                                   << " " << x << endl;
-                              cout << "Min. Latency: " << minLatency << endl;
-                              throw (HatScheT::Exception(
-                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range A"));
+                              cout << "Utility::calcMinLatencyEstimation(): Out of Range, " << vp->getName()
+                                   << " " << x << endl << "Min. Latency: " << minLatency << endl;
+                              throw (HatScheT::Exception("Utility::calcMinLatencyEstimation(): Out of Range A"));
                           }
                       }
                   } else {
@@ -2005,99 +2023,74 @@ namespace HatScheT {
                               }
                           } catch (std::out_of_range &) {
                               cout << "i: " << i << endl;
-                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
-                                   << " " << x << endl;
-                              cout << "Min. Latency: " << minLatency << endl;
+                              cout << "Utility::calcMinLatencyEstimation(): Out of Range, " << vp->getName()
+                                   << " " << x << endl << "Min. Latency: " << minLatency << endl;
                               throw (HatScheT::Exception(
-                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range B"));
+                                  "Utility::calcMinLatencyEstimation(): Out of Range B"));
                           }
                       }
                   }
               }
           }
-//          if (!quiet) {
-//              cout << "After Preprocessing: " << endl;
-//              printPossibleStarttimes(vertexTimeslot);
-//              cout << endl << "------------------------------------------------------------------" << endl << endl;
-//          }
-          usedFuInModslot.clear();
-          usedFuInModslot.resize(II);
-          availibleSlots.clear();
 
-          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
-          //Zählen wie viele potentielle Zeitslots existieren.
+          // 1. Count how many FUs are potentially used in each modulo timeslot.
+          // 2. Count how many potential timeslots for each vertex are existing.
+          vector<int> usedFuInModslot;
+          usedFuInModslot.resize(II);
+          map<Vertex *, int> availibleSlots;
           for (auto &cvp : verticesOfThisResource) {
-              auto vp = (Vertex *) cvp;
+              auto vp = (Vertex*) cvp;
               availibleSlots[vp] = 0;
-              for (int x = 0; x < minLatency; x++) {
-                  if (!vertexTimeslot.at({vp, x})) {
+              for (int i = 0; i < minLatency; i++) {
+                  if (!vertexTimeslot.at({vp, i})) {
                       continue;
                   }
-                  usedFuInModslot.at(x % II)++;
+                  usedFuInModslot.at(i % II)++;
                   availibleSlots.at(vp)++;
               }
           }
-          //Debugging Ausgaben
-          /*cout << r->getName() << " Used FUs: ";
-          for (auto &it : usedFuInModslot) {
-              cout << it << " ";
-          }
-          cout << endl;
-          cout << "Available Slots: " << endl;
-          for (auto &it : availibleSlots) {
-              cout << it.first->getName() << ": " << it.second << endl;
-          }
-          cout << endl;*/
 
-
-          //Überprüfen, ob Resourcenbeschränkungen eingehalten werden.
+          // Check if resource constraints are satisfied:
           for (int x = 0; x < min(II, minLatency); x++) {
-              //cout << "Checking Slot: " << x << endl;
               if (usedFuInModslot.at(x) <= r->getLimit()) {
-                  //Kein Konflikt alles gut.
+                  // No conflict, do nothing.
                   continue;
               }
-              //Potentieller Konflikt:
-              //Mappings zwischen Operationen und deren Priorität herstellen.
-              //Zudem werden die Operationen in einer Prioritätswarteschlange sortiert.
-              //Je mehr mögliche slots es gibt, desto einfacher lässt sich diese operation wegschedulen.
-              //Es wird also die Operation mit den meisten möglichen Slots gesucht und diese Operation dann
-              //in den Slot mit der geringsten Resourcenauslastung einsortiert.
+              // Potential conflict:
+              // If there is a potential conflict, we have to create a mapping between the operations in the
+              // mod-slot and their "mobility".
+              // These operation are now sorted in a priority queue based on their mobility (availible slots).
+              // Higher mobility means an earlier position in the PQ.
+              // Then we take the operation from the PQ and move them to the mod-slot with the fewest used FUs,
+              // until the resource contraint for the actual slot id satisfied or there are no more available slots
+              // where the operation can be moved.
               priority_queue<pair<Vertex *, int>, vector<pair<Vertex *, int>>, VertexIntCompLess> pq;
               for (auto &cvp : verticesOfThisResource) {
                   auto vp = (Vertex *) cvp;
                   pq.push({vp, availibleSlots.at(vp)});
               }
-              //Benutzte Resourcen im aktuellen Zeitlot merken um festzustellen ob sich dieser weiter verringern lässt.
-              //Ist dies nicht der Fall, kann das als Abbruchbedingung genutzt werden.
+              // We track used FUs for each mod-slot so we can compare the used FUs from the last iteration to the used
+              // FUs of the current iteration. If used FUs of the previous iteration are the same as the used FUs in
+              // Current iteration, we know that we can not satisfy the resource constraint, and we have to increase
+              // min. Latency
               int usedFUsAtActualSlot = 0;
 
-              //While-Schleife zur Resourcenminimierung. Diese läuft entweder, bis sich keine Minimierung mehr erziehlen lässt,
-              //oder bis die Resourcenlimits erreicht sind.
+              // While-Loop to reduce used FUs until resource constraints are satisfied or no further reduction of used
+              // FUs is possible.
               while (usedFuInModslot.at(x) > r->getLimit()) {
-                  //cout << "UsedFUs " << usedFuInModslot.at(x) << "-" << usedFUsAtActualSlot << endl;
-                  //cout << "Print: " << endl;
-                  //printPossibleStarttimes(vertexTimeslot);
                   if (usedFuInModslot.at(x) == usedFUsAtActualSlot) {
+                      // If resource constraints can't be satisfied, then we calculate an increment. Which will be added
+                      // to min. latency and break the loop.
                       increment = (int)floor(usedFuInModslot.at(x)/r->getLimit()) - r->getLimit();
                       if (increment < 1){
                           increment = 1;
                       }
-                      cout << "break equal" << endl;
+                      if (!quiet) { cout << "break equal" << endl; }
                       break;
                   }
                   usedFUsAtActualSlot = usedFuInModslot.at(x);
-                  //Operation mit der größten Anzahl an möglichen Slots wird gesucht und aus dem aktuellen Slot weggescheduled.
-                  vector<pair<Vertex *, int>> tempvec;
-                  while (!pq.empty()) {
-                      //cout << " * " << pq.top().first->getName() << "/" << pq.top().second;
-                      tempvec.push_back(pq.top());
-                      pq.pop();
-                  }
-                  //cout << endl;
-                  for (auto &it:tempvec) {
-                      pq.push(it);
-                  }
+                  // Operation with most available slot will be moved away from the actual slot, to the slot with
+                  // least amount uf used FUs.
                   while(!pq.empty()) {
                       if (usedFuInModslot.at(x) <= r->getLimit()){
                           break;
@@ -2108,11 +2101,9 @@ namespace HatScheT {
                       if (!vertexTimeslot.at({y, x})){
                           continue;
                       }
-                      //cout << "x/y: " << x << "/" << y->getName() << endl;
                       priority_queue<pair<int, int>, vector<pair<int, int>>, IntIntComp> fspq;
                       for (int i = 0; i < min((int)usedFuInModslot.size(), minLatency); i++) {
                           int temp = (r->getLimit() - usedFuInModslot.at(i)) * (int) vertexTimeslot.at({y, i});
-                          //cout << "** " << i << "/" << temp << endl;
                           fspq.push({i, temp});
                       }
                       while (!fspq.empty()) {
@@ -2123,22 +2114,21 @@ namespace HatScheT {
                           }
                           if (vertexTimeslot.at({y, curr.first})) {
                               if (vertexTimeslot.at({y, x})) {
-                                  //cout << x << "/" << y->getName() << " move --> " << curr.first << "/" << y->getName()
-                                  //     << endl;
                                   vertexTimeslot.at({y, x}) = false;
                                   usedFuInModslot.at(x)--;
                                   availibleSlots.at(y)--;
-                                  //printPossibleStarttimes(vertexTimeslot);
                               }
                           }
                       }
                   }
               }
-              //Überprüfen of Resourcenbeschränkungen eingehalten werden können.
+              // Check if resource constraints can be satisfied
               if (usedFuInModslot.at(x) > r->getLimit()){
-                  //Können nicht eingehalten werden, dann abbrechen und latenz erhöhen.
-                  cout << "Conflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
-                  cout << "Not Feasiable... Increase Latency!" << endl;
+                  //If not, break and increase latency
+                  if (!quiet) {
+                      cout << "Conflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
+                      cout << "Not Feasiable... Increase Latency!" << endl;
+                  }
                   return false;
               }else{
                   checkedResource.at(r) = true;
@@ -2160,11 +2150,6 @@ namespace HatScheT {
               }
           }
       }
-
-      //printPossibleStarttimes(vertexTimeslot);
-
-      //throw(HatScheT::Exception("Stop here..."));
-
       return true;
   }
 }
