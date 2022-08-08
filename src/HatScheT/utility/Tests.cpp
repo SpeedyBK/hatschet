@@ -3737,8 +3737,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "/home/bkessler/Repositories/hatschet/benchmarks/MachSuite/aes2/graph12_RM.xml";
-      string graphStr = "/home/bkessler/Repositories/hatschet/benchmarks/MachSuite/aes2/graph12.graphml";
+      string resStr = "benchmarks/MachSuite/aes2/graph12_RM.xml";
+      string graphStr = "benchmarks/MachSuite/aes2/graph12.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
