@@ -3916,8 +3916,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3947,7 +3947,7 @@ namespace HatScheT {
       cout << "Done in " << t << " seconds" << endl << endl;
 
       start_t = std::chrono::high_resolution_clock::now();
-      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both, true);
+      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both, false);
       end_t = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       t = ((double)duration / 1000);
