@@ -15,7 +15,7 @@
 
 namespace HatScheT {
 
-	std::map<const Vertex *, int> Binding::getSimpleBinding(std::map<Vertex *, int> sched, ResourceModel *rm, int II) {
+	std::map<const Vertex *, int> Binding::getSimpleBinding(const std::map<Vertex *, int> &sched, ResourceModel *rm, int II) {
 		std::map<const Vertex *, int> binding;
 		std::map<const Resource*, std::map<int, int>> resourceCounters;
 

@@ -11,6 +11,8 @@
 #include <chrono>
 
 namespace HatScheT {
+#define CADICAL_SAT 10
+#define CADICAL_UNSAT 20
 	// Use this class to track time and add a timeout to CaDiCaL solver
 	class CaDiCaLTerminator : public CaDiCaL::Terminator {
 	public:

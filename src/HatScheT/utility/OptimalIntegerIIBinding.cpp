@@ -378,31 +378,6 @@ namespace HatScheT {
 		if(!this->quiet) std::cout << "created commutativity constraints part 2" << std::endl;
 
 		// commutative operations part 3
-		// the sum of edge-port variables is p per sink vertex
-		/*
-		for(auto &vj : this->g->Vertices()) {
-			ScaLP::Term lhs;
-			auto rj = this->rm->getResource(vj);
-			if (this->commutativeOps.find(rj) == this->commutativeOps.end()) continue;
-			if(!this->quiet) {
-				std::cout << "Creating constraints that edge-port variables are equal to " << numResourcePorts[rj] << " for "
-									<< vj->getName() << std::endl;
-			}
-
-			for(int p=0; p<numResourcePorts[rj]; p++) {
-				for(auto &e : this->g->Edges()) {
-					if(vj != &e->getVertexDst()) continue;
-					lhs += a_e_p[{e,p}];
-				}
-			}
-			ScaLP::Constraint constr = lhs == numResourcePorts[rj];
-			solver.addConstraint(constr);
-			if(!this->quiet) std::cout << "  Successfully added constraint " << constr << std::endl;
-		}
-		if(!this->quiet) std::cout << "created commutativity constraints part 3" << std::endl;
-		 */
-
-		// commutative operations part 4
 		// map edge-port variables to actual binding variables
 		for(auto e : this->g->Edges()) {
 			auto vj = &e->getVertexDst();
@@ -471,12 +446,6 @@ namespace HatScheT {
 					auto n = fuIndexMap[{rj, b}];
 					ScaLP::Term t;
 					if (this->commutativeOps.find(rj) != this->commutativeOps.end()) {
-						/*
-						// commutative operation
-						for(auto p : possiblePortConnections[{m,n}]) {
-							t += r_m_n_k_p[{{m, n},{k, p}}];
-						}
-						 */
 						// skip them because they were already handled earlier
 						continue;
 					}

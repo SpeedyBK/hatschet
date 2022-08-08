@@ -121,29 +121,23 @@ ENDIF(CADICAL_H AND CADICAL_LIB)
 
 
 ####################
-#Find Z3-SMT
+#Find Z3-smtbased
 ####################
-message(STATUS "Z3_PREFIX_PATH=${Z3_PREFIX_PATH}")
-set(Z3_DIR ${Z3_PREFIX_PATH})
+FIND_LIBRARY(Z3_LIB
+        NAMES libz3.so
+        DOC "Directory of the Z3 library")
 
-find_package(Z3
-        CONFIG
-        # `NO_DEFAULT_PATH` is set so that -DZ3_DIR has to be passed to find Z3.
-        # This should prevent us from accidentally picking up an installed
-        # copy of Z3. This is here to benefit Z3's build system when building
-        # this project. When making your own project you probably shouldn't
-        # use this option.
-        NO_DEFAULT_PATH
+FIND_PATH(Z3_H
+        z3++.h
+        DOC "Path to main z3 header file"
         )
 
-IF(${Z3_FOUND})
-    message(STATUS "Z3_FOUND!")
-    message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
-    message(STATUS "Z3_DIR: ${Z3_DIR}")
+IF(Z3_H AND Z3_LIB)
     add_definitions(-DUSE_Z3)
-ELSE(${Z3_FOUND})
-    message(STATUS "Could not find Z3 (...). Please specify path by setting Z3_PREFIX_PATH (-DZ3_PREFIX_PATH=<path to Z3 install dir>)")
-ENDIF(${Z3_FOUND})
+    MESSAGE(STATUS "Found Z3 Lib: ${Z3_LIB} and Headers: ${Z3_H}")
+ELSE(Z3_H AND Z3_LIB)
+    MESSAGE(STATUS "Could not find Z3 Lib (${Z3_LIB}) or Z3 Header (${Z3_H}). Please specify paths by setting CMAKE_PREFIX_PATH (-DCMAKE_PREFIX_PATH=<path to Z3 install dir>)")
+ENDIF(Z3_H AND Z3_LIB)
 
 ####################
 #SRC and Headerfiles
@@ -183,6 +177,7 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
 src/HatScheT/utility/SDCSolver.cpp)
+
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -236,6 +231,7 @@ src/HatScheT/utility/Binding.h
 src/HatScheT/utility/BindingBase.h
 src/HatScheT/utility/TreeBind.h
 src/HatScheT/utility/OptimalIntegerIIBinding.h
+        src/HatScheT/utility/OptimalIntegerIISATBinding.h
 src/HatScheT/utility/OptimalIntegerIIBindingCong.h
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h
 src/HatScheT/utility/Verifier.h
@@ -257,10 +253,10 @@ src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
 src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
 src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
 src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
-src/HatScheT/scheduler/dev/SMT/SMTModScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
-src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.h)
+src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -298,6 +294,12 @@ src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
 
+IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/utility/OptimalIntegerIISATBinding.cpp
+    )
+ENDIF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
+
 IF (CADICAL_H AND CADICAL_LIB)
 list(APPEND HatScheT_SOURCES
 src/HatScheT/scheduler/dev/SDSScheduler.cpp
@@ -312,11 +314,11 @@ src/HatScheT/scheduler/satbased/CaDiCaLTerminator.cpp
 )
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
-IF(${Z3_FOUND})
+IF(Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
-            src/HatScheT/scheduler/dev/SMT/SMTModScheduler.cpp
-            src/HatScheT/scheduler/dev/SMT/SMTBinaryScheduler.cpp)
-ENDIF(${Z3_FOUND})
+            src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp)
+ENDIF(Z3_H AND Z3_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})
 add_executable(hatschet-bin src/hatschet.cpp)
@@ -351,30 +353,13 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 ####################
 #Z3 related
 ####################
-IF(${Z3_FOUND})
-    target_link_libraries(hatschet-bin ${Z3_LIBRARIES})
-ENDIF(${Z3_FOUND})
+IF(Z3_H AND Z3_LIB)
+    target_link_libraries(hatschet-bin ${Z3_LIB})
+ENDIF(Z3_H AND Z3_LIB)
 
-IF(${Z3_FOUND})
-    include_directories(${Z3_CXX_INCLUDE_DIRS})
-    target_compile_options(hatschet-bin PRIVATE ${Z3_COMPONENT_CXX_FLAGS})
-ENDIF(${Z3_FOUND})
-
-if (CMAKE_SYSTEM_NAME MATCHES "[Ww]indows")
-    # On Windows we need to copy the Z3 libraries
-    # into the same directory as the executable
-    # so that they can be found.
-    foreach (z3_lib ${Z3_LIBRARIES})
-        message(STATUS "Adding copy rule for ${z3_lib}")
-        add_custom_command(TARGET hatschet-bin
-                POST_BUILD
-                COMMAND
-                ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:${z3_lib}>
-                $<TARGET_FILE_DIR:cpp_example>
-                )
-    endforeach()
-endif()
+IF(Z3_H AND Z3_LIB)
+    include_directories(${Z3_H})
+ENDIF(Z3_H AND Z3_LIB)
 
 ####################
 # HaTScheTConfig.cmake
@@ -423,10 +408,10 @@ IF(CADICAL_H AND CADICAL_LIB)
     add_test("SATScheduler" "./hatschet" "--test=SATSCHEDULER")
 ENDIF(CADICAL_H AND CADICAL_LIB)
 
-IF(${Z3_FOUND})
+IF(Z3_H AND Z3_LIB)
     add_test("Z3" "./hatschet" "--test=Z3")
     add_test("SMTScheduler" "./hatschet" "--test=SMTSMART")
-ENDIF(${Z3_FOUND})
+ENDIF(Z3_H AND Z3_LIB)
 
 ####################
 # example project

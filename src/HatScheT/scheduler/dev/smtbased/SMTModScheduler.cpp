@@ -103,7 +103,7 @@ namespace HatScheT {
       deque<deque<b_variable>> collumn;
       deque<b_variable> line;
 
-      if (!quiet) { cout << "\nCreating b_variables:" << endl; }
+      if (!quiet) { cout << "\nCreating bVariables:" << endl; }
       if (!quiet) { cout << "Vertex: Moduloslot: Resource:\n"; }
 
       int r = 0;

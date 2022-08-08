@@ -126,7 +126,7 @@ namespace HatScheT {
 		 * @param II
 		 * @return
 		 */
-		static std::map<const Vertex*,int> getSimpleBinding(std::map<Vertex*, int> sched, ResourceModel* rm, int II);
+		static std::map<const Vertex*,int> getSimpleBinding(const std::map<Vertex*, int> &sched, ResourceModel* rm, int II);
 		/*!
 		 * @brief create simple rational II binding that just assignes resources as vertices appear in the schedule
 		 * @param sched
