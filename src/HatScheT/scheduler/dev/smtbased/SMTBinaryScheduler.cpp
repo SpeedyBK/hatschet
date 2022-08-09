@@ -151,21 +151,20 @@ namespace HatScheT {
               if (!quiet) { cout << "Prohibit late starts... " << endl; }
               prohibitToLateStartsAndAdd(s);
 
-              //New Schedule function for trivial stuff.
+              //New Schedule function for trivial stuff. TODO move to new class.
               try {
                   //scheduleTrival(candidateII);
                   auto temp = computeSCCs();
                   sortSCCs(temp);
-                  exit(-1);
               }catch (...){
                   cout << "Ignoring Error..." << endl;
               }
 
               //Takeing a shortcut, probably nonsence...
-              if (unsatCheckShortcut()){
+              /*if (unsatCheckShortcut()){
                   sati = z3::unsat;
                   continue;
-              }
+              }*/
 
               //Pushing assertions into z3-Prover
               if (!quiet) { cout << "Solving... " << endl; }

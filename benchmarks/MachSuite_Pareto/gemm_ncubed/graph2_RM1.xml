@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="0" latency="0" limit="-1" name="special_virtual" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="1" limit="1" name="special_loop" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="MUX_N_to_1_64_64_64_2" physicalDelay="0.691000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="0" limit="1" name="plus_expr_FU_64_64_64" physicalDelay="1.591000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="1" limit="-1" name="special_1_cycle" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="eq_expr_FU_1_1_1" physicalDelay="0.436000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="1" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="0" latency="0" limit="-1" name="lshift_expr_FU_64_64_64" physicalDelay="1.784000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="64" name="LUT"/>
+      <Cost demand="0" name="MEM"/>
+    </Resource>
+    <Resource blockingTime="1" latency="1" limit="1" name="mem_write" physicalDelay="0.000000">
+      <Cost demand="0" name="DSP"/>
+      <Cost demand="0" name="LUT"/>
+      <Cost demand="1" name="MEM"/>
+    </Resource>
+  </Resources>
+
+</ModelInformation>
