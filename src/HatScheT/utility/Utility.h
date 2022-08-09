@@ -456,7 +456,7 @@ namespace HatScheT {
     static int hFunction(double n, double M, int tau);
 
     /*!
-   * min latency estimation for a given graph/resource model/II (uses ILP)
+   * min latency estimation for a given graph/resource model/II (uses ILP and is slower than calcMinLatencyEstimation())
    * @param g: graph
    * @param rm: resource model
    * @param tMin: SDC-ASAP times for all vertices in g
@@ -477,18 +477,62 @@ namespace HatScheT {
                              const int &maxScheduleLength = -1,
                              const int8_t &threads = -1);
 
+    /*!
+     * max latency estimation for a given graph/resource/II
+     * look at getLatencyEstimation() first please.
+     * @param g: graph
+     * @param rm: resource model
+     * @param tMin: SDC-ASAP times for all vertices in g
+     * @param tMax: SDC-ALAP times for all vertices in g
+     * @param II: initiation interval
+     * @param quiet: true surpresses print statements
+     * @return max latency estimation
+     */
     static int calcMaxLatencyEstimation(Graph *g, ResourceModel *rm,
                                         const map<Vertex *, int> &tMin,
                                         const map<Vertex *, int> &tMax,
                                         const int &II, bool quiet = true);
 
+    /*!
+     * Creates ALAP and ASAP Starttimes for all vertices of a given graph/II, ignores resource limitations
+     * look at getLatencyEstimation() first please.
+     * @param g: graph
+     * @param rm: resource model
+     * @param II: initiation interval
+     * @param quiet: true surpresses print statements
+     * @return two maps "<vertex*, int>". First map contains ASAP starttimes, second map contains ALAP starttimes.
+     */
     static pair<map<Vertex *, int>, map<Vertex *, int>> getSDCAsapAndAlapTimes(Graph *g, ResourceModel *rm,
                                                                                const double &II, bool quiet = true);
 
-    static int getSDCScheduleLength(const unordered_map<Vertex *, int> &vertexLatency,
+    /*!
+     * Calcutates the latency of SDC-Schedules
+     * look at getLatencyEstimation() first please.
+     * @param vertexStarttimes Starttimes of each operation.
+     * @param newToOld mapping from SDC-Graphs to original Graph
+     * @param rm: resource model
+     * @param quiet: true surpresses print statements
+     * @return latency of the given schedule
+     */
+    static int getSDCScheduleLength(const unordered_map<Vertex *, int> &vertexStarttimes,
                                     const unordered_map<Vertex *, Vertex *> &newToOld,
                                     ResourceModel *rm, bool quiet = true);
 
+    /*!
+     * calculates a minimum latency wich is requiered to satisfy all resource constraints (faster than ILP).
+     * look at getLatencyEstimation() first please.
+     * @param g: graph
+     * @param rm: resource model
+     * @param tMin: SDC-ASAP times for all vertices in g
+     * @param tMax: SDC-ALAP times for all vertices in g
+     * @param II: initiation interval
+     * @param increment: Amount of timeslots by that the latency has to be increased to resolve a resource conflict in a modslot.
+     *                   Function updates this value by itself.
+     * @param minLatency: A candidate Latency.
+     * @param modAsapLength: Length of the SDC-Schedules
+     * @param quiet: true surpresses print statements
+     * @return minimum latency to satisfy resource constraints.
+     */
     static bool calcMinLatencyEstimation(Graph *g, ResourceModel *rm,
                                          const map<Vertex *, int> &tMin,
                                          const map<Vertex *, int> &tMax,
@@ -498,13 +542,23 @@ namespace HatScheT {
                                          int &modAsapLength,
                                          bool quiet = true);
 
-    enum class latencyMode {
+    enum class latencyBounds {
       minLatency, maxLatency, both
     };
-
+    /*!
+     * Wrapperfunction for latency estimation. Manages calls for calcMaxLatencyEstimation(), getSDCAsapAndAlapTimes(),
+     * getSDCScheduleLength() and calcMinLatencyEstimation(). It calculates a min latency estimation, a max latency
+     * estimation, or both for a given Graph, ResourceModel and II.
+     * @param g: graph
+     * @param rm: resource model
+     * @param II: initiation interval
+     * @param lb: Switch wich bound (min, max or both) should be calculated.
+     * @param quiet: true surpresses print statements
+     * @return pair<int, int>: first element = min latency estimation, second element = max latency estimation.
+     */
     static pair<int, int> getLatencyEstimation(Graph *g, ResourceModel *rm,
                                                double II,
-                                               latencyMode lm = latencyMode::both,
+                                               latencyBounds lb = latencyBounds::both,
                                                bool quiet = true);
 
   private:

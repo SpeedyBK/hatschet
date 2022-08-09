@@ -54,7 +54,7 @@ namespace HatScheT {
     /*!
      * @return Number of Vertices which belong to the SCC.
      */
-    int getNumberOfVertices();
+    int getNumberOfVertices() const;
 
     /*!
      * @return The type of a SCC.
@@ -120,6 +120,12 @@ namespace HatScheT {
      */
     void printInfo();
 
+    /*!
+     * Needed for sorting.
+     * @param a
+     * @return
+     */
+    bool operator<(const SCC &a) const;
 
   private:
 

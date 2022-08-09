@@ -7,6 +7,8 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/utility/subgraphs/SCC.h>
+#include <HatScheT/utility/subgraphs/KosarajuSCC.h>
 
 #include <utility>
 #include <deque>
@@ -66,6 +68,11 @@ namespace HatScheT {
      */
 
     void scheduleTrival(int candidateII);
+
+    vector<SCC*> computeSCCs();
+
+    void sortSCCs (vector<SCC*> &allSCCs);
+
 
     void setSolverTimeout(unsigned seconds);
     /*!
@@ -266,6 +273,7 @@ namespace HatScheT {
     void print_ASAP_ALAP_restictions();
     void print_latency_space(int l_index, int r_index);
     void print_b_variables();
+    static void print_scc_type(int scctype);
     void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
     void set_design_name(string s){ this->designName = s; }

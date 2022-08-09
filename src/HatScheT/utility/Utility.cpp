@@ -1531,7 +1531,7 @@ namespace HatScheT {
 #endif
 	}
 
-  pair<int, int> Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyMode lm, bool quiet) {
+  pair<int, int> Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyBounds lb, bool quiet) {
 
 	  // Calculate earliest and latest possible starttimes:
 	  auto aslap = Utility::getSDCAsapAndAlapTimes(g, rm, II, quiet);
@@ -1553,15 +1553,15 @@ namespace HatScheT {
       int maxLatency = calcMaxLatencyEstimation(g, rm, aslap.first, aslap.second, (int) II);;
       int minLatency = modAsapLength;
 
-      // lm = maxLatency returns {0, maxLatency}
-      // lm = minLatency returns {minLatency, 0}
-      // lm = minLatency returns {minLatency, maxLatency}
-      switch (lm) {
-          case latencyMode::maxLatency:
+      // lb = maxLatency returns {0, maxLatency}
+      // lb = minLatency returns {minLatency, 0}
+      // lb = minLatency returns {minLatency, maxLatency}
+      switch (lb) {
+          case latencyBounds::maxLatency:
               // Just return maxLatency... looks obvious...
               return {0, maxLatency};
 
-          case latencyMode::minLatency:
+          case latencyBounds::minLatency:
               // Latency can't be less then II, otherwise it would be possible to just reduce the II.
               // So minLatency is set to II.
               if ((int)II > modAsapLength){
@@ -1595,7 +1595,7 @@ namespace HatScheT {
               }
               return {minLatency, 0};
 
-          case latencyMode::both:
+          case latencyBounds::both:
               // Latency can't be less then II, otherwise it would be possible to just reduce the II.
               // So minLatency is set to II.
               if ((int)II > minLatency){
@@ -1811,11 +1811,11 @@ namespace HatScheT {
       return {startTimesAsap, startTimesAlap};
   }
 
-  int Utility::getSDCScheduleLength(const unordered_map<Vertex *, int> &vertexLatency,
+  int Utility::getSDCScheduleLength(const unordered_map<Vertex *, int> &vertexStarttimes,
                                     const unordered_map<Vertex *, Vertex *> &newToOld,
                                     ResourceModel* rm, bool quiet) {
       int maxTime = -1;
-      for (std::pair<Vertex *, int> vtPair : vertexLatency) {
+      for (std::pair<Vertex *, int> vtPair : vertexStarttimes) {
           try {
               Vertex *v = vtPair.first;
               if ((vtPair.second + rm->getVertexLatency(newToOld.at(v))) > maxTime) {

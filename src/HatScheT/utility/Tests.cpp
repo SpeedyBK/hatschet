@@ -3737,8 +3737,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3928,13 +3928,13 @@ namespace HatScheT {
 
       pair<map<Vertex*, int>, map<Vertex*, int>> aslapTimes = Utility::getSDCAsapAndAlapTimes(&g, &rm, minII, false);
 
-      unordered_map<Vertex*, Vertex*> uglyMap;
+      unordered_map<Vertex*, Vertex*> helperMap;
       unordered_map<Vertex*, int> tMaxUnordered;
       for (auto &v : aslapTimes.second){
-          uglyMap[v.first] = v.first;
+          helperMap[v.first] = v.first;
           tMaxUnordered[v.first] = v.second;
       }
-      int length = Utility::getSDCScheduleLength(tMaxUnordered, uglyMap, &rm);
+      int length = Utility::getSDCScheduleLength(tMaxUnordered, helperMap, &rm);
 
       auto start_t = std::chrono::high_resolution_clock::now();
       auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1) + length;
@@ -3947,7 +3947,7 @@ namespace HatScheT {
       cout << "Done in " << t << " seconds" << endl << endl;
 
       start_t = std::chrono::high_resolution_clock::now();
-      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyMode::both, false);
+      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyBounds::both, false);
       end_t = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       t = ((double)duration / 1000);

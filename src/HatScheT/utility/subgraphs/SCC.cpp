@@ -48,7 +48,7 @@ list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return verticesOfSC
 /*!
  * @return The number of Vertices which belong to the SCC.
  */
-int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
+int HatScheT::SCC::getNumberOfVertices() const { return verticesOfSCC.size(); }
 
 /*!
  * Sets the ID of a SCC.
@@ -126,4 +126,13 @@ void HatScheT::SCC::printInfo() {
 	for (auto &scc : this->connectedSCCs) {
 		std::cout << "    " << scc->getName() << " (ID " << scc->getId() << ")" << std::endl;
 	}
+}
+
+bool HatScheT::SCC::operator<(const HatScheT::SCC &a) const {
+	if (this->getNumberOfVertices() < a.getNumberOfVertices()){
+		return true;
+	}else if (this->getNumberOfVertices() == a.getNumberOfVertices()){
+		return id < a.id;
+	}
+	return false;
 }

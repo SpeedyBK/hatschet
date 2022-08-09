@@ -20,6 +20,7 @@
 #include <deque>
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace HatScheT {
 
@@ -153,6 +154,9 @@ namespace HatScheT {
               //New Schedule function for trivial stuff.
               try {
                   //scheduleTrival(candidateII);
+                  auto temp = computeSCCs();
+                  sortSCCs(temp);
+                  exit(-1);
               }catch (...){
                   cout << "Ignoring Error..." << endl;
               }
@@ -1337,6 +1341,10 @@ namespace HatScheT {
       return z3::sat;
   }
 
+
+
+
+  //TODO Finish later
   void SMTBinaryScheduler::scheduleTrival(int candidateII) {
 
       auto locPosStartTimes = startTimesSimplification;
@@ -1395,6 +1403,46 @@ namespace HatScheT {
           }
       }
       printPossibleStarttimes(locPosStartTimes);
+  }
+
+  vector<SCC*> SMTBinaryScheduler::computeSCCs() {
+      KosarajuSCC kSCC(this->g);
+      return kSCC.getSCCs();
+  }
+
+  void SMTBinaryScheduler::sortSCCs(vector<SCC*> &allSCCs) {
+
+      auto comp = [](SCC* x, SCC* y){ return *x < *y; };
+      auto _set = set<SCC*,decltype(comp)>( comp );
+
+      for (auto &it : allSCCs){
+          cout << it->getId() << ": ";
+          print_scc_type(it->getSccType(&resourceModel));
+          _set.insert(it);
+      }
+
+      for (auto &it : _set){
+          cout << it->getId() << " " << it->getNumberOfVertices() << endl;
+      }
+
+      /*
+      for (auto &scc:)
+      if (scc->getSccType(&this->resourceModel) == basic) {
+          basicSCCs.push_back(scc);
+      } else if (scc->getSccType(&this->resourceModel) == complex) {
+          complexSCCs.push_back(scc);
+      } else if (scc->getSccType(&this->resourceModel) == trivial) {
+          trivialSCCs.push_back(scc);
+      } else {
+          throw HatScheT::Exception("DaiZhang19Scheduler.sortSCCs: SCC with of type unknown, set SccType first.");
+      }*/
+  }
+
+  void SMTBinaryScheduler::print_scc_type(int scctype) {
+
+      string lut[4] = {"Unknown", "Basic", "Complex", "Trivial"};
+
+      cout << lut[scctype] << endl;
   }
 }
 #endif
