@@ -247,7 +247,7 @@ namespace HatScheT {
       auto start_t = std::chrono::high_resolution_clock::now();
       auto aslap = Utility::getSDCAsapAndAlapTimes(&g, &resourceModel, InitI);
       auto minLatCustom = Utility::getLatencyEstimation(&g, &resourceModel, InitI, Utility::latencyBounds::minLatency);
-      r.minLat = minLatCustom.first;
+      r.minLat = minLatCustom.minLat;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
@@ -266,14 +266,8 @@ namespace HatScheT {
 
       auto start_t = std::chrono::high_resolution_clock::now();
       auto aslap = Utility::getSDCAsapAndAlapTimes(&g, &resourceModel, InitI);
-      for (auto &it : aslap.first){
-          cout << it.first->getName() << ": " << it.second << endl;
-      }
-      for (auto &it : aslap.second){
-          cout << it.first->getName() << ": " << it.second << endl;
-      }
       auto maxLatCustom = Utility::getLatencyEstimation(&g, &resourceModel, InitI, Utility::latencyBounds::maxLatency);
-      r.maxLat = maxLatCustom.second;
+      r.maxLat = maxLatCustom.maxLAT;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);

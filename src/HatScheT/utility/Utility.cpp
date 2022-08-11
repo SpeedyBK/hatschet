@@ -1534,7 +1534,7 @@ namespace HatScheT {
 #endif
 	}
 
-  pair<int, int> Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyBounds lb, bool quiet) {
+  Utility::LatencyEstimation Utility::getLatencyEstimation(Graph *g, ResourceModel *rm, double II, Utility::latencyBounds lb, bool quiet) {
 
 	  // Calculate earliest and latest possible starttimes:
 	  auto aslap = Utility::getSDCAsapAndAlapTimes(g, rm, II, quiet);
@@ -1559,10 +1559,15 @@ namespace HatScheT {
       // lb = maxLatency returns {0, maxLatency}
       // lb = minLatency returns {minLatency, 0}
       // lb = minLatency returns {minLatency, maxLatency}
+	  Utility::LatencyEstimation le;
       switch (lb) {
           case latencyBounds::maxLatency:
               // Just return maxLatency... looks obvious...
-              return {0, maxLatency};
+              le.minLat = 0;
+              le.maxLAT = maxLatency;
+              le.alapStartTimes = aslap.second;
+              le.asapStartTimes = aslap.first;
+              return le;
 
           case latencyBounds::minLatency:
               // Latency can't be less then II, otherwise it would be possible to just reduce the II.
@@ -1596,7 +1601,11 @@ namespace HatScheT {
                   if (!quiet) { cout << "Min Lat:" << minLatency << " Increment: " << increment << endl; }
                   minLatency += increment;
               }
-              return {minLatency, 0};
+			  le.minLat = minLatency;
+			  le.maxLAT = 0;
+			  le.alapStartTimes = aslap.second;
+			  le.asapStartTimes = aslap.first;
+			  return le;
 
           case latencyBounds::both:
               // Latency can't be less then II, otherwise it would be possible to just reduce the II.
@@ -1631,10 +1640,13 @@ namespace HatScheT {
                   if (!quiet) { cout << "Min Lat:" << minLatency << " Increment: " << increment << endl; }
                   minLatency += increment;
               }
-              return {minLatency, maxLatency};
+			  le.minLat = minLatency;
+			  le.maxLAT = maxLatency;
+			  le.alapStartTimes = aslap.second;
+			  le.asapStartTimes = aslap.first;
+			  return le;
       }
       throw(HatScheT::Exception("Utility::getLatencyEstimation(): Reached end of the switch-statement."));
-      return {0,0};
   }
 
   pair<map<Vertex*, int>, map<Vertex*, int>> Utility::getSDCAsapAndAlapTimes(Graph* g, ResourceModel* rm,

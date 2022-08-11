@@ -546,6 +546,12 @@ namespace HatScheT {
     enum class latencyBounds {
       minLatency, maxLatency, both
     };
+    struct LatencyEstimation{
+      int minLat = -1;
+      int maxLAT = -1;
+      map<Vertex*, int>asapStartTimes;
+      map<Vertex*, int>alapStartTimes;
+    };
     /*!
      * Wrapperfunction for latency estimation. Manages calls for calcMaxLatencyEstimation(), getSDCAsapAndAlapTimes(),
      * getSDCScheduleLength() and calcMinLatencyEstimation(). It calculates a min latency estimation, a max latency
@@ -557,7 +563,7 @@ namespace HatScheT {
      * @param quiet: true surpresses print statements
      * @return pair<int, int>: first element = min latency estimation, second element = max latency estimation.
      */
-    static pair<int, int> getLatencyEstimation(Graph *g, ResourceModel *rm,
+    static LatencyEstimation getLatencyEstimation(Graph *g, ResourceModel *rm,
                                                double II,
                                                latencyBounds lb = latencyBounds::both,
                                                bool quiet = true);

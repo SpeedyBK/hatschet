@@ -13,6 +13,7 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
+#include "HatScheT/utility/subgraphs/SCC.h"
 
 namespace HatScheT {
 
@@ -23,6 +24,22 @@ namespace HatScheT {
     SMTSCCScheduler(Graph &g, ResourceModel &resourceModel);
 
     void schedule() override;
+
+  private:
+
+    struct cmp {
+      bool operator() (const SCC* x, const SCC* y) const {
+          return *x < *y;
+      }
+    };
+
+    void computeSCCs();
+
+    set<SCC*, cmp> trivialSCCs;
+
+    set<SCC*, cmp> basicSCCs;
+
+    set<SCC*, cmp> complexSCCs;
 
   };
 

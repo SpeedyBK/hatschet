@@ -3916,8 +3916,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
-      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3947,18 +3947,18 @@ namespace HatScheT {
       cout << "Done in " << t << " seconds" << endl << endl;
 
       start_t = std::chrono::high_resolution_clock::now();
-      pair<int, int> latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyBounds::both, false);
+      auto latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyBounds::both, false);
       end_t = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       t = ((double)duration / 1000);
 
       cout << endl;
       cout << "Result custom ( nameless :( ) Algorithm:" << endl;
-      cout << "Max Latency: " << latency.second << endl;
-      cout << "Min Latency: " << latency.first << endl;
+      cout << "Max Latency: " << latency.maxLAT << endl;
+      cout << "Min Latency: " << latency.minLat << endl;
       cout << "Done in " << t << " seconds" << endl;
 
-      return latency.first == ilpMinLatency and latency.first < latency.second;
+      return latency.minLat == ilpMinLatency and latency.minLat < latency.maxLAT;
 #else
       cout << "Not using ScaLP, skipping Test..."
       return true;
@@ -3968,10 +3968,20 @@ namespace HatScheT {
   bool Tests::smtScc() {
 #ifdef USE_Z3
 
+	    cout << "SMTSCC-Test:" << endl;
+
 	  Graph g;
 	  ResourceModel rm;
 
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
 	  SMTSCCScheduler smtScc(g, rm);
+	  smtScc.schedule();
 
       return false;
 #else
