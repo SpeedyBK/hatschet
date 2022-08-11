@@ -1923,7 +1923,10 @@ namespace HatScheT {
           criticalRessources.push_back(count2);
       }
 
-      int maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
+      int maximum = 0;
+      if (!criticalRessources.empty()) {
+		  maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
+	  }
 
       int maxLatency = maximum + length;
       if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + length << endl; }

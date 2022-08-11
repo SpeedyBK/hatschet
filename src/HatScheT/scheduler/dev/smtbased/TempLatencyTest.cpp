@@ -201,6 +201,8 @@ namespace HatScheT {
 
       openFileAndCollectData(datalist);
 
+      cout << "Number of Vertices: " << g.getNumberOfVertices() << endl;
+
       throw(HatScheT::Exception("No further Actions needed!"));
   }
 
@@ -264,13 +266,18 @@ namespace HatScheT {
 
       auto start_t = std::chrono::high_resolution_clock::now();
       auto aslap = Utility::getSDCAsapAndAlapTimes(&g, &resourceModel, InitI);
-      auto minLatCustom = Utility::getLatencyEstimation(&g, &resourceModel, InitI, Utility::latencyBounds::maxLatency);
-      r.maxLat = minLatCustom.second;
+      for (auto &it : aslap.first){
+          cout << it.first->getName() << ": " << it.second << endl;
+      }
+      for (auto &it : aslap.second){
+          cout << it.first->getName() << ": " << it.second << endl;
+      }
+      auto maxLatCustom = Utility::getLatencyEstimation(&g, &resourceModel, InitI, Utility::latencyBounds::maxLatency);
+      r.maxLat = maxLatCustom.second;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
       r.solvingTime = t;
-
       return r;
   }
 
@@ -356,10 +363,8 @@ namespace HatScheT {
       }
 
       string s;
-      for (auto itr = _resstr.begin(); itr < _resstr.begin() + 4; ++itr) {
-          if (*itr != '.') {
-              s += *itr;
-          }
+      for (auto itr = _resstr.begin(); itr < _resstr.end() - 4; ++itr) {
+          s += *itr;
       }
 
       string path = "SMTBenchmark/latency/" + token + "_" + s + ".csv";
@@ -368,8 +373,9 @@ namespace HatScheT {
           ofstream of;
           of.open(path);
           if (of.is_open()) {
-              of << _graphstr << ";\n";
-              of << _resstr << ";\n";
+              of << "#" << token + "_" + _graphstr << ";\n";
+              of << "#" << token + "_" + _resstr << ";\n";
+              of << "#" << "Number of Vertices: " << g.getNumberOfVertices() << ";\n";
               of << "II,Algorithm,minLat,maxLat,solvingTime;\n";
               for (auto &d : data) {
                   writeData(*d, of);

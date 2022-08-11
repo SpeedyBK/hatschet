@@ -3916,8 +3916,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_bw/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_bw/iir_bw.graphml";
+      string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
+      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
