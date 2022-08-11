@@ -20,7 +20,6 @@
 #include <deque>
 #include <algorithm>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace HatScheT {
 
@@ -150,15 +149,6 @@ namespace HatScheT {
               prohibitToEarlyStartsAndAdd(s);
               if (!quiet) { cout << "Prohibit late starts... " << endl; }
               prohibitToLateStartsAndAdd(s);
-
-              //New Schedule function for trivial stuff. TODO move to new class.
-              try {
-                  //scheduleTrival(candidateII);
-                  auto temp = computeSCCs();
-                  sortSCCs(temp);
-              }catch (...){
-                  cout << "Ignoring Error..." << endl;
-              }
 
               //Takeing a shortcut, probably nonsence...
               /*if (unsatCheckShortcut()){
@@ -669,7 +659,7 @@ namespace HatScheT {
               vertexDistanceAlap[&helperAlap] = 0;
               continue;
           }
-          sdcGraphAlap.createEdge(helperAlap, *v, 0);
+          sdcGraphAlap.createEdge(helperAlap, *v, -resourceModel.getVertexLatency(newToOldVertexAlap.at(v)));
           vertexDistanceAlap[v] = INT32_MAX;
       }
       for (auto &v : sdcGraphAsap.Vertices()){
@@ -1340,109 +1330,6 @@ namespace HatScheT {
       return z3::sat;
   }
 
-
-
-
-  //TODO Finish later
-  void SMTBinaryScheduler::scheduleTrival(int candidateII) {
-
-      auto locPosStartTimes = startTimesSimplification;
-      printPossibleStarttimes(locPosStartTimes);
-
-      map<Vertex*, int> availibleSlots;
-      map<pair<Resource*, int>, int> usedResources;
-
-      for (auto &v : locPosStartTimes){
-          availibleSlots[v.first.first] = 0;
-          for (int i = 0; i <= candidateLatency; i++){
-              if (locPosStartTimes.at({v.first.first, i})) {
-                  availibleSlots.at({v.first.first})++;
-              }
-          }
-      }
-
-      for (auto &r : resourceModel.Resources()){
-          for (int i = 0; i <= candidateII; i++){
-              usedResources[{r, i}] = 0;
-          }
-      }
-
-      priority_queue<pair<Vertex*, int>, vector<pair<Vertex*, int>>, SmtVertexIntCompGreater> sortedByAvailSlots;
-
-      for (int i = 0; i <= candidateLatency; i++){
-          for (auto &ops : availibleSlots){
-              if (locPosStartTimes.at({(Vertex*)ops.first, i})){
-                  sortedByAvailSlots.push({ops.first, ops.second});
-              }
-          }
-          while(!sortedByAvailSlots.empty()){
-              auto currOp = sortedByAvailSlots.top();
-              sortedByAvailSlots.pop();
-              auto r = (Resource*)resourceModel.getResource(currOp.first);
-              if (usedResources.at({r, i % candidateII}) < r->getLimit()){
-                  usedResources.at({r, i % candidateII})++;
-                  //Lock operation to current slot:
-                  for (int j = 0; j <= candidateLatency; j++){
-                      if (j == i){
-                          continue;
-                      }
-                      locPosStartTimes.at({currOp.first, j}) = false;
-                  }
-                  for (auto &e : g.getOutgoingEdges(currOp.first)){
-                      //tj + distance * this->candidateII - ti - lSrc - delay >= 0
-                      auto nextOp = &e->getVertexDst();
-                      for (int j = 0; j <= candidateLatency; j++)
-                      if (!(j + e->getDistance() * candidateII - i - resourceModel.getResource(currOp.first)->getLatency() - e->getDelay() >= 0)) {
-                          locPosStartTimes.at({nextOp, j}) = false;
-                      }
-                  }
-              }
-              cout << "CurrOp: " << currOp.first->getName() << endl;
-              printPossibleStarttimes(locPosStartTimes);
-          }
-      }
-      printPossibleStarttimes(locPosStartTimes);
-  }
-
-  vector<SCC*> SMTBinaryScheduler::computeSCCs() {
-      KosarajuSCC kSCC(this->g);
-      return kSCC.getSCCs();
-  }
-
-  void SMTBinaryScheduler::sortSCCs(vector<SCC*> &allSCCs) {
-
-      auto comp = [](SCC* x, SCC* y){ return *x < *y; };
-      auto _set = set<SCC*,decltype(comp)>( comp );
-
-      for (auto &it : allSCCs){
-          cout << it->getId() << ": ";
-          print_scc_type(it->getSccType(&resourceModel));
-          _set.insert(it);
-      }
-
-      for (auto &it : _set){
-          cout << it->getId() << " " << it->getNumberOfVertices() << endl;
-      }
-
-      /*
-      for (auto &scc:)
-      if (scc->getSccType(&this->resourceModel) == basic) {
-          basicSCCs.push_back(scc);
-      } else if (scc->getSccType(&this->resourceModel) == complex) {
-          complexSCCs.push_back(scc);
-      } else if (scc->getSccType(&this->resourceModel) == trivial) {
-          trivialSCCs.push_back(scc);
-      } else {
-          throw HatScheT::Exception("DaiZhang19Scheduler.sortSCCs: SCC with of type unknown, set SccType first.");
-      }*/
-  }
-
-  void SMTBinaryScheduler::print_scc_type(int scctype) {
-
-      string lut[4] = {"Unknown", "Basic", "Complex", "Trivial"};
-
-      cout << lut[scctype] << endl;
-  }
 }
 #endif
 

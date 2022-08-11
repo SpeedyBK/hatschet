@@ -7,8 +7,6 @@
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
-#include <HatScheT/utility/subgraphs/SCC.h>
-#include <HatScheT/utility/subgraphs/KosarajuSCC.h>
 
 #include <utility>
 #include <deque>
@@ -29,15 +27,6 @@ namespace HatScheT {
           pair<Vertex*, int> const &b)
       const noexcept {
           return a.second < b.second;
-      }
-    };
-
-    struct SmtVertexIntCompGreater {
-      constexpr bool operator()(
-          pair<Vertex*, int> const &a,
-          pair<Vertex*, int> const &b)
-      const noexcept {
-          return a.second > b.second;
       }
     };
 
@@ -66,13 +55,6 @@ namespace HatScheT {
      * Sets a timeout for Z3 for each check.
      * @param seconds
      */
-
-    void scheduleTrival(int candidateII);
-
-    vector<SCC*> computeSCCs();
-
-    void sortSCCs (vector<SCC*> &allSCCs);
-
 
     void setSolverTimeout(unsigned seconds);
     /*!

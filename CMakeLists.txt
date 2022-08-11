@@ -176,7 +176,8 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/utility/SDCSolver.cpp)
+src/HatScheT/utility/SDCSolver.cpp
+src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp)
 
 
 set(HatScheT_HEADERS
@@ -231,7 +232,7 @@ src/HatScheT/utility/Binding.h
 src/HatScheT/utility/BindingBase.h
 src/HatScheT/utility/TreeBind.h
 src/HatScheT/utility/OptimalIntegerIIBinding.h
-        src/HatScheT/utility/OptimalIntegerIISATBinding.h
+src/HatScheT/utility/OptimalIntegerIISATBinding.h
 src/HatScheT/utility/OptimalIntegerIIBindingCong.h
 src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h
 src/HatScheT/utility/Verifier.h
@@ -256,7 +257,9 @@ src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
 src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.h
 src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
-src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h)
+src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
+src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
+src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -317,7 +320,8 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 IF(Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp)
+            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp)
 ENDIF(Z3_H AND Z3_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})

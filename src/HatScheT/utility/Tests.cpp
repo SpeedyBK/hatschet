@@ -68,8 +68,8 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTModScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 
 #ifdef USE_CADICAL
@@ -3737,15 +3737,15 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone_Pareto/adpcm/graph2_RM3.xml";
-      string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("sos4.dot", &g, &rm);
+      HatScheT::DotWriter dw("fir6dlms.dot", &g, &rm);
       dw.setDisplayNames(true);
-      dw.write();*/
+      dw.write();
 
       //Simple IIR-Filter:
       /*auto &Sum = rm.makeResource("Sum", 1, 3, 1);
@@ -3916,8 +3916,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_bw/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_bw/iir_bw.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3961,6 +3961,20 @@ namespace HatScheT {
       return latency.first == ilpMinLatency and latency.first < latency.second;
 #else
       cout << "Not using ScaLP, skipping Test..."
+      return true;
+#endif
+  }
+
+  bool Tests::smtScc() {
+#ifdef USE_Z3
+
+	  Graph g;
+	  ResourceModel rm;
+
+	  SMTSCCScheduler smtScc(g, rm);
+
+      return false;
+#else
       return true;
 #endif
   }

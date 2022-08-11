@@ -475,7 +475,8 @@ namespace HatScheT {
                              const std::list<std::string> &sw = {"Gurobi", "CPLEX", "LPSolve", "SCIP"},
                              const unsigned int &timeout = 300,
                              const int &maxScheduleLength = -1,
-                             const int8_t &threads = -1);
+                             const int8_t &threads = -1,
+                             bool quiet = true);
 
     /*!
      * max latency estimation for a given graph/resource/II

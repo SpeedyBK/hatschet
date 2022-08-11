@@ -334,7 +334,10 @@ namespace HatScheT {
 		 * @return if test was passed
 		 */
 		static bool smtSmart();
-
+        /*!
+         * test functionality of utility latency estimation
+         * @return if test was passed
+         */
 		static bool utilityLatencyEstimation();
 
         /*!
@@ -342,5 +345,8 @@ namespace HatScheT {
          * @return if test was passed
          */
 		static bool satBinding();
+
+		static bool smtScc();
+
 	};
 }

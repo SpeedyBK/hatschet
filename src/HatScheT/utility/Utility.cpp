@@ -1459,7 +1459,8 @@ namespace HatScheT {
                                const int &II, const std::list<std::string> &sw,
                                const unsigned int &timeout,
                                const int &maxScheduleLength,
-                               const int8_t &threads) {
+                               const int8_t &threads,
+                               bool quiet) {
 #ifdef USE_SCALP
 		ScaLP::Solver s{sw};
 		if (threads > 0) {
@@ -1499,9 +1500,11 @@ namespace HatScheT {
 				latestEndTime = tMaxV;
 			}
 		}
-		std::cout << "max schedule length = " << maxScheduleLength << std::endl;
-		std::cout << "latest end time = " << latestEndTime << std::endl;
-		std::cout << "tau max = " << maxScheduleLength - latestEndTime << std::endl;
+		if (!quiet) {
+            std::cout << "max schedule length = " << maxScheduleLength << std::endl;
+            std::cout << "latest end time = " << latestEndTime << std::endl;
+            std::cout << "tau max = " << maxScheduleLength - latestEndTime << std::endl;
+        }
 		if (maxScheduleLength != -1) {
 			s.addConstraint(tau <= maxScheduleLength - latestEndTime);
 		}
@@ -1691,7 +1694,7 @@ namespace HatScheT {
               vertexDistanceAlap[&helperAlap] = 0;
               continue;
           }
-          sdcGraphAlap.createEdge(helperAlap, *v, 0);
+          sdcGraphAlap.createEdge(helperAlap, *v, -rm->getVertexLatency(newToOldVertexAlap.at(v)));
           vertexDistanceAlap[v] = INT32_MAX;
       }
       for (auto &v : sdcGraphAsap.Vertices()){
