@@ -3737,15 +3737,15 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      HatScheT::DotWriter dw("fir6dlms.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("fir6dlms.dot", &g, &rm);
       dw.setDisplayNames(true);
-      dw.write();
+      dw.write();*/
 
       //Simple IIR-Filter:
       /*auto &Sum = rm.makeResource("Sum", 1, 3, 1);
