@@ -68,8 +68,8 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTModScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 
 #ifdef USE_CADICAL
@@ -3517,7 +3517,7 @@ namespace HatScheT {
 		rm.registerVertex(&g5, &green);
 		g.createEdge(g5, r4, 0);
 
-		SATScheduler m(g, rm);
+        SATScheduler m(g, rm);
 		m.setQuiet(true);
 		m.setMaxRuns(1);
 		m.setSolverTimeout(300);
@@ -3743,7 +3743,7 @@ namespace HatScheT {
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("adcpm.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("fir6dlms.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
@@ -3909,4 +3909,83 @@ namespace HatScheT {
 		}
 		return valid;
 	}
+
+  bool Tests::utilityLatencyEstimation() {
+#ifdef USE_SCALP
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      double minII = Utility::calcMinII(Utility::calcRecMII(&g, &rm), Utility::calcResMII(&rm));
+
+      cout << endl << "Minimum II: " << minII << endl;
+
+      pair<map<Vertex*, int>, map<Vertex*, int>> aslapTimes = Utility::getSDCAsapAndAlapTimes(&g, &rm, minII, false);
+
+      unordered_map<Vertex*, Vertex*> helperMap;
+      unordered_map<Vertex*, int> tMaxUnordered;
+      for (auto &v : aslapTimes.second){
+          helperMap[v.first] = v.first;
+          tMaxUnordered[v.first] = v.second;
+      }
+      int length = Utility::getSDCScheduleLength(tMaxUnordered, helperMap, &rm);
+
+      auto start_t = std::chrono::high_resolution_clock::now();
+      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1) + length;
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << endl << "Result ILP: " << endl;
+      cout << "Min Latency ILP: " << ilpMinLatency << endl;
+      cout << "Done in " << t << " seconds" << endl << endl;
+
+      start_t = std::chrono::high_resolution_clock::now();
+      auto latency = Utility::getLatencyEstimation(&g, &rm, (int)minII, Utility::latencyBounds::both, false);
+      end_t = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      t = ((double)duration / 1000);
+
+      cout << endl;
+      cout << "Result custom ( nameless :( ) Algorithm:" << endl;
+      cout << "Max Latency: " << latency.maxLAT << endl;
+      cout << "Min Latency: " << latency.minLat << endl;
+      cout << "Done in " << t << " seconds" << endl;
+
+      return latency.minLat == ilpMinLatency and latency.minLat < latency.maxLAT;
+#else
+      cout << "Not using ScaLP, skipping Test..."
+      return true;
+#endif
+  }
+
+  bool Tests::smtScc() {
+#ifdef USE_Z3
+
+	    cout << "SMTSCC-Test:" << endl;
+
+	  Graph g;
+	  ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+	  SMTSCCScheduler smtScc(g, rm);
+	  smtScc.schedule();
+
+      return false;
+#else
+      return true;
+#endif
+  }
 }

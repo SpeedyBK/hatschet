@@ -49,12 +49,17 @@ namespace HatScheT {
     /*!
      * @return The ID of a SCC.
      */
-    int getId ();
+    int getId () const;
 
     /*!
      * @return Number of Vertices which belong to the SCC.
      */
-    int getNumberOfVertices();
+    int getNumberOfVertices() const;
+
+    /*!
+     * @return Number of Vertices with resource limits in SCC.
+     */
+    int getNumberofLimitedVertices() const { return numOfLimitedVerticesInSCC; }
 
     /*!
      * @return The type of a SCC.
@@ -78,7 +83,9 @@ namespace HatScheT {
     /*!
      * @return A list of edges which has Source and Destination in the SCC.
      */
-    list<Edge*> getSCCEdges();
+    list<Edge*> getSCCEdges() const;
+
+    int getNumOfEdges() const { return this->sccEdges.size(); }
 
     /*!
      * @return A list of SCC*s which are connected to the actual SCC.
@@ -120,6 +127,12 @@ namespace HatScheT {
      */
     void printInfo();
 
+    /*!
+     * Needed for sorting.
+     * @param a
+     * @return
+     */
+    bool operator<(const SCC &a) const;
 
   private:
 
@@ -165,6 +178,8 @@ namespace HatScheT {
      * List of Vertices which belong to the SCC.
      */
     list <Vertex*> verticesOfSCC;
+
+    int numOfLimitedVerticesInSCC;
 
   };
 

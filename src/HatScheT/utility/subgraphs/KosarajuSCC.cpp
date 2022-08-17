@@ -27,6 +27,7 @@ namespace HatScheT {
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
 
     this->g = &g;
+    this->quiet = true;
 
   }
 

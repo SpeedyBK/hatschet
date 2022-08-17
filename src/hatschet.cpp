@@ -36,6 +36,7 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 #include <HatScheT/utility/reader/ScheduleAndBindingReader.h>
+#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #ifdef USE_XERCESC
 
@@ -268,6 +269,7 @@ int main(int argc, char *args[]) {
 		RATIONALIISCCQ,
 		RATIONALIIFIMMEL,
 		SUGRREDUCTION,
+		LATENCYTEST,
 		NONE
 	};
 	SchedulersSelection schedulerSelection = NONE;
@@ -416,7 +418,9 @@ int main(int argc, char *args[]) {
 					schedulerSelection = RATIONALIISCCQ;
 				} else if (schedulerSelectionStr == "subgrreduction") {
 					schedulerSelection = SUGRREDUCTION;
-				} else {
+				} else if (schedulerSelectionStr == "latencytest") {
+                    schedulerSelection = LATENCYTEST;
+                } else {
 					throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
 				}
 			}
@@ -493,6 +497,7 @@ int main(int argc, char *args[]) {
 				if (str == "MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
 				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
+                if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
@@ -500,8 +505,8 @@ int main(int argc, char *args[]) {
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 				if (str == "SMTSMART" && !HatScheT::Tests::smtSmart()) exit(-1);
+                if (str == "SMTSCC" && !HatScheT::Tests::smtScc()) exit(-1);
 #endif
-
 				exit(0);
 			} else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
 				string str = std::string(value);
@@ -610,6 +615,9 @@ int main(int argc, char *args[]) {
 			case RATIONALIIMODULOSDC:
 				cout << "RATIONALIIMODULOSDC";
 				break;
+            case LATENCYTEST:
+                cout << "LATENCYTEST";
+                break;
 		}
 		std::cout << std::endl;
 
@@ -701,7 +709,12 @@ int main(int argc, char *args[]) {
 
 		if (rm.isEmpty() == false && g.isEmpty() == false) {
 			switch (schedulerSelection) {
-				case ASAP:
+			    case LATENCYTEST:
+			        scheduler = new HatScheT::TempLatencyTest(g, rm);
+                    isModuloScheduler = true;
+                    ((HatScheT::TempLatencyTest *) scheduler)->setnames(graphMLFile, resourceModelFile);
+			        break;
+			    case ASAP:
 					scheduler = new HatScheT::ASAPScheduler(g, rm);
 					break;
 				case ALAP:
@@ -932,7 +945,7 @@ int main(int argc, char *args[]) {
                 case SMT:
                     scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler *) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else
