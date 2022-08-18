@@ -333,7 +333,7 @@ namespace HatScheT {
 		 * test functionality of Z3 based scheduler
 		 * @return if test was passed
 		 */
-		static bool smtSmart();
+		static bool smtBinary();
         /*!
          * test functionality of utility latency estimation
          * @return if test was passed

@@ -3729,7 +3729,7 @@ namespace HatScheT {
 	  #endif
   }
 
-  bool Tests::smtSmart() {
+  bool Tests::smtBinary() {
 #ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
@@ -3737,13 +3737,13 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_bw/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_bw/iir_bw.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("fir6dlms.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("iir_bw.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
@@ -3806,9 +3806,23 @@ namespace HatScheT {
       if (!valid) {
           std::cout << "Tests::smtModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
       } else {
-          std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) II=" << sss.getII() << std::endl;
+          std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << (int)sss.getII() << " Latency: " << sss.getScheduleLength() << std::endl;
       }
       for (auto &it : sched){
+          cout << it.first->getName() << ": " << it.second << endl;
+      }
+
+      EichenbergerDavidson97Scheduler ed(g, rm, {"Gurobi"});
+      ed.schedule();
+      auto vali = verifyModuloSchedule(g, rm, sched, (int)ed.getII());
+      if (!vali) {
+          std::cout << "Tests::ED97ModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
+      } else {
+          std::cout << "Tests::ED97ModScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << (int)ed.getII() << " Latency: " << ed.getScheduleLength() << std::endl;
+      }
+      for (auto &it : ed.getSchedule()){
           cout << it.first->getName() << ": " << it.second << endl;
       }
 
@@ -3967,8 +3981,7 @@ namespace HatScheT {
 
   bool Tests::smtScc() {
 #ifdef USE_Z3
-
-	    cout << "SMTSCC-Test:" << endl;
+	  cout << "SMTSCC-Test:" << endl;
 
 	  Graph g;
 	  ResourceModel rm;

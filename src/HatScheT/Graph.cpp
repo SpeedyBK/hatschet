@@ -109,10 +109,10 @@ bool Graph::isSinkVertex(Vertex *v){
 	return this->getNumOutgoingEdges(v) == 0;
 }
 
-bool Graph::hasNoNonZeroDistanceOutgoingEdges(Vertex *v) {
+bool Graph::hasNoZeroDistanceOutgoingEdges(Vertex *v) {
 	try {
 		for (auto &e : this->outgoingEdges.at(v)) {
-			if (e->getDistance() != 0) return false;
+			if (e->getDistance() == 0) return false;
 		}
 		return true;
 	}
@@ -122,10 +122,10 @@ bool Graph::hasNoNonZeroDistanceOutgoingEdges(Vertex *v) {
 	}
 }
 
-bool Graph::hasNoNonZeroDistanceIncomingEdges(Vertex *v) {
+bool Graph::hasNoZeroDistanceIncomingEdges(Vertex *v) {
 	try {
 		for (auto &e : this->incomingEdges.at(v)) {
-			if (e->getDistance() != 0) return false;
+			if (e->getDistance() == 0) return false;
 		}
 		return true;
 	}

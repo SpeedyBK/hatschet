@@ -355,7 +355,7 @@ namespace HatScheT {
 			this->solver->addConstraint(ss <= this->maxLatencyConstraint);
 
 		for (auto *i : this->g.Vertices()) {
-			if (this->g.hasNoNonZeroDistanceOutgoingEdges(i)) {
+			if (this->g.hasNoZeroDistanceOutgoingEdges(i)) {
 				this->solver->addConstraint(ss - this->time[i] >= this->resourceModel.getVertexLatency(i));
 			}
 		}

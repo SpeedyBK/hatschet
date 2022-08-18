@@ -184,8 +184,10 @@ void EichenbergerDavidson97Scheduler::setObjective()
       */
 
     // now, let's do it correctly
-    if (g.hasNoNonZeroDistanceOutgoingEdges(i))
-    	solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+    if (g.hasNoZeroDistanceOutgoingEdges(i)) {
+        cout << "Adding Constraint for: " << i->getName() << endl;
+        solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+    }
   }
   solver->setObjective(ScaLP::minimize(ss));
 }

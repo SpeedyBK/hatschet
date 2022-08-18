@@ -74,7 +74,7 @@ namespace HatScheT {
           cout << "Res-Min-II: " << resMinII << endl;
           cout << "Max. II: " << maxII << endl;
           cout << "Vertices of G: " << g.getNumberOfVertices() << endl;
-          cout << "Edges of G: " << g.getNumberOfEdges();
+          cout << "Edges of G: " << g.getNumberOfEdges() << endl;
       }
 
       //Saving times:
