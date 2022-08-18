@@ -35,6 +35,12 @@ namespace HatScheT {
 
     void computeSCCs();
 
+    void modifyResourceModel();
+
+    void resetResourceModel();
+
+    map<Resource*, int>resourceLimits;
+
     set<SCC*, cmp> trivialSCCs;
 
     set<SCC*, cmp> basicSCCs;

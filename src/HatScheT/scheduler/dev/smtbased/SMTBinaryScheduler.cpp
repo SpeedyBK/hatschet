@@ -73,6 +73,8 @@ namespace HatScheT {
           cout << "Rec-Min-II: " << recMinII << endl;
           cout << "Res-Min-II: " << resMinII << endl;
           cout << "Max. II: " << maxII << endl;
+          cout << "Vertices of G: " << g.getNumberOfVertices() << endl;
+          cout << "Edges of G: " << g.getNumberOfEdges();
       }
 
       //Saving times:
@@ -89,7 +91,6 @@ namespace HatScheT {
           timeBudget = timeLimit;
       }
       if (timeBudget > 0) { p.set("timeout", (uint32_t)timeBudget); }
-      //p.set("arith.print_stats", true);
       if (!quiet) { cout << p << endl; }
       s.set(p);
 
@@ -127,14 +128,24 @@ namespace HatScheT {
               if (latSM == latSearchMethod::LINEAR) { candidateLatency = latLinearSearch(sati); }
               if (latSM == latSearchMethod::BINARY) { candidateLatency = latBinarySearch(sati); }
 
-              if (candidateLatency == -1 or oldLatency == candidateLatency ) {
-                  candidateLatency = 0;
-                  break;
+
+              if (latSM == latSearchMethod::BINARY) {
+                  if (candidateLatency == -1 or oldLatency == candidateLatency) {
+                      candidateLatency = 0;
+                      break;
+                  }
+              }
+
+              if (latSM == latSearchMethod::LINEAR){
+                  if (candidateLatency == -1) {
+                      candidateLatency = 0;
+                      break;
+                  }
               }
 
               if (!quiet) { cout << "Trying II: " << candidateII << " Trying Latency: " << candidateLatency << endl; }
               //Updating latest start times with candidate latency
-              updateLatestStartTimes(oldLatency);
+              updateLatestStartTimes();
               //Generating debendency constraints for z3-prover.
               if (!quiet) { cout << "Generating b-variables... " << endl; }
               generateBvariables();
@@ -149,12 +160,6 @@ namespace HatScheT {
               prohibitToEarlyStartsAndAdd(s);
               if (!quiet) { cout << "Prohibit late starts... " << endl; }
               prohibitToLateStartsAndAdd(s);
-
-              //Takeing a shortcut, probably nonsence...
-              /*if (unsatCheckShortcut()){
-                  sati = z3::unsat;
-                  continue;
-              }*/
 
               //Pushing assertions into z3-Prover
               if (!quiet) { cout << "Solving... " << endl; }
@@ -172,7 +177,7 @@ namespace HatScheT {
               if (sati != z3::unsat) {
                   if (!quiet) { cout << "Add dependency-constraints... " << endl; }
                   sati = setDependencyConstraintsAndAddToSolver(s, candidateII);
-                  if (!quiet) { cout << ">>" << sati << "<<" << endl; }
+                  if (!quiet) { cout << ">>" << "DONE" << "<<" << endl; }
               }
 
               if (!quiet) { cout << "System of " << s.assertions().size() << " assertions... Final Check" << endl; }
@@ -197,7 +202,8 @@ namespace HatScheT {
                   cout << "*-------------------------*" << endl;
                   cout << endl;
               }
-              if (timeBudget < 0){
+              if (timeBudget <= 0){
+                  linearSearchInit = true;
                   if (sati == z3::sat){
                       //A schedule for given II is found, and II can only get worse,
                       //so we return the schedule and we are done.
@@ -217,6 +223,7 @@ namespace HatScheT {
                       if (timeLimit > 0) {
                           timeBudget = timeLimit;
                       }
+                      cerr << "Timeout! Candidate II: " << candidateII << " Candidate Latency: " << candidateLatency << endl;
                       firstObjectiveOptimal = false;
                       break;
                   }
@@ -1022,7 +1029,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::updateLatestStartTimes(int oldLatency) {
+  void SMTBinaryScheduler::updateLatestStartTimes() {
       latestStartTimesUpdated.clear();
       for (auto &it: latestStartTimes) {
           //cout << it.first->getName() << ": " << it.second << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
@@ -1035,7 +1042,7 @@ namespace HatScheT {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       int i = 0;
       deque<long> sTimes;
-      z3::check_result satisfiable;
+      z3::check_result satisfiable = z3::unknown;
       clock_t start, end;
       for (auto &e : g.Edges()) {
           auto *vSrc = &e->getVertexSrc();
@@ -1048,32 +1055,36 @@ namespace HatScheT {
                   if (tj + distance * candidateII - ti - lSrc - delay >= 0) {
                       //No Conflict... Do nothing
                       continue;
-                  } else {
-                      //Those cases are not needed since one of these conditions is already prohibited
-                      //and we can use the law of absorption : (!a + !b) * !a = !a.
-                      if (!startTimesSimplification.at(std::make_pair(vSrc, ti)) ||
-                          !startTimesSimplification.at(std::make_pair(vDst, tj))) {
-                          continue;
-                      }
-                      //Conflict... Not both Operations in this timeslot;
-                      s.add(!*getBvariable(vSrc, ti) || !*getBvariable(vDst, tj));
-                      if (i % 10000 == 0) {
+                  }
+                  //Those cases are not needed since one of these conditions is already prohibited
+                  //and we can use the law of absorption : (!a + !b) * !a = !a.
+                  if (!startTimesSimplification.at(std::make_pair(vSrc, ti)) ||
+                      !startTimesSimplification.at(std::make_pair(vDst, tj))) {
+                      continue;
+                  }
+                  //Conflict... Not both Operations in this timeslot;
+                  s.add(!*getBvariable(vSrc, ti) || !*getBvariable(vDst, tj));
+                  if (false) {
+                      if (i % 25000000 == 0) {
                           auto start_time = std::chrono::high_resolution_clock::now();
                           satisfiable = s.check();
                           auto end_time = std::chrono::high_resolution_clock::now();
-                          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-                          sTimes.push_back((double)duration);
-                          timeBudget -= (int)(sTimes.back());
-                          if( !quiet ) { cout << i << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
-                                              << (double)sTimes.back()/1000 << setprecision(5) << " sec "
-                                              << "Time Budget: " << timeBudget << endl; }
-                          if (satisfiable == z3::unsat){
+                          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              end_time - start_time).count();
+                          sTimes.push_back((double) duration);
+                          timeBudget -= (int) (sTimes.back());
+                          if (!quiet) {
+                              cout << i << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
+                                   << (double) sTimes.back() / 1000 << setprecision(5) << " sec "
+                                   << "Time Budget: " << timeBudget << endl;
+                          }
+                          if (satisfiable == z3::unsat) {
                               return satisfiable;
                           }
-                          if (satisfiable == z3::unknown){
+                          if (satisfiable == z3::unknown) {
                               timeBudget = -1;
                           }
-                          if (timeBudget < 0){
+                          if (timeBudget < 0) {
                               cerr << "Timeout! Candidate II: " << candidateII
                                    << " Candidate Latency: " << candidateLatency << endl;
                               linearSearchInit = true;
@@ -1082,18 +1093,81 @@ namespace HatScheT {
                           }
                       }
                       i++;
-                      //Debugging:
-                      /* if (i % 250000 == 0){
-                          writeSolvingTimesToFile(sTimes, i);
-                      } */
                   }
               }
           }
       }
       startTimesSimplification.clear();
       return satisfiable;
-      //throw(HatScheT::Exception("Abort!"));
   }
+
+
+  /*z3::check_result SMTBinaryScheduler::setDependencyConstraintsAndAddToSolver(z3::solver &s, const int &candidateII) {
+      //tj + distance * this->candidateII - ti - lSrc - delay >= 0
+      if (!quiet) { cout << g.getNumberOfEdges() << " Edges... " << endl; }
+      deque<long> sTimes;
+      z3::check_result satisfiable = z3::unknown;
+      clock_t start, end;
+      int eCount = 0;
+      for (auto &e : g.Edges()) {
+          eCount++;
+          auto *vSrc = &e->getVertexSrc();
+          auto *vDst = &e->getVertexDst();
+          auto lSrc = this->resourceModel.getVertexLatency(vSrc);
+          auto distance = e->getDistance();
+          auto delay = e->getDelay();
+          z3::expr_vector ev(c);
+          vector<int> factors; // Gewichte für Dependency Constraint
+          for (int i = 0; i <= candidateLatency; i++) {
+              if (!startTimesSimplification.at({vSrc, i})) {
+                  continue;
+              }
+              factors.push_back(-i);
+              ev.push_back(*getBvariable(vSrc, i));
+          }
+          for (int j = 0; j <= candidateLatency; j++) {
+              if (!startTimesSimplification.at({vDst, j})) {
+                  continue;
+              }
+              factors.push_back(j);
+              ev.push_back(*getBvariable(vDst, j));
+          }
+          if (ev.size() != factors.size() or ev.empty()) {
+              throw (std::out_of_range("Vector sizes not equal!"));
+          }
+
+          s.add(z3::pbge(ev, &factors.at(0), (lSrc + delay - distance * candidateII))); // Dependency Constraint
+          if (eCount % 500 == 0) {
+              auto start_time = std::chrono::high_resolution_clock::now();
+              satisfiable = s.check();
+              auto end_time = std::chrono::high_resolution_clock::now();
+              auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+              sTimes.push_back((double) duration);
+              timeBudget -= (int) (sTimes.back());
+              if (!quiet) {
+                  cout << eCount << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
+                       << (double) sTimes.back() / 1000 << setprecision(5) << " sec "
+                       << "Time Budget: " << timeBudget << endl;
+              }
+              if (satisfiable == z3::unsat) {
+                  return satisfiable;
+              }
+              if (satisfiable == z3::unknown) {
+                  timeBudget = -1;
+              }
+              if (timeBudget <= 0) {
+                  //cerr << "Timeout! Candidate II: " << candidateII
+                  //     << " Candidate Latency: " << candidateLatency << endl;
+                  linearSearchInit = true;
+                  secondObjectiveOptimal = false;
+                  return z3::unsat;
+              }
+
+          }
+      }
+      startTimesSimplification.clear();
+      return satisfiable;
+  }*/
 
   bool SMTBinaryScheduler::unsatCheckShortcut() {
       for (auto &vIt : g.Vertices()){
@@ -1153,20 +1227,31 @@ namespace HatScheT {
   }
 
   int SMTBinaryScheduler::latLinearSearch(z3::check_result result) {
-      if (linearSearchInit){
-          latencySpaceIndex = 0;
-          linearSearchInit = false;
+      try {
+          if (linearSearchInit) {
+              latencySpaceIndex = 0;
+              linearSearchInit = false;
+          }
+          if (result == z3::sat) {
+              return -1;
+          }
+          if (latencySpaceIndex == latencySpace.size()) {
+              latencySpaceIndex = 0;
+              return -1;
+          }
+          int temp = latencySpaceIndex;
+          latencySpaceIndex++;
+          return latencySpace.at(temp);
+      }catch (std::out_of_range&){
+          cout << "Index: " << latencySpaceIndex << endl;
+          cout << "Size: " << latencySpace.size() << endl;
+          int i = 0;
+          for (auto &it : latencySpace){
+              cout << i << ": " << it << endl;
+              i++;
+          }
+          throw(HatScheT::Exception("SMTBinaryScheduler::latLinearSearch() -- Out of Range"));
       }
-      if (result == z3::sat) {
-          return -1;
-      }
-      if (latencySpaceIndex == latencySpace.size()) {
-          latencySpaceIndex = 0;
-          return -1;
-      }
-      int temp = latencySpaceIndex;
-      latencySpaceIndex++;
-      return latencySpace.at(temp);
   }
 
   int SMTBinaryScheduler::latBinarySearch(z3::check_result result) {

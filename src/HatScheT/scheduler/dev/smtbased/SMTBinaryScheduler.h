@@ -108,7 +108,7 @@ namespace HatScheT {
      * \brief Determines the latest possible start-times for each vertex by creating an ALAP-Schedule without
      * ressource-constraints.
      */
-    void updateLatestStartTimes(int oldLatency);
+    void updateLatestStartTimes();
     /*!
      * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
      */
@@ -255,7 +255,6 @@ namespace HatScheT {
     void print_ASAP_ALAP_restictions();
     void print_latency_space(int l_index, int r_index);
     void print_b_variables();
-    static void print_scc_type(int scctype);
     void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
     void set_design_name(string s){ this->designName = s; }

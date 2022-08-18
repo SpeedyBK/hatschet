@@ -3737,8 +3737,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3794,7 +3794,7 @@ namespace HatScheT {
       sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
       sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
-      sss.setSolverTimeout(1000);
+      sss.setSolverTimeout(10);
       //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();
