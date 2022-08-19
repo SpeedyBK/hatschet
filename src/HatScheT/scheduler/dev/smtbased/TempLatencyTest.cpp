@@ -184,9 +184,9 @@ namespace HatScheT {
       cout << "Total Solving Time minLAT Custom: " << totalSolvingTimeCustom << endl;
       cout << "Total Solving Time minLAT SDC: " << totalSolvingTimesdc << endl;
       cout << "Total Solving Time minLAT ASAP: " << totalSolvingTimeasap << endl;
-      cout << "Total Solving Time maxLAT Custom: " << totalSolvingTimeMaxCustom << endl;
-      cout << "Total Solving Time maxLAT Oppermann: " << totalSolvingTimeOppermann << endl;
-      cout << "Total Solving Time maxLAT Eichenberger: " << totalSolvingTimeEichenberger<< endl;
+      cout << "Total Solving Time maxLat Custom: " << totalSolvingTimeMaxCustom << endl;
+      cout << "Total Solving Time maxLat Oppermann: " << totalSolvingTimeOppermann << endl;
+      cout << "Total Solving Time maxLat Eichenberger: " << totalSolvingTimeEichenberger<< endl;
 
       cout << endl;
 
@@ -267,7 +267,7 @@ namespace HatScheT {
       auto start_t = std::chrono::high_resolution_clock::now();
       auto aslap = Utility::getSDCAsapAndAlapTimes(&g, &resourceModel, InitI);
       auto maxLatCustom = Utility::getLatencyEstimation(&g, &resourceModel, InitI, Utility::latencyBounds::maxLatency);
-      r.maxLat = maxLatCustom.maxLAT;
+      r.maxLat = maxLatCustom.maxLat;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);

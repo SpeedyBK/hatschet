@@ -3968,11 +3968,11 @@ namespace HatScheT {
 
       cout << endl;
       cout << "Result custom ( nameless :( ) Algorithm:" << endl;
-      cout << "Max Latency: " << latency.maxLAT << endl;
+      cout << "Max Latency: " << latency.maxLat << endl;
       cout << "Min Latency: " << latency.minLat << endl;
       cout << "Done in " << t << " seconds" << endl;
 
-      return latency.minLat == ilpMinLatency and latency.minLat < latency.maxLAT;
+      return latency.minLat == ilpMinLatency and latency.minLat < latency.maxLat;
 #else
       cout << "Not using ScaLP, skipping Test..."
       return true;

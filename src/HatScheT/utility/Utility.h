@@ -546,11 +546,11 @@ namespace HatScheT {
     enum class latencyBounds {
       minLatency, maxLatency, both
     };
-    struct LatencyEstimation{
+    struct LatencyEstimation {
       int minLat = -1;
-      int maxLAT = -1;
-      map<Vertex*, int>* asapStartTimes;
-      map<Vertex*, int>* alapStartTimes;
+      int maxLat = -1;
+      map<Vertex*, int> asapStartTimes;
+      map<Vertex*, int> alapStartTimes;
     };
     /*!
      * Wrapperfunction for latency estimation. Manages calls for calcMaxLatencyEstimation(), getSDCAsapAndAlapTimes(),
