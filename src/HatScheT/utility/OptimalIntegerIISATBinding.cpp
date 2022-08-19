@@ -66,6 +66,7 @@ namespace HatScheT {
 		// container to return //
 		/////////////////////////
 		this->binding = Binding::RegChainBindingContainer();
+		this->binding.portAssignments = this->portAssignments;
 
 		/////////////////////////////////////////////////
 		// count if less FUs are needed than allocated //
@@ -260,29 +261,34 @@ namespace HatScheT {
 		///////////////////////////////////////////
 		// start by computing an initial binding //
 		///////////////////////////////////////////
+		/*
 		if (!this->quiet) {
 			std::cout << "OptimalIntegerIISATBinding: computing initial binding now" << std::endl;
 		}
 		this->computeInitialBinding();
 		this->solutionStatus = "TIMEOUT_FEASIBLE";
+		 */
 
 		/////////////////////////
 		// define upper bounds //
 		/////////////////////////
+		/*
 		if (!this->quiet) {
 			std::cout << "OptimalIntegerIISATBinding: defining upper bounds now" << std::endl;
 		}
+		this->defineUpperBounds();
 		this->interconnectBounds.second = this->binding.multiplexerCosts;
 		this->interconnectCommutativeBounds.second = this->binding.multiplexerCosts;
 		this->registerBounds.second = this->binding.registerCosts;
+		 */
 
 		/////////////////////////
 		// define lower bounds //
 		/////////////////////////
 		if (!this->quiet) {
-			std::cout << "OptimalIntegerIISATBinding: defining lower bounds now" << std::endl;
+			std::cout << "OptimalIntegerIISATBinding: defining lower & upper bounds now" << std::endl;
 		}
-		this->defineLowerBounds();
+		this->defineBounds();
 		if (!this->quiet) {
 			std::cout << "  " << this->registerBounds.first << " <= #Regs <= " << this->registerBounds.second << std::endl;
 			std::cout << "  " << this->interconnectBounds.first << " <= #Connections <= " << this->interconnectBounds.second << std::endl;
@@ -480,6 +486,9 @@ namespace HatScheT {
 						std::cout << "OptimalIntegerIISATBinding: SAT solver proved feasibility" << std::endl;
 					}
 					// fill solution structure (operator bindings)
+					if (!this->quiet) {
+						std::cout << "OptimalIntegerIISATBinding: filling solution structure with operator bindings now" << std::endl;
+					}
 					for (auto &v : this->g->Vertices()) {
 						int b = -1;
 						for (auto idx : this->possibleResourceBindings[v]) {
@@ -497,6 +506,9 @@ namespace HatScheT {
 					}
 					// fill solution structure (port assignments)
 					if (considerCommutativity) {
+						if (!this->quiet) {
+							std::cout << "OptimalIntegerIISATBinding: filling solution structure with port assignements now" << std::endl;
+						}
 						for (auto &v : this->g->Vertices()) {
 							auto *r = this->rm->getResource(v);
 							if (this->commutativeOps.find(r) == this->commutativeOps.end()) continue;
@@ -516,7 +528,7 @@ namespace HatScheT {
 								if (b == -1) {
 									throw Exception("Missing port assignment for vertex '"+v->getName()+"'");
 								}
-								this->portAssignments[e] = b;
+								this->binding.portAssignments[e] = b;
 								foundPorts.insert(b);
 							}
 							if (foundPorts.size() != numPorts) {
@@ -525,6 +537,9 @@ namespace HatScheT {
 						}
 					}
 					// update binding container
+					if (!this->quiet) {
+						std::cout << "OptimalIntegerIISATBinding: updating binding container now" << std::endl;
+					}
 					this->binding = getBindingContainerFromBinding(this->binding.resourceBindings, this->binding.portAssignments, this->g, this->rm, this->sched, this->II);
 					if (!this->quiet) {
 						std::cout << "OptimalIntegerIISATBinding: computed binding has #Registers = " << this->binding.registerCosts
@@ -697,12 +712,15 @@ namespace HatScheT {
 			auto vSrcName = vSrc->getName();
 			auto vDstName = vDst->getName();
 			auto lifetime = getEdgeLifetime(e, &edgeLifetimes, sched, II, rm);
+			std::cout << "Try getting fuSrc binding for vertex " << vSrcName << std::endl;
 			auto fuSrc = binding.resourceBindings.at(vSrcName);
+			std::cout << "Try getting fuDst binding for vertex " << vDstName << std::endl;
 			auto fuDst = binding.resourceBindings.at(vDstName);
 			auto rSrc = rm->getResource(vSrc);
 			auto rDst = rm->getResource(vDst);
 			auto &rSrcName = rSrc->getName();
 			auto &rDstName = rDst->getName();
+			std::cout << "Try getting port assignment for edge '" << e->getVertexSrcName() << "' -(" << e->getDistance() << ")-> '" << e->getVertexDstName() << "'" << std::endl;
 			auto port = portAssignments.at(e);
 			auto findMe = std::make_pair(std::make_pair(std::make_pair(rSrcName, fuSrc), std::make_pair(rDstName, fuDst)), std::make_pair(lifetime, port));
 			auto it = std::find(binding.fuConnections.begin(), binding.fuConnections.end(), findMe);
@@ -729,7 +747,7 @@ namespace HatScheT {
 		this->firstObjective = t;
 	}
 
-	void OptimalIntegerIISATBinding::defineLowerBounds() {
+	void OptimalIntegerIISATBinding::defineBounds() {
 		// registers: use lifetimes as lower bound
 		std::map<const Resource*, std::map<int, int>> resourceLifetimes;
 		for (auto &v : this->g->Vertices()) {
@@ -746,6 +764,7 @@ namespace HatScheT {
 			}
 		}
 		int lifetimeRegsMin = 0;
+		// lower bound
 		for (auto &r : this->rm->Resources()) {
 			this->registerBreakPoints[r].first = lifetimeRegsMin;
 			int lifeMin = 0;
@@ -766,8 +785,26 @@ namespace HatScheT {
 			this->registerBreakPoints[r].second = lifetimeRegsMin-1;
 		}
 		this->numReservedRegisters = this->registerBounds.first = lifetimeRegsMin;
+		// upper bound
+		this->registerBounds.second = 0;
+		for (auto &r : this->rm->Resources()) {
+			int numInstances = r->getLimit();
+			if (numInstances == UNLIMITED) {
+				numInstances = this->rm->getNumVerticesRegisteredToResource(r);
+			}
+			int c=0;
+			int numRegs = 0;
+			auto it = reverseSortedResourceLifetimes[r].begin();
+			while (c < numInstances) {
+				c++;
+				numRegs += *it;
+				std::advance(it, 1);
+			}
+			this->registerBounds.second += numRegs;
+		}
 
 		// mux: use the number of connection types or the total number of FU inputs as lower bound (whatever is larger)
+		// lower bound
 		int totalNumFUInputs = 0;
 		for (auto &r : this->rm->Resources()) {
 			auto numFUInputs = this->numResourcePorts.at(r);
@@ -796,6 +833,8 @@ namespace HatScheT {
 #endif
 		this->interconnectBounds.first = std::max(totalNumFUInputs, totalNumUniqueEdgeTypesNoComm);
 		this->interconnectCommutativeBounds.first = std::max(totalNumFUInputs, totalNumUniqueEdgeTypesComm);
+		// upper bound
+		this->interconnectBounds.second = this->interconnectCommutativeBounds.second = (int)this->g->getNumberOfEdges();
 	}
 
 	std::tuple<const Resource *, const Resource *, int, int, int> &OptimalIntegerIISATBinding::getEdgeType(Edge *e, const bool &considerCommutativity) {

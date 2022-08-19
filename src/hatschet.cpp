@@ -80,6 +80,7 @@
 #ifdef USE_CADICAL
 
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
 #include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
@@ -244,6 +245,7 @@ int main(int argc, char *args[]) {
 	enum SchedulersSelection {
 		SMT,
 		SAT,
+		SATLAT,
 		SATSCC,
 		SATCOMBINED,
 		SATCOMBINEDRATII,
@@ -372,6 +374,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SMT;
 				} else if (schedulerSelectionStr == "sat") {
 					schedulerSelection = SAT;
+				} else if (schedulerSelectionStr == "satlat") {
+					schedulerSelection = SATLAT;
 				} else if (schedulerSelectionStr == "satminreg") {
 					schedulerSelection = SATMINREG;
 				} else if (schedulerSelectionStr == "satscc") {
@@ -729,6 +733,12 @@ int main(int argc, char *args[]) {
 					isModuloScheduler = true;
 					if (timeout > 0) ((HatScheT::SATScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0) ((HatScheT::SATScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATLAT:
+					scheduler = new HatScheT::SATSchedulerLatOpt(g, rm);
+					isModuloScheduler = true;
+					if (timeout > 0) ((HatScheT::SATSchedulerLatOpt *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::SATSchedulerLatOpt *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
 				case SATRATII:
 					scheduler = new HatScheT::SATRatIIScheduler(g, rm);

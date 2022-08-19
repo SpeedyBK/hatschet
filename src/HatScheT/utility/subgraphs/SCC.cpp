@@ -24,17 +24,20 @@ HatScheT::SCC::SCC(Graph &g) {
  * @return Type of the SCC
  */
 HatScheT::scctype HatScheT::SCC::getSccType(ResourceModel* rm) {
-  if (this->getNumberOfVertices() == 1) {
-    return trivial;
+	if (rm == nullptr or this->typeOfSCC != unknown) {
+		return this->typeOfSCC;
+	}
+	if (this->getNumberOfVertices() == 1) {
+    return this->typeOfSCC = trivial;
   }
   list<Vertex*> VerticesOfSCC = this->getVerticesOfSCC();
   for (auto &it : VerticesOfSCC) {
     if (rm->getResource(it)->getLimit() != UNLIMITED) {
       numOfLimitedVerticesInSCC++;
-      return complex;
+      return this->typeOfSCC = complex;
     }
   }
-  return basic;
+  return this->typeOfSCC = basic;
 }
 
 /*!

@@ -97,7 +97,7 @@ namespace HatScheT {
 		/*!
 		 * calculate and define lower bounds according to graph and resource model
 		 */
-		void defineLowerBounds();
+		void defineBounds();
 		/*!
 		 * first: lower bound on interconnect costs
 		 * second: upper bound on interconnect costs

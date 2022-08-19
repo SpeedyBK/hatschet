@@ -62,9 +62,10 @@ namespace HatScheT {
     int getNumberofLimitedVertices() const { return numOfLimitedVerticesInSCC; }
 
     /*!
+     * @param rm resource model of the graph that this SCC belongs to
      * @return The type of a SCC.
      */
-    scctype getSccType(ResourceModel* rm);
+    scctype getSccType(ResourceModel* rm = nullptr);
 
     /*!
      * @return A list of the Vertices which belong to an SCC.

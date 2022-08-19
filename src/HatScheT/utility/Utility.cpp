@@ -1454,67 +1454,68 @@ namespace HatScheT {
 	}
 
 	int Utility::getMinLatency(Graph *g, ResourceModel *rm,
-                               const map<Vertex *, int> &tMin,
-                               const map<Vertex *, int> &tMax,
-                               const int &II, const std::list<std::string> &sw,
-                               const unsigned int &timeout,
-                               const int &maxScheduleLength,
-                               const int8_t &threads,
-                               bool quiet) {
+														 const map<Vertex *, int> &tMin,
+														 const map<Vertex *, int> &tMax,
+														 const int &II, const std::list<std::string> &sw,
+														 const unsigned int &timeout,
+														 const int &maxScheduleLength,
+														 const int8_t &threads,
+														 bool quiet) {
 #ifdef USE_SCALP
 		ScaLP::Solver s{sw};
 		if (threads > 0) {
-            s.threads = (uint8_t) threads;
-        }
-		std::map<Vertex*, ScaLP::Variable> y;
-		std::map<std::pair<Vertex*, int>, ScaLP::Variable> b;
-		std::map<Vertex*, ScaLP::Variable> t;
+			s.threads = (uint8_t) threads;
+		}
+		std::map<Vertex *, ScaLP::Variable> y;
+		std::map<std::pair<Vertex *, int>, ScaLP::Variable> b;
+		std::map<Vertex *, ScaLP::Variable> t;
 		int latestEndTime = -1;
+		int offset = 0;
 		auto tau = ScaLP::newIntegerVariable("tau", 0, ScaLP::INF());
 		for (auto &v : g->Vertices()) {
 			// check if tMin/tMax are set
 			if (tMin.find(v) == tMin.end() or tMax.find(v) == tMax.end()) {
-				throw Exception("Utility::getMinLatency: tMin/tMax missing for vertex '"+v->getName()+"'");
+				throw Exception("Utility::getMinLatency: tMin/tMax missing for vertex '" + v->getName() + "'");
 			}
 			auto r = rm->getResource(v);
 			if (r->isUnlimited()) {
-				auto &tVar = t[v] = ScaLP::newIntegerVariable("t_"+v->getName(), 0, ScaLP::INF());
+				auto &tVar = t[v] = ScaLP::newIntegerVariable("t_" + v->getName(), 0, ScaLP::INF());
 				s.addConstraint(tVar - tau <= tMax.at(v));
 				s.addConstraint(tVar >= tMin.at(v));
-			}
-			else {
-				auto &yVar = y[v] = ScaLP::newIntegerVariable("y_"+v->getName(), 0, ScaLP::INF());
+			} else {
+				auto &yVar = y[v] = ScaLP::newIntegerVariable("y_" + v->getName(), 0, ScaLP::INF());
 				ScaLP::Term bSum;
 				ScaLP::Term bSumWeighted;
-				for (int m=0; m<II; m++) {
-					auto &bVar = b[{v, m}] = ScaLP::newBinaryVariable("b_"+v->getName()+"_"+std::to_string(m));
+				for (int m = 0; m < II; m++) {
+					auto &bVar = b[{v, m}] = ScaLP::newBinaryVariable("b_" + v->getName() + "_" + std::to_string(m));
 					bSum += bVar;
 					bSumWeighted += (m * bVar);
 				}
 				s.addConstraint(bSum == 1);
-				s.addConstraint(bSumWeighted + II*yVar - tau <= tMax.at(v));
-				s.addConstraint(bSumWeighted + II*yVar >= tMin.at(v));
+				s.addConstraint(bSumWeighted + II * yVar - tau <= tMax.at(v));
+				s.addConstraint(bSumWeighted + II * yVar >= tMin.at(v));
 			}
 			auto tMaxV = tMax.at(v) + r->getLatency();
 			if (maxScheduleLength != -1 and (latestEndTime == -1 or latestEndTime < tMaxV)) {
 				latestEndTime = tMaxV;
 			}
+			if (offset < tMaxV) offset = tMaxV;
 		}
 		if (!quiet) {
-            std::cout << "max schedule length = " << maxScheduleLength << std::endl;
-            std::cout << "latest end time = " << latestEndTime << std::endl;
-            std::cout << "tau max = " << maxScheduleLength - latestEndTime << std::endl;
-        }
+			std::cout << "max schedule length = " << maxScheduleLength << std::endl;
+			std::cout << "latest end time = " << latestEndTime << std::endl;
+			std::cout << "tau max = " << maxScheduleLength - latestEndTime << std::endl;
+		}
 		if (maxScheduleLength != -1) {
 			s.addConstraint(tau <= maxScheduleLength - latestEndTime);
 		}
 		for (auto &r : rm->Resources()) {
 			if (r->isUnlimited()) continue;
 			auto vertices = rm->getVerticesOfResource(r);
-			for (int m=0; m<II; m++) {
+			for (int m = 0; m < II; m++) {
 				ScaLP::Term bSum;
 				for (auto &vc : vertices) {
-					auto *v = const_cast<Vertex*>(vc);
+					auto *v = const_cast<Vertex *>(vc);
 					bSum += b[{v, m}];
 				}
 				s.addConstraint(bSum <= r->getLimit());
@@ -1523,12 +1524,14 @@ namespace HatScheT {
 		s.setObjective(ScaLP::minimize(tau));
 		s.timeout = timeout;
 		auto stat = s.solve();
-		if (stat == ScaLP::status::INFEASIBLE or stat == ScaLP::status::TIMEOUT_INFEASIBLE or stat == ScaLP::status::INVALID or stat == ScaLP::status::ERROR or stat == ScaLP::status::INFEASIBLE_OR_UNBOUND or stat == ScaLP::status::UNKNOWN) {
+		if (stat == ScaLP::status::INFEASIBLE or stat == ScaLP::status::TIMEOUT_INFEASIBLE or
+				stat == ScaLP::status::INVALID or stat == ScaLP::status::ERROR or
+				stat == ScaLP::status::INFEASIBLE_OR_UNBOUND or stat == ScaLP::status::UNKNOWN) {
 			std::cout << "ScaLP failed to find latency estimation in " << timeout << " sec" << std::endl;
 			std::cout << "ScaLP status: " << ScaLP::showStatus(stat) << std::endl;
 			return -1;
 		}
-		return (int)std::round(s.getResult().values.at(tau));
+		return offset + (int) std::round(s.getResult().values.at(tau));
 #else
 		throw Exception("Utility::getMinLatency: need ScaLP for minLatency estimation");
 #endif
@@ -1564,7 +1567,7 @@ namespace HatScheT {
           case latencyBounds::maxLatency:
               // Just return maxLatency... looks obvious...
               le.minLat = 0;
-              le.maxLAT = maxLatency;
+              le.maxLat = maxLatency;
               le.alapStartTimes = aslap.second;
               le.asapStartTimes = aslap.first;
               return le;
@@ -1602,7 +1605,7 @@ namespace HatScheT {
                   minLatency += increment;
               }
 			  le.minLat = minLatency;
-			  le.maxLAT = 0;
+			  le.maxLat = 0;
 			  le.alapStartTimes = aslap.second;
 			  le.asapStartTimes = aslap.first;
 			  return le;
@@ -1641,7 +1644,7 @@ namespace HatScheT {
                   minLatency += increment;
               }
 			  le.minLat = minLatency;
-			  le.maxLAT = maxLatency;
+			  le.maxLat = maxLatency;
 			  le.alapStartTimes = aslap.second;
 			  le.asapStartTimes = aslap.first;
 			  return le;
