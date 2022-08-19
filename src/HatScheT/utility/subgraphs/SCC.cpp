@@ -24,7 +24,9 @@ HatScheT::SCC::SCC(Graph &g) {
  * @return Type of the SCC
  */
 HatScheT::scctype HatScheT::SCC::getSccType(ResourceModel* rm) {
-	if (this->typeOfSCC != unknown) return this->typeOfSCC;
+	if (rm == nullptr or this->typeOfSCC != unknown) {
+		return this->typeOfSCC;
+	}
 	if (this->getNumberOfVertices() == 1) {
     return this->typeOfSCC = trivial;
   }
