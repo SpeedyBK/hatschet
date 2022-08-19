@@ -3951,7 +3951,7 @@ namespace HatScheT {
       int length = Utility::getSDCScheduleLength(tMaxUnordered, helperMap, &rm);
 
       auto start_t = std::chrono::high_resolution_clock::now();
-      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1) + length;
+      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1);
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
@@ -3972,7 +3972,7 @@ namespace HatScheT {
       cout << "Min Latency: " << latency.minLat << endl;
       cout << "Done in " << t << " seconds" << endl;
 
-      return latency.minLat == ilpMinLatency and latency.minLat < latency.maxLat;
+      return latency.minLat == ilpMinLatency and latency.minLat <= latency.maxLat;
 #else
       cout << "Not using ScaLP, skipping Test..."
       return true;
