@@ -16,7 +16,7 @@ namespace HatScheT {
 
 	SATSchedulerLatOpt::SATSchedulerLatOpt(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
 		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
-			los(LatencyOptimizationStrategy::LINEAR), linearJumpLength(-1), latencyLowerBound(-1),
+			los(LatencyOptimizationStrategy::LINEAR_JUMP_LOG), linearJumpLength(-1), latencyLowerBound(-1),
 			latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
 		this->II = -1;
 		this->timeouts = 0;
@@ -680,7 +680,7 @@ namespace HatScheT {
 				// once we have found a solution (i.e., a "good" upper bound on the latency)
 				if (this->candidateLatency < 0) {
 					// first attempt: try minimum latency
-					this->candidateLatency = this->latencyLowerBound;
+					this->candidateLatency = this->latencyLowerBound + this->linearJumpLength;
 					return true;
 				}
 				else if (this->scheduleFound) {
@@ -968,11 +968,11 @@ namespace HatScheT {
 		}
 		// jump length for latency minimization strategy
 		if (this->linearJumpLength <= 0) {
-			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency)/2.0); // division by 2 because in practice it turned out to be a good heuristic...
+			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency));
 		}
 		// handle max latency constraint
-		if (this->maxLatencyConstraint < 0 or this->maxLatency < this->maxLatencyConstraint) {
-			this->maxLatencyConstraint = this->maxLatency;
+		if (this->maxLatencyConstraint >= 0 and this->maxLatency > this->maxLatencyConstraint) {
+			this->maxLatency = this->maxLatencyConstraint;
 		}
 		if (!this->quiet) {
 			std::cout << "SATSchedulerLatOpt: latency limits: " << this->minLatency << " <= L <= " << this->maxLatency << std::endl;

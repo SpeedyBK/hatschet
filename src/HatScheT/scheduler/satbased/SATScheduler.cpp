@@ -256,8 +256,8 @@ namespace HatScheT {
 			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency)/2.0); // division by 2 because in practice it turned out to be a good heuristic...
 		}
 		// handle max latency constraint
-		if (this->maxLatencyConstraint < 0 or this->maxLatency < this->maxLatencyConstraint) {
-			this->maxLatencyConstraint = this->maxLatency;
+		if (this->maxLatencyConstraint >= 0 and this->maxLatency > this->maxLatencyConstraint) {
+			this->maxLatency = this->maxLatencyConstraint;
 		}
 		// II bounds
 		if(this->maxRuns > 0) {

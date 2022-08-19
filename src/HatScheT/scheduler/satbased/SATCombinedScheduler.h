@@ -23,12 +23,14 @@ namespace HatScheT {
 		double getSolvingTime() const { return this->solvingTime; }
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
+		void setUseOptLatScheduler(bool newUseOptLatScheduler);
 	private:
 		void initScheduler();
 		unsigned int solverTimeout;
 		bool optimalResult;
 		int candidateII;
 		double solvingTime;
+		bool useOptLatScheduler;
 	};
 }
 #endif //USE_CADICAL

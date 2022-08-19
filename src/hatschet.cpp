@@ -248,6 +248,7 @@ int main(int argc, char *args[]) {
 		SATLAT,
 		SATSCC,
 		SATCOMBINED,
+		SATCOMBINEDLAT,
 		SATCOMBINEDRATII,
 		SATMINREG,
 		SATRATII,
@@ -382,6 +383,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SATSCC;
 				} else if (schedulerSelectionStr == "satcombined") {
 					schedulerSelection = SATCOMBINED;
+				} else if (schedulerSelectionStr == "satcombinedlat") {
+					schedulerSelection = SATCOMBINEDLAT;
 				} else if (schedulerSelectionStr == "satcombinedratii") {
 					schedulerSelection = SATCOMBINEDRATII;
 				} else if (schedulerSelectionStr == "satratii") {
@@ -546,6 +549,8 @@ int main(int argc, char *args[]) {
 				break;
 			case SAT:
 				cout << "SAT";
+			case SATLAT:
+				cout << "SATLAT";
 				break;
 			case SATMINREG:
 				cout << "SATMINREG";
@@ -555,6 +560,8 @@ int main(int argc, char *args[]) {
 				break;
 			case SATCOMBINED:
 				cout << "SATCOMBINED";
+			case SATCOMBINEDLAT:
+				cout << "SATCOMBINEDLAT";
 				break;
 			case SATCOMBINEDRATII:
 				cout << "SATCOMBINEDRATII";
@@ -749,6 +756,14 @@ int main(int argc, char *args[]) {
 				case SATCOMBINED:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
+					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0)
+						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATCOMBINEDLAT:
+					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
+					isModuloScheduler = true;
+					((HatScheT::SATCombinedScheduler *) scheduler)->setUseOptLatScheduler(true);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);

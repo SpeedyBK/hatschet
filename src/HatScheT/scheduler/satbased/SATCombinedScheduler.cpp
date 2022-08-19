@@ -6,11 +6,13 @@
 #include <cmath>
 #ifdef USE_CADICAL
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
+#include <memory>
 namespace HatScheT {
 
 	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300)
+		: SchedulerBase(g,resourceModel), solverTimeout(300), useOptLatScheduler(false)
 	{
 		this->II = -1;
 		this->timeouts = 0;
@@ -86,21 +88,29 @@ namespace HatScheT {
 			}
 			auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
 			// refine latency with normal scheduler
-			SATScheduler s2(this->g, this->resourceModel, this->candidateII);
-			s2.setSolverTimeout(satTimeout);
-			s2.setQuiet(this->quiet);
+			std::unique_ptr<SchedulerBase> s2;
+			if (this->useOptLatScheduler) {
+				s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerLatOpt(this->g, this->resourceModel, this->candidateII));
+				dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setSolverTimeout(satTimeout);
+				dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setQuiet(this->quiet);
+			}
+			else {
+				s2 = std::unique_ptr<SchedulerBase>(new SATScheduler(this->g, this->resourceModel, this->candidateII));
+				dynamic_cast<SATScheduler*>(s2.get())->setSolverTimeout(satTimeout);
+				dynamic_cast<SATScheduler*>(s2.get())->setQuiet(this->quiet);
+			}
 			if (this->maxLatencyConstraint >= 0) {
 				lat = min(this->maxLatencyConstraint, lat);
 			}
-			s2.setMaxLatencyConstraint(lat);
-			s2.schedule();
-			if (s2.getScheduleFound()) {
+			s2->setMaxLatencyConstraint(lat);
+			s2->schedule();
+			if (s2->getScheduleFound()) {
 				// ayy we got a schedule :)
-				this->startTimes = s2.getSchedule();
+				this->startTimes = s2->getSchedule();
 				// check if it's latency-optimal
-				this->secondObjectiveOptimal = s2.getObjectivesOptimal().second;
+				this->secondObjectiveOptimal = dynamic_cast<ModuloSchedulerBase*>(s2.get())->getObjectivesOptimal().second;
 				if (!this->quiet) {
-					std::cout << "SATCombinedScheduler: SAT scheduler refined schedule length to " << s2.getScheduleLength() << std::endl;
+					std::cout << "SATCombinedScheduler: SAT scheduler refined schedule length to " << s2->getScheduleLength() << std::endl;
 				}
 			}
 			break;
@@ -115,6 +125,10 @@ namespace HatScheT {
 		// let's be optimistic :)
 		this->firstObjectiveOptimal = true;
 		this->secondObjectiveOptimal = true;
+	}
+
+	void SATCombinedScheduler::setUseOptLatScheduler(bool newUseOptLatScheduler) {
+		this->useOptLatScheduler = newUseOptLatScheduler;
 	}
 }
 #endif //USE_CADICAL
