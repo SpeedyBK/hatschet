@@ -1943,8 +1943,9 @@ namespace HatScheT {
 		  maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
 	  }
 
-      int maxLatency = maximum + length;
-      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + length << endl; }
+      auto helper = (int) (ceil((double) maximum / (double) II) * II);
+      int maxLatency = helper + length;
+      if ( !quiet ) { cout << "Max Latency Suggestion: " << helper << " + " << length << " = " << helper + length << endl; }
 
       return maxLatency;
   }

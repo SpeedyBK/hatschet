@@ -38,19 +38,19 @@ namespace HatScheT {
           minLAT = r.minLat;
           cout << "II: " << tempII << " minLat: " <<  minLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < minLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeILP = 0;
       for (auto &r : ilpMinLatResults){
           totalSolvingTimeILP += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
-      cout << "Calculate minLatency with Custom Algo: " << endl;
+      cout << endl << "Calculate minLatency with Custom Algo: " << endl;
 
       tempII = minII;
       minLAT = 0;
@@ -61,19 +61,19 @@ namespace HatScheT {
           minLAT = r.minLat;
           cout << "II: " << tempII << " minLat: " <<  minLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < minLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeCustom = 0;
       for (auto &r : customMinLatResults){
           totalSolvingTimeCustom += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
-      cout << "Calculate maxLatency with Custom Algo: " << endl;
+      cout << endl << "Calculate maxLatency with Custom Algo: " << endl;
 
       tempII = minII;
       int maxLAT = 0;
@@ -84,18 +84,19 @@ namespace HatScheT {
           maxLAT = r.maxLat;
           cout << "II: " << tempII << " maxLat: " <<  maxLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < maxLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeMaxCustom = 0;
       for (auto &r : customMaxLatResults){
           totalSolvingTimeMaxCustom += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
+      cout << endl << "Calculate minLatency with SDC: " << endl;
       tempII = minII;
       minLAT = 0;
       deque<result> sdcMinLatResults;
@@ -110,13 +111,14 @@ namespace HatScheT {
       double totalSolvingTimesdc = 0;
       for (auto &r : sdcMinLatResults){
           totalSolvingTimesdc += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
+      cout << endl << "Calculate minLatency with ASAP: " << endl;
       tempII = minII;
       minLAT = 0;
       deque<result> asapMinLatResults;
@@ -126,18 +128,19 @@ namespace HatScheT {
           minLAT = r.minLat;
           cout << "II: " << tempII << " minLat: " <<  minLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < minLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeasap = 0;
       for (auto &r : asapMinLatResults){
           totalSolvingTimeasap += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
+      cout << endl << "Calculate maxLatency with Opperman: " << endl;
       tempII = minII;
       maxLAT = 0;
       deque<result> oppermannMaxLatResults;
@@ -147,18 +150,19 @@ namespace HatScheT {
           maxLAT = r.maxLat;
           cout << "II: " << tempII << " maxLat: " <<  maxLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < minLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeOppermann = 0;
       for (auto &r : oppermannMaxLatResults){
           totalSolvingTimeOppermann += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
+      cout << endl << "Calculate maxLatency with Eichenberger: " << endl;
       tempII = minII;
       maxLAT = 0;
       deque<result> eichenbergerMaxLatResults;
@@ -168,18 +172,19 @@ namespace HatScheT {
           maxLAT = r.maxLat;
           cout << "II: " << tempII << " maxLat: " <<  maxLAT << " Solving Time: " << r.solvingTime << endl;
           tempII += 1;
-      } while ((int)tempII < minLAT);
+      } while ((int)tempII < maxII);
 
       double totalSolvingTimeEichenberger = 0;
       for (auto &r : eichenbergerMaxLatResults){
           totalSolvingTimeEichenberger += r.solvingTime;
-          cout << "Algorithm: " << r.algo << endl;
-          cout << "II: " << r.II << endl;
-          cout << "Solving Time: " << r.solvingTime << endl;
-          cout << "minLat: " << r.minLat << endl;
-          cout << "maxLat: " << r.maxLat << endl << endl;
+//          cout << "Algorithm: " << r.algo << endl;
+//          cout << "II: " << r.II << endl;
+//          cout << "Solving Time: " << r.solvingTime << endl;
+//          cout << "minLat: " << r.minLat << endl;
+//          cout << "maxLat: " << r.maxLat << endl << endl;
       }
 
+      cout << endl;
       cout << "Total Solving Time minLAT ILP: " << totalSolvingTimeILP << endl;
       cout << "Total Solving Time minLAT Custom: " << totalSolvingTimeCustom << endl;
       cout << "Total Solving Time minLAT SDC: " << totalSolvingTimesdc << endl;
@@ -226,7 +231,7 @@ namespace HatScheT {
           helperMap[v.first] = v.first;
           tMaxUnordered[v.first] = v.second;
       }
-      r.minLat = minLatILP + Utility::getSDCScheduleLength(tMaxUnordered, helperMap, &resourceModel);
+      r.minLat = minLatILP;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
