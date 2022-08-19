@@ -549,8 +549,8 @@ namespace HatScheT {
     struct LatencyEstimation{
       int minLat = -1;
       int maxLAT = -1;
-      map<Vertex*, int>* asapStartTimes;
-      map<Vertex*, int>* alapStartTimes;
+      map<Vertex*, int> asapStartTimes;
+      map<Vertex*, int> alapStartTimes;
     };
     /*!
      * Wrapperfunction for latency estimation. Manages calls for calcMaxLatencyEstimation(), getSDCAsapAndAlapTimes(),

@@ -48,6 +48,15 @@ namespace HatScheT {
     SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel);
 
     /*!
+     * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
+     * backend.
+     * @param g graph
+     * @param rm resource model
+     * @param II given II
+     */
+    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II);
+
+    /*!
      * \brief schedule main method that runs the algorithm and determines a schedule
      */
     void schedule() override;

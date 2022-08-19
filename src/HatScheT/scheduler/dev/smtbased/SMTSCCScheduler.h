@@ -9,6 +9,8 @@
 #ifdef USE_Z3
 
 #include <iostream>
+#include <memory>
+#include <deque>
 
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
@@ -23,13 +25,23 @@ namespace HatScheT {
 
     SMTSCCScheduler(Graph &g, ResourceModel &resourceModel);
 
+    ~SMTSCCScheduler() override;
+
     void schedule() override;
 
   private:
 
-    struct cmp {
-      bool operator() (const SCC* x, const SCC* y) const {
-          return *x < *y;
+    map<SCC*, int> inversePriority;
+
+    struct priocmp {
+      bool operator() (const pair<SCC*, int> x, const pair<SCC*, int> y) const {
+          if (x.second < y.second){
+              return true;
+          }
+          if (x.second == y.second){
+              return x.first < y.first;
+          }
+          return false;
       }
     };
 
@@ -39,14 +51,23 @@ namespace HatScheT {
 
     void resetResourceModel();
 
+    void combineRelScheds();
+
+    map<SCC*, int> computeTopologicalSCCOrder(vector<SCC*>&tempsccs);
+    map<Vertex*, SCC*> vertexToSCC;
+
+    map<Vertex*, int> computeBasicSchedules(SCC* sc);
+    map<Vertex*, int> sdcSchedule(std::shared_ptr<Graph>&gr, std::shared_ptr<ResourceModel>&rm, map<Vertex*, Vertex*>&sccVertexToVertex);
+    list<pair<SCC*, map<Vertex*, int>>> basicRelSchedules;
+
+    map<Vertex*, int> computeComplexSchedule(deque<SCC*> &complexSCCs);
+    map<Vertex*, int> smtSchedule(std::shared_ptr<Graph>&gr, std::shared_ptr<ResourceModel>&rm, map<Vertex*, Vertex*>&sccVertexToVertex);
+    map<Vertex*, int> complexRelSchedule;
+
     map<Resource*, int>resourceLimits;
 
-    set<SCC*, cmp> trivialSCCs;
-
-    set<SCC*, cmp> basicSCCs;
-
-    set<SCC*, cmp> complexSCCs;
-
+    set<pair<SCC*,int>, priocmp> topoSortedSccs;
+    set<Edge*> connectingEdges;
   };
 
 }

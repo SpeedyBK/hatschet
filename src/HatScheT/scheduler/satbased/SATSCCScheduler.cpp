@@ -157,7 +157,6 @@ namespace HatScheT {
 			if (!r->isUnlimited()) this->MRT.at(r).at(t % (int)this->II)++;
 		}
 	}
-
 	void SATSCCScheduler::computeFinalSchedule() {
 		if (!this->quiet) {
 			std::cout << "SATSCCScheduler: start computing final schedule" << std::endl;

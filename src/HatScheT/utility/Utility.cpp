@@ -1565,8 +1565,8 @@ namespace HatScheT {
               // Just return maxLatency... looks obvious...
               le.minLat = 0;
               le.maxLAT = maxLatency;
-              le.alapStartTimes = &aslap.second;
-              le.asapStartTimes = &aslap.first;
+              le.alapStartTimes = aslap.second;
+              le.asapStartTimes = aslap.first;
               return le;
 
           case latencyBounds::minLatency:
@@ -1603,8 +1603,8 @@ namespace HatScheT {
               }
 			  le.minLat = minLatency;
 			  le.maxLAT = 0;
-			  le.alapStartTimes = &aslap.second;
-			  le.asapStartTimes = &aslap.first;
+			  le.alapStartTimes = aslap.second;
+			  le.asapStartTimes = aslap.first;
 			  return le;
 
           case latencyBounds::both:
@@ -1642,8 +1642,8 @@ namespace HatScheT {
               }
 			  le.minLat = minLatency;
 			  le.maxLAT = maxLatency;
-			  le.alapStartTimes = &aslap.second;
-			  le.asapStartTimes = &aslap.first;
+			  le.alapStartTimes = aslap.second;
+			  le.asapStartTimes = aslap.first;
 			  return le;
       }
       throw(HatScheT::Exception("Utility::getLatencyEstimation(): Reached end of the switch-statement."));

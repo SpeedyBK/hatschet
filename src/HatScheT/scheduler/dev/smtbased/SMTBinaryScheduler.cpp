@@ -64,6 +64,46 @@ namespace HatScheT {
 
   }
 
+  SMTBinaryScheduler::SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II) : SchedulerBase(g, resourceModel) {
+      // reset previous solutions
+      this->timeouts = 0;
+      startTimes.clear();
+      scheduleFound = false;
+      minII = II;
+      maxII = (int)II;
+
+      for (int i = (int)minII; i <= (int)maxII+1; i++){
+          this->iiSpace.push_back(i);
+      }
+      this->iiSpaceIndex = 0;
+
+      this->sPref = schedulePreference::MOD_ASAP;
+      this->latSM = latSearchMethod::LINEAR;
+      this->quiet = true;
+      this->latencySpaceIndex = 0;
+      this->candidateLatency = -1;
+      this->minLatency = 0;
+      this->maxLatency = -1;
+      this->maxRuns = INT32_MAX;
+      this->leftIndex = 0;
+      this->rightIndex = 0;
+
+      this->binarySearchInit = true;
+      this->linearSearchInit = true;
+      this->iiSearchInit = true;
+
+      this->modAsapLength = 0;
+      this->modAlapLength = 0;
+      this->increment = 0;
+
+      this->designName = "";
+      this->timeLimit = -1;
+      this->timeBudget = INT32_MAX;
+      firstObjectiveOptimal = true;
+      secondObjectiveOptimal = true;
+
+  }
+
   /*!--------------------------*
    * Main scheduling function: *
    * --------------------------*/
@@ -329,7 +369,7 @@ namespace HatScheT {
       while (true) {
           auto feasilbe = calcMinLatencyEstimation(aslap, currentII);
           if (feasilbe or (minLatency >= maxLatency)){
-              cout << "Min Latency: " << minLatency << endl;
+              if (!quiet) { cout << "Min Latency: " << minLatency << endl; }
               break;
           }
           for (auto &it : aslap.second){
@@ -418,8 +458,10 @@ namespace HatScheT {
           maximum = *std::max_element(criticalRessources.begin(), criticalRessources.end());
       }
 
-      maxLatency = maximum + modAsapLength;
-      if ( !quiet ) { cout << "Max Latency Suggestion: " << maximum + modAsapLength << endl; }
+      maxLatency = currentII * (int)ceil(float(maximum)/float(currentII)) + modAsapLength;
+      if ( !quiet ) { cout << "Max Latency Suggestion: " << currentII << " * "
+                           << (int)ceil(float(maximum)/float(currentII)) << " + " << modAsapLength << " = "
+                           << currentII * (int)ceil(float(maximum)/float(currentII)) + modAsapLength << endl; }
   }
 
   bool SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){

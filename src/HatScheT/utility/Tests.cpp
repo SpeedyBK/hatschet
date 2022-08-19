@@ -3737,13 +3737,13 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_bw/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_bw/iir_bw.graphml";
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("iir_bw.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("iir_sos4.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
@@ -3794,7 +3794,7 @@ namespace HatScheT {
       sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
       sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
-      sss.setSolverTimeout(10);
+      sss.setSolverTimeout(600);
       //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();
@@ -3812,21 +3812,6 @@ namespace HatScheT {
       for (auto &it : sched){
           cout << it.first->getName() << ": " << it.second << endl;
       }
-
-      EichenbergerDavidson97Scheduler ed(g, rm, {"Gurobi"});
-      ed.schedule();
-      auto vali = verifyModuloSchedule(g, rm, sched, (int)ed.getII());
-      if (!vali) {
-          std::cout << "Tests::ED97ModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
-      } else {
-          std::cout << "Tests::ED97ModScheduler: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << (int)ed.getII() << " Latency: " << ed.getScheduleLength() << std::endl;
-      }
-      for (auto &it : ed.getSchedule()){
-          cout << it.first->getName() << ": " << it.second << endl;
-      }
-
-      cout << endl;
 
       return valid;
 #else
@@ -3987,11 +3972,15 @@ namespace HatScheT {
 	  ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
+
+//      for (auto &r : rm.Resources()){
+//          r->setLimit(UNLIMITED);
+//      }
 
 	  SMTSCCScheduler smtScc(g, rm);
 	  smtScc.schedule();
