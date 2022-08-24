@@ -62,5 +62,9 @@ protected:
   // decision variables
   std::vector<std::map<const Vertex*, ScaLP::Variable>> a;
   std::map<const Vertex*, ScaLP::Variable> k, row, time;
+
+	int maxLatency = -1;
+	int minLatency = -1;
+  bool useLatencyEstimation = true;
 };
 }

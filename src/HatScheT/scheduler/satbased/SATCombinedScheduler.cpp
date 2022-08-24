@@ -88,6 +88,7 @@ namespace HatScheT {
 			}
 			auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
 			// refine latency with normal scheduler
+			lat--; // do "-1" do avoid checking a latency twice
 			std::unique_ptr<SchedulerBase> s2;
 			if (this->useOptLatScheduler) {
 				s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerLatOpt(this->g, this->resourceModel, this->candidateII));
@@ -104,11 +105,11 @@ namespace HatScheT {
 			}
 			s2->setMaxLatencyConstraint(lat);
 			s2->schedule();
+			// check if the schedule is latency-optimal or if it is proven that there is no better solution than the SCC one
+			this->secondObjectiveOptimal = dynamic_cast<ModuloSchedulerBase*>(s2.get())->getObjectivesOptimal().second;
 			if (s2->getScheduleFound()) {
 				// ayy we got a schedule :)
 				this->startTimes = s2->getSchedule();
-				// check if it's latency-optimal
-				this->secondObjectiveOptimal = dynamic_cast<ModuloSchedulerBase*>(s2.get())->getObjectivesOptimal().second;
 				if (!this->quiet) {
 					std::cout << "SATCombinedScheduler: SAT scheduler refined schedule length to " << s2->getScheduleLength() << std::endl;
 				}

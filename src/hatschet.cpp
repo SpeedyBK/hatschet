@@ -211,6 +211,7 @@ void print_short_help() {
 	std::cout
 		<< "--uniform=[0/1]           Uniform(1) / Non-Uniform (0) schedule for samples in rational II modulo scheduling"
 		<< std::endl;
+	std::cout << "--II=[int] specify candidate II (if supported by the scheduler)" << std::endl;
 	std::cout << std::endl;
 }
 
@@ -348,6 +349,8 @@ int main(int argc, char *args[]) {
 				if (atol(value) == 1) optBinding = true;
 			} else if (getCmdParameter(args[i], "--maxlatency=", value)) {
 				maxLatency = atol(value);
+			} else if (getCmdParameter(args[i], "--II=", value)) {
+				targetII = std::stoi(std::string(value));
 			} else if (getCmdParameter(args[i], "--html=", value)) {
 				htmlFile = value;
 			} else if (getCmdParameter(args[i], "--quiet=", value)) {
@@ -536,6 +539,7 @@ int main(int argc, char *args[]) {
 		std::cout << "threads=" << threads << std::endl;
 		std::cout << "quiet=" << quiet << std::endl;
 		std::cout << "writeLPFile=" << writeLPFile << std::endl;
+		if (targetII >= 0) std::cout << "II=" << targetII << std::endl;
 		std::cout << "scheduler=";
 		switch (schedulerSelection) {
 			case ASAP:
@@ -1006,6 +1010,14 @@ int main(int argc, char *args[]) {
 				auto iterativeSchedulerBase = dynamic_cast<HatScheT::IterativeSchedulerBase *>(scheduler);
 				if (iterativeSchedulerBase != nullptr) {
 					iterativeSchedulerBase->setMaxRuns(maxRuns);
+				}
+			}
+
+			// set target II
+			if (targetII >= 0) {
+				auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase*> (scheduler);
+				if (modSchedBase != nullptr) {
+					modSchedBase->overrideII(targetII);
 				}
 			}
 

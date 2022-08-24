@@ -16,7 +16,7 @@ namespace HatScheT {
 
 	SATSchedulerLatOpt::SATSchedulerLatOpt(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
 		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
-			los(LatencyOptimizationStrategy::LINEAR_JUMP_LOG), linearJumpLength(-1), latencyLowerBound(-1),
+			los(LatencyOptimizationStrategy::AUTO), linearJumpLength(-1), latencyLowerBound(-1),
 			latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
 		this->II = -1;
 		this->timeouts = 0;
@@ -56,6 +56,8 @@ namespace HatScheT {
 		this->initScheduler();
 		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
 			this->defineLatLimits();
+			if (this->maxLatency < this->minLatency) continue;
+			this->setLatencySearchStrategy();
 			//if (!this->quiet) {
 			auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			std::cerr << "SATSchedulerLatOpt: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime1), "%Y-%m-%d %X") << std::endl;
@@ -445,21 +447,45 @@ namespace HatScheT {
 				std::cout << "SATSchedulerLatOpt: creating schedule time constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// schedule time
+			// at least one
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
 				this->solver->add(this->scheduleTimeLiterals.at({v, tau}));
 			}
 			this->solver->add(0);
 			this->scheduleTimeConstraintClauseCounter++;
+			// forbid overlaps (i.e. enfore exactly one assignment)
+			/*
+			for (int tau1=this->earliestStartTime.at(v); tau1< this->latestStartTime.at(v); tau1++) {
+				for (int tau2=tau1+1; tau2<= this->latestStartTime.at(v); tau2++) {
+					this->solver->add(-this->scheduleTimeLiterals.at({v, tau1}));
+					this->solver->add(-this->scheduleTimeLiterals.at({v, tau2}));
+					this->solver->add(0);
+					this->scheduleTimeConstraintClauseCounter++;
+				}
+			}
+			*/
 			if (!this->quiet) {
 				std::cout << "SATSchedulerLatOpt: creating binding constraint for vertex '" << v->getName() << "'" << std::endl;
 			}
 			// binding
+			// at least one
 			if (this->vertexIsUnlimited.at(v) or this->resourceLimit.at(v) == 1) continue;
 			for (int l=0; l<this->resourceLimit.at(v); l++) {
 				this->solver->add(this->bindingLiterals.at({v, l}));
 			}
 			this->solver->add(0);
 			this->bindingConstraintClauseCounter++;
+			// forbid overlaps (i.e. enfore exactly one assignment)
+			/*
+			for (int l1=0; l1<this->resourceLimit.at(v)-1; l1++) {
+				for (int l2=l1+1; l2<this->resourceLimit.at(v); l2++) {
+					this->solver->add(-this->bindingLiterals.at({v, l1}));
+					this->solver->add(-this->bindingLiterals.at({v, l2}));
+					this->solver->add(0);
+					this->bindingConstraintClauseCounter++;
+				}
+			}
+			*/
 		}
 		this->clauseCounter = this->dependencyConstraintClauseCounter + this->resourceConstraintClauseCounter +
 													this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter + this->timeOverlapClauseCounter
@@ -606,11 +632,12 @@ namespace HatScheT {
 					if (this->candidateLatency <= this->latencyLowerBound) {
 						// and we reached the lower bound
 						// -> we found the optimum
-						return true;
+						return false;
 					}
 					else {
 						// and we did not yet reach the lower bound
 						// -> try again with the next latency...
+						this->latencyUpperBound = this->candidateLatency;
 						this->candidateLatency--;
 						return true;
 					}
@@ -732,6 +759,9 @@ namespace HatScheT {
 				}
 				auto successPair = this->latencyAttempts.insert(this->candidateLatency);
 				return successPair.second;
+			}
+			case AUTO: {
+				throw Exception("SATSchedulerLatOpt: invalid latency optimization strategy - this should never happen");
 			}
 		}
 		// something went wrong ... ABORT!
@@ -966,13 +996,14 @@ namespace HatScheT {
 				this->latestStartTimeDifferences[v] = sdcScheduleLength - result.alapStartTimes.at(v);
 			}
 		}
-		// jump length for latency minimization strategy
-		if (this->linearJumpLength <= 0) {
-			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency));
+		if (!this->quiet) {
+			std::cout << "SATSchedulerLatOpt: determined min latency = " << this->minLatency << std::endl;
+			std::cout << "SATSchedulerLatOpt: determined max latency = " << this->maxLatency << std::endl;
 		}
 		// handle max latency constraint
 		if (this->maxLatencyConstraint >= 0 and this->maxLatency > this->maxLatencyConstraint) {
 			this->maxLatency = this->maxLatencyConstraint;
+			std::cout << "SATSchedulerLatOpt: max latency overridden due to user constraint = " << this->maxLatency << std::endl;
 		}
 		if (!this->quiet) {
 			std::cout << "SATSchedulerLatOpt: latency limits: " << this->minLatency << " <= L <= " << this->maxLatency << std::endl;
@@ -988,6 +1019,36 @@ namespace HatScheT {
 				std::cout << "  " << v->getName() << " earliest: " << this->earliestStartTime.at(v) << ", latest diff: "
 									<< this->latestStartTimeDifferences.at(v) << std::endl;
 			}
+		}
+	}
+
+	void SATSchedulerLatOpt::setLatencySearchStrategy() {
+		// calc search space size
+		auto searchSpace = (double)(this->maxLatency - this->minLatency);
+		auto normedSearchSpace = (searchSpace) / ((double) minLatency);
+		// define latency optimization strategy if not set by user
+		if (this->los == LatencyOptimizationStrategy::AUTO) {
+			if (normedSearchSpace <= 0.25) {
+				// small search space
+				// -> just do a reverse linear search
+				// -> because proving feasibility is much easier than proving infeasibility
+				this->los = LatencyOptimizationStrategy::REVERSE_LINEAR;
+			} else if (normedSearchSpace <= 1.0) {
+				// medium search space
+				// -> do a linear jump search with a reverse linear search at the end
+				// -> because we only overshoot the optimum by a small margin (if any)
+				this->los = LatencyOptimizationStrategy::LINEAR_JUMP;
+			}
+			else {
+				// large search space
+				// -> do a linear jump search with a binary search at the end
+				// -> because even after obtaining a valid solution, the solution space is still fairly large
+				this->los = LatencyOptimizationStrategy::LINEAR_JUMP_LOG;
+			}
+		}
+		// define linear jump length if not manually set by user
+		if (this->linearJumpLength <= 0) {
+			this->linearJumpLength = (int)ceil(sqrt((double)searchSpace));
 		}
 	}
 }

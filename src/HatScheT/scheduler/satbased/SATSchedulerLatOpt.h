@@ -21,6 +21,7 @@ namespace HatScheT {
 	class SATSchedulerLatOpt : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
 		enum LatencyOptimizationStrategy {
+			AUTO,
 			REVERSE_LINEAR,
 			LINEAR,
 			LINEAR_JUMP,
@@ -38,6 +39,7 @@ namespace HatScheT {
 		int linearJumpLength;
 
 	private:
+		void setLatencySearchStrategy();
 		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
 		void calcMinLatency();
 		void calcMaxLatency();

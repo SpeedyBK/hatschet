@@ -392,54 +392,7 @@ namespace HatScheT {
 		 * int sccGraphMaxLat;
 		 */
 		std::map<Vertex*, std::vector<Edge*>> outgoingEdges;
-#if 1
 		int sccLat;
-		int loopCounter;
-		std::map<Vertex*, bool> visited;
-		std::list<Edge*> path;
-		std::function<void(Vertex*, Vertex*, int)> dfs = [&](Vertex* v, Vertex* start, int level) -> void {
-			if (visited.at(v)) {
-				if (v == start) {
-					// found cycle
-					if (!this->quiet) {
-						std::cout << "SATSCCScheduler: found loop!" << std::endl;
-					}
-					loopCounter++;
-					int loopDistance = 0;
-					int loopLatency = 0;
-					for (auto &e : path) {
-						if (!this->quiet) {
-							std::cout << "  edge: " << e->getVertexSrcName() << "->" << e->getVertexDstName() << " - distance " << e->getDistance() << " - delay " << e->getDelay() << std::endl;
-						}
-						loopDistance += e->getDistance();
-						loopLatency += e->getDelay();
-						loopLatency += this->resourceModel.getVertexLatency(&e->getVertexSrc());
-					}
-					auto maxLoopLength = loopDistance * (int)this->II;
-					for (auto &e : path) {
-						auto *vSrc = &e->getVertexSrc();
-						auto sccV = this->vertexToSCCVertexMap.at(vSrc);
-						this->earliestStartTimes[sccV] = 0;
-						this->latestStartTimes[sccV] = std::max(this->latestStartTimes[sccV], maxLoopLength - this->resourceModel.getVertexLatency(vSrc));
-					}
-					if (!this->quiet) {
-						std::cout << "  loop distance: " << loopDistance << std::endl;
-						std::cout << "  loop latency: " << loopLatency << std::endl;
-						std::cout << "  minII = " << loopLatency << "/" << loopDistance << " = " << (float)loopLatency / (float)loopDistance << std::endl;
-					}
-					// adjust max latency of this scc
-					if (maxLoopLength > sccLat) sccLat = maxLoopLength;
-				}
-				return;
-			}
-			visited.at(v) = true;
-			for (auto &e : outgoingEdges.at(v)) {
-				path.resize(level);
-				path.emplace_back(e);
-				dfs(&e->getVertexDst(), start, level+1);
-			}
-			visited.at(v) = false;
-		};
 
 		int maxSCCLatencyCounter = 0;
 
@@ -453,7 +406,8 @@ namespace HatScheT {
 				}
 				return maxSCCLatency;
 			}
-			// use SDC schedule without resource constraints with ScaLP
+
+			// use SDC schedule without resource constraints with ScaLP to compute max SCC latency
 			ScaLP::Solver s({"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 			std::map<Vertex*, ScaLP::Variable> t;
 			auto supersink = ScaLP::newIntegerVariable("supersink", 0.0, ScaLP::INF());
@@ -465,83 +419,8 @@ namespace HatScheT {
 			}
 			std::vector<Vertex*> sources;
 			std::vector<Vertex*> sinks;
-			// compute min latency of SCC
-			/*
-			for (auto &v : sccVertices) {
-				auto var = t.at(v);
-				auto l = this->resourceModel.getVertexLatency(v);
-				s.addConstraint(supersink - var >= l);
-			}
-			for (auto &e : sccEdges) {
-				auto vSrc = &e->getVertexSrc();
-				auto vDst = &e->getVertexDst();
-				auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
-			}
-			s.setObjective(ScaLP::minimize(supersink));
-			stat = s.solve();
-			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
-				throw Exception("SATSCCScheduler: failed to compute min schedule length for SCC");
-			}
-			results = s.getResult().values;
-			int minSCCLat = (int)std::round(results.at(supersink));
-			if (!this->quiet) {
-				std::cout << "SATSCCScheduler: min SCC latency = " << minSCCLat << std::endl;
-			}
-			// calculate min times
-			s.reset();
-			ScaLP::Term minVarSum;
-			for (auto &v : sccVertices) {
-				auto var = t.at(v);
-				minVarSum += var;
-				auto l = this->resourceModel.getVertexLatency(v);
-				s.addConstraint(var <= minSCCLat-l);
-			}
-			for (auto &e : sccEdges) {
-				auto vSrc = &e->getVertexSrc();
-				auto vDst = &e->getVertexDst();
-				auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
-			}
-			s.setObjective(ScaLP::minimize(minVarSum));
-			stat = s.solve();
-			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
-				throw Exception("SATSCCScheduler: failed to compute min times for SCC");
-			}
-			results = s.getResult().values;
-			std::map<Vertex*, int> minTimes;
-			for (auto &v : sccVertices) {
-				minTimes[v] = (int) std::round(results[t.at(v)]);
-			}
 
-			// calculate max times
-			s.reset();
-			ScaLP::Term maxVarSum;
-			for (auto &v : sccVertices) {
-				auto var = t.at(v);
-				maxVarSum += var;
-				auto l = this->resourceModel.getVertexLatency(v);
-				s.addConstraint(var <= minSCCLat-l);
-			}
-			for (auto &e : sccEdges) {
-				auto vSrc = &e->getVertexSrc();
-				auto vDst = &e->getVertexDst();
-				auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-				s.addConstraint(t.at(vDst) - t.at(vSrc) >= lSrc + e->getDelay() - (e->getDistance() * this->II));
-			}
-			s.setObjective(ScaLP::maximize(maxVarSum));
-			stat = s.solve();
-			if (stat != ScaLP::status::OPTIMAL and stat != ScaLP::status::FEASIBLE and stat != ScaLP::status::TIMEOUT_FEASIBLE) {
-				throw Exception("SATSCCScheduler: failed to compute max times for SCC");
-			}
-			results = s.getResult().values;
-			std::map<Vertex*, int> maxTimes;
-			for (auto &v : sccVertices) {
-				maxTimes[v] = (int) std::round(results[t.at(v)]);
-			}
-			*/
-
-			// from min and max times compute sources and sinks
+			// compute possible sources and sinks
 			for (auto &v : sccVertices) {
 				bool canBeSource = true;
 				bool canBeSink = true;
@@ -616,7 +495,6 @@ namespace HatScheT {
 				maxSCCLatencyCounter++;
 			}
 
-			//return 7;
 			return maxSCCLat + maxSCCLatencyCounter;
 		};
 
@@ -625,33 +503,14 @@ namespace HatScheT {
 			// get scc vertices and edges
 			auto sccVertices = scc->getVerticesOfSCC();
 			auto sccEdges = scc->getSCCEdges();
-			// clear containers
-			visited.clear();
+			// init containers
 			outgoingEdges.clear();
-			// init visited container
 			for (auto &v : sccVertices) {
-				if (!this->quiet) {
-					//std::cout << "  " << v->getName() << std::endl;
-				}
-				visited[v] = false;
 				outgoingEdges[v] = {};
 			}
-			// init outgoing edges container
-			int totalDistance = 0;
-			int dataEdgeCounter = 0;
-			for (auto &e : sccEdges) {
-				if (!e->isDataEdge()) continue; // ignore chaining edges
-				if (!this->quiet) {
-					//std::cout << "  " << e->getVertexSrcName() << " -> " << e->getVertexDstName() << std::endl;
-				}
-				dataEdgeCounter++;
-				outgoingEdges[&e->getVertexSrc()].emplace_back(e);
-				totalDistance += e->getDistance();
-			}
 			if (!this->quiet) {
-				std::cout << "SATSCCScheduler: start enumerating loops of SCC_" << scc->getId() << " with "
-									<< sccVertices.size() << " vertices and " << sccEdges.size() << " edges (" << dataEdgeCounter
-									<< " data edges)" << std::endl;
+				std::cout << "SATSCCScheduler: start calculating max latency of SCC_" << scc->getId() << " with "
+									<< sccVertices.size() << " vertices and " << sccEdges.size() << " edges" << std::endl;
 			}
 			sccLat = getMaxSCCLatency(sccVertices, sccEdges);
 			auto minMaxSCCStartTimes = this->getMinMaxSCCStartTimes(sccVertices, sccEdges, sccLat);
@@ -664,117 +523,9 @@ namespace HatScheT {
 			}
 			// set maximum latency of the whole graph if needed
 			this->sccMaxLat[scc] = sccLat;
-			if (sccLat > this->sccGraphMaxLat) this->sccGraphMaxLat = sccLat;
+			if (scc->getSccType(&this->resourceModel) == scctype::complex and sccLat > this->sccGraphMaxLat) this->sccGraphMaxLat = sccLat;
 		}
 
-#else
-		this->sccGraphMaxLat = 0;
-		for (auto &scc : this->sccs) {
-			auto sccVertices = scc->getVerticesOfSCC();
-			auto sccEdges = scc->getSCCEdges();
-			int sccLat = 0;
-			// compute outgoing data edges of each vertex
-			int dataEdgeCounter = 0;
-			for (auto &e : sccEdges) {
-				if ((!e->isDataEdge()) and (e->getDelay() > 0)) continue; // ignore chaining edges
-				outgoingEdges[&e->getVertexSrc()].emplace_back(e);
-				dataEdgeCounter++;
-			}
-			if (!this->quiet) {
-				std::cout << "starting DFS on SCC_" << scc->getId() << " with " << sccVertices.size() << " vertices and "
-				  << sccEdges.size() << " edges (" << dataEdgeCounter << " data edges)" << std::endl;
-			}
-			// perform DFS for cycle enumeration starting at an arbitrary vertex
-			// we can start at an arbitrary one because each SCC is one large cycle anyways
-			auto *vStart = sccVertices.front();
-			///////////////////////////////////
-			// start DFS beginning at vStart //
-			///////////////////////////////////
-			// container to track the queue in which the graph is searched
-			std::list<std::pair<Edge*, int>> queue;
-			for (auto &e : sccEdges) {
-				if (&e->getVertexSrc() != vStart) continue;
-				queue.emplace_front(e, 0);
-			}
-			// container to track the current path through the graph
-			std::list<Edge*> path;
-			while (!queue.empty()) {
-				// get next queue element
-				auto nextQueueIt = queue.front();
-				auto *vDst = &nextQueueIt.first->getVertexDst();
-				queue.pop_front();
-				// resize path according to queue element
-				path.resize(nextQueueIt.second);
-				// check for loop
-				bool isLoop = false;
-				std::vector<Edge*> loopPath(path.size()+1);
-				int loopPathSize = 0;
-				for (auto &e : path) {
-					if (&e->getVertexSrc() == vDst) {
-						isLoop = true;
-					}
-					if (isLoop) {
-						loopPath[loopPathSize] = e;
-						loopPathSize++;
-					}
-				}
-				// adjust path
-				path.emplace_back(nextQueueIt.first);
-				if (!this->quiet) {
-					for (auto &e : path) {
-						std::cout << "  " << e->getVertexSrcName() << " -> " << e->getVertexDstName() << std::endl;
-					}
-				}
-				// handle loop
-				if (isLoop) {
-					loopPath[loopPathSize] = nextQueueIt.first;
-					loopPathSize++;
-					loopPath.resize(loopPathSize);
-					// we got a loop here!!
-					if (!this->quiet) {
-						std::cout << "SATSCCScheduler: found loop around " << vDst->getName() << " (loop path size: " << loopPathSize << ")" << std::endl;
-					}
-					int loopDistance = 0;
-					int loopLatency = 0;
-					for (auto &e : loopPath) {
-						if (!this->quiet) {
-							std::cout << "  edge: " << e->getVertexSrcName() << "->" << e->getVertexDstName() << " - distance " << e->getDistance() << " - delay " << e->getDelay() << std::endl;
-						}
-						loopDistance += e->getDistance();
-						loopLatency += e->getDelay();
-						loopLatency += this->resourceModel.getVertexLatency(&e->getVertexSrc());
-					}
-					if (!this->quiet) {
-						std::cout << "  loop distance: " << loopDistance << std::endl;
-						std::cout << "  loop latency: " << loopLatency << std::endl;
-						std::cout << "  minII = " << loopLatency << "/" << loopDistance << " = " << (float)loopLatency / (float)loopDistance << std::endl;
-					}
-					// adjust max latency of this scc
-					if (this->II * loopDistance > sccLat) sccLat = (int)this->II * loopDistance;
-					// adjust start times
-					for (auto &e : loopPath) {
-						auto *v = &e->getVertexSrc();
-						this->earliestStartTimes[v] = 0; // todo: think about more sophisticated lower bound
-						auto lst = (int)this->II * loopDistance - e->getDelay() - this->resourceModel.getVertexLatency(v);
-						if (lst > this->latestStartTimes[v]) this->latestStartTimes[v] = lst;
-					}
-					// go to next element in queue
-					continue;
-				}
-				// seems like we did not encounter a loop (yet)
-				// -> push all outgoing edges into queue
-				//for (auto &e : sccEdges) {
-				for (auto &e : outgoingEdges[vDst]) {
-					//if (&e->getVertexSrc() != vDst) continue;
-					queue.emplace_front(e, path.size());
-				}
-			}
-			// set maximum latency of whole graph if needed
-			this->sccMaxLat[scc] = sccLat;
-			if (sccLat > this->sccGraphMaxLat) this->sccGraphMaxLat = sccLat;
-		}
-
-#endif
 		// adjust max latency if the user also requested a maximum latency
 		if (this->maxLatencyConstraint >= 0) {
 			this->sccGraphMaxLat = min(this->sccGraphMaxLat, this->maxLatencyConstraint);

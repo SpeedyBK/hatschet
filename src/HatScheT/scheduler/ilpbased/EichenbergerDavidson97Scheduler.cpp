@@ -110,6 +110,12 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
 {
   solver->reset();
 
+  if (this->useLatencyEstimation) {
+  	auto latHelper = Utility::getLatencyEstimation(&this->g, &this->resourceModel, candII, Utility::latencyBounds::both, this->quiet);
+  	this->minLatency = latHelper.minLat;
+  	this->maxLatency = latHelper.maxLat;
+  }
+
   constructDecisionVariables(candII);
   setObjective();
   constructConstraints(candII);
@@ -158,10 +164,14 @@ void EichenbergerDavidson97Scheduler::constructDecisionVariables(int candII)
 
     solver->addConstraint(k[i] >= 0);
     solver->addConstraint(time[i] >= 0);
-    if (maxLatencyConstraint >= 0) {
-      solver->addConstraint(k[i]    <= maxLatencyConstraint / candII);
-      solver->addConstraint(time[i] <= maxLatencyConstraint);
-    }
+		if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
+			auto tighterConstraint = maxLatency;
+			if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
+			if (maxLatencyConstraint < 0) tighterConstraint = maxLatency;
+			if (maxLatency >= 0 and maxLatencyConstraint >= 0) tighterConstraint = std::min(maxLatency, maxLatencyConstraint);
+			//solver->addConstraint(k[i]    <= tighterConstraint / candII);
+			//solver->addConstraint(time[i] <= tighterConstraint - resourceModel.getVertexLatency(i));
+		}
   }
 }
 
@@ -170,8 +180,22 @@ void EichenbergerDavidson97Scheduler::setObjective()
   // currently only one objective: minimise the schedule length
   ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
   solver->addConstraint(ss >= 0);
-  if (maxLatencyConstraint >= 0)
-    solver->addConstraint(ss <= maxLatencyConstraint);
+  if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
+  	auto tighterConstraint = maxLatency;
+  	if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
+  	if (maxLatencyConstraint < 0) tighterConstraint = maxLatency;
+  	if (maxLatency >= 0 and maxLatencyConstraint >= 0) tighterConstraint = std::min(maxLatency, maxLatencyConstraint);
+  	solver->addConstraint(ss <= tighterConstraint);
+  	if (!this->quiet) {
+  		std::cout << "ED97: added constraint Latency <= " << tighterConstraint << std::endl;
+  	}
+  }
+  if (minLatency >= 0){
+  	solver->addConstraint(ss >= minLatency);
+		if (!this->quiet) {
+			std::cout << "ED97: added constraint Latency >= " << minLatency << std::endl;
+		}
+  }
 
   for (auto *i : g.Vertices()) {
     // nfiege: this is not enough!
