@@ -260,7 +260,8 @@ src/HatScheT/utility/SDCSolver.h
 src/HatScheT/utility/FibonacciHeap.h
 src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
 src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
-src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h)
+src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTScheduleOptimizer.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -323,7 +324,8 @@ IF(Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
             src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp)
+            src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTScheduleOptimizer.cpp)
 ENDIF(Z3_H AND Z3_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})
@@ -418,6 +420,7 @@ ENDIF(CADICAL_H AND CADICAL_LIB)
 IF(Z3_H AND Z3_LIB)
     add_test("Z3" "./hatschet" "--test=Z3")
     add_test("SMTScheduler" "./hatschet" "--test=SMTBINARY")
+    add_test("SMTSCCScheduler" "./hatschet" "--test=SMTSCC")
 ENDIF(Z3_H AND Z3_LIB)
 
 ####################

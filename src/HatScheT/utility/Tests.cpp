@@ -71,6 +71,7 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTScheduleOptimizer.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3737,13 +3738,13 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
       string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      /*HatScheT::DotWriter dw("iir_sos4.dot", &g, &rm);
+      /*HatScheT::DotWriter dw("aes2.dot", &g, &rm);
       dw.setDisplayNames(true);
       dw.write();*/
 
@@ -3791,7 +3792,7 @@ namespace HatScheT {
       g.createEdge(SUM_1, OUT, 0);*/
 
       SMTBinaryScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
       sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
       sss.setSolverTimeout(600);
@@ -3972,22 +3973,64 @@ namespace HatScheT {
 	  ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-//      for (auto &r : rm.Resources()){
-//          r->setLimit(UNLIMITED);
-//      }
-
 	  SMTSCCScheduler smtScc(g, rm);
+      smtScc.setQuiet(false);
+      smtScc.setSolverTimeout(600);
+      auto start_t = std::chrono::high_resolution_clock::now();
 	  smtScc.schedule();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+      cout << "Solving Time: " << t << endl;
+	  auto II = smtScc.getII();
+	  auto sched = smtScc.getSchedule();
 
-      return false;
+      auto valid = verifyModuloSchedule(g, rm, sched, (int)II);
+      if (!valid) {
+          std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtScc.getII() << std::endl;
+      } else {
+          std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << smtScc.getScheduleLength() << std::endl;
+      }
+      for (auto &it : sched){
+          cout << it.first->getName() << ": " << it.second << endl;
+      }
+
+      return valid;
 #else
       return true;
 #endif
+  }
+
+  bool Tests::smtOptimizer() {
+
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      //Create Heuristic Schedule
+      SMTSCCScheduler smtScc(g, rm);
+      smtScc.setQuiet(false);
+      smtScc.setSolverTimeout(60);
+      smtScc.schedule();
+      auto II = smtScc.getII();
+      auto sched = smtScc.getSchedule();
+
+      SMTScheduleOptimizer sopti(g, rm, sched, II);
+      sopti.schedule();
+
+      return false;
   }
 }

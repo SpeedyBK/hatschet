@@ -31,20 +31,20 @@ using namespace HatScheT;
 using namespace std;
 
 bool HatScheT::verifyResourceConstrainedSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                                 map<HatScheT::Vertex *, int> &schedule, int SL)
+                                                 map<HatScheT::Vertex *, int> &schedule, int SL, bool quiet)
 {
-  return HatScheT::verifyModuloSchedule(g, rm, schedule, SL+1); // +1 to be safe (depends on the interpretation of SL)
+  return HatScheT::verifyModuloSchedule(g, rm, schedule, SL+1, quiet); // +1 to be safe (depends on the interpretation of SL)
 }
 
 bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
-                                    std::map<Vertex *, int> &schedule, int II)
+                                    std::map<Vertex *, int> &schedule, int II, bool quiet)
 {
   if(II<=0){
-    cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl;
+    if (!quiet) cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl;
     return false;
   }
   if(schedule.empty()==true){
-    cout << "HatScheT.verifyModuloSchedule Error empty schedule provided to verifier!"  << endl;
+    if (!quiet)cout << "HatScheT.verifyModuloSchedule Error empty schedule provided to verifier!"  << endl;
     return false;
   }
   auto &S = schedule; // alias
@@ -58,8 +58,8 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
     ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
     if (! ok) {
-      cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
-      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;    
+      if (!quiet) cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+      if (!quiet) cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
       return false;
     }
   }
@@ -80,11 +80,12 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
       ok = res->getLimit() == UNLIMITED || vs.size() <= res->getLimit();
       if (! ok) {
-        cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
-        cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;      
+        if (!quiet) cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
+        if (!quiet) cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
         for (auto v : vs){
-          cout << *v << " (t=" << S[v] << ")" << endl;
-          cerr << *v << " (t=" << S[v] << ")" << endl;}
+            if (!quiet) cout << *v << " (t=" << S[v] << ")" << endl;
+            if (!quiet) cerr << *v << " (t=" << S[v] << ")" << endl;
+        }
         return false;
       }
     }
@@ -97,30 +98,30 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 }
 
 bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence, int scheduleLength) {
+                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence,
+                                              int scheduleLength, bool quiet) {
 
     if (latencySequence.size() == 0) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!" << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!" << endl;
         return false;
     }
     if (schedule.size() == 0) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
         return false;
     }
     if (schedule.size() != latencySequence.size()) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"
-             << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!" << endl;
         return false;
     }
-    cout << "Start verify rational II schedule: < ";
+    if (!quiet) cout << "Start verify rational II schedule: < ";
     for (int i = 0; i < latencySequence.size(); i++) {
         cout << latencySequence[i] << " ";
         if (latencySequence[i] <= 0) {
-            cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong latency between IIs provided: " << latencySequence[i] << endl;
+            if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong latency between IIs provided: " << latencySequence[i] << endl;
             return false;
         }
     }
-    cout << " >" << endl;
+    if (!quiet) cout << " >" << endl;
 
     int m = 0;
 
@@ -162,7 +163,7 @@ bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::Res
 
             ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] +  II;
             if (!ok) {
-                cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
+                if (!quiet) cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
                      << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
                 cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
                      << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
@@ -198,8 +199,7 @@ bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::Res
             }
 
             if (instancesUsed > r->getLimit()) {
-                cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << m << ": used "
-                     << instancesUsed << " of " << r->getLimit() << endl;
+                if (!quiet) cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << m << ": used " << instancesUsed << " of " << r->getLimit() << endl;
                 return false;
             }
         }
@@ -212,14 +212,14 @@ pair<int,int> splitRational(double x);
 int safeRoundDown(double x);
 
 bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
-                                    std::map<Vertex *, double> &schedule, double II)
+                                    std::map<Vertex *, double> &schedule, double II, bool quiet)
 {
     if(II<=0){
-        cout << "HatScheT.verifyModuloScheduleRational Error invalid II passed to verifier: "  << II << endl;
+        if (!quiet) cout << "HatScheT.verifyModuloScheduleRational Error invalid II passed to verifier: "  << II << endl;
         return false;
     }
     if(schedule.empty()==true){
-        cout << "HatScheT.verifyModuloScheduleRational Error empty schedule provided to verifier!"  << endl;
+        if (!quiet) cout << "HatScheT.verifyModuloScheduleRational Error empty schedule provided to verifier!"  << endl;
         return false;
     }
     auto &S = schedule; // alias
@@ -253,7 +253,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
 
             ok = a_start + rm.getVertexLatency(a) + e->getDelay() <= b_start;
             if (! ok) {
-                cout << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
+                if (!quiet) cout << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
                 cerr << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
                 return false;
             }
@@ -265,8 +265,8 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     for (int i = 0; i <= max_it; i++) {
         for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
             auto v = *it;
-            cout.precision(17);
-            cout << v->getName() << " i =  " <<  i << " i*II = " << i*II << " Start = " << S[v] << " sum = " << safeRoundDown(S[v] + i*II) << endl;
+            if (!quiet) cout.precision(17);
+            if (!quiet) cout << v->getName() << " i =  " <<  i << " i*II = " << i*II << " Start = " << S[v] << " sum = " << safeRoundDown(S[v] + i*II) << endl;
             ressourceSlotByCycle[make_pair(rm.getResource(v), safeRoundDown(S[v] + i*II) )].push_back(v);
         }
     }
@@ -279,7 +279,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
 
             ok = res->getLimit() == UNLIMITED || used.size() <= res->getLimit();
             if (! ok) {
-                cout << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
+                if (!quiet) cout << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
                 cerr << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
                 for (auto v : used){
                     cout << *v << " (t=" << S[v] << ")" << endl;
@@ -295,7 +295,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     return true;
 }
 
-bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int>> &schedule, int samples, int modulo) {
+bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int>> &schedule, int samples, int modulo, bool quiet) {
   if (schedule.empty()) {
     cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
     return false;
@@ -311,7 +311,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
       auto sampleIndex = so.first;
       auto offset = so.second;
       if (schedule[i][vDst] - schedule[sampleIndex][vSrc] - rm.getVertexLatency(vSrc) + offset < 0) {
-        cout << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
+          if (!quiet)cout << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
              << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
         cerr << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
              << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
@@ -330,7 +330,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
 			auto m = t % modulo;
 			resInstancesUsed[r][m]++;
 			if (resInstancesUsed[r][m] > r->getLimit()) {
-				cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << t << " mod " << modulo << " = " << m << ": used "
+                if (!quiet) cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << t << " mod " << modulo << " = " << m << ": used "
 						 << resInstancesUsed[r][m] << " of " << r->getLimit() << endl;
 				return false;
 			}

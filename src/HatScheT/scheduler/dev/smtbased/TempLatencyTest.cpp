@@ -420,9 +420,9 @@ namespace HatScheT {
               maxLatency += (int) floor(((float) i) / limit);
           }
       }
-      if (!this->quiet) {
-          std::cout << "SATScheduler: computed maximum latency " << maxLatency << std::endl;
-      }
+//      if (!this->quiet) {
+//          std::cout << "SATScheduler: computed maximum latency " << maxLatency << std::endl;
+//      }
       r.maxLat = maxLatency;
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();

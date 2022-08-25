@@ -346,7 +346,13 @@ namespace HatScheT {
          */
 		static bool satBinding();
 
+        /*!
+         * test functionality of Z3 based heuristic scheduler with scc-based preprocessing
+         * @return if test was passed
+         */
 		static bool smtScc();
+
+		static bool smtOptimizer();
 
 	};
 }

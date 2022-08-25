@@ -32,7 +32,7 @@ namespace HatScheT {
       minII = ceil(minII);
       computeMaxII(&g, &resourceModel);
 
-      for (int i = (int)minII; i <= (int)maxII+1; i++){
+      for (int i = (int)minII; i <= (int)maxII; i++){
           this->iiSpace.push_back(i);
       }
       this->iiSpaceIndex = 0;
@@ -72,7 +72,7 @@ namespace HatScheT {
       minII = II;
       maxII = (int)II;
 
-      for (int i = (int)minII; i <= (int)maxII+1; i++){
+      for (int i = (int)minII; i <= (int)maxII; i++){
           this->iiSpace.push_back(i);
       }
       this->iiSpaceIndex = 0;
@@ -172,6 +172,7 @@ namespace HatScheT {
               if (latSM == latSearchMethod::BINARY) {
                   if (candidateLatency == -1 or oldLatency == candidateLatency) {
                       candidateLatency = 0;
+                      timeBudget = timeLimit;
                       break;
                   }
               }
@@ -179,6 +180,7 @@ namespace HatScheT {
               if (latSM == latSearchMethod::LINEAR){
                   if (candidateLatency == -1) {
                       candidateLatency = 0;
+                      timeBudget = timeLimit;
                       break;
                   }
               }
@@ -206,11 +208,13 @@ namespace HatScheT {
 
               if (!quiet) { cout << "Add one-slot-constraints... " << endl; }
               sati = addOneSlotConstraintsToSolver(s);
+              if (sati == z3::unknown) { timeouts++; }
               if (!quiet) { cout << ">>" << sati << "<<" << endl; }
 
               if (!quiet) { cout << "Add resource-constraints... " << endl; }
               if (sati != z3::unsat) {
                   sati = addResourceLimitConstraintToSolver(s, candidateII);
+                  if (sati == z3::unknown) { timeouts++; }
                   if (!quiet) { cout << ">>" << sati << "<<" << endl; }
               }
 
@@ -226,6 +230,7 @@ namespace HatScheT {
               if (sati != z3::unsat) {
                   start_t = std::chrono::high_resolution_clock::now();
                   sati = s.check();
+                  if (sati == z3::unknown) { timeouts++; }
                   end_t = std::chrono::high_resolution_clock::now();
                   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
                   t = (int)((double)duration / 1000);
@@ -286,8 +291,9 @@ namespace HatScheT {
 
       II = candidateIIOLD;
 
+      scheduleFound = verifyModuloScheduleSMT(this->g, this->resourceModel, startTimes, (int) II);
       try {
-          if (!verifyModuloScheduleSMT(this->g, this->resourceModel, startTimes, (int) II)) {
+          if (!scheduleFound) {
               throw (HatScheT::Exception("Schedule not valid!"));
           }
       }catch (HatScheT::Exception&){
@@ -301,12 +307,11 @@ namespace HatScheT {
    * -------------------*/
   void SMTBinaryScheduler::calcLatencyEstimation() {
 
+      this->maxLatency = 0;
       //Check if max latency was set by user
       if (this->maxLatencyConstraint >= 0) {
           maxLatency = maxLatencyConstraint;
-          return;
       }
-      this->maxLatency = 0;
       int resMaxLat = 0;
 
       //Getting the current II mainly for better readability
@@ -327,20 +332,30 @@ namespace HatScheT {
       earliestStartTimes = aslap.first;
       latestStartTimes = aslap.second;
 
-      if ( !quiet ) {
-          cout << "*------------------------*" << endl;
-          cout << "* Max Latency Estimation *" << endl;
-          cout << "*------------------------*" << endl;
+      // Try to find best latency:
+      if (maxLatencyConstraint < 0) {
+          if ( !quiet ) {
+              cout << "*------------------------*" << endl;
+              cout << "* Max Latency Estimation *" << endl;
+              cout << "*------------------------*" << endl;
+          }
+          auto startMaxTime = std::chrono::high_resolution_clock::now();
+          calcMaxLatencyEstimation(currentII);
+          if (maxLatency < currentII) {
+              maxLatency = currentII;
+          }
+          auto endMaxTime = std::chrono::high_resolution_clock::now();
+          auto durationMaxTime = std::chrono::duration_cast<std::chrono::microseconds>(
+              endMaxTime - startMaxTime).count();
+          if (!quiet) { cout << "Done in " << (float) durationMaxTime / 1000000 << " seconds." << endl << endl; }
       }
-
-      auto startMaxTime = std::chrono::high_resolution_clock::now();
-      calcMaxLatencyEstimation(currentII);
-      if (maxLatency < currentII){
-          maxLatency = currentII;
+      // Solve for a given latency:
+      else{
+          cout << "Latency set by User: " << maxLatency << endl;
+          cout << "Trying this latency!" << endl;
+          minLatency = maxLatency;
+          return;
       }
-      auto endMaxTime = std::chrono::high_resolution_clock::now();
-      auto durationMaxTime = std::chrono::duration_cast<std::chrono::microseconds>(endMaxTime - startMaxTime).count();
-      if (!quiet) { cout << "Done in " << (float)durationMaxTime/1000000 << " seconds." << endl << endl; }
 
       if ( !quiet ) {
           cout << "*------------------------*" << endl;
@@ -1075,7 +1090,8 @@ namespace HatScheT {
       latestStartTimesUpdated.clear();
       for (auto &it: latestStartTimes) {
           //cout << it.first->getName() << ": " << it.second << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
-          this->latestStartTimesUpdated[it.first] = it.second + this->candidateLatency - modAsapLength;
+          this->latestStartTimesUpdated[it.first] = this->candidateLatency - (modAsapLength - it.second);
+          //this->latestStartTimesUpdated[it.first] = it.second + this->candidateLatency - modAsapLength;
           //cout << it.first->getName() << ": " << latestStartTimesUpdated.at(it.first) << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
       }
   }
@@ -1086,14 +1102,23 @@ namespace HatScheT {
       deque<long> sTimes;
       z3::check_result satisfiable = z3::unknown;
       clock_t start, end;
+      int x = 0;
       for (auto &e : g.Edges()) {
+          x++;
           auto *vSrc = &e->getVertexSrc();
           auto *vDst = &e->getVertexDst();
           auto lSrc = this->resourceModel.getVertexLatency(vSrc);
           auto distance = e->getDistance();
           auto delay = e->getDelay();
+/*          if (!this->quiet) {
+              std::cout << "SMTScheduler: creating dependency constraint for edge '" << e->getId() << "': '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
+              cout << "Source: " << earliestStartTimes.at(vSrc) << " / " << latestStartTimesUpdated.at(vSrc) << endl;
+              cout << "Destination: " << earliestStartTimes.at(vDst) << " / " << latestStartTimesUpdated.at(vDst) << endl;
+          }
           for (int ti = 0; ti <= candidateLatency; ti++) {
-              for (int tj = 0; tj <= candidateLatency; tj++) {
+              for (int tj = 0; tj <= candidateLatency; tj++) {*/
+          for (int ti = earliestStartTimes.at(vSrc); ti <= latestStartTimesUpdated.at(vSrc); ti++) {
+              for (int tj = earliestStartTimes.at(vDst); tj <= latestStartTimesUpdated.at(vDst); tj++) {
                   if (tj + distance * candidateII - ti - lSrc - delay >= 0) {
                       //No Conflict... Do nothing
                       continue;
@@ -1139,6 +1164,7 @@ namespace HatScheT {
               }
           }
       }
+      cout << "Num. of Edges: " << x << endl;
       startTimesSimplification.clear();
       return satisfiable;
   }
@@ -1210,19 +1236,6 @@ namespace HatScheT {
       startTimesSimplification.clear();
       return satisfiable;
   }*/
-
-  bool SMTBinaryScheduler::unsatCheckShortcut() {
-      for (auto &vIt : g.Vertices()){
-          int count = 0;
-          for(int lIt = 0; lIt <= candidateLatency; lIt++){
-              count += (int)startTimesSimplification.at(std::make_pair(vIt, lIt));
-          }
-          if (count == 0){
-              return true;
-          }
-      }
-      return false;
-  }
 
   /*!-----------------------*
    *  II-Search 'algorithm' *
