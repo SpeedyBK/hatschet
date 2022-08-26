@@ -23,10 +23,7 @@ namespace HatScheT {
 		enum LatencyOptimizationStrategy {
 			AUTO,
 			REVERSE_LINEAR,
-			LINEAR,
-			LINEAR_JUMP,
-			LINEAR_JUMP_LOG,
-			LOGARITHMIC
+			LINEAR_JUMP
 		};
 		SATSchedulerLatOpt(Graph& g, ResourceModel &resourceModel, int II=-1);
 		double getSolvingTime() const { return this->solvingTime; }
@@ -61,6 +58,7 @@ namespace HatScheT {
 		bool enableIIBasedLatencyLowerBound;
 		int candidateII;
 		int candidateLatency;
+		int lastCandidateLatency;
 		int minLatency;
 		int maxLatency;
 		int latencyLowerBound;
@@ -94,6 +92,7 @@ namespace HatScheT {
 		LatencyOptimizationStrategy los;
 		std::map<Vertex*, int> earliestStartTime;
 		std::map<Vertex*, int> latestStartTime;
+		std::map<Vertex*, int> lastLatestStartTime;
 		std::map<Vertex*, int> latestStartTimeDifferences;
 		std::map<const Resource*, int> originalResourceLimits;
 	};

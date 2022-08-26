@@ -156,5 +156,17 @@ protected:
    * \brief SLMax
    */
   unsigned int SLMax;
+  /*!
+   * \brief lower bound for the schedule length (depends on the II)
+   */
+	int maxLatency = -1;
+	/*!
+	 * \brief upper bound for the schedule length (depends on the II)
+	 */
+	int minLatency = -1;
+  /*!
+   * \brief whether a latency estimation should be used to reduce the search space for the ILP solver
+   */
+	bool useLatencyEstimation = true;
 };
 }

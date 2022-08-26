@@ -98,9 +98,25 @@ void MoovacScheduler::constructProblem()
 void MoovacScheduler::setObjective()
 {
   //supersink latency objective
-  ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,this->SLMax);
+  ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,ScaLP::INF());
   for(ScaLP::Variable &v:this->ti){
     this->solver->addConstraint(supersink - v >= 0);
+  }
+  if (this->SLMax >= 0 or this->maxLatency >= 0) {
+    auto tighterConstraint = this->maxLatency;
+    if (this->maxLatency < 0) tighterConstraint = this->SLMax;
+    if (this->SLMax < 0) tighterConstraint = this->maxLatency;
+    if (this->maxLatency >= 0 and this->SLMax >= 0) tighterConstraint = std::min((unsigned int)this->maxLatency, this->SLMax);
+    this->solver->addConstraint(supersink <= tighterConstraint);
+    if (!this->quiet) {
+      std::cout << "MoovacScheduler: added constraint Latency <= " << tighterConstraint << std::endl;
+    }
+  }
+  if (this->minLatency >= 0) {
+    this->solver->addConstraint(supersink >= this->minLatency);
+    if (!this->quiet) {
+      std::cout << "MoovacScheduler: added constraint Latency >= " << this->minLatency << std::endl;
+    }
   }
   this->solver->setObjective(ScaLP::minimize(supersink));
 }
@@ -136,6 +152,13 @@ void MoovacScheduler::schedule()
   // iterative search for optimum II
   while(this->II <= this->maxII) {
     if(this->quiet == false) cout << "Starting Moovac ILP-based modulo scheduling with II " << this->II << endl;
+
+    if (this->useLatencyEstimation) {
+      auto latHelper = Utility::getLatencyEstimation(&this->g, &this->resourceModel, this->II, Utility::latencyBounds::both, this->quiet);
+      this->minLatency = latHelper.minLat;
+      this->maxLatency = latHelper.maxLat;
+    }
+
     this->resetContainer();
     this->setUpSolverSettings();
     this->constructProblem();

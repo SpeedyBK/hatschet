@@ -164,14 +164,14 @@ void EichenbergerDavidson97Scheduler::constructDecisionVariables(int candII)
 
     solver->addConstraint(k[i] >= 0);
     solver->addConstraint(time[i] >= 0);
-		if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
-			auto tighterConstraint = maxLatency;
-			if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
-			if (maxLatencyConstraint < 0) tighterConstraint = maxLatency;
-			if (maxLatency >= 0 and maxLatencyConstraint >= 0) tighterConstraint = std::min(maxLatency, maxLatencyConstraint);
+		//if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
+			//auto tighterConstraint = maxLatency;
+			//if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
+			//if (maxLatencyConstraint < 0) tighterConstraint = maxLatency;
+			//if (maxLatency >= 0 and maxLatencyConstraint >= 0) tighterConstraint = std::min(maxLatency, maxLatencyConstraint);
 			//solver->addConstraint(k[i]    <= tighterConstraint / candII);
 			//solver->addConstraint(time[i] <= tighterConstraint - resourceModel.getVertexLatency(i));
-		}
+		//}
   }
 }
 
