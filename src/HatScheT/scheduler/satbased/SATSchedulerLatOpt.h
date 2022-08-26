@@ -38,11 +38,7 @@ namespace HatScheT {
 	private:
 		void setLatencySearchStrategy();
 		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
-		void calcMinLatency();
-		void calcMaxLatency();
 		void calculateLatestStartTimes();
-		void calculateLatestStartTimeDifferences();
-		void calculateEarliestStartTimes();
 		void simplifyResourceLimits();
 		void restoreResourceLimits();
 
