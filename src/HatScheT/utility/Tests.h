@@ -352,7 +352,17 @@ namespace HatScheT {
          */
 		static bool smtScc();
 
-		static bool smtOptimizer();
+	   /*!
+        * test functionality of Z3 based scheduler with "Conflict Driven Clause" Learning
+        * @return if test was passed
+        */
+		static bool smtCDCLTest();
+
+	   /*!
+        * test functionality of Z3 based scheduler with SCC - preprocessing
+        * @return if test was passed
+        */
+        static bool smtCombined();
 
 	};
 }

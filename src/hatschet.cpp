@@ -94,6 +94,8 @@
 #include <z3++.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
 
 #endif
 
@@ -170,7 +172,8 @@ void print_short_help() {
 		<< std::endl;
 	std::cout << "                            SMT: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
     std::cout << "                            SMTSCC: Experimental Heuristic-Scheduler which searches for the optimal II, but it has no latency optimization" << std::endl;
-	std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
+    std::cout << "                            SMTCOMBINED: Experimental 2-Stage Scheduler Heuristic which searches for the optimal II, and latency optimization" << std::endl;
+    std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
 	std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
 	std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)"
 						<< std::endl;
@@ -245,7 +248,9 @@ int main(int argc, char *args[]) {
 	bool writeLPFile = false;
 
 	enum SchedulersSelection {
-		SMTSCC,
+	    SMTCOMBINED,
+		SMTCDCL,
+	    SMTSCC,
 	    SMT,
 		SAT,
 		SATLAT,
@@ -377,7 +382,11 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SMT;
 				} else if (schedulerSelectionStr == "smtscc") {
                     schedulerSelection = SMTSCC;
-                } else if (schedulerSelectionStr == "sat") {
+                } else if (schedulerSelectionStr == "smtcdcl") {
+                        schedulerSelection = SMTCDCL;
+                } else if (schedulerSelectionStr == "smtcombined") {
+                    schedulerSelection = SMTCOMBINED;
+                }else if (schedulerSelectionStr == "sat") {
 					schedulerSelection = SAT;
 				} else if (schedulerSelectionStr == "satlat") {
 					schedulerSelection = SATLAT;
@@ -515,7 +524,8 @@ int main(int argc, char *args[]) {
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
 				if (str == "SMTBINARY" && !HatScheT::Tests::smtBinary()) exit(-1);
                 if (str == "SMTSCC" && !HatScheT::Tests::smtScc()) exit(-1);
-                if (str == "SMTOPTI" && !HatScheT::Tests::smtOptimizer()) exit(-1);
+                if (str == "SMTCDCL" && !HatScheT::Tests::smtCDCLTest()) exit(-1);
+                if (str == "SMTCOMB" && !HatScheT::Tests::smtCombined()) exit(-1);
 #endif
 				exit(0);
 			} else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
@@ -573,6 +583,12 @@ int main(int argc, char *args[]) {
 				break;
             case SMTSCC:
                 cout << "SMTSCC";
+                break;
+            case SMTCOMBINED:
+                cout << "SMTCOMBINED";
+                break;
+            case SMTCDCL:
+                cout << "SMTCDCL";
                 break;
 			case MOOVAC:
 				cout << "MOOVAC";
@@ -970,6 +986,16 @@ int main(int argc, char *args[]) {
                     scheduler = new HatScheT::SMTSCCScheduler(g, rm);
                     isModuloScheduler = true;
                     if (timeout > 0) ((HatScheT::SMTSCCScheduler*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTCOMBINED:
+                    scheduler = new HatScheT::SMTSCCCOMBINED(g, rm);
+                    isModuloScheduler = true;
+                    if (timeout > 0) ((HatScheT::SMTSCCCOMBINED*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTCDCL:
+                    scheduler = new HatScheT::SMTCDCLScheduler(g, rm);
+                    isModuloScheduler = true;
+                    //if (timeout > 0) ((HatScheT::SMTCDCLScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else

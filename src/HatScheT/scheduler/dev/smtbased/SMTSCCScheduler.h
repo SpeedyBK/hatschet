@@ -19,6 +19,8 @@
 
 namespace HatScheT {
 
+  enum class schedule_t {optimal, fast, automatic};
+
   class SMTSCCScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 
   public:
@@ -33,7 +35,7 @@ namespace HatScheT {
 
     void setSolverTimeout(int seconds);
 
-    enum class schedule_t {optimal, fast};
+    void setMode(schedule_t schedulemode) { this->mode = schedulemode; }
 
   private:
 

@@ -30,7 +30,7 @@ namespace HatScheT {
 
       iigiven = false;
       numOfCmplxSCCs = 0;
-      mode = schedule_t::fast;
+      mode = schedule_t::automatic;
 
       for (auto &v : g.Vertices()){
           this->startTimes[v] = 0;
@@ -53,7 +53,7 @@ namespace HatScheT {
       this->II = II;
 
       numOfCmplxSCCs = 0;
-      mode = schedule_t::fast;
+      mode = schedule_t::automatic;
 
       for (auto &v : g.Vertices()){
           this->startTimes[v] = 0;
@@ -264,10 +264,13 @@ namespace HatScheT {
               int maxSCCslat;
               if (mode == schedule_t::fast){
                   maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int) II);
-              }else{
+                  smt->setMaxLatencyConstraint(maxSCCslat);
+              }else if (mode == schedule_t::optimal){
                   maxSCCslat = expandSCC(gr, rm) + (int)II;
+                  smt->setMaxLatencyConstraint(maxSCCslat);
+              }else {
+                  //Let Scheduler Search...
               }
-              smt->setMaxLatencyConstraint(maxSCCslat);
               if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
               smt->schedule();
               if( smt->getTimeouts() > 0 ) { timeouts++; }
@@ -286,10 +289,13 @@ namespace HatScheT {
           int maxSCCslat;
           if (mode == schedule_t::fast){
               maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int)II);
-          }else{
+              smt->setMaxLatencyConstraint(maxSCCslat);
+          }else if (mode == schedule_t::optimal){
               maxSCCslat = expandSCC(gr, rm) + (int)II;
+              smt->setMaxLatencyConstraint(maxSCCslat);
+          }else{
+              //Let Scheduler search...
           }
-          smt->setMaxLatencyConstraint(maxSCCslat);
           if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
           smt->schedule();
           if( smt->getTimeouts() > 0 ) { timeouts++; }
@@ -362,10 +368,10 @@ namespace HatScheT {
       }
 
       // Topological Order with Asap Schedule:
-      ASAPScheduler asap (*gr, *rm);
+      ALAPScheduler alap (*gr, *rm);
       map<SCC*, int> inverseSccPriority;
-      asap.schedule();
-      auto asapSched = asap.getSchedule();
+      alap.schedule();
+      auto asapSched = alap.getSchedule();
       for (auto &vtPair: asapSched){
           inverseSccPriority[locVertexToScc.at(vtPair.first)] = vtPair.second;
       }

@@ -7,14 +7,11 @@
 #include "HatScheT/utility/Exception.h"
 #include "HatScheT/utility/Utility.h"
 
-#include "HatScheT/scheduler/ASAPScheduler.h"
-
 #include <z3++.h>
 
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <ctime>
 #include <chrono>
 #include <cmath>
 #include <deque>
@@ -168,7 +165,6 @@ namespace HatScheT {
               if (latSM == latSearchMethod::LINEAR) { candidateLatency = latLinearSearch(sati); }
               if (latSM == latSearchMethod::BINARY) { candidateLatency = latBinarySearch(sati); }
 
-
               if (latSM == latSearchMethod::BINARY) {
                   if (candidateLatency == -1 or oldLatency == candidateLatency) {
                       candidateLatency = 0;
@@ -210,6 +206,7 @@ namespace HatScheT {
               sati = addOneSlotConstraintsToSolver(s);
               if (sati == z3::unknown) { timeouts++; }
               if (!quiet) { cout << ">>" << sati << "<<" << endl; }
+
 
               if (!quiet) { cout << "Add resource-constraints... " << endl; }
               if (sati != z3::unsat) {
@@ -1089,10 +1086,7 @@ namespace HatScheT {
   void SMTBinaryScheduler::updateLatestStartTimes() {
       latestStartTimesUpdated.clear();
       for (auto &it: latestStartTimes) {
-          //cout << it.first->getName() << ": " << it.second << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
           this->latestStartTimesUpdated[it.first] = this->candidateLatency - (modAsapLength - it.second);
-          //this->latestStartTimesUpdated[it.first] = it.second + this->candidateLatency - modAsapLength;
-          //cout << it.first->getName() << ": " << latestStartTimesUpdated.at(it.first) << " + "<< this->candidateLatency << " - " << modAsapLength << endl;
       }
   }
 
@@ -1100,7 +1094,6 @@ namespace HatScheT {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       int i = 0;
       deque<long> sTimes;
-      z3::check_result satisfiable = z3::unknown;
       clock_t start, end;
       int x = 0;
       for (auto &e : g.Edges()) {
@@ -1114,9 +1107,7 @@ namespace HatScheT {
               std::cout << "SMTScheduler: creating dependency constraint for edge '" << e->getId() << "': '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
               cout << "Source: " << earliestStartTimes.at(vSrc) << " / " << latestStartTimesUpdated.at(vSrc) << endl;
               cout << "Destination: " << earliestStartTimes.at(vDst) << " / " << latestStartTimesUpdated.at(vDst) << endl;
-          }
-          for (int ti = 0; ti <= candidateLatency; ti++) {
-              for (int tj = 0; tj <= candidateLatency; tj++) {*/
+          }*/
           for (int ti = earliestStartTimes.at(vSrc); ti <= latestStartTimesUpdated.at(vSrc); ti++) {
               for (int tj = earliestStartTimes.at(vDst); tj <= latestStartTimesUpdated.at(vDst); tj++) {
                   if (tj + distance * candidateII - ti - lSrc - delay >= 0) {
@@ -1131,42 +1122,11 @@ namespace HatScheT {
                   }
                   //Conflict... Not both Operations in this timeslot;
                   s.add(!*getBvariable(vSrc, ti) || !*getBvariable(vDst, tj));
-                  if (false) {
-                      if (i % 25000000 == 0) {
-                          auto start_time = std::chrono::high_resolution_clock::now();
-                          satisfiable = s.check();
-                          auto end_time = std::chrono::high_resolution_clock::now();
-                          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-                              end_time - start_time).count();
-                          sTimes.push_back((double) duration);
-                          timeBudget -= (int) (sTimes.back());
-                          if (!quiet) {
-                              cout << i << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
-                                   << (double) sTimes.back() / 1000 << setprecision(5) << " sec "
-                                   << "Time Budget: " << timeBudget << endl;
-                          }
-                          if (satisfiable == z3::unsat) {
-                              return satisfiable;
-                          }
-                          if (satisfiable == z3::unknown) {
-                              timeBudget = -1;
-                          }
-                          if (timeBudget < 0) {
-                              cerr << "Timeout! Candidate II: " << candidateII
-                                   << " Candidate Latency: " << candidateLatency << endl;
-                              linearSearchInit = true;
-                              secondObjectiveOptimal = false;
-                              return z3::unsat;
-                          }
-                      }
-                      i++;
-                  }
               }
           }
       }
-      cout << "Num. of Edges: " << x << endl;
-      startTimesSimplification.clear();
-      return satisfiable;
+
+      return z3::unknown;
   }
 
 

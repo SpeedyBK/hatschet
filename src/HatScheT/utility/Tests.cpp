@@ -71,7 +71,8 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTScheduleOptimizer.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3738,8 +3739,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+      string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3792,7 +3793,7 @@ namespace HatScheT {
       g.createEdge(SUM_1, OUT, 0);*/
 
       SMTBinaryScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
+      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
       sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
       sss.setSolverTimeout(600);
@@ -3916,8 +3917,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3973,13 +3974,14 @@ namespace HatScheT {
 	  ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
+      string resStr = "benchmarks/ChStone/adpcm/graph1_RM.xml";
+      string graphStr = "benchmarks/ChStone/adpcm/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
 	  SMTSCCScheduler smtScc(g, rm);
+	  smtScc.setMode(schedule_t::automatic);
       smtScc.setQuiet(false);
       smtScc.setSolverTimeout(600);
       auto start_t = std::chrono::high_resolution_clock::now();
@@ -4008,28 +4010,69 @@ namespace HatScheT {
 #endif
   }
 
-  bool Tests::smtOptimizer() {
+  bool Tests::smtCDCLTest() {
 
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      //Create Heuristic Schedule
-      SMTSCCScheduler smtScc(g, rm);
-      smtScc.setQuiet(false);
-      smtScc.setSolverTimeout(60);
-      smtScc.schedule();
-      auto II = smtScc.getII();
-      auto sched = smtScc.getSchedule();
+      SMTCDCLScheduler smtcdcl(g, rm);
+      auto start_t = std::chrono::high_resolution_clock::now();
+      smtcdcl.setQuiet(false);
+      smtcdcl.schedule();
+      auto II = smtcdcl.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
 
-      SMTScheduleOptimizer sopti(g, rm, sched, II);
-      sopti.schedule();
+      cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, smtcdcl.getSchedule(), II)){
+          std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << smtcdcl.getScheduleLength() << std::endl;
+          return true;
+      }else{
+          std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
+          return false;
+      }
+  }
+
+  bool Tests::smtCombined() {
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
+      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      SMTSCCCOMBINED smtComb(g, rm);
+      smtComb.setQuiet(false);
+      smtComb.setSolverTimeout(600);
+      auto start_t = std::chrono::high_resolution_clock::now();
+      smtComb.schedule();
+      auto II = smtComb.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, smtComb.getSchedule(), II)){
+          std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << smtComb.getScheduleLength() << std::endl;
+          return true;
+      }else{
+          std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtComb.getII() << std::endl;
+          return false;
+      }
+
 
       return false;
   }
