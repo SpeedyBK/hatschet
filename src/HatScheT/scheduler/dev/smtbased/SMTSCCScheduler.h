@@ -37,6 +37,8 @@ namespace HatScheT {
 
     void setMode(schedule_t schedulemode) { this->mode = schedulemode; }
 
+    int getTimeBudget() const { return timeBudget; }
+
   private:
 
     map<SCC*, int> inversePriority;
@@ -64,6 +66,7 @@ namespace HatScheT {
     void combineRelScheds();
 
     int timeLimit;
+    int timeBudget;
 
     map<SCC*, int> computeTopologicalSCCOrder(vector<SCC*>&tempsccs);
     map<Vertex*, SCC*> vertexToSCC;

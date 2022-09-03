@@ -83,6 +83,8 @@ namespace HatScheT {
     enum class schedulePreference {MOD_ASAP, MOD_ALAP};
     void setSchedulePreference(schedulePreference pref) { this->sPref = pref; }
 
+    int getTimeBudget() const { return timeBudget; }
+
   protected:
 
     /*!------------------------

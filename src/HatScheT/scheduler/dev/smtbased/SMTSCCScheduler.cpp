@@ -5,6 +5,7 @@
 #ifdef USE_Z3
 
 #include <cmath>
+#include <chrono>
 #include <algorithm>
 #include <z3++.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
@@ -69,7 +70,6 @@ namespace HatScheT {
   void SMTSCCScheduler::schedule() {
 
       modifyResourceModel();
-
       // Get SCCs and sort them:
       computeSCCs();
 
@@ -273,6 +273,7 @@ namespace HatScheT {
               }
               if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
               smt->schedule();
+              timeBudget = smt->getTimeBudget();
               if( smt->getTimeouts() > 0 ) { timeouts++; }
               if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << endl; }
               foundSchedule = smt->getScheduleFound();
@@ -298,6 +299,7 @@ namespace HatScheT {
           }
           if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
           smt->schedule();
+          timeBudget = smt->getTimeBudget();
           if( smt->getTimeouts() > 0 ) { timeouts++; }
           if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << endl; }
           scheduleFound = smt->getScheduleFound();

@@ -295,6 +295,8 @@ namespace HatScheT {
           }
       }catch (HatScheT::Exception&){
           this->II = -1;
+          secondObjectiveOptimal = false;
+          firstObjectiveOptimal = false;
           cerr << "SMTBinaryScheduler::Schedule() : Schedule not valid!" << endl;
       }
   }

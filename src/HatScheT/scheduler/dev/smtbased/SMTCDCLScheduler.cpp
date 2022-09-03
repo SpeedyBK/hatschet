@@ -73,7 +73,7 @@ namespace HatScheT {
               if (!quiet) { cout << " >> " << SAT << " << " << endl; }
               if (SAT == z3::sat) {
                   m = s.get_model();
-                  if (!quiet) { compareModels(oldM, m); }
+                  //if (!quiet) { compareModels(oldM, m); }
                   parseSMTModel(m);
                   if (!quiet) { cout << "Checking Dependency Constraints:" << endl; }
                   violatedEdges = checkSchedule(g, resourceModel, startTimes, (int) II, quiet);
