@@ -35,7 +35,7 @@ namespace HatScheT {
 
     void setSolverTimeout(int seconds);
 
-    void setMode(schedule_t schedulemode) { this->mode = schedulemode; }
+    void setMode(schedule_t schedulemode);
 
     int getTimeBudget() const { return timeBudget; }
 

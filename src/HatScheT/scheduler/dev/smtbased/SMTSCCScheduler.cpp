@@ -31,7 +31,7 @@ namespace HatScheT {
 
       iigiven = false;
       numOfCmplxSCCs = 0;
-      mode = schedule_t::automatic;
+      mode = schedule_t::fast;
 
       for (auto &v : g.Vertices()){
           this->startTimes[v] = 0;
@@ -54,7 +54,7 @@ namespace HatScheT {
       this->II = II;
 
       numOfCmplxSCCs = 0;
-      mode = schedule_t::automatic;
+      mode = schedule_t::fast;
 
       for (auto &v : g.Vertices()){
           this->startTimes[v] = 0;
@@ -557,6 +557,17 @@ namespace HatScheT {
           svars.clear();
       }
       return *std::max_element(maxtimes.begin(), maxtimes.end());
+  }
+
+  void SMTSCCScheduler::setMode(schedule_t schedulemode) {
+      if (schedulemode == schedule_t::fast){
+          cout << "'Fast-Mode'" << endl;
+      }else if (schedulemode == schedule_t::optimal){
+          cout << "'Optimal-Mode'" << endl;
+      }else if (schedulemode == schedule_t::automatic){
+          cout << "'Automatic-Mode'" << endl;
+      }
+      this->mode = schedulemode;
   }
 
 }

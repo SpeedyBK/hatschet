@@ -985,6 +985,7 @@ int main(int argc, char *args[]) {
                 case SMTSCC:
                     scheduler = new HatScheT::SMTSCCScheduler(g, rm);
                     isModuloScheduler = true;
+                    ((HatScheT::SMTSCCScheduler*) scheduler)->setMode(HatScheT::schedule_t::fast);
                     if (timeout > 0) ((HatScheT::SMTSCCScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
                 case SMTCOMBINED:
