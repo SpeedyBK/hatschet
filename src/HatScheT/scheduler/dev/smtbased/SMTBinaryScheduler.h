@@ -85,6 +85,8 @@ namespace HatScheT {
 
     int getTimeBudget() const { return timeBudget; }
 
+    void set_design_name(string s){ this->designName = s; }
+
   protected:
 
     /*!------------------------
@@ -240,12 +242,8 @@ namespace HatScheT {
      * @param candidateII
      */
     z3::check_result setDependencyConstraintsAndAddToSolver(z3::solver& s, const int &candidateII);
-    /*!
-     * \brief Checks an obvious unsat condition without starting z3. (prohibitToEarlyStartsAndAdd() and
-     * prohibitToLateStartsAndAdd() prohibiting all time slots for one Vertex)
-     * @return True if unsat and false if possibly sat.
-     */
-    bool unsatCheckShortcut();
+
+    z3::check_result setDependencyConstraintsAndAddToSolverBIG(z3::solver& s, const int &candidateII);
     /*!
      * \brief Adds a constraint to solver s, that a vertex is scheduled in exactly one timeslot.
      * @param Reference to solver s
@@ -268,7 +266,6 @@ namespace HatScheT {
     void print_b_variables();
     void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
-    void set_design_name(string s){ this->designName = s; }
 
     string designName;
     void writeSolvingTimesToFile(deque<double> &times, int x);

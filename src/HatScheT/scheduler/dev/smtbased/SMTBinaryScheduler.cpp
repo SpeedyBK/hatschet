@@ -217,7 +217,12 @@ namespace HatScheT {
 
               if (sati != z3::unsat) {
                   if (!quiet) { cout << "Add dependency-constraints... " << endl; }
-                  sati = setDependencyConstraintsAndAddToSolver(s, candidateII);
+                  if (g.getNumberOfEdges() * candidateLatency > 2000000){
+                      if (!quiet) { cout << "Using Method for BIIIIG Problems... " << g.getNumberOfEdges() * candidateLatency << endl; }
+                      sati = setDependencyConstraintsAndAddToSolverBIG(s, candidateII);
+                  }else {
+                      sati = setDependencyConstraintsAndAddToSolver(s, candidateII);
+                  }
                   if (!quiet) { cout << ">>" << "DONE" << "<<" << endl; }
               }
 
@@ -504,7 +509,7 @@ namespace HatScheT {
           }
       }
 
-      // Schedules all operation with satisfied resource constraints. So we can get a requiered min. latency
+      // Schedules all operations with satisfied resource constraints. So we can get a requiered min. latency
       // for a schedule
       for (auto &r : resourceModel.Resources()) {
           if (r->isUnlimited()) {
@@ -1132,7 +1137,8 @@ namespace HatScheT {
   }
 
 
-  /*z3::check_result SMTBinaryScheduler::setDependencyConstraintsAndAddToSolver(z3::solver &s, const int &candidateII) {
+  z3::check_result
+  SMTBinaryScheduler::setDependencyConstraintsAndAddToSolverBIG(z3::solver &s, const int &candidateII) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       if (!quiet) { cout << g.getNumberOfEdges() << " Edges... " << endl; }
       deque<long> sTimes;
@@ -1167,37 +1173,11 @@ namespace HatScheT {
           }
 
           s.add(z3::pbge(ev, &factors.at(0), (lSrc + delay - distance * candidateII))); // Dependency Constraint
-          if (eCount % 500 == 0) {
-              auto start_time = std::chrono::high_resolution_clock::now();
-              satisfiable = s.check();
-              auto end_time = std::chrono::high_resolution_clock::now();
-              auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-              sTimes.push_back((double) duration);
-              timeBudget -= (int) (sTimes.back());
-              if (!quiet) {
-                  cout << eCount << ": >>" << satisfiable << "<< " << "Solving Time: " << fixed
-                       << (double) sTimes.back() / 1000 << setprecision(5) << " sec "
-                       << "Time Budget: " << timeBudget << endl;
-              }
-              if (satisfiable == z3::unsat) {
-                  return satisfiable;
-              }
-              if (satisfiable == z3::unknown) {
-                  timeBudget = -1;
-              }
-              if (timeBudget <= 0) {
-                  //cerr << "Timeout! Candidate II: " << candidateII
-                  //     << " Candidate Latency: " << candidateLatency << endl;
-                  linearSearchInit = true;
-                  secondObjectiveOptimal = false;
-                  return z3::unsat;
-              }
-
-          }
       }
-      startTimesSimplification.clear();
-      return satisfiable;
-  }*/
+
+      //startTimesSimplification.clear();
+      return z3::unknown;
+  }
 
   /*!-----------------------*
    *  II-Search 'algorithm' *

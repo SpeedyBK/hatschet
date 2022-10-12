@@ -38,7 +38,7 @@ namespace HatScheT
 class EichenbergerDavidson97Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
-  EichenbergerDavidson97Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
+  EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */

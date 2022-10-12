@@ -1,25 +1,39 @@
 //
-// Created by bkessler on 8/11/22.
+// Created by bkessler on 10/5/22.
 //
 
+#include "HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h"
+
 #ifdef USE_Z3
+#include <z3++.h>
+#endif
+
+#ifdef USE_CADICAL
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
+#endif
+
+#ifdef USE_SCALP
+#include <ScaLP/Solver.h>
+#include <HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h>
+#include <HatScheT/scheduler/ilpbased/MoovacScheduler.h>
+#endif
 
 #include <cmath>
 #include <chrono>
 #include <algorithm>
-#include <z3++.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 
-#include "SMTSCCScheduler.h"
-#include "HatScheT/scheduler/satbased/SATScheduler.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
-#include "SMTBinaryScheduler.h"
+#include "HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h"
 
 namespace HatScheT {
 
-  SMTSCCScheduler::SMTSCCScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel) {
+  SCCPreprocessingTemplate::SCCPreprocessingTemplate(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g,resourceModel) {
+
+      getSolverStatus();
+
       this->timeouts = 0;
       startTimes.clear();
       scheduleFound = false;
@@ -33,7 +47,7 @@ namespace HatScheT {
       numOfCmplxSCCs = 0;
       mode = schedule_t::fast;
 
-      for (auto &v : g.Vertices()){
+      for (auto &v : g.Vertices()) {
           this->startTimes[v] = 0;
       }
 
@@ -44,7 +58,11 @@ namespace HatScheT {
       }
   }
 
-  SMTSCCScheduler::SMTSCCScheduler(Graph &g, ResourceModel &resourceModel, double II) : SchedulerBase(g, resourceModel) {
+  SCCPreprocessingTemplate::SCCPreprocessingTemplate(Graph &g, ResourceModel &resourceModel, double II) : SchedulerBase(
+      g, resourceModel) {
+
+      getSolverStatus();
+
       this->timeouts = 0;
       startTimes.clear();
       scheduleFound = false;
@@ -56,7 +74,7 @@ namespace HatScheT {
       numOfCmplxSCCs = 0;
       mode = schedule_t::fast;
 
-      for (auto &v : g.Vertices()){
+      for (auto &v : g.Vertices()) {
           this->startTimes[v] = 0;
       }
 
@@ -67,7 +85,10 @@ namespace HatScheT {
       }
   }
 
-  void SMTSCCScheduler::schedule() {
+  void SCCPreprocessingTemplate::schedule() {
+
+      cout << endl << "ScaLP Availible: " << scalpAvail << endl;
+      cout << "z3 Availible: " << z3Avail << endl << endl;
 
       timeBudget = timeLimit;
 
@@ -76,23 +97,19 @@ namespace HatScheT {
       computeSCCs();
 
       // Compute relative Schedules:
-      deque<SCC*> complexSCCs;
-      deque<SCC*> basicSCCs;
-      for (auto &sc : topoSortedSccs){
-          if(sc.first->getSccType() == unknown){
-              //cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Unknown" << endl;
-              throw(HatScheT::Exception("SMTSCCScheduler::schedule() : SCC-Type not determined!"));
+      deque<SCC *> complexSCCs;
+      deque<SCC *> basicSCCs;
+      for (auto &sc : topoSortedSccs) {
+          if (sc.first->getSccType() == unknown) {
+              throw (HatScheT::Exception("SMTSCCScheduler::schedule() : SCC-Type not determined!"));
           }
-          if (sc.first->getSccType() == trivial){
-              //cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Trivial - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == trivial) {
               continue;
           }
-          if (sc.first->getSccType() == basic){
-              //cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Basic - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == basic) {
               basicSCCs.push_back(sc.first);
           }
-          if (sc.first->getSccType() == complex){
-              //cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Complex - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == complex) {
               complexSCCs.push_back(sc.first);
           }
       }
@@ -116,7 +133,7 @@ namespace HatScheT {
           // Combining relative Schedules:
           combineRelScheds();
           // Check if Schedule is Valid:
-      }else {
+      } else {
           if (!quiet) { cout << "No Schedule found... Setting II = -1 and Objectives = false..." << endl; }
           II = -1;
           firstObjectiveOptimal = false;
@@ -128,65 +145,66 @@ namespace HatScheT {
       resetResourceModel();
   }
 
-  void SMTSCCScheduler::computeSCCs() {
+  void SCCPreprocessingTemplate::computeSCCs() {
       KosarajuSCC kscc(g);
       auto sccs = kscc.getSCCs();
-      for (auto &sc : sccs){
+      for (auto &sc : sccs) {
           sc->getSccType(&resourceModel);
-          for (auto &v_in_SCC : sc->getVerticesOfSCC()){
+          for (auto &v_in_SCC : sc->getVerticesOfSCC()) {
               vertexToSCC[v_in_SCC] = sc;
           }
       }
       inversePriority = computeTopologicalSCCOrder(sccs);
 
-      for (auto &ip : inversePriority){
+      for (auto &ip : inversePriority) {
           topoSortedSccs.insert(ip);
       }
   }
 
-  void SMTSCCScheduler::modifyResourceModel() {
-      for (auto &r : resourceModel.Resources()){
-          resourceLimits[r]=r->getLimit();
-          if (resourceModel.getNumVerticesRegisteredToResource(r) <= r->getLimit()){
+  void SCCPreprocessingTemplate::modifyResourceModel() {
+      for (auto &r : resourceModel.Resources()) {
+          resourceLimits[r] = r->getLimit();
+          if (resourceModel.getNumVerticesRegisteredToResource(r) <= r->getLimit()) {
               r->setLimit(UNLIMITED, false);
           }
       }
   }
 
-  void SMTSCCScheduler::resetResourceModel() {
-      for (auto &r : resourceLimits){
+  void SCCPreprocessingTemplate::resetResourceModel() {
+      for (auto &r : resourceLimits) {
           r.first->setLimit(resourceLimits.at(r.first), false);
       }
   }
 
-  map<Vertex*, int> SMTSCCScheduler::computeBasicSchedules(SCC *sc) {
+  map<Vertex *, int> SCCPreprocessingTemplate::computeBasicSchedules(SCC *sc) {
       // Creating maps
-      map<Vertex*, Vertex*> sccVertexToVertex;
-      map<Vertex*, Vertex*> vertexToSccVertex;
+      map<Vertex *, Vertex *> sccVertexToVertex;
+      map<Vertex *, Vertex *> vertexToSccVertex;
       // Generate Graph and ResourceModel
       auto gr = std::make_shared<Graph>();
       auto rm = std::make_shared<ResourceModel>();
-      // Inset Vertices
+      // Insert Vertices
       auto vertices = sc->getVerticesOfSCC();
-      for (auto &v : vertices){
+      for (auto &v : vertices) {
           auto &newV = gr->createVertex(v->getId());
           sccVertexToVertex[&newV] = v;
           vertexToSccVertex[v] = &newV;
       }
       // Create Resources
-      for (auto &v : gr->Vertices()){
+      for (auto &v : gr->Vertices()) {
           auto res = resourceModel.getResource(sccVertexToVertex.at(v));
-          Resource* newRes;
+          Resource *newRes;
           try {
               newRes = rm->getResource(res->getName());
-          }catch (HatScheT::Exception&){
-              newRes = &rm->makeResource(res->getName(), resourceLimits.at((Resource*)res), res->getLatency(), res->getBlockingTime());
+          } catch (HatScheT::Exception &) {
+              newRes = &rm->makeResource(res->getName(), resourceLimits.at((Resource *) res), res->getLatency(),
+                                         res->getBlockingTime());
           }
           rm->registerVertex(v, newRes);
       }
       // Create Edges
       auto edges = sc->getSCCEdges();
-      for (auto &e : edges){
+      for (auto &e : edges) {
           auto &newSrc = vertexToSccVertex.at(&e->getVertexSrc());
           auto &newDst = vertexToSccVertex.at(&e->getVertexDst());
           auto &newE = gr->createEdge(*newSrc, *newDst, e->getDistance(), e->getDependencyType());
@@ -198,25 +216,26 @@ namespace HatScheT {
   }
 
   map<Vertex *, int>
-  SMTSCCScheduler::sdcSchedule(std::shared_ptr<Graph>&gr, std::shared_ptr<ResourceModel>&rm, map<Vertex*, Vertex*>&sccVertexToVertex) {
-      map<Vertex*, int> relSched;
-      map<Vertex*, int> relSchedTemp;
+  SCCPreprocessingTemplate::sdcSchedule(std::shared_ptr<Graph> &gr, std::shared_ptr<ResourceModel> &rm,
+                                        map<Vertex *, Vertex *> &sccVertexToVertex) {
+      map<Vertex *, int> relSched;
+      map<Vertex *, int> relSchedTemp;
       relSchedTemp = Utility::getSDCAsapAndAlapTimes(&(*gr), &(*rm), this->II).first;
-      for (auto &vtPair : relSchedTemp){
+      for (auto &vtPair : relSchedTemp) {
           relSched[sccVertexToVertex.at(vtPair.first)] = vtPair.second;
       }
       return relSched;
   }
 
-  void SMTSCCScheduler::computeComplexSchedule(deque<SCC*> &complexSCCs) {
+  void SCCPreprocessingTemplate::computeComplexSchedule(deque<SCC *> &complexSCCs) {
       // Creating maps
-      map<Vertex*, Vertex*> sccVertexToVertex;
-      map<Vertex*, Vertex*> vertexToSccVertex;
+      map<Vertex *, Vertex *> sccVertexToVertex;
+      map<Vertex *, Vertex *> vertexToSccVertex;
       // Generate Graph and ResourceModel
       auto gr = std::make_shared<Graph>();
       auto rm = std::make_shared<ResourceModel>();
-      // Inset Vertices
-      for (auto &sc : complexSCCs){
+      // Insert Vertices
+      for (auto &sc : complexSCCs) {
           for (auto &v : sc->getVerticesOfSCC()) {
               auto &newV = gr->createVertex(v->getId());
               sccVertexToVertex[&newV] = v;
@@ -225,12 +244,12 @@ namespace HatScheT {
       }
       resetResourceModel(); // Needed because of strange exception in constructor of resource class.
       // Create Resources
-      for (auto &v : gr->Vertices()){
+      for (auto &v : gr->Vertices()) {
           auto res = resourceModel.getResource(sccVertexToVertex.at(v));
-          Resource* newRes;
+          Resource *newRes;
           try {
               newRes = rm->getResource(res->getName());
-          }catch (HatScheT::Exception&){
+          } catch (HatScheT::Exception &) {
               newRes = &rm->makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
           }
           rm->registerVertex(v, newRes);
@@ -246,122 +265,112 @@ namespace HatScheT {
               newE.setDelay(e->getDelay());
           }
       }
-      auto bigComplexShedule = smtSchedule(gr, rm, sccVertexToVertex);
-      if (!scheduleFound){
+      auto bigComplexShedule = computeSchedule(gr, rm, sccVertexToVertex);
+      if (!scheduleFound) {
           return;
       }
-      for (auto &sc : complexSCCs){
-          map<Vertex*, int> cmplxRelSchedTemp;
-          for (auto &v : sc->getVerticesOfSCC()){
+      for (auto &sc : complexSCCs) {
+          map<Vertex *, int> cmplxRelSchedTemp;
+          for (auto &v : sc->getVerticesOfSCC()) {
               cmplxRelSchedTemp[v] = bigComplexShedule.at(v); // % (int)II;
-              auto rp = (Resource*)resourceModel.getResource(v);
+              auto rp = (Resource *) resourceModel.getResource(v);
               try {
                   usedFUsInModSlot.at({rp, bigComplexShedule.at(v) % (int) II})++;
-              }catch(std::out_of_range&){
-                  usedFUsInModSlot[{rp, bigComplexShedule.at(v) % (int)II}] = 1;
+              } catch (std::out_of_range &) {
+                  usedFUsInModSlot[{rp, bigComplexShedule.at(v) % (int) II}] = 1;
               }
           }
           complexRelSchedules[sc] = cmplxRelSchedTemp;
       }
   }
 
-  map<Vertex *, int> SMTSCCScheduler::smtSchedule(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm,
-                                                  map<Vertex *, Vertex *> &sccVertexToVertex) {
-      map<Vertex*, int> relSched;
-      map<Vertex*, int> relSchedTemp;
+  map<Vertex *, int> SCCPreprocessingTemplate::computeSchedule(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm,
+                                                               map<Vertex *, Vertex *> &sccVertexToVertex) {
+      map<Vertex *, int> relSched;
+      map<Vertex *, int> relSchedTemp;
       bool foundSchedule;
+      shared_ptr<SchedulerBase> sbPtr;
       if (!iigiven) {
-          do {
-              SMTBinaryScheduler smt(*gr, *rm, this->II);
-              //auto smt = new SMTBinaryScheduler (*gr, *rm, this->II);
-              smt.setQuiet(quiet);
-              int maxSCCslat;
-              if (mode == schedule_t::fast){
-                  maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int) II);
-                  smt.setMaxLatencyConstraint(maxSCCslat);
-              }else if (mode == schedule_t::optimal){
-                  maxSCCslat = expandSCC(gr, rm) + (int)II;
-                  smt.setMaxLatencyConstraint(maxSCCslat);
-              }else {
-                  //Let Scheduler Search...
+          if (scheduler == schedulerSel::SMT) {
+              if (!z3Avail){
+                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an SMT-Based Scheduler without Z3. Check Z3-Status!"));
               }
-              if (timeLimit > 0) { smt.setSolverTimeout(timeLimit); }
-              smt.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
-              smt.schedule();
-              timeBudget = ceil((double)smt.getTimeBudget()/1000);
-              if( smt.getTimeouts() > 0 ) { timeouts++; }
-              if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << " TimeBudget: " << timeBudget <<endl; }
-              foundSchedule = smt.getScheduleFound();
-              if (foundSchedule) {
-                  relSchedTemp = smt.getSchedule();
-                  scheduleFound = smt.getScheduleFound();
-                  this->II = smt.getII();
-                  for (auto &r : resourceModel.Resources()) {
-                      for (int i = 0; i < II; i++) {
-                          usedFUsInModSlot[{r, i}] = 0;
-                      }
-                  }
+              relSchedTemp = scheduleWithScheduler(gr, rm, sbPtr);
+          }else if(scheduler == schedulerSel::ED97){
+              if (!scalpAvail){
+                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an ILP-Based Scheduler without ScaLP. Check ScaLP-Status!"));
               }
-              if (!foundSchedule) { this->II += 1; }
-              //delete smt;
-          } while (!foundSchedule and ((int)this->II < maxII));
-      }else{
-          auto smt = new SMTBinaryScheduler(*gr, *rm, this->II);
-          smt->setQuiet(quiet);
-          int maxSCCslat;
-          if (mode == schedule_t::fast){
-              maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int)II);
-              smt->setMaxLatencyConstraint(maxSCCslat);
-          }else if (mode == schedule_t::optimal){
-              maxSCCslat = expandSCC(gr, rm) + (int)II;
-              smt->setMaxLatencyConstraint(maxSCCslat);
-          }else{
-              //Let Scheduler search...
+              relSchedTemp = scheduleWithScheduler(gr, rm, sbPtr);
+          }else if(scheduler == schedulerSel::MOOVAC){
+              if (!scalpAvail){
+                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an ILP-Based Scheduler without ScaLP. Check ScaLP-Status!"));
+              }
+              shared_ptr<MoovacScheduler> moovac(new MoovacScheduler(*gr, *rm, {"Gurobi"}));
+              if (timeLimit > 0) { moovac->setSolverTimeout(timeLimit); }
+              sbPtr = moovac;
+              relSchedTemp = scheduleWithScheduler(gr, rm, sbPtr);
+              if (moovac->getTimeouts() > 0) { timeouts++; }
+              if (!quiet) {
+                  cout << "Timeouts of Scheduler: " << timeouts << " TimeBudget: " << timeBudget << endl;
+              }
+          }else if(scheduler == schedulerSel::SAT){
+//              if (!scalpAvail){
+//                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an ILP-Based Scheduler without ScaLP. Check ScaLP-Status!"));
+//              }
+              relSchedTemp = scheduleWithScheduler(gr, rm, sbPtr);
           }
-          if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
-          smt->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
-          smt->schedule();
-          timeBudget = ceil((double)smt->getTimeBudget()/1000);
-          //timeBudget = timeBudget - (int)smt->getSolvingTime();
-          if( smt->getTimeouts() > 0 ) { timeouts++; }
-          if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << endl; }
-          scheduleFound = smt->getScheduleFound();
-          relSchedTemp = smt->getSchedule();
-          delete smt;
+      } else {
+          if (scheduler == schedulerSel::SMT) {
+              if (!z3Avail) {
+                  throw (HatScheT::Exception(
+                      "SCCPreprocessingTemplate: You are trying to use an SMT-Based Scheduler without Z3. Check Z3-Status!"));
+              }
+              relSchedTemp = scheduleWithSchedulerGivenII(gr, rm, sbPtr);
+          }else if(scheduler == schedulerSel::ED97){
+              if (!scalpAvail){
+                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an ILP-Based Scheduler without ScaLP. Check ScaLP-Status!"));
+              }
+              relSchedTemp = scheduleWithSchedulerGivenII(gr, rm, sbPtr);
+          }else if(scheduler == schedulerSel::MOOVAC){
+              if (!scalpAvail){
+                  throw (HatScheT::Exception("SCCPreprocessingTemplate: You are trying to use an ILP-Based Scheduler without ScaLP. Check ScaLP-Status!"));
+              }
+              relSchedTemp = scheduleWithSchedulerGivenII(gr, rm, sbPtr);
+          }
       }
 
-      if (!quiet){
-          if (verifyModuloSchedule(*gr, *rm, relSchedTemp,(int)this->II)){
-              if (!quiet){ cout << "Big Complex Relative Schedule is Valid!" << endl; }
+      if (!quiet) {
+          if (verifyModuloSchedule(*gr, *rm, relSchedTemp, (int) this->II)) {
+              if (!quiet) { cout << "Big Complex Relative Schedule is Valid!" << endl; }
           } else {
-              if (!quiet){ cout << "Big Complex Relative Schedule is NOT!!!!!!!111111 Valid!" << endl; }
+              if (!quiet) { cout << "Big Complex Relative Schedule is NOT!!!!!!!111111 Valid!" << endl; }
           }
       }
 
-      for (auto &vtPair : relSchedTemp){
+      for (auto &vtPair : relSchedTemp) {
           relSched[sccVertexToVertex.at(vtPair.first)] = vtPair.second;
       }
 
       return relSched;
   }
 
-  SMTSCCScheduler::~SMTSCCScheduler() {
-      for (auto &it : topoSortedSccs){
+  SCCPreprocessingTemplate::~SCCPreprocessingTemplate() {
+      for (auto &it : topoSortedSccs) {
           delete it.first;
       }
   }
 
-  map<SCC *, int> SMTSCCScheduler::computeTopologicalSCCOrder(vector<SCC*>&tempsccs) {
+  map<SCC *, int> SCCPreprocessingTemplate::computeTopologicalSCCOrder(vector<SCC *> &tempsccs) {
       // Creating maps
-      map<SCC*, Vertex*> sccToVertex;
-      map<Vertex*, SCC*> locVertexToScc;
+      map<SCC *, Vertex *> sccToVertex;
+      map<Vertex *, SCC *> locVertexToScc;
       // Generate Graph and ResourceModel
       auto gr = std::make_shared<Graph>();
       auto rm = std::make_shared<ResourceModel>();
       // Create a Dummyresource
       auto &dummyRes = rm->makeResource("SCC_DUMMY", UNLIMITED, 1);
       // Insert SCCs
-      for (auto &sc : tempsccs){
+      for (auto &sc : tempsccs) {
           auto &sccV = gr->createVertex(sc->getId());
           sccToVertex[sc] = &sccV;
           locVertexToScc[&sccV] = sc;
@@ -378,7 +387,7 @@ namespace HatScheT {
                   break;
               }
           }
-          if (isInsideSCC){
+          if (isInsideSCC) {
               continue;
           }
           //Saving Edge for later.
@@ -393,18 +402,17 @@ namespace HatScheT {
       }
 
       // Topological Order with Asap Schedule:
-      ALAPScheduler alap (*gr, *rm);
-      map<SCC*, int> inverseSccPriority;
+      ALAPScheduler alap(*gr, *rm);
+      map<SCC *, int> inverseSccPriority;
       alap.schedule();
       auto asapSched = alap.getSchedule();
-      for (auto &vtPair: asapSched){
+      for (auto &vtPair: asapSched) {
           inverseSccPriority[locVertexToScc.at(vtPair.first)] = vtPair.second;
       }
-
       return inverseSccPriority;
   }
 
-  void SMTSCCScheduler::combineRelScheds() {
+  void SCCPreprocessingTemplate::combineRelScheds() {
       //Going through topo sorted SCCs, and deciding based on sccType, what to do:
       for (auto &sc : topoSortedSccs) {
           auto sccType = sc.first->getSccType();
@@ -450,7 +458,7 @@ namespace HatScheT {
                               usedFUsInModSlot.at({rp, slot})++;
                               break;
                           }
-                      }catch (std::out_of_range&){
+                      } catch (std::out_of_range &) {
                           cout << rp->getName() << " Slot " << slot << " II: " << II << endl;
                           throw (HatScheT::Exception("Doofer Error"));
                       }
@@ -497,24 +505,27 @@ namespace HatScheT {
                   auto tDstRel = this->complexRelSchedules.at(sc.first).at(vDst);
                   auto distance = e->getDistance();
                   auto delay = e->getDelay();
-                  auto minOffset = (int) std::ceil(((double) tSrc - tDstRel + lSrc + delay - (distance * this->II)) / (this->II));
+                  auto minOffset = (int) std::ceil(
+                      ((double) tSrc - tDstRel + lSrc + delay - (distance * this->II)) / (this->II));
                   minOffset = std::max(minOffset, 0);
                   maxMinOffset = std::max(maxMinOffset, minOffset);
               }
               // offset every vertex by the minimum offset
               for (auto &vtpair : complexRelSchedules.at(sc.first)) {
-                  int tSrc = vtpair.second + (int)(maxMinOffset * II);
+                  int tSrc = vtpair.second + (int) (maxMinOffset * II);
                   startTimes.at(vtpair.first) = tSrc;
               }
           }
       }
   }
 
-  void SMTSCCScheduler::setSolverTimeout(int seconds) {
-        timeLimit = seconds;
+  void SCCPreprocessingTemplate::setSolverTimeout(int seconds) {
+      timeLimit = seconds;
   }
 
-  int SMTSCCScheduler::expandSCC(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm) {
+#ifdef USE_Z3
+
+  int SCCPreprocessingTemplate::expandSCC(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm) {
 
       KosarajuSCC kscc(*gr);
       auto locSCCs = kscc.getSCCs();
@@ -587,16 +598,87 @@ namespace HatScheT {
       return *std::max_element(maxtimes.begin(), maxtimes.end());
   }
 
-  void SMTSCCScheduler::setMode(schedule_t schedulemode) {
-      if (schedulemode == schedule_t::fast){
+#endif
+
+  void SCCPreprocessingTemplate::setMode(schedule_t schedulemode) {
+      if (schedulemode == schedule_t::fast) {
           cout << "'Fast-Mode'" << endl;
-      }else if (schedulemode == schedule_t::optimal){
+      } else if (schedulemode == schedule_t::optimal) {
           cout << "'Optimal-Mode'" << endl;
-      }else if (schedulemode == schedule_t::automatic){
+      } else if (schedulemode == schedule_t::automatic) {
           cout << "'Automatic-Mode'" << endl;
       }
       this->mode = schedulemode;
   }
-}
 
-#endif //USE_Z3
+  void SCCPreprocessingTemplate::getSolverStatus() {
+#ifdef USE_Z3
+      this->z3Avail = true;
+#else
+      this->z3Avail = false;
+#endif
+
+#ifdef USE_SCALP
+      this->scalpAvail = true;
+#else
+      this->scalpAvail = false;
+#endif
+  }
+
+  map<Vertex *, int>
+  SCCPreprocessingTemplate::scheduleWithSchedulerGivenII(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm, shared_ptr<SchedulerBase> &sbPtr) {
+      MoovacScheduler moovac(*gr, *rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}, (int)this->II);
+      moovac.setQuiet(quiet);
+      int maxSCCslat;
+      if (mode == schedule_t::fast) {
+          maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int) II);
+          moovac.setMaxLatencyConstraint(maxSCCslat);
+      } else if (mode == schedule_t::optimal) {
+          maxSCCslat = expandSCC(gr, rm) + (int) II;
+          moovac.setMaxLatencyConstraint(maxSCCslat);
+      } else {
+          //Let Scheduler search...
+      }
+      if (timeLimit > 0) { moovac.setSolverTimeout(timeLimit); }
+      moovac.schedule();
+      timeBudget = 600;//ToDo: Has to be changed
+      if (moovac.getTimeouts() > 0) { timeouts++; }
+      if (!quiet) { cout << "Timeouts of Scheduler: " << timeouts << endl; }
+      scheduleFound = moovac.getScheduleFound();
+      return moovac.getSchedule();
+  }
+
+  map<Vertex *, int>
+  SCCPreprocessingTemplate::scheduleWithScheduler(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm, shared_ptr<SchedulerBase> &sbPtr) {
+      map<Vertex *, int> relSchedTemp;
+      bool foundSchedule;
+      do {
+          int maxSCCslat;
+          if (mode == schedule_t::fast) {
+              maxSCCslat = std::max(expandSCC(gr, rm) + numOfCmplxSCCs - 1, (int) II);
+              sbPtr->setMaxLatencyConstraint(maxSCCslat);
+          } else if (mode == schedule_t::optimal) {
+              maxSCCslat = expandSCC(gr, rm) + (int) II;
+              sbPtr->setMaxLatencyConstraint(maxSCCslat);
+          } else {
+              //Let Scheduler Search...
+          }
+          sbPtr->schedule();
+          timeBudget = 600; //ToDo: Has to be changed
+          foundSchedule = sbPtr->getScheduleFound();
+          if (foundSchedule) {
+              relSchedTemp = sbPtr->getSchedule();
+              scheduleFound = sbPtr->getScheduleFound();
+              this->II = sbPtr->getII();
+              for (auto &r : resourceModel.Resources()) {
+                  for (int i = 0; i < II; i++) {
+                      usedFUsInModSlot[{r, i}] = 0;
+                  }
+              }
+          }
+          if (!foundSchedule) { this->II += 1; }
+      } while (!foundSchedule and ((int) this->II < maxII));
+
+      return relSchedTemp;
+  }
+}

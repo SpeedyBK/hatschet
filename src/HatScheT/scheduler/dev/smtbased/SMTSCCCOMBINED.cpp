@@ -25,16 +25,15 @@ namespace HatScheT{
 
       SMTSCCScheduler smtSCC(this->g, this->resourceModel);
       smtSCC.setQuiet(quiet);
-      smtSCC.setMode(schedule_t::fast);
+      smtSCC.setMode(SMTSCCScheduler::schedule_t::automatic);
       smtSCC.setSolverTimeout(timeLimit);
       smtSCC.schedule();
       scheduleFound = smtSCC.getScheduleFound();
+      timeBudget = smtSCC.getTimeBudget();
       if (scheduleFound) {
           firstObjectiveOptimal = smtSCC.getObjectivesOptimal().first;
-          scheduleFound = smtSCC.getScheduleFound();
           II = smtSCC.getII();
           startTimes = smtSCC.getSchedule();
-          timeBudget = ceil((double)smtSCC.getTimeBudget()/1000);
       }
 
       if (scheduleFound) {
@@ -43,21 +42,21 @@ namespace HatScheT{
           cout << " Heuristic Schedule for II = " << II << " and Latency = " << smtSCC.getScheduleLength()
                << " found..." << endl;
           cout << "*******************************************************************" << endl;
-          cout << endl << "Searching for better Latency... Time Left: " << timeBudget << endl << endl;
+          cout << endl << "SMTCOMBINED::Searching for better Latency... Time Left: " << timeBudget << endl << endl;
           SMTBinaryScheduler smtBIN(this->g, this->resourceModel, II);
           smtBIN.setQuiet(quiet);
-          smtBIN.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
+          smtBIN.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
           smtBIN.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
           smtBIN.setSolverTimeout(timeBudget);
           smtBIN.schedule();
           if (smtBIN.getScheduleFound()) {
+              cout << "SMTCOMBINED::Better Schedule found..." << endl;
               startTimes = smtBIN.getSchedule();
               secondObjectiveOptimal = smtBIN.getObjectivesOptimal().second;
           }
       } else {
           II = -1;
       }
-
   }
 
   void SMTSCCCOMBINED::setSolverTimeout(int seconds) {

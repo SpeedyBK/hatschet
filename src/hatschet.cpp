@@ -526,6 +526,7 @@ int main(int argc, char *args[]) {
                 if (str == "SMTSCC" && !HatScheT::Tests::smtScc()) exit(-1);
                 if (str == "SMTCDCL" && !HatScheT::Tests::smtCDCLTest()) exit(-1);
                 if (str == "SMTCOMB" && !HatScheT::Tests::smtCombined()) exit(-1);
+                if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);
 #endif
 				exit(0);
 			} else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
@@ -985,7 +986,7 @@ int main(int argc, char *args[]) {
                 case SMTSCC:
                     scheduler = new HatScheT::SMTSCCScheduler(g, rm);
                     isModuloScheduler = true;
-                    ((HatScheT::SMTSCCScheduler*) scheduler)->setMode(HatScheT::schedule_t::fast);
+                    ((HatScheT::SMTSCCScheduler*) scheduler)->setMode(HatScheT::SMTSCCScheduler::schedule_t::automatic);
                     if (timeout > 0) ((HatScheT::SMTSCCScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
                 case SMTCOMBINED:

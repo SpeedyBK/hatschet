@@ -1,12 +1,9 @@
 //
-// Created by bkessler on 8/11/22.
+// Created by bkessler on 10/5/22.
 //
-
-#ifndef HATSCHET_SMTSCCSCHEDULER_H
-#define HATSCHET_SMTSCCSCHEDULER_H
-
+#ifndef HATSCHET_SCCPREPROCESSINGTEMPLATE_H
+#define HATSCHET_SCCPREPROCESSINGTEMPLATE_H
 #pragma once
-#ifdef USE_Z3
 
 #include <iostream>
 #include <memory>
@@ -19,17 +16,19 @@
 
 namespace HatScheT {
 
-  class SMTSCCScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+  class SCCPreprocessingTemplate : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 
   public:
 
     enum class schedule_t {optimal, fast, automatic};
 
-    SMTSCCScheduler(Graph &g, ResourceModel &resourceModel);
+    enum class schedulerSel {MOOVAC, ED97, SMT, SAT};
 
-    SMTSCCScheduler(Graph &g, ResourceModel &resourceModel, double II);
+    SCCPreprocessingTemplate(Graph &g, ResourceModel &resourceModel);
 
-    ~SMTSCCScheduler() override;
+    SCCPreprocessingTemplate(Graph &g, ResourceModel &resourceModel, double II);
+
+    ~SCCPreprocessingTemplate() override;
 
     void schedule() override;
 
@@ -40,6 +39,13 @@ namespace HatScheT {
     int getTimeBudget() const { return timeBudget; }
 
   private:
+
+    schedulerSel scheduler = schedulerSel::MOOVAC;
+
+    void getSolverStatus();
+
+    bool scalpAvail;
+    bool z3Avail;
 
     map<SCC*, int> inversePriority;
 
@@ -76,7 +82,7 @@ namespace HatScheT {
     map<SCC*, map<Vertex*, int>> basicRelSchedules;
 
     void computeComplexSchedule(deque<SCC*> &complexSCCs);
-    map<Vertex*, int> smtSchedule(std::shared_ptr<Graph>&gr, std::shared_ptr<ResourceModel>&rm, map<Vertex*, Vertex*>&sccVertexToVertex);
+    map<Vertex*, int> computeSchedule(std::shared_ptr<Graph>&gr, std::shared_ptr<ResourceModel>&rm, map<Vertex*, Vertex*>&sccVertexToVertex);
     map<SCC*, map<Vertex*, int>> complexRelSchedules;
 
     map<Resource*, int>resourceLimits;
@@ -89,10 +95,11 @@ namespace HatScheT {
     schedule_t mode;
     int numOfCmplxSCCs;
 
+    map<Vertex*, int> scheduleWithScheduler(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm, shared_ptr<SchedulerBase> &sbPtr);
+
+    map<Vertex*, int> scheduleWithSchedulerGivenII(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm, shared_ptr<SchedulerBase> &sbPtr);
   };
 
 }
 
-#endif //USE_Z3
-
-#endif //HATSCHET_SMTSCCSCHEDULER_H
+#endif //HATSCHET_SCCPREPROCESSINGTEMPLATE_H

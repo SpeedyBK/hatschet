@@ -132,7 +132,7 @@ namespace HatScheT {
       s.setEarliestStartTimes(this->earliestStartTimes);
       s.setLatestStartTimeDifferences(this->latestStartTimeDifferences);
       s.setTargetLatency(this->sccGraphMaxLat);
-      cout << "sccGraphMaxLat: " << sccGraphMaxLat << endl;
+      //cout << "sccGraphMaxLat: " << sccGraphMaxLat << endl;
       s.schedule();
       this->scheduleFound = s.getScheduleFound();
       if (!this->scheduleFound) {
@@ -631,7 +631,7 @@ namespace HatScheT {
           // init visited container
           for (auto &v : sccVertices) {
               if (!this->quiet) {
-                  //std::cout << "  " << v->getName() << std::endl;
+                  std::cout << "  " << v->getName() << std::endl;
               }
               visited[v] = false;
               outgoingEdges[v] = {};
@@ -979,7 +979,7 @@ namespace HatScheT {
       std::map<Vertex*, int> latestSCCStartTimes;
       for (auto &v : sccVertices) {
           latestSCCStartTimes[v] = (int)std::round(results.at(vars.at(v)));
-          cout << latestSCCStartTimes.at(v) << endl;
+          //cout << latestSCCStartTimes.at(v) << endl;
       }
       // return results
       return {earliestSCCStartTimes, latestSCCStartTimes};

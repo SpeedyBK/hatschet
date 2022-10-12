@@ -86,14 +86,14 @@ void EichenbergerDavidson97Scheduler::schedule()
         startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
       if(this->quiet==false) {
-        std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
+        std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II = " << II << std::endl;
         for(auto it : this->startTimes) {
           std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
         }
       }
       break;
     }
-    if(!feasible and !this->quiet) cout << "  II" << candII << " : " << this->stat << endl;
+    if(!feasible and !this->quiet) cout << "  II " << candII << " : " << this->stat << endl;
   }
   if(scheduleFound == false) this->II = -1;
   if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
@@ -116,7 +116,7 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   setUpSolverSettings();
 
   if(this->quiet==false) {
-    std::cout << "ED97: attempt II=" << candII << std::endl;
+    std::cout << "ED97: attempt II = " << candII << std::endl;
     std::cout << "ED97: solver timeout = " << this->solver->timeout << " (sec)" << endl;
   }
 

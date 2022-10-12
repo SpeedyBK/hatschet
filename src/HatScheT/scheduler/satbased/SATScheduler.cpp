@@ -332,15 +332,13 @@ namespace HatScheT {
       if (!this->quiet) {
           std::cout << "SATScheduler: creating dependency constraints" << std::endl;
       }
-      int numEdges = 0;
       for (auto &e : this->g.Edges()) {
           auto *vSrc = &e->getVertexSrc();
           auto *vDst = &e->getVertexDst();
-          numEdges++;
           if (!this->quiet) {
               std::cout << "SATScheduler: creating dependency constraint for edge '" << e->getId() << "': '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
-              cout << "Source: " << earliestStartTime.at(vSrc) << " / " << latestStartTime.at(vSrc) << endl;
-              cout << "Destination: " << earliestStartTime.at(vDst) << " / " << latestStartTime.at(vDst) << endl;
+//              cout << "Source: " << earliestStartTime.at(vSrc) << " / " << latestStartTime.at(vSrc) << endl;
+//              cout << "Destination: " << earliestStartTime.at(vDst) << " / " << latestStartTime.at(vDst) << endl;
           }
           auto lSrc = this->resourceModel.getVertexLatency(vSrc);
           auto distance = e->getDistance();
@@ -364,7 +362,6 @@ namespace HatScheT {
               }
           }
       }
-      cout << "Num of Edges: " << numEdges << endl;
       // check timeout
       if (this->terminator.terminate()) {
           return;

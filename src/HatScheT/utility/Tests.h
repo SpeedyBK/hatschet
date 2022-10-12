@@ -364,5 +364,11 @@ namespace HatScheT {
         */
         static bool smtCombined();
 
+       /*!
+        * test functionality of SCC-Preprocessor
+        * @return if test was passed
+        */
+        static bool SCCTemplateTest();
+
 	};
 }

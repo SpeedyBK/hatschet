@@ -28,8 +28,8 @@ namespace HatScheT
 
 RationalIISchedulerLayer::RationalIISchedulerLayer(Graph &g, ResourceModel &resourceModel, int M, int S) :
 	SchedulerBase(g, resourceModel), latencySequence() {
-  this->modulo = -1;
-  this->samples = -1;
+  	this->modulo = -1;
+  	this->samples = -1;
 	this->m_start = -1;
 	this->s_start = -1;
 	this->m_found = -1;
@@ -223,7 +223,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			if(!this->quiet) {
 				cout << "------------------------" << endl;
 				cout << "RationalIISchedulerLayer.autoSetMAndS: auto setting samples to " << frac.second << endl;
-				cout << "RationalIISchedulerLayer.autoSetMAndS:auto setting modulo to " << frac.first << endl;
+				cout << "RationalIISchedulerLayer.autoSetMAndS: auto setting modulo to " << frac.first << endl;
 				cout << "------------------------" << endl;
 			}
 			this->samples = frac.second;

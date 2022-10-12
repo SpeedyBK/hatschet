@@ -113,14 +113,15 @@ public:
       return this->useOptimalBinding;
   }
   /*!
- * enable/disable debug couts
- * @param q
- */
+   * enable/disable debug couts
+   * @param q
+   */
   void setQuiet(bool q) { this->quiet = q; }
+
 protected:
   /*!
- * no couts if this is true
- */
+   * no couts if this is true
+   */
   bool quiet;
   /*!
    * \brief resourceModel
@@ -147,12 +148,13 @@ protected:
    */
   std::map<const Vertex*,int> binding;
   /*!
- * \brief scheduleFound
- */
+   * \brief scheduleFound
+   */
   bool scheduleFound;
   /*!
    * \brief use this flag to determine optimal binding using ILP
    */
   bool useOptimalBinding;
+
 };
 }

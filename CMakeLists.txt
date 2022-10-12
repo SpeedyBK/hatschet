@@ -150,6 +150,7 @@ src/HatScheT/TargetModel.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/layers/RationalIISchedulerLayer.cpp
+src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
@@ -177,7 +178,9 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
 src/HatScheT/utility/SDCSolver.cpp
-src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h)
+src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp
+src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
+src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.cpp)
 
 
 set(HatScheT_HEADERS
@@ -186,6 +189,7 @@ src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
 src/HatScheT/base/IterativeSchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
+src/HatScheT/layers/IterativeModuloSchedulerLayer.h
 src/HatScheT/TargetModel.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
@@ -261,8 +265,9 @@ src/HatScheT/utility/FibonacciHeap.h
 src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
 src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
 src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h
-src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
-src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h)
+src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h
+src/HatScheT/scheduler/dev/Moovac2Temp.h)
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -297,7 +302,8 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/OptimalIntegerIIBinding.cpp
 src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
-src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
+src/HatScheT/scheduler/dev/Moovac2Temp.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
 
 IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
@@ -329,6 +335,12 @@ IF(Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
             src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.cpp)
 ENDIF(Z3_H AND Z3_LIB)
+
+IF((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h
+        )
+ENDIF()
 
 add_library(hatschet ${HatScheT_SOURCES})
 add_executable(hatschet-bin src/hatschet.cpp)
