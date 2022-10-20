@@ -47,8 +47,17 @@ namespace HatScheT {
     * each scheduler should overload this function for one schedule iteration
     * II is already set automatically by this class
     */
-    virtual void scheduleIteration() {
+    virtual void scheduleIteration()
+    {
         throw HatScheT::Exception("IterativeModuloSchedulerLayer::scheduleIteration should never be called!");
+    }
+    /*!
+     * if a scheduler needs to setup stuff before iterative scheduling, than this function has to be overloaded.
+     * Per default it just does nothing.
+     */
+    virtual void scheduleInit()
+    {
+        if (!this->quiet) { cout << "IterativeModuloSchedulerLayer: nothing to init..." << endl; }
     }
 
     /*!

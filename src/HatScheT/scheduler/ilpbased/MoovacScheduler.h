@@ -41,7 +41,6 @@ namespace HatScheT
 
     MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
 
-    void scheduleIteration() override;
     /*!
      * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
      * \return
@@ -65,6 +64,10 @@ namespace HatScheT
     virtual std::map<Edge*,int> getLifeTimes();
 
   protected:
+    /*!
+     * \brief Schedule Iteration for one II.
+     */
+    void scheduleIteration() override;
     /*!
      * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
      */

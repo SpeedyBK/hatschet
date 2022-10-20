@@ -16,6 +16,8 @@
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    -- 20.10.2022 Benjamin Lagershausen-Keßler: Integrated "IterativeModuloSchedulerLayer" Class
 */
 #pragma once
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
@@ -47,7 +49,7 @@ public:
   /*!
    * schedule the provided problem
    */
-  virtual void schedule();
+  virtual void scheduleOLD();
   /*!
    * get the hardware bindings of the determined II
    * @return
@@ -110,6 +112,11 @@ public:
    * @return
    */
   vector<int > getFoundIIs();
+
+protected:
+
+  void scheduleIteration() override;
+
 private:
   /*!
    * extension of the base class to use RAMS scheduling

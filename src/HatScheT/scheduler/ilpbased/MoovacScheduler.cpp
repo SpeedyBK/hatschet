@@ -467,7 +467,10 @@ namespace HatScheT
       this->constructProblem();
       this->setSolverTimeout(timeBudget);
 
-      if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
+      if(this->writeLPFile == true)
+      {
+          this->solver->writeLP(to_string(this->II));
+      }
       //solve
       stat = this->solver->solve();
 
