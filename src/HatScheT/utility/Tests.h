@@ -370,5 +370,11 @@ namespace HatScheT {
         */
         static bool SCCTemplateTest();
 
+       /*!
+        * test functionality of Iterative Layer Class
+        * @return if test was passed
+        */
+        static bool iterativeLayerTest();
+
 	};
 }

@@ -74,7 +74,6 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
 #include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h>
-#include <HatScheT/scheduler/dev/Moovac2Temp.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4094,21 +4093,20 @@ namespace HatScheT {
       HatScheT::XMLResourceReader readerRes(&rm);
 //      string resStr = "benchmarks/ChStone_Pareto/aes/graph2_RM1.xml";
 //      string graphStr = "benchmarks/ChStone/aes/graph2.graphml";
-      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
 //      string resStr = "benchmarks/ChStone/dfsin/graph1_RM.xml";
 //      string graphStr = "benchmarks/ChStone/dfsin/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      //SCCPreprocessingTemplate scc(g, rm, 82);
+      SCCPreprocessingTemplate scc(g, rm, 82);
       auto start_t = std::chrono::high_resolution_clock::now();
-      //scc.setQuiet(false);
-      //scc.setSolverTimeout(600);
-      //scc.setMode(SCCPreprocessingTemplate::schedule_t::fast);
-      //scc.schedule();
-      Moovac2Temp scc(g, rm, {"Gurobi"});
+      scc.setQuiet(false);
+      scc.setSolverTimeout(600);
+      scc.setMode(SCCPreprocessingTemplate::schedule_t::fast);
+      scc.schedule();
       scc.setQuiet(false);
       scc.schedule();
       auto II = scc.getII();
@@ -4126,4 +4124,41 @@ namespace HatScheT {
           return false;
       }
   }
+
+  bool Tests::iterativeLayerTest() {
+
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+//      string resStr = "benchmarks/ChStone_Pareto/aes/graph2_RM1.xml";
+//      string graphStr = "benchmarks/ChStone/aes/graph2.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+//      string resStr = "benchmarks/ChStone/dfsin/graph1_RM.xml";
+//      string graphStr = "benchmarks/ChStone/dfsin/graph1.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+      auto start_t = std::chrono::high_resolution_clock::now();
+      MoovacScheduler moovac(g, rm, {"Gurobi"});
+      moovac.setQuiet(false);
+      moovac.setTimeBudget(1000);
+      moovac.schedule();
+      auto II = moovac.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, moovac.getSchedule(), II)){
+          std::cout << "Tests::SCCTemplateTest: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << moovac.getScheduleLength() << std::endl;
+          return true;
+      }else{
+          std::cout << "Tests::smtSCCSchSCCTemplateTesteduler: invalid modulo schedule found :( II=" << moovac.getII() << std::endl;
+          return false;
+      }
+  }
+
 }

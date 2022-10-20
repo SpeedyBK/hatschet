@@ -22,10 +22,10 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
 
     // ModuloSchedulerBase:
     this->firstObjectiveOptimal = true;
-    this->secondObjectiveOptimal = true;
+    this->secondObjectiveOptimal = false;
 
     // IterativeModuloSchedulerLayer:
-    this->disableObj = false;
+    this->disableSecObj = false;
     this->timeBudget = INT32_MAX/2;
     this->solvingTimePerIteration = 0;
 
@@ -51,6 +51,7 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
     // ----------------- //
     if(this->quiet)
     {
+        cout << "IterativeModuloSchedulerLayer: " << endl;
         cout << "Minimal II is " << this->minII << endl;
         cout << "Maximal II is " << this->maxII << endl;
         cout << "RecMin II is " << this->recMinII << endl;
@@ -63,16 +64,64 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // Define maxII if maxRuns Constraint is given:
     if (this->maxRuns > 0)
     {
-        maxII = (int)this->minII + maxRuns;
+        maxII = (int)this->minII + maxRuns - 1;
+        if(!this->quiet)
+        {
+            std::cout << "IterativeModuloSchedulerLayer: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
+            std::cout << "IterativeModuloSchedulerLayer: min/maxII = " << minII << " / " << maxII << std::endl;
+        }
     }
 
     // -------------------------------------- //
     // Iterative Search for best possible II: //
     // -------------------------------------- //
-    for (int ii = (int)minII; ii <= maxII; ii++){
+    if (!this->quiet)
+    {
+        cout << endl;
+        cout << "*********************************************************" << endl;
+        cout << "* IterativeModuloSchedulerLayer: Begin of Scheduling... *" << endl;
+        cout << "*********************************************************" << endl;
+        cout << endl;
+    }
+    // II - search - Loop
+    for (int ii = (int)minII; ii < maxII; ii++){
+        // For Debugging
+        if (!this->quiet)
+        {
+            cout << "IterativeModuloSchedulerLayer: " << ii - minII + 1 << ". Iteration, time budget: ";
+            cout << timeBudget * 1000 << " milliseconds." << endl;
+        }
+        // Time tracking begin.
         auto start_t = std::chrono::high_resolution_clock::now();
+        // Passing II from II - search - loop to class, so scheduler can use it.
+        this->II = ii;
+        // Schedule Iteration.
         scheduleIteration();
+        // Time tracking end.
         auto end_t = std::chrono::high_resolution_clock::now();
+        // Saving solving time.
         solvingTimePerIteration = floor(std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count());
+        // Print time for the current iteration.
+        if (!this->quiet)
+        {
+            cout << "IterativeModuloSchedulerLayer: Iteration done in " << solvingTimePerIteration << " milliseconds.";
+            cout << endl << endl;
+        }
+        // If a schedule is found, we break the loop.
+        // Scheduler has to fill the solution structure by itself!!!
+        if (scheduleFound)
+        {
+            return;
+        }
+    }
+    // ----------------------------------------------------- //
+    // Define what has to be done, when there is no schedule //
+    // ----------------------------------------------------- //
+    // For now, we just throw an expection
+    this->II = -1;
+    startTimes.clear();
+    if(!this->quiet)
+    {
+        cout << "IterativeModuloSchedulerLayer: Schedule Loop done, no schedule found!" << endl;
     }
 }

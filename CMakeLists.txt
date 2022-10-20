@@ -267,7 +267,7 @@ src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
 src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h
 src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h
 src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h
-src/HatScheT/scheduler/dev/Moovac2Temp.h)
+        )
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -302,8 +302,7 @@ src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
 src/HatScheT/utility/OptimalIntegerIIBinding.cpp
 src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
-src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
-src/HatScheT/scheduler/dev/Moovac2Temp.cpp)
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
 
 IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)

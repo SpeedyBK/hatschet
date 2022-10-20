@@ -24,10 +24,10 @@ namespace HatScheT {
     void schedule() final;
 
     /*!
-     * enable/disable objective function
+     * enable/disable the secondary objective (Latency minimization)
      * @param d
      */
-    void disableObjective(bool d) { this->disableObj = d; }
+    void disableSecObjective(bool d) { this->disableSecObj = d; }
 
     /*!
      * Getter for solvingtime of the current iteration.
@@ -52,9 +52,9 @@ namespace HatScheT {
     }
 
     /*!
-     * \brief use this flag to disable the minimizeObjective
+     * \brief use this flag to disable the secondary objective (No Latency minimization)
      */
-    bool disableObj;
+    bool disableSecObj;
 
     /*!
      * \brief Time available for an iteration in seconds
