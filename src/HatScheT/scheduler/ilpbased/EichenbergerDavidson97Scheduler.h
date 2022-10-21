@@ -44,11 +44,21 @@ public:
    */
   virtual void scheduleOLD(); // ToDo: Remove
 
+  /*!
+   * Mainly for debugging.
+   * @return Name of the scheduler
+   */
   string getName() override { return "ED97"; }
 
 protected:
 
+  /*!
+   * \brief Schedule Iteration for one II.
+   */
   void scheduleIteration() override;
+  /*!
+   * Initialize stuff before II-Search-Loop starts.
+   */
   void scheduleInit() override;
 
   virtual void setUpSolverSettings();

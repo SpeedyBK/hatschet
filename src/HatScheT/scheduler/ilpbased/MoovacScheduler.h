@@ -41,6 +41,10 @@ namespace HatScheT
 
     MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
 
+    /*!
+     * Mainly for debugging.
+     * @return Name of the scheduler
+     */
     string getName () override { return "MOOVAC"; }
 
     /*!
@@ -162,5 +166,6 @@ namespace HatScheT
      * \brief SLMax
      */
     unsigned int SLMax;
+
   };
 }

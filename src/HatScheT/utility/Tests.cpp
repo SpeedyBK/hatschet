@@ -4142,8 +4142,9 @@ namespace HatScheT {
       readerGraph.readGraph(graphStr.c_str());
 
       list<IterativeModuloSchedulerLayer*> schedulers;
-      schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}, 24));
-      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}, 24));
+      schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new ModSDC(g, rm, {"Gurobi"}));
 
       for (auto &scheduler : schedulers) {
           scheduler->setQuiet(false);

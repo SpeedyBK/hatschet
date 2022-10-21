@@ -44,7 +44,7 @@ namespace HatScheT {
 
     /*!
      * Mainly for debugging.
-     * @return Name of the Scheduler
+     * @return Name of the scheduler
      */
     virtual string getName() { return "Unnamed Scheduler"; }
 
@@ -57,6 +57,7 @@ namespace HatScheT {
     {
         throw HatScheT::Exception("IterativeModuloSchedulerLayer::scheduleIteration should never be called!");
     }
+
     /*!
      * if a scheduler needs to setup stuff before iterative scheduling, than this function has to be overloaded.
      * Per default it just does nothing.
@@ -65,6 +66,7 @@ namespace HatScheT {
     {
         if (!this->quiet) { cout << "IterativeModuloSchedulerLayer: nothing to init..." << endl; }
     }
+
     /*!
      * \brief use this flag to disable the secondary objective (No Latency minimization)
      */
