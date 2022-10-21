@@ -42,6 +42,12 @@ namespace HatScheT {
      */
     void setTimeBudget (int seconds) { this->timeBudget = seconds; }
 
+    /*!
+     * Mainly for debugging.
+     * @return Name of the Scheduler
+     */
+    virtual string getName() { return "Unnamed Scheduler"; }
+
   protected:
    /*!
     * each scheduler should overload this function for one schedule iteration
@@ -59,7 +65,6 @@ namespace HatScheT {
     {
         if (!this->quiet) { cout << "IterativeModuloSchedulerLayer: nothing to init..." << endl; }
     }
-
     /*!
      * \brief use this flag to disable the secondary objective (No Latency minimization)
      */

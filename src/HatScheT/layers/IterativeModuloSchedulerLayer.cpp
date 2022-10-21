@@ -97,7 +97,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         cout << endl;
     }
     // II - search - Loop
-    for (int ii = (int)minII; ii < maxII; ii++){
+    for (int ii = (int)minII; ii <= maxII; ii++){
         // For Debugging
         if (!this->quiet)
         {
@@ -130,7 +130,6 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // ----------------------------------------------------- //
     // Define what has to be done, when there is no schedule //
     // ----------------------------------------------------- //
-    // For now, we just throw an expection
     this->II = -1;
     startTimes.clear();
     if(!this->quiet)

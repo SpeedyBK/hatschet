@@ -3740,8 +3740,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3980,8 +3980,8 @@ namespace HatScheT {
 	  ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4127,38 +4127,63 @@ namespace HatScheT {
 
   bool Tests::iterativeLayerTest() {
 
+	  bool success = true;
+	  vector<int> iterationIntervals;
+	  vector<int> latencys;
+
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-//      string resStr = "benchmarks/ChStone_Pareto/aes/graph2_RM1.xml";
-//      string graphStr = "benchmarks/ChStone/aes/graph2.graphml";
-      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
-//      string resStr = "benchmarks/ChStone/dfsin/graph1_RM.xml";
-//      string graphStr = "benchmarks/ChStone/dfsin/graph1.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
-      auto start_t = std::chrono::high_resolution_clock::now();
-      MoovacScheduler moovac(g, rm, {"Gurobi"});
-      moovac.setQuiet(false);
-      moovac.setTimeBudget(1000);
-      moovac.schedule();
-      auto II = moovac.getII();
-      auto end_t = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-      auto t = ((double)duration / 1000);
 
-      cout << "Solving Time: " << t << endl;
-      if (verifyModuloSchedule(g, rm, moovac.getSchedule(), II)){
-          std::cout << "Tests::SCCTemplateTest: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << II << " Latency: " << moovac.getScheduleLength() << std::endl;
-          return true;
-      }else{
-          std::cout << "Tests::smtSCCSchSCCTemplateTesteduler: invalid modulo schedule found :( II=" << moovac.getII() << std::endl;
-          return false;
+      list<IterativeModuloSchedulerLayer*> schedulers;
+      schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}, 24));
+      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}, 24));
+
+      for (auto &scheduler : schedulers) {
+          scheduler->setQuiet(false);
+          scheduler->setTimeBudget(100);
+          auto start_t = std::chrono::high_resolution_clock::now();
+          scheduler->schedule();
+          auto II = scheduler->getII();
+          auto end_t = std::chrono::high_resolution_clock::now();
+          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+          auto t = ((double) duration / 1000);
+
+          cout << "Solving Time: " << t << endl;
+          if (verifyModuloSchedule(g, rm, scheduler->getSchedule(), II)) {
+              std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": valid modulo schedule found. :-) " << endl;
+              std::cout << "II=" << II << " Latency: " << scheduler->getScheduleLength() << std::endl;
+              iterationIntervals.push_back(II);
+              latencys.push_back(scheduler->getScheduleLength());
+          } else {
+              std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": invalid modulo schedule found :( II=" << scheduler->getII()
+                        << std::endl;
+              iterationIntervals.push_back(II);
+              latencys.push_back(scheduler->getScheduleLength());
+              success = false;
+          }
       }
-  }
 
+      for (auto &it : schedulers){
+          delete it;
+      }
+
+      cout << endl << "IIs:      ";
+      for (auto &it : iterationIntervals){
+          cout << it << " ";
+      }
+      cout << endl << "latencys: ";
+      for (auto &it : latencys){
+          cout << it << " ";
+      }
+
+      cout << endl;
+      return success;
+  }
 }

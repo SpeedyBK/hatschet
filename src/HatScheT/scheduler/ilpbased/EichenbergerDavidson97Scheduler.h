@@ -16,14 +16,14 @@
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    -- 20.10.2022 Benjamin Lagershausen-Keßler: Integrated "IterativeModuloSchedulerLayer" Class in ED97
 */
 
 #pragma once
 
-#include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 #include <vector>
 
 namespace HatScheT
@@ -35,16 +35,22 @@ namespace HatScheT
  *   Alexandre E. Eichenberger and Edward S. Davidson: Efficient Formulation for Optimal Modulo Schedulers.
  *   Proceedings of the ACM SIGPLAN '97 Conference on Programming Language Design and Implementation (PLDI), 1997
  */
-class EichenbergerDavidson97Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
+class EichenbergerDavidson97Scheduler : public ILPSchedulerBase, public IterativeModuloSchedulerLayer
 {
 public:
   EichenbergerDavidson97Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */
-  virtual void schedule();
+  virtual void scheduleOLD(); // ToDo: Remove
+
+  string getName() override { return "ED97"; }
 
 protected:
+
+  void scheduleIteration() override;
+  void scheduleInit() override;
+
   virtual void setUpSolverSettings();
 
   virtual void scheduleAttempt(int candII, bool &feasible, bool &proven);
@@ -62,5 +68,7 @@ protected:
   // decision variables
   std::vector<std::map<const Vertex*, ScaLP::Variable>> a;
   std::map<const Vertex*, ScaLP::Variable> k, row, time;
+
+  bool feasible;
 };
 }

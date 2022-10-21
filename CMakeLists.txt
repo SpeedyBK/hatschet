@@ -423,6 +423,7 @@ add_test("treeBind" "./hatschet" "--test=TREEBIND")
 add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
 add_test("congBind" "./hatschet" "--test=ILPBASEDINTIIBINDINGCONG")
 add_test("LatencyEstimation" "./hatschet" "--test=LATENCY")
+add_test("IterativeModSchedulerLayer" "./hatschet" "--test=ITLAYER")
 ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 
 IF(CADICAL_H AND CADICAL_LIB)

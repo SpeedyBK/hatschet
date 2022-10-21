@@ -29,9 +29,9 @@ namespace HatScheT
 {
 
   MoovacScheduler::MoovacScheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
-      : IterativeModuloSchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist)
+      : IterativeModuloSchedulerLayer(g, resourceModel, II), ILPSchedulerBase(solverWishlist)
   {
-      if (this->minII >= this->maxII) this->maxII = (int)this->minII+1;
+      if (this->minII >= this->maxII) this->maxII = (int)this->minII;
       this->SLMax = 0;
   }
 
@@ -496,6 +496,20 @@ namespace HatScheT
               else cout << "Found feasible solution for II: " << this->II << endl;
           }
       }
+  }
+
+  void MoovacScheduler::scheduleInit() {
+      if(!this->quiet)
+      {
+          cout << "Scheduling with " << this->getName() <<"!" << endl;
+      }
+      if (!this->quiet) {
+          std::cout << this->getName() << ": min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
+          std::cout << this->getName() << ": solver timeout = " << this->solverTimeout << " (sec)" << endl;
+      }
+
+      this->firstObjectiveOptimal = true;
+      this->secondObjectiveOptimal = true;
   }
 
 }
