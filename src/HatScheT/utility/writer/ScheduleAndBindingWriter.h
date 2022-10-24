@@ -70,13 +70,70 @@ namespace HatScheT {
 		/*!
 		 * @param g
 		 */
-		void setGraphPath(std::string g) { this->graphPath = g; }
+		void setGraphPath(std::string g) { this->graphPath = std::move(g); }
 		/*!
 		 * @param r
 		 */
-		void setRMPath(std::string r) { this->rmPath = r; }
+		void setRMPath(std::string r) { this->rmPath = std::move(r); }
+		/*!
+		 * sets the solving time
+		 * @param solvingTime new value for the solving time
+		 */
+		void setSolvingTime(const double & newSolvingTime) { this->solvingTime = newSolvingTime; }
+		/*!
+		 * sets the schedule length
+		 * @param newScheduleLength new value for the schedule length
+		 */
+		void setScheduleLength(const int & newScheduleLength) { this->scheduleLength = newScheduleLength; }
+		/*!
+		 * sets the minimum number of registers to implement the schedule
+		 * @param newMinNumRegs new value for the minimum number of registers
+		 */
+		void setMinNumRegs(const int & newMinNumRegs) { this->minNumRegs = newMinNumRegs; }
+		/*!
+		 * sets the minimum number of registers to implement the schedule
+		 * @param newMinNumRegs new value for the minimum number of registers
+		 */
+		void setMinNumRegsChain(const int & newMinNumRegsChain) { this->minNumRegsChain = newMinNumRegsChain; }
+		/*!
+		 * sets the minimum II
+		 * @param newMinNumRegs new value for the minimum II
+		 */
+		void setMinII(const double & newMinII) { this->minII = newMinII; }
+		/*!
+		 * sets this->objectivesOptimal
+		 * @param o new value for this->objectivesOptimal
+		 */
+		void setObjectivesOptimal(const std::pair<bool, bool> o) { this->objectivesOptimal = o; }
 
 	private:
+		/*!
+		 * tracks whether the first and second optimization objectives (usually II and schedule length) are proven optimal
+		 */
+		std::pair<bool, bool> objectivesOptimal;
+		/*!
+		 * minimum II for this graph and resource model
+		 */
+		double minII;
+		/*!
+		 * minimum number of registers needed to implement this schedule
+		 * -> maximum number of concurrently alive variables in any time step mod cycle length (= II/modulo for intII/ratII)
+		 */
+		int minNumRegs;
+		/*!
+		 * minimum number of registers needed to implement this schedule
+		 * when implementing registers as register chains after FUs
+		 * -> maximum lifetime of all variables produced by that FU
+		 */
+		int minNumRegsChain;
+		/*!
+		 * schedule length = max (t_i + D_i of all vertices i in the schedule)
+		 */
+		int scheduleLength;
+		/*!
+		 * elapsed time of the scheduling/binding algorithm to obtain the given solution
+		 */
+		double solvingTime;
 		/*!
 		 * connections between FUs (do not have to be specified if multiplexer port assignment should not be included)
 		 */
@@ -120,7 +177,7 @@ namespace HatScheT {
 			/*!
 			 * name of the vertex
 			 */
-			std::string name = "";
+			std::string name;
 			/*!
 			 * the sample number this line belongs to (there are 'this->samples' number of lines per vertex)
 			 */

@@ -47,7 +47,7 @@ namespace HatScheT {
  * @param SL the determined schedule length
  * @return true iff the schedule is valid
  */
-bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int SL);
+bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int SL, bool quiet = false);
 
 /*!
  * \brief Verifies the given modulo schedule
@@ -64,7 +64,7 @@ bool verifyResourceConstrainedSchedule(Graph &g, ResourceModel &rm, std::map<Ver
  * @param II the determined initiation interval
  * @return true iff the schedule is valid
  */
-bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
+bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II, bool quiet = false);
 /*!
  * Verifies the given rational II modolo schedule
  *
@@ -80,9 +80,10 @@ bool verifyModuloSchedule(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &
  * @return true iff the schedule is valid
  */
 bool verifyRationalIIModuloSchedule2(Graph &g, ResourceModel &rm, vector <std::map<Vertex *, int>> &schedule,
-																		 vector<int> latencySequence, int scheduleLength);
+																		 vector<int> latencySequence, int scheduleLength,
+																		 bool quiet = false);
 bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector <std::map<Vertex *, int>> &schedule,
-																		int samples, int modulo);
+																		int samples, int modulo, bool quiet = false);
 
 /*!
  * \brief Verifies the given modulo schedule
@@ -99,7 +100,7 @@ bool verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector <std::ma
  * @param II the determined initiation interval
  * @return true iff the schedule is valid
  */
-bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *, double> &schedule, double II);
+bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *, double> &schedule, double II, bool quiet = false);
 
 /*!
  * verify a binding
@@ -107,11 +108,25 @@ bool verifyModuleScheduleRational(Graph &g, ResourceModel &rm, std::map<Vertex *
  * @param rm resource model
  * @param sched schedule time container
  * @param II initiation interval
- * @param portAssignments this container specifies which edge is connected with which input port of the sink vertex
  * @param commutativeOps a set with commutative operations that do not care about their port assignments
  * @return if the binding is ok
  */
-bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II, Binding::BindingContainer bind, std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II,
+                         Binding::RegChainBindingContainer bind,
+                         std::set<const Resource*> commutativeOps = {}, bool quiet=true);
+	/*!
+	 * do the same but with a different binding container type
+	 * @param g
+	 * @param rm
+	 * @param sched
+	 * @param II
+	 * @param bind
+	 * @param portAssignments
+	 * @param commutativeOps
+	 * @return
+	 */
+	bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, int II,
+                         Binding::BindingContainer bind, std::set<const Resource*> commutativeOps = {}, bool quiet=true);
 
 /*!
  * verify a binding
@@ -124,5 +139,7 @@ bool verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex*, int> sched, in
  * @param commutativeOps a set with commutative operations that do not care about their port assignments
  * @return if the binding is ok
  */
-	bool verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<Vertex*, int>> sched, int samples, int modulo, Binding::RatIIBindingContainer bind, std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
+	bool verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<Vertex*, int>> sched,
+                         int samples, int modulo, Binding::RatIIRegChainBindingContainer bind,
+                         std::map<Edge*,int> portAssignments = {}, std::set<const Resource*> commutativeOps = {});
 }

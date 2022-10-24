@@ -25,6 +25,7 @@
 #include "Edge.h"
 #include <list>
 #include <map>
+#include <unordered_map>
 #include <set>
 
 namespace HatScheT
@@ -55,6 +56,14 @@ public:
    * copy constructor is forbidden for this class
    */
    Graph(const Graph&) = delete;
+   /*!
+    * resets the graph to its default state
+    * -> clear all vertices and edges
+    * -> reset all counters
+    * -> clear all helper containers
+    * -> but keep the name
+    */
+   void reset();
   /*!
    * Creates a vertex, assigns a non-existing id and inserts it in the graph
    *G
@@ -115,6 +124,18 @@ public:
    */
   bool isSinkVertex(Vertex* v);
   /*!
+   * \brief determines whether the given vertex has not a single outgoing edge with a distance of zero
+   * \param v the vertex to inspect
+   * \return true if v has no outgoing edges with distance=0
+   */
+  bool hasNoZeroDistanceOutgoingEdges(Vertex* v);
+	/*!
+	 * \brief determines whether the given vertex has not a single incoming edge with a distance of zero
+	 * \param v the vertex to inspect
+	 * \return true if v has no incoming edges with distance=0
+	 */
+  bool hasNoZeroDistanceIncomingEdges(Vertex* v);
+  /*!
    * \brief looks up the vertex with the given ID
    * \param id the ID to find
    * \return the vertex matching the given ID
@@ -174,6 +195,34 @@ public:
    * \return a set containing `v`'s predecessors
    */
   set<Vertex*> getPredecessors(const Vertex *v) const;
+
+  /*!
+   * \brief getter for all outgoing edges of a given vertex
+   * @param v vertex
+   * @return the outgoing edges
+   */
+  std::set<Edge*>& getOutgoingEdges(const Vertex* v);
+
+  /*!
+   * \brief getter for all incoming edges of a given vertex
+   * @param v vertex
+   * @return the incoming edges
+   */
+  std::set<Edge*>& getIncomingEdges(const Vertex* v);
+
+  /*!
+   * \brief getter for the number of outgoing edges of a given vertex
+   * @param v vertex
+   * @return the number of outgoing edges
+   */
+  size_t getNumOutgoingEdges(const Vertex* v) const;
+
+  /*!
+   * \brief getter for the number of incoming edges of a given vertex
+   * @param v vertex
+   * @return the number of incoming edges
+   */
+  size_t getNumIncomingEdges(const Vertex* v) const;
   /*!
    * \brief sets the graph name
    * \param s the new name
@@ -260,6 +309,26 @@ protected:
    * \brief The container for edges
    */
   std::set<Edge*> edges;
+
+  /*!
+   * \brief A mapping between vertices and their IDs
+   */
+	std::map<int, Vertex*> verticesById;
+
+	/*!
+	 * \brief A mapping between edges and their IDs
+	 */
+	std::map<int, Edge*> edgesById;
+
+  /*!
+   * \brief stores all edges that go into a given vertex (i.e., where it is the dst vertex)
+   */
+  std::map<const Vertex*, std::set<Edge*>> incomingEdges;
+
+  /*!
+   * \brief stores all edges that go out of a given vertex (i.e., where it is the src vertex)
+   */
+  std::map<const Vertex*, std::set<Edge*>> outgoingEdges;
 
   /*!
    * \brief This int is used to track the next valid vertex ID

@@ -45,7 +45,7 @@ namespace HatScheT {
       std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 
       /*!
-       * Setup of Variables. (1)
+       * Setup of Variables.
        */
       //Create Binding Variables.
       createBindingVariables();
@@ -77,7 +77,7 @@ namespace HatScheT {
       cout  << "Creating Variables Done after " << timer << " Seconds" << endl << endl;
 
       /*!
-       * Calculate a Solution for the SDC-Problem without Ressource Constraints. (2)
+       * Calculate a Solution for the SDC-Problem without Ressource Constraints.
        */
       //Setup an SDC-Solver
       auto *s = new SDCSolver;
@@ -131,11 +131,12 @@ namespace HatScheT {
       //Add Resource Constraints to SDC-Solver
       for (auto &it : resourceConstraints){
         static int counter = 0;
-        s->add_sdc_constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
-        s->compute_inital_solution();
-        if (s->get_solver_status() != 10){
+        //s->add_sdc_constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
+        //s->compute_inital_solution();
+        s->add_Constraint(s->create_sdc_constraint((Vertex*)it.constraintOneVertices.first, (Vertex*)it.constraintOneVertices.second, it.constraintOne));
+        //if (s->get_solver_status() != 10){
+        if (s->get_solver_status() != 30){
           cout << counter << endl;
-          //terminate with error.
           std::chrono::high_resolution_clock::time_point t6= std::chrono::high_resolution_clock::now();
           timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(t6 - t4);
           timer += (((double) timeSpan.count()) / 1000000000.0);
@@ -529,24 +530,6 @@ namespace HatScheT {
       conflictSAT.push_back(it.satVariable * -1);
     }
     return conflictSAT;
-  }
-
-  map<Vertex *, int> SDSScheduler::getFirstSDCSolution() {
-
-    HatScheT::ResourceModel rmTemp;
-
-    for (auto &rIt : resourceModel.Resources()){
-      rmTemp.makeResource(rIt->getName(),-1,rIt->getLatency(),rIt->getBlockingTime());
-    }
-
-    for (auto &it : g.Vertices()){
-      rmTemp.registerVertex(it, rmTemp.getResource(resourceModel.getResource(it)->getName()));
-    }
-
-    ASAPScheduler asa (this->g, rmTemp);
-    asa.schedule();
-    this->initScheduleLength = asa.getScheduleLength();
-    return asa.getSchedule();
   }
 
   map<Vertex*, int> SDSScheduler::map_SDC_solution_to_Graph(map<Vertex *, int> solution) {

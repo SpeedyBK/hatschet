@@ -5,6 +5,7 @@
 #ifndef HATSCHET_TREEBIND_H
 #define HATSCHET_TREEBIND_H
 
+#ifdef USE_SCALP
 #include <HatScheT/Graph.h>
 #include <HatScheT/ResourceModel.h>
 #include <HatScheT/utility/Binding.h>
@@ -28,7 +29,7 @@ namespace HatScheT {
      * @param portAssignments container that specifies input ports for
      * dst vertices of each edge in g
      */
-    TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments);
+    TreeBind(Graph* g, ResourceModel* rm, std::map<Vertex*, int> sched, int II, std::map<Edge*,int> portAssignments, std::set<const Resource*> commutativeOps = {});
     /*!
      * specify time budget in seconds 
      * @param timeout 
@@ -46,13 +47,15 @@ namespace HatScheT {
     /*!
      * @return binding
      */
-    Binding::BindingContainer getBinding();
+    Binding::RegChainBindingContainer getBinding();
     /*!
-     * set weighting factor for multiplexer costs
+     * set weighting factor for multiplexer costs;
+     * setting it to a negative value means that registers are optimized as a first objective and multiplexers second
      */
     void setMuxCostFactor(double wMux);
     /*!
-     * set weighting factor for multiplexer costs
+     * set weighting factor for register costs
+     * setting it to a negative value means that multiplexers are optimized as a first objective and registers second
      */
     void setRegCostFactor(double wReg);
     /*!
@@ -84,14 +87,50 @@ namespace HatScheT {
 		 * @return this->numFeasibleBindings
 		 */
 		double getNumFeasibleBindings();
-    
+		/*!
+		 * set new optimization objective
+		 * @param o new optimization objective
+		 */
+    void setObjective(Binding::objective o);
   private:
+  	/*!
+  	 * resources with exactly one vertex associated to them have a trivial binding
+  	 * even if they are limited
+  	 */
+  	std::set<const Resource*> trivialBindings;
+  	/*!
+  	 * this stores for each commutative operation if we assume in the current binding that its inputs are swapped
+  	 */
+  	std::map<const Vertex*, bool> commutativeInputsSwapped;
+  	/*!
+  	 * contains all commutative operation types
+  	 * ATTENTION: at the moment, each commutative operation must have EXACTLY 2 inputs
+  	 */
+		std::set<const Resource*> commutativeOps;
+		/*!
+		 * compare two bindings and return if A is better than B based on this->objective
+		 * @param bindingA A
+		 * @param bindingB B
+		 * @return if A is better than B
+		 */
+		bool bindingABetterThanB(Binding::RegChainBindingContainer* bindingA, Binding::RegChainBindingContainer* bindingB);
+		/*!
+		 * compare two bindings and return if A is better than B or equally good based on this->objective
+		 * @param bindingA A
+		 * @param bindingB B
+		 * @return if A is better than B or if both are equally good
+		 */
+		bool bindingABetterThanBOrEqual(Binding::RegChainBindingContainer* bindingA, Binding::RegChainBindingContainer* bindingB);
+  	/*!
+  	 * optimization goal
+  	 */
+  	Binding::objective obj;
   	/*!
   	 * this pushes a new vertex to the stack
   	 * @param stack the stack
   	 * @param v new vertex
   	 */
-  	void pushToStack(std::list<std::list<Vertex*>::iterator> &stack, const std::list<Vertex*>::iterator &v);
+  	void pushToStack(std::list<std::pair<std::list<Vertex*>::iterator, int>> &stack, const std::list<Vertex*>::iterator &v);
   	/*!
   	 * cut off subtree from the search space if it only leads to bindings that are equivalent to already explored ones
   	 */
@@ -154,8 +193,9 @@ namespace HatScheT {
     /*!
      * adds vertex to current binding and updates costs
      * @param v vertex that gets added
+     * @param nextFU its FU
      */
-    void addBindingInfo(Vertex* v);
+    void addBindingInfo(Vertex* v, int nextFU);
     /*!
      * this is called by addBindingInfo(Vertex*)
      * it adds binding info for a specific edge
@@ -217,6 +257,10 @@ namespace HatScheT {
      * schedule times for all operations
      */
     std::map<Vertex*, int> sched;
+		/*!
+		 * modulo slots for all operations
+		 */
+		std::map<Vertex*, int> mod;
     /*!
      * initiation interval
      */
@@ -232,11 +276,11 @@ namespace HatScheT {
     /*!
      * best solution found so far
      */
-    Binding::BindingContainer bestBinding;
+    Binding::RegChainBindingContainer bestBinding;
     /*!
      * keep track of current solution
      */
-    Binding::BindingContainer currentBinding;
+    Binding::RegChainBindingContainer currentBinding;
     /*!
      * sequence for tree traversal containing all limited operations
      */
@@ -255,7 +299,13 @@ namespace HatScheT {
      * map from <resource, modulo slot> to list with indices of occupied resources
      */
     std::map<std::pair<const Resource*, int>, std::list<int>> occupiedResources;
+    /*!
+     * this container tracks how many operations are bound to which FU for each resource type
+     * map from <resource, fu index> to the number of bound operations
+     */
+    std::map<std::pair<const Resource*, int>, int> numOperationsOnFU;
   };
 }
+#endif //USE_SCALP
 
 #endif //HATSCHET_TREEBIND_H

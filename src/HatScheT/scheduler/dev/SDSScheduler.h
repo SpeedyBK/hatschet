@@ -188,8 +188,6 @@ namespace HatScheT {
 
     vector<int> getSATClausesfromScaLP(list<orderingVariabletoSDCMapping> &conflicts);
 
-    map<Vertex *, int> getFirstSDCSolution();
-
     map<Vertex*, int> map_SDC_solution_to_Graph (map<Vertex*, int> solution);
 
     /////////////////////////

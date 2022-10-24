@@ -350,10 +350,10 @@ namespace HatScheT {
 							freeSlot = this->mrt.insertVertex(vertices.front(),vertexStartTime%this->modulo);
 						if(!this->quiet) {
 							std::cout << "    slot is " << (freeSlot?string(""):string("not ")) << "free" << std::endl;
-							if(!freeSlot) {
+							/*if(!freeSlot) {
 								std::cout << "    MRT" << std::endl;
 								this->mrt.print();
-							}
+							}*/
 						}
 						while(!freeSlot) {
 							++vertexStartTime;
@@ -390,6 +390,10 @@ namespace HatScheT {
 
 			// debugging
 			if(!this->quiet) {
+				std::cout << "Final start times after scheduling SCC" << sccId << ":" << std::endl;
+				for (auto &it : this->startTimes) {
+					std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+				}
 				std::cout << "MRT after scheduling SCC" << sccId << ":" << std::endl;
 				this->mrt.print();
 			}
@@ -527,6 +531,7 @@ namespace HatScheT {
 	}
 
 	void SCCQScheduler::scheduleIteration() {
+		this->secondObjectiveOptimal = false; // we can't guarantee anything about the schedule length with this scheduler
 		if (!this->quiet) {
 			std::cout << "SCC Q SCHEDULER graph: " << std::endl;
 			std::cout << this->g << std::endl;
@@ -561,6 +566,7 @@ namespace HatScheT {
 			this->startTimesVector.clear();
 			this->end = clock();
 			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			this->firstObjectiveOptimal = false;
 			// free memory
 			for(auto scc : sccs) {
 				delete scc;
@@ -585,8 +591,18 @@ namespace HatScheT {
 		bool scheduleSuccess = this->determineStartTimes(sccs, sccSchedule);
 		if(!scheduleSuccess) {
 			this->scheduleFound = false;
+			this->II = -1;
+			this->modulo = -1;
+			this->samples = -1;
 			this->startTimes.clear();
 			this->startTimesVector.clear();
+			this->firstObjectiveOptimal = false;
+			this->end = clock();
+			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			// free memory
+			for(auto scc : sccs) {
+				delete scc;
+			}
 			return;
 		}
 

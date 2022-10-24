@@ -3,6 +3,7 @@
 //
 
 #include "ScheduleAndBindingReader.h"
+#include <HatScheT/utility/Utility.h>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -12,7 +13,7 @@ HatScheT::ScheduleAndBindingReader::ScheduleAndBindingReader(HatScheT::Graph *g,
   g(g), rm(rm), modulo(-1), samples(-1), II(-1), schedule(), binding(){
 }
 
-void HatScheT::ScheduleAndBindingReader::read(std::string filepath) {
+void HatScheT::ScheduleAndBindingReader::read(const std::string &filepath) {
 	ifstream f;
 
 	f.open(filepath.c_str());
@@ -69,60 +70,83 @@ void HatScheT::ScheduleAndBindingReader::read(std::string filepath) {
 				}
 			}
 		}
-		else if(segments.size() == 6) {
-			// fu connection info
-			fuConnection fuC;
-			fuC.resourceSrc = segments[0];
-			fuC.fuSrc = stoi(segments[1]);
-			fuC.resourceDst = segments[2];
-			fuC.fuDst = stoi(segments[3]);
-			fuC.port = stoi(segments[4]);
-			fuC.lifetimeRegs = stoi(segments[5]);
-			this->fuConnections.emplace_back(fuC);
+	}
+
+	// calc schedule length and validate it if it was set
+	int scheduleLengthRead = -1;
+	for (auto &v : this->g->Vertices()) {
+		if (this->isRatII()) {
+			// rational-II case
+			for (auto s=0; s<this->samples; s++) {
+				auto t = this->schedule.at(s).at(v) + this->rm->getVertexLatency(v);
+				if (t > scheduleLengthRead) scheduleLengthRead = t;
+			}
+		}
+		else {
+			// integer-II case
+			auto t = this->schedule.at(0).at(v) + this->rm->getVertexLatency(v);
+			if (t > scheduleLengthRead) scheduleLengthRead = t;
 		}
 	}
+	if (scheduleLengthRead != this->scheduleLength) {
+		std::cout << "WARNING! ScheduleAndBindingReader: actual schedule length (" << scheduleLengthRead
+		  << ") is not equal to the schedule length in the .csv file (" << this->scheduleLength << ")"
+		  << " -> setting schedule length to the actual value!" << std::endl;
+	}
+	this->scheduleLength = scheduleLengthRead;
+
+	// calc min number of registers to implement this schedule and validate it if it was set
+	int minNumRegsRead;
+	if (this->isRatII()) {
+		minNumRegsRead = Utility::calcMinNumRegs(this->g, this->rm, this->schedule, this->modulo);
+	}
+	else {
+		minNumRegsRead = Utility::calcMinNumRegs(this->g, this->rm, this->schedule[0], (int)this->II);
+	}
+	if (minNumRegsRead != this->minNumRegs and this->minNumRegs >= 0) {
+		std::cout << "WARNING! ScheduleAndBindingReader: actual min #Regs (" << minNumRegsRead
+							<< ") is not equal to the min #Regs in the .csv file (" << this->minNumRegs << ")"
+							<< " -> setting min #Regs to the actual value!" << std::endl;
+	}
+	this->minNumRegs = minNumRegsRead;
 
 	f.close();
 }
 
-std::map<HatScheT::Vertex *, int> HatScheT::ScheduleAndBindingReader::getIntegerIISchedule() {
+std::map<HatScheT::Vertex *, int> HatScheT::ScheduleAndBindingReader::getIntegerIISchedule() const {
 	if(this->schedule.size() != 1) {
 		std::cout << "Did not read an integer-II schedule. Unable to return it" << std::endl;
 	}
 	return this->schedule[0];
 }
 
-std::vector<std::map<HatScheT::Vertex *, int>> HatScheT::ScheduleAndBindingReader::getRationalIISchedule() {
+std::vector<std::map<HatScheT::Vertex *, int>> HatScheT::ScheduleAndBindingReader::getRationalIISchedule() const {
 	if(this->schedule.empty()) {
 		std::cout << "Did not read a rational-II schedule. Unable to return it" << std::endl;
 	}
 	return this->schedule;
 }
 
-std::map<HatScheT::Vertex *, int> HatScheT::ScheduleAndBindingReader::getIntegerIIBinding() {
+std::map<HatScheT::Vertex *, int> HatScheT::ScheduleAndBindingReader::getIntegerIIBinding() const {
 	if(this->schedule.size() != 1) {
 		std::cout << "Did not read an integer-II binding. Unable to return it" << std::endl;
 	}
 	return this->binding[0];
 }
 
-std::vector<std::map<HatScheT::Vertex *, int>> HatScheT::ScheduleAndBindingReader::getRationalIIBinding() {
-	if(this->schedule.empty()) {
-		std::cout << "Did not read a rational-II schedule. Unable to return it" << std::endl;
+std::vector<std::map<HatScheT::Vertex *, int>> HatScheT::ScheduleAndBindingReader::getRationalIIBinding() const {
+	if(this->binding.empty()) {
+		std::cout << "Did not read a rational-II binding. Unable to return it" << std::endl;
 	}
 	return this->binding;
 }
 
-int HatScheT::ScheduleAndBindingReader::getSamples() {
+int HatScheT::ScheduleAndBindingReader::getSamples() const {
 	return this->samples;
 }
 
-int HatScheT::ScheduleAndBindingReader::getModulo() {
+int HatScheT::ScheduleAndBindingReader::getModulo() const {
 	return this->modulo;
-}
-
-double HatScheT::ScheduleAndBindingReader::getII() {
-	return this->II;
 }
 
 void HatScheT::ScheduleAndBindingReader::readHeader(std::string &line) {
@@ -141,12 +165,22 @@ void HatScheT::ScheduleAndBindingReader::readHeader(std::string &line) {
 	if(key == "II") this->II = stod(arg);
 	if(key == "modulo") this->modulo = stoi(arg);
 	if(key == "samples") this->samples = stoi(arg);
+	if(key == "scheduleLength") this->scheduleLength = stoi(arg);
+	if(key == "minNumRegs") this->minNumRegs = stoi(arg);
 }
 
-bool HatScheT::ScheduleAndBindingReader::isRatII() {
+bool HatScheT::ScheduleAndBindingReader::isRatII() const {
 	return this->modulo >= 0 and this->samples >= 0;
 }
 
-vector<HatScheT::ScheduleAndBindingReader::fuConnection> HatScheT::ScheduleAndBindingReader::getFUConnections() {
-	return this->fuConnections;
+double HatScheT::ScheduleAndBindingReader::getII() const {
+	return this->II;
+}
+
+int HatScheT::ScheduleAndBindingReader::getScheduleLength() const {
+	return this->scheduleLength;
+}
+
+int HatScheT::ScheduleAndBindingReader::getMinNumRegs() const {
+	return this->minNumRegs;
 }

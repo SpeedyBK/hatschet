@@ -38,7 +38,7 @@ namespace HatScheT
 class SuchaHanzalek11Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
 {
 public:
-    SuchaHanzalek11Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
+    SuchaHanzalek11Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */

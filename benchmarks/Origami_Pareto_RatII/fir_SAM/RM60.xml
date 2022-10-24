@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="5" limit="46" name="AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="4" limit="23" name="Product" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="X" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Y" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant31/65536_544" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant28/65536_545" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-352/65536_948" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-432/65536_949" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-500/65536_950" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-532/65536_951" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-129/65536_959" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant158/65536_960" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant526/65536_961" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant964/65536_962" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-529/65536_963" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-464/65536_964" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant29/65536_552" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-336/65536_965" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant3136/65536_973" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant3648/65536_974" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant4110/65536_975" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant4478/65536_976" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant4737/65536_1069" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant4868/65536_981" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant22/65536_553" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant1472/65536_984" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant2008/65536_985" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant2576/65536_986" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant8/65536_554" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-17/65536_555" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-59/65536_556" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-116/65536_945" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-188/65536_946" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-268/65536_947" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

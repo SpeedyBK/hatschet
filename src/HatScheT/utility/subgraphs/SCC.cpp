@@ -13,6 +13,7 @@ HatScheT::SCC::SCC(Graph &g) {
   this->typeOfSCC = unknown;
   this->name = "";
   this->id = 0;
+  this->numOfLimitedVerticesInSCC = 0;
 
   for (auto &it : g.Vertices()) {
     vertexInSCC[it] = false;
@@ -23,22 +24,26 @@ HatScheT::SCC::SCC(Graph &g) {
  * @return Type of the SCC
  */
 HatScheT::scctype HatScheT::SCC::getSccType(ResourceModel* rm) {
-  if (this->getNumberOfVertices() == 1) {
-    return trivial;
+	if (rm == nullptr or this->typeOfSCC != unknown) {
+		return this->typeOfSCC;
+	}
+	if (this->getNumberOfVertices() == 1) {
+    return this->typeOfSCC = trivial;
   }
   list<Vertex*> VerticesOfSCC = this->getVerticesOfSCC();
-  for (auto &it:VerticesOfSCC) {
-    if (rm->getResource(it)->getLimit() != -1) {
-      return complex;
+  for (auto &it : VerticesOfSCC) {
+    if (rm->getResource(it)->getLimit() != UNLIMITED) {
+      numOfLimitedVerticesInSCC++;
+      return this->typeOfSCC = complex;
     }
   }
-  return basic;
+  return this->typeOfSCC = basic;
 }
 
 /*!
  * @return ID of the SCC.
  */
-int HatScheT::SCC::getId() { return this->id; }
+int HatScheT::SCC::getId() const { return this->id; }
 
 /*!
  * @return the list of Vertices in the SCC.
@@ -48,7 +53,7 @@ list<HatScheT::Vertex *> HatScheT::SCC::getVerticesOfSCC() { return verticesOfSC
 /*!
  * @return The number of Vertices which belong to the SCC.
  */
-int HatScheT::SCC::getNumberOfVertices() { return verticesOfSCC.size(); }
+int HatScheT::SCC::getNumberOfVertices() const { return verticesOfSCC.size(); }
 
 /*!
  * Sets the ID of a SCC.
@@ -62,7 +67,6 @@ void HatScheT::SCC::setId(int newid) { this->id = newid; }
  * @param V
  */
 void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
-
   for (auto &it : g->Vertices()){
     if (it->getId() == V->getId()){
       vertexInSCC[it] = true;
@@ -75,7 +79,6 @@ void HatScheT::SCC::setVertexAsPartOfSCC(HatScheT::Vertex *V) {
  * Used for debugging.
  */
 void HatScheT::SCC::printVertexStatus() {
-
   for (auto &it:vertexInSCC){
     cout << it.first->getName() << " -- " << it.second << endl;
   }
@@ -89,11 +92,12 @@ void HatScheT::SCC::setConnectedSCCs(list<HatScheT::SCC *> conSCCs) { this -> co
 list<HatScheT::SCC *> HatScheT::SCC::getConnectedSCCs() { return connectedSCCs;}
 
 
-list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() {
+list<HatScheT::Edge *> HatScheT::SCC::getSCCEdges() const {
 	return this->sccEdges;
 }
 
 void HatScheT::SCC::findSCCEdges() {
+	this->sccEdges.clear();
 	for (auto &eIt : g->Edges()){
 		bool srcVertexInSCC = false;
 		bool dstVertexInSCC = false;
@@ -109,4 +113,37 @@ void HatScheT::SCC::findSCCEdges() {
 			this->sccEdges.emplace_back(eIt);
 		}
 	}
+}
+
+void HatScheT::SCC::printInfo() {
+	std::cout << "Printing info about " << this->getName() << " (ID " << this->getId() << ")" << std::endl;
+	std::cout << "  SCC vertices:" << std::endl;
+	for (auto &v : this->verticesOfSCC) {
+		std::cout << "    " << v->getName() << std::endl;
+	}
+	std::cout << "  SCC edges:" << std::endl;
+	for (auto &e : this->sccEdges) {
+		std::cout << "    '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName() << "'" << std::endl;
+	}
+	std::cout << "  connected SCCs:" << std::endl;
+	for (auto &scc : this->connectedSCCs) {
+		std::cout << "    " << scc->getName() << " (ID " << scc->getId() << ")" << std::endl;
+	}
+}
+
+bool HatScheT::SCC::operator<(const HatScheT::SCC &a) const {
+    if (this->getNumberofLimitedVertices() < a.getNumberofLimitedVertices()) {
+        return true;
+    }else if (this->getNumberofLimitedVertices() == a.getNumberofLimitedVertices()) {
+        if (this->getNumberOfVertices() < a.getNumberOfVertices()){
+            return true;
+        }else if (this->getNumberOfVertices() == a.getNumberOfVertices()) {
+            if (this->getNumOfEdges() < a.getNumOfEdges()) {
+                return true;
+            } else if (this->getNumOfEdges() == a.getNumOfEdges()) {
+                return id < a.id;
+            }
+        }
+    }
+    return false;
 }

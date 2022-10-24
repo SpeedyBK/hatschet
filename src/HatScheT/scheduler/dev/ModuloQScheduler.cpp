@@ -354,9 +354,11 @@ namespace HatScheT {
 		if (this->maxLatencyConstraint >= 0)
 			this->solver->addConstraint(ss <= this->maxLatencyConstraint);
 
-		for (auto *i : this->g.Vertices())
-			if (this->g.isSinkVertex(i))
+		for (auto *i : this->g.Vertices()) {
+			if (this->g.hasNoZeroDistanceOutgoingEdges(i)) {
 				this->solver->addConstraint(ss - this->time[i] >= this->resourceModel.getVertexLatency(i));
+			}
+		}
 
 		solver->setObjective(ScaLP::minimize(ss));
 	}

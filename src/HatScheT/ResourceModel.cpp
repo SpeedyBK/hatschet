@@ -20,6 +20,7 @@
 */
 
 #include <HatScheT/ResourceModel.h>
+#include <HatScheT/utility/Utility.h>
 
 #include <algorithm>
 #include <iostream>
@@ -109,6 +110,7 @@ ostream& operator<<(ostream& os, const ResourceModel& rm)
 void ResourceModel::registerVertex(const Vertex *v, const Resource *r)
 {
   this->registrations[v] = r;
+  this->reverseRegistrations[r].insert(v);
 }
 
 bool ResourceModel::resourceExists(std::string name) {
@@ -119,9 +121,9 @@ bool ResourceModel::resourceExists(std::string name) {
   return false;
 }
 
-void Resource::setLimit(int l)
+void Resource::setLimit(int l, const bool &safe)
 {
-  if(this->name=="special_loop" && l!=1) throw Exception(this->name + ".setLimit: ERORR it is not allowed to limit other than 1 to this resource!");
+  if(safe and this->name=="special_loop" and l!=1) throw Exception(this->name + ".setLimit: ERROR it is not allowed to limit other than 1 to this resource!");
   if(this->blockingTime==0 && l!=-1) {
     cout << this->name << ".setLimit: WARNING setting this resource limit to a limited value and a blocking time of 0 was detected! Blocking time set to 1!";
     this->blockingTime = 1;
@@ -248,47 +250,32 @@ Resource *ResourceModel::getResource(string name) const
 
 bool ResourceModel::isEmpty()
 {
-  if(this->resources.size() == 0) return true;
-  return false;
+  return this->resources.empty();
 }
 
 set<const Vertex*> ResourceModel::getVerticesOfResource(const Resource *r) const
 {
-  set<const Vertex*> vertices;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(rr==r) vertices.insert(it.first);
+  try {
+    return this->reverseRegistrations.at(r);
   }
-
-  return vertices;
+  catch (std::out_of_range&) {
+    return std::set<const Vertex*>();
+  }
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
-  }
-
-  return count;
+  return this->getNumVerticesRegisteredToResource(const_cast<const Resource*>(r));
 }
 
 int ResourceModel::getNumVerticesRegisteredToResource(const Resource *r) const
 {
-  int count = 0;
-
-  for(auto it:this->registrations)
-  {
-    const Resource* rr = it.second;
-    if(r==rr) count++;
+  try {
+    return this->reverseRegistrations.at(r).size();
   }
-
-  return count;
+  catch (std::out_of_range&) {
+    return 0;
+  }
 }
 
 double Resource::getHardwareCost(string n) {
@@ -310,6 +297,13 @@ void Resource::addHardwareCost(string n, double c)
 			numSlots += it.second;
 		}
 		return numSlots;
+	}
+
+	Resource::Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime)  {
+		if(Utility::iequals(name, "register")) throw Exception("register.constructor: ERROR resource name 'register' is not allowed; please choose another one");
+		if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERROR it is not allowed to limit other than 1 to this resource!");
+		if(blockingTime==0  && limit!=-1) throw Exception(name + ".constructor: ERROR it is not allowed to limit resource with a blocking time of 0!");
+		this->phyDelay = 0.0f;
 	}
 
 	int ResourceModel::getMaxLatency() const
@@ -345,20 +339,17 @@ int ResourceModel::getVertexLatency(const Vertex *v) const
   throw HatScheT::Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
 }
 
-int ResourceModel::getVertexLatency(Vertex *v) const
-{
-  for(auto it:this->registrations)
-  {
-    const Vertex* rv = it.first;
-    const Resource* rr = it.second;
-
-    if(rv==v)
-    {
-      return rr->getLatency();
-    }
-  }
-
-  throw HatScheT::Exception("ResourceModel.getVertexLatency: vertex not registered " + v->getName());
-}
+	void ResourceModel::reset() {
+		for (auto &r : this->resources) {
+			delete r;
+		}
+		this->resources.clear();
+		for (auto &t : this->tables) {
+			delete t;
+		}
+		this->tables.clear();
+		this->registrations.clear();
+		this->reverseRegistrations.clear();
+	}
 
 }

@@ -31,20 +31,20 @@ using namespace HatScheT;
 using namespace std;
 
 bool HatScheT::verifyResourceConstrainedSchedule(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                                 map<HatScheT::Vertex *, int> &schedule, int SL)
+                                                 map<HatScheT::Vertex *, int> &schedule, int SL, bool quiet)
 {
-  return HatScheT::verifyModuloSchedule(g, rm, schedule, SL+1); // +1 to be safe (depends on the interpretation of SL)
+  return HatScheT::verifyModuloSchedule(g, rm, schedule, SL+1, quiet); // +1 to be safe (depends on the interpretation of SL)
 }
 
 bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
-                                    std::map<Vertex *, int> &schedule, int II)
+                                    std::map<Vertex *, int> &schedule, int II, bool quiet)
 {
   if(II<=0){
-    cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl;
+    if (!quiet) cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl;
     return false;
   }
   if(schedule.empty()==true){
-    cout << "HatScheT.verifyModuloSchedule Error empty schedule provided to verifier!"  << endl;
+    if (!quiet)cout << "HatScheT.verifyModuloSchedule Error empty schedule provided to verifier!"  << endl;
     return false;
   }
   auto &S = schedule; // alias
@@ -58,8 +58,8 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
     ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] + e->getDistance() * II;
     if (! ok) {
-      cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
-      cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;    
+      if (!quiet) cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
+      if (!quiet) cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << S[j] << " + " << e->getDistance() << "*" << II << endl;
       return false;
     }
   }
@@ -80,11 +80,12 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 
       ok = res->getLimit() == UNLIMITED || vs.size() <= res->getLimit();
       if (! ok) {
-        cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
-        cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;      
+        if (!quiet) cout << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
+        if (!quiet) cerr << "The following " << vs.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in congruence class " << m << " (mod " << II << "):" << endl;
         for (auto v : vs){
-          cout << *v << " (t=" << S[v] << ")" << endl;
-          cerr << *v << " (t=" << S[v] << ")" << endl;}
+            if (!quiet) cout << *v << " (t=" << S[v] << ")" << endl;
+            if (!quiet) cerr << *v << " (t=" << S[v] << ")" << endl;
+        }
         return false;
       }
     }
@@ -97,30 +98,30 @@ bool HatScheT::verifyModuloSchedule(Graph &g, ResourceModel &rm,
 }
 
 bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::ResourceModel &rm,
-                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence, int scheduleLength) {
+                                              vector<map<HatScheT::Vertex *, int>> &schedule, vector<int> latencySequence,
+                                              int scheduleLength, bool quiet) {
 
     if (latencySequence.size() == 0) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!" << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error empty II vector passed to verifier!" << endl;
         return false;
     }
     if (schedule.size() == 0) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
         return false;
     }
     if (schedule.size() != latencySequence.size()) {
-        cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!"
-             << endl;
+        if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error schedule and II vector of incoherent  size provided!" << endl;
         return false;
     }
-    cout << "Start verify rational II schedule: < ";
+    if (!quiet) cout << "Start verify rational II schedule: < ";
     for (int i = 0; i < latencySequence.size(); i++) {
         cout << latencySequence[i] << " ";
         if (latencySequence[i] <= 0) {
-            cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong latency between IIs provided: " << latencySequence[i] << endl;
+            if (!quiet) cout << "HatScheT.verifyRationalIIModuloSchedule Error wrong latency between IIs provided: " << latencySequence[i] << endl;
             return false;
         }
     }
-    cout << " >" << endl;
+    if (!quiet) cout << " >" << endl;
 
     int m = 0;
 
@@ -162,7 +163,7 @@ bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::Res
 
             ok = S[i] + rm.getVertexLatency(i) + e->getDelay() <= S[j] +  II;
             if (!ok) {
-                cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
+                if (!quiet) cout << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
                      << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
                 cerr << *e << " violated: " << S[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay()
                      << " <= " << S[j] << " + " << II << "(sample " << s << ")" << endl;
@@ -198,8 +199,7 @@ bool HatScheT::verifyRationalIIModuloSchedule2(HatScheT::Graph &g, HatScheT::Res
             }
 
             if (instancesUsed > r->getLimit()) {
-                cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << m << ": used "
-                     << instancesUsed << " of " << r->getLimit() << endl;
+                if (!quiet) cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << m << ": used " << instancesUsed << " of " << r->getLimit() << endl;
                 return false;
             }
         }
@@ -212,14 +212,14 @@ pair<int,int> splitRational(double x);
 int safeRoundDown(double x);
 
 bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
-                                    std::map<Vertex *, double> &schedule, double II)
+                                    std::map<Vertex *, double> &schedule, double II, bool quiet)
 {
     if(II<=0){
-        cout << "HatScheT.verifyModuloScheduleRational Error invalid II passed to verifier: "  << II << endl;
+        if (!quiet) cout << "HatScheT.verifyModuloScheduleRational Error invalid II passed to verifier: "  << II << endl;
         return false;
     }
     if(schedule.empty()==true){
-        cout << "HatScheT.verifyModuloScheduleRational Error empty schedule provided to verifier!"  << endl;
+        if (!quiet) cout << "HatScheT.verifyModuloScheduleRational Error empty schedule provided to verifier!"  << endl;
         return false;
     }
     auto &S = schedule; // alias
@@ -253,7 +253,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
 
             ok = a_start + rm.getVertexLatency(a) + e->getDelay() <= b_start;
             if (! ok) {
-                cout << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
+                if (!quiet) cout << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
                 cerr << *e << " violated: " << a_start << " + " << rm.getVertexLatency(a) << " + " << e->getDelay() << " <= " << b_start<< " In Iteration: " << i << endl;
                 return false;
             }
@@ -265,8 +265,8 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     for (int i = 0; i <= max_it; i++) {
         for (auto it = g.verticesBegin(), end = g.verticesEnd(); it != end; it++) {
             auto v = *it;
-            cout.precision(17);
-            cout << v->getName() << " i =  " <<  i << " i*II = " << i*II << " Start = " << S[v] << " sum = " << safeRoundDown(S[v] + i*II) << endl;
+            if (!quiet) cout.precision(17);
+            if (!quiet) cout << v->getName() << " i =  " <<  i << " i*II = " << i*II << " Start = " << S[v] << " sum = " << safeRoundDown(S[v] + i*II) << endl;
             ressourceSlotByCycle[make_pair(rm.getResource(v), safeRoundDown(S[v] + i*II) )].push_back(v);
         }
     }
@@ -279,7 +279,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
 
             ok = res->getLimit() == UNLIMITED || used.size() <= res->getLimit();
             if (! ok) {
-                cout << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
+                if (!quiet) cout << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
                 cerr << "The following " << used.size() << " vertices violate the resource limit " << res->getLimit() << " for " << res->getName() << " in cycle " << i << ":" << endl;
                 for (auto v : used){
                     cout << *v << " (t=" << S[v] << ")" << endl;
@@ -295,7 +295,7 @@ bool HatScheT::verifyModuleScheduleRational(Graph &g, ResourceModel &rm,
     return true;
 }
 
-bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int>> &schedule, int samples, int modulo) {
+bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vector<std::map<Vertex *, int>> &schedule, int samples, int modulo, bool quiet) {
   if (schedule.empty()) {
     cout << "HatScheT.verifyRationalIIModuloSchedule Error empty schedule provided to verifier!" << endl;
     return false;
@@ -311,7 +311,7 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
       auto sampleIndex = so.first;
       auto offset = so.second;
       if (schedule[i][vDst] - schedule[sampleIndex][vSrc] - rm.getVertexLatency(vSrc) + offset < 0) {
-        cout << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
+          if (!quiet)cout << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
              << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
         cerr << *e << " violated: " << schedule[i][vDst] << " - " << schedule[sampleIndex][vSrc] << " - "
              << rm.getVertexLatency(vSrc) << " + " << offset << " >= 0 (sample " << i << ")" << endl;
@@ -321,45 +321,33 @@ bool HatScheT::verifyRationalIIModuloSchedule(Graph &g, ResourceModel &rm, vecto
   }
 
   /* 2)  modulo resource constraints*/
-  for (auto it = rm.resourcesBegin(); it != rm.resourcesEnd(); ++it) {
-    Resource *r = *it;
-    //unlimited
-    if (r->getLimit() == -1) continue;
-
-    //iterate over every timestep
-    //TODO resource limit in timestep mod m !!
-    for (int timeStep = 0; timeStep <= modulo; timeStep++) {
-      int instancesUsed = 0;
-      //iterate over schedules
-      for (auto S : schedule) {
-
-        //iterate over vertices
-        for (auto it2 = g.verticesBegin(); it2 != g.verticesEnd(); ++it2) {
-          Vertex *v = *it2;
-          //vertex of other resource
-          if (rm.getResource(v) != r) continue;
-          //other timestep assigned
-          if ((S[v] % modulo) != timeStep) continue;
-          else instancesUsed++;
-        }
-      }
-
-      if (instancesUsed > r->getLimit()) {
-        cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << timeStep << " mod " << modulo << ": used "
-             << instancesUsed << " of " << r->getLimit() << endl;
-        return false;
-      }
-    }
-  }
+	std::map<const Resource*, std::map<int, int>> resInstancesUsed;
+	for (auto &v : g.Vertices()) {
+		auto r = rm.getResource(v);
+		if (r->isUnlimited()) continue;
+		for (int s=0; s<samples; s++) {
+			auto t = schedule[s][v];
+			auto m = t % modulo;
+			resInstancesUsed[r][m]++;
+			if (resInstancesUsed[r][m] > r->getLimit()) {
+                if (!quiet) cout << "Resource Constraint violated for " << r->getName() << " in modulo slot " << t << " mod " << modulo << " = " << m << ": used "
+						 << resInstancesUsed[r][m] << " of " << r->getLimit() << endl;
+				return false;
+			}
+		}
+	}
 
   return true;
 }
 
 bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
-		Binding::BindingContainer bind, map<Edge *, int> portAssignments, set<const Resource *> commutativeOps) {
+																	Binding::RegChainBindingContainer bind, set<const Resource *> commutativeOps,
+																	bool quiet) {
 	// check for empty binding
 	if (bind.resourceBindings.empty()) {
-		std::cout << "HatScheT::verifyIntIIBinding: detected empty binding" << std::endl;
+		if (!quiet) {
+			std::cout << "HatScheT::verifyIntIIBinding: detected empty binding" << std::endl;
+		}
 		return false;
 	}
 	// check if operations of unlimited resources are executed on unique FUs
@@ -368,7 +356,7 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		auto fu = it.second;
 		auto res = rm->getResource(&g->getVertexByName(v));
 		if(!res->isUnlimited()) continue;
-		for(auto it2 : bind.resourceBindings) {
+		for(auto &it2 : bind.resourceBindings) {
 			auto v2 = it2.first;
 			if(v == v2) continue;
 			auto fu2 = it2.second;
@@ -376,8 +364,10 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			if(res != res2) continue;
 			if(fu == fu2) {
 				// FUs are equal, this should not happen!
-				std::cout << "Operations '" << v << "' and '" << v2
-				          << "' are unlimited and bound to the same resource - that should never happen!" << std::endl;
+				if (!quiet) {
+					std::cout << "Operations '" << v << "' and '" << v2
+										<< "' are unlimited and bound to the same resource - that should never happen!" << std::endl;
+				}
 				return false;
 			}
 		}
@@ -395,9 +385,11 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 		auto alreadyBusy = busyResources[{r,fu}];
 		try {
 			auto conflictVertex = alreadyBusy.at(m);
-			std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
-								<< "': vertices '" << conflictVertex->getName() << "' and '" << v
-								<< "' occupy it in the same time slot" << std::endl;
+			if (!quiet) {
+				std::cout << "Found resource conflict for resource '" << r->getName() << "', FU '" << fu << "' in modulo slot '"
+									<< m << "': vertices '" << conflictVertex->getName() << "' and '" << v->getName()
+									<< "' occupy it in the same time slot" << std::endl;
+			}
 			return false;
 		}
 		catch(std::out_of_range&) {
@@ -409,8 +401,10 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 	}
 
 	// check if port assignments for non-commutative operations are obeyed
-	if(portAssignments.empty() or bind.fuConnections.empty()) {
-		std::cout << "HatScheT::verifyIntIIBinding: no port assignments passed - will skip evaluation for those" << std::endl;
+	if(bind.portAssignments.empty() or bind.fuConnections.empty()) {
+		if (!quiet) {
+			std::cout << "HatScheT::verifyIntIIBinding: no port assignments passed - will skip evaluation for those" << std::endl;
+		}
 		return true;
 	}
 
@@ -439,62 +433,21 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				auto tDst = sched[const_cast<Vertex*>(&e->getVertexDst())];
 				auto lifetime = tDst - tSrc - latSrc + (II * e->getDistance());
 				if (it.second.first != lifetime) continue;
-				auto port = portAssignments[e];
+				auto port = bind.portAssignments[e];
 				if (it.second.second != port) continue;
 				foundConnection = true;
 				break;
 			}
 			if (!foundConnection) {
-				std::cout << "Could not find a port assignment for edge '" << e->getVertexSrcName() << "' -> '" << e->getVertexDstName()
-									<< "' (non-commutative)" << std::endl;
+				if (!quiet) {
+					std::cout << "Could not find a port assignment for edge '" << e->getVertexSrcName() << "' -> '"
+										<< e->getVertexDstName()
+										<< "' (non-commutative)" << std::endl;
+				}
 				return false;
 			}
 		}
 	}
-	/*
-	for(auto &e : g->Edges()) {
-		auto vSrc = &e->getVertexSrc();
-		auto vDst = &e->getVertexDst();
-		auto rSrc = rm->getResource(vSrc);
-		auto rDst = rm->getResource(vDst);
-		// skip commutative operation types
-		if(commutativeOps.find(rDst) != commutativeOps.end()) continue;
-		// skip chaining edges
-		if(e->getDependencyType() != Edge::DependencyType::Data) continue;
-		// continue check for non-commutative operations
-		auto fuSrc = bind.resourceBindings[vSrc->getName()];
-		auto fuDst = bind.resourceBindings[vDst->getName()];
-		auto tSrc = sched[vSrc];
-		auto tDst = sched[vDst];
-		auto latSrc = rSrc->getLatency();
-		auto dist = e->getDistance();
-		auto wantedPort = portAssignments[e];
-		auto lifetime = tDst - tSrc - latSrc + dist*II;
-		bool allGood = false;
-		for(auto &it : bind.fuConnections) {
-			if(it.first.first.first != rSrc->getName()) continue;
-			if(it.first.first.second != fuSrc) continue;
-			if(it.first.second.first != rDst->getName()) continue;
-			if(it.first.second.second != fuDst) continue;
-			if(it.second.first != lifetime) continue;
-			if(it.second.second == wantedPort) {
-				allGood = true;
-				break;
-			}
-			else {
-				std::cout << "Found illegal port assignment for non-commutative operation '" << vDst->getName()
-					<< "' of type '" << rDst->getName() << "' - wanted port '" << wantedPort << "', actual port '"
-					<< it.second.second << "'" << std::endl;
-				return false;
-			}
-		}
-		if(!allGood) {
-			std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
-				<< "' (non-commutative)" << std::endl;
-			return false;
-		}
-	}
-	*/
 
 	// check if commutative operations have valid port assignments
 	for(auto &vDst : g->Vertices()) {
@@ -517,9 +470,12 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 			auto tDst = sched[vDst];
 			auto latSrc = rSrc->getLatency();
 			auto dist = e->getDistance();
-			auto wantedPort = portAssignments[e];
+			auto wantedPort = bind.portAssignments[e];
 			if (requestedPorts.find(wantedPort) != requestedPorts.end()) {
-				throw HatScheT::Exception("Corrupt port assignment container - Multiple edges are connected to port '"+std::to_string(wantedPort)+"' of '"+vDst->getName()+"'");
+				if (!quiet) {
+					std::cout << "Corrupt port assignment container - Multiple edges are connected to port '" << wantedPort
+										<< "' of '" << vDst->getName() << "'" << std::endl;
+				}
 			}
 			requestedPorts.insert(wantedPort);
 			auto lifetime = tDst - tSrc - latSrc + dist*II;
@@ -537,13 +493,18 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 				//break;
 			}
 			if(!foundIt) {
-				std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
-									<< "' (commutative)" << std::endl;
+				if (!quiet) {
+					std::cout << "Could not find a port assignment for edge '" << vSrc->getName() << "' -> '" << vDst->getName()
+										<< "' (commutative)" << std::endl;
+				}
 				return false;
 			}
 		}
 		if(requestedPorts.size() != actualPorts.size()) {
-			std::cout << "Found invalid port assignments for commutative operation '" << vDst->getName() << "'" << std::endl;
+			if (!quiet) {
+				std::cout << "Found invalid port assignments for commutative operation '" << vDst->getName() << "'"
+									<< std::endl;
+			}
 			return false;
 		}
 	}
@@ -552,8 +513,8 @@ bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int
 }
 
 bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<Vertex *, int>> sched, int samples, int modulo,
-												Binding::RatIIBindingContainer bind, map<Edge *, int> portAssignments,
-												set<const Resource *> commutativeOps) {
+																	Binding::RatIIRegChainBindingContainer bind, map<Edge *, int> portAssignments,
+																	set<const Resource *> commutativeOps) {
 	// check for empty binding
 	if (bind.resourceBindings.empty()) {
 		std::cout << "HatScheT::verifyRatIIBinding: detected empty binding" << std::endl;
@@ -600,9 +561,9 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 			try {
 				auto conflictVertex = alreadyBusy.at(m).first;
 				auto conflictSample = alreadyBusy.at(m).second;
-				std::cout << "Found resource conflict for resource '" << r->getName() << "' in modulo slot '" << m
-									<< "': vertices '" << conflictVertex->getName() << "' of sample '" << conflictSample << "' and '"
-									<< v->getName() << "' of sample '" << s << "' occupy it in the same time slot" << std::endl;
+				std::cout << "Found resource conflict for resource '" << r->getName() << "' FU '" << fu << "' in modulo slot '"
+					<< m << "': vertices '" << conflictVertex->getName() << "' of sample '" << conflictSample << "' and '"
+					<< v->getName() << "' of sample '" << s << "' occupy it in the same time slot" << std::endl;
 				return false;
 			}
 			catch(std::out_of_range&) {
@@ -722,6 +683,233 @@ bool HatScheT::verifyRatIIBinding(Graph *g, ResourceModel *rm, std::vector<map<V
 	}
 
 	return true;
+}
+
+bool HatScheT::verifyIntIIBinding(Graph *g, ResourceModel *rm, map<Vertex *, int> sched, int II,
+																	Binding::BindingContainer bind, std::set<const Resource *> commutativeOps,
+																	bool quiet) {
+
+	// check if all edges have a *valid* port assignment (i.e., all input ports of each vertex must be occupied)
+	// ATTENTION: this function expects that the port assignments container was updated
+	// if ports were switched for commutative operations
+	for (auto &vDst : g->Vertices()) {
+		int numInputEdges = 0;
+		std::set<int> occupiedInputPorts;
+		for (auto &e : g->Edges()) {
+			if (vDst != &e->getVertexDst()) continue;
+			try {
+				occupiedInputPorts.insert(bind.portAssignments.at(e).second);
+			}
+			catch (std::out_of_range&) {
+				// edge has no port assignment
+				// oh no, binding is invalid :(
+				if (!quiet) {
+					std::cout << "Missing port assignment for edge '" << e->getVertexSrcName() << "' -(" << e->getDistance()
+										<< ")-> '" << e->getVertexDstName() << "'" << std::endl;
+				}
+				return false;
+			}
+			numInputEdges++;
+		}
+		if (numInputEdges != occupiedInputPorts.size()) {
+			// not all input ports are occupied
+			// oh no, binding is invalid :(
+			if (!quiet) {
+				std::cout << "Not all ports of vertex '" << vDst->getName() << "' are occupied (" << occupiedInputPorts.size()
+									<< "/" << numInputEdges << ")" << std::endl;
+			}
+			return false;
+		}
+	}
+
+	// check if all connections have valid active times
+	std::map<std::tuple<std::string, int, int>, std::set<int>> activeTimes;
+	for (auto &it : bind.connections) {
+		for (auto t : std::get<6>(it)) {
+			if (t >= II) {
+				if (!quiet) {
+					std::cout << "Detected invalid active time of connection '" << std::get<0>(it) << "' (" << std::get<1>(it)
+										<< ") port " << std::get<2>(it) << " -> '" << std::get<3>(it) << "' (" << std::get<4>(it)
+										<< ") port " << std::get<5>(it) << ": t >= II (" << t << " >= " << II << ")" << std::endl;
+				}
+				return false;
+			}
+			std::tuple<std::string, int, int> dst = {std::get<3>(it), std::get<4>(it), std::get<5>(it)};
+			if (activeTimes[dst].find(t) == activeTimes[dst].end()) {
+				activeTimes[dst].insert(t);
+			}
+			else {
+				if (!quiet) {
+					std::cout << "Detected duplicate active time of '" << std::get<3>(it) << "' (" << std::get<4>(it)
+										<< ") input " << std::get<5>(it) << std::endl;
+				}
+				return false;
+			}
+		}
+	}
+
+	// check if all vertices are assigned to an FU
+	for (auto v : g->Vertices()) {
+		if (bind.resourceBindings.find(v->getName()) == bind.resourceBindings.end()) {
+			// oh no, binding is invalid :(
+			if (!quiet) {
+				std::cout << "Vertex '" << v->getName() << "' is not assigned to an FU" << std::endl;
+			}
+			return false;
+		}
+	}
+
+	// check if conflicting vertices are bound to the same FU
+	for (auto v1 : g->Vertices()) {
+		for (auto v2 : g->Vertices()) {
+			// skip potential conflicts with itself
+			if (v1 == v2) continue;
+			// conflicts are only possible if both resource types are equal
+			if (rm->getResource(v1) != rm->getResource(v2)) continue;
+			// conflicts are only possible if both congruence classes are also equal
+			if (sched.at(v1) % II != sched.at(v2) % II) continue;
+			// we got a conflict if they are executed by the same FU
+			for (auto &fu1 : bind.resourceBindings.at(v1->getName())) {
+				for (auto &fu2 : bind.resourceBindings.at(v2->getName())) {
+					if (fu1 == fu2) {
+						// oh no, binding is invalid :(
+						if (!quiet) {
+							std::cout << "Conflicting vertices '" << v1->getName() << "' and '" << v2->getName()
+												<< "' are bound to the same FU" << std::endl;
+						}
+						return false;
+					}
+				}
+			}
+		}
+	}
+
+	// check if all dependencies for all vertices are ok
+	bool allDependenciesOk = true;
+	for (auto &vDst : g->Vertices()) {
+		// get info about this vertex
+		auto rDst = rm->getResource(vDst);
+		auto tDst = sched.at(vDst);
+		auto fuDst = bind.resourceBindings.at(vDst->getName());
+		// this is needed for commutative operation types
+		// keep track which edge is connected to which input port of the FU that executes this operation
+		std::map<Edge*, std::set<int>> vertexInputs;
+		std::vector<Edge*> inputEdges;
+		// check all input edges
+		for (auto e : g->Edges()) {
+			// skip input edges of other vertices
+			if (vDst != &e->getVertexDst()) continue;
+			// register edge as input edges of this vertex
+			inputEdges.emplace_back(e);
+			// just get all info about src vertex that we may potentially need
+			auto vSrc = &e->getVertexSrc();
+			auto rSrc = rm->getResource(vSrc);
+			auto tSrc = sched.at(vSrc);
+			auto fuSrc = bind.resourceBindings.at(vSrc->getName());
+			// calculate lifetime
+			int lifetime = tDst - tSrc - rSrc->getLatency() + e->getDistance() * II;
+			// keep track of where the variable is at which time step
+			std::set<std::pair<std::string, int>> currentSources; // = {{rSrc->getName(), fuSrc}};
+			for (auto &it : fuSrc) {
+				currentSources.insert({rSrc->getName(), it});
+			}
+			// number of considered lifetime register stages
+			int numLifetimeRegs = 0;
+			// the time step in which the variable was created
+			int currentTimestep = tSrc + rSrc->getLatency();
+			// search the location of the variable in the time step when the dst operation is executed
+			while (lifetime > numLifetimeRegs) {
+				// container to store where the variable will be in the next time step
+				std::set<std::pair<std::string, int>> nextSources;
+
+				// check all locations of the variable in the current time step
+				for (auto &source : currentSources) {
+					// check if it is passed to another register
+					for (auto &connection : bind.connections) {
+						// only check connections for which the source matches
+						// skip connections for source resource type mismatch
+						if (std::get<0>(connection) != source.first) continue;
+						// also skip it if FU or register index does not match
+						if (std::get<1>(connection) != source.second) continue;
+						// also skip it if destination is not a register
+						if (std::get<3>(connection) != "register") continue;
+						// shortcut for the register index
+						auto regIndex = std::get<4>(connection);
+						// also skip it if the register is not enabled in the current time step
+						if (bind.registerEnableTimes[regIndex].find(currentTimestep % II) == bind.registerEnableTimes[regIndex].end()) continue;
+						// looks like we found a register that holds the variable in the next time step
+						nextSources.insert({"register", regIndex});
+					}
+
+					// check if it remains where it is
+					bool overwritesValue = false;
+					if (source.first == "register") {
+						for (auto enableTime : bind.registerEnableTimes[source.second]) {
+							if (enableTime == currentTimestep % II) {
+								overwritesValue = true;
+								break;
+							}
+						}
+					}
+					else {
+						// FUs always produce a new value
+						overwritesValue = true;
+					}
+					if (!overwritesValue) {
+						nextSources.insert(source);
+					}
+				}
+
+				// update sources
+				currentSources = nextSources;
+
+				// update time step counter
+				currentTimestep++;
+
+				// update register stage counter
+				numLifetimeRegs++;
+			}
+
+			// check if all destinations get their data from any of the sources
+			std::set<int> foundConnection;
+			for (auto &source : currentSources) {
+				int expectedSrcOutputPort;
+				if (source.first == "register") {
+					expectedSrcOutputPort = 0;
+				}
+				else {
+					expectedSrcOutputPort = bind.portAssignments.at(e).first;
+				}
+				for (auto &fu : fuDst) {
+					for (auto connection : bind.connections) {
+						// skip connections for source resource type mismatch
+						if (std::get<0>(connection) != source.first) continue;
+						// skip if FU or register index does not match
+						if (std::get<1>(connection) != source.second) continue;
+						// skip if src port does not match
+						if (std::get<2>(connection) != expectedSrcOutputPort) continue;
+						// skip if destination does not match
+						if (std::get<3>(connection) != rDst->getName()) continue;
+						if (std::get<4>(connection) != fu) continue;
+						// skip if dst port does not match
+						if (std::get<5>(connection) != bind.portAssignments.at(e).second) continue;
+						// connection seems fine...
+						foundConnection.insert(fu);
+					}
+				}
+			}
+			if (foundConnection != fuDst) {
+				// oh no, binding is invalid :(
+				if (!quiet) {
+					std::cout << "Failed to find all necessary connection paths for edge '" << e->getVertexSrcName() << "' port "
+										<< bind.portAssignments.at(e).first << " -(" << e->getDistance() << ")-> '" << e->getVertexDstName()
+										<< "' port " << bind.portAssignments.at(e).second << std::endl;
+				}
+				allDependenciesOk = false;
+			}
+		}
+	}
+	return allDependenciesOk;
 }
 
 

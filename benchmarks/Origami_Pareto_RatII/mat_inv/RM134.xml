@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="5" limit="29" name="AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="5" limit="8" name="AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="4" limit="105" name="Product" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_UU_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_UV_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_UW_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_VU_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_VV_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_VW_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_WU_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_WV_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Ldiff_WW_del_1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="R_U" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="R_V" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="R_W" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_11" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_12" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_13" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_21" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_22" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_23" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_31" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_32" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_33" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_41" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_42" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Inv_43" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant1_274" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="14" limit="-1" name="Divide" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant348*8e-9_53" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

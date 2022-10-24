@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="5" limit="5" name="AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="4" limit="3" name="Product" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="X" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Y" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant9/1024_544" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-44/1024_545" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant208/1024_552" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant346/1024_553" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

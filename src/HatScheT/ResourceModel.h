@@ -33,7 +33,8 @@
 namespace HatScheT
 {
 
-const int UNLIMITED = -1;
+//class Utility; // forward declaration for cyclic include
+const int UNLIMITED = -1; // code for unlimited resource type
 
 /*!
  * \brief Instances of this class represent a simple resource
@@ -48,11 +49,7 @@ public:
    * \param latency the number of time steps the resource needs to complete its function
    * \param blockingTime the number of time steps a resource instance is blocked by an individual operation
    */
-  Resource(std::string name, int limit, int latency, int blockingTime) : name(name), limit(limit), latency(latency), blockingTime(blockingTime) {
-    if(name=="special_loop" && limit!=1) throw Exception(name + ".constructor: ERORR it is not allowed to limit other than 1 to this resource!");
-    if(blockingTime==0  && limit!=-1) throw Exception(name + ".constructor: ERORR it is not allowed to limit resource with a blocking time of 0!");
-    this->phyDelay = 0.0f;
-  }
+  Resource(std::string name, int limit, int latency, int blockingTime);
   /*!
    * copy constructor is forbidden for this class
    */
@@ -75,8 +72,9 @@ public:
   /*!
    * set resource limit
    * @param l new limit
+   * @param safe guarantee safe operation by enabling error checks - DISABLE THIS ONLY IF YOU KNOW WHAT YOU ARE DOING!
    */
-  void setLimit(int l);
+  void setLimit(int l, const bool &safe=true);
   /*!
    * this is used for resources that have different limits in different congruence classes
    * @param congruenceClass
@@ -287,6 +285,13 @@ public:
    */
   ResourceModel(const ResourceModel&) = delete;
   /*!
+   * resets a resource model to its default state
+   * -> clear resources
+   * -> clear registrations
+   * -> clear helper containers
+   */
+  void reset();
+  /*!
    * \brief operator <<
    * \param os
    * \param rm
@@ -367,13 +372,6 @@ public:
    * \return `v`'s latency
    * \throws Exception if vertex is not registered
    */
-  int getVertexLatency(Vertex* v) const;
-  /*!
-   * \brief Convenience method to get the given vertex's latency
-   * \param v the vertex
-   * \return `v`'s latency
-   * \throws Exception if vertex is not registered
-   */
   int getVertexLatency(const Vertex* v) const;
   /*!
    * \brief determines the maximum latency of all registered latencies
@@ -414,10 +412,14 @@ public:
     return {resources.begin(),resources.end()};
   }
 private:
-  /*!
-   * \brief the mapping between vertices and resources
-   */
-  map<const Vertex*, const Resource*> registrations;
+	/*!
+	 * \brief the mapping between vertices and resources
+	 */
+	map<const Vertex*, const Resource*> registrations;
+	/*!
+	 * \brief the mapping between resources and vertices
+	 */
+	map<const Resource*, std::set<const Vertex*>> reverseRegistrations;
   /*!
    * \brief all created resources
    */

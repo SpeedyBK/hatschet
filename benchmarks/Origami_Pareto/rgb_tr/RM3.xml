@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="5" limit="4" name="AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="5" limit="4" name="AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="4" limit="4" name="Product" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In_R" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In_G" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In_B" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Out_CR" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Out_Y" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Out_CB" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.299_15" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.114_16" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.564_17" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.713_18" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant128_19" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant128_20" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>

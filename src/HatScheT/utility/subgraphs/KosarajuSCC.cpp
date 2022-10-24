@@ -27,7 +27,7 @@ namespace HatScheT {
   KosarajuSCC::KosarajuSCC(HatScheT::Graph &g) {
 
     this->g = &g;
-    this->gT = nullptr;
+    this->quiet = true;
 
   }
 
@@ -64,7 +64,7 @@ namespace HatScheT {
 
     //This gets all the edges with source-vertex V. Now we have to check if the destination-vertex of the edge is
     //already visited.
-    for (auto e:this->gT->Edges()) {
+    for (auto e:this->gT.Edges()) {
       if (&e->getVertexSrc() == V) {
 
         //Now we have to check if the destination-vertex of the edge is already visited. If it is unvisited, we have to
@@ -80,9 +80,6 @@ namespace HatScheT {
     sccVector[sccVector.size()-1]->setVertexAsPartOfSCC(V);
 
   }
-
-
-
 
   vector <SCC*> KosarajuSCC::getSCCs () {
     //Generating a map which holds the information if a vertex is visited and mark all Vertices as unvisited.
@@ -101,14 +98,11 @@ namespace HatScheT {
     if(!this->quiet) cout << endl << "-------------------------------------------------------------------------------------" << endl;
 
     //Getting the transposed graph of g. And a map, which maps the Vertices of g to the Vertices of gT.
-    auto graphMap = Utility::transposeGraph(g);
-    this->gT = graphMap.first;
-    this->VertexMap = graphMap.second;
-
+		this->VertexMap = Utility::transposeGraph(this->g, &this->gT);
 
     //Marking all Vertices of the transposed graph as unvisited
     visited.clear();
-    for (auto v:this->gT->Vertices()) {
+    for (auto v:this->gT.Vertices()) {
       visited.insert(std::make_pair(v, false));
     }
 
@@ -121,14 +115,22 @@ namespace HatScheT {
 
       if (!visited[VertexMap[Stack.top()]]) {
         auto *scc = new SCC(*g);
-        sccVector.push_back(scc);
-        sccVector[sccVector.size()-1]->setId(i);
-        sccVector[sccVector.size()-1]->setName("SCC_");
+        sccVector.emplace_back(scc);
+        scc->setId(i);
+        scc->setName("SCC_");
         dfs(VertexMap[Stack.top()]);
         scc->findSCCEdges(); // let the scc find its edges inside the original graph
         //cout << "Size of SCCVector is " << sccVector.size() << endl;
-        if(!this->quiet) cout << sccVector[sccVector.size()-1]->getName() << sccVector[sccVector.size()-1]->getId();
-        if(!this->quiet) cout << " Has " << sccVector[sccVector.size()-1]->getNumberOfVertices() << " Vertices" << endl;
+        if(!this->quiet) {
+          cout << scc->getName() << scc->getId();
+          cout << " Has " << scc->getNumberOfVertices() << " Vertices and " << scc->getSCCEdges().size() << " Edges:" << endl;
+          for (auto &v : scc->getVerticesOfSCC()) {
+            cout << "  " << v->getName() << endl;
+          }
+          for (auto &e : scc->getSCCEdges()) {
+            cout << "  " << e->getVertexSrcName() << " -> " << e->getVertexDstName() << endl;
+          }
+        }
         i++;
       }
 
@@ -138,8 +140,6 @@ namespace HatScheT {
 
     return sccVector;
   }
-
-
 
   Vertex *KosarajuSCC::getOriginalVertex(Vertex *V) {
 

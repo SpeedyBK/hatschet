@@ -208,11 +208,6 @@ namespace HatScheT {
          * @brief destructor
          */
         ~RationalIIModuloSDCScheduler() override;
-        /*!
-         * @brief override SchedulerBase::getBindings()
-         * @return
-         */
-        std::map<const Vertex *, int> getBindings() override;
 
         /*!
          * @brief calculate life times considering II instead of schedule length

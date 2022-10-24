@@ -1,0 +1,120 @@
+//
+// Created by nfiege on 5/25/22.
+//
+
+#include "SATCombinedScheduler.h"
+#include <cmath>
+#ifdef USE_CADICAL
+#include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
+namespace HatScheT {
+
+	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
+		: SchedulerBase(g,resourceModel), solverTimeout(300)
+	{
+		this->II = -1;
+		this->timeouts = 0;
+		this->scheduleFound = false;
+		this->optimalResult = false;
+		if (II <= 0) {
+			computeMinII(&g, &resourceModel);
+			this->minII = ceil(this->minII);
+			computeMaxII(&g, &resourceModel);
+		}
+		else {
+			this->minII = II;
+			this->maxII = II;
+			this->resMinII = II;
+			this->recMinII = II;
+		}
+		this->solvingTime = -1.0;
+		this->candidateII = -1;
+	}
+
+	void SATCombinedScheduler::schedule() {
+		this->initScheduler();
+		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
+			if (!this->quiet) {
+				std::cout << "SATCombinedScheduler: candidate II=" << this->candidateII << std::endl;
+			}
+			// prove II infeasible or compute valid schedule with SCC-based scheduler
+			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII);
+			s1.setSolverTimeout(this->solverTimeout);
+			s1.setQuiet(this->quiet);
+			s1.setMaxLatencyConstraint(this->maxLatencyConstraint);
+			s1.schedule();
+			int lat;
+			if (s1.getScheduleFound()) {
+				// found schedule for II
+				this->scheduleFound = true;
+				this->II = this->candidateII;
+				this->secondObjectiveOptimal = false;
+				this->startTimes = s1.getSchedule();
+				if (!this->quiet) {
+					std::cout << "SATCombinedScheduler: found initial schedule with SCC heuristic:" << std::endl;
+					for (auto &v : this->g.Vertices()) {
+						std::cout << "  " << v->getName() << " - " << this->startTimes.at(v) << std::endl;
+					}
+				}
+				lat = s1.getScheduleLength();
+			}
+			else {
+				// no schedule found
+				if (s1.getIIFeasible()) {
+					// timeout
+					this->firstObjectiveOptimal = false;
+				}
+				else {
+					// II infeasible
+					this->firstObjectiveOptimal = true;
+				}
+				// try next II
+				continue;
+			}
+			auto sccTime = s1.getSolvingTime();
+			if (sccTime > this->solverTimeout) {
+				// sanity check for timeout
+				if (s1.getScheduleFound()) {
+					break;
+				}
+				else {
+					continue;
+				}
+			}
+			if (!this->quiet) {
+				std::cout << "SATCombinedScheduler: SAT-based SCC scheduler found solution for II=" << this->candidateII << " and schedule length " << lat << std::endl;
+			}
+			auto satTimeout = (unsigned int)(this->solverTimeout - sccTime);
+			// refine latency with normal scheduler
+			SATScheduler s2(this->g, this->resourceModel, this->candidateII);
+			s2.setSolverTimeout(satTimeout);
+			s2.setQuiet(this->quiet);
+			if (this->maxLatencyConstraint >= 0) {
+				lat = min(this->maxLatencyConstraint, lat);
+			}
+			s2.setMaxLatencyConstraint(lat);
+			s2.schedule();
+			if (s2.getScheduleFound()) {
+				// ayy we got a schedule :)
+				this->startTimes = s2.getSchedule();
+				// check if it's latency-optimal
+				this->secondObjectiveOptimal = s2.getObjectivesOptimal().second;
+				if (!this->quiet) {
+					std::cout << "SATCombinedScheduler: SAT scheduler refined schedule length to " << s2.getScheduleLength() << std::endl;
+				}
+			}
+			break;
+		}
+	}
+
+	void SATCombinedScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
+		this->solverTimeout = newTimeoutInSec;
+	}
+
+	void SATCombinedScheduler::initScheduler() {
+		// let's be optimistic :)
+		this->firstObjectiveOptimal = true;
+		this->secondObjectiveOptimal = true;
+	}
+}
+#endif //USE_CADICAL

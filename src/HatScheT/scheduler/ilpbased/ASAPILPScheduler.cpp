@@ -19,6 +19,7 @@
 */
 
 #include "ASAPILPScheduler.h"
+#include <cmath>
 
 namespace HatScheT
 {
@@ -78,7 +79,7 @@ void ASAPILPScheduler::fillSolutionStructure() {
     unsigned int index =this->tIndices.at(v);
     ScaLP::Variable svTemp = this->ti[index];
 
-    int startTime = this->r.values[svTemp];
+    auto startTime = (int)round(this->r.values[svTemp]);
     this->startTimes.insert(make_pair(v, startTime));
   }
 }

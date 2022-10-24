@@ -850,12 +850,6 @@ namespace HatScheT {
         this->priorityForSchedQueue[v] = new PriorityHandler1(p);
     }
 
-    std::map<const Vertex *, int> RationalIIModuloSDCScheduler::getBindings() {
-        //return Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
-        return Binding::getILPMinRegBinding(this->getSchedule(), &this->g, &this->resourceModel, (int) this->II,
-                                            {"Gurobi"});
-    }
-
     std::map<Edge *, int> RationalIIModuloSDCScheduler::getLifeTimes() {
         if (this->startTimes.empty())
             throw HatScheT::Exception("ModSDC.getLifeTimes: cant return lifetimes! no startTimes determined!");

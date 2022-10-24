@@ -99,35 +99,49 @@ ELSE(USE_XERCESC)
 ENDIF (USE_XERCESC)
 
 ####################
-#Find CaDiCaL lib
+#Find CaDiCaL
 ####################
 FIND_LIBRARY(CADICAL_LIB
              NAMES libcadical.a
              HINTS "${CADICAL_LIBRARY_PATH}"
              DOC "Directory of the CaDiCaL library")
 
-IF(CADICAL_LIB)
-    MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB}")
-ELSE(CADICAL_LIB)
-    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}). Please specify path by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>)")
-ENDIF(CADICAL_LIB)
-
-####################
-#Find CaDiCaL Headers
-####################
 FIND_PATH(CADICAL_H
-          cadical.hpp
-          HINTS "${CADICAL_INCLUDE_PATH}"
-          DOC "Path to main CaDiCal header file"
+        cadical.hpp
+        HINTS "${CADICAL_INCLUDE_PATH}"
+        DOC "Path to main CaDiCal header file"
         )
 
-IF(CADICAL_H)
-    MESSAGE(STATUS "Found CaDiCaL Header: ${CADICAL_H}")
-ELSE(CADICAL_H)
-    MESSAGE(STATUS "Could not find CaDiCaL Headers (${CADICAL_H}). Please specify path by setting CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
-ENDIF(CADICAL_H)
+IF(CADICAL_H AND CADICAL_LIB)
+    add_definitions(-DUSE_CADICAL)
+    MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB} and Headers: ${CADICAL_H}")
+ELSE(CADICAL_H AND CADICAL_LIB)
+    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}) or CaDiCaL Header (${CADICAL_H}). Please specify paths by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>) and CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
+ENDIF(CADICAL_H AND CADICAL_LIB)
 
 
+####################
+#Find Z3-smtbased
+####################
+FIND_LIBRARY(Z3_LIB
+        NAMES libz3.so
+        DOC "Directory of the Z3 library")
+
+FIND_PATH(Z3_H
+        z3++.h
+        DOC "Path to main z3 header file"
+        )
+
+IF(Z3_H AND Z3_LIB)
+    add_definitions(-DUSE_Z3)
+    MESSAGE(STATUS "Found Z3 Lib: ${Z3_LIB} and Headers: ${Z3_H}")
+ELSE(Z3_H AND Z3_LIB)
+    MESSAGE(STATUS "Could not find Z3 Lib (${Z3_LIB}) or Z3 Header (${Z3_H}). Please specify paths by setting CMAKE_PREFIX_PATH (-DCMAKE_PREFIX_PATH=<path to Z3 install dir>)")
+ENDIF(Z3_H AND Z3_LIB)
+
+####################
+#SRC and Headerfiles
+####################
 set(HatScheT_SOURCES
 src/HatScheT/Vertex.cpp
 src/HatScheT/Edge.cpp
@@ -136,6 +150,7 @@ src/HatScheT/TargetModel.cpp
 src/HatScheT/utility/Exception.cpp
 src/HatScheT/base/SchedulerBase.cpp
 src/HatScheT/layers/RationalIISchedulerLayer.cpp
+src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
 src/HatScheT/ResourceModel.cpp
 src/HatScheT/utility/reader/Reader.cpp
 src/HatScheT/utility/reader/GraphMLGraphReader.cpp
@@ -152,6 +167,7 @@ src/HatScheT/utility/writer/ScheduleAndBindingWriter.cpp
 src/HatScheT/utility/writer/DGLWriter.cpp
 src/HatScheT/utility/Utility.cpp
 src/HatScheT/utility/Binding.cpp
+src/HatScheT/utility/BindingBase.cpp
 src/HatScheT/utility/TreeBind.cpp
 src/HatScheT/scheduler/ASAPScheduler.cpp
 src/HatScheT/scheduler/ALAPScheduler.cpp
@@ -161,11 +177,11 @@ src/HatScheT/utility/reader/XMLTargetReader.cpp
 src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
-src/HatScheT/scheduler/dev/SDSScheduler.cpp 
-src/HatScheT/utility/FibonacciHeap.h 
-src/HatScheT/utility/SDCSolver.cpp 
-src/HatScheT/utility/SDCSolver.h
-)
+src/HatScheT/utility/SDCSolver.cpp
+src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp
+src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
+src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.cpp)
+
 
 set(HatScheT_HEADERS
 src/HatScheT/base/ILPSchedulerBase.h
@@ -173,6 +189,7 @@ src/HatScheT/base/ModuloSchedulerBase.h
 src/HatScheT/base/SchedulerBase.h
 src/HatScheT/base/IterativeSchedulerBase.h
 src/HatScheT/layers/RationalIISchedulerLayer.h
+src/HatScheT/layers/IterativeModuloSchedulerLayer.h
 src/HatScheT/TargetModel.h
 src/HatScheT/Edge.h
 src/HatScheT/Graph.h
@@ -191,6 +208,7 @@ src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
 src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.h
+src/HatScheT/scheduler/dev/MinRegMultiScheduler.h
 src/HatScheT/scheduler/graphBased/PBScheduler.h
 src/HatScheT/scheduler/dev/ModuloQScheduler.h
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.h
@@ -201,7 +219,7 @@ src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
 src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
-src/HatScheT/scheduler/dev/ModSDC.cpp
+src/HatScheT/scheduler/dev/ModSDC.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h
@@ -215,7 +233,12 @@ src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
 src/HatScheT/utility/Tests.h
 src/HatScheT/utility/Utility.h
 src/HatScheT/utility/Binding.h
+src/HatScheT/utility/BindingBase.h
 src/HatScheT/utility/TreeBind.h
+src/HatScheT/utility/OptimalIntegerIIBinding.h
+src/HatScheT/utility/OptimalIntegerIISATBinding.h
+src/HatScheT/utility/OptimalIntegerIIBindingCong.h
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h
 src/HatScheT/utility/Verifier.h
 src/HatScheT/utility/writer/DotWriter.h
 src/HatScheT/utility/writer/ScheduleAndBindingWriter.h
@@ -227,7 +250,24 @@ src/HatScheT/utility/subgraphs/SCC.h
 src/HatScheT/Vertex.h
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
 src/HatScheT/scheduler/dev/SDSScheduler.h
-)
+src/HatScheT/scheduler/satbased/SATScheduler.h
+src/HatScheT/scheduler/satbased/SATSchedulerLatOpt.h
+src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
+src/HatScheT/scheduler/satbased/SATSCCScheduler.h
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
+src/HatScheT/scheduler/satbased/SATCombinedScheduler.h
+src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
+src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
+src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
+src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.h
+src/HatScheT/utility/SDCSolver.h
+src/HatScheT/utility/FibonacciHeap.h
+src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
+src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
+src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h
+src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h
+        )
 
 IF (SCALP_H AND SCALP_LIB)
 list(APPEND HatScheT_SOURCES
@@ -246,6 +286,7 @@ src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
 src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
+src/HatScheT/scheduler/dev/MinRegMultiScheduler.cpp
 src/HatScheT/scheduler/graphBased/PBScheduler.cpp
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/ModSDC.cpp
@@ -259,25 +300,61 @@ src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
 src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
 src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
 src/HatScheT/utility/Tests.cpp
-)
+src/HatScheT/utility/OptimalIntegerIIBinding.cpp
+src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
+src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
+
+IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/utility/OptimalIntegerIISATBinding.cpp
+    )
+ENDIF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
+
+IF (CADICAL_H AND CADICAL_LIB)
+list(APPEND HatScheT_SOURCES
+src/HatScheT/scheduler/dev/SDSScheduler.cpp
+src/HatScheT/scheduler/satbased/SATScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSchedulerLatOpt.cpp
+src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
+src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp
+src/HatScheT/scheduler/satbased/SATCombinedScheduler.cpp
+src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.cpp
+src/HatScheT/scheduler/satbased/SATMinRegScheduler.cpp
+src/HatScheT/scheduler/satbased/CaDiCaLTerminator.cpp
+)
+ENDIF (CADICAL_H AND CADICAL_LIB)
+
+IF(Z3_H AND Z3_LIB)
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
+            src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.cpp)
+ENDIF(Z3_H AND Z3_LIB)
+
+IF((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h
+        )
+ENDIF()
 
 add_library(hatschet ${HatScheT_SOURCES})
-
 add_executable(hatschet-bin src/hatschet.cpp)
 set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
 target_link_libraries(hatschet-bin hatschet)
+
 IF (SCALP_H AND SCALP_LIB)
-target_link_libraries(hatschet-bin ${SCALP_LIB})
+    target_link_libraries(hatschet-bin ${SCALP_LIB})
 ENDIF (SCALP_H AND SCALP_LIB)
 IF (XERCESC_H AND XERCESC_LIB)
-target_link_libraries(hatschet-bin ${XERCESC_LIB})
+    target_link_libraries(hatschet-bin ${XERCESC_LIB})
 ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
-target_link_libraries(hatschet-bin ${CADICAL_LIB})
+    target_link_libraries(hatschet-bin ${CADICAL_LIB})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
 include_directories(src/)
@@ -291,10 +368,19 @@ include_directories(${XERCESC_H})
 ENDIF (XERCESC_H AND XERCESC_LIB)
 
 IF (CADICAL_H AND CADICAL_LIB)
-add_definitions(-DUSE_CADICAL)
 include_directories(${CADICAL_H})
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
+####################
+#Z3 related
+####################
+IF(Z3_H AND Z3_LIB)
+    target_link_libraries(hatschet-bin ${Z3_LIB})
+ENDIF(Z3_H AND Z3_LIB)
+
+IF(Z3_H AND Z3_LIB)
+    include_directories(${Z3_H})
+ENDIF(Z3_H AND Z3_LIB)
 
 ####################
 # HaTScheTConfig.cmake
@@ -332,14 +418,24 @@ add_test("ratIIModuloQ" "./hatschet" "--test=RATIONALIIMODULOQ")
 add_test("ratIISCCQ" "./hatschet" "--test=RATIONALIISCCQ")
 add_test("ratIIUnroll" "./hatschet" "--test=UNROLLSCHEDULER")
 add_test("integerIINonRect" "./hatschet" "--test=INTEGERIINONRECT")
-add_test("minMuxBinding" "./hatschet" "--test=ILPMINMUXBINDING")
 add_test("optimalBinding" "./hatschet" "--test=ILPBASEDINTIIBINDING")
+add_test("treeBind" "./hatschet" "--test=TREEBIND")
+add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
+add_test("congBind" "./hatschet" "--test=ILPBASEDINTIIBINDINGCONG")
+add_test("LatencyEstimation" "./hatschet" "--test=LATENCY")
+add_test("IterativeModSchedulerLayer" "./hatschet" "--test=ITLAYER")
+ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 
 IF(CADICAL_H AND CADICAL_LIB)
-add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
+    add_test("CaDiCaL" "./hatschet" "--test=CADICAL")
+    add_test("SATScheduler" "./hatschet" "--test=SATSCHEDULER")
 ENDIF(CADICAL_H AND CADICAL_LIB)
 
-ENDIF(SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
+IF(Z3_H AND Z3_LIB)
+    add_test("Z3" "./hatschet" "--test=Z3")
+    add_test("SMTScheduler" "./hatschet" "--test=SMTBINARY")
+    add_test("SMTSCCScheduler" "./hatschet" "--test=SMTSCC")
+ENDIF(Z3_H AND Z3_LIB)
 
 ####################
 # example project

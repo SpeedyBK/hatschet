@@ -1,3 +1,4 @@
+
 //
 // Created by nfiege on 22/11/18.
 //
@@ -5,10 +6,8 @@
 #ifndef HATSCHET_MODSDC_H
 #define HATSCHET_MODSDC_H
 
-#include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 
 #include <vector>
 #include <string>
@@ -76,7 +75,7 @@ namespace HatScheT {
   };
 
   class ModSDC
-    : public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+    : public IterativeModuloSchedulerLayer, public ILPSchedulerBase {
   public:
     /*!
      * @brief ModSDC for scheduling in hatschet a graph (g), a resource model (rm) is needed
@@ -86,7 +85,7 @@ namespace HatScheT {
      * @param rm resource model
      * @param sw solver wishlist
      */
-    ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw);
+    ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II=-1);
 
     /*!
      * @brief destructor
@@ -96,7 +95,13 @@ namespace HatScheT {
     /*!
      * @brief schedule main method that runs the algorithm and determines a schedule
      */
-    void schedule() override;
+    void scheduleOLD(); //ToDo: Remove!
+
+    /*!
+     * Mainly for debugging.
+     * @return Name of the scheduler
+     */
+    string getName () override { return "ModSDCFiege"; }
 
     /*!
      * @brief override SchedulerBase::getBindings()
@@ -176,6 +181,17 @@ namespace HatScheT {
     int getInitialBudged() const {
       return this->initialBudget;
     }
+
+  protected:
+
+    /*!
+     * \brief Schedule Iteration for one II.
+     */
+    void scheduleIteration() override;
+    /*!
+     * Initialize stuff before II-Search-Loop starts.
+     */
+    void scheduleInit() override;
 
   private:
     /*!
@@ -494,6 +510,9 @@ namespace HatScheT {
      * @brief is used to determine budget per II
      */
     unsigned int budgetMultiplier;
+
+    time_t t;
+
   };
 }
 
