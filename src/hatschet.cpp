@@ -620,7 +620,7 @@ int main(int argc, char *args[]) {
 					((HatScheT::ModSDC*) scheduler)->setSolverQuiet(solverQuiet);
 					break;
 				case RATIONALIIMODULOSDC:
-					isModuloScheduler=true;
+                    isRationalIIScheduler=true;
 					scheduler = new HatScheT::RationalIIModuloSDCScheduler(g,rm,solverWishList);
 					if(timeout>0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
 					if(maxLatency > 0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);

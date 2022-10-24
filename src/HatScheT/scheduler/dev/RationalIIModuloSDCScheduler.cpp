@@ -749,7 +749,7 @@ namespace HatScheT {
     void RationalIIModuloSDCScheduler::scheduleInstruction(Vertex *I, int t) {
         ScaLP::Constraint c(this->scalpVariables.at(I) == t);
         this->createAdditionalConstraint(I, c);
-        this->mrt.insertVertex(I,t);
+        //this->mrt.insertVertex(I,t);
         this->prevSched[I] = t;
     }
 
@@ -1216,15 +1216,20 @@ namespace HatScheT {
     }
 
     bool RationalIIModuloSDCSchedulerMRT::insertVertex(Vertex *v, unsigned int moduloSlot) {
+        cout <<"moduloslot: "<< moduloSlot<<endl;
+        cout <<"II: "<< this->II<<endl;
         moduloSlot = moduloSlot % this->II;
+        cout <<"moduloslot: "<< moduloSlot<<endl;
         //int limit = this->rm->getResource(v)->getLimit();
         if(moduloSlot>=this->II)
             throw HatScheT::Exception("Invalid modulo slot requested: "+to_string(moduloSlot)+", II="+to_string(this->II));
         auto *res = this->rm->getResource(v);
+        cout <<"resource: "<< this->rm->getResource(v)->getName()<<endl;
         if(this->mrt.find(res) == this->mrt.end())
             throw HatScheT::Exception("Invalid vertex provided, its resource type doesn't exist in MRT");
         auto &column = this->mrt[res][moduloSlot];
         for(auto &it : column) {
+            cout <<"it: "<< it <<endl;
             if(it == nullptr) {
                 it = v;
                 return true;
