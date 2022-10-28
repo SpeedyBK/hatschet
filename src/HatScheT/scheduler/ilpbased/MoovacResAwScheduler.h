@@ -47,10 +47,6 @@ public:
    */
   MoovacResAwScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, Target& target);
   /*!
-   * schedule the provided problem
-   */
-  virtual void scheduleOLD();
-  /*!
    * get the hardware bindings of the determined II
    * @return
    */
@@ -112,6 +108,8 @@ public:
    * @return
    */
   vector<int > getFoundIIs();
+
+  string getName() override { return "MoovacResAwScheduler"; }
 
 protected:
 

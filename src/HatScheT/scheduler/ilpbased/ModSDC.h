@@ -2,6 +2,7 @@
 //
 // Created by nfiege on 22/11/18.
 //
+// 22/10/22 bkessler: Integration of IterativeModuloSchedulerLayer - Class
 
 #ifndef HATSCHET_MODSDC_H
 #define HATSCHET_MODSDC_H

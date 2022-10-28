@@ -20,6 +20,9 @@
 
 #include <ctime>
 #include <iomanip>
+#include <stdio.h>
+#include <math.h>
+
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/TreeBind.h"
 #include "HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h"
@@ -58,8 +61,6 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
-#include <stdio.h>
-#include <math.h>
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
 #include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
@@ -73,6 +74,7 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
 #include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h>
+#include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4093,6 +4095,8 @@ namespace HatScheT {
       schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new ModSDC(g, rm, {"Gurobi"}));
+      schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
+
 
       for (auto &scheduler : schedulers) {
           scheduler->setQuiet(false);

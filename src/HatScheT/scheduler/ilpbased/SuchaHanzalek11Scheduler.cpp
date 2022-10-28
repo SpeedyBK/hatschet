@@ -30,51 +30,11 @@ namespace HatScheT
 {
 
 SuchaHanzalek11Scheduler::SuchaHanzalek11Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
-	: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
-	this->II = -1;
-	scheduleFound = false;
-	optimalResult = true;
-	if (II <= 0) {
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
-	}
-	else {
-		this->minII = II;
-		this->maxII = II;
-		this->resMinII = II;
-		this->recMinII = II;
-	}
-}
+	: IterativeModuloSchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist) {
 
-void SuchaHanzalek11Scheduler::schedule()
-{
-  // reset previous solutions
-	startTimes.clear();
+    optimalResult = true;
+    this->feasible = false;
 
-  std::cout << "SH11: min/maxII = " << minII << " " << maxII << std::endl;
-
-  if (minII > maxII)
-    throw HatScheT::Exception("Inconsistent II bounds");
-
-  setUpSolverSettings();
-
-  bool feasible = false;
-  for (int candII = minII; candII <= maxII; ++candII) {
-    bool proven = false;
-    scheduleAttempt(candII, feasible, proven);
-    scheduleFound |= feasible;
-    optimalResult &= proven;
-    if (feasible) {
-      II = candII;
-      auto solution = solver->getResult().values;
-      for (auto *i : g.Vertices())
-        startTimes[i] = (int) std::lround(solution.find(s[i])->second);
-
-      std::cout << "SH11: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
-      break;
-    }
-  }
 }
 
 void SuchaHanzalek11Scheduler::setUpSolverSettings()
@@ -240,4 +200,43 @@ void SuchaHanzalek11Scheduler::constructResourceConstraints(int candII)
   }
 }
 
+  void SuchaHanzalek11Scheduler::scheduleInit() {
+      // reset previous solutions
+      startTimes.clear();
+      this->feasible = false;
+
+      if (!this->quiet)
+      {
+          cout << "Scheduling with " << this->getName() <<"!" << endl;
+          std::cout << "SH11: min/maxII = " << minII << " " << maxII << std::endl;
+      }
+
+      if (minII > maxII)
+      {
+          throw HatScheT::Exception("Inconsistent II bounds");
+      }
+
+      setUpSolverSettings();
+  }
+
+  void SuchaHanzalek11Scheduler::scheduleIteration() {
+      bool proven = false;
+      scheduleAttempt((int)II, this->feasible, proven);
+      scheduleFound |= feasible;
+      optimalResult &= proven;
+      if (feasible)
+      {
+          auto solution = solver->getResult().values;
+          for (auto *i : g.Vertices())
+          {
+              startTimes[i] = (int) std::lround(solution.find(s[i])->second);
+          }
+          if (!this->quiet)
+          {
+              std::cout << "SH11: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II
+                        << std::endl;
+          }
+          return;
+      }
+  }
 }
