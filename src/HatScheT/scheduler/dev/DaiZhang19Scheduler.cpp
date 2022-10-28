@@ -8,7 +8,6 @@
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/utility/writer/DotWriter.h"

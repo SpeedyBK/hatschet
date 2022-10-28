@@ -198,8 +198,7 @@ src/HatScheT/scheduler/ALAPScheduler.h
 src/HatScheT/scheduler/ASAPScheduler.h
 src/HatScheT/scheduler/graphBased/SGMScheduler.h
 src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.h
-src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
-src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
+        src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.h
 src/HatScheT/scheduler/ilpbased/MoovacScheduler.h
 src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h
@@ -279,9 +278,7 @@ src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
 src/HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.cpp
 src/HatScheT/scheduler/ilpbased/SuchaHanzalek11ResAwScheduler.cpp
-src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
-src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
 src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
 src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp

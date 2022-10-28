@@ -28,7 +28,6 @@
 #include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/utility/writer/GraphMLGraphWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/IntegerIINonRectScheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
@@ -413,57 +412,6 @@ namespace HatScheT {
 #endif
 	}
 
-	bool Tests::moduloSDCTest() {
-		try {
-			HatScheT::ResourceModel rm;
-
-			auto &load = rm.makeResource("load", 1, 2, 1);
-			auto &add = rm.makeResource("add", -1, 0, 1);
-
-			HatScheT::Graph g;
-
-			Vertex &a = g.createVertex(1);
-			Vertex &b = g.createVertex(2);
-			Vertex &c = g.createVertex(3);
-			Vertex &d = g.createVertex(4);
-
-			a.setName("a");
-			b.setName("b");
-			c.setName("c");
-			d.setName("d");
-
-			g.createEdge(a, c, 0);
-			g.createEdge(b, c, 0);
-			g.createEdge(c, d, 0);
-			g.createEdge(d, a, 1);
-
-			rm.registerVertex(&a, &load);
-			rm.registerVertex(&b, &load);
-			rm.registerVertex(&c, &add);
-			rm.registerVertex(&d, &load);
-
-			HatScheT::ModuloSDCScheduler m{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
-			m.setSolverQuiet(true);
-			m.setQuiet(false);
-			m.schedule();
-
-			auto sch = m.getSchedule();
-
-			bool result = true;
-			for (auto &p:sch) {
-				std::cout << p.first->getName() << " = " << p.second << std::endl;
-			}
-
-			if (verifyModuloSchedule(g, rm, sch, m.getII()) == false) return false;
-			if (m.getII() != 4) return false;
-			return result;
-		}
-		catch (HatScheT::Exception &e) {
-			std::cout << e.msg << std::endl;
-		}
-		return false;
-	}
-
 	bool Tests::integerIINonRectTest() {
 		try {
 			HatScheT::ResourceModel rm;
@@ -830,7 +778,7 @@ namespace HatScheT {
 		readerGraph.readGraph(graphStr.c_str());
 
 		//------------
-		HatScheT::ModuloSDCScheduler sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		HatScheT::ModSDC sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 		sdc.schedule();
 		modSDC_II = sdc.getII();
 		//------------

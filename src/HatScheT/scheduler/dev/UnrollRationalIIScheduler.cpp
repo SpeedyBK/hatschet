@@ -8,7 +8,6 @@
 #include <cmath>
 
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"

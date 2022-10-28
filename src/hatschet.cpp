@@ -70,7 +70,6 @@
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
@@ -449,7 +448,6 @@ int main(int argc, char *args[]) {
 				if (str == "READ" && HatScheT::Tests::readTest() == false) exit(-1);
 				if (str == "MOOVAC" && HatScheT::Tests::moovacTest() == false) exit(-1);
 				if (str == "RWRS" && HatScheT::Tests::readWriteReadScheduleTest() == false) exit(-1);
-				if (str == "MODULOSDC" && HatScheT::Tests::moduloSDCTest() == false) exit(-1);
 				if (str == "INTEGERIINONRECT" && HatScheT::Tests::integerIINonRectTest() == false) exit(-1);
 				if (str == "INTEGERIIPB" && HatScheT::Tests::integerIIPBTest() == false) exit(-1);
 				if (str == "MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege() == false) exit(-1);
@@ -864,15 +862,6 @@ int main(int argc, char *args[]) {
 					scheduler = sh11ra;
 					break;
 				}
-				case MODULOSDC:
-					isModuloScheduler = true;
-					scheduler = new HatScheT::ModuloSDCScheduler(g, rm, solverWishList);
-					if (timeout > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0)
-						((HatScheT::ModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
-					((HatScheT::ModuloSDCScheduler *) scheduler)->setThreads(threads);
-					((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverQuiet(solverQuiet);
-					break;
 				case MODULOSDCFIEGE:
 					isModuloScheduler = true;
 					scheduler = new HatScheT::ModSDC(g, rm, solverWishList);
