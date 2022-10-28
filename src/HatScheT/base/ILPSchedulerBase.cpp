@@ -33,7 +33,6 @@ ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solv
   this->optimalResult = false;
   this->solverTimeout = 300;
   this->solvingTime = -1.0;
-  this->totalTime = 0;
   this->writeLPFile = false;
   this->stat = ScaLP::status::UNKNOWN;
   //default false to avoid errors using SCIP and LPSolve

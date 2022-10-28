@@ -80,7 +80,7 @@ namespace HatScheT
           if(!feasible and !this->quiet) cout << "  II " << candII << " : " << this->stat << endl;
       }
       if(scheduleFound == false) this->II = -1;
-      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTime << " seconds" << std::endl;
+      if(this->quiet==false) std::cout << "ED97: solving time was " << this->timeUsed << " seconds" << std::endl;
   }
 
   void EichenbergerDavidson97Scheduler::setUpSolverSettings()
@@ -105,15 +105,11 @@ namespace HatScheT
       }
 
       //timestamp
-      this->begin = clock();
+      startTimeTracking();
       //solve
       this->stat = this->solver->solve();
       //timestamp
-      this->end = clock();
-
-      //log time
-      if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-      this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+      endTimeTracking();
 
       if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
           this->firstObjectiveOptimal = false;

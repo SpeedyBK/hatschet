@@ -27,7 +27,10 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
     // IterativeModuloSchedulerLayer:
     this->disableSecObj = false;
     this->timeBudget = INT32_MAX/2;
-    this->solvingTimePerIteration = 0;
+    this->timeRemaining = timeBudget;
+    this->timeUsed = 0;
+    start_t = std::chrono::high_resolution_clock::now();
+    end_t = std::chrono::high_resolution_clock::now();
 
     // ---------------------------------------- //
     // Calculate min. and max. II if not given. //
@@ -102,23 +105,17 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         if (!this->quiet)
         {
             cout << "IterativeModuloSchedulerLayer: " << ii - minII + 1 << ". Iteration, time budget: ";
-            cout << timeBudget * 1000 << " milliseconds." << endl;
+            cout << timeBudget << " seconds." << endl;
         }
-        // Time tracking begin.
-        auto start_t = std::chrono::high_resolution_clock::now();
         // Passing II from II - search - loop to class, so scheduler can use it.
         this->II = ii;
         // Schedule Iteration.
         scheduleIteration();
-        // Time tracking end.
-        auto end_t = std::chrono::high_resolution_clock::now();
-        // Saving solving time.
-        solvingTimePerIteration = floor(std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count());
         // Print time for the current iteration.
         if (!this->quiet)
         {
-            cout << "IterativeModuloSchedulerLayer: Iteration done in " << solvingTimePerIteration << " milliseconds.";
-            cout << endl << endl;
+            cout << "IterativeModuloSchedulerLayer: Iteration done in " << this->timeUsed << " seconds, time remaining: ";
+            cout << this->timeRemaining << endl << endl;
         }
         // If a schedule is found, we break the loop.
         // Scheduler has to fill the solution structure by itself!!!
@@ -136,4 +133,15 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     {
         cout << "IterativeModuloSchedulerLayer: Schedule Loop done, no schedule found!" << endl;
     }
+}
+
+void HatScheT::IterativeModuloSchedulerLayer::startTimeTracking() {
+    this->start_t = std::chrono::high_resolution_clock::now();
+}
+
+void HatScheT::IterativeModuloSchedulerLayer::endTimeTracking() {
+    this->end_t = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+    timeUsed = (double)duration / 1000;
+    timeRemaining = timeBudget - timeUsed;
 }

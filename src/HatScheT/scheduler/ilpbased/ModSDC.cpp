@@ -1135,16 +1135,11 @@ namespace HatScheT {
     }
 
     //timestamp
-    this->begin = clock();
+    startTimeTracking();
     bool foundSolution = this->modSDCIteration((int) this->II, this->budget);
     //timestamp
-    this->end = clock();
+    endTimeTracking();
     //log time
-    if(this->solvingTime == -1.0)
-    {
-      this->solvingTime = 0.0;
-    }
-    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
 
     if (foundSolution)
     {

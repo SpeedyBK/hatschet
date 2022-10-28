@@ -54,15 +54,11 @@ void SuchaHanzalek11Scheduler::scheduleAttempt(int candII, bool &feasible, bool 
   constructConstraints(candII);
 
   //timestamp
-  this->begin = clock();
+  startTimeTracking();
   //solve
-  stat     = solver->solve();
+  stat = solver->solve();
   //timestamp
-  this->end = clock();
-
-  //log time
-  if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-  this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+  endTimeTracking();
 
   feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
   proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;

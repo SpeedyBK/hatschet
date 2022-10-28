@@ -4104,11 +4104,9 @@ namespace HatScheT {
           auto start_t = std::chrono::high_resolution_clock::now();
           scheduler->schedule();
           auto II = scheduler->getII();
-          auto end_t = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-          auto t = ((double) duration / 1000);
 
-          cout << "Solving Time: " << t << endl;
+          cout << "Solving Time: " << scheduler->getTimeUsed() << endl;
+          cout << "Remaining Time: " << scheduler->getTimeRemaining() << endl;
           if (verifyModuloSchedule(g, rm, scheduler->getSchedule(), II)) {
               std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": valid modulo schedule found. :-) " << endl;
               std::cout << "II=" << II << " Latency: " << scheduler->getScheduleLength() << std::endl;

@@ -163,10 +163,6 @@ protected:
    */
   double solvingTime;
   /*!
-   * \brief totalTime
-   */
-  double totalTime;
-  /*!
    * \brief threads
    */
   unsigned int threads;

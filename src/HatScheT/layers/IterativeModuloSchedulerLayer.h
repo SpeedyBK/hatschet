@@ -5,6 +5,7 @@
 #ifndef HATSCHET_ITERATIVEMODULOSCHEDULERLAYER_H
 #define HATSCHET_ITERATIVEMODULOSCHEDULERLAYER_H
 
+#include <chrono>
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/base/ModuloSchedulerBase.h"
 #include "HatScheT/base/IterativeSchedulerBase.h"
@@ -30,17 +31,23 @@ namespace HatScheT {
     void disableSecObjective(bool d) { this->disableSecObj = d; }
 
     /*!
-     * Getter for solvingtime of the current iteration.
-     * @return Solvingtime needed for the current iteration.
-     */
-    int getIterationSolvingTime() const { return solvingTimePerIteration; }
-
-    /*!
      * Sets the amount of time which is available for each iteration.
      * Default is INT_MAX/2 seconds which is about 34 Years.
      * @param seconds
      */
-    void setTimeBudget (int seconds) { this->timeBudget = seconds; }
+    void setTimeBudget (double seconds) { this->timeBudget = seconds; }
+
+    /*!
+     * Getter for the time which was spent in solvers during the latest iteration.
+     * @return Time spent in Solvers
+     */
+    double getTimeUsed() const { return this->timeUsed; }
+
+    /*!
+     * Getter for the
+     * @return
+     */
+    double getTimeRemaining () const { return this->timeBudget - this->timeUsed; }
 
     /*!
      * Mainly for debugging.
@@ -73,15 +80,40 @@ namespace HatScheT {
     bool disableSecObj;
 
     /*!
-     * \brief Time available for an iteration in seconds
+     * Starts the time messurement, should be called directly before solver->solve() function.
      */
-    int timeBudget;
+    void startTimeTracking();
 
     /*!
-     * \brief Time, that one schedule iteration took
+     * End of time messurement, should be called directly after solver->solve() function.
+     * It calculates the results and stores them in "timeRemaining" and "timeUsed".
      */
-    int solvingTimePerIteration;
+    void endTimeTracking();
 
+    /*!
+     * Starttime of Timemessurement
+     */
+    std::chrono::high_resolution_clock::time_point start_t;
+
+    /*!
+     * Endtime of Timemessurement
+     */
+    std::chrono::high_resolution_clock::time_point end_t;
+
+    /*!
+     * \brief Time available for an iteration in seconds
+     */
+    double timeBudget;
+
+    /*!
+     * Time spent in solvers during the latest schedule Iteration
+     */
+    double timeUsed;
+
+    /*!
+     * timeBudget - timeUsed
+     */
+    double timeRemaining;
   };
 
 }

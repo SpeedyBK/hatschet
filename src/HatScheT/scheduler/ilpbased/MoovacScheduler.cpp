@@ -472,7 +472,9 @@ namespace HatScheT
           this->solver->writeLP(to_string(this->II));
       }
       //solve
+      startTimeTracking();
       stat = this->solver->solve();
+      endTimeTracking();
 
       if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE)
       {
