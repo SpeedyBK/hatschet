@@ -11,7 +11,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
-#include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModSDC.h"
 #ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
 #include "HatScheT/scheduler/satbased/SATCombinedScheduler.h"

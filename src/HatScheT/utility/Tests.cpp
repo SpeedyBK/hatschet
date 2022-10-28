@@ -47,7 +47,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
-#include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModSDC.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"

@@ -70,7 +70,7 @@
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
-#include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModSDC.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
 
