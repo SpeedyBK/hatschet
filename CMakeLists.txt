@@ -178,8 +178,6 @@ src/HatScheT/utility/writer/XMLResourceWriter.cpp
 src/HatScheT/base/IterativeSchedulerBase.cpp
 src/HatScheT/utility/subgraphs/SCC.cpp
 src/HatScheT/utility/SDCSolver.cpp
-src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp
-src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
 src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.cpp)
 
 
@@ -329,7 +327,8 @@ IF(Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
             src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp
             src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.cpp)
+            src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.cpp
+            src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp)
 ENDIF(Z3_H AND Z3_LIB)
 
 IF((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
