@@ -216,7 +216,7 @@ src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
 src/HatScheT/scheduler/dev/SCCQScheduler.h
 src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.h
 src/HatScheT/scheduler/ULScheduler.h
-        src/HatScheT/scheduler/ilpbased/ModSDC.h
+        src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
 src/HatScheT/utility/Exception.h
 src/HatScheT/utility/reader/GraphMLGraphReader.h
 src/HatScheT/utility/reader/XMLResourceReader.h
@@ -284,7 +284,7 @@ src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
 src/HatScheT/scheduler/dev/MinRegMultiScheduler.cpp
 src/HatScheT/scheduler/graphBased/PBScheduler.cpp
 src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.cpp
-        src/HatScheT/scheduler/ilpbased/ModSDC.cpp
+        src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.cpp
 src/HatScheT/scheduler/dev/ModuloQScheduler.cpp
 src/HatScheT/scheduler/dev/SCCQScheduler.cpp
 src/HatScheT/scheduler/dev/UniformRationalIIScheduler.cpp

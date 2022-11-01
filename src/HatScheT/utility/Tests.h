@@ -168,7 +168,7 @@ namespace HatScheT {
 		static bool rationalIISCCQTest();
 
 		/*!
-		 * @brief test functionality of (rational II) ModuloSDC scheduler
+		 * @brief test functionality of (rational II) ModuloSDCScheduler scheduler
 		 */
 		static bool rationalIIModuloSDCTest();
 

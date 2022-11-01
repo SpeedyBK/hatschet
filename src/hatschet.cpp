@@ -69,7 +69,7 @@
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
-#include "HatScheT/scheduler/ilpbased/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
 
@@ -868,11 +868,11 @@ int main(int argc, char *args[]) {
 				}
 				case MODULOSDCFIEGE:
 					isModuloScheduler = true;
-					scheduler = new HatScheT::ModSDC(g, rm, solverWishList);
-					if (timeout > 0) ((HatScheT::ModSDC *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0) ((HatScheT::ModSDC *) scheduler)->setMaxLatencyConstraint(maxLatency);
-					((HatScheT::ModSDC *) scheduler)->setThreads(threads);
-					((HatScheT::ModSDC *) scheduler)->setSolverQuiet(solverQuiet);
+					scheduler = new HatScheT::ModuloSDCScheduler(g, rm, solverWishList);
+					if (timeout > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					((HatScheT::ModuloSDCScheduler *) scheduler)->setThreads(threads);
+					((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverQuiet(solverQuiet);
 					break;
 				case RATIONALIIMODULOSDC:
                     isRationalIIScheduler=true;

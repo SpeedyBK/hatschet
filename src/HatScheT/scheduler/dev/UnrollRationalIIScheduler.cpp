@@ -11,7 +11,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
 #include "HatScheT/scheduler/satbased/SATCombinedScheduler.h"
@@ -98,13 +98,13 @@ namespace HatScheT {
         ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::MODULOSDC:
-        schedulerBase = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
-        if(this->solverTimeout > 0) ((HatScheT::ModSDC*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+        schedulerBase = new HatScheT::ModuloSDCScheduler(g_unrolled, rm_unrolled, this->solverWishlist, this->modulo);
+        if(this->solverTimeout > 0) ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
-          ((HatScheT::ModSDC*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
-        ((HatScheT::ModSDC*) schedulerBase)->setThreads(this->threads);
-        ((HatScheT::ModSDC*) schedulerBase)->setSolverQuiet(this->solverQuiet);
-        ((HatScheT::ModSDC*) schedulerBase)->setMaxRuns(1);
+          ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::ED97:
         schedulerBase = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
@@ -172,8 +172,8 @@ namespace HatScheT {
         this->solvingTime = ((HatScheT::MoovacScheduler*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::MODULOSDC:
-        this->stat = ((HatScheT::ModSDC*) schedulerBase)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::ModSDC*) schedulerBase)->getSolvingTime();
+        this->stat = ((HatScheT::ModuloSDCScheduler*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::ModuloSDCScheduler*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::ED97:
         this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getScaLPStatus();
