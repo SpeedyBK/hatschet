@@ -36,7 +36,6 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 #include <HatScheT/utility/reader/ScheduleAndBindingReader.h>
-#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #ifdef USE_XERCESC
 
@@ -95,6 +94,7 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #endif
 
@@ -739,9 +739,13 @@ int main(int argc, char *args[]) {
 		if (rm.isEmpty() == false && g.isEmpty() == false) {
 			switch (schedulerSelection) {
 			    case LATENCYTEST:
+#ifdef USE_Z3
 			        scheduler = new HatScheT::TempLatencyTest(g, rm);
                     isModuloScheduler = true;
                     ((HatScheT::TempLatencyTest *) scheduler)->setnames(graphMLFile, resourceModelFile);
+#else
+							throw HatScheT::Exception("Link Z3 to enable latency test");
+#endif
 			        break;
 			    case ASAP:
 					scheduler = new HatScheT::ASAPScheduler(g, rm);

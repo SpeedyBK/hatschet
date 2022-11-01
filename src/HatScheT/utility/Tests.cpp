@@ -3778,6 +3778,7 @@ namespace HatScheT {
   }
 
 	bool Tests::satBinding() {
+#ifdef USE_CADICAL
 		// create scheduling problem
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
@@ -3865,6 +3866,10 @@ namespace HatScheT {
 			std::cout << "TEST FAILED!" << std::endl;
 		}
 		return valid;
+#else
+		std::cout << "Tests::satBinding: link CaDiCaL to enable test" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::utilityLatencyEstimation() {
@@ -3967,7 +3972,7 @@ namespace HatScheT {
   }
 
   bool Tests::smtCDCLTest() {
-
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -3996,9 +4001,14 @@ namespace HatScheT {
           std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
           return false;
       }
+#else
+			std::cout << "Tests::smtCDCLTest: link Z3 to enable test" << std::endl;
+      return true;
+#endif
   }
 
   bool Tests::smtCombined() {
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -4033,6 +4043,10 @@ namespace HatScheT {
       }
 
       return false;
+#else
+			std::cout << "Tests::smtCombined: link Z3 to enable test" << std::endl;
+			return true;
+#endif
   }
 
   bool Tests::SCCTemplateTest() {

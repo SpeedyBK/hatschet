@@ -38,60 +38,6 @@ namespace HatScheT {
 
   }
 
-  /*
-  void UnrollRationalIIScheduler::unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s) {
-    Graph *new_g = &g_unrolled;
-    ResourceModel *new_rm = &rm_unrolled;
-
-    map<Vertex *, vector<Vertex *> > mappings;
-
-    for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
-      HatScheT::Vertex *v = *it;
-      const HatScheT::Resource *r = this->resourceModel.getResource(v);
-
-      Resource *r_new;
-
-      vector<Vertex *> v_mapping;
-
-      if (new_rm->resourceExists(r->getName())) {
-        r_new = new_rm->getResource(r->getName());
-      } else {
-        r_new = &new_rm->makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
-      }
-
-      for (int i = 0; i < s; i++) {
-        Vertex *v_new = &new_g->createVertex();
-        v_new->setName(v->getName() + "_" + to_string(i));
-        new_rm->registerVertex(v_new, r_new);
-        v_mapping.push_back(v_new);
-      }
-
-      mappings.insert(make_pair(v, v_mapping));
-    }
-
-    for (auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
-      Edge *e = *it;
-      Vertex *v_src = &e->getVertexSrc();
-      Vertex *v_dst = &e->getVertexDst();
-
-      vector<Vertex *> v_src_mappings = mappings[v_src];
-      vector<Vertex *> v_dst_mappings = mappings[v_dst];
-
-      for (int i = 0; i < v_src_mappings.size(); i++) {
-        if (e->getDistance() == 0)
-          new_g->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
-        else {
-          int distance = e->getDistance();
-          auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance,i,s,this->modulo);
-          auto index = sampleIndexOffset.first;
-          auto newDistance = sampleIndexOffset.second / this->modulo;
-          new_g->createEdge(*v_src_mappings[index], *v_dst_mappings[i], newDistance, e->getDependencyType());
-        }
-      }
-    }
-  }
-   */
-
   void UnrollRationalIIScheduler::fillSolutionStructure(SchedulerBase* scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled) {
     auto schedUnrolled =  scheduler->getSchedule();
 
@@ -258,7 +204,11 @@ namespace HatScheT {
 						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
     			}
     		}
+#ifdef USE_CADICAL
 				this->solvingTime = ((HatScheT::SATScheduler*) schedulerBase)->getSolvingTime();
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATScheduler");
+#endif
     		break;
 			case SchedulerType::SATCOMBINED:
 				if (this->scheduleFound) {
@@ -277,7 +227,11 @@ namespace HatScheT {
 						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
 					}
 				}
+#ifdef USE_CADICAL
 				this->solvingTime = ((HatScheT::SATCombinedScheduler*) schedulerBase)->getSolvingTime();
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATCombinedScheduler");
+#endif
 				break;
     }
 
@@ -293,7 +247,7 @@ namespace HatScheT {
     	this->secondObjectiveOptimal = false;
     }
 
-    if(schedulerBase->getScheduleFound() == true) {
+    if(schedulerBase->getScheduleFound()) {
       this->scheduleFound = true;
 
       this->fillSolutionStructure(schedulerBase,&g_unrolled,&rm_unrolled);
