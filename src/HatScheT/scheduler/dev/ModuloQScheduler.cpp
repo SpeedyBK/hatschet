@@ -500,7 +500,7 @@ namespace HatScheT {
 		endTimeTracking();
 
 		if(!this->quiet) {
-			std::cout << "Time to solve: " << getTimeUsed() << " sec" << std::endl;
+			std::cout << "Time to solve: " << getSolvingTimePerIteration() << " sec" << std::endl;
 			std::cout << "ScaLP status:" << stat << std::endl;
 		}
 		return (stat == ScaLP::status::OPTIMAL) or (stat == ScaLP::status::FEASIBLE) or (stat == ScaLP::status::TIMEOUT_FEASIBLE);

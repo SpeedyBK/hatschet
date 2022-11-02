@@ -47,7 +47,7 @@ namespace HatScheT {
   }
 
   void ModuloSDCScheduler::scheduleOLD() {
-    time_t t = time(nullptr);
+    /*time_t t = time(nullptr);
     if(this->quiet == false)
       cout << "ModuloSDCScheduler::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
     this->calculatePriorities(); // calculate priorities for scheduling queue
@@ -106,7 +106,7 @@ namespace HatScheT {
     }
     this->firstObjectiveOptimal = this->II == this->minII; // II is only proven to be optimal if it is equal to minII
     if (failed == true) this->II = -1;
-  }
+  */}
 
   void ModuloSDCScheduler::constructProblem() {
     // clear old solver settings and create new variables

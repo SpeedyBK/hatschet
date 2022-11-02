@@ -31,6 +31,12 @@ namespace HatScheT {
     void disableSecObjective(bool d) { this->disableSecObj = d; }
 
     /*!
+     * enable/disable couts from layerclass
+     * @param q
+     */
+    void setLayerQuiet(bool q) { this->layerQuiet = q; }
+
+    /*!
      * Mainly for debugging.
      * @return Name of the scheduler
      */
@@ -59,6 +65,11 @@ namespace HatScheT {
      * \brief use this flag to disable the secondary objective (No Latency minimization)
      */
     bool disableSecObj;
+
+    /*!
+     * Surpresses couts from layerclass.
+     */
+    bool layerQuiet;
   };
 
 }

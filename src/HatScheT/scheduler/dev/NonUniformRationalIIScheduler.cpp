@@ -226,7 +226,7 @@ namespace HatScheT
 		if(!this->quiet) {
 			cout << "Finished solving: " << stat << endl;
 			cout << "ScaLP results: " << this->solver->getResult() << endl;
-			cout << "Time Used: " << getTimeUsed() << endl;
+			cout << "Time Used: " << getSolvingTimePerIteration() << endl;
 		}
 
 		// track optimality of first objective (i.e., II)

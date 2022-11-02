@@ -6,18 +6,17 @@
 #define HATSCHET_MINREGMULTISCHEDULER_H
 
 #ifdef USE_SCALP
-#include <HatScheT/base/SchedulerBase.h>
+
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 #include <map>
 #include <vector>
 
 namespace HatScheT {
-	class MinRegMultiScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+	class MinRegMultiScheduler :  public IterativeModuloSchedulerLayer, public ILPSchedulerBase {
 	public:
 		MinRegMultiScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist);
-		void schedule() override;
+		void scheduleOLD();
 		void disableMultipleStartTimes();
 		void enableMultipleStartTimes();
 		int getNumLifetimeRegs() const;
@@ -27,7 +26,15 @@ namespace HatScheT {
 	protected:
 		void constructProblem() override;
 		void setObjective() override;
-		void resetContainer() override;
+	    void resetContainer() override;
+	    /*!
+         * \brief Schedule Iteration for one II.
+         */
+        void scheduleIteration() override;
+        /*!
+         * Initialize stuff before II-Search-Loop starts.
+         */
+        void scheduleInit() override;
 
 	private:
 		int candII;

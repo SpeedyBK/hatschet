@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Benjamin Lagershausen-Keßler (benjaminkessler@student.uni-kassel.de)
     Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
 
     Copyright (C) 2018
@@ -127,62 +128,114 @@ public:
    *  Timetracking in HatScheT:
    *  Based on C++ Chrono Library.
    *
-   *  It is designed to easily get time messurements for each
-   *  II-Iternation.
+   *  It is designed to easily get time measurements.
    *
-   *  There are 3 Variables for timetracking
+   *  There are 4 Variables for timetracking:
    *  - timeBudget: The time a scheduler has to solve one
    *  specific II.
-   *  - timeUsed: The time between calling startTimeTracking()
+   *  - solvingTimePerIteration: The time between calling startTimeTracking()
    *  and calling endTimeTracking().
-   *  - timeRemaining: Basicly timeBugdet - timeUsed. The time
-   *  which is left after a timetracked function.
+   *  - solvingTimeTotal: Inteded for iterative use. Sums up
+   *  solvingTimePerIteration after each iteration.
+   *  - timeRemaining: Basically timeBugdet - solvingTimePerIteration. The time
+   *  which is left after a timetracked function. Within one II-Iteration.
    *
    *  Functions public:
    *  - setTimeBudget(): Takes a double value in seconds and
    *  sets timeBudget accordingly. If not called, timeBudget
-   *  will be set by the constructor to INT32_MAX.
-   *  - getTimeUsed() and getTimeRemaining():
-   *  Just getters for the variables.
+   *  will be set by the constructor to INT32_MAX (about 68 Years ^^ ).
+   *  !!!
+   *  If you are using ILP-, SAT-, SMT- or other solvers, this function
+   *  has to be overwritten.
+   *  !!!
+   *  - getSolvingTimePerIteration() and getTimeRemaining():
+   *  Just getters for the variables, from outside a Scheduler
+   *  only the last II-Iteration is accessible.
    *
    *  Functions protected:
    *  - startTimeTracking(): Starts timetracking.
    *  - endTimeTracking(): Ends timetracking and calculates
-   *  timeUsed and timeRemaining.
+   *  solvingTimePerIteration and timeRemaining.
+   *  - updateSolvingTimeTotal(): For iterative use, it sums up
+   *  the solving times measured in each iteration. And is
+   *  used in the LayerClasses.
    *
-   *  If continuous timetracking is needed "timeBudget" can be
-   *  updated with "timeRemaining" after each tracked step.
-   *  And a total time messurement can be achieved by saving
-   *  the original timeBudget and then subtract timeRemaining
-   *  after all steps are done.
-   *
-   *  Example:
-   *  Step:           1    2    3
-   *  ----------------------------
-   *  TimeBudget:    10    8    5
-   *  TimeUsed:       2    3    1
-   *  TimeRemaining:  8    5    4
-   *
-   *  Total Time Used 10 - 4 = 6
+   *  Benjamin Lagershausen-Keßler
    ----------------------------------------------------------- */
   /*!
    * Sets the amount of time which is available for each iteration.
+   *  !!!
+   *  If you are using ILP-, SAT-, SMT- or other solvers, this function
+   *  has to be overwritten by your Scheduler.
+   *
+   *  !!!
    * Default is INT32_MAX.
    * @param seconds
    */
-  void setTimeBudget (double seconds) { this->timeBudget = seconds; }
+  virtual void setTimeBudget (double seconds);
   /*!
-   * Getter for timeUsed, look above.
-   * @return timeUsed if set by the scheduler, -1 otherwise.
+   * Getter for solvingTimePerIteration, look above.
+   * From outside of the Scheduler only accessible for the last Iteration.
+   * @return solvingTimePerIteration if set by the scheduler, -1 otherwise.
    */
-  double getTimeUsed() const { return this->timeUsed; }
+  double getSolvingTimePerIteration() const { return this->solvingTimePerIteration; }
+  /*!
+   * Getter for solvingTimeTotal, look above.
+   * @return solvingTimeTotal if set by the scheduler, 0 otherwise.
+   */
+  double getSolvingTimeTotal() const { return this->solvingTimeTotal; }
   /*!
    * Getter for timeRemaining, look above
+   * From outside of the Scheduler only accessable for the last Iteration.
    * @return timeRemaining if set by the scheduler, -1 otherwise.
    */
   double getTimeRemaining () const { return this->timeRemaining; }
 
 protected:
+  /*!--------------
+   * Timetracking:
+   *--------------*/
+  /*!
+   * Starts the time messurement, should be called directly before solver->solve() function.
+   */
+  void startTimeTracking();
+  /*!
+   * End of time messurement, should be called directly after solver->solve() function.
+   * It calculates the results and stores them in "timeRemaining" and "solvingTimePerIteration".
+   */
+  void endTimeTracking();
+  /*!
+   * For iterative use, it sums up the solving times measured in each iteration.
+   */
+  void updateSolvingTimeTotal();
+  /*!
+   * Starttime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point start_t;
+  /*!
+   * Endtime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point end_t;
+  /*!
+   * \brief Time available for an iteration in seconds
+   */
+  double timeBudget;
+  /*!
+   * Time spent in solvers
+   */
+  double solvingTimePerIteration;
+  /*!
+   * Total Time spent in solvers over multiple Iterations
+   */
+  double solvingTimeTotal;
+  /*!
+   * timeBudget - solvingTimePerIteration
+   */
+  double timeRemaining;
+  /*!-----------------
+   * End Timetracking
+   *-----------------*/
+
   /*!
    * no couts if this is true
    */
@@ -219,38 +272,6 @@ protected:
    * \brief use this flag to determine optimal binding using ILP
    */
   bool useOptimalBinding;
-  /*!--------------
-   * Timetracking:
-   *--------------*/
-  /*!
-   * Starts the time messurement, should be called directly before solver->solve() function.
-   */
-  void startTimeTracking();
-  /*!
-   * End of time messurement, should be called directly after solver->solve() function.
-   * It calculates the results and stores them in "timeRemaining" and "timeUsed".
-   */
-  void endTimeTracking();
-  /*!
-   * Starttime of Timemessurement
-   */
-  std::chrono::high_resolution_clock::time_point start_t;
-  /*!
-   * Endtime of Timemessurement
-   */
-  std::chrono::high_resolution_clock::time_point end_t;
-  /*!
-   * \brief Time available for an iteration in seconds
-   */
-  double timeBudget;
-  /*!
-   * Time spent in solvers during the latest schedule Iteration
-   */
-  double timeUsed;
-  /*!
-   * timeBudget - timeUsed
-   */
-  double timeRemaining;
 
 };
 }

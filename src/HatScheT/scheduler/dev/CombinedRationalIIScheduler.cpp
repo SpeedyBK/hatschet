@@ -49,7 +49,7 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	sccq.schedule();
 
 	// track time
-	double heuristicTime = sccq.getSolvingTime();
+	double heuristicTime = sccq.getSolvingTimeTotal();
 	long ilpTimeoutSec = this->solverTimeout - (long)heuristicTime;
 	if(ilpTimeoutSec <= 0) ilpTimeoutSec = 1; // minimum is 1 sec; otherwise it is unlimited...
 	if(!this->quiet) {
@@ -95,8 +95,8 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 	this->stat = opt.getScaLPStatus();
 
 	// track time
-	double optimalTime = opt.getSolvingTime();
-	this->solvingTime = heuristicTime + optimalTime;
+	double optimalTime = opt.getSolvingTimeTotal();
+	this->solvingTimeTotal = heuristicTime + optimalTime;
 
 	if(opt.getScheduleFound()) {
 		// exact scheduler found solution, yay! :)
@@ -106,7 +106,7 @@ void HatScheT::CombinedRationalIIScheduler::scheduleIteration() {
 		if(!this->quiet) {
 			std::cout << "Optimal scheduler found solution for II=" << opt.getM_Found() << "/" << opt.getS_Found()
 								<< " with latency=" << opt.getScheduleLength() << " and ScaLP status " << this->stat
-								<< " in additional " << optimalTime << " sec (total: " << this->solvingTime << " sec)" << std::endl;
+								<< " in additional " << optimalTime << " sec (total: " << this->solvingTimeTotal << " sec)" << std::endl;
 		}
 	}
 	else {

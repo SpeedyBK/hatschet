@@ -454,7 +454,7 @@ namespace HatScheT {
 			m.setCandidateII(4);
 			m.schedule();
 
-			cout << "Done in " << m.getTimeUsed() << " seconds!" << endl;
+			cout << "Done in " << m.getSolvingTimePerIteration() << " seconds!" << endl;
 
 			auto sch = m.getSchedule();
 
@@ -1548,7 +1548,7 @@ namespace HatScheT {
 		pbs.schedule();
 
 		// get results
-		auto solvingTime = pbs.getTimeUsed();
+		auto solvingTime = pbs.getSolvingTimePerIteration();
 		std::cout << "solving time = " << solvingTime << std::endl;
 		auto II = (int)pbs.getII();
 		std::cout << "II = " << II << std::endl;
@@ -2460,7 +2460,7 @@ namespace HatScheT {
 		else {
 			std::cout << "Combined scheduler did not find solution" << std::endl;
 		}
-		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec with solver status "
+		std::cout << "Combined scheduler needed " << comb.getSolvingTimeTotal() << " sec with solver status "
 		<< comb.getScaLPStatus() << std::endl;
 
 		HatScheT::UniformRationalIISchedulerNew uni{g, rm, sw};
@@ -2477,7 +2477,7 @@ namespace HatScheT {
 		else {
 			std::cout << "Optimal uniform scheduler did not find solution" << std::endl;
 		}
-		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec with solver status "
+		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTimeTotal() << " sec with solver status "
 							<< uni.getScaLPStatus() << std::endl;
 
 		return true;
@@ -3417,7 +3417,8 @@ namespace HatScheT {
 		g.createEdge(g9, g11, 0);
 
 		MinRegMultiScheduler m(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-		m.setQuiet(false);
+		m.setLayerQuiet(false);
+		m.setQuiet(true);
 		m.setSolverQuiet(true);
 		m.setThreads(24);
 		m.setSolverTimeout(300);
@@ -3437,6 +3438,8 @@ namespace HatScheT {
 
 		std::cout << "#Lifetime regs (multi)  = " << numLifetimeRegsMulti  << std::endl;
 		std::cout << "#Lifetime regs (single) = " << numLifetimeRegsSingle << std::endl;
+
+		std::cout << "validMulti: " << validMulti << " validSingle: " << validSingle << endl;
 
 		return validMulti and validSingle;
 	}
@@ -3823,7 +3826,7 @@ namespace HatScheT {
 		int samples = 2;
 		int modulo = 3;
 
-		ModSDC scheduler(g,rm,sw);
+		ModuloSDCScheduler scheduler(g,rm,sw);
 		scheduler.setQuiet(true);
 		scheduler.setSolverTimeout(timeout);
 		scheduler.schedule();
@@ -4101,8 +4104,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4115,13 +4118,14 @@ namespace HatScheT {
 
 
       for (auto &scheduler : schedulers) {
-          scheduler->setQuiet(false);
+          scheduler->setQuiet(true);
+          scheduler->setLayerQuiet(false);
           scheduler->setTimeBudget(100);
           auto start_t = std::chrono::high_resolution_clock::now();
           scheduler->schedule();
           auto II = scheduler->getII();
 
-          cout << "Solving Time: " << scheduler->getTimeUsed() << endl;
+          cout << "Solving Time: " << scheduler->getSolvingTimeTotal() << endl;
           cout << "Remaining Time: " << scheduler->getTimeRemaining() << endl;
           if (verifyModuloSchedule(g, rm, scheduler->getSchedule(), II)) {
               std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": valid modulo schedule found. :-) " << endl;

@@ -285,6 +285,7 @@ RationalIISchedulerLayer::getRationalIIQueue(int sMinII, int mMinII, int integer
 			if(!this->quiet) cout << "RationalIISchedulerLayer::schedule: max. no. of iterations " << this->maxRuns << endl;
 
 			this->scheduleIteration();
+            updateSolvingTimeTotal();
 
 			if(this->scheduleFound) {
 				this->m_found = this->modulo;

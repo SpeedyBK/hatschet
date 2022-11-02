@@ -22,38 +22,33 @@
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/utility/Exception.h>
 
-namespace HatScheT
-{
+namespace HatScheT {
 
-ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solver(new ScaLP::Solver(solverWishlist))
-{
-  this->threads = 1;
-  this->solver->threads = 1;
-  this->solverQuiet = true;
-  this->optimalResult = false;
-  this->solverTimeout = 300;
-  this->solvingTime = -1.0;
-  this->writeLPFile = false;
-  this->stat = ScaLP::status::UNKNOWN;
-  //default false to avoid errors using SCIP and LPSolve
-  this->solver->presolve=false;
-}
+  ILPSchedulerBase::ILPSchedulerBase(std::list<std::string> solverWishlist) : solver(
+      new ScaLP::Solver(solverWishlist)) {
+      this->threads = 1;
+      this->solver->threads = 1;
+      this->solverQuiet = true;
+      this->optimalResult = false;
+      this->solverTimeout = 300;
+      this->writeLPFile = false;
+      this->stat = ScaLP::status::UNKNOWN;
+      //default false to avoid errors using SCIP and LPSolve
+      this->solver->presolve = false;
+  }
 
-ILPSchedulerBase::~ILPSchedulerBase()
-{
-  solver->reset();
-  delete solver;
-}
+  ILPSchedulerBase::~ILPSchedulerBase() {
+      solver->reset();
+      delete solver;
+  }
 
-std::string ILPSchedulerBase::getSolverName()
-{
-  return solver->getBackendName();
-}
+  std::string ILPSchedulerBase::getSolverName() {
+      return solver->getBackendName();
+  }
 
-void ILPSchedulerBase::setSolverTimeout(long timeoutInSeconds)
-{
-  this->solverTimeout = timeoutInSeconds;
-  solver->timeout = timeoutInSeconds;
-}
+  void ILPSchedulerBase::setSolverTimeout(long timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = timeoutInSeconds;
+  }
 
 }

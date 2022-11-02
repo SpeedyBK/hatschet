@@ -17,6 +17,7 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
     this->timeouts = 0;
 
     // SchedulerBase:
+    this->startTimes.clear();
     this->scheduleFound = false;
     this->maxLatencyConstraint = -1;
 
@@ -26,6 +27,7 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
 
     // IterativeModuloSchedulerLayer:
     this->disableSecObj = false;
+    this->layerQuiet = true;
 
     // ---------------------------------------- //
     // Calculate min. and max. II if not given. //
@@ -47,7 +49,7 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
     // ----------------- //
     // Debugging Prints. //
     // ----------------- //
-    if(this->quiet)
+    if(!this->quiet or !this->layerQuiet)
     {
         cout << "IterativeModuloSchedulerLayer: " << endl;
         cout << "Minimal II is " << this->minII << endl;
@@ -63,7 +65,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     if (this->maxRuns > 0)
     {
         maxII = (int)this->minII + maxRuns;
-        if(!this->quiet)
+        if(!this->quiet or !this->layerQuiet)
         {
             std::cout << "IterativeModuloSchedulerLayer: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
             std::cout << "IterativeModuloSchedulerLayer: min/maxII = " << minII << " / " << maxII << std::endl;
@@ -73,7 +75,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // ------------------------------------------------- //
     // Initiate what is needed before II - Search - Loop //
     // ------------------------------------------------- //
-    if (!this->quiet)
+    if (!this->quiet or !this->layerQuiet)
     {
         cout << endl;
         cout << "********************************************************************" << endl;
@@ -86,7 +88,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // -------------------------------------- //
     // Iterative Search for best possible II: //
     // -------------------------------------- //
-    if (!this->quiet)
+    if (!this->quiet or !this->layerQuiet)
     {
         cout << endl;
         cout << "*********************************************************" << endl;
@@ -97,7 +99,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // II - search - Loop
     for (int ii = (int)minII; ii <= maxII; ii++){
         // For Debugging
-        if (!this->quiet)
+        if (!this->quiet or !this->layerQuiet)
         {
             cout << "IterativeModuloSchedulerLayer: " << ii - minII + 1 << ". Iteration, time budget: ";
             cout << timeBudget << " seconds." << endl;
@@ -106,10 +108,11 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         this->II = ii;
         // Schedule Iteration.
         scheduleIteration();
+        updateSolvingTimeTotal();
         // Print time for the current iteration.
-        if (!this->quiet)
+        if (!this->quiet or !this->layerQuiet)
         {
-            cout << "IterativeModuloSchedulerLayer: Iteration done in " << this->timeUsed << " seconds, time remaining: ";
+            cout << "IterativeModuloSchedulerLayer: Iteration done in " << this->solvingTimePerIteration << " seconds, time remaining: ";
             cout << this->timeRemaining << endl << endl;
         }
         // If a schedule is found, we break the loop.
@@ -124,7 +127,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // ----------------------------------------------------- //
     this->II = -1;
     startTimes.clear();
-    if(!this->quiet)
+    if(!this->quiet or !this->layerQuiet)
     {
         cout << "IterativeModuloSchedulerLayer: Schedule Loop done, no schedule found!" << endl;
     }

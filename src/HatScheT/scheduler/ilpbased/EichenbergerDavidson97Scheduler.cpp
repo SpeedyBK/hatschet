@@ -80,7 +80,7 @@ namespace HatScheT
           if(!feasible and !this->quiet) cout << "  II " << candII << " : " << this->stat << endl;
       }
       if(scheduleFound == false) this->II = -1;
-      if(this->quiet==false) std::cout << "ED97: solving time was " << this->timeUsed << " seconds" << std::endl;
+      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTimePerIteration << " seconds" << std::endl;
   }
 
   void EichenbergerDavidson97Scheduler::setUpSolverSettings()

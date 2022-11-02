@@ -125,7 +125,7 @@ namespace HatScheT {
 				std::cout << "SATCombinedRatIIScheduler: unrolling-based nonuniform scheduler refined schedule length to " << lat << std::endl;
 			}
 		}
-		elapsedSchedulingTime += s3.getSolvingTime();
+		elapsedSchedulingTime += s3.getSolvingTimeTotal();//ToDo Check That.
 		this->solvingTime = elapsedSchedulingTime;
 		if (!this->quiet) {
 			std::cout << "SATCombinedRatIIScheduler: elapsed time after exact nonuniform scheduler: " << elapsedSchedulingTime << std::endl;

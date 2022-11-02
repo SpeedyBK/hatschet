@@ -150,8 +150,8 @@ namespace HatScheT {
 	bool SCCQScheduler::determineStartTimes(vector<SCC *> &sccs, std::map<Vertex *, std::pair<int, int>> &sccSchedule) {
 
 		// track time
-		this->end = clock();
-		std::cout << "SCC solver needed " << this->solvingTime << " sec - determining start times now" << std::endl;
+		endTimeTracking();
+        if (!quiet) { std::cout << "SCC solver needed " << this->solvingTimePerIteration << " sec - determining start times now" << std::endl;}
 
 		auto queueG = this->getScheduleQueue(sccs,sccSchedule);
 		auto queue = queueG.first;
@@ -159,7 +159,7 @@ namespace HatScheT {
 
 		if(sccGraph == nullptr) {
 			// timeout during schedule queue generation is encoded as a nullptr in the graph object
-			std::cout << "timeout during schedule queue generation after " << this->solvingTime << " sec" << std::endl;
+			std::cout << "timeout during schedule queue generation after " << this->solvingTimePerIteration << " sec" << std::endl;
 			return false;
 		}
 
@@ -182,10 +182,10 @@ namespace HatScheT {
 
 		for(auto sccId : queue) {
 			// track time
-			this->end = clock();
-			this->solvingTime = (double) (this->end - this->begin) / CLOCKS_PER_SEC;
-			if(this->solvingTime > this->solverTimeout) {
-				std::cout << "timeout during start time determination after " << this->solvingTime << " sec" << std::endl;
+			endTimeTracking();
+            if (!quiet) { cout << "Solving Time: " << solvingTimePerIteration << endl << endl; }
+			if(this->solvingTimePerIteration > this->solverTimeout) {
+				std::cout << "timeout during start time determination after " << this->solvingTimePerIteration << " sec" << std::endl;
 				return false;
 			}
 			// debugging
@@ -412,9 +412,9 @@ namespace HatScheT {
 		}
 		// insert edges between SCCs
 		for(auto &edge : this->g.Edges()) {
-			this->end = clock();
-			this->solvingTime = ((double)(this->end - this->begin) / CLOCKS_PER_SEC);
-			if(this->solvingTime > this->solverTimeout) {
+			endTimeTracking();
+            if (!quiet) { cout << "Solving Time: " << solvingTimePerIteration << endl << endl; }
+			if(this->solvingTimePerIteration > this->solverTimeout) {
 				return {std::list<int>(),nullptr};
 			}
 			// check if edge is in one of the SCCs
@@ -542,9 +542,8 @@ namespace HatScheT {
 		}
 
 		//timestamp
-		this->begin = clock();
-		// reset solving time
-		this->solvingTime = 0.0;
+		startTimeTracking();
+        if (!quiet) { cout << "Solving Time: " << solvingTimePerIteration << endl << endl; }
 		// find SCCs
 		KosarajuSCC k(this->g);
 		k.setQuiet(this->quiet);
@@ -564,8 +563,7 @@ namespace HatScheT {
 			this->scheduleFound = false;
 			this->startTimes.clear();
 			this->startTimesVector.clear();
-			this->end = clock();
-			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			endTimeTracking();
 			this->firstObjectiveOptimal = false;
 			// free memory
 			for(auto scc : sccs) {
@@ -597,8 +595,8 @@ namespace HatScheT {
 			this->startTimes.clear();
 			this->startTimesVector.clear();
 			this->firstObjectiveOptimal = false;
-			this->end = clock();
-			this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+			endTimeTracking();
+            if (!quiet) { cout << "Solving Time: " << solvingTimePerIteration << endl << endl; }
 			// free memory
 			for(auto scc : sccs) {
 				delete scc;
@@ -608,11 +606,10 @@ namespace HatScheT {
 
 		// optimize start times if possible
 		this->optimizeStartTimes();
-		//timestamp
-		this->end = clock();
-		//log time
-		if (this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
+        //log time
+		endTimeTracking();
+        if (!quiet) { cout << "Solving Time: " << solvingTimePerIteration << endl << endl; }
+
 
 		// fill ratII start times vector
 		for (auto II : this->initiationIntervals) {
