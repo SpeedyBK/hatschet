@@ -11,7 +11,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
 #include "HatScheT/scheduler/satbased/SATCombinedScheduler.h"
@@ -37,60 +37,6 @@ namespace HatScheT {
     if (this->minII >= this->maxII) this->maxII = this->minII+1;
 
   }
-
-  /*
-  void UnrollRationalIIScheduler::unroll(Graph& g_unrolled, ResourceModel& rm_unrolled, int s) {
-    Graph *new_g = &g_unrolled;
-    ResourceModel *new_rm = &rm_unrolled;
-
-    map<Vertex *, vector<Vertex *> > mappings;
-
-    for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); ++it) {
-      HatScheT::Vertex *v = *it;
-      const HatScheT::Resource *r = this->resourceModel.getResource(v);
-
-      Resource *r_new;
-
-      vector<Vertex *> v_mapping;
-
-      if (new_rm->resourceExists(r->getName())) {
-        r_new = new_rm->getResource(r->getName());
-      } else {
-        r_new = &new_rm->makeResource(r->getName(), r->getLimit(), r->getLatency(), r->getBlockingTime());
-      }
-
-      for (int i = 0; i < s; i++) {
-        Vertex *v_new = &new_g->createVertex();
-        v_new->setName(v->getName() + "_" + to_string(i));
-        new_rm->registerVertex(v_new, r_new);
-        v_mapping.push_back(v_new);
-      }
-
-      mappings.insert(make_pair(v, v_mapping));
-    }
-
-    for (auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); ++it) {
-      Edge *e = *it;
-      Vertex *v_src = &e->getVertexSrc();
-      Vertex *v_dst = &e->getVertexDst();
-
-      vector<Vertex *> v_src_mappings = mappings[v_src];
-      vector<Vertex *> v_dst_mappings = mappings[v_dst];
-
-      for (int i = 0; i < v_src_mappings.size(); i++) {
-        if (e->getDistance() == 0)
-          new_g->createEdge(*v_src_mappings[i], *v_dst_mappings[i], 0, e->getDependencyType());
-        else {
-          int distance = e->getDistance();
-          auto sampleIndexOffset = Utility::getSampleIndexAndOffset(distance,i,s,this->modulo);
-          auto index = sampleIndexOffset.first;
-          auto newDistance = sampleIndexOffset.second / this->modulo;
-          new_g->createEdge(*v_src_mappings[index], *v_dst_mappings[i], newDistance, e->getDependencyType());
-        }
-      }
-    }
-  }
-   */
 
   void UnrollRationalIIScheduler::fillSolutionStructure(SchedulerBase* scheduler, Graph* g_unrolled, ResourceModel* rm_unrolled) {
     auto schedUnrolled =  scheduler->getSchedule();
@@ -152,13 +98,13 @@ namespace HatScheT {
         ((HatScheT::MoovacScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::MODULOSDC:
-        schedulerBase = new HatScheT::ModSDC(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
-        if(this->solverTimeout > 0) ((HatScheT::ModSDC*) schedulerBase)->setSolverTimeout(this->solverTimeout);
+        schedulerBase = new HatScheT::ModuloSDCScheduler(g_unrolled, rm_unrolled, this->solverWishlist, this->modulo);
+        if(this->solverTimeout > 0) ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setSolverTimeout(this->solverTimeout);
         if(this->maxLatencyConstraint > 0)
-          ((HatScheT::ModSDC*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
-        ((HatScheT::ModSDC*) schedulerBase)->setThreads(this->threads);
-        ((HatScheT::ModSDC*) schedulerBase)->setSolverQuiet(this->solverQuiet);
-        ((HatScheT::ModSDC*) schedulerBase)->setMaxRuns(1);
+          ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setMaxLatencyConstraint(this->maxLatencyConstraint);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setThreads(this->threads);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setSolverQuiet(this->solverQuiet);
+        ((HatScheT::ModuloSDCScheduler*) schedulerBase)->setMaxRuns(1);
         break;
       case SchedulerType::ED97:
         schedulerBase = new HatScheT::EichenbergerDavidson97Scheduler(g_unrolled,rm_unrolled, this->solverWishlist, this->modulo);
@@ -226,8 +172,8 @@ namespace HatScheT {
         this->solvingTime = ((HatScheT::MoovacScheduler*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::MODULOSDC:
-        this->stat = ((HatScheT::ModSDC*) schedulerBase)->getScaLPStatus();
-        this->solvingTime = ((HatScheT::ModSDC*) schedulerBase)->getSolvingTime();
+        this->stat = ((HatScheT::ModuloSDCScheduler*) schedulerBase)->getScaLPStatus();
+        this->solvingTime = ((HatScheT::ModuloSDCScheduler*) schedulerBase)->getSolvingTime();
         break;
       case SchedulerType::ED97:
         this->stat = ((HatScheT::EichenbergerDavidson97Scheduler*) schedulerBase)->getScaLPStatus();
@@ -258,7 +204,11 @@ namespace HatScheT {
 						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
     			}
     		}
+#ifdef USE_CADICAL
 				this->solvingTime = ((HatScheT::SATScheduler*) schedulerBase)->getSolvingTime();
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATScheduler");
+#endif
     		break;
 			case SchedulerType::SATCOMBINED:
 				if (this->scheduleFound) {
@@ -277,7 +227,11 @@ namespace HatScheT {
 						this->stat = ScaLP::status::TIMEOUT_INFEASIBLE;
 					}
 				}
+#ifdef USE_CADICAL
 				this->solvingTime = ((HatScheT::SATCombinedScheduler*) schedulerBase)->getSolvingTime();
+#else
+				throw Exception("UnrollRationalIIScheduler: CaDiCaL needed for SATCombinedScheduler");
+#endif
 				break;
     }
 
@@ -293,7 +247,7 @@ namespace HatScheT {
     	this->secondObjectiveOptimal = false;
     }
 
-    if(schedulerBase->getScheduleFound() == true) {
+    if(schedulerBase->getScheduleFound()) {
       this->scheduleFound = true;
 
       this->fillSolutionStructure(schedulerBase,&g_unrolled,&rm_unrolled);

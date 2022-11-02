@@ -5,6 +5,7 @@
 #ifndef HATSCHET_SMTSCCCOMBINED_H
 #define HATSCHET_SMTSCCCOMBINED_H
 
+#ifdef USE_Z3
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
@@ -30,5 +31,6 @@ private:
 
   };
 }
+#endif //USE_Z3
 
 #endif //HATSCHET_SMTSCCCOMBINED_H

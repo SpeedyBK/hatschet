@@ -2,7 +2,7 @@
 // Created by nfiege on 19/11/18.
 //
 
-#include "ModSDC.h"
+#include "ModuloSDCScheduler.h"
 #include <cmath>
 #include <ctime>
 #include <stdlib.h>
@@ -21,7 +21,7 @@ namespace HatScheT {
     return oss << e.msg;
   }
 
-  ModSDC::ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II) :
+  ModuloSDCScheduler::ModuloSDCScheduler(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II) :
     IterativeModuloSchedulerLayer(g, rm, II), ILPSchedulerBase(sw),
     priorityForSchedQueue(), schedQueue(), scalpVariables(), timeInILPSolvers(0.0), fastObjective(true),
     pType(PriorityHandler::priorityType::SUBSEQUALAP), budget(-1), uniqueVariableName(""),
@@ -46,10 +46,10 @@ namespace HatScheT {
     this->secondObjectiveOptimal = false; // unable to prove latency-optimality with this algorithm
   }
 
-  void ModSDC::scheduleOLD() {
+  void ModuloSDCScheduler::scheduleOLD() {
     time_t t = time(nullptr);
     if(this->quiet == false)
-      cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
+      cout << "ModuloSDCScheduler::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
     this->calculatePriorities(); // calculate priorities for scheduling queue
     t = time(nullptr);
     this->mrt = std::map<Vertex *, int>(); // create empty mrt
@@ -65,12 +65,12 @@ namespace HatScheT {
     if(this->maxRuns > 0){
       int runs = this->maxII - this->minII;
       if(runs >= this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
-      if(this->quiet == false) std::cout << "ModSDC: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
-      if(this->quiet == false) std::cout << "ModSDC: min/maxII = " << minII << " " << maxII << std::endl;
+      if(this->quiet == false) std::cout << "ModuloSDCScheduler: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;
+      if(this->quiet == false) std::cout << "ModuloSDCScheduler: min/maxII = " << minII << " " << maxII << std::endl;
     }
 
     for (this->II = this->minII; this->II <= this->maxII; this->II++) {
-      if(this->quiet == false) cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
+      if(this->quiet == false) cout << "ModuloSDCScheduler::schedule: Trying to find solution for II=" << this->II << endl;
 
       //timestamp
       this->begin = clock();
@@ -84,7 +84,7 @@ namespace HatScheT {
       if (foundSolution) {
         t = time(nullptr);
         if(this->quiet == false) {
-          cout << "ModSDC::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
+          cout << "ModuloSDCScheduler::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
           cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
         }
 
@@ -92,11 +92,11 @@ namespace HatScheT {
         this->scheduleFound = true;
         break;
       } else {
-        if(this->quiet == false) cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
+        if(this->quiet == false) cout << "ModuloSDCScheduler::schedule: Didn't find solution for II=" << this->II << endl;
         if (this->II == this->maxII) {
           if(this->quiet == false) {
             cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
-            cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName()
+            cout << "ERROR: ModuloSDCScheduler heuristic didn't find solution for graph '" << this->g.getName()
                  << "', consider a higher budget or another priority function" << endl;
           }
           failed = true;
@@ -108,14 +108,14 @@ namespace HatScheT {
     if (failed == true) this->II = -1;
   }
 
-  void ModSDC::constructProblem() {
+  void ModuloSDCScheduler::constructProblem() {
     // clear old solver settings and create new variables
     this->createScalpVariables();
     this->createDataDependencyConstraints();
     this->createAdditionalConstraints();
   }
 
-  void ModSDC::setObjective() {
+  void ModuloSDCScheduler::setObjective() {
     if (this->fastObjective) {
       // minimize sum of all start times (significantly less constraints, but slightly more complex objective)
       ScaLP::Term o;
@@ -144,7 +144,7 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::createSchedulingQueue(const std::list<Vertex *> scheduleMe) {
+  void ModuloSDCScheduler::createSchedulingQueue(const std::list<Vertex *> scheduleMe) {
     for (auto it : scheduleMe) {
       if (this->resourceModel.getResource(it)->getLimit() > 0) {
         PriorityHandler::putIntoSchedQueue(it, this->pType, &this->priorityForSchedQueue, &this->schedQueue);
@@ -152,7 +152,7 @@ namespace HatScheT {
     }
   }
 
-  bool ModSDC::modSDCIteration(const int &II, int budget) {
+  bool ModuloSDCScheduler::modSDCIteration(const int &II, int budget) {
 
     // reset ScaLP status
     this->scalpStatus = ScaLP::status::UNKNOWN;
@@ -190,7 +190,7 @@ namespace HatScheT {
       }
 
       if (time < 0)
-        throw HatScheT::Exception("Error: ModSDC::modSDCIteration: invalid time (" + to_string(time) +
+        throw HatScheT::Exception("Error: ModuloSDCScheduler::modSDCIteration: invalid time (" + to_string(time) +
                                   ") found by ILP solver for instruction '" + I->getName() + "'");
       if (!this->hasResourceConflict(I, time)) {
           //cout << "No RessourceConflict Next Vertex: " << I->getName()<<" Time: "<<time<<endl;
@@ -247,9 +247,9 @@ namespace HatScheT {
           try {
             foundSolution = this->solveSDCProblem();
             if (!foundSolution) {
-              cout << "ERROR: ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
+              cout << "ERROR: ModuloSDCScheduler::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
               throw HatScheT::Exception(
-                "ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution");
+                "ModuloSDCScheduler::modSDCIteration: Pseudocode line 17; solver should always find solution");
             }
           }
           catch (HatScheT::TimeoutException &e) {
@@ -272,14 +272,14 @@ namespace HatScheT {
     if (this->schedQueue.empty() == false) {
       this->budgedEmptyCounter++;
       if(this->quiet == false) {
-        // cout << "ModSDC::modSDCIteration: empty budged for II " << this->II << endl;
-        // cout << "ModSDC::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
+        // cout << "ModuloSDCScheduler::modSDCIteration: empty budged for II " << this->II << endl;
+        // cout << "ModuloSDCScheduler::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
       }
     }
     return this->schedQueue.empty();
   }
 
-  bool ModSDC::hasResourceConflict(const Vertex *I, const int &t) const {
+  bool ModuloSDCScheduler::hasResourceConflict(const Vertex *I, const int &t) const {
     int limit = this->resourceModel.getResource(I)->getLimit();
     int neededResources(0);
     for (auto it : this->mrt) {
@@ -300,11 +300,11 @@ namespace HatScheT {
     return false;
   }
 
-  void ModSDC::setDefaultBudget() {
+  void ModuloSDCScheduler::setDefaultBudget() {
     this->budget = (int) (this->budgetMultiplier * this->g.getNumberOfVertices());
   }
 
-  void ModSDC::createScalpVariables() {
+  void ModuloSDCScheduler::createScalpVariables() {
     if (this->scalpVariables.empty()) {
       for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); it++) {
         auto v = (*it);
@@ -313,13 +313,13 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::setUpScalp() {
+  void ModuloSDCScheduler::setUpScalp() {
     this->initSolver();
     this->constructProblem();
     this->setObjective();
   }
 
-  int ModSDC::getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm) {
+  int ModuloSDCScheduler::getNumberOfConstrainedVertices(Graph &g, ResourceModel &rm) {
     int counter = 0;
     for (auto it = g.verticesBegin(); it != g.verticesEnd(); it++) {
       if (rm.getResource(*it)->getLimit() > 0) counter++;
@@ -327,7 +327,7 @@ namespace HatScheT {
     return counter;
   }
 
-  int ModSDC::getPrevSched(Vertex *v) {
+  int ModuloSDCScheduler::getPrevSched(Vertex *v) {
     try {
       return this->prevSched.at(v);
     }
@@ -336,7 +336,7 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::createDataDependencyConstraints() {
+  void ModuloSDCScheduler::createDataDependencyConstraints() {
     for (auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); it++) {
       Edge *edge = (*it);
       Vertex &src = edge->getVertexSrc();
@@ -348,7 +348,7 @@ namespace HatScheT {
     }
   }
 
-  ScaLP::Constraint *ModSDC::getAdditionalConstraint(Vertex *v) {
+  ScaLP::Constraint *ModuloSDCScheduler::getAdditionalConstraint(Vertex *v) {
     try {
       return this->additionalConstraints.at(v);
     }
@@ -357,30 +357,30 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::clearConstraintForVertex(Vertex *v) {
+  void ModuloSDCScheduler::clearConstraintForVertex(Vertex *v) {
     if (this->getAdditionalConstraint(v) != nullptr) {
       delete this->additionalConstraints.at(v);
       this->additionalConstraints.erase(v);
     }
   }
 
-  void ModSDC::createAdditionalConstraint(Vertex *v, ScaLP::Constraint &c) {
+  void ModuloSDCScheduler::createAdditionalConstraint(Vertex *v, ScaLP::Constraint &c) {
     this->additionalConstraints[v] = new ScaLP::Constraint(c);
   }
 
-  void ModSDC::createAdditionalConstraints() {
+  void ModuloSDCScheduler::createAdditionalConstraints() {
     for (auto it : this->additionalConstraints) {
       *this->solver << *it.second;
     }
   }
 
-  void ModSDC::clearAllAdditionalConstraints() {
+  void ModuloSDCScheduler::clearAllAdditionalConstraints() {
     for (auto it = this->g.verticesBegin(); it != this->g.verticesEnd(); it++) {
       this->clearConstraintForVertex(*it);
     }
   }
 
-  bool ModSDC::solveSDCProblem() {
+  bool ModuloSDCScheduler::solveSDCProblem() {
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     this->setUpScalp();
     if (!this->manageTimeBudgetSuccess()) {
@@ -414,14 +414,14 @@ namespace HatScheT {
     return true;
   }
 
-  Vertex *ModSDC::getVertexFromVariable(const ScaLP::Variable &sv) {
+  Vertex *ModuloSDCScheduler::getVertexFromVariable(const ScaLP::Variable &sv) {
     for (auto it : this->scalpVariables) {
       if (it.second == sv) return it.first;
     }
     return nullptr;
   }
 
-  void ModSDC::backtracking(Vertex *I, const int &time) {
+  void ModuloSDCScheduler::backtracking(Vertex *I, const int &time) {
     int minTime;
     try {
       minTime = this->asapTimes.at(I);
@@ -474,7 +474,7 @@ namespace HatScheT {
     }
     if (evictTime < 0)
       throw HatScheT::Exception(
-        "Error: ModSDC::backtracking: Invalid evict time (" + to_string(evictTime) + ") for instruction '" +
+        "Error: ModuloSDCScheduler::backtracking: Invalid evict time (" + to_string(evictTime) + ") for instruction '" +
         I->getName() + "'");
     std::list<Vertex *> evictInst = this->getResourceConflicts(I, evictTime);
     ///////////////////////////
@@ -512,7 +512,7 @@ namespace HatScheT {
     scheduleInstruction(I, evictTime);
   }
 
-  void ModSDC::createInitialSchedule() {
+  void ModuloSDCScheduler::createInitialSchedule() {
 
     this->setUpScalp();
     ScaLP::status s = this->solver->solve(); // solver should never timeout here...
@@ -524,8 +524,8 @@ namespace HatScheT {
       }
       this->printAdditionalSolverConstraints();
       if(this->quiet == false)
-        cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints" << endl;
-      throw HatScheT::Exception("ModSDC::createInitialSchedule: failed to find schedule without resource constraints");
+        cout << "ERROR: ModuloSDCScheduler::createInitialSchedule: failed to find schedule without resource constraints" << endl;
+      throw HatScheT::Exception("ModuloSDCScheduler::createInitialSchedule: failed to find schedule without resource constraints");
     }
 
     ScaLP::Result r = this->solver->getResult();
@@ -536,7 +536,7 @@ namespace HatScheT {
     }
   }
 
-  std::list<Vertex *> ModSDC::getResourceConflicts(Vertex *I, const int &evictTime) {
+  std::list<Vertex *> ModuloSDCScheduler::getResourceConflicts(Vertex *I, const int &evictTime) {
     std::list<Vertex *> l;
     const Resource *resourceType = this->resourceModel.getResource(I);
     for (auto it : this->mrt) {
@@ -549,12 +549,12 @@ namespace HatScheT {
     return l;
   }
 
-  void ModSDC::unscheduleInstruction(Vertex *evictInst) {
+  void ModuloSDCScheduler::unscheduleInstruction(Vertex *evictInst) {
     this->clearConstraintForVertex(evictInst);
     this->mrt.erase(evictInst);
   }
 
-  bool ModSDC::dependencyConflict(Vertex *I, const int &evictTime) {
+  bool ModuloSDCScheduler::dependencyConflict(Vertex *I, const int &evictTime) {
     for (auto it = this->g.edgesBegin(); it != this->g.edgesEnd(); it++) {
       auto e = (*it);
       // I == e.start
@@ -575,13 +575,13 @@ namespace HatScheT {
     return false;
   }
 
-  bool ModSDC::dependencyConflictForTwoInstructions(Vertex *i, const int &newStartTime_i, const int &newStartTime_j,
-                                                    const int &edgeDelay, const int &distance) {
+  bool ModuloSDCScheduler::dependencyConflictForTwoInstructions(Vertex *i, const int &newStartTime_i, const int &newStartTime_j,
+																																const int &edgeDelay, const int &distance) {
     return ((newStartTime_i + this->resourceModel.getResource(i)->getLatency() + edgeDelay - newStartTime_j) >
             (this->II * distance));
   }
 
-  void ModSDC::setUniqueVariableName() {
+  void ModuloSDCScheduler::setUniqueVariableName() {
     if (!this->uniqueVariableName.empty()) return;
     this->uniqueVariableName = "you_sexy_creature";
     bool unique = false;
@@ -597,7 +597,7 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::initSolver() {
+  void ModuloSDCScheduler::initSolver() {
     this->solver->reset();
     this->solver->quiet = this->solverQuiet;
     this->solver->timeout = (long) this->timeBudget;
@@ -610,7 +610,7 @@ namespace HatScheT {
     }
   }
 
-  void ModSDC::calculatePriorities() {
+  void ModuloSDCScheduler::calculatePriorities() {
     // Paper: priority of an instruction depends on how many operations depend on the result of this one
     // => different metrics possible; only god knows whats best
     switch (this->pType) {
@@ -751,12 +751,12 @@ namespace HatScheT {
     }
   }
 
-  ModSDC::~ModSDC() {
+  ModuloSDCScheduler::~ModuloSDCScheduler() {
     for (auto it : this->additionalConstraints) delete it.second;
     for (auto it : this->priorityForSchedQueue) delete it.second;
   }
 
-  bool ModSDC::manageTimeBudgetSuccess() {
+  bool ModuloSDCScheduler::manageTimeBudgetSuccess() {
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp - this->timeTracker);
     double elapsedTime = ((double) timeSpan.count()) / 1000.0;
@@ -768,7 +768,7 @@ namespace HatScheT {
     return this->timeBudget >= 0.0;
   }
 
-  void ModSDC::resetContainer() {
+  void ModuloSDCScheduler::resetContainer() {
     this->mrt.clear();
     this->asapTimes.clear();
     this->sdcTimes.clear();
@@ -776,25 +776,25 @@ namespace HatScheT {
     this->schedQueue.clear();
   }
 
-  void ModSDC::scheduleInstruction(Vertex *I, int t) {
+  void ModuloSDCScheduler::scheduleInstruction(Vertex *I, int t) {
     ScaLP::Constraint c(this->scalpVariables.at(I) == t);
     this->createAdditionalConstraint(I, c);
     this->mrt[I] = t;
     this->prevSched[I] = t;
   }
 
-  void ModSDC::handleTimeout() {
+  void ModuloSDCScheduler::handleTimeout() {
     this->timeBudget = this->solverTimeout;
     this->timeTracker = std::chrono::high_resolution_clock::now();
   }
 
-  void ModSDC::printAdditionalSolverConstraints() {
+  void ModuloSDCScheduler::printAdditionalSolverConstraints() {
     for (auto it : this->additionalConstraints) {
       //if(this->quiet == false) cout << (*it.second) << endl;
     }
   }
 
-  int ModSDC::getNoOfSubsequentVertices(Vertex *v) {
+  int ModuloSDCScheduler::getNoOfSubsequentVertices(Vertex *v) {
     int noOfSubseq = 0;
     std::map<Vertex *, bool> visited;
     for (auto it : this->g.Vertices()) {
@@ -823,7 +823,7 @@ namespace HatScheT {
     return noOfSubseq;
   }
 
-  map<Vertex *, int> ModSDC::getASAPScheduleWithoutResourceConstraints() {
+  map<Vertex *, int> ModuloSDCScheduler::getASAPScheduleWithoutResourceConstraints() {
     auto resM = this->getUnlimitedResourceModel();
     auto asap = ASAPScheduler(this->g, *resM);
     asap.schedule();
@@ -831,7 +831,7 @@ namespace HatScheT {
     return asap.getSchedule();
   }
 
-  map<Vertex *, int> ModSDC::getALAPScheduleWithoutResourceConstraints() {
+  map<Vertex *, int> ModuloSDCScheduler::getALAPScheduleWithoutResourceConstraints() {
     auto resM = this->getUnlimitedResourceModel();
     auto alap = ALAPScheduler(this->g, *resM);
     alap.schedule();
@@ -839,7 +839,7 @@ namespace HatScheT {
     return alap.getSchedule();
   }
 
-  ResourceModel *ModSDC::getUnlimitedResourceModel() {
+  ResourceModel *ModuloSDCScheduler::getUnlimitedResourceModel() {
     auto resM = new ResourceModel();
     for (auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); it++) {
       // copy resource but make it unlimited
@@ -857,7 +857,7 @@ namespace HatScheT {
     return resM;
   }
 
-  list<Vertex *> ModSDC::getResourceConstrainedVertices() {
+  list<Vertex *> ModuloSDCScheduler::getResourceConstrainedVertices() {
     list<Vertex *> returnMe;
     for (auto it : this->g.Vertices()) {
       if (this->resourceModel.getResource(it)->getLimit() >= 0)
@@ -866,9 +866,9 @@ namespace HatScheT {
     return returnMe;
   }
 
-  void ModSDC::setPriority(Vertex *v, PriorityHandler p) {
+  void ModuloSDCScheduler::setPriority(Vertex *v, PriorityHandler p) {
     if (this->pType != PriorityHandler::priorityType::CUSTOM)
-      throw HatScheT::Exception("ModSDC::setPriority: priority type must be CUSTOM but is " +
+      throw HatScheT::Exception("ModuloSDCScheduler::setPriority: priority type must be CUSTOM but is " +
                                 PriorityHandler::getPriorityTypeAsString(this->pType));
     try {
       auto a = this->priorityForSchedQueue.at(v);
@@ -880,13 +880,13 @@ namespace HatScheT {
     this->priorityForSchedQueue[v] = new PriorityHandler(p);
   }
 
-  std::map<const Vertex *, int> ModSDC::getBindings() {
+  std::map<const Vertex *, int> ModuloSDCScheduler::getBindings() {
     return Binding::getSimpleBinding(this->getSchedule(),&this->resourceModel,(int)this->II);
   }
 
-  std::map<Edge *, int> ModSDC::getLifeTimes() {
+  std::map<Edge *, int> ModuloSDCScheduler::getLifeTimes() {
     if (this->startTimes.empty())
-      throw HatScheT::Exception("ModSDC.getLifeTimes: cant return lifetimes! no startTimes determined!");
+      throw HatScheT::Exception("ModuloSDCScheduler.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
     std::map<Edge *, int> lifetimes;
 
@@ -896,13 +896,13 @@ namespace HatScheT {
       Vertex *vDst = &e->getVertexDst();
       int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) +
                      e->getDistance() * (int) this->II;
-      if (lifetime < 0) throw HatScheT::Exception("ModSDC.getLifeTimes: negative lifetime detected!");
+      if (lifetime < 0) throw HatScheT::Exception("ModuloSDCScheduler.getLifeTimes: negative lifetime detected!");
       else lifetimes.insert(make_pair(e, lifetime));
     }
     return lifetimes;
   }
 
-  void ModSDC::setOutputsOnLatestControlStep() {
+  void ModuloSDCScheduler::setOutputsOnLatestControlStep() {
     this->fastObjective = false;
     this->outputsEqualScheduleLength = true;
     if (this->vertexHasOutgoingEdges.empty()) {
@@ -1107,14 +1107,14 @@ namespace HatScheT {
     return priorityType::NONE;
   }
 
-  void ModSDC::scheduleInit() {
+  void ModuloSDCScheduler::scheduleInit() {
     if (!this->quiet)
     {
       cout << "Scheduling with " << this->getName() << "!" << endl;
     }
     t = time(nullptr); //ToDo TimeStuff... Has to be checked.
     if(this->quiet == false)
-      cout << "ModSDC::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
+      cout << "ModuloSDCScheduler::schedule: start scheduling graph '" << this->g.getName() << "' " << ctime(&t) << endl;
     this->calculatePriorities(); // calculate priorities for scheduling queue
     t = time(nullptr);
     this->mrt = std::map<Vertex *, int>(); // create empty mrt
@@ -1127,11 +1127,11 @@ namespace HatScheT {
     this->timeTracker = std::chrono::high_resolution_clock::now();
   }
 
-  void ModSDC::scheduleIteration() {
+  void ModuloSDCScheduler::scheduleIteration() {
 
     if(this->quiet == false)
     {
-      cout << "ModSDC::schedule: Trying to find solution for II=" << this->II << endl;
+      cout << "ModuloSDCScheduler::schedule: Trying to find solution for II=" << this->II << endl;
     }
 
     //timestamp
@@ -1146,7 +1146,7 @@ namespace HatScheT {
       t = time(nullptr);
       if(this->quiet == false)
       {
-        cout << "ModSDC::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
+        cout << "ModuloSDCScheduler::schedule: Found solution for II=" << this->II << ", current time: " << ctime(&t) << endl;
         cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
       }
 
@@ -1159,14 +1159,14 @@ namespace HatScheT {
     {
       if(this->quiet == false)
       {
-        cout << "ModSDC::schedule: Didn't find solution for II=" << this->II << endl;
+        cout << "ModuloSDCScheduler::schedule: Didn't find solution for II=" << this->II << endl;
       }
       if (this->II == this->maxII)
       {
         if(this->quiet == false)
         {
           cout << "Spent " << this->timeInILPSolvers << " sec in ILP solvers" << endl;
-          cout << "ERROR: ModuloSDC heuristic didn't find solution for graph '" << this->g.getName()
+          cout << "ERROR: ModuloSDCScheduler heuristic didn't find solution for graph '" << this->g.getName()
                << "', consider a higher budget or another priority function" << endl;
         }
       }

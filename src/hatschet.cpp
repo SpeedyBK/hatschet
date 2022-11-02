@@ -36,7 +36,6 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 #include <HatScheT/utility/reader/ScheduleAndBindingReader.h>
-#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #ifdef USE_XERCESC
 
@@ -70,7 +69,7 @@
 #include <HatScheT/scheduler/dev/UnrollRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
-#include "HatScheT/scheduler/ilpbased/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
 
@@ -95,6 +94,7 @@
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #endif
 
@@ -739,9 +739,13 @@ int main(int argc, char *args[]) {
 		if (rm.isEmpty() == false && g.isEmpty() == false) {
 			switch (schedulerSelection) {
 			    case LATENCYTEST:
+#ifdef USE_Z3
 			        scheduler = new HatScheT::TempLatencyTest(g, rm);
                     isModuloScheduler = true;
                     ((HatScheT::TempLatencyTest *) scheduler)->setnames(graphMLFile, resourceModelFile);
+#else
+							throw HatScheT::Exception("Link Z3 to enable latency test");
+#endif
 			        break;
 			    case ASAP:
 					scheduler = new HatScheT::ASAPScheduler(g, rm);
@@ -864,11 +868,11 @@ int main(int argc, char *args[]) {
 				}
 				case MODULOSDCFIEGE:
 					isModuloScheduler = true;
-					scheduler = new HatScheT::ModSDC(g, rm, solverWishList);
-					if (timeout > 0) ((HatScheT::ModSDC *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0) ((HatScheT::ModSDC *) scheduler)->setMaxLatencyConstraint(maxLatency);
-					((HatScheT::ModSDC *) scheduler)->setThreads(threads);
-					((HatScheT::ModSDC *) scheduler)->setSolverQuiet(solverQuiet);
+					scheduler = new HatScheT::ModuloSDCScheduler(g, rm, solverWishList);
+					if (timeout > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					((HatScheT::ModuloSDCScheduler *) scheduler)->setThreads(threads);
+					((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverQuiet(solverQuiet);
 					break;
 				case RATIONALIIMODULOSDC:
                     isRationalIIScheduler=true;

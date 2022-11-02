@@ -512,7 +512,7 @@ namespace HatScheT {
         void createAdditionalConstraints();
 
         /*!
-         * @brief additional constraints based on lines 7 and 10 (ModSDC algorithm)
+         * @brief additional constraints based on lines 7 and 10 (ModuloSDCScheduler algorithm)
          */
         std::map<Vertex *, ScaLP::Constraint *> additionalConstraints;
 

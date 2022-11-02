@@ -50,7 +50,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
-#include "HatScheT/scheduler/ilpbased/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
@@ -676,7 +676,7 @@ namespace HatScheT {
 			rm.registerVertex(&p2, &add);
 
 			std::list<std::string> solverList = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
-			HatScheT::ModSDC m(g, rm, solverList);
+			HatScheT::ModuloSDCScheduler m(g, rm, solverList);
 			m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 			m.setSolverQuiet(true);
 			m.schedule();
@@ -782,7 +782,7 @@ namespace HatScheT {
 		readerGraph.readGraph(graphStr.c_str());
 
 		//------------
-		HatScheT::ModSDC sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		HatScheT::ModuloSDCScheduler sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 		sdc.schedule();
 		modSDC_II = sdc.getII();
 		//------------
@@ -799,7 +799,7 @@ namespace HatScheT {
 		ED97_II = ed97.getII();
 
 		cout << "Tests::compareModuloSchedulerTest: Expected II is 11" << endl;
-		cout << "Tests::compareModuloSchedulerTest: ModuloSDC found II " << modSDC_II << endl;
+		cout << "Tests::compareModuloSchedulerTest: ModuloSDCScheduler found II " << modSDC_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: MoovacScheduler found II " << moovac_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
@@ -2323,7 +2323,7 @@ namespace HatScheT {
             cout<< g;
 
             //UniformRationalIISchedulerNew schedulerUNIFORM (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-            ModSDC schedulerMod (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            ModuloSDCScheduler schedulerMod (g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             ModuloQScheduler test (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             RationalIIModuloSDCScheduler schedulerRationalSDC (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             //ASAPScheduler schedulerASAP (g,rm);
@@ -3780,6 +3780,7 @@ namespace HatScheT {
   }
 
 	bool Tests::satBinding() {
+#ifdef USE_CADICAL
 		// create scheduling problem
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
@@ -3867,6 +3868,10 @@ namespace HatScheT {
 			std::cout << "TEST FAILED!" << std::endl;
 		}
 		return valid;
+#else
+		std::cout << "Tests::satBinding: link CaDiCaL to enable test" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::utilityLatencyEstimation() {
@@ -3969,7 +3974,7 @@ namespace HatScheT {
   }
 
   bool Tests::smtCDCLTest() {
-
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -3998,9 +4003,14 @@ namespace HatScheT {
           std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
           return false;
       }
+#else
+			std::cout << "Tests::smtCDCLTest: link Z3 to enable test" << std::endl;
+      return true;
+#endif
   }
 
   bool Tests::smtCombined() {
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -4035,6 +4045,10 @@ namespace HatScheT {
       }
 
       return false;
+#else
+			std::cout << "Tests::smtCombined: link Z3 to enable test" << std::endl;
+			return true;
+#endif
   }
 
   bool Tests::SCCTemplateTest() {
@@ -4096,7 +4110,7 @@ namespace HatScheT {
       list<IterativeModuloSchedulerLayer*> schedulers;
       schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
-      schedulers.push_back(new ModSDC(g, rm, {"Gurobi"}));
+      schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
 
 

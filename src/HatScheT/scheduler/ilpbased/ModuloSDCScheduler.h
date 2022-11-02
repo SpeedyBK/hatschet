@@ -4,8 +4,8 @@
 //
 // 22/10/22 bkessler: Integration of IterativeModuloSchedulerLayer - Class
 
-#ifndef HATSCHET_MODSDC_H
-#define HATSCHET_MODSDC_H
+#ifndef HATSCHET_MODULOSDCSCHEDULER_H
+#define HATSCHET_MODULOSDCSCHEDULER_H
 
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
@@ -75,23 +75,23 @@ namespace HatScheT {
     int secondPriority;
   };
 
-  class ModSDC
+  class ModuloSDCScheduler
     : public IterativeModuloSchedulerLayer, public ILPSchedulerBase {
   public:
     /*!
-     * @brief ModSDC for scheduling in hatschet a graph (g), a resource model (rm) is needed
+     * @brief ModuloSDCScheduler for scheduling in hatschet a graph (g), a resource model (rm) is needed
      * for solving the SDC problems, a solver wishlist (sw) to enable the ScaLP ILP backend is needed
      * (for example "Gurobi", "SCIP", "CPLEX")
      * @param g graph
      * @param rm resource model
      * @param sw solver wishlist
      */
-    ModSDC(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II=-1);
+    ModuloSDCScheduler(Graph &g, ResourceModel &rm, std::list<std::string> sw, int II=-1);
 
     /*!
      * @brief destructor
      */
-    ~ModSDC() override;
+    ~ModuloSDCScheduler() override;
 
     /*!
      * @brief schedule main method that runs the algorithm and determines a schedule
@@ -393,7 +393,7 @@ namespace HatScheT {
     void createAdditionalConstraints();
 
     /*!
-     * @brief additional constraints based on lines 7 and 10 (ModSDC algorithm)
+     * @brief additional constraints based on lines 7 and 10 (ModuloSDCScheduler algorithm)
      */
     std::map<Vertex *, ScaLP::Constraint *> additionalConstraints;
 
@@ -517,4 +517,4 @@ namespace HatScheT {
   };
 }
 
-#endif //HATSCHET_MODSDC_H
+#endif //HATSCHET_MODULOSDCSCHEDULER_H

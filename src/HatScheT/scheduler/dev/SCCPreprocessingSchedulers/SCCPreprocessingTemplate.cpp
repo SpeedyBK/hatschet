@@ -523,9 +523,9 @@ namespace HatScheT {
       timeLimit = seconds;
   }
 
-#ifdef USE_Z3
 
   int SCCPreprocessingTemplate::expandSCC(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm) {
+#ifdef USE_Z3
 
       KosarajuSCC kscc(*gr);
       auto locSCCs = kscc.getSCCs();
@@ -596,9 +596,11 @@ namespace HatScheT {
           svars.clear();
       }
       return *std::max_element(maxtimes.begin(), maxtimes.end());
+#else
+      throw Exception("SCCPreprocessingTemplate::expandSCC: link Z3 to use this feature");
+#endif
   }
 
-#endif
 
   void SCCPreprocessingTemplate::setMode(schedule_t schedulemode) {
       if (schedulemode == schedule_t::fast) {
