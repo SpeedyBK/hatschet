@@ -31,25 +31,6 @@ namespace HatScheT {
     void disableSecObjective(bool d) { this->disableSecObj = d; }
 
     /*!
-     * Sets the amount of time which is available for each iteration.
-     * Default is INT_MAX/2 seconds which is about 34 Years.
-     * @param seconds
-     */
-    void setTimeBudget (double seconds) { this->timeBudget = seconds; }
-
-    /*!
-     * Getter for the time which was spent in solvers during the latest iteration.
-     * @return Time spent in Solvers
-     */
-    double getTimeUsed() const { return this->timeUsed; }
-
-    /*!
-     * Getter for the
-     * @return
-     */
-    double getTimeRemaining () const { return this->timeBudget - this->timeUsed; }
-
-    /*!
      * Mainly for debugging.
      * @return Name of the scheduler
      */
@@ -78,42 +59,6 @@ namespace HatScheT {
      * \brief use this flag to disable the secondary objective (No Latency minimization)
      */
     bool disableSecObj;
-
-    /*!
-     * Starts the time messurement, should be called directly before solver->solve() function.
-     */
-    void startTimeTracking();
-
-    /*!
-     * End of time messurement, should be called directly after solver->solve() function.
-     * It calculates the results and stores them in "timeRemaining" and "timeUsed".
-     */
-    void endTimeTracking();
-
-    /*!
-     * Starttime of Timemessurement
-     */
-    std::chrono::high_resolution_clock::time_point start_t;
-
-    /*!
-     * Endtime of Timemessurement
-     */
-    std::chrono::high_resolution_clock::time_point end_t;
-
-    /*!
-     * \brief Time available for an iteration in seconds
-     */
-    double timeBudget;
-
-    /*!
-     * Time spent in solvers during the latest schedule Iteration
-     */
-    double timeUsed;
-
-    /*!
-     * timeBudget - timeUsed
-     */
-    double timeRemaining;
   };
 
 }

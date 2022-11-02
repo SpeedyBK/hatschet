@@ -21,10 +21,11 @@
 
 #pragma once
 
+#include <map>
+#include <chrono>
 #include <HatScheT/Graph.h>
 #include <HatScheT/Vertex.h>
 #include <HatScheT/Edge.h>
-#include <map>
 #include <HatScheT/ResourceModel.h>
 
 namespace HatScheT
@@ -63,8 +64,12 @@ public:
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
    */
-  void setMaxLatencyConstraint(int l){this->maxLatencyConstraint =l;}
-  int getMaxLatencyConstraint(){return this->maxLatencyConstraint;}
+  void setMaxLatencyConstraint(int l) { this->maxLatencyConstraint =l; }
+  /*!
+   * Getter for maxLatencyConstraint
+   * @return maxLatencyConstraint
+   */
+  int getMaxLatencyConstraint() const { return this->maxLatencyConstraint; }
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
@@ -100,23 +105,82 @@ public:
  * \brief getScheduleFound
  * \return
  */
-  bool getScheduleFound(){return this->scheduleFound;}
+  bool getScheduleFound() const { return this->scheduleFound; }
   /*!
    * use this flag to control the mux optimal binding algorithm
    * NOTE: EXPERIMENTAL
    * @param b
    */
-  void setUseOptBinding(bool b){
-      this->useOptimalBinding = b;
-  }
-  bool getUseOptBinding(){
-      return this->useOptimalBinding;
-  }
+  void setUseOptBinding(bool b){ this->useOptimalBinding = b; }
+  /*!
+   * Getter for useOptimalBinding
+   * @return useOptimalBinding
+   */
+  bool getUseOptBinding() const { return this->useOptimalBinding; }
   /*!
    * enable/disable debug couts
    * @param q
    */
   void setQuiet(bool q) { this->quiet = q; }
+
+  /*!-----------------------------------------------------------
+   *  Timetracking in HatScheT:
+   *  Based on C++ Chrono Library.
+   *
+   *  It is designed to easily get time messurements for each
+   *  II-Iternation.
+   *
+   *  There are 3 Variables for timetracking
+   *  - timeBudget: The time a scheduler has to solve one
+   *  specific II.
+   *  - timeUsed: The time between calling startTimeTracking()
+   *  and calling endTimeTracking().
+   *  - timeRemaining: Basicly timeBugdet - timeUsed. The time
+   *  which is left after a timetracked function.
+   *
+   *  Functions public:
+   *  - setTimeBudget(): Takes a double value in seconds and
+   *  sets timeBudget accordingly. If not called, timeBudget
+   *  will be set by the constructor to INT32_MAX.
+   *  - getTimeUsed() and getTimeRemaining():
+   *  Just getters for the variables.
+   *
+   *  Functions protected:
+   *  - startTimeTracking(): Starts timetracking.
+   *  - endTimeTracking(): Ends timetracking and calculates
+   *  timeUsed and timeRemaining.
+   *
+   *  If continuous timetracking is needed "timeBudget" can be
+   *  updated with "timeRemaining" after each tracked step.
+   *  And a total time messurement can be achieved by saving
+   *  the original timeBudget and then subtract timeRemaining
+   *  after all steps are done.
+   *
+   *  Example:
+   *  Step:           1    2    3
+   *  ----------------------------
+   *  TimeBudget:    10    8    5
+   *  TimeUsed:       2    3    1
+   *  TimeRemaining:  8    5    4
+   *
+   *  Total Time Used 10 - 4 = 6
+   ----------------------------------------------------------- */
+  /*!
+   * Sets the amount of time which is available for each iteration.
+   * Default is INT32_MAX.
+   * @param seconds
+   */
+  void setTimeBudget (double seconds) { this->timeBudget = seconds; }
+  /*!
+   * Getter for timeUsed, look above.
+   * @return timeUsed if set by the scheduler, -1 otherwise.
+   */
+  double getTimeUsed() const { return this->timeUsed; }
+  /*!
+   * Getter for timeRemaining, look above
+   * @return timeRemaining if set by the scheduler, -1 otherwise.
+   */
+  double getTimeRemaining () const { return this->timeRemaining; }
 
 protected:
   /*!
@@ -155,6 +219,38 @@ protected:
    * \brief use this flag to determine optimal binding using ILP
    */
   bool useOptimalBinding;
+  /*!--------------
+   * Timetracking:
+   *--------------*/
+  /*!
+   * Starts the time messurement, should be called directly before solver->solve() function.
+   */
+  void startTimeTracking();
+  /*!
+   * End of time messurement, should be called directly after solver->solve() function.
+   * It calculates the results and stores them in "timeRemaining" and "timeUsed".
+   */
+  void endTimeTracking();
+  /*!
+   * Starttime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point start_t;
+  /*!
+   * Endtime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point end_t;
+  /*!
+   * \brief Time available for an iteration in seconds
+   */
+  double timeBudget;
+  /*!
+   * Time spent in solvers during the latest schedule Iteration
+   */
+  double timeUsed;
+  /*!
+   * timeBudget - timeUsed
+   */
+  double timeRemaining;
 
 };
 }

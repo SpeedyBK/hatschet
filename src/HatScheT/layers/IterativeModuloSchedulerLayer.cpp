@@ -26,11 +26,6 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
 
     // IterativeModuloSchedulerLayer:
     this->disableSecObj = false;
-    this->timeBudget = INT32_MAX/2;
-    this->timeRemaining = timeBudget;
-    this->timeUsed = 0;
-    start_t = std::chrono::high_resolution_clock::now();
-    end_t = std::chrono::high_resolution_clock::now();
 
     // ---------------------------------------- //
     // Calculate min. and max. II if not given. //
@@ -133,15 +128,4 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     {
         cout << "IterativeModuloSchedulerLayer: Schedule Loop done, no schedule found!" << endl;
     }
-}
-
-void HatScheT::IterativeModuloSchedulerLayer::startTimeTracking() {
-    this->start_t = std::chrono::high_resolution_clock::now();
-}
-
-void HatScheT::IterativeModuloSchedulerLayer::endTimeTracking() {
-    this->end_t = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-    timeUsed = (double)duration / 1000;
-    timeRemaining = timeBudget - timeUsed;
 }

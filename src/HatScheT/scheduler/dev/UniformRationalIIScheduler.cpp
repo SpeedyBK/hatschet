@@ -257,16 +257,23 @@ namespace HatScheT
 		//solve the current problem
 		if(this->writeLPFile) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
 
+//		//timestamp
+//		this->begin = clock();
+//		//solve
+//		stat = this->solver->solve();
+//		//timestamp
+//		this->end = clock();
+//
+//		//log time
+//		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
 		//timestamp
-		this->begin = clock();
+		startTimeTracking();
 		//solve
 		stat = this->solver->solve();
 		//timestamp
-		this->end = clock();
-
-		//log time
-		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+		endTimeTracking();
 
 		if(!this->quiet) cout << "Finished solving: " << stat << endl;
 

@@ -54,7 +54,7 @@ namespace HatScheT {
 		if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
 
 		if(scheduleFound == false) this->II = -1;
-		if(this->quiet==false) std::cout << "IntIINonRect: solving time was " << this->solvingTime << " seconds" << std::endl;
+		if(this->quiet==false) std::cout << "IntIINonRect: solving time was " << this->timeUsed << " seconds" << std::endl;
 	}
 
 	void IntegerIINonRectScheduler::setUpSolverSettings()
@@ -79,16 +79,23 @@ namespace HatScheT {
 			std::cout << "IntIINonRect: solver timeout = " << this->solver->timeout << " (sec)" << endl;
 		}
 
+//		//timestamp
+//		this->begin = clock();
+//		//solve
+//		this->stat = this->solver->solve();
+//		//timestamp
+//		this->end = clock();
+//
+//		//log time
+//		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
 		//timestamp
-		this->begin = clock();
+		startTimeTracking();
 		//solve
 		this->stat = this->solver->solve();
 		//timestamp
-		this->end = clock();
-
-		//log time
-		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+		endTimeTracking();
 
 		if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) this->timeouts++;
 		feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;

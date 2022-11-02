@@ -481,19 +481,26 @@ namespace HatScheT {
 			std::cout << this->solver->showLP() << std::endl;
 		}
 
+//		//timestamp
+//		this->begin = clock();
+//		//solve
+//		stat = this->solver->solve();
+//		//timestamp
+//		this->end = clock();
+//
+//		//log time
+//		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
 		//timestamp
-		this->begin = clock();
+		startTimeTracking();
 		//solve
 		stat = this->solver->solve();
 		//timestamp
-		this->end = clock();
-
-		//log time
-		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+		endTimeTracking();
 
 		if(!this->quiet) {
-			std::cout << "Time to solve: " << (double)(this->end - this->begin) / CLOCKS_PER_SEC << " sec" << std::endl;
+			std::cout << "Time to solve: " << getTimeUsed() << " sec" << std::endl;
 			std::cout << "ScaLP status:" << stat << std::endl;
 		}
 		return (stat == ScaLP::status::OPTIMAL) or (stat == ScaLP::status::FEASIBLE) or (stat == ScaLP::status::TIMEOUT_FEASIBLE);

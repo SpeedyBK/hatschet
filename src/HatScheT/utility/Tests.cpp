@@ -454,6 +454,8 @@ namespace HatScheT {
 			m.setCandidateII(4);
 			m.schedule();
 
+			cout << "Done in " << m.getTimeUsed() << " seconds!" << endl;
+
 			auto sch = m.getSchedule();
 
 			for (auto &p:sch) {
@@ -1539,14 +1541,14 @@ namespace HatScheT {
 		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		// set it up
 		pbs.setQuiet(false);
-		pbs.setSolverTimeout(1);
+		pbs.setTimeBudget(1);
 		pbs.setMaxRuns(1);
 		pbs.maximalSubgraphSize = 3;
 		// call scheduling function
 		pbs.schedule();
 
 		// get results
-		auto solvingTime = pbs.getSolvingTime();
+		auto solvingTime = pbs.getTimeUsed();
 		std::cout << "solving time = " << solvingTime << std::endl;
 		auto II = (int)pbs.getII();
 		std::cout << "II = " << II << std::endl;

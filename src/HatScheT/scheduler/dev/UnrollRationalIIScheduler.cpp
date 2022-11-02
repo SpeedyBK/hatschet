@@ -239,7 +239,7 @@ namespace HatScheT {
 				break;
 			case SchedulerType::PBS:
 				this->stat = ((HatScheT::PBScheduler*) schedulerBase)->getScaLPStatus();
-				this->solvingTime = ((HatScheT::PBScheduler*) schedulerBase)->getSolvingTime();
+				this->solvingTime = ((HatScheT::PBScheduler*) schedulerBase)->getTimeUsed();
 				break;
     	case SchedulerType::SAT:
     		if (this->scheduleFound) {

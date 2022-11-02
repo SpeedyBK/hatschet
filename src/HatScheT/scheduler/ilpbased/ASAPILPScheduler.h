@@ -25,7 +25,7 @@
 namespace HatScheT
 {
 
-/*!!
+/*!
  * Scheduler for ilp based asap scheduling
  * This formulation is time-index based and uses binary variables
  * As a result, an upper bound for the schedule is needed

@@ -40,6 +40,13 @@ SchedulerBase::SchedulerBase(Graph& g, ResourceModel &resourceModel) : resourceM
   this->scheduleFound = false;
   this->useOptimalBinding = false;
   this->quiet = true;
+
+  // Timetracking
+  this->timeBudget = INT32_MAX;
+  this->timeRemaining = -1;
+  this->timeUsed = -1;
+  start_t = std::chrono::high_resolution_clock::now();
+  end_t = std::chrono::high_resolution_clock::now();
 }
 
 SchedulerBase::~SchedulerBase()
@@ -189,5 +196,16 @@ std::map<Edge*,int> SchedulerBase::getLifeTimes()
   }
   return lifetimes;
 }
+
+  void HatScheT::SchedulerBase::startTimeTracking() {
+    this->start_t = std::chrono::high_resolution_clock::now();
+  }
+
+  void HatScheT::SchedulerBase::endTimeTracking() {
+    this->end_t = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+    timeUsed = (double)duration / 1000;
+    timeRemaining = timeBudget - timeUsed;
+  }
 
 }

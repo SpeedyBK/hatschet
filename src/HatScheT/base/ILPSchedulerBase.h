@@ -98,27 +98,28 @@ public:
    * (if set by the schedulers, -1.0 otherwise)
    * @return
    */
-  double getSolvingTime(){
-    return this->solvingTime;
-  }
+  double getSolvingTime(){ return this->solvingTime; }
   /*!
    * @brief default false to avoid errors using SCIP and LPSolve
    * @param p
    */
-  void setPresolve(bool p) {
-    this->solver->presolve = p;
-  }
+  void setPresolve(bool p) { this->solver->presolve = p; }
+  /*!
+   * Getter for this->solver->presolve.
+   * @return this->solver->presolve
+   */
   bool getPresolve(){return this->solver->presolve;}
-	/*!
-	 * use this container to specify an initial solution from which the solver should start its solving process
-	 * for rational II schedulers only
-	 */
-	std::vector<std::map<Vertex*,int>> initialSolutionRatII;
-	/*!
-	 * use this container to specify an initial solution from which the solver should start its solving process
-	 * for integer II schedulers only
-	 */
-	std::map<Vertex*,int> initialSolutionIntII;
+  /*!
+   * use this container to specify an initial solution from which the solver should start its solving process
+   * for rational II schedulers only
+   */
+  std::vector<std::map<Vertex *, int>> initialSolutionRatII;
+  /*!
+   * use this container to specify an initial solution from which the solver should start its solving process
+   * for integer II schedulers only
+   */
+  std::map<Vertex *, int> initialSolutionIntII;
+
 protected:
   /*!
    * store the status of ilp-based scheduling
@@ -143,7 +144,7 @@ protected:
    */
   ScaLP::Solver *solver;
   /*!
-   * store the results of ilb-based scheduling
+   * store the results of ilp-based scheduling
    */
   ScaLP::Result r;
   /*!
