@@ -376,7 +376,7 @@ namespace HatScheT {
         void handleTimeout();
 
         /*!
-         * @brief is used to calculate this->timeBudget
+         * @brief is used to calculate this->solverTimeout
          */
         std::chrono::high_resolution_clock::time_point timeTracker;
         /*!

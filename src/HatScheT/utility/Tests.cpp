@@ -111,6 +111,8 @@ namespace HatScheT {
 		HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 		sched.setMaxLatencyConstraint(maxLatencyConstraint);
 		sched.setSolverQuiet(false);
+		sched.setQuiet(false);
+		sched.setSolverTimeout(42);
 
 		cout << "starting moovac scheduling" << endl;
 		sched.schedule();
@@ -451,6 +453,7 @@ namespace HatScheT {
 			HatScheT::IntegerIINonRectScheduler m{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 			m.setSolverQuiet(true);
 			m.setQuiet(false);
+			m.setSolverTimeout(42);
 			m.setCandidateII(4);
 			m.schedule();
 
@@ -679,6 +682,8 @@ namespace HatScheT {
 			HatScheT::ModuloSDCScheduler m(g, rm, solverList);
 			m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 			m.setSolverQuiet(true);
+			m.setQuiet(false);
+			m.setSolverTimeout(42);
 			m.schedule();
 
 			auto sch = m.getSchedule();
@@ -721,6 +726,9 @@ namespace HatScheT {
 		readerGraph.readGraph(graphStr.c_str());
 
 		HatScheT::RationalIISchedulerFimmel fimmel{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		fimmel.setQuiet(false);
+		fimmel.setSolverQuiet(false);
+		fimmel.setSolverTimeout(42);
 		fimmel.schedule();
 
 		cout << "Tests::rationalIISchedulerFimmelTest: expected II is 5.333..." << endl;
@@ -749,6 +757,8 @@ namespace HatScheT {
 
 		HatScheT::RationalIIScheduler rii{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 		rii.setUniformScheduleFlag(true);
+		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 
 		cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
@@ -781,20 +791,30 @@ namespace HatScheT {
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
 		readerGraph.readGraph(graphStr.c_str());
 
+		bool allQuiet = true;
+
 		//------------
 		HatScheT::ModuloSDCScheduler sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		sdc.setQuiet(allQuiet);
+		sdc.setSolverTimeout(42);
 		sdc.schedule();
 		modSDC_II = sdc.getII();
 		//------------
 		HatScheT::MoovacScheduler moovac{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        moovac.setQuiet(allQuiet);
+        moovac.setSolverTimeout(42);
 		moovac.schedule();
 		moovac_II = moovac.getII();
 		//------------
 		HatScheT::MoovacMinRegScheduler minreg{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        minreg.setQuiet(allQuiet);
+        minreg.setSolverTimeout(42);
 		minreg.schedule();
 		moovacminreg_II = minreg.getII();
 		//------------
 		HatScheT::EichenbergerDavidson97Scheduler ed97{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        ed97.setQuiet(allQuiet);
+        ed97.setSolverTimeout(42);
 		ed97.schedule();
 		ED97_II = ed97.getII();
 
@@ -1148,6 +1168,7 @@ namespace HatScheT {
 
 		ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		m.setQuiet(false);
+		m.setSolverTimeout(42);
 		//m.setMaxLatencyConstraint(100);
 		m.schedule();
 		//auto result = m.getSchedule();
@@ -1541,7 +1562,7 @@ namespace HatScheT {
 		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		// set it up
 		pbs.setQuiet(false);
-		pbs.setTimeBudget(1);
+        pbs.setSolverTimeout(1);
 		pbs.setMaxRuns(1);
 		pbs.maximalSubgraphSize = 3;
 		// call scheduling function
@@ -1599,6 +1620,7 @@ namespace HatScheT {
 
 		HatScheT::UniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1631,6 +1653,7 @@ namespace HatScheT {
 
 		HatScheT::UniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1663,6 +1686,7 @@ namespace HatScheT {
 
 		HatScheT::NonUniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1755,7 +1779,10 @@ namespace HatScheT {
 
 			HatScheT::UnrollRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 			rii.setIntIIScheduler(intIIScheduler);
-			rii.setQuiet(false);
+			if (intIIScheduler != SAT)
+			{
+                rii.setQuiet(false);
+            }
 			rii.setSolverTimeout(30);
 			rii.setThreads(1);
 			rii.schedule();
@@ -2331,6 +2358,7 @@ namespace HatScheT {
             //schedulerRationalSDC.setSolverTimeout(30000);
             schedulerRationalSDC.setBudgetMultiplier(15);
             schedulerRationalSDC.setQuiet(false);
+            schedulerRationalSDC.setSolverTimeout(42);
             schedulerRationalSDC.schedule();
             //auto &test = schedulerRationalSDC.getStartTimeVector();
             //auto s =schedulerMod.getSchedule();
@@ -2434,8 +2462,8 @@ namespace HatScheT {
 		HatScheT::Graph g;
 		HatScheT::XMLResourceReader readerRes(&rm);
 
-		string resStr = "benchmarks/origamiRatII/mat_inv/RM78.xml";
-		string graphStr = "benchmarks/origamiRatII/mat_inv/mat_inv.graphml";
+		string resStr = "benchmarks/Origami_Pareto_RatII/mat_inv/RM78.xml";
+		string graphStr = "benchmarks/Origami_Pareto_RatII/mat_inv/mat_inv.graphml";
 		readerRes.readResourceModel(resStr.c_str());
 
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -4118,9 +4146,9 @@ namespace HatScheT {
 
 
       for (auto &scheduler : schedulers) {
-          scheduler->setQuiet(true);
+          scheduler->setQuiet(false);
           scheduler->setLayerQuiet(false);
-          scheduler->setTimeBudget(100);
+          scheduler->setSolverTimeout(100);
           auto start_t = std::chrono::high_resolution_clock::now();
           scheduler->schedule();
           auto II = scheduler->getII();

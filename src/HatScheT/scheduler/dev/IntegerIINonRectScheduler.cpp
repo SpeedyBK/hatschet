@@ -67,7 +67,7 @@ namespace HatScheT {
 	void IntegerIINonRectScheduler::scheduleAttempt(int candII, bool &feasible, bool &proven)
 	{
 		solver->reset();
-		solver->timeout = this->getSolverTimeout();
+		solver->timeout = this->solverTimeout;
 
 		constructDecisionVariables(candII);
 		setObjective();
@@ -201,4 +201,14 @@ namespace HatScheT {
 			this->solver->addConstraint(tSrc + latSrc + delay - tDst <= candII * distance);
 		}
 	}
+
+  void IntegerIINonRectScheduler::setSolverTimeout(double timeoutInSeconds) {
+	  this->solverTimeout = timeoutInSeconds;
+	  solver->timeout = (long)timeoutInSeconds;
+	  if (!this->quiet)
+	  {
+		  cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+	  }
+  }
+
 }

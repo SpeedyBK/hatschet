@@ -50,6 +50,12 @@ public:
    */
   string getName() override { return "ED97"; }
 
+  /*!
+   * Function to set the solver Timeout
+   * @param seconds
+   */
+  void setSolverTimeout(double timeoutInSeconds) override;
+
 protected:
 
   /*!

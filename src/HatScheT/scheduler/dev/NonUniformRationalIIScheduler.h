@@ -31,6 +31,12 @@ namespace HatScheT {
 		 * @brief print the MRTs of all resources after rational II scheduling and binding
 		 */
 		void printBindingToConsole();
+      /*!
+       * Function to set the solver Timeout
+       * @param seconds
+       */
+      void setSolverTimeout(double timeoutInSeconds) override;
+
 	protected:
 		/*!
 		 * each scheduler should overload this function for one schedule iteration

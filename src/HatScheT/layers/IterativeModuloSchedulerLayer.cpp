@@ -102,7 +102,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         if (!this->quiet or !this->layerQuiet)
         {
             cout << "IterativeModuloSchedulerLayer: " << ii - minII + 1 << ". Iteration, time budget: ";
-            cout << timeBudget << " seconds." << endl;
+            cout << solverTimeout << " seconds." << endl;
         }
         // Passing II from II - search - loop to class, so scheduler can use it.
         this->II = ii;

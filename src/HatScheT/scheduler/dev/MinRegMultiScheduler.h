@@ -22,6 +22,11 @@ namespace HatScheT {
 		int getNumLifetimeRegs() const;
 		bool validateScheduleAndBinding() const;
 		void printScheduleAndBinding() const;
+      /*!
+       * Function to set the solver Timeout
+       * @param seconds
+       */
+      void setSolverTimeout(double timeoutInSeconds) override;
 
 	protected:
 		void constructProblem() override;

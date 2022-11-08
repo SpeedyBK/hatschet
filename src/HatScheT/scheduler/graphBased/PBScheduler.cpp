@@ -40,7 +40,6 @@ namespace HatScheT {
 
 	void PBScheduler::schedule() {
 		//this->solvingTime = 0.0;
-		setSolverTimeout((long)timeBudget);
 		if(!this->quiet){
 			std::cout << "PBS: min/maxII = " << this->minII << " " << this->maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 			std::cout << "PBS: solver timeout = " << this->solverTimeout << " (sec)" << endl;
@@ -512,5 +511,15 @@ namespace HatScheT {
 		this->resourceModels.clear();
 		this->subgraphs.clear();
 	}
+
+  void PBScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
 }
 

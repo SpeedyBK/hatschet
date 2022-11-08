@@ -191,6 +191,7 @@ namespace HatScheT
 	void NonUniformRationalIIScheduler::scheduleIteration() {
 		//clear up and reset
 		this->solver->reset();
+        solver->timeout = this->solverTimeout;
 		this->resetContainer();
 
 		//set up new variables and constraints
@@ -266,5 +267,14 @@ namespace HatScheT
 			this->scheduleFound = false;
 		}
 	}
+
+  void NonUniformRationalIIScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
 
 }

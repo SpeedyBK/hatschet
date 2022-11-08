@@ -465,7 +465,7 @@ namespace HatScheT
       this->resetContainer();
       this->setUpSolverSettings();
       this->constructProblem();
-      this->setSolverTimeout(timeBudget);
+      this->setSolverTimeout(solverTimeout);
 
       if(this->writeLPFile == true)
       {
@@ -514,4 +514,12 @@ namespace HatScheT
       this->secondObjectiveOptimal = true;
   }
 
+  void MoovacScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
 }

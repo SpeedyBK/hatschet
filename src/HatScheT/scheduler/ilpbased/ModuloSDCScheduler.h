@@ -105,6 +105,12 @@ namespace HatScheT {
     string getName () override { return "ModSDCFiege"; }
 
     /*!
+     * Function to set the solver Timeout
+     * @param seconds
+     */
+    void setSolverTimeout(double timeoutInSeconds) override;
+
+    /*!
      * @brief override SchedulerBase::getBindings()
      * @return
      */
@@ -247,7 +253,7 @@ namespace HatScheT {
     void handleTimeout();
 
     /*!
-     * @brief is used to calculate this->timeBudget
+     * @brief is used to calculate this->solverTimeout
      */
     std::chrono::high_resolution_clock::time_point timeTracker;
     /*!

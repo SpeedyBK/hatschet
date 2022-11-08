@@ -265,4 +265,12 @@ namespace HatScheT {
 
       delete schedulerBase;
   }
+
+  void UnrollRationalIIScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "UnrollRationalIIScheduler:: Solver Timeout set to " << this->solverTimeout << " seconds." << endl;
+      }
+  }
 }

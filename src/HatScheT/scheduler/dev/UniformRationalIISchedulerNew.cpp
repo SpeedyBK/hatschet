@@ -362,4 +362,15 @@ namespace HatScheT
 			throw HatScheT::Exception("UniformRationalIISchedulerNew::getNewModuloslot: s>S ("+to_string(s)+">"+to_string(this->samples)+")");
 		return ((oldModuloslot + this->initiationIntervals[s]) % this->modulo);
 	}
+
+  void UniformRationalIISchedulerNew::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
+
 }

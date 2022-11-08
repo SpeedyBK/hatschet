@@ -39,6 +39,11 @@ namespace HatScheT {
 		 * apporiximately sqrt(|V|) subgraphs with approximately sqrt(|V|) vertices
 		 */
 		int maximalSubgraphSize = 15;
+		/*!
+         * Function to set the solver Timeout
+         * @param seconds
+         */
+      void setSolverTimeout(double timeoutInSeconds) override;
 
 	protected:
 		/*!

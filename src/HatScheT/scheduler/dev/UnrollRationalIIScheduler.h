@@ -38,6 +38,12 @@ namespace HatScheT {
 
     ScaLP::status getScaLPStatus() override { return this->stat; }
 
+    /*!
+     * Function to set the solver Timeout
+     * @param seconds
+     */
+    void setSolverTimeout(double timeoutInSeconds) override;
+
   protected:
     virtual void constructProblem() override {};
     virtual void setObjective() override {};

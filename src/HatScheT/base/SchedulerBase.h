@@ -131,7 +131,7 @@ public:
    *  It is designed to easily get time measurements.
    *
    *  There are 4 Variables for timetracking:
-   *  - timeBudget: The time a scheduler has to solve one
+   *  - solverTimeout: The time a scheduler has to solve one
    *  specific II.
    *  - solvingTimePerIteration: The time between calling startTimeTracking()
    *  and calling endTimeTracking().
@@ -141,8 +141,8 @@ public:
    *  which is left after a timetracked function. Within one II-Iteration.
    *
    *  Functions public:
-   *  - setTimeBudget(): Takes a double value in seconds and
-   *  sets timeBudget accordingly. If not called, timeBudget
+   *  - setSolverTimeout(): Takes a double value in seconds and
+   *  sets solverTimeout accordingly. If not called, solverTimeout
    *  will be set by the constructor to INT32_MAX (about 68 Years ^^ ).
    *  !!!
    *  If you are using ILP-, SAT-, SMT- or other solvers, this function
@@ -151,6 +151,7 @@ public:
    *  - getSolvingTimePerIteration() and getTimeRemaining():
    *  Just getters for the variables, from outside a Scheduler
    *  only the last II-Iteration is accessible.
+   *  - getSolverTimeout() getter for the solverTimeout-Variable.
    *
    *  Functions protected:
    *  - startTimeTracking(): Starts timetracking.
@@ -167,12 +168,16 @@ public:
    *  !!!
    *  If you are using ILP-, SAT-, SMT- or other solvers, this function
    *  has to be overwritten by your Scheduler.
-   *
    *  !!!
    * Default is INT32_MAX.
    * @param seconds
    */
-  virtual void setTimeBudget (double seconds);
+  virtual void setSolverTimeout (double seconds);
+  /*!
+   * Getter for the solverTimeout Variable.
+   * @return
+   */
+  double getSolverTimeout() const { return this->solverTimeout; }
   /*!
    * Getter for solvingTimePerIteration, look above.
    * From outside of the Scheduler only accessible for the last Iteration.
@@ -219,7 +224,7 @@ protected:
   /*!
    * \brief Time available for an iteration in seconds
    */
-  double timeBudget;
+  double solverTimeout;
   /*!
    * Time spent in solvers
    */
@@ -229,7 +234,7 @@ protected:
    */
   double solvingTimeTotal;
   /*!
-   * timeBudget - solvingTimePerIteration
+   * solverTimeout - solvingTimePerIteration
    */
   double timeRemaining;
   /*!-----------------

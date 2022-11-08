@@ -494,7 +494,7 @@ void MoovacResAwScheduler::getAk() {
     this->resetContainer();
     this->setUpSolverSettings();
     this->constructProblem();
-    this->setSolverTimeout(timeBudget);
+    this->setSolverTimeout(solverTimeout);
 
     if(this->writeLPFile == true)
     {

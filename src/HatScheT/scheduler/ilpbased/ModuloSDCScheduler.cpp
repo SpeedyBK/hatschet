@@ -29,17 +29,6 @@ namespace HatScheT {
     scheduleLength(-1), scalpStatus(ScaLP::status::UNKNOWN) {
 
     this->solverQuiet = true;
-		if (II <= 0) {
-			computeMinII(&g, &resourceModel);
-			this->minII = ceil(this->minII);
-			computeMaxII(&g, &resourceModel);
-		}
-		else {
-			this->minII = II;
-			this->maxII = II;
-			this->resMinII = II;
-			this->recMinII = II;
-		}
     if (minII >= maxII) maxII = (int) minII + 1;
     this->budgedEmptyCounter = 0;
     this->initialBudget = 0;
@@ -56,7 +45,7 @@ namespace HatScheT {
     if (this->budget < 0)
       this->setDefaultBudget(); // set default budget according to paper if no budget was given by the user
     this->initialBudget = this->budget;
-    this->timeBudget = (double) this->solverTimeout;
+    this->solverTimeout = (double) this->solverTimeout;
     this->timeTracker = std::chrono::high_resolution_clock::now();
 
     bool failed = false;
@@ -761,7 +750,7 @@ namespace HatScheT {
     std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp - this->timeTracker);
     double elapsedTime = ((double) timeSpan.count()) / 1000.0;
       //std::cout << "elapsed time: " << elapsedTime<<endl;
-      //std::cout << "time budget before minus elapsed time: " << this->timeBudget<<endl;
+      //std::cout << "time budget before minus elapsed time: " << this->solverTimeout<<endl;
     this->timeTracker = tp;
     this->timeBudget -= elapsedTime;
     if(this->timeBudget<0) this->scalpStatus = ScaLP::status::TIMEOUT_INFEASIBLE;
@@ -1172,5 +1161,14 @@ namespace HatScheT {
       }
     }
     this->resetContainer();
+  }
+
+  void ModuloSDCScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
   }
 }

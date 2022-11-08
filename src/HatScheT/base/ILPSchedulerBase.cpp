@@ -30,7 +30,7 @@ namespace HatScheT {
       this->solver->threads = 1;
       this->solverQuiet = true;
       this->optimalResult = false;
-      this->solverTimeout = 300;
+      //this->solverTimeout = 300;
       this->writeLPFile = false;
       this->stat = ScaLP::status::UNKNOWN;
       //default false to avoid errors using SCIP and LPSolve
@@ -46,9 +46,9 @@ namespace HatScheT {
       return solver->getBackendName();
   }
 
-  void ILPSchedulerBase::setSolverTimeout(long timeoutInSeconds) {
-      this->solverTimeout = timeoutInSeconds;
-      solver->timeout = timeoutInSeconds;
-  }
+//  void ILPSchedulerBase::setSolverTimeout(long timeoutInSeconds) {
+//      this->solverTimeout = timeoutInSeconds;
+//      solver->timeout = timeoutInSeconds;
+//  }
 
 }

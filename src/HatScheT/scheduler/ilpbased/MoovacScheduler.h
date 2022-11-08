@@ -46,7 +46,11 @@ namespace HatScheT
      * @return Name of the scheduler
      */
     string getName () override { return "MOOVAC"; }
-
+    /*!
+     * Function to set the solver Timeout
+     * @param seconds
+     */
+    void setSolverTimeout(double timeoutInSeconds) override;
     /*!
      * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
      * \return

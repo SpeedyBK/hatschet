@@ -778,4 +778,14 @@ namespace HatScheT {
       this->fillSolutionStructure();
       this->printScheduleAndBinding();
   }
+
+  void MinRegMultiScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
 }

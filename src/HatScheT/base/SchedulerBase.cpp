@@ -40,7 +40,7 @@ namespace HatScheT {
       this->quiet = true;
 
       // Timetracking
-      this->timeBudget = INT32_MAX;
+      this->solverTimeout = INT32_MAX;
       this->timeRemaining = -1;
       this->solvingTimePerIteration = -1;
       this->solvingTimeTotal = 0;
@@ -184,16 +184,19 @@ namespace HatScheT {
       this->end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
       solvingTimePerIteration = (double) duration / 1000000;
-      timeRemaining = timeBudget - solvingTimePerIteration;
+      timeRemaining = solverTimeout - solvingTimePerIteration;
   }
 
   void SchedulerBase::updateSolvingTimeTotal() {
       solvingTimeTotal += solvingTimePerIteration;
   }
 
-  void SchedulerBase::setTimeBudget(double seconds) {
-      cout << "SchedulerBase::Warning: Function from SchedulerBase sets only the solverTimeout-Variable!" << endl;
-      cout << "If using solvers for ILP, SAT, SMT, ..., this function has to be overwritten." << endl;
-      this->timeBudget = seconds;
+  void SchedulerBase::setSolverTimeout(double seconds) {
+      if (!quiet) {
+          cout << endl << "SchedulerBase::Warning: Function from SchedulerBase sets only the solverTimeout-Variable!"
+               << endl;
+          cout << "If using solvers for ILP, SAT, SMT, ..., this function has to be overwritten." << endl << endl;
+      }
+      this->solverTimeout = seconds;
   }
 }

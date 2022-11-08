@@ -595,4 +595,14 @@ namespace HatScheT {
 			std::cout << "  Latency=" << this->getScheduleLength() << std::endl;
 		}
 	}
+
+  void ModuloQScheduler::setSolverTimeout(double timeoutInSeconds) {
+	  this->solverTimeout = timeoutInSeconds;
+	  solver->timeout = (long)timeoutInSeconds;
+	  if (!this->quiet)
+	  {
+		  cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+	  }
+  }
+
 }

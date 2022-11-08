@@ -211,21 +211,10 @@ namespace HatScheT {
       }
     }
 
-    if(this->quiet==false) {
+    if(!this->quiet) {
       cout << "##############" << endl;
       cout << "Solver start, timeout = " << this->solverTimeout << endl;
     }
-
-//    //timestamp
-//    this->begin = clock();
-//    //solve
-//    ScaLP::status r = s->solve();
-//    //timestamp
-//    this->end = clock();
-//
-//    //log time
-//    if (this->solvingTime == -1.0) this->solvingTime = 0.0;
-//    this->solvingTime += (double) (this->end - this->begin) / CLOCKS_PER_SEC;
 
     //timestamp
     startTimeTracking();
@@ -233,6 +222,7 @@ namespace HatScheT {
     ScaLP::status r = s->solve();
     //timestamp
     endTimeTracking();
+    updateSolvingTimeTotal();
 
     ScaLP::Result res = s->getResult();
     if(this->quiet==false) {
@@ -268,6 +258,15 @@ namespace HatScheT {
 
     this->stat = r;
     if(this->quiet==false) cout << "##############" << endl;
+  }
+
+  void RationalIISchedulerFimmel::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
   }
 
 }

@@ -322,7 +322,7 @@ namespace HatScheT {
           smt->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
           smt->schedule();
           timeBudget = ceil((double)smt->getTimeBudget()/1000);
-          //timeBudget = timeBudget - (int)smt->getSolvingTime();
+          //solverTimeout = solverTimeout - (int)smt->getSolvingTime();
           if( smt->getTimeouts() > 0 ) { timeouts++; }
           if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << endl; }
           scheduleFound = smt->getScheduleFound();

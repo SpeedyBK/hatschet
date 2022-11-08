@@ -591,6 +591,10 @@ namespace HatScheT {
         this->solver->reset();
         this->solver->quiet = this->solverQuiet;
         this->solver->timeout = (long) this->timeBudget;
+        if (!quiet)
+        {
+            cout << "RationalIIModuloSDCScheduler: Timeout set to " << solver->timeout << " seconds!" << endl;
+        }
         if (this->solver->getBackendName() == "Dynamic: LPSolve") {
             this->solver->presolve = false;
             this->solver->threads = 0;
@@ -1078,10 +1082,10 @@ namespace HatScheT {
         std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp - this->timeTracker);
         double elapsedTime = ((double) timeSpan.count()) / 1000.0;
         //std::cout << "elapsed time: " << elapsedTime<<endl;
-        //std::cout << "time budget before minus elapsed time: " << this->timeBudget<<endl;
+        //std::cout << "time budget before minus elapsed time: " << this->solverTimeout<<endl;
         this->timeTracker = tp;
         this->timeBudget -= elapsedTime;
-        //std::cout << "time budget after minus elapsed time: " << this->timeBudget<<endl;
+        //std::cout << "time budget after minus elapsed time: " << this->solverTimeout<<endl;
         if(this->timeBudget<0) this->scalpStatus = ScaLP::status::TIMEOUT_INFEASIBLE;
         return this->timeBudget >= 0.0;
     }

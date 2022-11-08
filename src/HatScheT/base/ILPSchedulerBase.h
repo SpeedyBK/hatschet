@@ -57,8 +57,8 @@ namespace HatScheT {
      * \brief sets the timeout of the solver
      * \param timeoutInSeconds the timeout in seconds
      */
-    long getSolverTimeout() { return this->solverTimeout; }
-    void setSolverTimeout(long timeoutInSeconds);
+    //long getSolverTimeout() { return this->solverTimeout; }
+    //void setSolverTimeout(long timeoutInSeconds);
     /*!
      * \brief setSolverQuiet manage solver output cout
      * \param b
@@ -148,7 +148,7 @@ namespace HatScheT {
     /*!
      * \brief solverTimeout in seconds, default is 3600sec=1 hour
      */
-    long solverTimeout;
+    //long solverTimeout;
     /*!
      * \brief threads
      */

@@ -34,6 +34,11 @@ namespace HatScheT {
 		 * @param II
 		 */
 		void setCandidateII(int II) {this->candII = II;}
+		/*!
+         * Function to set the solver Timeout
+         * @param seconds
+         */
+        void setSolverTimeout(double timeoutInSeconds) override;
 
 	protected:
 		virtual void setUpSolverSettings();

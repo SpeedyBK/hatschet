@@ -49,6 +49,12 @@ public:
    */
   string getName() override { return "SuchaHanzalek11"; }
 
+  /*!
+   * Function to set the solver Timeout
+   * @param seconds
+   */
+  void setSolverTimeout(double timeoutInSeconds) override;
+
 protected:
   virtual void setUpSolverSettings();
 

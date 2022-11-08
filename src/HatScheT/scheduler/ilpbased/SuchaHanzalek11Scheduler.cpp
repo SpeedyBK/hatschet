@@ -235,4 +235,13 @@ void SuchaHanzalek11Scheduler::constructResourceConstraints(int candII)
           return;
       }
   }
+
+  void SuchaHanzalek11Scheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
 }

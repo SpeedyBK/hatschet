@@ -287,4 +287,13 @@ namespace HatScheT
       if(!feasible and !this->quiet) cout << "  II " << this->II << " : " << this->stat << endl;
   }
 
+  void EichenbergerDavidson97Scheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
 }
