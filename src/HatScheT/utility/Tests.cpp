@@ -68,11 +68,11 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
 #include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 

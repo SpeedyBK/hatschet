@@ -10,8 +10,8 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
 
-#include "HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h"
-#include "HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h"
+#include "SMTBinaryScheduler.h"
+#include "SMTSCCScheduler.h"
 
 namespace HatScheT{
 

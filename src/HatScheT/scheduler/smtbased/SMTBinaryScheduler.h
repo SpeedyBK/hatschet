@@ -20,25 +20,6 @@ namespace HatScheT {
   class SMTBinaryScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
 
   public:
-
-    struct SmtVertexIntCompLess {
-      constexpr bool operator()(
-          pair<Vertex*, int> const &a,
-          pair<Vertex*, int> const &b)
-      const noexcept {
-          return a.second < b.second;
-      }
-    };
-
-    struct SmtIntIntComp {
-      bool operator()(
-          pair<int, int> const &a,
-          pair<int, int> const &b)
-      const noexcept {
-          return a.second < b.second;
-      }
-    };
-
     /*!
      * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
      * backend.
@@ -46,7 +27,6 @@ namespace HatScheT {
      * @param rm resource model
      */
     SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel);
-
     /*!
      * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
      * backend.
@@ -55,7 +35,6 @@ namespace HatScheT {
      * @param II given II
      */
     SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II);
-
     /*!
      * \brief schedule main method that runs the algorithm and determines a schedule
      */
@@ -64,7 +43,6 @@ namespace HatScheT {
      * Sets a timeout for Z3 for each check.
      * @param seconds
      */
-
     void setSolverTimeout(unsigned seconds);
     /*!
      * Enum to set the method to find the best possible latency.
@@ -79,15 +57,49 @@ namespace HatScheT {
      * @param lsm (latency-search-method)
      */
     void setLatencySearchMethod(latSearchMethod lsm) { this->latSM = lsm; }
-
+    /*!
+     * Look below.
+     */
     enum class schedulePreference {MOD_ASAP, MOD_ALAP};
+    /*!
+     * In case SDC finds valid ASAP- and ALAP-schedules the pefered schedule can be selected here.
+     */
     void setSchedulePreference(schedulePreference pref) { this->sPref = pref; }
-
+    /*!
+     * Needs to be changed when iterative layer is implemented
+     * @return
+     */
     int getTimeBudget() const { return timeBudget; }
-
+    /*!
+     * for debugging to set a filename for debug files.
+     * @param s name
+     */
     void set_design_name(string s){ this->designName = s; }
 
   protected:
+
+    /*!
+     * Comperator for priority queue in latency estimation
+     */
+    struct SmtVertexIntCompLess {
+      constexpr bool operator()(
+          pair<Vertex*, int> const &a,
+          pair<Vertex*, int> const &b)
+      const noexcept {
+          return a.second < b.second;
+      }
+    };
+    /*!
+     * Comperator for priority queue in latency estimation
+     */
+    struct SmtIntIntComp {
+      bool operator()(
+          pair<int, int> const &a,
+          pair<int, int> const &b)
+      const noexcept {
+          return a.second < b.second;
+      }
+    };
 
     /*!------------------------
      * latency related stuff:
@@ -118,24 +130,65 @@ namespace HatScheT {
      */
     int candidateLatency;
     /*!
-     * \brief Determines the latest possible start-times for each vertex by creating an ALAP-Schedule without
+     * \brief Determines the latest possible start-times for each vertex by creating an ALAP-schedule without
      * ressource-constraints.
      */
     void updateLatestStartTimes();
     /*!
-     * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
+     * \brief Wrapper for latency-estimation.
      */
     void calcLatencyEstimation();
+    /*!
+     * Calculates the maximum latency estimation based on earliest and latest possible starttimes.
+     * @param currentII
+     */
     void calcMaxLatencyEstimation(int currentII);
+    /*!
+     * Calculates the minimum latency based on earliest and latest starttimes.
+     * @param aslap earliest and latest starttimes for each vertex
+     * @param currentII
+     * @return a boolean value with the information, if min latency-estimation is valid. If not, the wrapper-function
+     * will increase latency, and try again.
+     */
     bool calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII);
+    /*!
+     * Calculates earliest and latest starttimes for each vertex.
+     * @param g Graph
+     * @param resM ResourceModel
+     * @return 2 maps with earliest and latest starttimes.
+     */
     pair <map<Vertex*,int>, map<Vertex*, int>> calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM);
-    schedulePreference sPref;
+    /*!
+     * Length of SDC ASAP Schedule
+     */
     int modAsapLength;
+    /*!
+     * Length of SDC ALAP Schedule
+     */
     int modAlapLength;
-    unordered_map<Resource*, bool> checkedResource;
+    /*!
+     * Value by which minimum latency has to be increased if it is to small
+     */
     int increment;
+    /*!
+     * Verifies if found SDC-Shedules are allready valid modulo schedules.
+     * @param g Graph
+     * @param rm Resource Model
+     * @param schedule found Schedule
+     * @param II current II
+     * @return boolean which says if schedule is valid.
+     */
     bool verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
-
+    /*!
+     * Used to switch between ASAP and ALAP SDC schedules in case they are valid.
+     */
+    schedulePreference sPref;
+    /*!
+     * Calculates the schedule-length of an SDC-schedule.
+     * @param vertexLatency mapping between Vertex in SDC-Graph and the latency of original vertex.
+     * @param newToOld mapping between Vertex in SDC-Graph and original vertex.
+     * @return length of SDC-schedule.
+     */
     int getScheduleLatency(unordered_map<Vertex*, int> &vertexLatency, unordered_map<Vertex*, Vertex*> &newToOld);
     /*!
      * \brief Creates the latency space vector.
@@ -148,9 +201,12 @@ namespace HatScheT {
      */
     int latBinarySearch(z3::check_result result);
     /*!
-     * Containts the information, if the binary search is called the first time.
+     * Contains the information, if the binary search is called the first time.
      */
     bool binarySearchInit;
+    /*!
+     * Indices for binary search.
+     */
     int leftIndex;
     int rightIndex;
     /*!
@@ -159,7 +215,9 @@ namespace HatScheT {
      * @return next candidate latency, or -1 if the search is completed.
      */
     int latLinearSearch(z3::check_result result);
-
+    /*!
+     * Contains the information, if the linear search is called the first time.
+     */
     bool linearSearchInit;
 
     /*!------------------
@@ -242,7 +300,12 @@ namespace HatScheT {
      * @param candidateII
      */
     z3::check_result setDependencyConstraintsAndAddToSolver(z3::solver& s, const int &candidateII);
-
+    /*!
+     * \brief This function inserts the dependency constraints to solver s. Only used if there are to many constraints to
+     * get in with the other function.
+     * @param Reference to solver s
+     * @param candidateII
+     */
     z3::check_result setDependencyConstraintsAndAddToSolverBIG(z3::solver& s, const int &candidateII);
     /*!
      * \brief Adds a constraint to solver s, that a vertex is scheduled in exactly one timeslot.
@@ -254,9 +317,16 @@ namespace HatScheT {
      * @param Reference to solver s
      */
     z3::check_result addResourceLimitConstraintToSolver(z3::solver &s, int candidateII);
-
+    /*!
+     * Has to be changed after the implementation of iterativ scheduler Layer
+     */
     int32_t timeBudget;
     int32_t timeLimit;
+    /*!
+     * Gets model m if z3 returns sat and extracts the schedule from this model.
+     * @param z3::model &m
+     */
+    void parseSchedule(z3::model &m);
     /*!-------------------------------
      *  Print and Debugging Methods
      *-------------------------------*/
@@ -269,11 +339,6 @@ namespace HatScheT {
 
     string designName;
     void writeSolvingTimesToFile(deque<double> &times, int x);
-    /*!
-     * Gets model m if z3 returns sat and extracts the schedule from this model.
-     * @param z3::model &m
-     */
-    void parseSchedule(z3::model &m);
 
   };
 

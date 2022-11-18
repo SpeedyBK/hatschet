@@ -258,14 +258,14 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
         src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
-        src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTModScheduler.h
         src/HatScheT/utility/SDCSolver.h
         src/HatScheT/utility/FibonacciHeap.h
-        src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h
-        src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.h
-        src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h
-        src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h
-        src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h
+        src/HatScheT/scheduler/smtbased/SMTBinaryScheduler.h
+        src/HatScheT/scheduler/smtbased/TempLatencyTest.h
+        src/HatScheT/scheduler/smtbased/SMTSCCScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTCDCLScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -327,12 +327,12 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 IF (Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/SMTSchedulerBase.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTModScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.cpp
-            src/HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.cpp
-            src/HatScheT/scheduler/dev/smtbased/TempLatencyTest.cpp)
+            src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTBinaryScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.cpp
+            src/HatScheT/scheduler/smtbased/SMTCDCLScheduler.cpp
+            src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))

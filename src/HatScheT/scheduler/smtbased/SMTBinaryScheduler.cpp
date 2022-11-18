@@ -488,9 +488,10 @@ namespace HatScheT {
       //Algorithm to estimate min latency based on earliest and latest possible start times
       //as well as on ressource constraints.
       map<pair<Vertex*, int>, bool> vertexTimeslot;
+      unordered_map<Resource*, bool> checkedResource;
 
       for (auto &r : resourceModel.Resources()){
-          this->checkedResource[r] = false;
+          checkedResource[r] = false;
       }
 
       //Generates a matrix with the information wether a Vertex can be schedules in a timeslot or not,

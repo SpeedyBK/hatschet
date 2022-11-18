@@ -26,7 +26,7 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
-#include "HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h"
+#include "HatScheT/scheduler/smtbased/SMTBinaryScheduler.h"
 
 namespace HatScheT {
 

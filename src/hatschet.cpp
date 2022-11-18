@@ -90,11 +90,11 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTCDCLScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTSCCCOMBINED.h>
-#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
+#include <HatScheT/scheduler/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/smtbased/TempLatencyTest.h>
 
 #endif
 
