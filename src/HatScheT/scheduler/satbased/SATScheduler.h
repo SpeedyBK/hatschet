@@ -37,6 +37,8 @@ namespace HatScheT {
 		void setLatestStartTimeDifferences(const std::map<Vertex*, int> &newLatestStartTimeDifferences);
 		int linearJumpLength;
 
+	    string getName() override { return "SAT-Scheduler"; }
+
 	private:
 		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
 		void calcMinLatency();

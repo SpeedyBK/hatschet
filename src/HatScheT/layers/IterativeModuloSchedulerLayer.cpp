@@ -45,18 +45,6 @@ HatScheT::IterativeModuloSchedulerLayer::IterativeModuloSchedulerLayer(HatScheT:
         this->resMinII = II;
         this->recMinII = II;
     }
-
-    // ----------------- //
-    // Debugging Prints. //
-    // ----------------- //
-    if(!this->quiet or !this->layerQuiet)
-    {
-        cout << "IterativeModuloSchedulerLayer: " << endl;
-        cout << "Minimal II is " << this->minII << endl;
-        cout << "Maximal II is " << this->maxII << endl;
-        cout << "RecMin II is " << this->recMinII << endl;
-        cout << "ResMin II is " << this->resMinII << endl;
-    }
 }
 
 void HatScheT::IterativeModuloSchedulerLayer::schedule() {
@@ -119,6 +107,10 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         // Scheduler has to fill the solution structure by itself!!!
         if (scheduleFound)
         {
+            if (!this->quiet or !this->layerQuiet){
+                cout << "1st. Objective Optimal: " << firstObjectiveOptimal << endl;
+                cout << "2nd. Objective Optimal: " << secondObjectiveOptimal << endl;
+            }
             return;
         }
     }
@@ -131,4 +123,17 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     {
         cout << "IterativeModuloSchedulerLayer: Schedule Loop done, no schedule found!" << endl;
     }
+}
+
+void HatScheT::IterativeModuloSchedulerLayer::getDebugPrintouts() {
+
+    // ----------------- //
+    // Debugging Prints. //
+    // ----------------- //
+    cout << "IterativeModuloSchedulerLayer: " << endl;
+    cout << "Minimal II is " << this->minII << endl;
+    cout << "Maximal II is " << this->maxII << endl;
+    cout << "RecMin II is " << this->recMinII << endl;
+    cout << "ResMin II is " << this->resMinII << endl;
+
 }

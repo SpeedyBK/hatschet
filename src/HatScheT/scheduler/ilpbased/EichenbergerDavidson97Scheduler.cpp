@@ -36,52 +36,52 @@ namespace HatScheT
       : IterativeModuloSchedulerLayer(g, resourceModel, II), ILPSchedulerBase(solverWishlist) {
   }
 
-  void EichenbergerDavidson97Scheduler::scheduleOLD()
-  {
-      if(this->quiet==false){
-          std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
-          std::cout << "ED97: solver timeout = " << this->solverTimeout << " (sec)" << endl;
-      }
-
-      //set maxRuns, e.g., maxII - minII, iff value if not -1
-      if(this->maxRuns > 0){
-          int runs = this->maxII - this->minII;
-          if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
-          if(this->quiet==false) std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
-          if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
-      }
-
-      if (minII > maxII)
-          throw HatScheT::Exception("Inconsistent II bounds");
-
-      // let's be optimistic and set them to false on timeout
-      this->firstObjectiveOptimal = true;
-      this->secondObjectiveOptimal = true;
-      for (int candII = minII; candII <= maxII; ++candII) {
-          bool proven = false;
-          scheduleAttempt(candII, feasible, proven);
-          scheduleFound |= feasible;
-          optimalResult &= proven;
-          secondObjectiveOptimal = proven;
-          if (feasible) {
-              II = candII;
-              auto solution = solver->getResult().values;
-              for (auto *i : g.Vertices())
-                  startTimes[i] = (int) std::lround(solution.find(time[i])->second);
-
-              if(this->quiet==false) {
-                  std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II = " << II << std::endl;
-                  for(auto it : this->startTimes) {
-                      std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
-                  }
-              }
-              break;
-          }
-          if(!feasible and !this->quiet) cout << "  II " << candII << " : " << this->stat << endl;
-      }
-      if(scheduleFound == false) this->II = -1;
-      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTimePerIteration << " seconds" << std::endl;
-  }
+//  void EichenbergerDavidson97Scheduler::scheduleOLD()
+//  {
+//      if(this->quiet==false){
+//          std::cout << "ED97: min/maxII = " << minII << " " << maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
+//          std::cout << "ED97: solver timeout = " << this->solverTimeout << " (sec)" << endl;
+//      }
+//
+//      //set maxRuns, e.g., maxII - minII, iff value if not -1
+//      if(this->maxRuns > 0){
+//          int runs = this->maxII - this->minII;
+//          if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns - 1;
+//          if(this->quiet==false) std::cout << "ED97: maxII changed due to maxRuns value set by user!" << endl;
+//          if(this->quiet==false) std::cout << "ED97: min/maxII = " << minII << " " << maxII << std::endl;
+//      }
+//
+//      if (minII > maxII)
+//          throw HatScheT::Exception("Inconsistent II bounds");
+//
+//      // let's be optimistic and set them to false on timeout
+//      this->firstObjectiveOptimal = true;
+//      this->secondObjectiveOptimal = true;
+//      for (int candII = minII; candII <= maxII; ++candII) {
+//          bool proven = false;
+//          scheduleAttempt(candII, feasible, proven);
+//          scheduleFound |= feasible;
+//          optimalResult &= proven;
+//          secondObjectiveOptimal = proven;
+//          if (feasible) {
+//              II = candII;
+//              auto solution = solver->getResult().values;
+//              for (auto *i : g.Vertices())
+//                  startTimes[i] = (int) std::lround(solution.find(time[i])->second);
+//
+//              if(this->quiet==false) {
+//                  std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II = " << II << std::endl;
+//                  for(auto it : this->startTimes) {
+//                      std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
+//                  }
+//              }
+//              break;
+//          }
+//          if(!feasible and !this->quiet) cout << "  II " << candII << " : " << this->stat << endl;
+//      }
+//      if(scheduleFound == false) this->II = -1;
+//      if(this->quiet==false) std::cout << "ED97: solving time was " << this->solvingTimePerIteration << " seconds" << std::endl;
+//  }
 
   void EichenbergerDavidson97Scheduler::setUpSolverSettings()
   {
@@ -110,6 +110,10 @@ namespace HatScheT
       this->stat = this->solver->solve();
       //timestamp
       endTimeTracking();
+
+      if(this->quiet==false) {
+          std::cout << "Attempt done... " << std::endl;
+      }
 
       if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
           this->firstObjectiveOptimal = false;
@@ -169,7 +173,14 @@ namespace HatScheT
               solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
           }
       }
-      solver->setObjective(ScaLP::minimize(ss));
+      if (!disableSecObj)
+      {
+          this->solver->setObjective(ScaLP::minimize(ss));
+      }
+      else
+      {
+          cout << "EichenbergerDavidson97Scheduler: Latencyminimize objective Disabled!" << endl;
+      }
   }
 
   static inline int mod(int a, int b) {
@@ -276,7 +287,7 @@ namespace HatScheT
           for (auto *i : g.Vertices())
               startTimes[i] = (int) std::lround(solution.find(time[i])->second);
 
-          if(this->quiet==false) {
+          if(!this->quiet) {
               std::cout << "ED97: found " << (optimalResult ? "optimal" : "feasible") << " solution with II = " << II << std::endl;
 //              for(auto it : this->startTimes) {
 //                  std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;

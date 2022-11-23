@@ -178,12 +178,12 @@ set(HatScheT_SOURCES
         src/HatScheT/base/IterativeSchedulerBase.cpp
         src/HatScheT/utility/subgraphs/SCC.cpp
         src/HatScheT/utility/SDCSolver.cpp
-        src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.cpp)
+        src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp)
 
 
 set(HatScheT_HEADERS
         src/HatScheT/base/SATSchedulerBase.h
-        src/HatScheT/base/SMTSchedulerBase.h
+        src/HatScheT/base/Z3SchedulerBase.h
         src/HatScheT/base/ILPSchedulerBase.h
         src/HatScheT/base/ModuloSchedulerBase.h
         src/HatScheT/base/SchedulerBase.h
@@ -326,7 +326,7 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 
 IF (Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
-            src/HatScheT/base/SMTSchedulerBase.cpp
+            src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTBinaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
@@ -337,7 +337,7 @@ ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
     list(APPEND HatScheT_SOURCES
-            src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h
+            src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
             )
 ENDIF ()
 

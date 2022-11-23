@@ -30,7 +30,7 @@ namespace HatScheT
 {
 
 SuchaHanzalek11Scheduler::SuchaHanzalek11Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
-	: IterativeModuloSchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist) {
+	: IterativeModuloSchedulerLayer(g, resourceModel, II), ILPSchedulerBase(solverWishlist) {
 
     optimalResult = true;
     this->feasible = false;
@@ -97,20 +97,23 @@ void SuchaHanzalek11Scheduler::constructDecisionVariables(int candII)
   }
 }
 
-void SuchaHanzalek11Scheduler::setObjective()
-{
-  // currently only one objective: minimise the schedule length
-  ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
-  solver->addConstraint(ss >= 0);
-  if (maxLatencyConstraint >= 0)
-    solver->addConstraint(ss <= maxLatencyConstraint);
+  void SuchaHanzalek11Scheduler::setObjective() {
+      // currently only one objective: minimise the schedule length
+      ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
+      solver->addConstraint(ss >= 0);
+      if (maxLatencyConstraint >= 0)
+          solver->addConstraint(ss <= maxLatencyConstraint);
 
-  for (auto *i : g.Vertices())
-    if (g.isSinkVertex(i))
-      solver->addConstraint(ss - s[i] >= resourceModel.getVertexLatency(i));
+      for (auto *i : g.Vertices())
+          if (g.isSinkVertex(i))
+              solver->addConstraint(ss - s[i] >= resourceModel.getVertexLatency(i));
 
-  solver->setObjective(ScaLP::minimize(ss));
-}
+      if (!disableSecObj) {
+          this->solver->setObjective(ScaLP::minimize(ss));
+      } else {
+          cout << "SuchaHanzalek11Scheduler: Latencyminimize objective Disabled!" << endl;
+      }
+  }
 
 void SuchaHanzalek11Scheduler::constructConstraints(int candII)
 {

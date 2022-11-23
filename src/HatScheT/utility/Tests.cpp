@@ -73,8 +73,9 @@
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
-#include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCPreprocessingTemplate.h>
+#include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -3682,33 +3683,61 @@ namespace HatScheT {
 
   bool Tests::z3Test() {
 	  #ifdef USE_Z3
-	      /*!
-          * Demonstration of how Z3 can be used to prove validity of
-          * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
-          */
-	      using namespace z3;
 
-          std::cout << "de-Morgan example\n";
+	      class z3Wrapper : public Z3SchedulerBase {
+	      public :
+	        z3Wrapper(){ quiet = true; }
 
-          context c;
+	        void setSolverTimeout(uint32_t seconds) { this->setZ3Timeout(seconds); }
 
-          expr x = c.bool_const("x");
-          expr y = c.bool_const("y");
-          expr conjecture = (!(x && y)) == (!x || !y);
+	        void setQuiet(bool q) { this->setZ3Quiet(q); this->quiet = q; }
 
-          solver s(c);
-          // adding the negation of the conjecture as a constraint.
-          s.add(!conjecture);
-          std::cout << s << "\n";
-          std::cout << s.to_smt2();
-          std::cout << s.check() << "\n";
-          switch (s.check()) {
-              case unsat:   std::cout << "\nDe-Morgan is valid\n"; break;
-              case sat:     std::cout << "\nDe-Morgan is not valid\n"; return false;
-              default:      std::cout << "\nunknown\n"; return false;
-          }
+	        void setThreads(int t) { this->setZ3Threads(t); }
 
-          return true;
+	        bool testFunction(){
+                /*!
+                 * Demonstration of how Z3 can be used to prove validity of
+                 * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
+                 */
+                if (!quiet) { std::cout << endl << "Checking De-Morgans Theorem:\n\n"; }
+
+                z3::expr x = this->c.bool_const("x");
+                z3::expr y = this->c.bool_const("y");
+                z3::expr conjecture = (!(x && y)) == (!x || !y);
+                z3::expr trivialSat = (x && y);
+
+                this->printZ3Params();
+
+                //Checking a trivial satisfiable expression.
+                this->s.add(trivialSat);
+                this->z3Check();
+
+                // adding the negation of the conjecture as a constraint.
+                this->s.add(!conjecture);
+                z3::check_result result = this->z3Check();
+
+                switch (result) {
+                    case z3::unsat:
+                        if (!quiet) { std::cout << "\nDe-Morgans Theorem is valid, test passed...\n"; }
+                        return true;
+                    case z3::sat:
+                        if (!quiet) { std::cout << "\nDe-Morgan Theorem is not valid, test failed...\n"; }
+                        return false;
+                    default: if (!quiet) {std::cout << "\nunknown\n"; }
+                        return false;
+                }
+	        }
+
+	        bool quiet;
+
+	      };
+
+	      z3Wrapper zWr;
+	      zWr.setQuiet(false);
+	      zWr.setSolverTimeout(10);
+	      zWr.setThreads(1);
+
+          return zWr.testFunction();
       #else
           //Z3 not active! Test function disabled!
           return true;
@@ -3783,7 +3812,8 @@ namespace HatScheT {
       sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
       sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
       sss.setQuiet(false);
-      sss.setSolverTimeout(20000);
+      sss.setLayerQuiet(false);
+      sss.setSolverTimeout(600);
       //sss.set_design_name(resStr);
       start = clock();
       sss.schedule();
@@ -4010,8 +4040,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4088,23 +4118,17 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-//      string resStr = "benchmarks/ChStone_Pareto/aes/graph2_RM1.xml";
-//      string graphStr = "benchmarks/ChStone/aes/graph2.graphml";
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
-//      string resStr = "benchmarks/ChStone/dfsin/graph1_RM.xml";
-//      string graphStr = "benchmarks/ChStone/dfsin/graph1.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      SCCPreprocessingTemplate scc(g, rm, 82);
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::NONE);
       auto start_t = std::chrono::high_resolution_clock::now();
       scc.setQuiet(false);
       scc.setSolverTimeout(600);
-      scc.setMode(SCCPreprocessingTemplate::schedule_t::fast);
-      scc.schedule();
-      scc.setQuiet(false);
+      scc.setExpandMode(SCCSchedulerTemplate::sccExpandMode::fast);
       scc.schedule();
       auto II = scc.getII();
       auto end_t = std::chrono::high_resolution_clock::now();
@@ -4113,11 +4137,11 @@ namespace HatScheT {
 
       cout << "Solving Time: " << t << endl;
       if (verifyModuloSchedule(g, rm, scc.getSchedule(), II)){
-          std::cout << "Tests::SCCTemplateTest: valid modulo schedule found. :-) "<< endl;
+          std::cout << "Tests:: valid modulo schedule found. :-) "<< endl;
           std::cout << "II=" << II << " Latency: " << scc.getScheduleLength() << std::endl;
           return true;
       }else{
-          std::cout << "Tests::smtSCCSchSCCTemplateTesteduler: invalid modulo schedule found :( II=" << scc.getII() << std::endl;
+          std::cout << "Tests:: invalid modulo schedule found :( II=" << scc.getII() << std::endl;
           return false;
       }
   }
@@ -4143,6 +4167,8 @@ namespace HatScheT {
       schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new SMTBinaryScheduler(g, rm));
+      schedulers.push_back(new SCCSchedulerTemplate(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::ED97));
 
 
       for (auto &scheduler : schedulers) {

@@ -42,7 +42,7 @@ public:
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */
-  virtual void scheduleOLD(); // ToDo: Remove
+  //virtual void scheduleOLD(); // ToDo: Remove
 
   /*!
    * Mainly for debugging.

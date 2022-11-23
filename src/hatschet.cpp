@@ -98,6 +98,10 @@
 
 #endif
 
+#if defined(USE_Z3) || defined(USE_SCALP)
+#include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
+#endif
+
 /**
  * Returns the value as string of a command line argument in syntax --key=value
  * @param argv the command line string
@@ -129,13 +133,10 @@ void print_short_help() {
 	std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
 	std::cout << "                            ED97: ILP formulation by Eichenberger & Davidson" << std::endl;
 	std::cout << "                            SH11: ILP formulation by Sucha & Hanzalek" << std::endl;
-	std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
-	std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)"
-						<< std::endl;
+	std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling " << std::endl;
 	std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
-	std::cout
-		<< "                            UNROLLRATIONALII: Experimental rational II scheduler which finds a rational II modulo schedule based on graph unrolling and integer II scheduling"
-		<< std::endl;
+	std::cout << "                            UNROLLRATIONALII: Experimental rational II scheduler which finds a rational II modulo schedule based on graph unrolling and integer II scheduling"
+	          << std::endl;
 	std::cout
 		<< "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules"
 		<< std::endl;
@@ -169,13 +170,17 @@ void print_short_help() {
 	std::cout
 		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
+    std::cout << "                            SCC: Experimental. Has to stages. First stage trys to find a schedule for the optimal II, but don't has \n"
+              << "                            but is not optimized for latency. If a schedule is found the second stage try to optimize latency. User can\n"
+              << "                            set which schedulers are used as backend." << std::endl;
 	std::cout << "                            SMT: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
     std::cout << "                            SMTSCC: Experimental Heuristic-Scheduler which searches for the optimal II, but it has no latency optimization" << std::endl;
     std::cout << "                            SMTCOMBINED: Experimental 2-Stage Scheduler Heuristic which searches for the optimal II, and latency optimization" << std::endl;
-    std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
-	std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
-	std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)"
-						<< std::endl;
+    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]" << std::endl;
+    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]" << std::endl;
+    std::cout << "--resource=[string]         Path to XML resource constraint file" << std::endl;
+	std::cout << "--target=[string]           Path to XML target constraint file" << std::endl;
+	std::cout << "--graph=[string]            graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
 	std::cout
 		<< "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)"
 		<< std::endl;
@@ -247,6 +252,7 @@ int main(int argc, char *args[]) {
 	bool writeLPFile = false;
 
 	enum SchedulersSelection {
+	    SCC,
 	    SMTCOMBINED,
 		SMTCDCL,
 	    SMTSCC,
@@ -268,7 +274,6 @@ int main(int argc, char *args[]) {
 		SH11,
 		SH11RA,
 		MODULOSDC,
-		MODULOSDCFIEGE,
 		RATIONALIIMODULOSDC,
 		RATIONALII,
 		UNROLLRATIONALII,
@@ -282,6 +287,8 @@ int main(int argc, char *args[]) {
 		NONE
 	};
 	SchedulersSelection schedulerSelection = NONE;
+	SchedulersSelection sccSchedulerSelection = NONE;
+	SchedulersSelection finalSchedulerSelection = NONE;
 	string schedulerSelectionStr;
 
 	std::string graphMLFile = "";
@@ -369,7 +376,6 @@ int main(int argc, char *args[]) {
 				}
 			} else if (getCmdParameter(args[i], "--scheduler=", value)) {
 				std::string valueStr = std::string(value);
-
 				schedulerSelectionStr.resize(valueStr.size());
 				std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
 
@@ -415,8 +421,6 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SH11RA;
 				} else if (schedulerSelectionStr == "modulosdc") {
 					schedulerSelection = MODULOSDC;
-				} else if (schedulerSelectionStr == "modulosdcfiege") {
-					schedulerSelection = MODULOSDCFIEGE;
 				} else if (schedulerSelectionStr == "rationaliimodulosdc") {
 					schedulerSelection = RATIONALIIMODULOSDC;
 				} else if (schedulerSelectionStr == "rationalii") {
@@ -437,11 +441,43 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SUGRREDUCTION;
 				} else if (schedulerSelectionStr == "latencytest") {
                     schedulerSelection = LATENCYTEST;
-                } else {
+                } else if (schedulerSelectionStr == "scc") {
+                    schedulerSelection = SCC;
+                }else {
 					throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
 				}
-			}
-				//HatScheT Auto Test Function
+            } else if (getCmdParameter(args[i], "--sccScheduler=", value)) {
+                std::string valueStr = std::string(value);
+                schedulerSelectionStr.resize(valueStr.size());
+                std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
+                if (schedulerSelectionStr == "moovac") {
+                    sccSchedulerSelection = MOOVAC;
+                } else if (schedulerSelectionStr == "ed97") {
+                    sccSchedulerSelection = ED97;
+                } else if (schedulerSelectionStr == "sh11") {
+                    sccSchedulerSelection = SH11;
+                } else if (schedulerSelectionStr == "modulosdc") {
+                    sccSchedulerSelection = MODULOSDC;
+                } else {
+                    sccSchedulerSelection = SMT;
+                }
+            } else if (getCmdParameter(args[i], "--finalScheduler=", value)) {
+                std::string valueStr = std::string(value);
+                schedulerSelectionStr.resize(valueStr.size());
+                std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
+                if (schedulerSelectionStr == "moovac") {
+                    finalSchedulerSelection = MOOVAC;
+                } else if (schedulerSelectionStr == "ed97") {
+                    finalSchedulerSelection = ED97;
+                } else if (schedulerSelectionStr == "sh11") {
+                    finalSchedulerSelection = SH11;
+                } else if (schedulerSelectionStr == "modulosdc") {
+                    finalSchedulerSelection = MODULOSDC;
+                } else {
+                    finalSchedulerSelection = SMT;
+                }
+            }
+                //HatScheT Auto Test Function
 			else if (getCmdParameter(args[i], "--test=", value)) {
 #ifdef USE_SCALP
 				string str = std::string(value);
@@ -610,9 +646,6 @@ int main(int argc, char *args[]) {
 				break;
 			case MODULOSDC:
 				cout << "MODULOSDC";
-				break;
-			case MODULOSDCFIEGE:
-				cout << "MODULOSDCFIEGE";
 				break;
 			case RATIONALII:
 				cout << "RATIONALII";
@@ -866,7 +899,7 @@ int main(int argc, char *args[]) {
 					scheduler = sh11ra;
 					break;
 				}
-				case MODULOSDCFIEGE:
+				case MODULOSDC:
 					isModuloScheduler = true;
 					scheduler = new HatScheT::ModuloSDCScheduler(g, rm, solverWishList);
 					if (timeout > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
@@ -971,6 +1004,48 @@ int main(int argc, char *args[]) {
 					break;
 				}
 #ifdef USE_Z3
+                case SCC: {
+                    HatScheT::SCCSchedulerTemplate::scheduler sccSched;
+                    switch (sccSchedulerSelection) {
+                        case MOOVAC :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
+                            break;
+                        case ED97 :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
+                            break;
+                        case SH11 :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SH11;
+                            break;
+                        case MODULOSDC :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+                            break;
+                        default:
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+                            break;
+                    }
+                    HatScheT::SCCSchedulerTemplate::scheduler finSched;
+                    switch (finalSchedulerSelection) {
+                        case MOOVAC :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
+                            break;
+                        case ED97 :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
+                            break;
+                        case SH11 :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SH11;
+                            break;
+                        case MODULOSDC :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+                            break;
+                        default:
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+                            break;
+                    }
+                    scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
+                    isModuloScheduler = true;
+                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                }
                 case SMT:
                     scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
                     isModuloScheduler = true;
@@ -1004,7 +1079,6 @@ int main(int argc, char *args[]) {
 					case MOOVACMINREG:
 					case ED97:
 					case MODULOSDC:
-					case MODULOSDCFIEGE:
 					case RATIONALII:
 					case UNROLLRATIONALII:
 					case UNIFORMRATIONALII:

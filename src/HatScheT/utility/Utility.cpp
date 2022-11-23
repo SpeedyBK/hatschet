@@ -220,9 +220,9 @@ namespace HatScheT {
 	}
 
 	double Utility::calcMinII(double minResII, double minRecII) {
-		if (minResII > minRecII) return minResII;
-
-		return minRecII;
+		return std::max(minRecII, minResII);
+//		if (minResII > minRecII) return minResII;
+//		return minRecII;
 	}
 
 #ifdef USE_SCALP

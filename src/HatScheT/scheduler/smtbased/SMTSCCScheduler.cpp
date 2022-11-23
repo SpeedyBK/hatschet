@@ -288,7 +288,7 @@ namespace HatScheT {
               if (timeLimit > 0) { smt.setSolverTimeout(timeLimit); }
               smt.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
               smt.schedule();
-              timeBudget = ceil((double)smt.getTimeBudget()/1000);
+              timeBudget = 1000;//ToDo:ceil((double)smt.getTimeBudget()/1000);
               if( smt.getTimeouts() > 0 ) { timeouts++; }
               if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << " TimeBudget: " << timeBudget <<endl; }
               foundSchedule = smt.getScheduleFound();
@@ -321,7 +321,7 @@ namespace HatScheT {
           if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
           smt->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
           smt->schedule();
-          timeBudget = ceil((double)smt->getTimeBudget()/1000);
+          timeBudget = 1000; //ToDo:ceil((double)smt->getTimeBudget()/1000);
           //solverTimeout = solverTimeout - (int)smt->getSolvingTime();
           if( smt->getTimeouts() > 0 ) { timeouts++; }
           if (!quiet) { cout << "Timeouts of SMT-Binary-Scheduler: " << timeouts << endl; }

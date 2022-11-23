@@ -42,6 +42,11 @@ public:
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
   virtual ~SchedulerBase();
   /*!
+   * Mainly for debugging.
+   * @return Name of the scheduler
+   */
+  virtual string getName() { return "Unnamed Scheduler"; }
+  /*!
    * \brief schedule main method for all schedulers, not implemented in base class
    */
   virtual void schedule() = 0;
@@ -203,16 +208,16 @@ protected:
   /*!
    * Starts the time messurement, should be called directly before solver->solve() function.
    */
-  void startTimeTracking();
+  virtual void startTimeTracking();
   /*!
    * End of time messurement, should be called directly after solver->solve() function.
    * It calculates the results and stores them in "timeRemaining" and "solvingTimePerIteration".
    */
-  void endTimeTracking();
+  virtual void endTimeTracking();
   /*!
    * For iterative use, it sums up the solving times measured in each iteration.
    */
-  void updateSolvingTimeTotal();
+  virtual void updateSolvingTimeTotal();
   /*!
    * Starttime of Timemessurement
    */

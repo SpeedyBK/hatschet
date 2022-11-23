@@ -36,11 +36,7 @@ namespace HatScheT {
      */
     void setLayerQuiet(bool q) { this->layerQuiet = q; }
 
-    /*!
-     * Mainly for debugging.
-     * @return Name of the scheduler
-     */
-    virtual string getName() { return "Unnamed Scheduler"; }
+    void getDebugPrintouts();
 
   protected:
    /*!

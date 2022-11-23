@@ -29,10 +29,12 @@ namespace HatScheT {
     scheduleLength(-1), scalpStatus(ScaLP::status::UNKNOWN) {
 
     this->solverQuiet = true;
-    if (minII >= maxII) maxII = (int) minII + 1;
+    //if (minII >= maxII) maxII = (int) minII + 1;
     this->budgedEmptyCounter = 0;
     this->initialBudget = 0;
     this->secondObjectiveOptimal = false; // unable to prove latency-optimality with this algorithm
+    this->firstObjectiveOptimal = false; // B. Lagershausen-Keßler: In general false, will only be set to true if solution
+                                         // Min. II is found.
   }
 
   void ModuloSDCScheduler::scheduleOLD() {

@@ -4,20 +4,17 @@
 #pragma once
 
 #ifdef USE_Z3
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 #include <utility>
 #include <deque>
 #include <queue>
 #include <cmath>
 
-#include <z3++.h>
-
 namespace HatScheT {
 
-  class SMTBinaryScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
+  class SMTBinaryScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase{
 
   public:
     /*!
@@ -25,25 +22,18 @@ namespace HatScheT {
      * backend.
      * @param g graph
      * @param rm resource model
-     */
-    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel);
-    /*!
-     * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
-     * backend.
-     * @param g graph
-     * @param rm resource model
      * @param II given II
      */
-    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II);
+    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
     /*!
-     * \brief schedule main method that runs the algorithm and determines a schedule
+     * Obvious
      */
-    void schedule() override;
+    string getName() override { return "SMT-Binary-Scheduler"; }
     /*!
      * Sets a timeout for Z3 for each check.
      * @param seconds
      */
-    void setSolverTimeout(unsigned seconds);
+    void setSolverTimeout(double seconds) override;
     /*!
      * Enum to set the method to find the best possible latency.
      * linear: Incremental starting at min. latency. Checking after each increment.
@@ -66,18 +56,25 @@ namespace HatScheT {
      */
     void setSchedulePreference(schedulePreference pref) { this->sPref = pref; }
     /*!
-     * Needs to be changed when iterative layer is implemented
-     * @return
-     */
-    int getTimeBudget() const { return timeBudget; }
-    /*!
      * for debugging to set a filename for debug files.
      * @param s name
      */
     void set_design_name(string s){ this->designName = s; }
+    /*!
+     * Function to set a specific latency to search a schedule for.
+     * @param latency
+     */
+    void setTargetLatency(int latency) { this->targetLatency = latency; }
 
   protected:
-
+    /*!
+     * \brief Schedule Iteration for one II.
+     */
+    void scheduleIteration() override;
+    /*!
+     * Initialize stuff before II-Search-Loop starts.
+     */
+    void scheduleInit() override;
     /*!
      * Comperator for priority queue in latency estimation
      */
@@ -126,7 +123,11 @@ namespace HatScheT {
      */
     int maxLatency;
     /*!
-     * \brief Latency that has to be ckecked.
+     * \brief Latency which is set by the user.
+     */
+    int targetLatency;
+    /*!
+     * \brief Latency that has to be checked.
      */
     int candidateLatency;
     /*!
@@ -220,35 +221,9 @@ namespace HatScheT {
      */
     bool linearSearchInit;
 
-    /*!------------------
-     * II related stuff
-     *------------------*/
-    /*!
-     * \brief Vector which contains all possible IIs, created by the constructor.
-     */
-    vector<int>iiSpace;
-    /*!
-     * \brief Index of an element in the II-Space. Used by II-linear-search.
-     */
-    int iiSpaceIndex;
-    /*!
-     * Linear (incremental) search for the optimal II.
-     * @param result from the previous z3 check. (SAT, UNSAT, UNKOWN)
-     * @return next candidate II, or -1 if the search is completed or search space is exhausted.
-     */
-    int iiLinearSearch(z3::check_result result);
-    /*!
-     * Containts the information, if the II-Search is called the first time.
-     */
-    bool iiSearchInit;
-
     /*!---------------------------
      * Stuff needed to set up z3.
      *---------------------------*/
-    /*!
-     * Problem context for z3
-     */
-    z3::context c;
     /*!
      * \brief Earliest possible start times for each operation, determined by an ASAP-Schedule without ressource constraints
      */
@@ -270,13 +245,13 @@ namespace HatScheT {
      * to the solver s.
      * @param reference to solver s
      */
-    void prohibitToEarlyStartsAndAdd(z3::solver &s);
+    void prohibitToEarlyStartsAndAdd();
     /*!
      * \brief Function prohibits start times which violate the ALAP-Schedule without ressource constraints and adds them
      * to the solver s.
      * @param reference to solver s
      */
-    void prohibitToLateStartsAndAdd(z3::solver &s);
+    void prohibitToLateStartsAndAdd();
     /*!
      * \brief z3 boolean expression for each pair of vertex* and start time. Will be true if z3 schedules a vertex to the start
      * time, and false if it does not.
@@ -299,29 +274,23 @@ namespace HatScheT {
      * @param Reference to solver s
      * @param candidateII
      */
-    z3::check_result setDependencyConstraintsAndAddToSolver(z3::solver& s, const int &candidateII);
+    void setDependencyConstraintsAndAddToSolver(const int &candidateII);
     /*!
      * \brief This function inserts the dependency constraints to solver s. Only used if there are to many constraints to
      * get in with the other function.
-     * @param Reference to solver s
      * @param candidateII
      */
-    z3::check_result setDependencyConstraintsAndAddToSolverBIG(z3::solver& s, const int &candidateII);
+    void setDependencyConstraintsAndAddToSolverBIG(const int &candidateII);
     /*!
      * \brief Adds a constraint to solver s, that a vertex is scheduled in exactly one timeslot.
      * @param Reference to solver s
      */
-    z3::check_result addOneSlotConstraintsToSolver(z3::solver &s);
+    z3::check_result addOneSlotConstraintsToSolver();
     /*!
      * \brief Adds a constraint to solver s, that no ressource limits are violated.
      * @param Reference to solver s
      */
-    z3::check_result addResourceLimitConstraintToSolver(z3::solver &s, int candidateII);
-    /*!
-     * Has to be changed after the implementation of iterativ scheduler Layer
-     */
-    int32_t timeBudget;
-    int32_t timeLimit;
+    z3::check_result addResourceLimitConstraintToSolver(int candidateII);
     /*!
      * Gets model m if z3 returns sat and extracts the schedule from this model.
      * @param z3::model &m
@@ -339,6 +308,8 @@ namespace HatScheT {
 
     string designName;
     void writeSolvingTimesToFile(deque<double> &times, int x);
+
+    void endTimeTracking() override;
 
   };
 
