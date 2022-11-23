@@ -448,6 +448,7 @@ namespace HatScheT {
       auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(endTimeClock2 - startTimeClock2).count();
       if (!quiet) { cout << "Done in " << (float)duration2/1000000 << " seconds." << endl << endl; }
       if (maxLatencyConstraint > 0 and maxLatencyConstraint < maxLatency){
+          if (!this->quiet){ cout << "Max Latency Constraint: " << maxLatencyConstraint << endl; }
           maxLatency = maxLatencyConstraint;
       }
   }

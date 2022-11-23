@@ -276,7 +276,7 @@ namespace HatScheT {
       sccSchedulerSelected->disableSecObjective(true);
       int maxSCCslat;
       if (sccMode == sccExpandMode::fast) {
-          maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs - 1, (int) II);
+          maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
           sccSchedulerSelected->setMaxLatencyConstraint(maxSCCslat);
       } else if (sccMode == sccExpandMode::fast) {
           maxSCCslat = expandSCC() + (int) II;
