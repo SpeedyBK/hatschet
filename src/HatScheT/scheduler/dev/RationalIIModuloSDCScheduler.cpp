@@ -753,7 +753,7 @@ namespace HatScheT {
     void RationalIIModuloSDCScheduler::scheduleInstruction(Vertex *I, int t) {
         ScaLP::Constraint c(this->scalpVariables.at(I) == t);
         this->createAdditionalConstraint(I, c);
-        //this->mrt.insertVertex(I,t);
+        this->mrt.insertVertex(I,t);
         this->prevSched[I] = t;
     }
 
