@@ -131,6 +131,10 @@ namespace HatScheT {
      */
     int candidateLatency;
     /*!
+     * Will be set to true, if max. latency constraint is less then the calculated min. latency
+     */
+    bool latencyConstraintOutOfRange;
+    /*!
      * \brief Determines the latest possible start-times for each vertex by creating an ALAP-schedule without
      * ressource-constraints.
      */

@@ -435,7 +435,7 @@ namespace HatScheT {
 //        visited.at(v) = true;
 //        for (auto &e : outgoingEdges.at(v)) {
 //            path.resize(level);
-//            path.emplace_back(e);
+//            pat h.emplace_back(e);
 //            dfs(&e->getVertexDst(), start, level+1);
 //        }
 //        visited.at(v) = false;

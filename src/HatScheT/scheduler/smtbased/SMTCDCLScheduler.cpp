@@ -4,7 +4,6 @@
 
 #include <cmath>
 #include <stack>
-#include <algorithm>
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/Verifier.h>
 #include <iomanip>
@@ -15,86 +14,76 @@
 
 namespace HatScheT {
 
-  SMTCDCLScheduler::SMTCDCLScheduler(Graph &g, ResourceModel &resourceModel) : SchedulerBase(g, resourceModel)
+  SMTCDCLScheduler::SMTCDCLScheduler(Graph &g, ResourceModel &resourceModel, double II) : IterativeModuloSchedulerLayer(g, resourceModel, II)
   {
-      this->timeouts = 0;
-      startTimes.clear();
-      scheduleFound = false;
-      computeMinII(&g, &resourceModel);
-      minII = ceil(minII);
-      computeMaxII(&g, &resourceModel);
-
-      this->timeLimit = -1;
-      this->timeBudget = INT32_MAX;
+      this->secondObjectiveOptimal = true;
   }
 
-  void SMTCDCLScheduler::schedule() {
-
-      if (!quiet) { cout << "Starting SMTCDCLScheduler..." << endl; }
-      modifyResourceModel();
-
-      z3::solver s(c);
-
-      z3::params p(c);
-      if (timeLimit > 0) {
-          timeBudget = timeLimit;
+  void SMTCDCLScheduler::scheduleInit()
+  {
+      if(!this->quiet)
+      {
+          cout << "Scheduling with " << this->getName() <<":" << endl;
+          cout << "Rec-Min-II: " << recMinII << endl;
+          cout << "Res-Min-II: " << resMinII << endl;
+          cout << "Max. II: " << maxII << endl;
+          cout << "Vertices of G: " << g.getNumberOfVertices() << endl;
+          cout << "Edges of G: " << g.getNumberOfEdges() << endl;
+          this->printZ3Params();
       }
-      if (timeBudget > 0) { p.set("timeout", (uint32_t) timeBudget); }
-      if (!quiet) { cout << p << endl; }
-      s.set(p);
 
-      II = minII;
+      modifyResourceModel();
+  }
 
-      while (II <= maxII) {
-          if (!quiet) { cout << "Calculating ASAP and ALAP Starttimes: " << endl; }
-          s.reset();
-          calculateStartimes(-1);
+  void SMTCDCLScheduler::scheduleIteration() {
+      if (!quiet) { cout << "Calculating ASAP and ALAP Starttimes: " << endl; }
+      latEst = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::both);
+      if (!quiet) { cout << "Min. Latency: " << latEst.minLat << " Max. Latency: " << latEst.maxLat << endl; }
+      for (int latency = latEst.minLat; latency <= latEst.maxLat; latency++) {
+          z3Reset();
+          int i = 0;
+          calculateStartimes(latency);
           setInitialStartTimes();
           createBooleanVariables();
-          printbooleanVeriables();
-          z3::check_result SAT = z3::unknown;
+          //printbooleanVeriables();
           stack<Edge *> violatedEdges;
-          addOneSlotConstraintToSolver(s);
-          addResourceContraintsToSolver(s);
-          z3::model m(c);
-          int i = 0;
+          addOneSlotConstraintToSolver();
+          addResourceContraintsToSolver();
           do {
-              if (!quiet) {
-                  cout << "Fixing " << violatedEdges.size() << " Dependency Constraints..." << endl << endl;
-              }
-              addConflictClauseNextTry(violatedEdges, s);
-              if (!quiet) { cout << "******************************" << endl; }
-              if (!quiet) { cout << "* Begin of Solving Iteration *" << endl; }
-              if (!quiet) { cout << "******************************" << endl; }
-              if (!quiet) { cout << "System of " << s.assertions().size() << " Assertions." << endl; }
-              if (!quiet) { cout << "Check SMT: "; }
-              auto oldM = m;
-              SAT = s.check();
-              if (!quiet) { cout << " >> " << SAT << " << " << endl; }
-              if (SAT == z3::sat) {
-                  m = s.get_model();
-                  //if (!quiet) { compareModels(oldM, m); }
-                  parseSMTModel(m);
-                  if (!quiet) { cout << "Checking Dependency Constraints:" << endl; }
+              i++;
+              if (!quiet) { cout << "II: " << this->II << " | Latency: " << latency << " | Iteration: " << i; }
+              if (!quiet) { cout << " || Time Used: " << this->getSolvingTimePerIteration() << " | Time Remaining: " << this->getTimeRemaining() << endl;}
+              addConflictClauseNextTry(violatedEdges);
+              this->setZ3Timeout((uint32_t) getTimeRemaining());
+              startTimeTracking();
+              z3Check();
+              endTimeTracking();
+              if (getZ3Result() == z3::sat) {
+                  parseSMTModel();
                   violatedEdges = checkSchedule(g, resourceModel, startTimes, (int) II, quiet);
-                  if (!quiet) {
-                      if (violatedEdges.empty()) {
-                          cout << "Dependency Constraints:" << " >> sat << " << endl;
-                      } else {
-                          cout << "Dependency Constraints:" << " >> unsat << " << endl;
-                      }
-                  }
-                  if (!quiet) { i++; }
-                  if (!quiet) { cout << " -- " << i << " -- " << endl; }
               }
-              scheduleFound = (SAT == z3::sat);
-          } while (!(SAT == z3::unsat) and !violatedEdges.empty());
+              scheduleFound = (getZ3Result() == z3::sat);
+              if (this->timeRemaining <= 0) {
+                  scheduleFound = false;
+                  firstObjectiveOptimal = false;
+                  return;
+              }
+              if (getZ3Result() == z3::unknown)
+              {
+                  secondObjectiveOptimal = false;
+              }
+          } while (!(getZ3Result() == z3::unsat) and !violatedEdges.empty());
 
-          if (scheduleFound) {
-              break;
+          if (scheduleFound)
+          {
+              cout << "Schedule Found!" << endl;
+              resetResourceModel();
+              return;
           }
-          II++;
       }
+  }
+
+  void SMTCDCLScheduler::scheduleOLD() {
 
       resetResourceModel();
 
@@ -110,8 +99,8 @@ namespace HatScheT {
                   maxTime = (vtPair.second + resourceModel.getVertexLatency(v));
                   //Debugging:
                   if (!quiet) {
-                      cout << vtPair.first->getName() << ": " << vtPair.second << " + "
-                           << resourceModel.getVertexLatency(v) << " = " << maxTime << endl;
+                      //cout << vtPair.first->getName() << ": " << vtPair.second << " + "
+                      //     << resourceModel.getVertexLatency(v) << " = " << maxTime << endl;
                   }
               }
           }catch(std::out_of_range&){
@@ -133,7 +122,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::addOneSlotConstraintToSolver(z3::solver &s) {
+  void SMTCDCLScheduler::addOneSlotConstraintToSolver() {
       for (auto &v : g.Vertices()) {
           z3::expr_vector oneSlotVector(c);
           vector<int>oneSlotWeight;
@@ -146,7 +135,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::addResourceContraintsToSolver(z3::solver &s) {
+  void SMTCDCLScheduler::addResourceContraintsToSolver() {
       for (auto &r : resourceModel.Resources()){
           if (r->isUnlimited()){
               continue;
@@ -180,7 +169,7 @@ namespace HatScheT {
 
           ok = proposedDchedule[i] + rm.getVertexLatency(i) + e->getDelay() <= proposedDchedule[j] + e->getDistance() * II;
           if (! ok) {
-              if (!quiet) cerr << *e << " violated: " << proposedDchedule[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << proposedDchedule[j] << " + " << e->getDistance() << "*" << II << endl;
+              //if (!quiet) cerr << *e << " violated: " << proposedDchedule[i] << " + " << rm.getVertexLatency(i) << " + " << e->getDelay() << " <= " << proposedDchedule[j] << " + " << e->getDistance() << "*" << II << endl;
               violatedEdges.push(e);
           }
       }
@@ -206,24 +195,24 @@ namespace HatScheT {
   }
 
   void SMTCDCLScheduler::calculateStartimes(int candidateLatency) {
-      latEst = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::both);
+      latestStartTimesWithOffset.clear();
       if (candidateLatency == -1)
       {
-          latestStartTimesWithOffset.clear();
-          for (auto &it: latEst.alapStartTimes) {
+          for (auto &it: latEst.alapStartTimes)
+          {
               this->latestStartTimesWithOffset[it.first] = latEst.maxLat - (getScheduleLatency(latEst.alapStartTimes) - it.second);
           }
       }
       else
       {
-          latestStartTimesWithOffset.clear();
-          for (auto &it: latEst.alapStartTimes) {
+          for (auto &it: latEst.alapStartTimes)
+          {
               this->latestStartTimesWithOffset[it.first] = candidateLatency - (getScheduleLatency(latEst.alapStartTimes) - it.second);
           }
       }
   }
 
-  void SMTCDCLScheduler::printSMTModel(z3::model &m) {
+  void SMTCDCLScheduler::printSMTModel() {
       for (auto &v : g.Vertices()) {
           cout << setw(10) << v->getName() << ": ";
           for (int i = 0; i < latEst.maxLat; i++) {
@@ -255,7 +244,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::parseSMTModel(z3::model &m) {
+  void SMTCDCLScheduler::parseSMTModel() {
       for (auto &v : g.Vertices()) {
           for (int i = 0; i < latEst.maxLat; i++) {
               try {
@@ -278,12 +267,12 @@ namespace HatScheT {
   void SMTCDCLScheduler::fixDependencyConstraints(stack<Edge*> &violatedEdges, z3::solver &s) {
       while(!violatedEdges.empty()){
           auto e = violatedEdges.top();
-          addConflictClause(e, s);
+          addConflictClause(e);
           violatedEdges.pop();
       }
   }
 
-  void SMTCDCLScheduler::addConflictClause(Edge *e, z3::solver &s) {
+  void SMTCDCLScheduler::addConflictClause(Edge *e) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       int i = 0;
       auto *vSrc = &e->getVertexSrc();
@@ -312,7 +301,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::addConflictClauseNextTry(stack<Edge *> &eStack, z3::solver &s) {
+  void SMTCDCLScheduler::addConflictClauseNextTry(stack<Edge *> &eStack) {
 
       while(!eStack.empty()){
           auto e = eStack.top();
@@ -323,14 +312,22 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::setSolverTimeout(unsigned int seconds) {
-      this->timeLimit = seconds * 1000;
+  void SMTCDCLScheduler::setSolverTimeout(double seconds) {
+      this->solverTimeout = seconds;
+      this->setZ3Timeout((uint32_t)seconds);
   }
 
   void SMTCDCLScheduler::reduceLatency(z3::solver &s) {
       for (auto it : startTimes){
           s.add(!booleanVariables.at({it.first, it.second}));
       }
+  }
+
+  void SMTCDCLScheduler::endTimeTracking() {
+      this->end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
+      solvingTimePerIteration += (double) duration / 1000000;
+      timeRemaining = solverTimeout - solvingTimePerIteration;
   }
 
 }

@@ -141,11 +141,9 @@ void print_short_help() {
 		<< "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules"
 		<< std::endl;
 	std::cout
-		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which does not guarantee uniformity"
-		<< std::endl;
+		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which does not guarantee uniformity" << std::endl;
 	std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
-	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)"
-						<< std::endl;
+	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)" << std::endl;
 	std::cout
 		<< "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)"
 		<< std::endl;
@@ -162,64 +160,58 @@ void print_short_help() {
 		<< "                            SATSCC: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
+		<< "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency \n"
+        << "                              refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATCOMBINEDRATII: Experimental rational II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
+		<< "                            SATCOMBINEDRATII: Experimental rational II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency \n"
+        << "                              refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
 		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
-    std::cout << "                            SCC: Experimental. Has to stages. First stage trys to find a schedule for the optimal II, but don't has \n"
-              << "                            but is not optimized for latency. If a schedule is found the second stage try to optimize latency. User can\n"
-              << "                            set which schedulers are used as backend." << std::endl;
+    std::cout << "                            SCC: Experimental. Has two stages. First stage trys to find a schedule for the optimal II,\n"
+              << "                              but is not optimized for latency. If a schedule is found the second stage try to optimize latency. User can\n"
+              << "                              set which schedulers are used as backend." << std::endl;
 	std::cout << "                            SMT: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
     std::cout << "                            SMTSCC: Experimental Heuristic-Scheduler which searches for the optimal II, but it has no latency optimization" << std::endl;
     std::cout << "                            SMTCOMBINED: Experimental 2-Stage Scheduler Heuristic which searches for the optimal II, and latency optimization" << std::endl;
-    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]" << std::endl;
-    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]" << std::endl;
+    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
+    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
     std::cout << "--resource=[string]         Path to XML resource constraint file" << std::endl;
 	std::cout << "--target=[string]           Path to XML target constraint file" << std::endl;
 	std::cout << "--graph=[string]            graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
-	std::cout
-		<< "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)"
-		<< std::endl;
-	std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)"
-						<< std::endl;
-	std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)"
-						<< std::endl;
-	std::cout
-		<< "--writeschedule=[string]  Optional path to csv file to write the found schedule and bindings (default: none)"
-		<< std::endl;
-	std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
-	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
-	std::cout << "--writeLPFile=[0/1]       Write LP file (only available for some schedulers; default: 0)"
-						<< std::endl;
-	std::cout
-		<< "--set_bounds=[string]     Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file"
-		<< std::endl;
+	std::cout << "--dot=[string]              Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
+	std::cout << "--writegraph=[string]       Optional path to graphML file to write the graph model (default: none)" << std::endl;
+	std::cout << "--writeresource=[string]    Optional path to xml file to write the resource model (default: none)" << std::endl;
+	std::cout << "--writeschedule=[string]    Optional path to csv file to write the found schedule and bindings (default: none)" << std::endl;
+	std::cout << "--html=[string]             Optional path to html file for a schedule chart" << std::endl;
+	std::cout << "--quiet=[0/1]               Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
+	std::cout << "--writeLPFile=[0/1]         Write LP file (only available for some schedulers; default: 0)" << std::endl;
+	std::cout << "--set_bounds=[string]       Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for ILP-based schedulers:" << std::endl;
 	std::cout << std::endl;
-	std::cout
-		<< "--solver=<solver>         ILP solver (as available in ScaLP library), typicall one of the following: Gurobi, CPLEX, SCIP, LPSolve"
-		<< std::endl;
-	std::cout << "--timeout=[int]           ILP solver timeout in seconds (default: -1, no timeout)" << std::endl;
-	std::cout << "--threads=[int]           Number of threads for the ILP solver (default: 1)" << std::endl;
-	std::cout << "--show_ilp_solver_output  Shows the ILP solver output" << std::endl;
+	std::cout << "--solver=<solver>           ILP solver (as available in ScaLP library), typicall one of the following: Gurobi, CPLEX, SCIP, LPSolve" << std::endl;
+	std::cout << "--timeout=[int]             ILP solver timeout in seconds (default: -1, no timeout)" << std::endl;
+	std::cout << "--threads=[int]             Number of threads for the ILP solver (default: 1)" << std::endl;
+	std::cout << "--show_ilp_solver_output    Shows the ILP solver output" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for iterative schedulers:" << std::endl;
-	std::cout << "--max_runs=[int]  maximum number of allowed iterations (default: -1, no limit)" << std::endl;
+	std::cout << "--max_runs=[int]            maximum number of allowed iterations (default: -1, no limit)" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for register minimization schedulers:" << std::endl;
-	std::cout << "--max_regs=[int]  maximum number of registers to allocate (default: -1, no limit)" << std::endl;
+	std::cout << "--max_regs=[int]            maximum number of registers to allocate (default: -1, no limit)" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for ILP-based rational II scheduling:" << std::endl;
-	std::cout << "--samples=[int]           Demanded samples per modulo" << std::endl;
-	std::cout << "--modulo=[int]            Demanded clock cycles for the repeating schedule" << std::endl;
-	std::cout
-		<< "--uniform=[0/1]           Uniform(1) / Non-Uniform (0) schedule for samples in rational II modulo scheduling"
-		<< std::endl;
+	std::cout << "--samples=[int]             Demanded samples per modulo" << std::endl;
+	std::cout << "--modulo=[int]              Demanded clock cycles for the repeating schedule" << std::endl;
+	std::cout << "--uniform=[0/1]             Uniform(1) / Non-Uniform (0) schedule for samples in rational II modulo scheduling"
+		      << std::endl;
 	std::cout << std::endl;
 }
 
@@ -384,8 +376,8 @@ int main(int argc, char *args[]) {
 				} else if (schedulerSelectionStr == "alap") {
 					schedulerSelection = ALAP;
 				} else if (schedulerSelectionStr == "smt") {
-					schedulerSelection = SMT;
-				} else if (schedulerSelectionStr == "smtscc") {
+                    schedulerSelection = SMT;
+                } else if (schedulerSelectionStr == "smtscc") {
                     schedulerSelection = SMTSCC;
                 } else if (schedulerSelectionStr == "smtcdcl") {
                         schedulerSelection = SMTCDCL;
@@ -1065,7 +1057,8 @@ int main(int argc, char *args[]) {
                 case SMTCDCL:
                     scheduler = new HatScheT::SMTCDCLScheduler(g, rm);
                     isModuloScheduler = true;
-                    //if (timeout > 0) ((HatScheT::SMTCDCLScheduler*) scheduler)->setSolverTimeout(timeout);
+                    ((HatScheT::SMTCDCLScheduler*) scheduler)->setLayerQuiet(false);
+                    if (timeout > 0) ((HatScheT::SMTCDCLScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else

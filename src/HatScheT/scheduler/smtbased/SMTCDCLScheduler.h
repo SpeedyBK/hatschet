@@ -7,23 +7,27 @@
 
 #ifdef USE_Z3
 
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
-
-#include <z3++.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 namespace HatScheT {
 
-  class SMTCDCLScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+  class SMTCDCLScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase {
 
   public:
 
-    SMTCDCLScheduler(Graph &g, ResourceModel &resourceModel);
+    SMTCDCLScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
 
-    void schedule() override;
+    void scheduleOLD();
+
+    void setSolverTimeout(double seconds) override;
+
+    string getName() override { return "SMT-CDCL-Scheduler"; }
 
   private:
+
+    void scheduleInit() override;
+    void scheduleIteration() override;
 
     void modifyResourceModel();
     void resetResourceModel();
@@ -32,21 +36,18 @@ namespace HatScheT {
     void calculateStartimes(int candidateLatency);
     void reduceLatency(z3::solver &s);
     void createBooleanVariables();
-    void addOneSlotConstraintToSolver(z3::solver &s);
-    void addResourceContraintsToSolver(z3::solver &s);
+    void addOneSlotConstraintToSolver();
+    void addResourceContraintsToSolver();
 
     int getScheduleLatency (map<Vertex*, int> &sched);
 
     void fixDependencyConstraints(stack<Edge*> &violatedEdges, z3::solver &s);
 
-    void addConflictClause(Edge* e, z3::solver &s);
+    void addConflictClause(Edge* e);
 
-    void addConflictClauseNextTry(stack<Edge*> &eStack, z3::solver &s);
+    void addConflictClauseNextTry(stack<Edge*> &eStack);
 
     void compareModels (z3::model &m1, z3::model &m2);
-
-
-    z3::context c;
 
     map<Vertex*, z3::expr> timeVariables;
 
@@ -58,17 +59,15 @@ namespace HatScheT {
 
     map<Resource*, int>resourceLimits;
 
-    int32_t timeBudget;
-    int32_t timeLimit;
-
-    void setSolverTimeout(unsigned int seconds);
-
     static stack<Edge *> checkSchedule(Graph &g, ResourceModel &rm, map<Vertex *, int> &schedule, int II, bool quiet);
 
-    void parseSMTModel(z3::model &m);
+    void parseSMTModel();
 
     void printbooleanVeriables();
-    void printSMTModel(z3::model &m);
+    void printSMTModel();
+
+    void endTimeTracking() override;
+
   };
 
 }

@@ -2075,7 +2075,25 @@ namespace HatScheT {
           // Check if resource constraints are satisfied:
           for (int x = 0; x < min(II, minLatency); x++) {
               if (usedFuInModslot.at(x) <= r->getLimit()) {
-                  // No conflict, do nothing.
+                  // No conflict, lock operation to this slot.
+                  // BUGFIX begin...
+                  checkedResource.at(r) = true;
+                  for (auto &cvp : verticesOfThisResource){
+                      auto vp = (Vertex*)cvp;
+                      if (vertexTimeslot.at({vp, x})){
+                          for (int i = 0; i < min(II, minLatency); i++){
+                              if (i == x){
+                                  continue;
+                              }
+                              if (vertexTimeslot.at({vp, i})) {
+                                  vertexTimeslot.at({vp, i}) = false;
+                                  availibleSlots.at(vp)--;
+                                  usedFuInModslot.at(i)--;
+                              }
+                          }
+                      }
+                  }
+                  // BUGFIX end...
                   continue;
               }
               // Potential conflict:

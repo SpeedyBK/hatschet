@@ -3752,8 +3752,8 @@ namespace HatScheT {
       clock_t start, end;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos4/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos4/iir_sos4.graphml";
+      string resStr = "benchmarks/Origami_Pareto/splin_pf/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/splin_pf/splin_pf.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4040,8 +4040,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4049,6 +4049,7 @@ namespace HatScheT {
       SMTCDCLScheduler smtcdcl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdcl.setQuiet(false);
+      smtcdcl.setSolverTimeout(600);
       smtcdcl.schedule();
       auto II = smtcdcl.getII();
       auto end_t = std::chrono::high_resolution_clock::now();
@@ -4118,13 +4119,13 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+      string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
+      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::NONE);
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::SMT);
       auto start_t = std::chrono::high_resolution_clock::now();
       scc.setQuiet(false);
       scc.setSolverTimeout(600);

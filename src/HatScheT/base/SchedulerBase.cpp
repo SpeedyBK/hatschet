@@ -42,7 +42,7 @@ namespace HatScheT {
       // Timetracking
       this->solverTimeout = INT32_MAX;
       this->timeRemaining = -1;
-      this->solvingTimePerIteration = -1;
+      this->solvingTimePerIteration = 0;
       this->solvingTimeTotal = 0;
       start_t = std::chrono::high_resolution_clock::now();
       end_t = std::chrono::high_resolution_clock::now();
@@ -189,6 +189,7 @@ namespace HatScheT {
 
   void SchedulerBase::updateSolvingTimeTotal() {
       solvingTimeTotal += solvingTimePerIteration;
+      solvingTimePerIteration = 0;
   }
 
   void SchedulerBase::setSolverTimeout(double seconds) {
