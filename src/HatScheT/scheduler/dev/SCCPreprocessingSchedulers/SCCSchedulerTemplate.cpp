@@ -20,7 +20,6 @@
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
 
-
 namespace HatScheT {
 
   SCCSchedulerTemplate::SCCSchedulerTemplate(Graph &g, ResourceModel &resourceModel, SCCSchedulerTemplate::scheduler sccScheduler,
@@ -29,6 +28,8 @@ namespace HatScheT {
       this->sccScheduler = sccScheduler;
       this->finalScheduler = finalScheduler;
       this->sccMode = sccExpandMode::fast;
+
+      this->threads = 1;
 
       for (auto &r : resourceModel.Resources()) {
           for (int i = 0; i < II; i++) {
@@ -66,6 +67,8 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::scheduleIteration() {
 
+      calcStarttimesPerComplexSCC();
+
       if (!complexSCCs.empty()) {
           bigComplexSchedule = scheduleComplexGraph();
       }
@@ -100,6 +103,7 @@ namespace HatScheT {
           finalSchedulerSelected->setSolverTimeout(this->timeRemaining);
           finalSchedulerSelected->disableSecObjective(false);
           finalSchedulerSelected->setMaxLatencyConstraint(this->getScheduleLength());
+          sharedPointerCastAndSetup(finalSchedulerSelected);
           finalSchedulerSelected->schedule();
           if (finalSchedulerSelected->getScheduleFound()){
               startTimes = finalSchedulerSelected->getSchedule();
@@ -198,6 +202,12 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::sortSCCsByType() {
 
+      struct sccComp{
+        bool operator ()(const SCC* a, const SCC* b){
+            return !(*a < *b);
+        }
+      };
+
       for (auto &sc : topoSortedSccs){
           if(sc.first->getSccType() == unknown){
               cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Unknown" << endl;
@@ -216,6 +226,10 @@ namespace HatScheT {
               complexSCCs.push_back(sc.first);
           }
       }
+
+      std::sort(complexSCCs.begin(), complexSCCs.end(), sccComp());
+      std::sort(basicSCCs.begin(), basicSCCs.end(), sccComp());
+
       numOfCmplxSCCs = complexSCCs.size();
   }
 
@@ -276,10 +290,12 @@ namespace HatScheT {
       sccSchedulerSelected->disableSecObjective(true);
       int maxSCCslat;
       if (sccMode == sccExpandMode::fast) {
-          maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
+          //maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
+          maxSCCslat = *std::max_element(maxTimesSCC.begin(), maxTimesSCC.end());
           sccSchedulerSelected->setMaxLatencyConstraint(maxSCCslat);
       } else if (sccMode == sccExpandMode::fast) {
-          maxSCCslat = expandSCC() + (int) II;
+          //maxSCCslat = expandSCC() + (int) II;
+          maxSCCslat = *std::max_element(maxTimesSCC.begin(), maxTimesSCC.end()) + (int) II;
           sccSchedulerSelected->setMaxLatencyConstraint(maxSCCslat);
       } else {
           //Let Scheduler Search...
@@ -294,6 +310,17 @@ namespace HatScheT {
       if (!quiet) { cout << "Timeouts of ComplexSCC-Scheduler: " << timeouts << endl; }
 
       if (sccSchedulerSelected->getScheduleFound()) {
+
+          /*if (sccScheduler == scheduler::SMT) {
+              auto ptr = dynamic_pointer_cast<SMTBinaryScheduler>(sccSchedulerSelected);
+              auto st = ptr->printVertexStarttimes();
+
+              cout << "Earliest and Latest Starttimes:" << endl;
+              for (auto &v : st){
+                  cout << sccVertexToVertex.at(v.first)->getName() << ": " << v.second.first << " / " << v.second.second << endl;
+              }
+          }*/
+
           relSchedTemp = sccSchedulerSelected->getSchedule();
           scheduleFound = sccSchedulerSelected->getScheduleFound();
           this->II = sccSchedulerSelected->getII();
@@ -369,7 +396,6 @@ namespace HatScheT {
 
           int max = 0;
           for (auto &v : sc->getVerticesOfSCC()) {
-              //cout << v->getName() << ": " << m.eval(tvars.at(v)).get_numeral_int() + rm->getVertexLatency(v) << endl;
               if ((m.eval(tvars.at(v)).get_numeral_int() + complexRm->getVertexLatency(v)) > max) {
                   max = m.eval(tvars.at(v)).get_numeral_int() + complexRm->getVertexLatency(v);
               }
@@ -397,6 +423,7 @@ namespace HatScheT {
               if (!quiet) schedulePtr->getDebugPrintouts();
               schedulePtr->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
               schedulePtr->setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
           case scheduler::ED97:{
@@ -404,6 +431,7 @@ namespace HatScheT {
               shared_ptr<EichenbergerDavidson97Scheduler>schedulePtr(ED);
               if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
           case scheduler::MOOVAC:{
@@ -411,6 +439,7 @@ namespace HatScheT {
               shared_ptr<MoovacScheduler>schedulePtr(MOOVAC);
               if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
           case scheduler::SH11:{
@@ -418,6 +447,7 @@ namespace HatScheT {
               shared_ptr<SuchaHanzalek11Scheduler>schedulePtr(SH);
               if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
           case scheduler::MODSDC:{
@@ -425,6 +455,7 @@ namespace HatScheT {
               shared_ptr<ModuloSDCScheduler>schedulePtr(MODSDC);
               if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
           case scheduler::SAT:{
@@ -613,4 +644,128 @@ namespace HatScheT {
       this->solverTimeout = seconds;
   }
 
+  void SCCSchedulerTemplate::sharedPointerCastAndSetup(shared_ptr<IterativeModuloSchedulerLayer>& ssptr) {
+      if (finalScheduler == scheduler::SMT){
+          auto ptr = std::dynamic_pointer_cast<SMTBinaryScheduler>(ssptr);
+          ptr->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
+      }
+  }
+
+  void SCCSchedulerTemplate::calcStarttimesPerComplexSCC() {
+
+      map<Vertex*, Vertex*> scc2v;
+      map<Vertex*, Vertex*> v2scc;
+
+      int sccCounter = 0;
+      // Creating maps and Generate Graph and ResourceModel and Inset Vertices
+      for (auto &sc : complexSCCs){
+          Graph sccG;
+          ResourceModel sccRM;
+          for (auto &v : sc->getVerticesOfSCC()) {
+              Vertex &newV = sccG.createVertex(v->getId());
+              scc2v[&newV] = v;
+              v2scc[v] = &newV;
+          }
+          // Create Resources
+          resetResourceModel(); // Needed because of strange exception in constructor of resource class.
+          for (auto &vinSccG : sccG.Vertices()){
+              auto res = resourceModel.getResource(scc2v.at(vinSccG));
+              Resource* newRes;
+              try {
+                  newRes = sccRM.getResource(res->getName());
+              }catch (HatScheT::Exception&){
+                  newRes = &sccRM.makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
+              }
+              sccRM.registerVertex(vinSccG, newRes);
+          }
+          modifyResourceModel(); // Needed because of strange exception in constructor of resource class.
+          auto edges = sc->getSCCEdges();
+          for (auto &e : edges) {
+              auto &newSrc = v2scc.at(&e->getVertexSrc());
+              auto &newDst = v2scc.at(&e->getVertexDst());
+              auto &newE = sccG.createEdge(*newSrc, *newDst, e->getDistance(), e->getDependencyType());
+              newE.setDelay(e->getDelay());
+          }
+
+          auto sccStartTimes = Utility::getSDCAsapAndAlapTimes(&sccG, &sccRM, this->II, true);
+
+          z3::context cLocal;
+          z3::optimize opti (cLocal);
+
+          map<Vertex *, z3::expr> tvars;
+          map<Vertex *, z3::expr> svars;
+
+          //Create T-Variables and allow only pos. integers:
+          for (auto &v : sc->getVerticesOfSCC()) {
+              std::stringstream name;
+              name << v->getName();
+              z3::expr tvar(cLocal.int_const(name.str().c_str()));
+              z3::expr svar(cLocal.bool_const(name.str().c_str()));
+              tvars.insert({v, tvar});
+              svars.insert({v, svar});
+              opti.add(tvar >= 0);
+          }
+
+          for (auto &e : sc->getSCCEdges()) {
+              Vertex *src = &e->getVertexSrc();
+              Vertex *dst = &e->getVertexDst();
+              int delay = e->getDelay();
+              int distance = e->getDistance();
+              opti.add(
+                  tvars.at(dst) - tvars.at(src) >= resourceModel.getResource(src)->getLatency() + delay - (distance * (int) II));
+          }
+
+          z3::expr_vector zeroPoints(cLocal);
+          z3::expr_vector timeVars(cLocal);
+          for (auto &v : sc->getVerticesOfSCC()) {
+              opti.add(z3::implies(svars.at(v), tvars.at(v) == 0));
+              zeroPoints.push_back(svars.at(v));
+              timeVars.push_back(tvars.at(v));
+          }
+
+          opti.add(z3::atleast(zeroPoints, 1));
+          opti.maximize(sum(timeVars));
+
+          z3::check_result sati = opti.check();
+          if (!quiet) { cout << "Searching Max Latency of SCC: " << sati << ": "; }
+
+          auto m = opti.get_model();
+
+          int max = 0;
+          for (auto &v : sc->getVerticesOfSCC()) {
+              if ((m.eval(tvars.at(v)).get_numeral_int() + resourceModel.getVertexLatency(v)) > max) {
+                  max = m.eval(tvars.at(v)).get_numeral_int() + resourceModel.getVertexLatency(v);
+              }
+          }
+          max += sccCounter;
+          maxTimesSCC.insert(max);
+          if (!quiet) { cout << max << endl; }
+          opti.pop();
+          while (!timeVars.empty()) {
+              timeVars.pop_back();
+          }
+          while (!zeroPoints.empty()) {
+              zeroPoints.pop_back();
+          }
+          tvars.clear();
+          svars.clear();
+
+          unordered_map<Vertex*, int>ltTemp;
+          unordered_map<Vertex*, Vertex*> new2old;
+
+          for (auto &v : sccStartTimes.first){
+              earliestStarttimes[scc2v.at(v.first)] = v.second;
+              ltTemp[scc2v.at(v.first)] = sccStartTimes.second.at(v.first);
+              new2old[scc2v.at(v.first)] = scc2v.at(v.first);
+          }
+
+          auto length = Utility::getSDCScheduleLength(ltTemp, new2old, &resourceModel);
+
+          for (auto &v : sccStartTimes.second){
+              latestStarttimes[scc2v.at(v.first)] = max - (length - v.second);
+          }
+
+          sccCounter++;
+      }
+  }
 }

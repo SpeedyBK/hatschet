@@ -149,7 +149,6 @@ namespace HatScheT {
           if (this->getZ3Result() == z3::unknown) {
               timeouts++;
           }
-
           //Saving solving times per latency attempt.
           if (!quiet) {
               cout << ">>" << this->getZ3Result() << "<<" << endl;
@@ -1286,6 +1285,23 @@ namespace HatScheT {
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
       solvingTimePerIteration += (double) duration / 1000000;
       timeRemaining = solverTimeout - solvingTimePerIteration;
+  }
+
+  map <Vertex*, pair<int, int>> SMTBinaryScheduler::printVertexStarttimes() {
+
+      map <Vertex*, pair<int, int>> returnmap;
+
+      cout << "Earliest and Latest Starttimes:" << endl;
+      for (auto v : g.Vertices()){
+          try {
+              //cout << v->getName() << ": " << earliestStartTimes.at(v) << " / " << latestStartTimesUpdated.at(v)
+              //     << endl;
+              returnmap.insert({v, {earliestStartTimes.at(v), latestStartTimesUpdated.at(v)}});
+          }catch (std::out_of_range&){
+              cout << "Who Cares!" << endl;
+          }
+      }
+      return returnmap;
   }
 
 }

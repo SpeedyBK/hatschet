@@ -366,7 +366,7 @@ namespace HatScheT {
           s += *itr;
       }
 
-      string path = "SMTBenchmark/latency/" + token + "_" + s + ".csv";
+      string path = "latency/" + token + "_" + s + ".csv";
       cout << path << endl;
       try {
           ofstream of;

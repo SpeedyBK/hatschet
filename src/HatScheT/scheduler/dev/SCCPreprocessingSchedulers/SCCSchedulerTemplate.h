@@ -28,6 +28,8 @@ namespace HatScheT {
 
         void setSolverTimeout(double seconds) override;
 
+        void setThreads( int t ) { this->threads = t; }
+
         string getName() override { return "SCC-Scheduler"; }
 
   protected:
@@ -37,6 +39,13 @@ namespace HatScheT {
     void scheduleIteration() override;
 
   private:
+    /*!
+     * Function to cast shared pointers of a base class to shared pointers of derived classes to set specific settings
+     * @param ssptr pointer of base class
+     */
+    void sharedPointerCastAndSetup(shared_ptr<IterativeModuloSchedulerLayer>& ssptr);
+
+    void calcStarttimesPerComplexSCC();
 
     void modifyResourceModel();
 
@@ -75,6 +84,7 @@ namespace HatScheT {
           return false;
       }
     };
+
     set<pair<SCC*,int>, priocmp> topoSortedSccs;
 
     scheduler sccScheduler;
@@ -94,6 +104,11 @@ namespace HatScheT {
 
     set<Edge*> connectingEdges;
 
+    set<int>maxTimesSCC;
+
+    map<Vertex*, int> earliestStarttimes;
+    map<Vertex*, int> latestStarttimes;
+
     deque<SCC*> complexSCCs;
     deque<SCC*> basicSCCs;
 
@@ -105,6 +120,8 @@ namespace HatScheT {
 
     sccExpandMode sccMode;
     int numOfCmplxSCCs;
+
+    int threads;
 
   };
 }

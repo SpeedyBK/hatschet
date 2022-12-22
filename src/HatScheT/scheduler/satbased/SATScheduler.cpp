@@ -9,6 +9,8 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 
+#include <HatScheT/utility/Utility.h>
+
 #ifdef USE_CADICAL
 namespace HatScheT {
 #define NEW_RESOURCE_CONSTRAINTS 1
@@ -340,6 +342,7 @@ namespace HatScheT {
 //              cout << "Source: " << earliestStartTime.at(vSrc) << " / " << latestStartTime.at(vSrc) << endl;
 //              cout << "Destination: " << earliestStartTime.at(vDst) << " / " << latestStartTime.at(vDst) << endl;
           }
+
           auto lSrc = this->resourceModel.getVertexLatency(vSrc);
           auto distance = e->getDistance();
           auto delay = e->getDelay();
@@ -922,5 +925,6 @@ namespace HatScheT {
           r->setLimit(lim, false);
       }
   }
+
 }
 #endif

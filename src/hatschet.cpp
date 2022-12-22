@@ -549,8 +549,6 @@ int main(int argc, char *args[]) {
 
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
-				if (str == "SMTBINARY" && !HatScheT::Tests::smtBinary()) exit(-1);
-                if (str == "SMTSCC" && !HatScheT::Tests::smtScc()) exit(-1);
                 if (str == "SMTCDCL" && !HatScheT::Tests::smtCDCLTest()) exit(-1);
                 if (str == "SMTCOMB" && !HatScheT::Tests::smtCombined()) exit(-1);
                 if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);

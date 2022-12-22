@@ -66,6 +66,10 @@ namespace HatScheT {
      */
     void setTargetLatency(int latency) { this->targetLatency = latency; }
 
+    map <Vertex*, pair<int, int>> printVertexStarttimes();
+
+    void setThreads(int t) { if (t > 1) { setZ3Threads((uint32_t)t); } }
+
   protected:
     /*!
      * \brief Schedule Iteration for one II.

@@ -433,8 +433,6 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 
 IF (Z3_H AND Z3_LIB)
     add_test("Z3" "./hatschet" "--test=Z3")
-    add_test("SMTScheduler" "./hatschet" "--test=SMTBINARY")
-    add_test("SMTSCCScheduler" "./hatschet" "--test=SMTSCC")
 ENDIF (Z3_H AND Z3_LIB)
 
 ####################
