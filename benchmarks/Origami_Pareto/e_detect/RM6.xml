@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ModelInformation>
+
+  <Resources>
+    <Resource blockingTime="1" latency="5" limit="10" name="AddAdd_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="5" limit="3" name="AddSub_1_23_8_FLOAT_O_1_23_8_FLOAT_O_1_23_8_FLOAT_O" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="4" limit="10" name="Product" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="11" limit="1" name="Sqrt" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="2" limit="1" name="RelationalOperator" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In1" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In2" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="In3" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="1" name="Out2" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant2_0" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.25_102" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant120_98" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.1445_26" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.5869_27" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant0.2988_28" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant2_70" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant2_71" physicalDelay="0.000000"/>
+    <Resource blockingTime="1" latency="1" limit="-1" name="Constant-1_0" physicalDelay="0.000000"/>
+  </Resources>
+
+</ModelInformation>
