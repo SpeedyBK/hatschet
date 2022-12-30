@@ -327,32 +327,27 @@ namespace HatScheT {
 		 * test functionality of Z3 based scheduler
 		 * @return if test was passed
 		 */
-
 		static bool utilityLatencyEstimation();
         /*!
          * test functionality of SAT based binding algorithm
          * @return if test was passed
          */
 		static bool satBinding();
-
 	   /*!
         * test functionality of Z3 based scheduler with "Conflict Driven Clause" Learning
         * @return if test was passed
         */
 		static bool smtCDCLTest();
-
 	   /*!
         * test functionality of Z3 based scheduler with SCC - preprocessing
         * @return if test was passed
         */
         static bool smtCombined();
-
        /*!
         * test functionality of SCC-Preprocessor
         * @return if test was passed
         */
         static bool SCCTemplateTest();
-
        /*!
         * test functionality of Iterative Layer Class
         * @return if test was passed

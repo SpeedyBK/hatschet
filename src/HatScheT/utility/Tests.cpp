@@ -73,6 +73,7 @@
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/smtbased/SMTModScheduler.h>
 #include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
@@ -3900,11 +3901,50 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
+      string resStr = "benchmarks/MachSuite/aes2/graph2_RM.xml";
+      string graphStr = "benchmarks/MachSuite/aes2/graph2.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
+
+      /*auto &add = rm.makeResource("add", 1, 2, 1);
+      auto &prod = rm.makeResource("prod", 1, 3, 1);
+      auto &io = rm.makeResource("io", 1, 1, 1);
+      auto &c = rm.makeResource("const", UNLIMITED, 1, 1);
+
+      Vertex &sum0 = g.createVertex(0);
+      sum0.setName("Sum_0");
+      Vertex &sum1 = g.createVertex(1);
+      sum1.setName("Sum_1");
+      Vertex &prod0 = g.createVertex(2);
+      prod0.setName("Product_0");
+      Vertex &prod1 = g.createVertex(3);
+      prod1.setName("Product_1");
+      Vertex &in = g.createVertex(4);
+      in.setName("In");
+      Vertex &out = g.createVertex(5);
+      out.setName("Out");
+      Vertex &c0 = g.createVertex(6);
+      c0.setName("Constant_0");
+      Vertex &c1 = g.createVertex(7);
+      c1.setName("Constant_1");
+      rm.registerVertex(&sum0, &add);
+      rm.registerVertex(&sum1, &add);
+      rm.registerVertex(&prod0, &prod);
+      rm.registerVertex(&prod1, &prod);
+      rm.registerVertex(&in, &io);
+      rm.registerVertex(&out, &io);
+      rm.registerVertex(&c0, &c);
+      rm.registerVertex(&c1, &c);
+      g.createEdge(in, sum0, 0);
+      g.createEdge(c0, prod0, 0);
+      g.createEdge(c1, prod1, 0);
+      g.createEdge(sum0, prod0, 1);
+      g.createEdge(sum0, prod1, 1);
+      g.createEdge(sum0, sum1, 0);
+      g.createEdge(prod0, sum0, 0);
+      g.createEdge(prod1, sum1, 0);
+      g.createEdge(sum1, out, 0);*/
 
       SMTCDCLScheduler smtcdcl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
@@ -3918,11 +3958,14 @@ namespace HatScheT {
 
       cout << "Solving Time: " << t << endl;
       if (verifyModuloSchedule(g, rm, smtcdcl.getSchedule(), II)){
-          std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "Tests::smtCDCLScheduler: valid modulo schedule found. :-) "<< endl;
           std::cout << "II=" << II << " Latency: " << smtcdcl.getScheduleLength() << std::endl;
+          for (auto &it : smtcdcl.getSchedule()) {
+              cout << it.first->getName() << ": " << it.second << endl;
+          }
           return true;
       }else{
-          std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
+          std::cout << "Tests::smtCDCLScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
           return false;
       }
 #else
@@ -3974,7 +4017,7 @@ namespace HatScheT {
   }
 
   bool Tests::SCCTemplateTest() {
-
+#ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -4005,6 +4048,7 @@ namespace HatScheT {
           std::cout << "Tests:: invalid modulo schedule found :( II=" << scc.getII() << std::endl;
           return false;
       }
+#endif
   }
 
   bool Tests::iterativeLayerTest() {
@@ -4028,9 +4072,10 @@ namespace HatScheT {
       schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
+#ifdef USE_Z3
       schedulers.push_back(new SMTBinaryScheduler(g, rm));
       schedulers.push_back(new SCCSchedulerTemplate(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::ED97));
-
+#endif
 
       for (auto &scheduler : schedulers) {
           scheduler->setQuiet(false);
