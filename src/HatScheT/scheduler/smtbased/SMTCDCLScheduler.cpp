@@ -83,13 +83,6 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::scheduleOLD() {
-
-      resetResourceModel();
-
-      cout << endl;
-  }
-
   int SMTCDCLScheduler::getScheduleLatency(map<Vertex *, int> &sched) {
       int maxTime = -1;
       for (std::pair<Vertex *, int> vtPair : sched) {
@@ -264,35 +257,6 @@ namespace HatScheT {
       }
   }
 
-  void SMTCDCLScheduler::fixDependencyConstraints(stack<Edge*> &violatedEdges, z3::solver &s) {
-      while(!violatedEdges.empty()){
-          auto e = violatedEdges.top();
-          addConflictClause(e);
-          violatedEdges.pop();
-      }
-  }
-
-  void SMTCDCLScheduler::addConflictClause(Edge *e) {
-      //tj + distance * this->candidateII - ti - lSrc - delay >= 0
-      int i = 0;
-      auto *vSrc = &e->getVertexSrc();
-      auto *vDst = &e->getVertexDst();
-      auto lSrc = this->resourceModel.getVertexLatency(vSrc);
-      auto distance = e->getDistance();
-      auto delay = e->getDelay();
-      for (int ti = latEst.asapStartTimes.at(vSrc); ti <= latestStartTimesWithOffset.at(vSrc); ti++) {
-          for (int tj = latEst.asapStartTimes.at(vDst); tj <= latestStartTimesWithOffset.at(vDst); tj++) {
-              if (tj + distance * (int) II - ti - lSrc - delay >= 0) {
-                  //No Conflict... Do nothing
-                  continue;
-              }
-              //Conflict... Not both Operations in this timeslot;
-              z3::expr ex = !booleanVariables.at({vSrc, ti}) || !booleanVariables.at({vDst, tj});
-              s.add(ex);
-          }
-      }
-  }
-
   void SMTCDCLScheduler::compareModels(z3::model &m1, z3::model &m2) {
       for (auto &b : booleanVariables){
           if (m1.eval(b.second).is_true() != m2.eval(b.second).is_true()){
@@ -315,12 +279,6 @@ namespace HatScheT {
   void SMTCDCLScheduler::setSolverTimeout(double seconds) {
       this->solverTimeout = seconds;
       this->setZ3Timeout((uint32_t)seconds);
-  }
-
-  void SMTCDCLScheduler::reduceLatency(z3::solver &s) {
-      for (auto it : startTimes){
-          s.add(!booleanVariables.at({it.first, it.second}));
-      }
   }
 
   void SMTCDCLScheduler::endTimeTracking() {

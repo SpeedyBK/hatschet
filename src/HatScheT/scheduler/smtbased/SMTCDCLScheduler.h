@@ -18,8 +18,6 @@ namespace HatScheT {
 
     SMTCDCLScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
 
-    void scheduleOLD();
-
     void setSolverTimeout(double seconds) override;
 
     string getName() override { return "SMT-CDCL-Scheduler"; }
@@ -34,22 +32,15 @@ namespace HatScheT {
     void setInitialStartTimes();
 
     void calculateStartimes(int candidateLatency);
-    void reduceLatency(z3::solver &s);
     void createBooleanVariables();
     void addOneSlotConstraintToSolver();
     void addResourceContraintsToSolver();
 
     int getScheduleLatency (map<Vertex*, int> &sched);
 
-    void fixDependencyConstraints(stack<Edge*> &violatedEdges, z3::solver &s);
-
-    void addConflictClause(Edge* e);
-
     void addConflictClauseNextTry(stack<Edge*> &eStack);
 
     void compareModels (z3::model &m1, z3::model &m2);
-
-    map<Vertex*, z3::expr> timeVariables;
 
     map<pair<Vertex*, int>, z3::expr> booleanVariables;
 

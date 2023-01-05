@@ -3685,60 +3685,88 @@ namespace HatScheT {
   bool Tests::z3Test() {
 	  #ifdef USE_Z3
 
-	      class z3Wrapper : public Z3SchedulerBase {
-	      public :
-	        z3Wrapper(){ quiet = true; }
+      class z3Wrapper : public Z3SchedulerBase {
+      public :
+        z3Wrapper() { quiet = true; }
 
-	        void setSolverTimeout(uint32_t seconds) { this->setZ3Timeout(seconds); }
+        void setSolverTimeout(uint32_t seconds) { this->setZ3Timeout(seconds); }
 
-	        void setQuiet(bool q) { this->setZ3Quiet(q); this->quiet = q; }
+        void setQuiet(bool q) {
+            this->setZ3Quiet(q);
+            this->quiet = q;
+        }
 
-	        void setThreads(int t) { this->setZ3Threads(t); }
+        void setThreads(int t) { this->setZ3Threads(t); }
 
-	        bool testFunction(){
-                /*!
-                 * Demonstration of how Z3 can be used to prove validity of
-                 * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
-                 */
-                if (!quiet) { std::cout << endl << "Checking De-Morgans Theorem:\n\n"; }
+        bool testFunction() {
+            /*!
+             * Demonstration of how Z3 can be used to prove validity of
+             * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
+             */
+            if (!quiet) { std::cout << endl << "Checking De-Morgans Theorem:\n\n"; }
 
-                z3::expr x = this->c.bool_const("x");
-                z3::expr y = this->c.bool_const("y");
-                z3::expr conjecture = (!(x && y)) == (!x || !y);
-                z3::expr trivialSat = (x && y);
+            z3::expr x = this->c.bool_const("x");
+            z3::expr y = this->c.bool_const("y");
+            z3::expr conjecture = (!(x && y)) == (!x || !y);
+            z3::expr trivialSat = (x && y);
 
-                this->printZ3Params();
+            this->printZ3Params();
 
-                //Checking a trivial satisfiable expression.
-                this->s.add(trivialSat);
-                this->z3Check();
+            //Checking a trivial satisfiable expression.
+            this->s.add(trivialSat);
+            this->z3Check();
 
-                // adding the negation of the conjecture as a constraint.
-                this->s.add(!conjecture);
-                z3::check_result result = this->z3Check();
+            // adding the negation of the conjecture as a constraint.
+            this->s.add(!conjecture);
+            z3::check_result result = this->z3Check();
 
-                switch (result) {
-                    case z3::unsat:
-                        if (!quiet) { std::cout << "\nDe-Morgans Theorem is valid, test passed...\n"; }
-                        return true;
-                    case z3::sat:
-                        if (!quiet) { std::cout << "\nDe-Morgan Theorem is not valid, test failed...\n"; }
-                        return false;
-                    default: if (!quiet) {std::cout << "\nunknown\n"; }
-                        return false;
-                }
-	        }
+            switch (result) {
+                case z3::unsat:
+                    if (!quiet) { std::cout << "\nDe-Morgans Theorem is valid, test passed...\n"; }
+                    return true;
+                case z3::sat:
+                    if (!quiet) { std::cout << "\nDe-Morgan Theorem is not valid, test failed...\n"; }
+                    return false;
+                default:
+                    if (!quiet) { std::cout << "\nunknown\n"; }
+                    return false;
+            }
+        }
 
-	        bool quiet;
+        bool youtubeAufgabe() {
+            // https://www.youtube.com/watch?v=IP6KhDEKp38
+            z3Reset();
+            z3::expr a = this->c.int_const("a");
+            z3::expr b = this->c.int_const("b");
+            z3::expr c = this->c.int_const("c");
+            z3::expr d = this->c.int_const("d");
 
-	      };
+            s.add(a < 10);
+            s.add(b < 10);
+            s.add(c < 10);
+            s.add(d < 10);
+
+            s.add(a > 0 || b > 0 || c > 0 || d > 0);
+
+            s.add( (a*1000 + b*100 + c*10 + d ) * 4 ==  d*1000 + c*100 + b*10 +a );
+            auto sat = z3Check();
+            if (sat == z3::sat){
+                cout << s.get_model() << endl;
+            }
+
+            return (z3::sat == sat);
+        }
+
+        bool quiet;
+
+      };
 
 	      z3Wrapper zWr;
 	      zWr.setQuiet(false);
 	      zWr.setSolverTimeout(10);
 	      zWr.setThreads(1);
 
-          return zWr.testFunction();
+          return zWr.testFunction() and zWr.youtubeAufgabe();
       #else
           //Z3 not active! Test function disabled!
           return true;
@@ -3901,8 +3929,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/MachSuite/aes2/graph2_RM.xml";
-      string graphStr = "benchmarks/MachSuite/aes2/graph2.graphml";
+      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3950,6 +3978,7 @@ namespace HatScheT {
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdcl.setQuiet(false);
       smtcdcl.setSolverTimeout(600);
+      //smtcdcl.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
       smtcdcl.schedule();
       auto II = smtcdcl.getII();
       auto end_t = std::chrono::high_resolution_clock::now();

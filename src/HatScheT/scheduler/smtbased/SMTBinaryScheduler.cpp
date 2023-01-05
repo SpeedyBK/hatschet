@@ -95,6 +95,11 @@ namespace HatScheT {
                   break;
               }
           }
+          if (latSM == latSearchMethod::LINEAR){
+              if (candidateLatency == -1){
+                  return;
+              }
+          }
           if (!quiet) { cout << "Trying II: " << this->II << " Trying Latency: " << candidateLatency << endl; }
           //Updating latest start times with candidate latency
           updateLatestStartTimes();
@@ -125,7 +130,7 @@ namespace HatScheT {
 
           if (this->getZ3Result() != z3::unsat) {
               if (!quiet) { cout << "Add dependency-constraints... " << endl; }
-              if (g.getNumberOfEdges() * candidateLatency > 2000000) {
+              if (g.getNumberOfEdges() * candidateLatency > 5000000) {
                   if (!quiet) { cout << "Using Method for BIIIIG Problems... " << g.getNumberOfEdges() * candidateLatency << endl; }
                   setDependencyConstraintsAndAddToSolverBIG((int)this->II);
               } else {
@@ -1063,9 +1068,9 @@ namespace HatScheT {
               ev.push_back(*getBvariable(vDst, j));
           }
           if (ev.size() != factors.size() or ev.empty()) {
+              cout << "ev is empty: " << ev.empty() << endl;
               throw (std::out_of_range("Vector sizes not equal!"));
           }
-
           this->s.add(z3::pbge(ev, &factors.at(0), (lSrc + delay - distance * candidateII))); // Dependency Constraint
       }
 

@@ -293,7 +293,7 @@ namespace HatScheT {
           //maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
           maxSCCslat = *std::max_element(maxTimesSCC.begin(), maxTimesSCC.end());
           sccSchedulerSelected->setMaxLatencyConstraint(maxSCCslat);
-      } else if (sccMode == sccExpandMode::fast) {
+      } else if (sccMode == sccExpandMode::optimal) {
           //maxSCCslat = expandSCC() + (int) II;
           maxSCCslat = *std::max_element(maxTimesSCC.begin(), maxTimesSCC.end()) + (int) II;
           sccSchedulerSelected->setMaxLatencyConstraint(maxSCCslat);
