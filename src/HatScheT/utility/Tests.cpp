@@ -3683,7 +3683,7 @@ namespace HatScheT {
 	}
 
   bool Tests::z3Test() {
-	  #ifdef USE_Z3
+#ifdef USE_Z3
 
       class z3Wrapper : public Z3SchedulerBase {
       public :
@@ -3735,42 +3735,73 @@ namespace HatScheT {
 
         bool youtubeAufgabe() {
             // https://www.youtube.com/watch?v=IP6KhDEKp38
+
             z3Reset();
             z3::expr a = this->c.int_const("a");
             z3::expr b = this->c.int_const("b");
             z3::expr c = this->c.int_const("c");
             z3::expr d = this->c.int_const("d");
+            z3::expr n = this->c.int_const("n");
 
-            s.add(a < 10);
-            s.add(b < 10);
-            s.add(c < 10);
-            s.add(d < 10);
+            s.add(a < 10 && a > 0);
+            s.add(b < 10 && b >= 0);
+            s.add(c < 10 && c >= 0);
+            s.add(d < 10 && d > 0);
 
-            s.add(a > 0 || b > 0 || c > 0 || d > 0);
+            setZ3Timeout(10);
 
-            s.add( (a*1000 + b*100 + c*10 + d ) * 4 ==  d*1000 + c*100 + b*10 +a );
+            s.add((a * 1000 + b * 100 + c * 10 + d) * n == d * 1000 + c * 100 + b * 10 + a);
+
             auto sat = z3Check();
-            if (sat == z3::sat){
-                cout << s.get_model() << endl;
+            while (sat == z3::sat) {
+                cout << s.get_model().eval(a) << s.get_model().eval(b) << s.get_model().eval(c)
+                     << s.get_model().eval(d);
+                cout << " * " << s.get_model().eval(n) << " = ";
+                cout << s.get_model().eval(d) << s.get_model().eval(c) << s.get_model().eval(b)
+                     << s.get_model().eval(a);
+                cout << endl;
+                s.add(n != s.get_model().eval(n));
+                sat = z3Check();
             }
 
-            return (z3::sat == sat);
+            return (sat == z3::unsat);
+        }
+
+        bool threeSAT() {
+
+            z3Reset();
+            z3::expr x1 = this->c.bool_const("x1");
+            z3::expr x2 = this->c.bool_const("x2");
+            z3::expr x3 = this->c.bool_const("x3");
+            z3::expr x4 = this->c.bool_const("x4");
+
+            s.add(x1 || x2 || !x3);
+            s.add(!x1 || x3 || !x4);
+            s.add(x2 || !x3 || !x4);
+
+            if (z3Check() == z3::sat){
+                cout << s.get_model() << endl;
+                return true;
+            }
+
+            return false;
+
         }
 
         bool quiet;
 
       };
 
-	      z3Wrapper zWr;
-	      zWr.setQuiet(false);
-	      zWr.setSolverTimeout(10);
-	      zWr.setThreads(1);
+      z3Wrapper zWr;
+      zWr.setQuiet(false);
+      zWr.setSolverTimeout(10);
+      zWr.setThreads(1);
 
-          return zWr.testFunction() and zWr.youtubeAufgabe();
-      #else
-          //Z3 not active! Test function disabled!
-          return true;
-	  #endif
+      return zWr.testFunction() and zWr.youtubeAufgabe() and zWr.threeSAT();
+#else
+      //Z3 not active! Test function disabled!
+      return true;
+#endif
   }
 
 	bool Tests::satBinding() {
@@ -3929,8 +3960,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
+      string resStr = "benchmarks/ChStone_Pareto/blowfish/graph1_RM3.xml";
+      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3974,7 +4005,7 @@ namespace HatScheT {
       g.createEdge(prod1, sum1, 0);
       g.createEdge(sum1, out, 0);*/
 
-      SMTCDCLScheduler smtcdcl(g, rm);
+      SMTBinaryScheduler smtcdcl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdcl.setQuiet(false);
       smtcdcl.setSolverTimeout(600);
