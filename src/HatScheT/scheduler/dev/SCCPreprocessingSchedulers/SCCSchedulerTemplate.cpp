@@ -4,7 +4,7 @@
 
 #include "HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h"
 
-#include "HatScheT/scheduler/smtbased/SMTBinaryScheduler.h"
+#include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
@@ -312,7 +312,7 @@ namespace HatScheT {
       if (sccSchedulerSelected->getScheduleFound()) {
 
           /*if (sccScheduler == scheduler::SMT) {
-              auto ptr = dynamic_pointer_cast<SMTBinaryScheduler>(sccSchedulerSelected);
+              auto ptr = dynamic_pointer_cast<SMTUnaryScheduler>(sccSchedulerSelected);
               auto st = ptr->printVertexStarttimes();
 
               cout << "Earliest and Latest Starttimes:" << endl;
@@ -418,11 +418,11 @@ namespace HatScheT {
   shared_ptr<IterativeModuloSchedulerLayer> SCCSchedulerTemplate::selectSccScheduler(scheduler schedEnum, Graph& gr, ResourceModel& rm) {
       switch (schedEnum){
           case scheduler::SMT: {
-              auto schedulePtr = std::make_shared<SMTBinaryScheduler>(gr, rm, this->II);
+              auto schedulePtr = std::make_shared<SMTUnaryScheduler>(gr, rm, this->II);
               if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
-              schedulePtr->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
-              schedulePtr->setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
+              schedulePtr->setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::BINARY);
+              schedulePtr->setSchedulePreference(SMTUnaryScheduler::schedulePreference::MOD_ASAP);
               if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
@@ -646,8 +646,8 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::sharedPointerCastAndSetup(shared_ptr<IterativeModuloSchedulerLayer>& ssptr) {
       if (finalScheduler == scheduler::SMT){
-          auto ptr = std::dynamic_pointer_cast<SMTBinaryScheduler>(ssptr);
-          ptr->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
+          auto ptr = std::dynamic_pointer_cast<SMTUnaryScheduler>(ssptr);
+          ptr->setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::LINEAR);
       }
   }
 

@@ -90,9 +90,9 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
 #include <HatScheT/scheduler/smtbased/TempLatencyTest.h>
 
@@ -1033,13 +1033,13 @@ int main(int argc, char *args[]) {
                     }
                     scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
                 }
                 case SMT:
-                    scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
+                    scheduler = new HatScheT::SMTUnaryScheduler(g, rm);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
                 case SMTSCC:
                     scheduler = new HatScheT::SMTSCCScheduler(g, rm);
@@ -1053,10 +1053,10 @@ int main(int argc, char *args[]) {
                     if (timeout > 0) ((HatScheT::SMTSCCCOMBINED*) scheduler)->setSolverTimeout(timeout);
                     break;
                 case SMTCDCL:
-                    scheduler = new HatScheT::SMTCDCLScheduler(g, rm);
+                    scheduler = new HatScheT::SMTCDLScheduler(g, rm);
                     isModuloScheduler = true;
-                    ((HatScheT::SMTCDCLScheduler*) scheduler)->setLayerQuiet(false);
-                    if (timeout > 0) ((HatScheT::SMTCDCLScheduler*) scheduler)->setSolverTimeout(timeout);
+                    ((HatScheT::SMTCDLScheduler*) scheduler)->setLayerQuiet(false);
+                    if (timeout > 0) ((HatScheT::SMTCDLScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else

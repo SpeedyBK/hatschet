@@ -15,7 +15,7 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
-#include "SMTBinaryScheduler.h"
+#include "SMTUnaryScheduler.h"
 
 namespace HatScheT {
 
@@ -272,8 +272,8 @@ namespace HatScheT {
       bool foundSchedule;
       if (!iigiven) {
           do {
-              SMTBinaryScheduler smt(*gr, *rm, this->II);
-              //auto smt = new SMTBinaryScheduler (*gr, *rm, this->II);
+              SMTUnaryScheduler smt(*gr, *rm, this->II);
+              //auto smt = new SMTUnaryScheduler (*gr, *rm, this->II);
               smt.setQuiet(quiet);
               int maxSCCslat;
               if (mode == schedule_t::fast){
@@ -286,7 +286,7 @@ namespace HatScheT {
                   //Let Scheduler Search...
               }
               if (timeLimit > 0) { smt.setSolverTimeout(timeLimit); }
-              smt.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
+              smt.setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::BINARY);
               smt.schedule();
               timeBudget = 1000;//ToDo:ceil((double)smt.getTimeBudget()/1000);
               if( smt.getTimeouts() > 0 ) { timeouts++; }
@@ -306,7 +306,7 @@ namespace HatScheT {
               //delete smt;
           } while (!foundSchedule and ((int)this->II < maxII));
       }else{
-          auto smt = new SMTBinaryScheduler(*gr, *rm, this->II);
+          auto smt = new SMTUnaryScheduler(*gr, *rm, this->II);
           smt->setQuiet(quiet);
           int maxSCCslat;
           if (mode == schedule_t::fast){
@@ -319,7 +319,7 @@ namespace HatScheT {
               //Let Scheduler search...
           }
           if (timeLimit > 0) { smt->setSolverTimeout(timeLimit); }
-          smt->setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
+          smt->setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::BINARY);
           smt->schedule();
           timeBudget = 1000; //ToDo:ceil((double)smt->getTimeBudget()/1000);
           //solverTimeout = solverTimeout - (int)smt->getSolvingTime();

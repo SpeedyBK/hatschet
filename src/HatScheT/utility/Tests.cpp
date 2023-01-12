@@ -68,10 +68,10 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
-#include <HatScheT/scheduler/smtbased/SMTCDCLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
 #include <HatScheT/scheduler/smtbased/SMTModScheduler.h>
 #include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
@@ -3959,12 +3959,29 @@ namespace HatScheT {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      HatScheT::XMLResourceReader readerRes(&rm);
+      /*HatScheT::XMLResourceReader readerRes(&rm);
       string resStr = "benchmarks/ChStone_Pareto/blowfish/graph1_RM3.xml";
       string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
+      readerGraph.readGraph(graphStr.c_str());*/
+
+      auto &m = rm.makeResource("M", 1, 2, 1);
+
+      Vertex &M0 = g.createVertex(0);
+      M0.setName("M0");
+      Vertex &M1 = g.createVertex(1);
+      M1.setName("M1");
+      Vertex &M2 = g.createVertex(2);
+      M2.setName("M2");
+      rm.registerVertex(&M0, &m);
+      rm.registerVertex(&M1, &m);
+      rm.registerVertex(&M2, &m);
+      g.createEdge(M0, M1, 0);
+      g.createEdge(M1, M2, 0);
+      g.createEdge(M2, M0, 3);
+      g.createEdge(M2, M1, 2);
+      g.createEdge(M1, M0, 2);
 
       /*auto &add = rm.makeResource("add", 1, 2, 1);
       auto &prod = rm.makeResource("prod", 1, 3, 1);
@@ -4005,11 +4022,11 @@ namespace HatScheT {
       g.createEdge(prod1, sum1, 0);
       g.createEdge(sum1, out, 0);*/
 
-      SMTBinaryScheduler smtcdcl(g, rm);
+      SMTCDLScheduler smtcdcl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdcl.setQuiet(false);
       smtcdcl.setSolverTimeout(600);
-      //smtcdcl.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
+      //smtcdcl.setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::LINEAR);
       smtcdcl.schedule();
       auto II = smtcdcl.getII();
       auto end_t = std::chrono::high_resolution_clock::now();
@@ -4133,7 +4150,7 @@ namespace HatScheT {
       schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
       schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
 #ifdef USE_Z3
-      schedulers.push_back(new SMTBinaryScheduler(g, rm));
+      schedulers.push_back(new SMTUnaryScheduler(g, rm));
       schedulers.push_back(new SCCSchedulerTemplate(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::ED97));
 #endif
 

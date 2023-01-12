@@ -1,5 +1,5 @@
-#ifndef HATSCHET_SMTBINARYSCHEDULER_H
-#define HATSCHET_SMTBINARYSCHEDULER_H
+#ifndef HATSCHET_SMTUNARYSCHEDULER_H
+#define HATSCHET_SMTUNARYSCHEDULER_H
 
 #pragma once
 
@@ -14,7 +14,7 @@
 
 namespace HatScheT {
 
-  class SMTBinaryScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase{
+  class SMTUnaryScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase{
 
   public:
     /*!
@@ -24,7 +24,7 @@ namespace HatScheT {
      * @param rm resource model
      * @param II given II
      */
-    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
+    SMTUnaryScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
     /*!
      * Obvious
      */
@@ -65,9 +65,14 @@ namespace HatScheT {
      * @param latency
      */
     void setTargetLatency(int latency) { this->targetLatency = latency; }
-
+    /*!
+     * For Debugging
+     */
     map <Vertex*, pair<int, int>> printVertexStarttimes();
-
+    /*!
+     * Method to set how many threads z3 is allowed to use.
+     * @param t threads
+     */
     void setThreads(int t) { if (t > 1) { setZ3Threads((uint32_t)t); } }
 
   protected:
@@ -291,12 +296,10 @@ namespace HatScheT {
     void setDependencyConstraintsAndAddToSolverBIG(const int &candidateII);
     /*!
      * \brief Adds a constraint to solver s, that a vertex is scheduled in exactly one timeslot.
-     * @param Reference to solver s
      */
     z3::check_result addOneSlotConstraintsToSolver();
     /*!
      * \brief Adds a constraint to solver s, that no ressource limits are violated.
-     * @param Reference to solver s
      */
     z3::check_result addResourceLimitConstraintToSolver(int candidateII);
     /*!
@@ -313,10 +316,12 @@ namespace HatScheT {
     void print_b_variables();
     void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
-
     string designName;
     void writeSolvingTimesToFile(deque<double> &times, int x);
 
+    /*!
+     * Overrides endTimeTracking Method from SchedulerBase since there are multiple spots where time has to be tracked.
+     */
     void endTimeTracking() override;
 
   };
@@ -324,4 +329,4 @@ namespace HatScheT {
 }
 
 #endif //USE_Z3
-#endif //HATSCHET_SMTBINARYSCHEDULER_H
+#endif //HATSCHET_SMTUNARYSCHEDULER_H

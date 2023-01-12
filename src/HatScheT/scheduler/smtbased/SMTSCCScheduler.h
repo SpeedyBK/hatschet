@@ -2,6 +2,8 @@
 // Created by bkessler on 8/11/22.
 //
 
+//ToDo Will be replaced by SCC-Scheduler-Template...
+
 #ifndef HATSCHET_SMTSCCSCHEDULER_H
 #define HATSCHET_SMTSCCSCHEDULER_H
 

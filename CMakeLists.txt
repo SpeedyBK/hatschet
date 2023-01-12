@@ -261,10 +261,10 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/smtbased/SMTModScheduler.h
         src/HatScheT/utility/SDCSolver.h
         src/HatScheT/utility/FibonacciHeap.h
-        src/HatScheT/scheduler/smtbased/SMTBinaryScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/TempLatencyTest.h
         src/HatScheT/scheduler/smtbased/SMTSCCScheduler.h
-        src/HatScheT/scheduler/smtbased/SMTCDCLScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
         src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h
         )
 
@@ -328,10 +328,10 @@ IF (Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTBinaryScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.cpp
-            src/HatScheT/scheduler/smtbased/SMTCDCLScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
             src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 

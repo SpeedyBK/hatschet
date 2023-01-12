@@ -3,7 +3,7 @@
 //
 
 #ifdef USE_Z3
-#include "SMTBinaryScheduler.h"
+#include "SMTUnaryScheduler.h"
 #include "HatScheT/utility/Exception.h"
 #include "HatScheT/utility/Utility.h"
 
@@ -20,7 +20,7 @@
 
 namespace HatScheT {
 
-  SMTBinaryScheduler::SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel, double II) : IterativeModuloSchedulerLayer(g, resourceModel, II){
+  SMTUnaryScheduler::SMTUnaryScheduler(Graph &g, ResourceModel &resourceModel, double II) : IterativeModuloSchedulerLayer(g, resourceModel, II){
       this->sPref = schedulePreference::MOD_ASAP;
       this->latSM = latSearchMethod::BINARY;
       this->latencySpaceIndex = 0;
@@ -48,7 +48,7 @@ namespace HatScheT {
   /*!---------------------------*
    * Main scheduling functions: *
    * ---------------------------*/
-  void SMTBinaryScheduler::scheduleInit() {
+  void SMTUnaryScheduler::scheduleInit() {
       if(!quiet) {
           cout << "Scheduling with " << this->getName() <<":" << endl;
           cout << "Rec-Min-II: " << recMinII << endl;
@@ -60,7 +60,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::scheduleIteration() {
+  void SMTUnaryScheduler::scheduleIteration() {
 
       this->solvingTimePerIteration = 0;
       candidateLatency = 0;
@@ -176,7 +176,7 @@ namespace HatScheT {
                   return;
               }
               if (!scheduleFound) {
-                  cerr << "SMTBinaryScheduler: Found Schedule is not valid!" << endl;
+                  cerr << "SMTUnaryScheduler: Found Schedule is not valid!" << endl;
               }
               if (latSM == latSearchMethod::LINEAR) {
                   break;
@@ -191,7 +191,7 @@ namespace HatScheT {
   /*!-------------------*
    * Latency Estimation *
    * -------------------*/
-  void SMTBinaryScheduler::calcLatencyEstimation() {
+  void SMTUnaryScheduler::calcLatencyEstimation() {
 
       this->maxLatency = 0;
       //Check if max latency was set by user
@@ -279,7 +279,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::calcMaxLatencyEstimation(int currentII) {
+  void SMTUnaryScheduler::calcMaxLatencyEstimation(int currentII) {
 
       //Algorithm to estimate max latency based on earliest and latest possible start times
       //as well as on ressource constraints.
@@ -361,7 +361,7 @@ namespace HatScheT {
                            << currentII * (int)ceil(float(maximum)/float(currentII)) + modAsapLength << endl; }
   }
 
-  bool SMTBinaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
+  bool SMTUnaryScheduler::calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII){
 
       //Algorithm to estimate min latency based on earliest and latest possible start times
       //as well as on ressource constraints.
@@ -410,11 +410,11 @@ namespace HatScheT {
                               vertexTimeslot.at({vp, i}) = false;
                           } catch (std::out_of_range &) {
                               cout << "i: " << i << " Out of Range A" << endl;
-                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
+                              cout << "SMTUnaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
                                    << " " << x << endl;
                               cout << "Min. Latency: " << minLatency << endl;
                               throw (HatScheT::Exception(
-                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range A"));
+                                  "SMTUnaryScheduler::calcMinLatencyEstimation: Out of Range A"));
                           }
                       }
                   } else {
@@ -429,11 +429,11 @@ namespace HatScheT {
                               }
                           } catch (std::out_of_range &) {
                               cout << "i: " << i << endl;
-                              cout << "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
+                              cout << "SMTUnaryScheduler::calcMinLatencyEstimation: Out of Range, " << vp->getName()
                                    << " " << x << endl;
                               cout << "Min. Latency: " << minLatency << endl;
                               throw (HatScheT::Exception(
-                                  "SMTBinaryScheduler::calcMinLatencyEstimation: Out of Range B"));
+                                  "SMTUnaryScheduler::calcMinLatencyEstimation: Out of Range B"));
                           }
                       }
                   }
@@ -444,8 +444,8 @@ namespace HatScheT {
           usedFuInModslot.resize(currentII);
           map<Vertex *, int> availibleSlots;
 
-          //Zählen, wie viele FUs in jedem Zeitslot benutzt werden. (Potentiell)
-          //Zählen wie viele potentielle Zeitslots existieren.
+          //Count how many FUs are used in each timeslot.
+          //Count how many timeslots exist for each vertex.
           for (auto &cvp : verticesOfThisResource) {
               auto vp = (Vertex *) cvp;
               availibleSlots[vp] = 0;
@@ -457,24 +457,20 @@ namespace HatScheT {
                   availibleSlots.at(vp)++;
               }
           }
-          //Überprüfen, ob Resourcenbeschränkungen eingehalten werden.
+          //Checking Resourceconstraints
           for (int x = 0; x < min(currentII, minLatency); x++) {
               //cout << "Checking Slot: " << x << endl;
               if (usedFuInModslot.at(x) <= r->getLimit()) {
-                  //Kein Konflikt alles gut.
-                  //ToDo: Hier müssen die Oprationen in dem Zeitslot verankert werden.
+                  //No Conflict, lock opterations.
                   checkedResource.at(r) = true;
                   for (auto &cvp : verticesOfThisResource){
                       auto vp = (Vertex*)cvp;
                       if (vertexTimeslot.at({vp, x})){
-                          //cout << "Bums1 " << vp->getName() << " / " << x << endl;
                           for (int i = 0; i < min(currentII, minLatency); i++){
                               if (i == x){
-                                  //cout << "Bums2 " << x << " :: " << i << endl;
                                   continue;
                               }
                               if (vertexTimeslot.at({vp, i})) {
-                                  //cout << "Bums3 " << vp->getName() << " / " << i << endl;
                                   vertexTimeslot.at({vp, i}) = false;
                                   availibleSlots.at(vp)--;
                                   usedFuInModslot.at(i)--;
@@ -484,23 +480,27 @@ namespace HatScheT {
                   }
                   continue;
               }
-              //Potentieller Konflikt:
-              //Mappings zwischen Operationen und deren Priorität herstellen.
-              //Zudem werden die Operationen in einer Prioritätswarteschlange sortiert.
-              //Je mehr mögliche slots es gibt, desto einfacher lässt sich diese operation wegschedulen.
-              //Es wird also die Operation mit den meisten möglichen Slots gesucht und diese Operation dann
-              //in den Slot mit der geringsten Resourcenauslastung einsortiert.
+              // Potential conflict:
+              // If there is a potential conflict, we have to create a mapping between the operations in the
+              // mod-slot and their "mobility".
+              // These operation are now sorted in a priority queue based on their mobility (availible slots).
+              // Higher mobility means an earlier position in the PQ.
+              // Then we take the operation from the PQ and move them to the mod-slot with the fewest used FUs,
+              // until the resource contraint for the actual slot id satisfied or there are no more available slots
+              // where the operation can be moved.
               priority_queue<pair<Vertex *, int>, vector<pair<Vertex *, int>>, SmtVertexIntCompLess> pq;
               for (auto &cvp : verticesOfThisResource) {
                   auto vp = (Vertex *) cvp;
                   pq.push({vp, availibleSlots.at(vp)});
               }
-              //Benutzte Resourcen im aktuellen Zeitlot merken um festzustellen ob sich dieser weiter verringern lässt.
-              //Ist dies nicht der Fall, kann das als Abbruchbedingung genutzt werden.
+              // We track used FUs for each mod-slot so we can compare the used FUs from the last iteration to the used
+              // FUs of the current iteration. If used FUs of the previous iteration are the same as the used FUs in
+              // Current iteration, we know that we can not satisfy the resource constraint, and we have to increase
+              // min. Latency
               int usedFUsAtActualSlot = 0;
 
-              //While-Schleife zur Resourcenminimierung. Diese läuft entweder, bis sich keine Minimierung mehr erziehlen lässt,
-              //oder bis die Resourcenlimits erreicht sind.
+              // While-Loop to reduce used FUs until resource constraints are satisfied or no further reduction of used
+              // FUs is possible.
               while (usedFuInModslot.at(x) > r->getLimit()) {
                   if (usedFuInModslot.at(x) == usedFUsAtActualSlot) {
                       increment = (int)floor(usedFuInModslot.at(x)/r->getLimit()) - r->getLimit();
@@ -511,7 +511,8 @@ namespace HatScheT {
                       break;
                   }
                   usedFUsAtActualSlot = usedFuInModslot.at(x);
-                  //Operation mit der größten Anzahl an möglichen Slots wird gesucht und aus dem aktuellen Slot weggescheduled.
+                  // Operation with most available slot will be moved away from the actual slot, to the slot with
+                  // least amount uf used FUs.
                   while(!pq.empty()) {
                       if (usedFuInModslot.at(x) <= r->getLimit()){
                           break;
@@ -543,11 +544,9 @@ namespace HatScheT {
                       }
                   }
               }
-              //printPossibleStarttimes(vertexTimeslot);
-              //cout << x << endl;
-              //Überprüfen of Resourcenbeschränkungen eingehalten werden können.
+              // Check if resource constraints can be satisfied
               if (usedFuInModslot.at(x) > r->getLimit()){
-                  //Können nicht eingehalten werden, dann abbrechen und latenz erhöhen.
+                  //If not, break and increase latency
                   cout << "Conflict at " << x << " Used FUs: " << usedFuInModslot.at(x) << endl;
                   cout << "Not Feasiable... Increase Latency!" << endl;
                   return false;
@@ -556,14 +555,11 @@ namespace HatScheT {
                   for (auto &cvp : verticesOfThisResource){
                       auto vp = (Vertex*)cvp;
                       if (vertexTimeslot.at({vp, x})){
-                          //cout << "Bums1 " << vp->getName() << " / " << x << endl;
                           for (int i = 0; i < min(currentII, minLatency); i++){
                               if (i == x){
-                                  //cout << "Bums2 " << x << " :: " << i << endl;
                                   continue;
                               }
                               if (vertexTimeslot.at({vp, i})) {
-                                  //cout << "Bums3 " << vp->getName() << " / " << i << endl;
                                   vertexTimeslot.at({vp, i}) = false;
                                   availibleSlots.at(vp)--;
                                   usedFuInModslot.at(i)--;
@@ -578,7 +574,7 @@ namespace HatScheT {
       return true;
   }
 
-  pair <map<Vertex*,int>, map<Vertex*, int>> SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM) {
+  pair <map<Vertex*,int>, map<Vertex*, int>> SMTUnaryScheduler::calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM) {
 
       // Create SDC-Graphs (Transposed with Helper for ALAP-Starttimes
       // and original with Helper for ASAP-Starttimes) as well as a mapping
@@ -691,7 +687,7 @@ namespace HatScheT {
           if ((vertexDistanceAlap.at(t) != INT32_MAX) && (vertexDistanceAlap.at(t) + weight < vertexDistanceAlap.at(u))){
               cout << "Negative Cycle Detected ALAP:" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
-              throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
+              throw(HatScheT::Exception("SMTUnaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
           }
       }
       for (auto &e : sdcGraphAsap.Edges()){
@@ -701,7 +697,7 @@ namespace HatScheT {
           if ((vertexDistanceAsap.at(t) != INT32_MAX) && (vertexDistanceAsap.at(t) + weight < vertexDistanceAsap.at(u))){
               cout << "Negative Cycle Detected ASAP" << endl;
               cout << "Infeasibility without Ressource Constraints: Check if II is correct." << endl;
-              throw(HatScheT::Exception("SMTBinaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
+              throw(HatScheT::Exception("SMTUnaryScheduler::calcAsapAndAlapModScheduleWithSdc()"));
           }
       }
 
@@ -803,8 +799,8 @@ namespace HatScheT {
       return {startTimesAsap, startTimes_alap};
   }
 
-  int SMTBinaryScheduler::getScheduleLatency(unordered_map<Vertex *, int> &vertexLatency,
-                                             unordered_map<Vertex *, Vertex *> &newToOld) {
+  int SMTUnaryScheduler::getScheduleLatency(unordered_map<Vertex *, int> &vertexLatency,
+                                            unordered_map<Vertex *, Vertex *> &newToOld) {
       int maxTime = -1;
       for (std::pair<Vertex *, int> vtPair : vertexLatency) {
           try {
@@ -819,14 +815,14 @@ namespace HatScheT {
               }
           }catch(std::out_of_range&){
               cout << vtPair.first->getName() << ": " << vtPair.second << endl;
-              throw (HatScheT::Exception("SMTBinaryScheduler::getScheduleLatency() OUT_OF_RANGE"));
+              throw (HatScheT::Exception("SMTUnaryScheduler::getScheduleLatency() OUT_OF_RANGE"));
           }
       }
       return maxTime;
   }
 
   //Copied from Verifier to get rid of the CERR outputs. No one likes errors!
-  bool SMTBinaryScheduler::verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II)
+  bool SMTUnaryScheduler::verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II)
   {
       if(II<=0){
           if ( !quiet ) { cout << "HatScheT.verifyModuloSchedule Error invalid II passed to verifier: "  << II << endl; }
@@ -889,7 +885,7 @@ namespace HatScheT {
   /*!----------------------------------------*
    * Functions to add constraints to solver: *
    * ----------------------------------------*/
-  void SMTBinaryScheduler::generateBvariables() {
+  void SMTUnaryScheduler::generateBvariables() {
       bVariables.clear();
       for (auto &it : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++){
@@ -902,7 +898,7 @@ namespace HatScheT {
       }
   }
 
-  z3::expr *SMTBinaryScheduler::getBvariable(Vertex *v, int i) {
+  z3::expr *SMTUnaryScheduler::getBvariable(Vertex *v, int i) {
       auto key = std::make_pair(v, i);
       try {
           return &bVariables.at(key);
@@ -912,7 +908,7 @@ namespace HatScheT {
       }
   }
 
-  z3::check_result SMTBinaryScheduler::addOneSlotConstraintsToSolver() {
+  z3::check_result SMTUnaryScheduler::addOneSlotConstraintsToSolver() {
       for (auto &it : g.Vertices()) {
 
           vector<int> coefficients;
@@ -937,7 +933,7 @@ namespace HatScheT {
       return this->getZ3Result();
   }
 
-  z3::check_result SMTBinaryScheduler::addResourceLimitConstraintToSolver(int candidateII) {
+  z3::check_result SMTUnaryScheduler::addResourceLimitConstraintToSolver(int candidateII) {
       for (auto &it : resourceModel.Resources()) {
           if (it->isUnlimited()) {
               continue;
@@ -967,7 +963,7 @@ namespace HatScheT {
       return this->getZ3Result();
   }
 
-  void SMTBinaryScheduler::prohibitToEarlyStartsAndAdd() {
+  void SMTUnaryScheduler::prohibitToEarlyStartsAndAdd() {
       startTimesSimplification.clear();
       for (auto &v : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++){
@@ -981,7 +977,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::prohibitToLateStartsAndAdd() {
+  void SMTUnaryScheduler::prohibitToLateStartsAndAdd() {
       for (auto &v : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++){
               if (i > latestStartTimesUpdated.at(v)){
@@ -992,14 +988,14 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::updateLatestStartTimes() {
+  void SMTUnaryScheduler::updateLatestStartTimes() {
       latestStartTimesUpdated.clear();
       for (auto &it: latestStartTimes) {
           this->latestStartTimesUpdated[it.first] = this->candidateLatency - (modAsapLength - it.second);
       }
   }
 
-  void SMTBinaryScheduler::setDependencyConstraintsAndAddToSolver(const int &candidateII) {
+  void SMTUnaryScheduler::setDependencyConstraintsAndAddToSolver(const int &candidateII) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       int i = 0;
       deque<long> sTimes;
@@ -1037,7 +1033,7 @@ namespace HatScheT {
   }
 
 
-  void SMTBinaryScheduler::setDependencyConstraintsAndAddToSolverBIG(const int &candidateII) {
+  void SMTUnaryScheduler::setDependencyConstraintsAndAddToSolverBIG(const int &candidateII) {
       //tj + distance * this->candidateII - ti - lSrc - delay >= 0
       if (!quiet) { cout << g.getNumberOfEdges() << " Edges... " << endl; }
       deque<long> sTimes;
@@ -1080,7 +1076,7 @@ namespace HatScheT {
   /*!--------------------------*
    * Latency-Search algorithms *
    * --------------------------*/
-  void SMTBinaryScheduler::calcLatencySpace() {
+  void SMTUnaryScheduler::calcLatencySpace() {
       latencySpace.clear();
       latencySpace.shrink_to_fit();
       if (minLatency < (int)minII){
@@ -1092,7 +1088,7 @@ namespace HatScheT {
       }
   }
 
-  int SMTBinaryScheduler::latLinearSearch(z3::check_result result) {
+  int SMTUnaryScheduler::latLinearSearch(z3::check_result result) {
       try {
           if (linearSearchInit) {
               latencySpaceIndex = 0;
@@ -1116,11 +1112,11 @@ namespace HatScheT {
               cout << i << ": " << it << endl;
               i++;
           }
-          throw(HatScheT::Exception("SMTBinaryScheduler::latLinearSearch() -- Out of Range"));
+          throw(HatScheT::Exception("SMTUnaryScheduler::latLinearSearch() -- Out of Range"));
       }
   }
 
-  int SMTBinaryScheduler::latBinarySearch(z3::check_result result) {
+  int SMTUnaryScheduler::latBinarySearch(z3::check_result result) {
       try {
           if (binarySearchInit) {
               if (!quiet) { cout << "Init Binary Search..." << endl; }
@@ -1157,14 +1153,14 @@ namespace HatScheT {
               cout << it << " ";
           }
           cout << endl << "LAT Space Index: " << latencySpaceIndex << endl;
-          throw (HatScheT::Exception("SMTBinaryScheduler: Binary Latency Search: STD::OUT_OF_RANGE"));
+          throw (HatScheT::Exception("SMTUnaryScheduler: Binary Latency Search: STD::OUT_OF_RANGE"));
       }
   }
 
   /*!-------------------------------*
    * Parsing schedule from z3-model *
    *--------------------------------*/
-  void SMTBinaryScheduler::parseSchedule(z3::model &m) {
+  void SMTUnaryScheduler::parseSchedule(z3::model &m) {
       for (auto &it : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++) {
               auto val = m.eval(*getBvariable(it, i));
@@ -1178,7 +1174,7 @@ namespace HatScheT {
   /*!-------------*
    * Solver Setup *
    *--------------*/
-  void SMTBinaryScheduler::setSolverTimeout(double seconds) {
+  void SMTUnaryScheduler::setSolverTimeout(double seconds) {
       this->solverTimeout = seconds;
       this->setZ3Timeout((uint32_t)seconds);
   }
@@ -1186,7 +1182,7 @@ namespace HatScheT {
   /*!--------------------------------*
    * Print and Debugging Functions:  *
    * --------------------------------*/
-  void SMTBinaryScheduler::print_b_variables() {
+  void SMTUnaryScheduler::print_b_variables() {
       for (auto &it:g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++){
               cout << *getBvariable(it, i) << endl;
@@ -1194,14 +1190,14 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::print_latency_space(int l_index, int r_index) {
+  void SMTUnaryScheduler::print_latency_space(int l_index, int r_index) {
       for (int i = l_index; i < r_index; i++){
           cout << latencySpace.at(i) << " ";
       }
       cout << endl;
   }
 
-  void SMTBinaryScheduler::print_solution(z3::model &m) {
+  void SMTUnaryScheduler::print_solution(z3::model &m) {
       for (auto &it : g.Vertices()){
           for (int i = 0; i <= candidateLatency; i++) {
               auto val = m.eval(*getBvariable(it, i));
@@ -1212,13 +1208,13 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::print_ASAP_ALAP_restictions() {
+  void SMTUnaryScheduler::print_ASAP_ALAP_restictions() {
       for (auto &it : startTimesSimplification){
           cout << it.first.first->getName() << " <" << it.first.second << "> " << it.second << endl;
       }
   }
 
-  void SMTBinaryScheduler::writeSolvingTimesToFile(deque<double> &times, int x) {
+  void SMTUnaryScheduler::writeSolvingTimesToFile(deque<double> &times, int x) {
       if (!designName.empty()) {
           bool skip = true;
           reverse(designName.begin(), designName.end());
@@ -1258,7 +1254,7 @@ namespace HatScheT {
       }
   }
 
-  void SMTBinaryScheduler::printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot) {
+  void SMTUnaryScheduler::printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot) {
       cout << "MinLAT: " << minLatency << " modASAPLength: " << modAsapLength << endl;
       for (auto &r : resourceModel.Resources()) {
           if (r->isUnlimited()) {
@@ -1278,21 +1274,21 @@ namespace HatScheT {
       }
   }
 
-  z3::check_result SMTBinaryScheduler::test_binary_search(int value_to_check, int target_value) {
+  z3::check_result SMTUnaryScheduler::test_binary_search(int value_to_check, int target_value) {
       if (value_to_check < target_value){
           return z3::unsat;
       }
       return z3::sat;
   }
 
-  void SMTBinaryScheduler::endTimeTracking() {
+  void SMTUnaryScheduler::endTimeTracking() {
       this->end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
       solvingTimePerIteration += (double) duration / 1000000;
       timeRemaining = solverTimeout - solvingTimePerIteration;
   }
 
-  map <Vertex*, pair<int, int>> SMTBinaryScheduler::printVertexStarttimes() {
+  map <Vertex*, pair<int, int>> SMTUnaryScheduler::printVertexStarttimes() {
 
       map <Vertex*, pair<int, int>> returnmap;
 

@@ -43,10 +43,10 @@ namespace HatScheT{
                << " found..." << endl;
           cout << "*******************************************************************" << endl;
           cout << endl << "SMTCOMBINED::Searching for better Latency... Time Left: " << timeBudget << endl << endl;
-          SMTBinaryScheduler smtBIN(this->g, this->resourceModel, II);
+          SMTUnaryScheduler smtBIN(this->g, this->resourceModel, II);
           smtBIN.setQuiet(quiet);
-          smtBIN.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::BINARY);
-          smtBIN.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
+          smtBIN.setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::BINARY);
+          smtBIN.setSchedulePreference(SMTUnaryScheduler::schedulePreference::MOD_ASAP);
           smtBIN.setSolverTimeout(timeBudget);
           smtBIN.schedule();
           if (smtBIN.getScheduleFound()) {
