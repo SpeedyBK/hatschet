@@ -9,6 +9,8 @@
 
 #include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
+#include <stack>
+#include <HatScheT/utility/Utility.h>
 
 namespace HatScheT {
 
@@ -31,7 +33,11 @@ namespace HatScheT {
     /*!
      * Obvious
      */
-    string getName() override { return "SMT-CDCL-Scheduler"; }
+    string getName() override { return "SMTCDL-Scheduler"; }
+    /*!
+     * Sets how many threads Z3 is allowed to use.
+     */
+    void setThreads(unsigned int threads) {this->setZ3Threads(threads);}
 
   private:
     /*!

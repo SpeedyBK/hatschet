@@ -18,7 +18,7 @@ namespace HatScheT {
 
   public:
 
-        enum class scheduler {MOOVAC, ED97, SMT, SAT, SH11, MODSDC, NONE};
+        enum class scheduler {MOOVAC, ED97, SMT, SAT, SH11, MODSDC, SMTCDL, NONE};
 
         enum class sccExpandMode{optimal, fast, automatic};
 

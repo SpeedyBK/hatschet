@@ -28,7 +28,7 @@ namespace HatScheT {
     /*!
      * Obvious
      */
-    string getName() override { return "SMT-Binary-Scheduler"; }
+    string getName() override { return "SMTUnary-Scheduler"; }
     /*!
      * Sets a timeout for Z3 for each check.
      * @param seconds

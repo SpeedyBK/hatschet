@@ -3954,34 +3954,17 @@ namespace HatScheT {
 #endif
   }
 
-  bool Tests::smtCDCLTest() {
+  bool Tests::smtCDLTest() {
 #ifdef USE_Z3
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      /*HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone_Pareto/blowfish/graph1_RM3.xml";
-      string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/MachSuite/aes2/graph4_RM.xml";
+      string graphStr = "benchmarks/MachSuite/aes2/graph4.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());*/
-
-      auto &m = rm.makeResource("M", 1, 2, 1);
-
-      Vertex &M0 = g.createVertex(0);
-      M0.setName("M0");
-      Vertex &M1 = g.createVertex(1);
-      M1.setName("M1");
-      Vertex &M2 = g.createVertex(2);
-      M2.setName("M2");
-      rm.registerVertex(&M0, &m);
-      rm.registerVertex(&M1, &m);
-      rm.registerVertex(&M2, &m);
-      g.createEdge(M0, M1, 0);
-      g.createEdge(M1, M2, 0);
-      g.createEdge(M2, M0, 3);
-      g.createEdge(M2, M1, 2);
-      g.createEdge(M1, M0, 2);
+      readerGraph.readGraph(graphStr.c_str());
 
       /*auto &add = rm.makeResource("add", 1, 2, 1);
       auto &prod = rm.makeResource("prod", 1, 3, 1);
@@ -4022,31 +4005,31 @@ namespace HatScheT {
       g.createEdge(prod1, sum1, 0);
       g.createEdge(sum1, out, 0);*/
 
-      SMTCDLScheduler smtcdcl(g, rm);
+      SCCSchedulerTemplate smtcdl(g, rm, SCCSchedulerTemplate::scheduler::SMTCDL, SCCSchedulerTemplate::scheduler::NONE);
       auto start_t = std::chrono::high_resolution_clock::now();
-      smtcdcl.setQuiet(false);
-      smtcdcl.setSolverTimeout(600);
-      //smtcdcl.setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::LINEAR);
-      smtcdcl.schedule();
-      auto II = smtcdcl.getII();
+      smtcdl.setQuiet(false);
+      smtcdl.setSolverTimeout(600);
+      //smtcdl.setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::LINEAR);
+      smtcdl.schedule();
+      auto II = smtcdl.getII();
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
 
       cout << "Solving Time: " << t << endl;
-      if (verifyModuloSchedule(g, rm, smtcdcl.getSchedule(), II)){
-          std::cout << "Tests::smtCDCLScheduler: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << II << " Latency: " << smtcdcl.getScheduleLength() << std::endl;
-          for (auto &it : smtcdcl.getSchedule()) {
+      if (verifyModuloSchedule(g, rm, smtcdl.getSchedule(), II)){
+          std::cout << "Tests::smtCDLScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << smtcdl.getScheduleLength() << std::endl;
+          for (auto &it : smtcdl.getSchedule()) {
               cout << it.first->getName() << ": " << it.second << endl;
           }
           return true;
       }else{
-          std::cout << "Tests::smtCDCLScheduler: invalid modulo schedule found :( II=" << smtcdcl.getII() << std::endl;
+          std::cout << "Tests::smtCDLScheduler: invalid modulo schedule found :( II=" << smtcdl.getII() << std::endl;
           return false;
       }
 #else
-			std::cout << "Tests::smtCDCLTest: link Z3 to enable test" << std::endl;
+			std::cout << "Tests::smtCDLTest: link Z3 to enable test" << std::endl;
       return true;
 #endif
   }
