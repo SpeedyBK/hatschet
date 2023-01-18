@@ -3,7 +3,8 @@
 //
 #ifndef HATSCHET_SCCSCHEDULERTEMPLATE_H
 #define HATSCHET_SCCSCHEDULERTEMPLATE_H
-#pragma once
+#ifdef USE_Z3
+#ifdef USE_SCALP
 
 #include <iostream>
 #include <memory>
@@ -126,4 +127,6 @@ namespace HatScheT {
   };
 }
 
+#endif // USE_SCALP
+#endif // USE_Z3
 #endif //HATSCHET_SCCSCHEDULERTEMPLATE_H
