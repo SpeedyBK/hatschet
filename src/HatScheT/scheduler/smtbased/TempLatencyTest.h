@@ -9,6 +9,8 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/base/IterativeSchedulerBase.h>
 
+//Temporary class to take some messurements regarding the Latency Estimation.
+
 namespace HatScheT {
 
   class TempLatencyTest : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
