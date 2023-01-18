@@ -8,6 +8,7 @@
 #ifdef USE_SCALP
 
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
+#include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/satbased/SATScheduler.h"
@@ -52,11 +53,10 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::scheduleInit() {
 
-      string names[7] = {"MOOVAC", "ED97", "SMT", "SAT", "SH11", "MODSDC", "NONE"};
+      string names[8] = {"MOOVAC", "ED97", "SMT", "SAT", "SH11", "MODSDC", "SMTCDL", "NONE"};
       cout << endl << "Scheduling with " << this->getName() << "!" << endl;
       cout << "1st-Stage-Scheduler: " << names[(int) sccScheduler] << endl;
       cout << "2nd-Stage-Scheduler: " << names[(int) finalScheduler] << endl << endl;
-
 
       modifyResourceModel();
 
@@ -460,6 +460,16 @@ namespace HatScheT {
               if (!quiet) schedulePtr->getDebugPrintouts();
               if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
+          }
+          case scheduler::SMTCDL:{
+              auto SMTCDL = std::make_shared<SMTCDLScheduler>(gr, rm, (int)this->II);
+              shared_ptr<SMTCDLScheduler>schedulePtr(SMTCDL);
+              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+          }
+          case scheduler::NONE:{
+              return nullptr;
           }
           case scheduler::SAT:{
               throw(HatScheT::Exception("SAT-Scheduler not moved to IterativeSchedulerLayer, yet!"));

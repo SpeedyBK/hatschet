@@ -337,7 +337,7 @@ namespace HatScheT {
         * test functionality of Z3 based scheduler with "Conflict Driven Clause" Learning
         * @return if test was passed
         */
-		static bool smtCDCLTest();
+		static bool smtCDLTest();
 	   /*!
         * test functionality of Z3 based scheduler with SCC - preprocessing
         * @return if test was passed

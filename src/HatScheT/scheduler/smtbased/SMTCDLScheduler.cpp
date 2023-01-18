@@ -52,8 +52,9 @@ namespace HatScheT {
               i++;
               if (!quiet) { cout << "II: " << this->II << " | Latency: " << latency << " | Iteration: " << i; }
               if (!quiet) { cout << " || Time Used: " << this->getSolvingTimePerIteration() << " | Time Remaining: " << this->getTimeRemaining() << endl;}
+              if (!quiet) { cout << p << endl;}
               addConflictClauseNextTry(violatedEdges);
-              this->setZ3Timeout((uint32_t) getTimeRemaining());
+              this->setZ3Timeout((uint32_t) getTimeRemaining()+1);
               startTimeTracking();
               z3Check();
               endTimeTracking();

@@ -176,8 +176,8 @@ void print_short_help() {
 	std::cout << "                            SMT: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
     std::cout << "                            SMTSCC: Experimental Heuristic-Scheduler which searches for the optimal II, but it has no latency optimization" << std::endl;
     std::cout << "                            SMTCOMBINED: Experimental 2-Stage Scheduler Heuristic which searches for the optimal II, and latency optimization" << std::endl;
-    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
-    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
+    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, SMTCDL, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
+    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, SMTCDL, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
     std::cout << "--resource=[string]         Path to XML resource constraint file" << std::endl;
 	std::cout << "--target=[string]           Path to XML target constraint file" << std::endl;
 	std::cout << "--graph=[string]            graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
@@ -246,7 +246,7 @@ int main(int argc, char *args[]) {
 	enum SchedulersSelection {
 	    SCC,
 	    SMTCOMBINED,
-		SMTCDCL,
+		SMTCDL,
 	    SMTSCC,
 	    SMT,
 		SAT,
@@ -379,8 +379,8 @@ int main(int argc, char *args[]) {
                     schedulerSelection = SMT;
                 } else if (schedulerSelectionStr == "smtscc") {
                     schedulerSelection = SMTSCC;
-                } else if (schedulerSelectionStr == "smtcdcl") {
-                        schedulerSelection = SMTCDCL;
+                } else if (schedulerSelectionStr == "smtcdl") {
+                        schedulerSelection = SMTCDL;
                 } else if (schedulerSelectionStr == "smtcombined") {
                     schedulerSelection = SMTCOMBINED;
                 }else if (schedulerSelectionStr == "sat") {
@@ -439,7 +439,7 @@ int main(int argc, char *args[]) {
 					throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
 				}
             } else if (getCmdParameter(args[i], "--sccScheduler=", value)) {
-                std::string valueStr = std::string(value);
+			    std::string valueStr = std::string(value);
                 schedulerSelectionStr.resize(valueStr.size());
                 std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
                 if (schedulerSelectionStr == "moovac") {
@@ -448,13 +448,15 @@ int main(int argc, char *args[]) {
                     sccSchedulerSelection = ED97;
                 } else if (schedulerSelectionStr == "sh11") {
                     sccSchedulerSelection = SH11;
+                }else if (schedulerSelectionStr == "smtcdl") {
+                    sccSchedulerSelection = SMTCDL;
                 } else if (schedulerSelectionStr == "modulosdc") {
                     sccSchedulerSelection = MODULOSDC;
                 } else {
                     sccSchedulerSelection = SMT;
                 }
             } else if (getCmdParameter(args[i], "--finalScheduler=", value)) {
-                std::string valueStr = std::string(value);
+			    std::string valueStr = std::string(value);
                 schedulerSelectionStr.resize(valueStr.size());
                 std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
                 if (schedulerSelectionStr == "moovac") {
@@ -463,8 +465,12 @@ int main(int argc, char *args[]) {
                     finalSchedulerSelection = ED97;
                 } else if (schedulerSelectionStr == "sh11") {
                     finalSchedulerSelection = SH11;
+                }else if (schedulerSelectionStr == "smtcdl") {
+                    sccSchedulerSelection = SMTCDL;
                 } else if (schedulerSelectionStr == "modulosdc") {
                     finalSchedulerSelection = MODULOSDC;
+                } else if (schedulerSelectionStr == "none"){
+                    finalSchedulerSelection = NONE;
                 } else {
                     finalSchedulerSelection = SMT;
                 }
@@ -549,7 +555,7 @@ int main(int argc, char *args[]) {
 
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
-                if (str == "SMTCDCL" && !HatScheT::Tests::smtCDCLTest()) exit(-1);
+                if (str == "SMTCDL" && !HatScheT::Tests::smtCDLTest()) exit(-1);
                 if (str == "SMTCOMB" && !HatScheT::Tests::smtCombined()) exit(-1);
                 if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);
 #endif
@@ -613,8 +619,8 @@ int main(int argc, char *args[]) {
             case SMTCOMBINED:
                 cout << "SMTCOMBINED";
                 break;
-            case SMTCDCL:
-                cout << "SMTCDCL";
+            case SMTCDL:
+                cout << "SMTCDL";
                 break;
 			case MOOVAC:
 				cout << "MOOVAC";
@@ -1000,6 +1006,9 @@ int main(int argc, char *args[]) {
                         case MOOVAC :
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
                             break;
+                        case SMTCDL :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
+                            break;
                         case ED97 :
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
                             break;
@@ -1018,6 +1027,9 @@ int main(int argc, char *args[]) {
                         case MOOVAC :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
                             break;
+                        case SMTCDL :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
+                            break;
                         case ED97 :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
                             break;
@@ -1026,6 +1038,9 @@ int main(int argc, char *args[]) {
                             break;
                         case MODULOSDC :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+                            break;
+                        case NONE :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
                             break;
                         default:
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
@@ -1052,7 +1067,7 @@ int main(int argc, char *args[]) {
                     isModuloScheduler = true;
                     if (timeout > 0) ((HatScheT::SMTSCCCOMBINED*) scheduler)->setSolverTimeout(timeout);
                     break;
-                case SMTCDCL:
+                case SMTCDL:
                     scheduler = new HatScheT::SMTCDLScheduler(g, rm);
                     isModuloScheduler = true;
                     ((HatScheT::SMTCDLScheduler*) scheduler)->setLayerQuiet(false);
