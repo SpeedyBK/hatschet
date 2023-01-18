@@ -4,6 +4,9 @@
 
 #include "HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h"
 
+#ifdef USE_Z3
+#ifdef USE_SCALP
+
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
@@ -769,3 +772,6 @@ namespace HatScheT {
       }
   }
 }
+
+#endif // USE_Z3
+#endif // USE_SCALP

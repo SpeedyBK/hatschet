@@ -4095,6 +4095,7 @@ namespace HatScheT {
 
   bool Tests::SCCTemplateTest() {
 #ifdef USE_Z3
+#ifdef USE_SCALP
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -4125,6 +4126,13 @@ namespace HatScheT {
           std::cout << "Tests:: invalid modulo schedule found :( II=" << scc.getII() << std::endl;
           return false;
       }
+#else
+			// test disabled
+      return true;
+#endif
+#else
+		// test disabled
+		return true;
 #endif
   }
 
