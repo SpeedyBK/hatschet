@@ -2,7 +2,7 @@
 // Created by bkessler on 10/5/22.
 //
 
-#include "HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h"
+#include "SCCSchedulerTemplate.h"
 
 #ifdef USE_Z3
 #ifdef USE_SCALP
@@ -54,9 +54,9 @@ namespace HatScheT {
   void SCCSchedulerTemplate::scheduleInit() {
 
       string names[8] = {"MOOVAC", "ED97", "SMT", "SAT", "SH11", "MODSDC", "SMTCDL", "NONE"};
-      cout << endl << "Scheduling with " << this->getName() << "!" << endl;
-      cout << "1st-Stage-Scheduler: " << names[(int) sccScheduler] << endl;
-      cout << "2nd-Stage-Scheduler: " << names[(int) finalScheduler] << endl << endl;
+      if (!this->quiet) { cout << endl << "Scheduling with " << this->getName() << "!" << endl; }
+      if (!this->quiet) { cout << "1st-Stage-Scheduler: " << names[(int) sccScheduler] << endl; }
+      if (!this->quiet) { cout << "2nd-Stage-Scheduler: " << names[(int) finalScheduler] << endl << endl; }
 
       modifyResourceModel();
 

@@ -99,7 +99,7 @@
 #endif
 
 #if defined(USE_Z3) || defined(USE_SCALP)
-#include <HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
+#include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #endif
 
 /**

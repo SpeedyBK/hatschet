@@ -178,7 +178,7 @@ set(HatScheT_SOURCES
         src/HatScheT/base/IterativeSchedulerBase.cpp
         src/HatScheT/utility/subgraphs/SCC.cpp
         src/HatScheT/utility/SDCSolver.cpp
-        src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp)
+        src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp)
 
 
 set(HatScheT_HEADERS
@@ -337,7 +337,7 @@ ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
     list(APPEND HatScheT_SOURCES
-            src/HatScheT/scheduler/dev/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
+            src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
             )
 ENDIF ()
 
