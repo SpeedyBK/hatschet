@@ -48,6 +48,12 @@ namespace HatScheT {
 		 */
 		ScaLP::status getScaLPStatus() override { return ScaLP::status::UNKNOWN; }
 
+      /*!
+       * Function to set the solver Timeout
+       * @param seconds
+       */
+      void setSolverTimeout(double timeoutInSeconds) override;
+
 	protected:
 		/*!
 		 * each scheduler should overload this function for one schedule iteration

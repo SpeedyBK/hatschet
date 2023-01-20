@@ -16,14 +16,14 @@
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    -- 20.10.2022 Benjamin Lagershausen-Keßler: Integrated "IterativeModuloSchedulerLayer" Class in MOOVAC
 */
 
 #pragma once
 
-#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <vector>
 
 namespace HatScheT
@@ -35,146 +35,140 @@ namespace HatScheT
  * Presented at the Proceedings of the International Conference on Compilers, Architectures and Synthesis for Embedded Systems (CASES) 2016
  *
  */
-class MoovacScheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
-{
-public:
-  MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
-  /*!
-   * \brief schedule the schedule method of moocav will try to find the smallest possible II respecting the minII/maxII bounds iteratively.
-   * as long as no feasible solution is found, the problem will be constructed again with an increased II until maxII is reached.
-   */
-  virtual void schedule();
+  class MoovacScheduler : public IterativeModuloSchedulerLayer, public ILPSchedulerBase
+  {
+  public:
 
-  /*!
-   * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
-   * \return
-   */
-  virtual int getNoOfImplementedRegisters();
-  /*!
-   * \brief getNoOfMuxInputs
-   * \return
-   */
-  virtual int getNoOfMuxInputs();
-  /*!
-   * \brief getBindings getBdings based on solution of the ilp solver
-   * non limited resources are assumed to be bound on pairwise different hardware units
-   * \return
-   */
-  virtual std::map<const Vertex*,int> getBindings();
-  /*!
-   * \brief getLifeTimes considering II
-   * \return
-   */
-  virtual std::map<Edge*,int> getLifeTimes();
+    MoovacScheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
 
-protected:
-  /*!
-   * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
-   */
-  virtual void constructProblem();
-  /*!
-   * \brief setObjective currently asap
-   */
-  virtual void setObjective();
-  /*!
-   * \brief setGeneralConstraints read the paper for further information
-   */
-  virtual void setGeneralConstraints();
-  /*!
-   * \brief setSourceVerticesToZero pin all source vertices(inputs, constants,...) to starttime 0
-   */
-  void setSourceVerticesToZero();
-  /*!
-   * \brief resetContainer
-   */
-  virtual void resetContainer();
-  /*!
-   * \brief setUpSolverSettings
-   */
-  void setUpSolverSettings();
-  /*!
-   * \brief setTVectorVariables fill the container for ILP variables of vertex starting times
-   */
-  void setVectorVariables();
-  /*!
-   * \brief fillRegVector not used in moovac
-   */
-  virtual void fillRegVector(){ }
-  /*!
-   * \brief setModuloAndResourceConstraints read the paper for further information
-   */
-  virtual void setModuloAndResourceConstraints();
-  /*!
-   * \brief fillSolutionStructure pass the solution of the modulo schedule
-   */
-  void fillSolutionStructure();
-  /*!
-   * set maxLatency based on user input or estimate as described in the moovac paper
-   */
-  void setMaxLatency();
-  /*!
-   * \brief mi contains all mi for i in L. (20) in paper
-   */
-  vector< vector<ScaLP::Variable> > mi;
-  /*!
-   * \brief regVector
-   */
-  vector<ScaLP::Variable> registers;
-  /*!
-   * \brief ri contains all ri for i in L. (18) in paper
-   */
-  vector<ScaLP::Variable> ri;
-  /*!
-   * \brief yi contains all yr for i in L. (19) in paper
-   */
-  vector<vector<ScaLP::Variable> > yi;
-  /*!
-   * \brief eps_container (21) in paper
-   */
-  vector<vector<vector<ScaLP::Variable> > > epsij;
-  /*!
-   * \brief mu_container (22) in paper
-   */
-  vector<vector<vector<ScaLP::Variable> > > muij;
-  /*!
-   * \brief tIndices
-   */
-  map<const Vertex*, unsigned int> tIndices;
-  /*!
-   * \brief rIndices
-   */
-  map<const Vertex*, unsigned int> rIndices;
-  /*!
-   * \brief registerIndices
-   */
-  map<const Edge*, unsigned int> registerIndices;
-  /*!
-   * \brief ti contains the time variables of all operations in O
-   */
-  vector<ScaLP::Variable> ti;
-  /*!
-   * \brief SLMax
-   */
-  unsigned int SLMax;
-  /*!
-   * \brief lower bound for the schedule length (depends on the II)
-   */
-	int maxLatency = -1;
-	/*!
-	 * \brief upper bound for the schedule length (depends on the II)
-	 */
-	int minLatency = -1;
-  /*!
-   * \brief whether a latency estimation should be used to reduce the search space for the ILP solver
-   */
-	bool useLatencyEstimation = true;
-	/*!
-	 * \brief counter for ILP variables
-	 */
-	int variableCounter;
-	/*!
-	 * \brief counter for ILP constraints
-	 */
-	int constraintCounter;
-};
+    /*!
+     * Mainly for debugging.
+     * @return Name of the scheduler
+     */
+    string getName () override { return "MOOVAC"; }
+    /*!
+     * Function to set the solver Timeout
+     * @param seconds
+     */
+    void setSolverTimeout(double timeoutInSeconds) override;
+    /*!
+     * \brief getNoOfImplementedRegisters return -1 if no schedule was determined
+     * \return
+     */
+    virtual int getNoOfImplementedRegisters();
+    /*!
+     * \brief getNoOfMuxInputs
+     * \return
+     */
+    virtual int getNoOfMuxInputs();
+    /*!
+     * \brief getBindings getBdings based on solution of the ilp solver
+     * non limited resources are assumed to be bound on pairwise different hardware units
+     * \return
+     */
+    virtual std::map<const Vertex*,int> getBindings();
+    /*!
+     * \brief getLifeTimes considering II
+     * \return
+     */
+    virtual std::map<Edge*,int> getLifeTimes();
+
+  protected:
+    /*!
+     * \brief Schedule Iteration for one II.
+     */
+    void scheduleIteration() override;
+    /*!
+     * Initialize stuff before II-Search-Loop starts.
+     */
+    void scheduleInit() override;
+    /*!
+     * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
+     */
+    virtual void constructProblem();
+    /*!
+     * \brief setObjective currently asap
+     */
+    virtual void setObjective();
+    /*!
+     * \brief setGeneralConstraints read the paper for further information
+     */
+    virtual void setGeneralConstraints();
+    /*!
+     * \brief setSourceVerticesToZero pin all source vertices(inputs, constants,...) to starttime 0
+     */
+    void setSourceVerticesToZero();
+    /*!
+     * \brief resetContainer
+     */
+    virtual void resetContainer();
+    /*!
+     * \brief setUpSolverSettings
+     */
+    void setUpSolverSettings();
+    /*!
+     * \brief setTVectorVariables fill the container for ILP variables of vertex starting times
+     */
+    void setVectorVariables();
+    /*!
+     * \brief fillRegVector not used in moovac
+     */
+    virtual void fillRegVector(){ }
+    /*!
+     * \brief setModuloAndResourceConstraints read the paper for further information
+     */
+    virtual void setModuloAndResourceConstraints();
+    /*!
+     * \brief fillSolutionStructure pass the solution of the modulo schedule
+     */
+    void fillSolutionStructure();
+    /*!
+     * set maxLatency based on user input or estimate as described in the moovac paper
+     */
+    void setMaxLatency();
+    /*!
+     * \brief mi contains all mi for i in L. (20) in paper
+     */
+    vector< vector<ScaLP::Variable> > mi;
+    /*!
+     * \brief regVector
+     */
+    vector<ScaLP::Variable> registers;
+    /*!
+     * \brief ri contains all ri for i in L. (18) in paper
+     */
+    vector<ScaLP::Variable> ri;
+    /*!
+     * \brief yi contains all yr for i in L. (19) in paper
+     */
+    vector<vector<ScaLP::Variable> > yi;
+    /*!
+     * \brief eps_container (21) in paper
+     */
+    vector<vector<vector<ScaLP::Variable> > > epsij;
+    /*!
+     * \brief mu_container (22) in paper
+     */
+    vector<vector<vector<ScaLP::Variable> > > muij;
+    /*!
+     * \brief tIndices
+     */
+    map<const Vertex*, unsigned int> tIndices;
+    /*!
+     * \brief rIndices
+     */
+    map<const Vertex*, unsigned int> rIndices;
+    /*!
+     * \brief registerIndices
+     */
+    map<const Edge*, unsigned int> registerIndices;
+    /*!
+     * \brief ti contains the time variables of all operations in O
+     */
+    vector<ScaLP::Variable> ti;
+    /*!
+     * \brief SLMax
+     */
+    unsigned int SLMax;
+  };
 }

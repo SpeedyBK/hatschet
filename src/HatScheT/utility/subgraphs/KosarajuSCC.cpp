@@ -81,9 +81,6 @@ namespace HatScheT {
 
   }
 
-
-
-
   vector <SCC*> KosarajuSCC::getSCCs () {
     //Generating a map which holds the information if a vertex is visited and mark all Vertices as unvisited.
     for (auto v:this->g->Vertices()) {
@@ -143,8 +140,6 @@ namespace HatScheT {
 
     return sccVector;
   }
-
-
 
   Vertex *KosarajuSCC::getOriginalVertex(Vertex *V) {
 

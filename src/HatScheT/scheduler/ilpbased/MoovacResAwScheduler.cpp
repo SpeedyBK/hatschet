@@ -16,6 +16,8 @@
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    -- 20.10.2022 Benjamin Lagershausen-Keßler: Integrated "IterativeModuloSchedulerLayer" Class
 */
 
 #include "MoovacResAwScheduler.h"
@@ -136,117 +138,7 @@ void MoovacResAwScheduler::storeScheduleAndAllocation(){
   if(finished == true) this->DSEfinshed = true;
 }
 
-void MoovacResAwScheduler::schedule()
-{
-  this->totalTime = 0;
-  this->II = this->minII;
-  this->timeouts = 0;
 
-  bool timeoutOccured=false;
-
-  //set maxRuns, e.g., maxII - minII, iff value if not -1
-  if(this->maxRuns > 0){
-    int runs = this->maxII - this->minII;
-    if(runs > this->maxRuns) this->maxII = this->minII + this->maxRuns;
-    std::cout << "MoovacResAwScheduler: maxII changed due to maxRuns value set by user!" << endl;
-    std::cout << "MoovacResAwScheduler: min/maxII = " << minII << " " << maxII << std::endl;
-  }
-
-  cout << "Starting RAMS ILP-based modulo scheduling! minII is " << this->minII << ", maxII is " << this->maxII << endl;
-  cout << "resMinII is " << this->getResMinII() << ", recMinII is " << this->getRecMinII() << endl;
-  if(this->maxLatencyConstraint!=-1) cout << "MaxLatency is " << this->maxLatencyConstraint << endl;
-  else cout << "Unlimited MaxLatency" << endl;
-  cout << "Timeout: " << this->solverTimeout << " (sec) using " << this->threads << " threads." << endl;
-
-  while(this->II <= this->maxII) {
-    cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
-    this->optimalResult = false;
-    this->resetContainer();
-    this->setUpSolverSettings();
-    this->constructProblem();
-
-    if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
-
-    //timestamp
-    this->begin = clock();
-    //solve
-    stat = this->solver->solve();
-    //timestamp
-    this->end = clock();
-
-    //log time
-    if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
-
-    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
-    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) {
-      this->timeouts++;
-      timeoutOccured = true;
-    }
-    if(stat == ScaLP::status::OPTIMAL && timeoutOccured == false) {
-      this->optimalResult = true;
-    }
-
-    if(this->fullDSE == true) cout << "Finished RAMS ILP-based modulo scheduling with II " << this->II << " status " << stat << endl;
-
-    if(scheduleFound == false) (this->II)++;
-    if(scheduleFound == true and this->fullDSE == false) break;
-    if(scheduleFound == true and this->fullDSE == true){
-      //store info about the result quality when DSE is active
-      if(this->fullDSE == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
-
-      this->r = this->solver->getResult();
-
-      //display resource allocation here during developement
-      for(auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it){
-        Resource* r = *it;
-        if(r->isUnlimited()== true) continue;
-        int allocation = this->r.values[this->aks[this->aksIndices[r]]];
-        cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
-        r->setLimit(allocation);
-      }
-
-      //store determined schedule and allocation for this II
-      //continue design space exploration in resource aware modulo scheduling afterwards
-      this->storeScheduleAndAllocation();
-
-      //continue with next II iff there are still resource to be saved
-      // (at least one resource got more than 1 unit allocated in hardware)
-      if(this->DSEfinshed == true) break;
-      else (this->II)++;
-    }
-  }
-
-  if(this->scheduleFound == true) {
-    this->r = this->solver->getResult();
-    this->fillSolutionStructure();
-
-    //display resource allocation here during developement
-    if(this->fullDSE == false) {
-      for (auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
-        Resource *r = *it;
-        if (r->isUnlimited() == true) continue;
-        int allocation = this->r.values[this->aks[this->aksIndices[r]]];
-        cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
-        r->setLimit(allocation);
-      }
-    }
-
-    if(this->optimalResult == true) cout << "Found optimal solution for II: " << this->II << endl;
-    else cout << "Found feasible solution for II: " << this->II << endl;
-  }
-  if(this->scheduleFound == false && this->fullDSE == false){
-    cout << "Passed maxII boundary! No modulo schedule identified by RAMS scheduler without DSE!" << endl;
-    this->II = -1;
-  }
-  if(this->scheduleFound == false && this->fullDSE == true){
-    if(this->dseResultOptimal.size() > 0) this->scheduleFound = true;
-    else{
-      cout << "Passed maxII boundary! No modulo schedule identified by RAMS scheduler with DSE!" << endl;
-      this->II = -1;
-    }
-  }
-}
 
 void MoovacResAwScheduler::constructProblem()
 {
@@ -596,4 +488,77 @@ void MoovacResAwScheduler::getAk() {
   }
 }
 
+  void MoovacResAwScheduler::scheduleIteration() {
+    cout << "Starting RAMS ILP-based modulo scheduling with II " << this->II << endl;
+    this->optimalResult = false;
+    this->resetContainer();
+    this->setUpSolverSettings();
+    this->constructProblem();
+    this->setSolverTimeout(solverTimeout);
+
+    if(this->writeLPFile == true)
+    {
+      this->solver->writeLP(to_string(this->II));
+    }
+
+    //timestamp
+    startTimeTracking();
+    //solve
+    stat = this->solver->solve();
+    //timestamp
+    endTimeTracking();
+
+    if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE)
+    {
+      this->scheduleFound = true;
+    }
+    if(stat == ScaLP::status::TIMEOUT_INFEASIBLE)
+    {
+      this->timeouts++;
+    }
+    if(stat == ScaLP::status::OPTIMAL && timeouts == 0)
+    {
+      this->optimalResult = true;
+    }
+
+    if(this->fullDSE == true)
+    {
+      cout << "Finished RAMS ILP-based modulo scheduling with II " << this->II << " status " << stat << endl;
+    }
+
+    if(scheduleFound == false)
+    {
+      (this->II)++;
+    }
+
+    if(scheduleFound == true and this->fullDSE == false)
+    {
+      return;
+    }
+    if(scheduleFound == true and this->fullDSE == true) {
+      //store info about the result quality when DSE is active
+      if (this->fullDSE == true) this->dseResultOptimal.insert(make_pair(this->II, this->optimalResult));
+
+      this->r = this->solver->getResult();
+
+      //display resource allocation here during developement
+      for (auto it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
+        Resource *r = *it;
+        if (r->isUnlimited() == true) continue;
+        int allocation = this->r.values[this->aks[this->aksIndices[r]]];
+        cout << "Allocated units for resource: " << r->getName() << ": " << allocation << endl;
+        r->setLimit(allocation);
+      }
+
+      //store determined schedule and allocation for this II
+      //continue design space exploration in resource aware modulo scheduling afterwards
+      this->storeScheduleAndAllocation();
+
+      //continue with next II iff there are still resource to be saved
+      // (at least one resource got more than 1 unit allocated in hardware)
+      if (this->DSEfinshed == true) {
+        return;
+      }
+    }
+  }
 }

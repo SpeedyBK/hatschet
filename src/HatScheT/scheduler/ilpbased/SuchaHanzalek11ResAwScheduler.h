@@ -38,15 +38,26 @@ class SuchaHanzalek11ResAwScheduler :  public SuchaHanzalek11Scheduler
 {
 public:
     SuchaHanzalek11ResAwScheduler(Graph& g, ResourceModel &resourceModel, Target &target, std::list<std::string> solverWishlist);
+
   /*!
-   * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
+   * Mainly for debugging.
+   * @return Name of the scheduler
    */
-  virtual void schedule();
+  string getName() override { return "SuchaHanzalek11ResAw"; }
 
 protected:
   virtual void constructDecisionVariables(int candII);
   virtual void constructResourceConstraints(int candII);
   virtual void setObjective();
+
+  /*!
+   * Initialize stuff before II-Search-Loop starts.
+   */
+  void scheduleInit() override;
+  /*!
+   * \brief Schedule Iteration for one II.
+   */
+  void scheduleIteration() override;
 
   void compute_m_max();
 

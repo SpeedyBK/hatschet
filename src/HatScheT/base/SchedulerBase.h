@@ -1,6 +1,7 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
     Author: Martin Kumm, Patrick Sittel ({kumm, sittel}@uni-kassel.de)
+    Author: Benjamin Lagershausen-Keßler (benjaminkessler@student.uni-kassel.de)
     Author: Julian Oppermann (oppermann@esa.tu-darmstadt.de)
 
     Copyright (C) 2018
@@ -21,10 +22,11 @@
 
 #pragma once
 
+#include <map>
+#include <chrono>
 #include <HatScheT/Graph.h>
 #include <HatScheT/Vertex.h>
 #include <HatScheT/Edge.h>
-#include <map>
 #include <HatScheT/ResourceModel.h>
 
 namespace HatScheT
@@ -39,6 +41,11 @@ class SchedulerBase
 public:
   SchedulerBase(Graph& g,ResourceModel &resourceModel);
   virtual ~SchedulerBase();
+  /*!
+   * Mainly for debugging.
+   * @return Name of the scheduler
+   */
+  virtual string getName() { return "Unnamed Scheduler"; }
   /*!
    * \brief schedule main method for all schedulers, not implemented in base class
    */
@@ -63,8 +70,12 @@ public:
    * \brief setMaxLatencyConstraint manage the allowed maximum latency of the schedule
    * \param l
    */
-  void setMaxLatencyConstraint(int l){this->maxLatencyConstraint =l;}
-  int getMaxLatencyConstraint(){return this->maxLatencyConstraint;}
+  void setMaxLatencyConstraint(int l) { this->maxLatencyConstraint =l; }
+  /*!
+   * Getter for maxLatencyConstraint
+   * @return maxLatencyConstraint
+   */
+  int getMaxLatencyConstraint() const { return this->maxLatencyConstraint; }
   /*!
    * \brief getBindings calculate a naive binding in base class
    * should be overloaded by scheduler that determine specific bindings
@@ -100,27 +111,144 @@ public:
  * \brief getScheduleFound
  * \return
  */
-  bool getScheduleFound(){return this->scheduleFound;}
+  bool getScheduleFound() const { return this->scheduleFound; }
   /*!
    * use this flag to control the mux optimal binding algorithm
    * NOTE: EXPERIMENTAL
    * @param b
    */
-  void setUseOptBinding(bool b){
-      this->useOptimalBinding = b;
-  }
-  bool getUseOptBinding(){
-      return this->useOptimalBinding;
-  }
+  void setUseOptBinding(bool b){ this->useOptimalBinding = b; }
   /*!
- * enable/disable debug couts
- * @param q
- */
+   * Getter for useOptimalBinding
+   * @return useOptimalBinding
+   */
+  bool getUseOptBinding() const { return this->useOptimalBinding; }
+  /*!
+   * enable/disable debug couts
+   * @param q
+   */
   void setQuiet(bool q) { this->quiet = q; }
-protected:
+
+  /*!-----------------------------------------------------------
+   *  Timetracking in HatScheT:
+   *  Based on C++ Chrono Library.
+   *
+   *  It is designed to easily get time measurements.
+   *
+   *  There are 4 Variables for timetracking:
+   *  - solverTimeout: The time a scheduler has to solve one
+   *  specific II.
+   *  - solvingTimePerIteration: The time between calling startTimeTracking()
+   *  and calling endTimeTracking().
+   *  - solvingTimeTotal: Inteded for iterative use. Sums up
+   *  solvingTimePerIteration after each iteration.
+   *  - timeRemaining: Basically timeBugdet - solvingTimePerIteration. The time
+   *  which is left after a timetracked function. Within one II-Iteration.
+   *
+   *  Functions public:
+   *  - setSolverTimeout(): Takes a double value in seconds and
+   *  sets solverTimeout accordingly. If not called, solverTimeout
+   *  will be set by the constructor to INT32_MAX (about 68 Years ^^ ).
+   *  !!!
+   *  If you are using ILP-, SAT-, SMT- or other solvers, this function
+   *  has to be overwritten.
+   *  !!!
+   *  - getSolvingTimePerIteration() and getTimeRemaining():
+   *  Just getters for the variables, from outside a Scheduler
+   *  only the last II-Iteration is accessible.
+   *  - getSolverTimeout() getter for the solverTimeout-Variable.
+   *
+   *  Functions protected:
+   *  - startTimeTracking(): Starts timetracking.
+   *  - endTimeTracking(): Ends timetracking and calculates
+   *  solvingTimePerIteration and timeRemaining.
+   *  - updateSolvingTimeTotal(): For iterative use, it sums up
+   *  the solving times measured in each iteration. And is
+   *  used in the LayerClasses.
+   *
+   *  Benjamin Lagershausen-Keßler
+   ----------------------------------------------------------- */
   /*!
- * no couts if this is true
- */
+   * Sets the amount of time which is available for each iteration.
+   *  !!!
+   *  If you are using ILP-, SAT-, SMT- or other solvers, this function
+   *  has to be overwritten by your Scheduler.
+   *  !!!
+   * Default is INT32_MAX.
+   * @param seconds
+   */
+  virtual void setSolverTimeout (double seconds);
+  /*!
+   * Getter for the solverTimeout Variable.
+   * @return
+   */
+  double getSolverTimeout() const { return this->solverTimeout; }
+  /*!
+   * Getter for solvingTimePerIteration, look above.
+   * From outside of the Scheduler only accessible for the last Iteration.
+   * @return solvingTimePerIteration if set by the scheduler, -1 otherwise.
+   */
+  double getSolvingTimePerIteration() const { return this->solvingTimePerIteration; }
+  /*!
+   * Getter for solvingTimeTotal, look above.
+   * @return solvingTimeTotal if set by the scheduler, 0 otherwise.
+   */
+  double getSolvingTimeTotal() const { return this->solvingTimeTotal; }
+  /*!
+   * Getter for timeRemaining, look above
+   * From outside of the Scheduler only accessable for the last Iteration.
+   * @return timeRemaining if set by the scheduler, -1 otherwise.
+   */
+  double getTimeRemaining () const { return this->timeRemaining; }
+
+protected:
+  /*!--------------
+   * Timetracking:
+   *--------------*/
+  /*!
+   * Starts the time messurement, should be called directly before solver->solve() function.
+   */
+  virtual void startTimeTracking();
+  /*!
+   * End of time messurement, should be called directly after solver->solve() function.
+   * It calculates the results and stores them in "timeRemaining" and "solvingTimePerIteration".
+   */
+  virtual void endTimeTracking();
+  /*!
+   * For iterative use, it sums up the solving times measured in each iteration.
+   */
+  virtual void updateSolvingTimeTotal();
+  /*!
+   * Starttime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point start_t;
+  /*!
+   * Endtime of Timemessurement
+   */
+  std::chrono::high_resolution_clock::time_point end_t;
+  /*!
+   * \brief Time available for an iteration in seconds
+   */
+  double solverTimeout;
+  /*!
+   * Time spent in solvers
+   */
+  double solvingTimePerIteration;
+  /*!
+   * Total Time spent in solvers over multiple Iterations
+   */
+  double solvingTimeTotal;
+  /*!
+   * solverTimeout - solvingTimePerIteration
+   */
+  double timeRemaining;
+  /*!-----------------
+   * End Timetracking
+   *-----------------*/
+
+  /*!
+   * no couts if this is true
+   */
   bool quiet;
   /*!
    * \brief resourceModel
@@ -147,12 +275,13 @@ protected:
    */
   std::map<const Vertex*,int> binding;
   /*!
- * \brief scheduleFound
- */
+   * \brief scheduleFound
+   */
   bool scheduleFound;
   /*!
    * \brief use this flag to determine optimal binding using ILP
    */
   bool useOptimalBinding;
+
 };
 }

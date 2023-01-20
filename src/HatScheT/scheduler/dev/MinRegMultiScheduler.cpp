@@ -10,20 +10,13 @@
 namespace HatScheT {
 
 	MinRegMultiScheduler::MinRegMultiScheduler(Graph &g, ResourceModel &resourceModel,
-		std::list<std::string> solverWishlist) : SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist),
+		std::list<std::string> solverWishlist) : IterativeModuloSchedulerLayer(g, resourceModel), ILPSchedulerBase(solverWishlist),
 		numLifetimeRegs(-1), bigM(0.0), multipleStartTimesAllowed(true), candII(-1), ilpConstraintCounter(0), ilpVariableCounter(0) {
-		this->II = -1;
-		this->timeouts = 0;
-		this->startTimes.clear();
-		this->scheduleFound = false;
 		this->optimalResult = false;
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
 	}
 
-	void MinRegMultiScheduler::schedule() {
-		this->initScheduler();
+	void MinRegMultiScheduler::scheduleOLD() {
+/*		this->initScheduler();
 		this->timeouts = 0;
 		this->solvingTime = 0.0;
 		for (this->candII = (int)this->minII; this->candII <= (int)this->maxII; ++this->candII) {
@@ -64,7 +57,7 @@ namespace HatScheT {
 			this->fillSolutionStructure();
 			this->printScheduleAndBinding();
 			break;
-		}
+		}*/
 	}
 
 	void MinRegMultiScheduler::createScaLPVariables() {
@@ -741,4 +734,58 @@ namespace HatScheT {
 			}
 		}
 	}
+
+  void MinRegMultiScheduler::scheduleInit() {
+      this->initScheduler();
+      this->timeouts = 0;
+      this->solvingTimeTotal = 0.0;
+  }
+
+  void MinRegMultiScheduler::scheduleIteration() {
+      if (!this->quiet) {
+          std::cout << "MinRegMultiScheduler: candidate II=" << this->candII << std::endl;
+      }
+      this->resetContainer();
+      this->setUpSolver();
+      this->createScaLPVariables();
+      this->constructProblem();
+      this->setObjective();
+      if (!this->quiet) {
+          std::cout << "MinRegMultiScheduler: start scheduling with '" << this->ilpVariableCounter
+                    << "' variables and '"
+                    << this->ilpConstraintCounter << "' constraints" << std::endl;
+          std::cout << "MinRegMultiScheduler: start scheduling with ILP formulation:" << std::endl;
+          std::cout << this->solver->showLP() << std::endl;
+      }
+      startTimeTracking();
+      this->stat = this->solver->solve();
+      endTimeTracking();
+      if (!this->quiet) {
+          std::cout << "MinRegMultiScheduler: finished solving with status '" << ScaLP::showStatus(this->stat)
+                    << "' after " << solvingTimePerIteration << " sec (total: " << this->solvingTimeTotal << " sec)" << std::endl;
+      }
+      if(this->stat == ScaLP::status::TIMEOUT_INFEASIBLE or this->stat == ScaLP::status::INFEASIBLE) {
+          this->timeouts++;
+      }
+      this->scheduleFound = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE | stat == ScaLP::status::TIMEOUT_FEASIBLE;
+      this->optimalResult = stat == ScaLP::status::OPTIMAL;
+      if (not this->scheduleFound) {
+          // schedule attempt failed :(
+          // let's try again for the next II :)
+          return;
+      }
+      this->II = this->candII;
+      this->fillSolutionStructure();
+      this->printScheduleAndBinding();
+  }
+
+  void MinRegMultiScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
 }

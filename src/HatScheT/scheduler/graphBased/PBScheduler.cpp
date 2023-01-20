@@ -39,7 +39,7 @@ namespace HatScheT {
 	}
 
 	void PBScheduler::schedule() {
-		this->solvingTime = 0.0;
+		//this->solvingTime = 0.0;
 		if(!this->quiet){
 			std::cout << "PBS: min/maxII = " << this->minII << " " << this->maxII << ", (minResII/minRecII " << this->resMinII << " / " << this->recMinII << ")" << std::endl;
 			std::cout << "PBS: solver timeout = " << this->solverTimeout << " (sec)" << endl;
@@ -94,14 +94,15 @@ namespace HatScheT {
 			if(!this->scheduleFound) if(this->quiet==false) cout << "  II=" << candII << " : " << this->stat << endl;
 		}
 		if(scheduleFound == false) this->II = -1;
-		if(this->quiet==false) std::cout << "PBS: solving time was " << this->solvingTime << " seconds" << std::endl;
+		if(this->quiet==false) std::cout << "PBS: solving time was " << this->solvingTimePerIteration << " seconds" << std::endl;
 	}
 
 	void PBScheduler::scheduleAttempt(int candidateII) {
 		// set to false at timeout
 		this->scheduleFound = true;
 		// time management
-		this->begin = clock();
+		//this->begin = clock();
+        startTimeTracking();
 
 		// WHAT TO DO:
 		// create subgraphs from SCCs
@@ -133,8 +134,8 @@ namespace HatScheT {
 		this->scheduleSubgraphs(candidateII);
 		if (!this->scheduleFound) {
 			// timeout :(
-			this->end = clock();
-			this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
+//			this->end = clock();
+//			this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
 			this->optimalResult = false; // I would be shocked if we ever found an optimum
 			this->II = -1;
 		}
@@ -149,8 +150,9 @@ namespace HatScheT {
 		//   this->optimalResult
 		//   this->startTimes
 		//   this->solvingTime
-		this->end = clock();
-		this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
+//		this->end = clock();
+//		this->solvingTime += ((double) this->end - this->begin) / ((double) CLOCKS_PER_SEC);
+		endTimeTracking();
 		this->optimalResult = false; // I would be shocked if we ever found an optimum
 		this->II = candidateII;
 	}
@@ -351,7 +353,7 @@ namespace HatScheT {
 
 	void PBScheduler::scheduleSubgraphs(int candidateII) {
 		for (auto subgraph : this->subgraphs) {
-			auto elapsedTime = ((double)(clock() - this->begin)) / CLOCKS_PER_SEC;
+            auto elapsedTime = (double)std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_t).count() / 1000;
 			if (!this->quiet) {
 				std::cout << "start scheduling " << subgraph->getName() << " - elapsed time so far: " << elapsedTime << " sec"
 					<< std::endl;
@@ -509,5 +511,15 @@ namespace HatScheT {
 		this->resourceModels.clear();
 		this->subgraphs.clear();
 	}
+
+  void PBScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
+
 }
 

@@ -30,51 +30,11 @@ namespace HatScheT
 {
 
 SuchaHanzalek11Scheduler::SuchaHanzalek11Scheduler(Graph &g, ResourceModel &resourceModel, std::list<std::string>  solverWishlist, int II)
-	: SchedulerBase(g, resourceModel), ILPSchedulerBase(solverWishlist) {
-	this->II = -1;
-	scheduleFound = false;
-	optimalResult = true;
-	if (II <= 0) {
-		computeMinII(&g, &resourceModel);
-		this->minII = ceil(this->minII);
-		computeMaxII(&g, &resourceModel);
-	}
-	else {
-		this->minII = II;
-		this->maxII = II;
-		this->resMinII = II;
-		this->recMinII = II;
-	}
-}
+	: IterativeModuloSchedulerLayer(g, resourceModel, II), ILPSchedulerBase(solverWishlist) {
 
-void SuchaHanzalek11Scheduler::schedule()
-{
-  // reset previous solutions
-	startTimes.clear();
+    optimalResult = true;
+    this->feasible = false;
 
-  std::cout << "SH11: min/maxII = " << minII << " " << maxII << std::endl;
-
-  if (minII > maxII)
-    throw HatScheT::Exception("Inconsistent II bounds");
-
-  setUpSolverSettings();
-
-  bool feasible = false;
-  for (int candII = minII; candII <= maxII; ++candII) {
-    bool proven = false;
-    scheduleAttempt(candII, feasible, proven);
-    scheduleFound |= feasible;
-    optimalResult &= proven;
-    if (feasible) {
-      II = candII;
-      auto solution = solver->getResult().values;
-      for (auto *i : g.Vertices())
-        startTimes[i] = (int) std::lround(solution.find(s[i])->second);
-
-      std::cout << "SH11: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II << std::endl;
-      break;
-    }
-  }
 }
 
 void SuchaHanzalek11Scheduler::setUpSolverSettings()
@@ -94,15 +54,11 @@ void SuchaHanzalek11Scheduler::scheduleAttempt(int candII, bool &feasible, bool 
   constructConstraints(candII);
 
   //timestamp
-  this->begin = clock();
+  startTimeTracking();
   //solve
-  stat     = solver->solve();
+  stat = solver->solve();
   //timestamp
-  this->end = clock();
-
-  //log time
-  if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-  this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+  endTimeTracking();
 
   feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
   proven   = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::INFEASIBLE;
@@ -141,20 +97,23 @@ void SuchaHanzalek11Scheduler::constructDecisionVariables(int candII)
   }
 }
 
-void SuchaHanzalek11Scheduler::setObjective()
-{
-  // currently only one objective: minimise the schedule length
-  ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
-  solver->addConstraint(ss >= 0);
-  if (maxLatencyConstraint >= 0)
-    solver->addConstraint(ss <= maxLatencyConstraint);
+  void SuchaHanzalek11Scheduler::setObjective() {
+      // currently only one objective: minimise the schedule length
+      ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
+      solver->addConstraint(ss >= 0);
+      if (maxLatencyConstraint >= 0)
+          solver->addConstraint(ss <= maxLatencyConstraint);
 
-  for (auto *i : g.Vertices())
-    if (g.isSinkVertex(i))
-      solver->addConstraint(ss - s[i] >= resourceModel.getVertexLatency(i));
+      for (auto *i : g.Vertices())
+          if (g.isSinkVertex(i))
+              solver->addConstraint(ss - s[i] >= resourceModel.getVertexLatency(i));
 
-  solver->setObjective(ScaLP::minimize(ss));
-}
+      if (!disableSecObj) {
+          this->solver->setObjective(ScaLP::minimize(ss));
+      } else {
+          cout << "SuchaHanzalek11Scheduler: Latencyminimize objective Disabled!" << endl;
+      }
+  }
 
 void SuchaHanzalek11Scheduler::constructConstraints(int candII)
 {
@@ -240,4 +199,52 @@ void SuchaHanzalek11Scheduler::constructResourceConstraints(int candII)
   }
 }
 
+  void SuchaHanzalek11Scheduler::scheduleInit() {
+      // reset previous solutions
+      startTimes.clear();
+      this->feasible = false;
+
+      if (!this->quiet)
+      {
+          cout << "Scheduling with " << this->getName() <<"!" << endl;
+          std::cout << "SH11: min/maxII = " << minII << " " << maxII << std::endl;
+      }
+
+      if (minII > maxII)
+      {
+          throw HatScheT::Exception("Inconsistent II bounds");
+      }
+
+      setUpSolverSettings();
+  }
+
+  void SuchaHanzalek11Scheduler::scheduleIteration() {
+      bool proven = false;
+      scheduleAttempt((int)II, this->feasible, proven);
+      scheduleFound |= feasible;
+      optimalResult &= proven;
+      if (feasible)
+      {
+          auto solution = solver->getResult().values;
+          for (auto *i : g.Vertices())
+          {
+              startTimes[i] = (int) std::lround(solution.find(s[i])->second);
+          }
+          if (!this->quiet)
+          {
+              std::cout << "SH11: found " << (optimalResult ? "optimal" : "feasible") << " solution with II=" << II
+                        << std::endl;
+          }
+          return;
+      }
+  }
+
+  void SuchaHanzalek11Scheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
+  }
 }

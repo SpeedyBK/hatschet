@@ -431,16 +431,23 @@ void RationalIIScheduler::fillTMaxtrix()
     //solve the current problem
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->samples) + to_string(this->modulo) + ".lp");
 
+//    //timestamp
+//    this->begin = clock();
+//    //solve
+//    stat = this->solver->solve();
+//    //timestamp
+//    this->end = clock();
+//
+//    //log time
+//    if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
     //timestamp
-    this->begin = clock();
+    startTimeTracking();
     //solve
     stat = this->solver->solve();
     //timestamp
-    this->end = clock();
-
-    //log time
-    if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-    this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+    endTimeTracking();
 
     if(this->quiet==false) cout << "Finished solving: " << stat << endl;
 
@@ -478,6 +485,15 @@ void RationalIIScheduler::fillTMaxtrix()
       this->scheduleFound = false;
       this->tpBuffer = (double)this->modulo / (double)this->samples;
     }
+  }
+
+  void RationalIIScheduler::setSolverTimeout(double timeoutInSeconds) {
+      this->solverTimeout = timeoutInSeconds;
+      solver->timeout = (long)timeoutInSeconds;
+      if (!this->quiet)
+      {
+          cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+      }
   }
 
 }

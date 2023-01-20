@@ -41,7 +41,7 @@ namespace HatScheT {
 				std::cout << "SATCombinedScheduler: candidate II=" << this->candidateII << std::endl;
 			}
 			// prove II infeasible or compute valid schedule with SCC-based scheduler
-			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII, this->backendSchedulerType==BACKEND_SATBIN);
+			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII);
 			s1.setSolverTimeout(this->solverTimeout);
 			s1.setQuiet(this->quiet);
 			s1.setMaxLatencyConstraint(this->maxLatencyConstraint);

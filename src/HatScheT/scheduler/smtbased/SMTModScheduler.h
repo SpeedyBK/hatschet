@@ -2,6 +2,8 @@
 // Created by bkessler on 5/7/22.
 //
 
+//ToDo Should be removed since it is super slow.
+
 #ifndef HATSCHET_SMTMODSCHEDULER_H
 #define HATSCHET_SMTMODSCHEDULER_H
 
@@ -19,6 +21,9 @@
 
 namespace HatScheT {
 
+  /*!
+   * Used for testing different Encodings. //ToDo: Remove this.
+   */
   enum class encodingMode {ite, pbeq, somethingElse};
 
   class SMTModScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
@@ -30,22 +35,20 @@ namespace HatScheT {
      * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
      */
     ~SMTModScheduler() override = default;
-
+    /*!
+     * Main scheduling function, where scheduleinit and scheduleitteration is implemented.
+     */
     void schedule() override;
 
-    void set_encoding_mode(encodingMode e) { this->encode = e; }
-
-    void set_mode(int i) { this->mode = i; }
-
   protected:
-
+    /*!
+     * Builds B-Variables and T-Variables and stores them in a suitable Container.
+     */
     void build_Data_Structure();
-
     /*!
      * Problem Context, needed for Z3-Solver;
      */
     z3::context c;
-
     /* ----------------------------------------- *
      *  t_variables and dependency Constraints   *
      * ----------------------------------------- */
@@ -75,7 +78,6 @@ namespace HatScheT {
      * II and push those constraints back in the Solver.
      */
     pair <deque<z3::expr>, deque<z3::expr>> build_Dependency_Constraints();
-
     /* ----------------------------------------- *
      *  bVariables and MRT                      *
      * ----------------------------------------- */
@@ -132,39 +134,60 @@ namespace HatScheT {
      * Getter for B_Variables, by Vertex, Resource and Moduloslot.
      */
     b_variable* get_b_var(Vertex* v, const Resource *r, int slot);
-
-    static void add_Constraints_to_solver(z3::solver &s, deque<z3::expr, allocator<z3::expr>> &eVec);
-
-    void add_one_slot_constraints_to_solver(z3::solver &s);
-
-    void add_resource_limit_constraint_to_solver(z3::solver &s);
-
-    void add_linking_constraints_to_solver(z3::solver &s);
-
-    void create_and_add_latency_constraints(z3::solver &s);
-
-    void set_max_latency(z3::solver &s, int maxLat);
     /*!
-     * Print Methode.
+     * Adds simplifies constraints and adds them to solver.
+     * @param s A reference to Solver S
+     * @param eVec Vector with z3-Expressions which should be added to solver s.
      */
+    static void add_Constraints_to_solver(z3::solver &s, deque<z3::expr, allocator<z3::expr>> &eVec);
+    /*!
+     * Function to create Constraints, that prevent the solver from not adding operation to the schedule.
+     * @param s A reference to Solver S
+     */
+    void add_one_slot_constraints_to_solver(z3::solver &s);
+    /*!
+     * Creates Resource Limit Constraints and adds them to Solver S
+     * @param s A reference to Solver S
+     */
+    void add_resource_limit_constraint_to_solver(z3::solver &s);
+    /*!
+     * Creates the linking Constraints between B-Variables and T-Variables. After creating them, they are added to
+     * Solver S
+     * @param s A reference to Solver S
+     */
+    void add_linking_constraints_to_solver(z3::solver &s);
+    /*!
+     * Used to reduce Latency of a schedule. Takes the starttimes from a previosly determined schedule. Calculates the
+     * latency and adds a constraint to Solver, that the Latency for next iteration should be smaller.
+     * @param s A reference to Solver S
+     */
+    void create_and_add_latency_constraints(z3::solver &s);
+    /*!
+     * Adds a Max Latency to solver, which could be given by the user, or calculated otherweise. And prevents the solver
+     * from setting t-Variables to negative Values.
+     * @param s A reference to Solver S
+     */
+    void set_max_latency(z3::solver &s, int maxLat);
+    /*!-----------------*/
+    /*! Print Methodes. */
+    /*!-----------------*/
     void print_b_variables();
-
     void print_data_dependency_Constraints();
-
-    /* ----------------------------------------- *
-     *  I don't know                             *
-     * ----------------------------------------- */
     /*!
      * Mapping the index of an Expression in expr_vector to the corresponsing Edge.
      */
     map<int, Edge*> exprToEdgeMap;
-
+    /*!
+     * Stores the maxLatency Bound.
+     */
     int maxLatency;
-
+    /*!--------------------------------------------------------------------------------------------------*/
+    /*!
+     * For Testing different Encoding of constraints. /ToDo Remove this. Or probably the whole Scheduler since it is to slow...
+     */
     encodingMode encode;
-
     int mode;
-
+    /*!--------------------------------------------------------------------------------------------------*/
   };
 
 }

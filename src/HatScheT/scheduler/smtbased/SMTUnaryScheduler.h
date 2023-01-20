@@ -1,26 +1,92 @@
-#ifndef HATSCHET_SMTBINARYSCHEDULER_H
-#define HATSCHET_SMTBINARYSCHEDULER_H
+#ifndef HATSCHET_SMTUNARYSCHEDULER_H
+#define HATSCHET_SMTUNARYSCHEDULER_H
 
 #pragma once
 
 #ifdef USE_Z3
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 #include <utility>
 #include <deque>
 #include <queue>
 #include <cmath>
 
-#include <z3++.h>
-
 namespace HatScheT {
 
-  class SMTBinaryScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase{
+  class SMTUnaryScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase{
 
   public:
+    /*!
+     * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
+     * backend.
+     * @param g graph
+     * @param rm resource model
+     * @param II given II
+     */
+    SMTUnaryScheduler(Graph &g, ResourceModel &resourceModel, double II = -1);
+    /*!
+     * Obvious
+     */
+    string getName() override { return "SMTUnary-Scheduler"; }
+    /*!
+     * Sets a timeout for Z3 for each check.
+     * @param seconds
+     */
+    void setSolverTimeout(double seconds) override;
+    /*!
+     * Enum to set the method to find the best possible latency.
+     * linear: Incremental starting at min. latency. Checking after each increment.
+     * - Good for designs when known, that they can be scheduled with MinII and a Low Latency.
+     * binary: Binary search for the optimal latency
+     * - Needs less checks than the linear methode to show, that a design can not be scheduled for a given II
+     */
+    enum class latSearchMethod { LINEAR, BINARY };
+    /*!
+     * Function to set latency-search-method, default is linear.
+     * @param lsm (latency-search-method)
+     */
+    void setLatencySearchMethod(latSearchMethod lsm) { this->latSM = lsm; }
+    /*!
+     * Look below.
+     */
+    enum class schedulePreference {MOD_ASAP, MOD_ALAP};
+    /*!
+     * In case SDC finds valid ASAP- and ALAP-schedules the pefered schedule can be selected here.
+     */
+    void setSchedulePreference(schedulePreference pref) { this->sPref = pref; }
+    /*!
+     * for debugging to set a filename for debug files.
+     * @param s name
+     */
+    void set_design_name(string s){ this->designName = s; }
+    /*!
+     * Function to set a specific latency to search a schedule for.
+     * @param latency
+     */
+    void setTargetLatency(int latency) { this->targetLatency = latency; }
+    /*!
+     * For Debugging
+     */
+    map <Vertex*, pair<int, int>> printVertexStarttimes();
+    /*!
+     * Method to set how many threads z3 is allowed to use.
+     * @param t threads
+     */
+    void setThreads(int t) { if (t > 1) { setZ3Threads((uint32_t)t); } }
 
+  protected:
+    /*!
+     * \brief Schedule Iteration for one II.
+     */
+    void scheduleIteration() override;
+    /*!
+     * Initialize stuff before II-Search-Loop starts.
+     */
+    void scheduleInit() override;
+    /*!
+     * Comperator for priority queue in latency estimation
+     */
     struct SmtVertexIntCompLess {
       constexpr bool operator()(
           pair<Vertex*, int> const &a,
@@ -29,7 +95,9 @@ namespace HatScheT {
           return a.second < b.second;
       }
     };
-
+    /*!
+     * Comperator for priority queue in latency estimation
+     */
     struct SmtIntIntComp {
       bool operator()(
           pair<int, int> const &a,
@@ -38,43 +106,6 @@ namespace HatScheT {
           return a.second < b.second;
       }
     };
-
-    /*!
-     * @brief smtbased-Scheduler for scheduling in hatschet a graph (g), a resource model (rm). Uses Z3-Theorem-Prover as
-     * backend.
-     * @param g graph
-     * @param rm resource model
-     */
-    SMTBinaryScheduler(Graph &g, ResourceModel &resourceModel);
-
-    /*!
-     * \brief schedule main method that runs the algorithm and determines a schedule
-     */
-    void schedule() override;
-    /*!
-     * Sets a timeout for Z3 for each check.
-     * @param seconds
-     */
-
-    void setSolverTimeout(unsigned seconds);
-    /*!
-     * Enum to set the method to find the best possible latency.
-     * linear: Incremental starting at min. latency. Checking after each increment.
-     * - Good for designs when known, that they can be scheduled with MinII and a Low Latency.
-     * binary: Binary search for the optimal latency
-     * - Needs less checks than the linear methode to show, that a design can not be scheduled for a given II
-     */
-    enum class latSearchMethod { LINEAR, BINARY , REVERSE_LINEAR };
-    /*!
-     * Function to set latency-search-method, default is linear.
-     * @param lsm (latency-search-method)
-     */
-    void setLatencySearchMethod(latSearchMethod lsm) { this->latSM = lsm; }
-
-    enum class schedulePreference {MOD_ASAP, MOD_ALAP};
-    void setSchedulePreference(schedulePreference pref) { this->sPref = pref; }
-
-  protected:
 
     /*!------------------------
      * latency related stuff:
@@ -101,28 +132,77 @@ namespace HatScheT {
      */
     int maxLatency;
     /*!
-     * \brief Latency that has to be ckecked.
+     * \brief Latency which is set by the user.
+     */
+    int targetLatency;
+    /*!
+     * \brief Latency that has to be checked.
      */
     int candidateLatency;
     /*!
-     * \brief Determines the latest possible start-times for each vertex by creating an ALAP-Schedule without
+     * Will be set to true, if max. latency constraint is less then the calculated min. latency
+     */
+    bool latencyConstraintOutOfRange;
+    /*!
+     * \brief Determines the latest possible start-times for each vertex by creating an ALAP-schedule without
      * ressource-constraints.
      */
     void updateLatestStartTimes();
     /*!
-     * \brief Calculates the max latency by counting the vertices and multiplying with the max-vertex-latency.
+     * \brief Wrapper for latency-estimation.
      */
     void calcLatencyEstimation();
+    /*!
+     * Calculates the maximum latency estimation based on earliest and latest possible starttimes.
+     * @param currentII
+     */
     void calcMaxLatencyEstimation(int currentII);
+    /*!
+     * Calculates the minimum latency based on earliest and latest starttimes.
+     * @param aslap earliest and latest starttimes for each vertex
+     * @param currentII
+     * @return a boolean value with the information, if min latency-estimation is valid. If not, the wrapper-function
+     * will increase latency, and try again.
+     */
     bool calcMinLatencyEstimation(pair<map<Vertex*, int>, map<Vertex*, int>> &aslap, int currentII);
+    /*!
+     * Calculates earliest and latest starttimes for each vertex.
+     * @param g Graph
+     * @param resM ResourceModel
+     * @return 2 maps with earliest and latest starttimes.
+     */
     pair <map<Vertex*,int>, map<Vertex*, int>> calcAsapAndAlapModScheduleWithSdc(Graph &g, ResourceModel &resM);
-    schedulePreference sPref;
+    /*!
+     * Length of SDC ASAP Schedule
+     */
     int modAsapLength;
+    /*!
+     * Length of SDC ALAP Schedule
+     */
     int modAlapLength;
-    unordered_map<Resource*, bool> checkedResource;
+    /*!
+     * Value by which minimum latency has to be increased if it is to small
+     */
     int increment;
+    /*!
+     * Verifies if found SDC-Shedules are allready valid modulo schedules.
+     * @param g Graph
+     * @param rm Resource Model
+     * @param schedule found Schedule
+     * @param II current II
+     * @return boolean which says if schedule is valid.
+     */
     bool verifyModuloScheduleSMT(Graph &g, ResourceModel &rm, std::map<Vertex *, int> &schedule, int II);
-
+    /*!
+     * Used to switch between ASAP and ALAP SDC schedules in case they are valid.
+     */
+    schedulePreference sPref;
+    /*!
+     * Calculates the schedule-length of an SDC-schedule.
+     * @param vertexLatency mapping between Vertex in SDC-Graph and the latency of original vertex.
+     * @param newToOld mapping between Vertex in SDC-Graph and original vertex.
+     * @return length of SDC-schedule.
+     */
     int getScheduleLatency(unordered_map<Vertex*, int> &vertexLatency, unordered_map<Vertex*, Vertex*> &newToOld);
     /*!
      * \brief Creates the latency space vector.
@@ -135,9 +215,12 @@ namespace HatScheT {
      */
     int latBinarySearch(z3::check_result result);
     /*!
-     * Containts the information, if the binary search is called the first time.
+     * Contains the information, if the binary search is called the first time.
      */
     bool binarySearchInit;
+    /*!
+     * Indices for binary search.
+     */
     int leftIndex;
     int rightIndex;
     /*!
@@ -146,38 +229,14 @@ namespace HatScheT {
      * @return next candidate latency, or -1 if the search is completed.
      */
     int latLinearSearch(z3::check_result result);
-
+    /*!
+     * Contains the information, if the linear search is called the first time.
+     */
     bool linearSearchInit;
-
-    /*!------------------
-     * II related stuff
-     *------------------*/
-    /*!
-     * \brief Vector which contains all possible IIs, created by the constructor.
-     */
-    vector<int>iiSpace;
-    /*!
-     * \brief Index of an element in the II-Space. Used by II-linear-search.
-     */
-    int iiSpaceIndex;
-    /*!
-     * Linear (incremental) search for the optimal II.
-     * @param result from the previous z3 check. (SAT, UNSAT, UNKOWN)
-     * @return next candidate II, or -1 if the search is completed or search space is exhausted.
-     */
-    int iiLinearSearch(z3::check_result result);
-    /*!
-     * Containts the information, if the II-Search is called the first time.
-     */
-    bool iiSearchInit;
 
     /*!---------------------------
      * Stuff needed to set up z3.
      *---------------------------*/
-    /*!
-     * Problem context for z3
-     */
-    z3::context c;
     /*!
      * \brief Earliest possible start times for each operation, determined by an ASAP-Schedule without ressource constraints
      */
@@ -199,13 +258,13 @@ namespace HatScheT {
      * to the solver s.
      * @param reference to solver s
      */
-    void prohibitToEarlyStartsAndAdd(z3::solver &s);
+    void prohibitToEarlyStartsAndAdd();
     /*!
      * \brief Function prohibits start times which violate the ALAP-Schedule without ressource constraints and adds them
      * to the solver s.
      * @param reference to solver s
      */
-    void prohibitToLateStartsAndAdd(z3::solver &s);
+    void prohibitToLateStartsAndAdd();
     /*!
      * \brief z3 boolean expression for each pair of vertex* and start time. Will be true if z3 schedules a vertex to the start
      * time, and false if it does not.
@@ -228,26 +287,26 @@ namespace HatScheT {
      * @param Reference to solver s
      * @param candidateII
      */
-    z3::check_result setDependencyConstraintsAndAddToSolver(z3::solver& s, const int &candidateII);
+    void setDependencyConstraintsAndAddToSolver(const int &candidateII);
     /*!
-     * \brief Checks an obvious unsat condition without starting z3. (prohibitToEarlyStartsAndAdd() and
-     * prohibitToLateStartsAndAdd() prohibiting all time slots for one Vertex)
-     * @return True if unsat and false if possibly sat.
+     * \brief This function inserts the dependency constraints to solver s. Only used if there are to many constraints to
+     * get in with the other function.
+     * @param candidateII
      */
-    bool unsatCheckShortcut();
+    void setDependencyConstraintsAndAddToSolverBIG(const int &candidateII);
     /*!
      * \brief Adds a constraint to solver s, that a vertex is scheduled in exactly one timeslot.
-     * @param Reference to solver s
      */
-    z3::check_result addOneSlotConstraintsToSolver(z3::solver &s);
+    z3::check_result addOneSlotConstraintsToSolver();
     /*!
      * \brief Adds a constraint to solver s, that no ressource limits are violated.
-     * @param Reference to solver s
      */
-    z3::check_result addResourceLimitConstraintToSolver(z3::solver &s, int candidateII);
-
-    int32_t timeBudget;
-    int32_t timeLimit;
+    z3::check_result addResourceLimitConstraintToSolver(int candidateII);
+    /*!
+     * Gets model m if z3 returns sat and extracts the schedule from this model.
+     * @param z3::model &m
+     */
+    void parseSchedule(z3::model &m);
     /*!-------------------------------
      *  Print and Debugging Methods
      *-------------------------------*/
@@ -257,19 +316,17 @@ namespace HatScheT {
     void print_b_variables();
     void printPossibleStarttimes(map<pair<Vertex*, int>, bool>& vertex_timeslot);
     static z3::check_result test_binary_search(int value_to_check, int target_value);
-    void set_design_name(string s){ this->designName = s; }
-
     string designName;
     void writeSolvingTimesToFile(deque<double> &times, int x);
+
     /*!
-     * Gets model m if z3 returns sat and extracts the schedule from this model.
-     * @param z3::model &m
+     * Overrides endTimeTracking Method from SchedulerBase since there are multiple spots where time has to be tracked.
      */
-    void parseSchedule(z3::model &m);
+    void endTimeTracking() override;
 
   };
 
 }
 
 #endif //USE_Z3
-#endif //HATSCHET_SMTBINARYSCHEDULER_H
+#endif //HATSCHET_SMTUNARYSCHEDULER_H

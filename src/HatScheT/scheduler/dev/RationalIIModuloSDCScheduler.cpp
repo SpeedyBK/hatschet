@@ -108,7 +108,7 @@ namespace HatScheT {
             }
 
             if (time < 0)
-                throw HatScheT::Exception("Error: ModSDC::modSDCIteration: invalid time (" + to_string(time) +
+                throw HatScheT::Exception("Error: ModuloSDCScheduler::modSDCIteration: invalid time (" + to_string(time) +
                                           ") found by ILP solver for instruction '" + I->getName() + "'");
             if (this->mrt.insertVertex(I,time)) {
                 cout << "No RessourceConflict Next Vertex: " << I->getName()<<" Time: "<<time<<endl;
@@ -168,9 +168,9 @@ namespace HatScheT {
                     try {
                         foundSolution = this->solveSDCProblem();
                         if (!foundSolution) {
-                            cout << "ERROR: ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
+                            cout << "ERROR: ModuloSDCScheduler::modSDCIteration: Pseudocode line 17; solver should always find solution" << endl;
                             throw HatScheT::Exception(
-                                    "ModSDC::modSDCIteration: Pseudocode line 17; solver should always find solution");
+                                    "ModuloSDCScheduler::modSDCIteration: Pseudocode line 17; solver should always find solution");
                         }
                     }
                     catch (HatScheT::TimeoutException1 &e) {
@@ -194,8 +194,8 @@ namespace HatScheT {
         if (this->schedQueue.empty() == false) {
             this->budgedEmptyCounter++;
             if(this->quiet == false) {
-                cout << "ModSDC::modSDCIteration: empty budged for II " << this->II << endl;
-                cout << "ModSDC::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
+                cout << "ModuloSDCScheduler::modSDCIteration: empty budged for II " << this->II << endl;
+                cout << "ModuloSDCScheduler::modSDCIteration: empty budged counter " << this->budgedEmptyCounter << endl;
             }
         }
         this->scheduleFound = schedQueue.empty();
@@ -473,7 +473,7 @@ namespace HatScheT {
         }
         if (evictTime < 0)
             throw HatScheT::Exception(
-                    "Error: ModSDC::backtracking: Invalid evict time (" + to_string(evictTime) + ") for instruction '" +
+                    "Error: ModuloSDCScheduler::backtracking: Invalid evict time (" + to_string(evictTime) + ") for instruction '" +
                     I->getName() + "'");
         int timeslot = evictTime % this->modulo;
         std::list<Vertex *> evictInst = this->mrt.getResourceConflicts(I, timeslot);
@@ -526,7 +526,7 @@ namespace HatScheT {
             }
             this->printAdditionalSolverConstraints();
             if(this->quiet == false)
-                cout << "ERROR: ModSDC::createInitialSchedule: failed to find schedule without resource constraints (no hatschet exception)" << endl;
+                cout << "ERROR: ModuloSDCScheduler::createInitialSchedule: failed to find schedule without resource constraints (no hatschet exception)" << endl;
             return false;
         }
 
@@ -591,6 +591,10 @@ namespace HatScheT {
         this->solver->reset();
         this->solver->quiet = this->solverQuiet;
         this->solver->timeout = (long) this->timeBudget;
+        if (!quiet)
+        {
+            cout << "RationalIIModuloSDCScheduler: Timeout set to " << solver->timeout << " seconds!" << endl;
+        }
         if (this->solver->getBackendName() == "Dynamic: LPSolve") {
             this->solver->presolve = false;
             this->solver->threads = 0;
@@ -749,7 +753,7 @@ namespace HatScheT {
     void RationalIIModuloSDCScheduler::scheduleInstruction(Vertex *I, int t) {
         ScaLP::Constraint c(this->scalpVariables.at(I) == t);
         this->createAdditionalConstraint(I, c);
-        this->mrt.insertVertex(I,t);
+        //this->mrt.insertVertex(I,t);
         this->prevSched[I] = t;
     }
 
@@ -838,7 +842,7 @@ namespace HatScheT {
 
     void RationalIIModuloSDCScheduler::setPriority(Vertex *v, PriorityHandler1 p) {
         if (this->pType != PriorityHandler1::priorityType::CUSTOM)
-            throw HatScheT::Exception("ModSDC::setPriority: priority type must be CUSTOM but is " +
+            throw HatScheT::Exception("ModuloSDCScheduler::setPriority: priority type must be CUSTOM but is " +
                                       PriorityHandler1::getPriorityTypeAsString(this->pType));
         try {
             auto a = this->priorityForSchedQueue.at(v);
@@ -852,7 +856,7 @@ namespace HatScheT {
 
     std::map<Edge *, int> RationalIIModuloSDCScheduler::getLifeTimes() {
         if (this->startTimes.empty())
-            throw HatScheT::Exception("ModSDC.getLifeTimes: cant return lifetimes! no startTimes determined!");
+            throw HatScheT::Exception("ModuloSDCScheduler.getLifeTimes: cant return lifetimes! no startTimes determined!");
 
         std::map<Edge *, int> lifetimes;
 
@@ -862,7 +866,7 @@ namespace HatScheT {
             Vertex *vDst = &e->getVertexDst();
             int lifetime = this->startTimes[vDst] - this->startTimes[vSrc] - this->resourceModel.getVertexLatency(vSrc) +
                            e->getDistance() * (int) this->II;
-            if (lifetime < 0) throw HatScheT::Exception("ModSDC.getLifeTimes: negative lifetime detected!");
+            if (lifetime < 0) throw HatScheT::Exception("ModuloSDCScheduler.getLifeTimes: negative lifetime detected!");
             else lifetimes.insert(make_pair(e, lifetime));
         }
         return lifetimes;
@@ -1078,10 +1082,10 @@ namespace HatScheT {
         std::chrono::milliseconds timeSpan = std::chrono::duration_cast<std::chrono::milliseconds>(tp - this->timeTracker);
         double elapsedTime = ((double) timeSpan.count()) / 1000.0;
         //std::cout << "elapsed time: " << elapsedTime<<endl;
-        //std::cout << "time budget before minus elapsed time: " << this->timeBudget<<endl;
+        //std::cout << "time budget before minus elapsed time: " << this->solverTimeout<<endl;
         this->timeTracker = tp;
         this->timeBudget -= elapsedTime;
-        //std::cout << "time budget after minus elapsed time: " << this->timeBudget<<endl;
+        //std::cout << "time budget after minus elapsed time: " << this->solverTimeout<<endl;
         if(this->timeBudget<0) this->scalpStatus = ScaLP::status::TIMEOUT_INFEASIBLE;
         return this->timeBudget >= 0.0;
     }
@@ -1210,15 +1214,20 @@ namespace HatScheT {
     }
 
     bool RationalIIModuloSDCSchedulerMRT::insertVertex(Vertex *v, unsigned int moduloSlot) {
+        cout <<"moduloslot: "<< moduloSlot<<endl;
+        cout <<"II: "<< this->II<<endl;
         moduloSlot = moduloSlot % this->II;
+        cout <<"moduloslot: "<< moduloSlot<<endl;
         //int limit = this->rm->getResource(v)->getLimit();
         if(moduloSlot>=this->II)
             throw HatScheT::Exception("Invalid modulo slot requested: "+to_string(moduloSlot)+", II="+to_string(this->II));
         auto *res = this->rm->getResource(v);
+        cout <<"resource: "<< this->rm->getResource(v)->getName()<<endl;
         if(this->mrt.find(res) == this->mrt.end())
             throw HatScheT::Exception("Invalid vertex provided, its resource type doesn't exist in MRT");
         auto &column = this->mrt[res][moduloSlot];
         for(auto &it : column) {
+            cout <<"it: "<< it <<endl;
             if(it == nullptr) {
                 it = v;
                 return true;

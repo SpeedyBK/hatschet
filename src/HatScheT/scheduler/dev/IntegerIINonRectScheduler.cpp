@@ -54,7 +54,7 @@ namespace HatScheT {
 		if(!feasible) if(this->quiet==false) cout << "  II" << candII << " : " << this->stat << endl;
 
 		if(scheduleFound == false) this->II = -1;
-		if(this->quiet==false) std::cout << "IntIINonRect: solving time was " << this->solvingTime << " seconds" << std::endl;
+		if(this->quiet==false) std::cout << "IntIINonRect: solving time was " << this->solvingTimePerIteration << " seconds" << std::endl;
 	}
 
 	void IntegerIINonRectScheduler::setUpSolverSettings()
@@ -67,7 +67,7 @@ namespace HatScheT {
 	void IntegerIINonRectScheduler::scheduleAttempt(int candII, bool &feasible, bool &proven)
 	{
 		solver->reset();
-		solver->timeout = this->getSolverTimeout();
+		solver->timeout = this->solverTimeout;
 
 		constructDecisionVariables(candII);
 		setObjective();
@@ -79,16 +79,23 @@ namespace HatScheT {
 			std::cout << "IntIINonRect: solver timeout = " << this->solver->timeout << " (sec)" << endl;
 		}
 
+//		//timestamp
+//		this->begin = clock();
+//		//solve
+//		this->stat = this->solver->solve();
+//		//timestamp
+//		this->end = clock();
+//
+//		//log time
+//		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
 		//timestamp
-		this->begin = clock();
+		startTimeTracking();
 		//solve
 		this->stat = this->solver->solve();
 		//timestamp
-		this->end = clock();
-
-		//log time
-		if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-		this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+		endTimeTracking();
 
 		if(stat == ScaLP::status::TIMEOUT_INFEASIBLE) this->timeouts++;
 		feasible = stat == ScaLP::status::OPTIMAL | stat == ScaLP::status::FEASIBLE   | stat == ScaLP::status::TIMEOUT_FEASIBLE;
@@ -194,4 +201,14 @@ namespace HatScheT {
 			this->solver->addConstraint(tSrc + latSrc + delay - tDst <= candII * distance);
 		}
 	}
+
+  void IntegerIINonRectScheduler::setSolverTimeout(double timeoutInSeconds) {
+	  this->solverTimeout = timeoutInSeconds;
+	  solver->timeout = (long)timeoutInSeconds;
+	  if (!this->quiet)
+	  {
+		  cout << "Solver Timeout set to " << this->solver->timeout << " seconds." << endl;
+	  }
+  }
+
 }

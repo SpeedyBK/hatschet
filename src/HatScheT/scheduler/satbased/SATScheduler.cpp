@@ -9,14 +9,16 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 
+#include <HatScheT/utility/Utility.h>
+
 #ifdef USE_CADICAL
 namespace HatScheT {
 #define NEW_RESOURCE_CONSTRAINTS 1
 
 	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
 		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
-		  los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
-		  latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
+			los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
+			latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
 		this->II = -1;
 		this->timeouts = 0;
 		this->scheduleFound = false;
@@ -55,8 +57,8 @@ namespace HatScheT {
 		this->initScheduler();
 		for (this->candidateII = (int)this->minII; this->candidateII <= (int)this->maxII; ++this->candidateII) {
 			//if (!this->quiet) {
-				auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cerr << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime1), "%Y-%m-%d %X") << std::endl;
+			auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+			std::cerr << "SATScheduler: trying candidate II=" << this->candidateII << " at time " << 	std::put_time(std::localtime(&currentTime1), "%Y-%m-%d %X") << std::endl;
 			//}
 
 			this->latencyAttempts.clear();
@@ -73,7 +75,7 @@ namespace HatScheT {
 			this->terminator = CaDiCaLTerminator((double)this->solverTimeout);
 			if (!this->quiet) {
 				std::cout << "SATScheduler: candidate II=" << this->candidateII << " with min latency="
-				  << this->latencyLowerBound << " and max latency=" << this->latencyUpperBound << std::endl;
+									<< this->latencyLowerBound << " and max latency=" << this->latencyUpperBound << std::endl;
 			}
 			while (this->computeNewLatencySuccess(lastAttemptSuccess)) {
 				if (!this->quiet) {
@@ -131,21 +133,21 @@ namespace HatScheT {
 				}
 				// start solving
 				//if (!this->quiet) {
-					auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cerr << "SATScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
+				auto currentTime3 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATScheduler: start solving at time " << 	std::put_time(std::localtime(&currentTime3), "%Y-%m-%d %X") << std::endl;
 				//}
 				auto stat = this->solver->solve();
 				elapsedTime = this->terminator.getElapsedTime();
 				lastAttemptSuccess = stat == CADICAL_SAT;
 				if (!this->quiet) {
 					std::cout << "SATScheduler: finished solving with status '" <<
-					  (lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
-					  << " sec (total: " << this->solvingTime << " sec)" << std::endl;
+										(lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << elapsedTime
+										<< " sec (total: " << this->solvingTime << " sec)" << std::endl;
 				}
 				if(!lastAttemptSuccess) {
 					//if (!this->quiet) {
-						auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-						std::cerr << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
+					auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					std::cerr << "SATScheduler: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
 					//}
 					// check if it was due to a timeout
 					if (elapsedTime >= this->solverTimeout) {
@@ -167,8 +169,8 @@ namespace HatScheT {
 				this->II = this->candidateII;
 				this->fillSolutionStructure();
 				//if (!this->quiet) {
-					auto currentTime5 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					std::cerr << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime5), "%Y-%m-%d %X") << std::endl;
+				auto currentTime5 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+				std::cerr << "SATScheduler: found solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime5), "%Y-%m-%d %X") << std::endl;
 				//}
 			}
 			this->solvingTime += elapsedTime;
@@ -256,8 +258,8 @@ namespace HatScheT {
 			this->linearJumpLength = (int)ceil(sqrt(this->maxLatency - this->minLatency)/2.0); // division by 2 because in practice it turned out to be a good heuristic...
 		}
 		// handle max latency constraint
-		if (this->maxLatencyConstraint >= 0 and this->maxLatency > this->maxLatencyConstraint) {
-			this->maxLatency = this->maxLatencyConstraint;
+		if (this->maxLatencyConstraint < 0 or this->maxLatency < this->maxLatencyConstraint) {
+			this->maxLatencyConstraint = this->maxLatency;
 		}
 		// II bounds
 		if(this->maxRuns > 0) {
@@ -300,7 +302,7 @@ namespace HatScheT {
 			for (auto &vn : vertexNames) {
 				auto *v = &this->g.getVertexByName(vn);
 				std::cout << "  " << v->getName() << " earliest: " << this->earliestStartTime.at(v) << ", latest diff: "
-				  << this->latestStartTimeDifferences.at(v) << std::endl;
+									<< this->latestStartTimeDifferences.at(v) << std::endl;
 			}
 		}
 		// simplify resource limits to save variables/clauses
@@ -336,8 +338,11 @@ namespace HatScheT {
 			auto *vSrc = &e->getVertexSrc();
 			auto *vDst = &e->getVertexDst();
 			if (!this->quiet) {
-				std::cout << "SATScheduler: creating dependency constraint for edge '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
+				std::cout << "SATScheduler: creating dependency constraint for edge '" << e->getId() << "': '" << vSrc->getName() << "' -> '" << vDst->getName() << "'" << std::endl;
+//              cout << "Source: " << earliestStartTime.at(vSrc) << " / " << latestStartTime.at(vSrc) << endl;
+//              cout << "Destination: " << earliestStartTime.at(vDst) << " / " << latestStartTime.at(vDst) << endl;
 			}
+
 			auto lSrc = this->resourceModel.getVertexLatency(vSrc);
 			auto distance = e->getDistance();
 			auto delay = e->getDelay();
@@ -492,8 +497,8 @@ namespace HatScheT {
 			this->bindingConstraintClauseCounter++;
 		}
 		this->clauseCounter = this->dependencyConstraintClauseCounter + this->resourceConstraintClauseCounter +
-			this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter + this->timeOverlapClauseCounter
-			+ this->bindingConstraintClauseCounter;
+													this->scheduleTimeConstraintClauseCounter + this->bindingConstraintClauseCounter + this->timeOverlapClauseCounter
+													+ this->bindingConstraintClauseCounter;
 	}
 
 	void SATScheduler::fillSolutionStructure() {
@@ -620,8 +625,8 @@ namespace HatScheT {
 	bool SATScheduler::computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful) {
 		if (!this->quiet) {
 			std::cout << "SATScheduler: computing new latency for last candidate latency=" << this->candidateLatency
-			  << ", min latency=" << this->latencyLowerBound << ", max latency=" << this->latencyUpperBound
-			  << " and last attempt success=" << lastSchedulingAttemptSuccessful << std::endl;
+								<< ", min latency=" << this->latencyLowerBound << ", max latency=" << this->latencyUpperBound
+								<< " and last attempt success=" << lastSchedulingAttemptSuccessful << std::endl;
 		}
 		switch (this->los) {
 			case REVERSE_LINEAR: {
@@ -812,8 +817,8 @@ namespace HatScheT {
 				auto lstd = this->latestStartTimeDifferences.at(v);
 				if (!this->quiet) {
 					std::cout << "SATScheduler: vertex '" << v->getName() << "': user max time diff = '"
-					          << lstd << "', ALAP max time diff = '" << alapSL - alapStartTimes.at(v) << "'"
-					          << std::endl;
+										<< lstd << "', ALAP max time diff = '" << alapSL - alapStartTimes.at(v) << "'"
+										<< std::endl;
 				}
 				this->latestStartTimeDifferences[v] = std::min(lstd ,alapSL - alapStartTimes.at(v));
 			}
@@ -920,5 +925,6 @@ namespace HatScheT {
 			r->setLimit(lim, false);
 		}
 	}
+
 }
 #endif

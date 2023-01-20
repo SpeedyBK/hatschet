@@ -4,6 +4,7 @@
 
 #ifndef HATSCHET_SATSCHEDULERBINENC_H
 #define HATSCHET_SATSCHEDULERBINENC_H
+#ifdef USE_CADICAL
 #include <cadical.hpp>
 #include <HatScheT/base/SchedulerBase.h>
 #include <HatScheT/base/ModuloSchedulerBase.h>
@@ -101,4 +102,5 @@ namespace HatScheT {
 		std::map<const Resource*, int> originalResourceLimits;
 	};
 }
+#endif
 #endif //HATSCHET_SATSCHEDULERBINENC_H

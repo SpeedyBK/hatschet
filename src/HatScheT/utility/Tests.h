@@ -51,12 +51,6 @@ namespace HatScheT {
 		static bool moovacTest();
 
 		/*!
-		 * \brief moduloSDCTest test whether modulo SDC scheduling is running as expected
-		 * \return
-		 */
-		static bool moduloSDCTest();
-
-		/*!
 		 * \brief moduloSDCTestFiege test whether modulo SDC scheduling by nfiege is running as expected
 		 * \return
 		 */
@@ -174,7 +168,7 @@ namespace HatScheT {
 		static bool rationalIISCCQTest();
 
 		/*!
-		 * @brief test functionality of (rational II) ModuloSDC scheduler
+		 * @brief test functionality of (rational II) ModuloSDCScheduler scheduler
 		 */
 		static bool rationalIIModuloSDCTest();
 
@@ -333,20 +327,32 @@ namespace HatScheT {
 		 * test functionality of Z3 based scheduler
 		 * @return if test was passed
 		 */
-		static bool smtBinary();
-        /*!
-         * test functionality of utility latency estimation
-         * @return if test was passed
-         */
 		static bool utilityLatencyEstimation();
-
         /*!
          * test functionality of SAT based binding algorithm
          * @return if test was passed
          */
 		static bool satBinding();
-
-		static bool smtScc();
+	   /*!
+        * test functionality of Z3 based scheduler with "Conflict Driven Clause" Learning
+        * @return if test was passed
+        */
+		static bool smtCDLTest();
+	   /*!
+        * test functionality of Z3 based scheduler with SCC - preprocessing
+        * @return if test was passed
+        */
+        static bool smtCombined();
+       /*!
+        * test functionality of SCC-Preprocessor
+        * @return if test was passed
+        */
+        static bool SCCTemplateTest();
+       /*!
+        * test functionality of Iterative Layer Class
+        * @return if test was passed
+        */
+        static bool iterativeLayerTest();
 
 	};
 }

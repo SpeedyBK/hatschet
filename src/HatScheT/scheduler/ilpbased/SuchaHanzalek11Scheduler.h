@@ -16,14 +16,14 @@
 
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    -- 20.10.2022 Benjamin Lagershausen-Keßler: Integrated "IterativeModuloSchedulerLayer" Class
 */
 
 #pragma once
 
-#include <HatScheT/base/SchedulerBase.h>
+#include <HatScheT/layers/IterativeModuloSchedulerLayer.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
 #include <map>
 
 namespace HatScheT
@@ -35,14 +35,25 @@ namespace HatScheT
  *   Přemysl Šůcha and Zdenĕk Hanzálek: A cyclic scheduling problem with an undetermined number of parallel identical
  *   processors. Comp. Opt. and Appl., Vol 48, 2011.
  */
-class SuchaHanzalek11Scheduler :  public SchedulerBase, public ILPSchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase
+class SuchaHanzalek11Scheduler :  public IterativeModuloSchedulerLayer, public ILPSchedulerBase
 {
 public:
     SuchaHanzalek11Scheduler(Graph& g, ResourceModel &resourceModel, std::list<std::string> solverWishlist, int II=-1);
   /*!
    * \brief Attempts to schedule the given instances. The candidate II is incremented until a feasible schedule is found.
    */
-  virtual void schedule();
+
+  /*!
+   * Mainly for debugging.
+   * @return Name of the scheduler
+   */
+  string getName() override { return "SuchaHanzalek11"; }
+
+  /*!
+   * Function to set the solver Timeout
+   * @param seconds
+   */
+  void setSolverTimeout(double timeoutInSeconds) override;
 
 protected:
   virtual void setUpSolverSettings();
@@ -57,6 +68,17 @@ protected:
 
   virtual void constructProblem() {/* unused */}
 
+  /*!
+   * Initialize stuff before II-Search-Loop starts.
+   */
+  void scheduleInit() override;
+  /*!
+   * \brief Schedule Iteration for one II.
+   */
+  void scheduleIteration() override;
+
+  bool feasible;
+
     /*!
      * not needed
      */
@@ -65,5 +87,6 @@ protected:
   // decision variables
   std::map<const Vertex*, ScaLP::Variable> s, s_hat, q_hat;
   std::map<const Vertex*, std::map<const Vertex*, ScaLP::Variable>> x_hat, y_hat;
+
 };
 }

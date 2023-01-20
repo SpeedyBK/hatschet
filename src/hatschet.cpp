@@ -36,7 +36,6 @@
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <HatScheT/utility/writer/ScheduleAndBindingWriter.h>
 #include <HatScheT/utility/reader/ScheduleAndBindingReader.h>
-#include <HatScheT/scheduler/dev/smtbased/TempLatencyTest.h>
 
 #ifdef USE_XERCESC
 
@@ -71,7 +70,6 @@
 #include <HatScheT/scheduler/dev/DaiZhang19Scheduler.h>
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
-#include "HatScheT/scheduler/dev/ModSDC.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/utility/Tests.h"
 
@@ -93,8 +91,16 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/smtbased/TempLatencyTest.h>
 
+#endif
+
+#if defined(USE_Z3) || defined(USE_SCALP)
+#include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #endif
 
 /**
@@ -128,22 +134,17 @@ void print_short_help() {
 	std::cout << "                            MOOVAC: Moovac ILP-based exact modulo scheduling" << std::endl;
 	std::cout << "                            ED97: ILP formulation by Eichenberger & Davidson" << std::endl;
 	std::cout << "                            SH11: ILP formulation by Sucha & Hanzalek" << std::endl;
-	std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling" << std::endl;
-	std::cout << "                            MODULOSDCFIEGE: Modulo SDC modulo scheduling (another implementation)"
-						<< std::endl;
+	std::cout << "                            MODULOSDC: Modulo SDC modulo scheduling " << std::endl;
 	std::cout << "                            RATIONALII: Experimental rational II scheduler" << std::endl;
-	std::cout
-		<< "                            UNROLLRATIONALII: Experimental rational II scheduler which finds a rational II modulo schedule based on graph unrolling and integer II scheduling"
-		<< std::endl;
+	std::cout << "                            UNROLLRATIONALII: Experimental rational II scheduler which finds a rational II modulo schedule based on graph unrolling and integer II scheduling"
+	          << std::endl;
 	std::cout
 		<< "                            UNIFORMRATIONALII: Experimental rational II scheduler which always creates uniform schedules"
 		<< std::endl;
 	std::cout
-		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which does not guarantee uniformity"
-		<< std::endl;
+		<< "                            NONUNIFORMRATIONALII: Experimental rational II scheduler which does not guarantee uniformity" << std::endl;
 	std::cout << "                            RATIONALIIFIMMEL: Third experimental rational II scheduler" << std::endl;
-	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)"
-						<< std::endl;
+	std::cout << "                            RATIONALIIMODULOQ: Fourth experimental rational II scheduler (heuristic)" << std::endl;
 	std::cout
 		<< "                            RATIONALIISCCQ: Fifth experimental rational II scheduler (SCC based heuristic)"
 		<< std::endl;
@@ -160,52 +161,53 @@ void print_short_help() {
 		<< "                            SATSCC: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
+		<< "                            SATCOMBINED: Experimental integer II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency \n"
+        << "                              refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
-		<< "                            SATCOMBINEDRATII: Experimental rational II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
+		<< "                            SATCOMBINEDRATII: Experimental rational II scheduler based on Boolean Satisfiability and partitioning the graph into Strongly Connected Components with latency \n"
+        << "                              refinement using the optimal SAT scheduler (uses CaDiCaL as backend)"
 		<< std::endl;
 	std::cout
 		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
-	std::cout << "                            smtbased: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
-	std::cout << "--resource=[string]       Path to XML resource constraint file" << std::endl;
-	std::cout << "--target=[string]         Path to XML target constraint file" << std::endl;
-	std::cout << "--graph=[string]          graphML graph file you want to read. (Make sure XercesC is enabled)"
-						<< std::endl;
-	std::cout
-		<< "--dot=[string]            Optional path to dot file generated from graph+resource model (default: none)"
-		<< std::endl;
-	std::cout << "--writegraph=[string]     Optional path to graphML file to write the graph model (default: none)"
-						<< std::endl;
-	std::cout << "--writeresource=[string]  Optional path to xml file to write the resource model (default: none)"
-						<< std::endl;
-	std::cout
-		<< "--writeschedule=[string]  Optional path to csv file to write the found schedule and bindings (default: none)"
-		<< std::endl;
-	std::cout << "--html=[string]           Optional path to html file for a schedule chart" << std::endl;
-	std::cout << "--quiet=[0/1]             Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
-	std::cout << "--writeLPFile=[0/1]       Write LP file (only available for some schedulers; default: 0)"
-						<< std::endl;
-	std::cout
-		<< "--set_bounds=[string]     Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file"
-		<< std::endl;
+    std::cout << "                            SCC: Experimental. Has two stages. First stage trys to find a schedule for the optimal II,\n"
+              << "                              but is not optimized for latency. If a schedule is found the second stage try to optimize latency. User can\n"
+              << "                              set which schedulers are used as backend." << std::endl;
+	std::cout << "                            SMT: Experimental uses smtbased-formulation and Z3 Backend" << std::endl;
+    std::cout << "                            SMTSCC: Experimental Heuristic-Scheduler which searches for the optimal II, but it has no latency optimization" << std::endl;
+    std::cout << "                            SMTCOMBINED: Experimental 2-Stage Scheduler Heuristic which searches for the optimal II, and latency optimization" << std::endl;
+    std::cout << "--sccScheduler=[string]     Backendscheduler for 1st Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, SMTCDL, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
+    std::cout << "--finalScheduler=[string]   Backendscheduler for 2nd Stage of SCC-Scheduler. So far: [MOOVAC, ED97, SH11, SMT, SMTCDL, MODSDC]. Only effective if '--scheduler=SCC'." << std::endl;
+    std::cout << "--resource=[string]         Path to XML resource constraint file" << std::endl;
+	std::cout << "--target=[string]           Path to XML target constraint file" << std::endl;
+	std::cout << "--graph=[string]            graphML graph file you want to read. (Make sure XercesC is enabled)" << std::endl;
+	std::cout << "--dot=[string]              Optional path to dot file generated from graph+resource model (default: none)" << std::endl;
+	std::cout << "--writegraph=[string]       Optional path to graphML file to write the graph model (default: none)" << std::endl;
+	std::cout << "--writeresource=[string]    Optional path to xml file to write the resource model (default: none)" << std::endl;
+	std::cout << "--writeschedule=[string]    Optional path to csv file to write the found schedule and bindings (default: none)" << std::endl;
+	std::cout << "--html=[string]             Optional path to html file for a schedule chart" << std::endl;
+	std::cout << "--quiet=[0/1]               Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
+	std::cout << "--writeLPFile=[0/1]         Write LP file (only available for some schedulers; default: 0)" << std::endl;
+	std::cout << "--set_bounds=[string]       Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for ILP-based schedulers:" << std::endl;
 	std::cout << std::endl;
-	std::cout
-		<< "--solver=<solver>         ILP solver (as available in ScaLP library), typicall one of the following: Gurobi, CPLEX, SCIP, LPSolve"
-		<< std::endl;
-	std::cout << "--timeout=[int]           ILP solver timeout in seconds (default: -1, no timeout)" << std::endl;
-	std::cout << "--threads=[int]           Number of threads for the ILP solver (default: 1)" << std::endl;
-	std::cout << "--show_ilp_solver_output  Shows the ILP solver output" << std::endl;
+	std::cout << "--solver=<solver>           ILP solver (as available in ScaLP library), typicall one of the following: Gurobi, CPLEX, SCIP, LPSolve" << std::endl;
+	std::cout << "--timeout=[int]             ILP solver timeout in seconds (default: -1, no timeout)" << std::endl;
+	std::cout << "--threads=[int]             Number of threads for the ILP solver (default: 1)" << std::endl;
+	std::cout << "--show_ilp_solver_output    Shows the ILP solver output" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for iterative schedulers:" << std::endl;
-	std::cout << "--max_runs=[int]  maximum number of allowed iterations (default: -1, no limit)" << std::endl;
+	std::cout << "--max_runs=[int]            maximum number of allowed iterations (default: -1, no limit)" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for register minimization schedulers:" << std::endl;
-	std::cout << "--max_regs=[int]  maximum number of registers to allocate (default: -1, no limit)" << std::endl;
+	std::cout << "--max_regs=[int]            maximum number of registers to allocate (default: -1, no limit)" << std::endl;
 	std::cout << std::endl;
+
 	std::cout << "Options for ILP-based rational II scheduling:" << std::endl;
 	std::cout << "--samples=[int]           Demanded samples per modulo" << std::endl;
 	std::cout << "--modulo=[int]            Demanded clock cycles for the repeating schedule" << std::endl;
@@ -245,7 +247,11 @@ int main(int argc, char *args[]) {
 	bool writeLPFile = false;
 
 	enum SchedulersSelection {
-		SMT,
+	    SCC,
+	    SMTCOMBINED,
+		SMTCDL,
+	    SMTSCC,
+	    SMT,
 		SAT,
 		SATLAT,
 		SATBIN,
@@ -266,7 +272,6 @@ int main(int argc, char *args[]) {
 		SH11,
 		SH11RA,
 		MODULOSDC,
-		MODULOSDCFIEGE,
 		RATIONALIIMODULOSDC,
 		RATIONALII,
 		UNROLLRATIONALII,
@@ -280,6 +285,8 @@ int main(int argc, char *args[]) {
 		NONE
 	};
 	SchedulersSelection schedulerSelection = NONE;
+	SchedulersSelection sccSchedulerSelection = NONE;
+	SchedulersSelection finalSchedulerSelection = NONE;
 	string schedulerSelectionStr;
 
 	std::string graphMLFile = "";
@@ -369,7 +376,6 @@ int main(int argc, char *args[]) {
 				}
 			} else if (getCmdParameter(args[i], "--scheduler=", value)) {
 				std::string valueStr = std::string(value);
-
 				schedulerSelectionStr.resize(valueStr.size());
 				std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
 
@@ -378,8 +384,14 @@ int main(int argc, char *args[]) {
 				} else if (schedulerSelectionStr == "alap") {
 					schedulerSelection = ALAP;
 				} else if (schedulerSelectionStr == "smt") {
-					schedulerSelection = SMT;
-				} else if (schedulerSelectionStr == "sat") {
+                    schedulerSelection = SMT;
+                } else if (schedulerSelectionStr == "smtscc") {
+                    schedulerSelection = SMTSCC;
+                } else if (schedulerSelectionStr == "smtcdl") {
+                        schedulerSelection = SMTCDL;
+                } else if (schedulerSelectionStr == "smtcombined") {
+                    schedulerSelection = SMTCOMBINED;
+                }else if (schedulerSelectionStr == "sat") {
 					schedulerSelection = SAT;
 				} else if (schedulerSelectionStr == "satlat") {
 					schedulerSelection = SATLAT;
@@ -415,8 +427,6 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SH11RA;
 				} else if (schedulerSelectionStr == "modulosdc") {
 					schedulerSelection = MODULOSDC;
-				} else if (schedulerSelectionStr == "modulosdcfiege") {
-					schedulerSelection = MODULOSDCFIEGE;
 				} else if (schedulerSelectionStr == "rationaliimodulosdc") {
 					schedulerSelection = RATIONALIIMODULOSDC;
 				} else if (schedulerSelectionStr == "rationalii") {
@@ -437,18 +447,55 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SUGRREDUCTION;
 				} else if (schedulerSelectionStr == "latencytest") {
                     schedulerSelection = LATENCYTEST;
-                } else {
+                } else if (schedulerSelectionStr == "scc") {
+                    schedulerSelection = SCC;
+                }else {
 					throw HatScheT::Exception("Scheduler " + valueStr + " unknown!");
 				}
-			}
-				//HatScheT Auto Test Function
+            } else if (getCmdParameter(args[i], "--sccScheduler=", value)) {
+			    std::string valueStr = std::string(value);
+                schedulerSelectionStr.resize(valueStr.size());
+                std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
+                if (schedulerSelectionStr == "moovac") {
+                    sccSchedulerSelection = MOOVAC;
+                } else if (schedulerSelectionStr == "ed97") {
+                    sccSchedulerSelection = ED97;
+                } else if (schedulerSelectionStr == "sh11") {
+                    sccSchedulerSelection = SH11;
+                }else if (schedulerSelectionStr == "smtcdl") {
+                    sccSchedulerSelection = SMTCDL;
+                } else if (schedulerSelectionStr == "modulosdc") {
+                    sccSchedulerSelection = MODULOSDC;
+                } else {
+                    sccSchedulerSelection = SMT;
+                }
+            } else if (getCmdParameter(args[i], "--finalScheduler=", value)) {
+			    std::string valueStr = std::string(value);
+                schedulerSelectionStr.resize(valueStr.size());
+                std::transform(valueStr.begin(), valueStr.end(), schedulerSelectionStr.begin(), ::tolower);
+                if (schedulerSelectionStr == "moovac") {
+                    finalSchedulerSelection = MOOVAC;
+                } else if (schedulerSelectionStr == "ed97") {
+                    finalSchedulerSelection = ED97;
+                } else if (schedulerSelectionStr == "sh11") {
+                    finalSchedulerSelection = SH11;
+                }else if (schedulerSelectionStr == "smtcdl") {
+                    sccSchedulerSelection = SMTCDL;
+                } else if (schedulerSelectionStr == "modulosdc") {
+                    finalSchedulerSelection = MODULOSDC;
+                } else if (schedulerSelectionStr == "none"){
+                    finalSchedulerSelection = NONE;
+                } else {
+                    finalSchedulerSelection = SMT;
+                }
+            }
+                //HatScheT Auto Test Function
 			else if (getCmdParameter(args[i], "--test=", value)) {
 #ifdef USE_SCALP
 				string str = std::string(value);
 				if (str == "READ" && HatScheT::Tests::readTest() == false) exit(-1);
 				if (str == "MOOVAC" && HatScheT::Tests::moovacTest() == false) exit(-1);
 				if (str == "RWRS" && HatScheT::Tests::readWriteReadScheduleTest() == false) exit(-1);
-				if (str == "MODULOSDC" && HatScheT::Tests::moduloSDCTest() == false) exit(-1);
 				if (str == "INTEGERIINONRECT" && HatScheT::Tests::integerIINonRectTest() == false) exit(-1);
 				if (str == "INTEGERIIPB" && HatScheT::Tests::integerIIPBTest() == false) exit(-1);
 				if (str == "MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege() == false) exit(-1);
@@ -514,6 +561,7 @@ int main(int argc, char *args[]) {
 				if (str == "MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
 				if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
 				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
+				if (str == "ITLAYER" && HatScheT::Tests::iterativeLayerTest() == false) exit(-1);
                 if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
@@ -521,8 +569,9 @@ int main(int argc, char *args[]) {
 
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
-				if (str == "SMTBINARY" && !HatScheT::Tests::smtBinary()) exit(-1);
-                if (str == "SMTSCC" && !HatScheT::Tests::smtScc()) exit(-1);
+                if (str == "SMTCDL" && !HatScheT::Tests::smtCDLTest()) exit(-1);
+                if (str == "SMTCOMB" && !HatScheT::Tests::smtCombined()) exit(-1);
+                if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);
 #endif
 				exit(0);
 			} else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
@@ -587,8 +636,17 @@ int main(int argc, char *args[]) {
 				cout << "SATRATII";
 				break;
 			case SMT:
-				cout << "smtbased";
+				cout << "SMT";
 				break;
+            case SMTSCC:
+                cout << "SMTSCC";
+                break;
+            case SMTCOMBINED:
+                cout << "SMTCOMBINED";
+                break;
+            case SMTCDL:
+                cout << "SMTCDL";
+                break;
 			case MOOVAC:
 				cout << "MOOVAC";
 				break;
@@ -609,9 +667,6 @@ int main(int argc, char *args[]) {
 				break;
 			case MODULOSDC:
 				cout << "MODULOSDC";
-				break;
-			case MODULOSDCFIEGE:
-				cout << "MODULOSDCFIEGE";
 				break;
 			case RATIONALII:
 				cout << "RATIONALII";
@@ -738,9 +793,13 @@ int main(int argc, char *args[]) {
 		if (rm.isEmpty() == false && g.isEmpty() == false) {
 			switch (schedulerSelection) {
 			    case LATENCYTEST:
+#ifdef USE_Z3
 			        scheduler = new HatScheT::TempLatencyTest(g, rm);
                     isModuloScheduler = true;
                     ((HatScheT::TempLatencyTest *) scheduler)->setnames(graphMLFile, resourceModelFile);
+#else
+							throw HatScheT::Exception("Link Z3 to enable latency test");
+#endif
 			        break;
 			    case ASAP:
 					scheduler = new HatScheT::ASAPScheduler(g, rm);
@@ -887,27 +946,17 @@ int main(int argc, char *args[]) {
 					isModuloScheduler = true;
 					scheduler = new HatScheT::ModuloSDCScheduler(g, rm, solverWishList);
 					if (timeout > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0)
-						((HatScheT::ModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					if (maxLatency > 0) ((HatScheT::ModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					((HatScheT::ModuloSDCScheduler *) scheduler)->setThreads(threads);
 					((HatScheT::ModuloSDCScheduler *) scheduler)->setSolverQuiet(solverQuiet);
 					break;
-				case MODULOSDCFIEGE:
-					isModuloScheduler = true;
-					scheduler = new HatScheT::ModSDC(g, rm, solverWishList);
-					if (timeout > 0) ((HatScheT::ModSDC *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0) ((HatScheT::ModSDC *) scheduler)->setMaxLatencyConstraint(maxLatency);
-					((HatScheT::ModSDC *) scheduler)->setThreads(threads);
-					((HatScheT::ModSDC *) scheduler)->setSolverQuiet(solverQuiet);
-					break;
 				case RATIONALIIMODULOSDC:
-					isModuloScheduler = true;
-					scheduler = new HatScheT::RationalIIModuloSDCScheduler(g, rm, solverWishList);
-					if (timeout > 0) ((HatScheT::RationalIIModuloSDCScheduler *) scheduler)->setSolverTimeout(timeout);
-					if (maxLatency > 0)
-						((HatScheT::RationalIIModuloSDCScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
-					((HatScheT::RationalIIModuloSDCScheduler *) scheduler)->setThreads(threads);
-					((HatScheT::RationalIIModuloSDCScheduler *) scheduler)->setSolverQuiet(solverQuiet);
+                    isRationalIIScheduler=true;
+					scheduler = new HatScheT::RationalIIModuloSDCScheduler(g,rm,solverWishList);
+					if(timeout>0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setSolverTimeout(timeout);
+					if(maxLatency > 0) ((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setMaxLatencyConstraint(maxLatency);
+					((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setThreads(threads);
+					((HatScheT::RationalIIModuloSDCScheduler*) scheduler)->setSolverQuiet(solverQuiet);
 					break;
 				case RATIONALII:
 					isRationalIIScheduler = true;
@@ -998,10 +1047,78 @@ int main(int argc, char *args[]) {
 					break;
 				}
 #ifdef USE_Z3
-                case SMT:
-                    scheduler = new HatScheT::SMTBinaryScheduler(g, rm);
+                case SCC: {
+                    HatScheT::SCCSchedulerTemplate::scheduler sccSched;
+                    switch (sccSchedulerSelection) {
+                        case MOOVAC :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
+                            break;
+                        case SMTCDL :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
+                            break;
+                        case ED97 :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
+                            break;
+                        case SH11 :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SH11;
+                            break;
+                        case MODULOSDC :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+                            break;
+                        default:
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+                            break;
+                    }
+                    HatScheT::SCCSchedulerTemplate::scheduler finSched;
+                    switch (finalSchedulerSelection) {
+                        case MOOVAC :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
+                            break;
+                        case SMTCDL :
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
+                            break;
+                        case ED97 :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
+                            break;
+                        case SH11 :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SH11;
+                            break;
+                        case MODULOSDC :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+                            break;
+                        case NONE :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
+                            break;
+                        default:
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+                            break;
+                    }
+                    scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
                     isModuloScheduler = true;
-                    if (timeout > 0) ((HatScheT::SMTBinaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                }
+                case SMT:
+                    scheduler = new HatScheT::SMTUnaryScheduler(g, rm);
+                    isModuloScheduler = true;
+                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTSCC:
+                    scheduler = new HatScheT::SMTSCCScheduler(g, rm);
+                    isModuloScheduler = true;
+                    ((HatScheT::SMTSCCScheduler*) scheduler)->setMode(HatScheT::SMTSCCScheduler::schedule_t::automatic);
+                    if (timeout > 0) ((HatScheT::SMTSCCScheduler*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTCOMBINED:
+                    scheduler = new HatScheT::SMTSCCCOMBINED(g, rm);
+                    isModuloScheduler = true;
+                    if (timeout > 0) ((HatScheT::SMTSCCCOMBINED*) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTCDL:
+                    scheduler = new HatScheT::SMTCDLScheduler(g, rm);
+                    isModuloScheduler = true;
+                    ((HatScheT::SMTCDLScheduler*) scheduler)->setLayerQuiet(false);
+                    if (timeout > 0) ((HatScheT::SMTCDLScheduler*) scheduler)->setSolverTimeout(timeout);
                     break;
 
 #else
@@ -1015,7 +1132,6 @@ int main(int argc, char *args[]) {
 					case MOOVACMINREG:
 					case ED97:
 					case MODULOSDC:
-					case MODULOSDCFIEGE:
 					case RATIONALII:
 					case UNROLLRATIONALII:
 					case UNIFORMRATIONALII:

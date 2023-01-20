@@ -20,12 +20,14 @@
 namespace HatScheT {
 	class SATSCCScheduler : public SchedulerBase, public ModuloSchedulerBase {
 	public:
-		SATSCCScheduler(Graph& g, ResourceModel &resourceModel, int II, bool useBinEncScheduler=false);
+		SATSCCScheduler(Graph& g, ResourceModel &resourceModel, int II);
 		~SATSCCScheduler() override;
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		bool getIIFeasible() const;
 		double getSolvingTime() const;
+
+        map <Vertex*, pair<int, int>> printVertexStarttimes();
 
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;

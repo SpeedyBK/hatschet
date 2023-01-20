@@ -20,6 +20,9 @@
 
 #include <ctime>
 #include <iomanip>
+#include <stdio.h>
+#include <math.h>
+
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/utility/TreeBind.h"
 #include "HatScheT/utility/OptimalIntegerIIGeneralizedBinding.h"
@@ -28,7 +31,6 @@
 #include "HatScheT/utility/reader/XMLTargetReader.h"
 #include "HatScheT/utility/writer/GraphMLGraphWriter.h"
 #include "HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/dev/IntegerIINonRectScheduler.h"
 #include "HatScheT/scheduler/graphBased/PBScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
@@ -48,7 +50,7 @@
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
-#include "HatScheT/scheduler/dev/ModSDC.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
 #include "HatScheT/scheduler/dev/DaiZhang19Scheduler.h"
@@ -59,8 +61,6 @@
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
-#include <stdio.h>
-#include <math.h>
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
 #include <HatScheT/scheduler/dev/CombinedRationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/MinRegMultiScheduler.h>
@@ -68,9 +68,15 @@
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCombinedScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTBinaryScheduler.h>
-#include <HatScheT/scheduler/dev/smtbased/SMTSCCScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
+#include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
+#include <HatScheT/scheduler/smtbased/SMTModScheduler.h>
+#include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
+#include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -107,6 +113,8 @@ namespace HatScheT {
 		HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 		sched.setMaxLatencyConstraint(maxLatencyConstraint);
 		sched.setSolverQuiet(false);
+		sched.setQuiet(false);
+		sched.setSolverTimeout(42);
 
 		cout << "starting moovac scheduling" << endl;
 		sched.schedule();
@@ -410,57 +418,6 @@ namespace HatScheT {
 #endif
 	}
 
-	bool Tests::moduloSDCTest() {
-		try {
-			HatScheT::ResourceModel rm;
-
-			auto &load = rm.makeResource("load", 1, 2, 1);
-			auto &add = rm.makeResource("add", -1, 0, 1);
-
-			HatScheT::Graph g;
-
-			Vertex &a = g.createVertex(1);
-			Vertex &b = g.createVertex(2);
-			Vertex &c = g.createVertex(3);
-			Vertex &d = g.createVertex(4);
-
-			a.setName("a");
-			b.setName("b");
-			c.setName("c");
-			d.setName("d");
-
-			g.createEdge(a, c, 0);
-			g.createEdge(b, c, 0);
-			g.createEdge(c, d, 0);
-			g.createEdge(d, a, 1);
-
-			rm.registerVertex(&a, &load);
-			rm.registerVertex(&b, &load);
-			rm.registerVertex(&c, &add);
-			rm.registerVertex(&d, &load);
-
-			HatScheT::ModuloSDCScheduler m{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
-			m.setSolverQuiet(true);
-			m.setQuiet(false);
-			m.schedule();
-
-			auto sch = m.getSchedule();
-
-			bool result = true;
-			for (auto &p:sch) {
-				std::cout << p.first->getName() << " = " << p.second << std::endl;
-			}
-
-			if (verifyModuloSchedule(g, rm, sch, m.getII()) == false) return false;
-			if (m.getII() != 4) return false;
-			return result;
-		}
-		catch (HatScheT::Exception &e) {
-			std::cout << e.msg << std::endl;
-		}
-		return false;
-	}
-
 	bool Tests::integerIINonRectTest() {
 		try {
 			HatScheT::ResourceModel rm;
@@ -498,8 +455,11 @@ namespace HatScheT {
 			HatScheT::IntegerIINonRectScheduler m{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 			m.setSolverQuiet(true);
 			m.setQuiet(false);
+			m.setSolverTimeout(42);
 			m.setCandidateII(4);
 			m.schedule();
+
+			cout << "Done in " << m.getSolvingTimePerIteration() << " seconds!" << endl;
 
 			auto sch = m.getSchedule();
 
@@ -721,9 +681,11 @@ namespace HatScheT {
 			rm.registerVertex(&p2, &add);
 
 			std::list<std::string> solverList = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
-			HatScheT::ModSDC m(g, rm, solverList);
+			HatScheT::ModuloSDCScheduler m(g, rm, solverList);
 			m.setPriorityType(PriorityHandler::priorityType::ALASUB);
 			m.setSolverQuiet(true);
+			m.setQuiet(false);
+			m.setSolverTimeout(42);
 			m.schedule();
 
 			auto sch = m.getSchedule();
@@ -766,6 +728,9 @@ namespace HatScheT {
 		readerGraph.readGraph(graphStr.c_str());
 
 		HatScheT::RationalIISchedulerFimmel fimmel{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		fimmel.setQuiet(false);
+		fimmel.setSolverQuiet(false);
+		fimmel.setSolverTimeout(42);
 		fimmel.schedule();
 
 		cout << "Tests::rationalIISchedulerFimmelTest: expected II is 5.333..." << endl;
@@ -794,6 +759,8 @@ namespace HatScheT {
 
 		HatScheT::RationalIIScheduler rii{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
 		rii.setUniformScheduleFlag(true);
+		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 
 		cout << "Tests::rationalIISchedulerTest: expected II is 5/3" << endl;
@@ -826,25 +793,35 @@ namespace HatScheT {
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
 		readerGraph.readGraph(graphStr.c_str());
 
+		bool allQuiet = true;
+
 		//------------
 		HatScheT::ModuloSDCScheduler sdc{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+		sdc.setQuiet(allQuiet);
+		sdc.setSolverTimeout(42);
 		sdc.schedule();
 		modSDC_II = sdc.getII();
 		//------------
 		HatScheT::MoovacScheduler moovac{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        moovac.setQuiet(allQuiet);
+        moovac.setSolverTimeout(42);
 		moovac.schedule();
 		moovac_II = moovac.getII();
 		//------------
 		HatScheT::MoovacMinRegScheduler minreg{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        minreg.setQuiet(allQuiet);
+        minreg.setSolverTimeout(42);
 		minreg.schedule();
 		moovacminreg_II = minreg.getII();
 		//------------
 		HatScheT::EichenbergerDavidson97Scheduler ed97{g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}};
+        ed97.setQuiet(allQuiet);
+        ed97.setSolverTimeout(42);
 		ed97.schedule();
 		ED97_II = ed97.getII();
 
 		cout << "Tests::compareModuloSchedulerTest: Expected II is 11" << endl;
-		cout << "Tests::compareModuloSchedulerTest: ModuloSDC found II " << modSDC_II << endl;
+		cout << "Tests::compareModuloSchedulerTest: ModuloSDCScheduler found II " << modSDC_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: MoovacScheduler found II " << moovac_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: MoovacMinRegScheduler found II " << moovacminreg_II << endl;
 		cout << "Tests::compareModuloSchedulerTest: EichenbergerDavidson97Scheduler found II " << ED97_II << endl;
@@ -1193,6 +1170,7 @@ namespace HatScheT {
 
 		ModuloQScheduler m(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		m.setQuiet(false);
+		m.setSolverTimeout(42);
 		//m.setMaxLatencyConstraint(100);
 		m.schedule();
 		//auto result = m.getSchedule();
@@ -1586,14 +1564,14 @@ namespace HatScheT {
 		PBScheduler pbs(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"});
 		// set it up
 		pbs.setQuiet(false);
-		pbs.setSolverTimeout(1);
+        pbs.setSolverTimeout(1);
 		pbs.setMaxRuns(1);
 		pbs.maximalSubgraphSize = 3;
 		// call scheduling function
 		pbs.schedule();
 
 		// get results
-		auto solvingTime = pbs.getSolvingTime();
+		auto solvingTime = pbs.getSolvingTimePerIteration();
 		std::cout << "solving time = " << solvingTime << std::endl;
 		auto II = (int)pbs.getII();
 		std::cout << "II = " << II << std::endl;
@@ -1644,6 +1622,7 @@ namespace HatScheT {
 
 		HatScheT::UniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1676,6 +1655,7 @@ namespace HatScheT {
 
 		HatScheT::UniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1708,6 +1688,7 @@ namespace HatScheT {
 
 		HatScheT::NonUniformRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 		rii.setQuiet(false);
+		rii.setSolverTimeout(42);
 		rii.schedule();
 		auto valid = rii.getScheduleValid();
 		if (!valid) {
@@ -1800,7 +1781,10 @@ namespace HatScheT {
 
 			HatScheT::UnrollRationalIIScheduler rii(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
 			rii.setIntIIScheduler(intIIScheduler);
-			rii.setQuiet(false);
+			if (intIIScheduler != SAT)
+			{
+                rii.setQuiet(false);
+            }
 			rii.setSolverTimeout(30);
 			rii.setThreads(1);
 			rii.schedule();
@@ -2368,7 +2352,7 @@ namespace HatScheT {
             cout<< g;
 
             //UniformRationalIISchedulerNew schedulerUNIFORM (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-            ModSDC schedulerMod (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+            ModuloSDCScheduler schedulerMod (g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             ModuloQScheduler test (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             RationalIIModuloSDCScheduler schedulerRationalSDC (g,rm,{"Gurobi", "CPLEX", "SCIP", "LPSolve"});
             //ASAPScheduler schedulerASAP (g,rm);
@@ -2376,6 +2360,7 @@ namespace HatScheT {
             //schedulerRationalSDC.setSolverTimeout(30000);
             schedulerRationalSDC.setBudgetMultiplier(15);
             schedulerRationalSDC.setQuiet(false);
+            schedulerRationalSDC.setSolverTimeout(42);
             schedulerRationalSDC.schedule();
             //auto &test = schedulerRationalSDC.getStartTimeVector();
             //auto s =schedulerMod.getSchedule();
@@ -2479,8 +2464,8 @@ namespace HatScheT {
 		HatScheT::Graph g;
 		HatScheT::XMLResourceReader readerRes(&rm);
 
-		string resStr = "benchmarks/origamiRatII/mat_inv/RM78.xml";
-		string graphStr = "benchmarks/origamiRatII/mat_inv/mat_inv.graphml";
+		string resStr = "benchmarks/Origami_Pareto_RatII/mat_inv/RM78.xml";
+		string graphStr = "benchmarks/Origami_Pareto_RatII/mat_inv/mat_inv.graphml";
 		readerRes.readResourceModel(resStr.c_str());
 
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
@@ -2505,7 +2490,7 @@ namespace HatScheT {
 		else {
 			std::cout << "Combined scheduler did not find solution" << std::endl;
 		}
-		std::cout << "Combined scheduler needed " << comb.getSolvingTime() << " sec with solver status "
+		std::cout << "Combined scheduler needed " << comb.getSolvingTimeTotal() << " sec with solver status "
 		<< comb.getScaLPStatus() << std::endl;
 
 		HatScheT::UniformRationalIISchedulerNew uni{g, rm, sw};
@@ -2522,7 +2507,7 @@ namespace HatScheT {
 		else {
 			std::cout << "Optimal uniform scheduler did not find solution" << std::endl;
 		}
-		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTime() << " sec with solver status "
+		std::cout << "Optimal uniform scheduler needed " << uni.getSolvingTimeTotal() << " sec with solver status "
 							<< uni.getScaLPStatus() << std::endl;
 
 		return true;
@@ -3462,7 +3447,8 @@ namespace HatScheT {
 		g.createEdge(g9, g11, 0);
 
 		MinRegMultiScheduler m(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
-		m.setQuiet(false);
+		m.setLayerQuiet(false);
+		m.setQuiet(true);
 		m.setSolverQuiet(true);
 		m.setThreads(24);
 		m.setSolverTimeout(300);
@@ -3482,6 +3468,8 @@ namespace HatScheT {
 
 		std::cout << "#Lifetime regs (multi)  = " << numLifetimeRegsMulti  << std::endl;
 		std::cout << "#Lifetime regs (single) = " << numLifetimeRegsSingle << std::endl;
+
+		std::cout << "validMulti: " << validMulti << " validSingle: " << validSingle << endl;
 
 		return validMulti and validSingle;
 	}
@@ -3517,7 +3505,7 @@ namespace HatScheT {
 		rm.registerVertex(&g5, &green);
 		g.createEdge(g5, r4, 0);
 
-        SATScheduler m(g, rm);
+		SATScheduler m(g, rm);
 		m.setQuiet(true);
 		m.setMaxRuns(1);
 		m.setSolverTimeout(300);
@@ -3695,146 +3683,129 @@ namespace HatScheT {
 	}
 
   bool Tests::z3Test() {
-	  #ifdef USE_Z3
-	      /*!
-          * Demonstration of how Z3 can be used to prove validity of
-          * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
-          */
-	      using namespace z3;
-
-          std::cout << "de-Morgan example\n";
-
-          context c;
-
-          expr x = c.bool_const("x");
-          expr y = c.bool_const("y");
-          expr conjecture = (!(x && y)) == (!x || !y);
-
-          solver s(c);
-          // adding the negation of the conjecture as a constraint.
-          s.add(!conjecture);
-          std::cout << s << "\n";
-          std::cout << s.to_smt2();
-          std::cout << s.check() << "\n";
-          switch (s.check()) {
-              case unsat:   std::cout << "\nDe-Morgan is valid\n"; break;
-              case sat:     std::cout << "\nDe-Morgan is not valid\n"; return false;
-              default:      std::cout << "\nunknown\n"; return false;
-          }
-
-          return true;
-      #else
-          //Z3 not active! Test function disabled!
-          return true;
-	  #endif
-  }
-
-  bool Tests::smtBinary() {
 #ifdef USE_Z3
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
 
-      clock_t start, end;
+      class z3Wrapper : public Z3SchedulerBase {
+      public :
+        z3Wrapper() { quiet = true; }
 
-      HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_bw/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_bw/iir_bw.graphml";
-      readerRes.readResourceModel(resStr.c_str());
-      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
+        void setSolverTimeout(uint32_t seconds) { this->setZ3Timeout(seconds); }
 
-      /*HatScheT::DotWriter dw("iir_bw.dot", &g, &rm);
-      dw.setDisplayNames(true);
-      dw.write();*/
+        void setQuiet(bool q) {
+            this->setZ3Quiet(q);
+            this->quiet = q;
+        }
 
-      //Simple IIR-Filter:
-      /*auto &Sum = rm.makeResource("Sum", 1, 3, 1);
-      auto &Product = rm.makeResource("Product", 1, 4, 1);
-      auto &Constant = rm.makeResource("constant", UNLIMITED, 1, 1);
-      auto &LoadStore = rm.makeResource("L_S", 1, 1, 1);
+        void setThreads(int t) { this->setZ3Threads(t); }
 
-      Vertex &IN = g.createVertex(0);
-      Vertex &SUM_0 = g.createVertex(1);
-      Vertex &PROD_1 = g.createVertex(2);
-      Vertex &PROD_0 = g.createVertex(3);
-      Vertex &CONST_A = g.createVertex(4);
-      Vertex &CONST_B = g.createVertex(5);
-      Vertex &SUM_1 = g.createVertex(6);
-      Vertex &OUT = g.createVertex(7);
+        bool testFunction() {
+            /*!
+             * Demonstration of how Z3 can be used to prove validity of
+             * De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
+             */
+            if (!quiet) { std::cout << endl << "Checking De-Morgans Theorem:\n\n"; }
 
-      IN.setName("IN");
-      SUM_0.setName("SUM_0");
-      PROD_1.setName("PROD_1");
-      PROD_0.setName("PROD_0");
-      CONST_A.setName("CONST_A");
-      CONST_B.setName("CONST_B");
-      SUM_1.setName("SUM_1");
-      OUT.setName("OUT");
+            z3::expr x = this->c.bool_const("x");
+            z3::expr y = this->c.bool_const("y");
+            z3::expr conjecture = (!(x && y)) == (!x || !y);
+            z3::expr trivialSat = (x && y);
 
-      rm.registerVertex(&IN, &LoadStore);
-      rm.registerVertex(&SUM_0, &Sum);
-      rm.registerVertex(&PROD_1, &Product);
-      rm.registerVertex(&PROD_0, &Product);
-      rm.registerVertex(&CONST_A, &Constant);
-      rm.registerVertex(&CONST_B, &Constant);
-      rm.registerVertex(&SUM_1, &Sum);
-      rm.registerVertex(&OUT, &LoadStore);
+            this->printZ3Params();
 
-      g.createEdge(IN, SUM_0, 0);
-      g.createEdge(SUM_0, PROD_0, 1);
-      g.createEdge(SUM_0, PROD_1, 1);
-      g.createEdge(SUM_0, SUM_1, 0);
-      g.createEdge(CONST_B, PROD_1, 0);
-      g.createEdge(CONST_A, PROD_0, 0);
-      g.createEdge(PROD_0, SUM_0, 0);
-      g.createEdge(PROD_1, SUM_1, 0);
-      g.createEdge(SUM_1, OUT, 0);*/
+            //Checking a trivial satisfiable expression.
+            this->s.add(trivialSat);
+            this->z3Check();
 
-      SMTBinaryScheduler sss(g, rm);
-      sss.setLatencySearchMethod(SMTBinaryScheduler::latSearchMethod::LINEAR);
-      sss.setSchedulePreference(SMTBinaryScheduler::schedulePreference::MOD_ASAP);
-      sss.setQuiet(false);
-      sss.setSolverTimeout(10);
-      //sss.set_design_name(resStr);
-      start = clock();
-      sss.schedule();
-      end = clock();
-      auto sched = sss.getSchedule();
+            // adding the negation of the conjecture as a constraint.
+            this->s.add(!conjecture);
+            z3::check_result result = this->z3Check();
 
-      cout << "Done in " << fixed << double(end - start) / double(CLOCKS_PER_SEC) << setprecision(5) << " sec " << endl;
-      auto valid = verifyModuloSchedule(g, rm, sched, (int)sss.getII());
-      if (!valid) {
-          std::cout << "Tests::smtModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
-      } else {
-          std::cout << "Tests::smtModScheduler: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << (int)sss.getII() << " Latency: " << sss.getScheduleLength() << std::endl;
-      }
-      for (auto &it : sched){
-          cout << it.first->getName() << ": " << it.second << endl;
-      }
+            switch (result) {
+                case z3::unsat:
+                    if (!quiet) { std::cout << "\nDe-Morgans Theorem is valid, test passed...\n"; }
+                    return true;
+                case z3::sat:
+                    if (!quiet) { std::cout << "\nDe-Morgan Theorem is not valid, test failed...\n"; }
+                    return false;
+                default:
+                    if (!quiet) { std::cout << "\nunknown\n"; }
+                    return false;
+            }
+        }
 
-      EichenbergerDavidson97Scheduler ed(g, rm, {"Gurobi"});
-      ed.schedule();
-      auto vali = verifyModuloSchedule(g, rm, sched, (int)ed.getII());
-      if (!vali) {
-          std::cout << "Tests::ED97ModScheduler: invalid modulo schedule found :( II=" << sss.getII() << std::endl;
-      } else {
-          std::cout << "Tests::ED97ModScheduler: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << (int)ed.getII() << " Latency: " << ed.getScheduleLength() << std::endl;
-      }
-      for (auto &it : ed.getSchedule()){
-          cout << it.first->getName() << ": " << it.second << endl;
-      }
+        bool youtubeAufgabe() {
+            // https://www.youtube.com/watch?v=IP6KhDEKp38
 
-      cout << endl;
+            z3Reset();
+            z3::expr a = this->c.int_const("a");
+            z3::expr b = this->c.int_const("b");
+            z3::expr c = this->c.int_const("c");
+            z3::expr d = this->c.int_const("d");
+            z3::expr n = this->c.int_const("n");
 
-      return valid;
+            s.add(a < 10 && a > 0);
+            s.add(b < 10 && b >= 0);
+            s.add(c < 10 && c >= 0);
+            s.add(d < 10 && d > 0);
+
+            setZ3Timeout(10);
+
+            s.add((a * 1000 + b * 100 + c * 10 + d) * n == d * 1000 + c * 100 + b * 10 + a);
+
+            auto sat = z3Check();
+            while (sat == z3::sat) {
+                cout << s.get_model().eval(a) << s.get_model().eval(b) << s.get_model().eval(c)
+                     << s.get_model().eval(d);
+                cout << " * " << s.get_model().eval(n) << " = ";
+                cout << s.get_model().eval(d) << s.get_model().eval(c) << s.get_model().eval(b)
+                     << s.get_model().eval(a);
+                cout << endl;
+                s.add(n != s.get_model().eval(n));
+                sat = z3Check();
+            }
+
+            return (sat == z3::unsat);
+        }
+
+        bool threeSAT() {
+
+            z3Reset();
+            z3::expr x1 = this->c.bool_const("x1");
+            z3::expr x2 = this->c.bool_const("x2");
+            z3::expr x3 = this->c.bool_const("x3");
+            z3::expr x4 = this->c.bool_const("x4");
+
+            s.add(x1 || x2 || !x3);
+            s.add(!x1 || x3 || !x4);
+            s.add(x2 || !x3 || !x4);
+
+            if (z3Check() == z3::sat){
+                cout << s.get_model() << endl;
+                return true;
+            }
+
+            return false;
+
+        }
+
+        bool quiet;
+
+      };
+
+      z3Wrapper zWr;
+      zWr.setQuiet(false);
+      zWr.setSolverTimeout(10);
+      zWr.setThreads(1);
+
+      return zWr.testFunction() and zWr.youtubeAufgabe() and zWr.threeSAT();
 #else
+      //Z3 not active! Test function disabled!
       return true;
 #endif
   }
 
 	bool Tests::satBinding() {
+#ifdef USE_CADICAL
 		// create scheduling problem
 		HatScheT::ResourceModel rm;
 		HatScheT::Graph g;
@@ -3877,7 +3848,7 @@ namespace HatScheT {
 		int samples = 2;
 		int modulo = 3;
 
-		ModSDC scheduler(g,rm,sw);
+		ModuloSDCScheduler scheduler(g,rm,sw);
 		scheduler.setQuiet(true);
 		scheduler.setSolverTimeout(timeout);
 		scheduler.schedule();
@@ -3922,6 +3893,10 @@ namespace HatScheT {
 			std::cout << "TEST FAILED!" << std::endl;
 		}
 		return valid;
+#else
+		std::cout << "Tests::satBinding: link CaDiCaL to enable test" << std::endl;
+		return true;
+#endif
 	}
 
   bool Tests::utilityLatencyEstimation() {
@@ -3930,8 +3905,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -3979,26 +3954,234 @@ namespace HatScheT {
 #endif
   }
 
-  bool Tests::smtScc() {
+  bool Tests::smtCDLTest() {
 #ifdef USE_Z3
-	  cout << "SMTSCC-Test:" << endl;
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
 
-	  Graph g;
-	  ResourceModel rm;
+      /*HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/ChStone/adpcm/graph2_RM.xml";
+      string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());*/
+
+      auto &add = rm.makeResource("add", 1, 2, 1);
+      auto &prod = rm.makeResource("prod", 1, 3, 1);
+      auto &io = rm.makeResource("io", 1, 1, 1);
+      auto &c = rm.makeResource("const", UNLIMITED, 1, 1);
+
+      Vertex &sum0 = g.createVertex(0);
+      sum0.setName("Sum_0");
+      Vertex &sum1 = g.createVertex(1);
+      sum1.setName("Sum_1");
+      Vertex &prod0 = g.createVertex(2);
+      prod0.setName("Product_0");
+      Vertex &prod1 = g.createVertex(3);
+      prod1.setName("Product_1");
+      Vertex &in = g.createVertex(4);
+      in.setName("In");
+      Vertex &out = g.createVertex(5);
+      out.setName("Out");
+      Vertex &c0 = g.createVertex(6);
+      c0.setName("Constant_0");
+      Vertex &c1 = g.createVertex(7);
+      c1.setName("Constant_1");
+      rm.registerVertex(&sum0, &add);
+      rm.registerVertex(&sum1, &add);
+      rm.registerVertex(&prod0, &prod);
+      rm.registerVertex(&prod1, &prod);
+      rm.registerVertex(&in, &io);
+      rm.registerVertex(&out, &io);
+      rm.registerVertex(&c0, &c);
+      rm.registerVertex(&c1, &c);
+      g.createEdge(in, sum0, 0);
+      g.createEdge(c0, prod0, 0);
+      g.createEdge(c1, prod1, 0);
+      g.createEdge(sum0, prod0, 1);
+      g.createEdge(sum0, prod1, 1);
+      g.createEdge(sum0, sum1, 0);
+      g.createEdge(prod0, sum0, 0);
+      g.createEdge(prod1, sum1, 0);
+      g.createEdge(sum1, out, 0);
+
+      SCCSchedulerTemplate smtcdl(g, rm, SCCSchedulerTemplate::scheduler::SMTCDL, SCCSchedulerTemplate::scheduler::SMTCDL);
+      auto start_t = std::chrono::high_resolution_clock::now();
+      smtcdl.setQuiet(false);
+      smtcdl.setSolverTimeout(600);
+      smtcdl.schedule();
+      auto II = smtcdl.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, smtcdl.getSchedule(), II)){
+          std::cout << "Tests::smtCDLScheduler: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << smtcdl.getScheduleLength() << std::endl;
+          for (auto &it : smtcdl.getSchedule()) {
+              cout << it.first->getName() << ": " << it.second << endl;
+          }
+          return true;
+      }else{
+          std::cout << "Tests::smtCDLScheduler: invalid modulo schedule found :( II=" << smtcdl.getII() << std::endl;
+          return false;
+      }
+#else
+			std::cout << "Tests::smtCDLTest: link Z3 to enable test" << std::endl;
+      return true;
+#endif
+  }
+
+  bool Tests::smtCombined() {
+#ifdef USE_Z3
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/iir_sos8/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos8/iir_sos8.graphml";
+      string graphStr = "BenchmarkSpeicher/adpcm/graph2.graphml";
+      string resStr = "BenchmarkSpeicher/adpcm/graph2_RM.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-	  SMTSCCScheduler smtScc(g, rm);
-	  smtScc.schedule();
+      SATSCCScheduler smtComb(g, rm, 50);
+      smtComb.setQuiet(true);
+      smtComb.setSolverTimeout(600);
+      auto start_t = std::chrono::high_resolution_clock::now();
+      smtComb.schedule();
+      auto II = smtComb.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      //cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, smtComb.getSchedule(), II)){
+          //std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
+          //std::cout << "II=" << II << " Latency: " << smtComb.getScheduleLength() << std::endl;
+          for (auto &it : smtComb.getSchedule()){
+              //cout << it.first->getName() << ": " << it.second << endl;
+          }
+          return true;
+      }else{
+          //std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtComb.getII() << std::endl;
+          return false;
+      }
 
       return false;
 #else
+			std::cout << "Tests::smtCombined: link Z3 to enable test" << std::endl;
+			return true;
+#endif
+  }
+
+  bool Tests::SCCTemplateTest() {
+#ifdef USE_Z3
+#ifdef USE_SCALP
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
+      string resStr = "benchmarks/ChStone/adpcm/graph2_RM.xml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::SMT);
+      auto start_t = std::chrono::high_resolution_clock::now();
+      scc.setQuiet(false);
+      scc.setSolverTimeout(600);
+      scc.setExpandMode(SCCSchedulerTemplate::sccExpandMode::fast);
+      scc.schedule();
+      auto II = scc.getII();
+      auto end_t = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+      auto t = ((double)duration / 1000);
+
+      cout << "Solving Time: " << t << endl;
+      if (verifyModuloSchedule(g, rm, scc.getSchedule(), II)){
+          std::cout << "Tests:: valid modulo schedule found. :-) "<< endl;
+          std::cout << "II=" << II << " Latency: " << scc.getScheduleLength() << std::endl;
+          return true;
+      }else{
+          std::cout << "Tests:: invalid modulo schedule found :( II=" << scc.getII() << std::endl;
+          return false;
+      }
+#else
+			// test disabled
       return true;
 #endif
+#else
+		// test disabled
+		return true;
+#endif
+  }
+
+  bool Tests::iterativeLayerTest() {
+
+	  bool success = true;
+	  vector<int> iterationIntervals;
+	  vector<int> latencys;
+
+      HatScheT::Graph g;
+      HatScheT::ResourceModel rm;
+
+      HatScheT::XMLResourceReader readerRes(&rm);
+      string resStr = "benchmarks/Origami_Pareto/fir_lms/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_lms/fir_lms.graphml";
+      readerRes.readResourceModel(resStr.c_str());
+      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+      readerGraph.readGraph(graphStr.c_str());
+
+      list<IterativeModuloSchedulerLayer*> schedulers;
+      schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
+#ifdef USE_Z3
+      schedulers.push_back(new SMTUnaryScheduler(g, rm));
+      schedulers.push_back(new SCCSchedulerTemplate(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::ED97));
+#endif
+
+      for (auto &scheduler : schedulers) {
+          scheduler->setQuiet(false);
+          scheduler->setLayerQuiet(false);
+          scheduler->setSolverTimeout(100);
+          auto start_t = std::chrono::high_resolution_clock::now();
+          scheduler->schedule();
+          auto II = scheduler->getII();
+
+          cout << "Solving Time: " << scheduler->getSolvingTimeTotal() << endl;
+          cout << "Remaining Time: " << scheduler->getTimeRemaining() << endl;
+          if (verifyModuloSchedule(g, rm, scheduler->getSchedule(), II)) {
+              std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": valid modulo schedule found. :-) " << endl;
+              std::cout << "II=" << II << " Latency: " << scheduler->getScheduleLength() << std::endl;
+              iterationIntervals.push_back(II);
+              latencys.push_back(scheduler->getScheduleLength());
+          } else {
+              std::cout << "Tests::iterativeLayerTest::" << scheduler->getName() << ": invalid modulo schedule found :( II=" << scheduler->getII()
+                        << std::endl;
+              iterationIntervals.push_back(II);
+              latencys.push_back(scheduler->getScheduleLength());
+              success = false;
+          }
+      }
+
+      for (auto &it : schedulers){
+          delete it;
+      }
+
+      cout << endl << "IIs:      ";
+      for (auto &it : iterationIntervals){
+          cout << it << " ";
+      }
+      cout << endl << "latencys: ";
+      for (auto &it : latencys){
+          cout << it << " ";
+      }
+
+      cout << endl;
+      return success;
   }
 }

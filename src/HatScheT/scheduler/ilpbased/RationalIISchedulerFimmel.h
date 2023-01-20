@@ -41,6 +41,11 @@ public:
 
     void setPmax(int pmax){this->pmax = pmax;}
     int getPmax() {return pmax;}
+    /*!
+     * Function to set the solver Timeout
+     * @param seconds
+     */
+  void setSolverTimeout(double timeoutInSeconds) override;
 protected:
     virtual void constructProblem(){};
     virtual void setObjective(){};

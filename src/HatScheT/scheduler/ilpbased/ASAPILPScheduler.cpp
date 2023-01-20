@@ -33,11 +33,15 @@ void ASAPILPScheduler::schedule() {
 
   if(this->maxLatencyConstraint<=0) throw HatScheT::Exception("ASAPILP Scheduler::schedule: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
 
-  this->begin = clock();
+//  this->begin = clock();
+//  stat = this->solver->solve();
+//  this->end = clock();
+//  if(this->solvingTime == -1.0) this->solvingTime = 0.0;
+//  this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+
+  startTimeTracking();
   stat = this->solver->solve();
-  this->end = clock();
-  if(this->solvingTime == -1.0) this->solvingTime = 0.0;
-  this->solvingTime += (double)(this->end - this->begin) / CLOCKS_PER_SEC;
+  endTimeTracking();
 
   if(stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE || stat == ScaLP::status::TIMEOUT_FEASIBLE) this->scheduleFound = true;
   if(stat == ScaLP::status::OPTIMAL) this->optimalResult = true;
