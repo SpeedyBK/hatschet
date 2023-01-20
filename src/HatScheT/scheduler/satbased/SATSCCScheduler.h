@@ -20,7 +20,7 @@
 namespace HatScheT {
 	class SATSCCScheduler : public SchedulerBase, public ModuloSchedulerBase {
 	public:
-		SATSCCScheduler(Graph& g, ResourceModel &resourceModel, int II);
+		SATSCCScheduler(Graph& g, ResourceModel &resourceModel, int II, bool useBinEncScheduler=false);
 		~SATSCCScheduler() override;
 		void schedule() override;
 		void setSolverTimeout(unsigned int newTimeoutInSec);
@@ -57,6 +57,7 @@ namespace HatScheT {
 		std::map<Vertex*, Vertex*> sccVertexToVertexMap;
 		std::vector<std::vector<SCC*>> topologicallySortedSCCs;
 		std::vector<SCC*> sccs;
+		bool useBinEncScheduler;
 	};
 }
 #endif

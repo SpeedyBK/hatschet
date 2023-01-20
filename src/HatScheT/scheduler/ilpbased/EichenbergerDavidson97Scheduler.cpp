@@ -124,6 +124,7 @@ void EichenbergerDavidson97Scheduler::scheduleAttempt(int candII, bool &feasible
   if(this->quiet==false) {
     std::cout << "ED97: attempt II=" << candII << std::endl;
     std::cout << "ED97: solver timeout = " << this->solver->timeout << " (sec)" << endl;
+    std::cout << "ED97: start solving with " << this->variableCounter << " variables and " << this->constraintCounter << " constraints" << std::endl;
   }
 
   //timestamp
@@ -151,19 +152,29 @@ void EichenbergerDavidson97Scheduler::constructDecisionVariables(int candII)
   row.clear();
   a.clear(); a.resize(candII);
   k.clear();
+  this->variableCounter = 0;
+  this->constraintCounter = 0;
 
   for (auto *i : g.Vertices()) {
     auto id = "_" + std::to_string(i->getId());
     // (1)
-    for (int r = 0; r < candII; ++r) a[r][i] = ScaLP::newBinaryVariable("a_" + std::to_string(r) + id);
+    for (int r = 0; r < candII; ++r) {
+      a[r][i] = ScaLP::newBinaryVariable("a_" + std::to_string(r) + id);
+      this->variableCounter++;
+    }
 
     // (2)
     k[i]    = ScaLP::newIntegerVariable("k" + id);
+    this->variableCounter++;
     row[i]  = ScaLP::newIntegerVariable("row" + id, 0, candII - 1);
+    this->variableCounter++;
     time[i] = ScaLP::newIntegerVariable("time" + id);
+    this->variableCounter++;
 
     solver->addConstraint(k[i] >= 0);
+    this->constraintCounter++;
     solver->addConstraint(time[i] >= 0);
+    this->constraintCounter++;
 		//if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
 			//auto tighterConstraint = maxLatency;
 			//if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
@@ -179,19 +190,23 @@ void EichenbergerDavidson97Scheduler::setObjective()
 {
   // currently only one objective: minimise the schedule length
   ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
+  this->variableCounter++;
   solver->addConstraint(ss >= 0);
+  this->constraintCounter++;
   if (maxLatencyConstraint >= 0 or maxLatency >= 0) {
   	auto tighterConstraint = maxLatency;
   	if (maxLatency < 0) tighterConstraint = maxLatencyConstraint;
   	if (maxLatencyConstraint < 0) tighterConstraint = maxLatency;
   	if (maxLatency >= 0 and maxLatencyConstraint >= 0) tighterConstraint = std::min(maxLatency, maxLatencyConstraint);
   	solver->addConstraint(ss <= tighterConstraint);
+    this->constraintCounter++;
   	if (!this->quiet) {
   		std::cout << "ED97: added constraint Latency <= " << tighterConstraint << std::endl;
   	}
   }
   if (minLatency >= 0){
   	solver->addConstraint(ss >= minLatency);
+    this->constraintCounter++;
 		if (!this->quiet) {
 			std::cout << "ED97: added constraint Latency >= " << minLatency << std::endl;
 		}
@@ -209,8 +224,9 @@ void EichenbergerDavidson97Scheduler::setObjective()
 
     // now, let's do it correctly
     if (g.hasNoZeroDistanceOutgoingEdges(i)) {
-        cout << "Adding Constraint for: " << i->getName() << endl;
-        solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+      cout << "Adding Constraint for: " << i->getName() << endl;
+      solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
+      this->constraintCounter++;
     }
   }
   solver->setObjective(ScaLP::minimize(ss));
@@ -227,19 +243,24 @@ void EichenbergerDavidson97Scheduler::constructConstraints(int candII)
     // anchor source vertices, but only if they are not resource-limited
     if (g.isSourceVertex(i) && resourceModel.getResource(i)->getLimit() == UNLIMITED) {
       solver->addConstraint(k[i] == 0);
+      this->constraintCounter++;
       solver->addConstraint(a[0][i] == 1);
+      this->constraintCounter++;
     }
 
     // bind result variables (2)
     ScaLP::Term sumBind;
     for (int r = 0; r < candII; ++r) sumBind.add(a[r][i], r);
     solver->addConstraint(row[i] - sumBind == 0);
+    this->constraintCounter++;
     solver->addConstraint(time[i] - (k[i] * candII) - row[i] == 0);
+    this->constraintCounter++;
 
     // assignment constraints (1)
     ScaLP::Term sumAssign;
     for (int r = 0; r < candII; ++r) sumAssign.add(a[r][i], 1);
     solver->addConstraint(sumAssign == 1);
+    this->constraintCounter++;
   }
 
   // resource constraints (5)
@@ -259,6 +280,7 @@ void EichenbergerDavidson97Scheduler::constructConstraints(int candII)
         for (int c = 0; c < q->getBlockingTime(); ++c)
           sumRes.add(a[mod(r - c, candII)][i], 1);
       solver->addConstraint(sumRes <= q->getLimit());
+      this->constraintCounter++;
     }
   }
 
@@ -283,6 +305,7 @@ void EichenbergerDavidson97Scheduler::constructConstraints(int candII)
       sumDep.add(k[j], -1);
 
       solver->addConstraint(sumDep <= (omega_ij - ((r + l_ij - 1) / candII) + 1));
+      this->constraintCounter++;
     }
   }
 }

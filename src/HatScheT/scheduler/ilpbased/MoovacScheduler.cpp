@@ -54,6 +54,8 @@ void MoovacScheduler::resetContainer()
   this->rIndices.clear();
   this->ri.resize(0);
 
+  this->variableCounter = 0;
+  this->constraintCounter = 0;
   this->scheduleFound = false;
 }
 
@@ -99,8 +101,14 @@ void MoovacScheduler::setObjective()
 {
   //supersink latency objective
   ScaLP::Variable supersink = ScaLP::newIntegerVariable("supersink",0,ScaLP::INF());
-  for(ScaLP::Variable &v:this->ti){
-    this->solver->addConstraint(supersink - v >= 0);
+  this->variableCounter++;
+  // unsigned int index =this->tIndices.at(v);
+	//    ScaLP::Variable svTemp = this->ti[index];
+  for(auto &v : this->g.Vertices()){
+		unsigned int index =this->tIndices.at(v);
+		ScaLP::Variable svTemp = this->ti[index];
+    this->solver->addConstraint(supersink - svTemp >= this->resourceModel.getVertexLatency(v));
+		this->constraintCounter++;
   }
   if (this->SLMax >= 0 or this->maxLatency >= 0) {
     auto tighterConstraint = this->maxLatency;
@@ -108,12 +116,14 @@ void MoovacScheduler::setObjective()
     if (this->SLMax < 0) tighterConstraint = this->maxLatency;
     if (this->maxLatency >= 0 and this->SLMax >= 0) tighterConstraint = std::min((unsigned int)this->maxLatency, this->SLMax);
     this->solver->addConstraint(supersink <= tighterConstraint);
+		this->constraintCounter++;
     if (!this->quiet) {
       std::cout << "MoovacScheduler: added constraint Latency <= " << tighterConstraint << std::endl;
     }
   }
   if (this->minLatency >= 0) {
     this->solver->addConstraint(supersink >= this->minLatency);
+		this->constraintCounter++;
     if (!this->quiet) {
       std::cout << "MoovacScheduler: added constraint Latency >= " << this->minLatency << std::endl;
     }
@@ -165,6 +175,9 @@ void MoovacScheduler::schedule()
 
     if(this->writeLPFile == true) this->solver->writeLP(to_string(this->II));
 
+    if (!this->quiet) {
+    	std::cout << "Start solving for II=" << (int)this->II << " with " << this->variableCounter << " variables and " << this->constraintCounter << " constraints" << std::endl;
+    }
     //timestamp
     this->begin = clock();
     //solve
@@ -226,10 +239,12 @@ void MoovacScheduler::setVectorVariables()
 
     //17
     this->ti.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
+		this->variableCounter++;
     //store tIndex
     this->tIndices.insert(make_pair(v,ti.size()-1));
     //16
     this->solver->addConstraint(ti.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
+		this->constraintCounter++;
   }
 
   for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
@@ -243,6 +258,7 @@ void MoovacScheduler::setVectorVariables()
       const Vertex* v1 = (*it2);
       //18
       this->ri.push_back(ScaLP::newIntegerVariable("r_" + std::to_string(v1->getId()),0,ScaLP::INF()));
+			this->variableCounter++;
       this->rIndices.insert(make_pair(v1, this->ri.size() -1));
     }
   }
@@ -256,7 +272,10 @@ void MoovacScheduler::setSourceVerticesToZero()
     unsigned int index =this->tIndices.at(v);
     ScaLP::Variable  temp = this->ti[index];
     //source vertix of unlimited(!) resource
-    if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) this->solver->addConstraint(temp == 0);
+    if(this->g.isSourceVertex(v) && this->resourceModel.getResource(v)->getLimit()==-1) {
+    	this->solver->addConstraint(temp == 0);
+			this->constraintCounter++;
+    }
   }
 }
 
@@ -271,6 +290,7 @@ void MoovacScheduler::setGeneralConstraints()
     unsigned int dstTVecIndex = this->tIndices[dst];
 
     this->solver->addConstraint(ti[srcTVecIndex] - ti[dstTVecIndex] + this->resourceModel.getVertexLatency(src) + e->getDelay() - this->II*(e->getDistance()) <= 0);
+		this->constraintCounter++;
   }
 }
 
@@ -481,15 +501,20 @@ void MoovacScheduler::setModuloAndResourceConstraints()
       int rvecIndex = this->rIndices.at(v1);
       //19
       m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
+			this->variableCounter++;
       //20
       y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
+			this->variableCounter++;
 
       //13
       this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);
+			this->constraintCounter++;
       //14
       this->solver->addConstraint(this->ri[rvecIndex] <= ak - 1);
+			this->constraintCounter++;
       //15
       this->solver->addConstraint(m_vector.back() <= this->II - 1);
+			this->constraintCounter++;
 
       //declare eps-vector
       vector<ScaLP::Variable> eps_vector;
@@ -503,12 +528,16 @@ void MoovacScheduler::setModuloAndResourceConstraints()
 
         if(v1 != v2) {
           eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
+					this->variableCounter++;
           mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId()) + "_" + std::to_string(v2->getId()),0,1));
+					this->variableCounter++;
         }
 
         else if(v1==v2) {
           eps_vector.push_back(ScaLP::newBinaryVariable("eps_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+					this->variableCounter++;
           mu_vector.push_back(ScaLP::newBinaryVariable("mu_" + std::to_string(v1->getId())  + "_" + std::to_string(v1->getId()),0,1));
+					this->variableCounter++;
         }
       }
 
@@ -528,8 +557,10 @@ void MoovacScheduler::setModuloAndResourceConstraints()
           if(k!=j && j<k) {
             //6
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] <= 1);
+						this->constraintCounter++;
             //12
             this->solver->addConstraint(eps_matrix[j][k] + eps_matrix[k][j] + mu_matrix[j][k] + mu_matrix[k][j] >= 1);
+						this->constraintCounter++;
           }
 
           if(k!=j) {
@@ -537,15 +568,20 @@ void MoovacScheduler::setModuloAndResourceConstraints()
             //7
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                 - (ak*eps_matrix[j][k]) + ak >= 1);
+						this->constraintCounter++;
             //8
             this->solver->addConstraint(this->ri[this->rIndices[vPair.first]] - this->ri[this->rIndices[vPair.second]]
                 - (ak*eps_matrix[j][k]) <= 0);
+						this->constraintCounter++;
             //9
             this->solver->addConstraint(mu_matrix[j][k] + mu_matrix[k][j]<= 1);
+						this->constraintCounter++;
             //10
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) + this->II >= 1);
+						this->constraintCounter++;
             //11
             this->solver->addConstraint(m_vector[j]-m_vector[k] - (this->II*mu_matrix[j][k]) <= 0);
+						this->constraintCounter++;
           }
         }
       }

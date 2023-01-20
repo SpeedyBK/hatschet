@@ -7,12 +7,13 @@
 #ifdef USE_CADICAL
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <memory>
 namespace HatScheT {
 
 	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), useOptLatScheduler(false)
+		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SAT)
 	{
 		this->II = -1;
 		this->timeouts = 0;
@@ -40,7 +41,7 @@ namespace HatScheT {
 				std::cout << "SATCombinedScheduler: candidate II=" << this->candidateII << std::endl;
 			}
 			// prove II infeasible or compute valid schedule with SCC-based scheduler
-			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII);
+			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII, this->backendSchedulerType==BACKEND_SATBIN);
 			s1.setSolverTimeout(this->solverTimeout);
 			s1.setQuiet(this->quiet);
 			s1.setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -90,15 +91,24 @@ namespace HatScheT {
 			// refine latency with normal scheduler
 			lat--; // do "-1" do avoid checking a latency twice
 			std::unique_ptr<SchedulerBase> s2;
-			if (this->useOptLatScheduler) {
-				s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerLatOpt(this->g, this->resourceModel, this->candidateII));
-				dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setSolverTimeout(satTimeout);
-				dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setQuiet(this->quiet);
-			}
-			else {
-				s2 = std::unique_ptr<SchedulerBase>(new SATScheduler(this->g, this->resourceModel, this->candidateII));
-				dynamic_cast<SATScheduler*>(s2.get())->setSolverTimeout(satTimeout);
-				dynamic_cast<SATScheduler*>(s2.get())->setQuiet(this->quiet);
+			switch (this->backendSchedulerType) {
+				case BACKEND_SAT:
+					s2 = std::unique_ptr<SchedulerBase>(new SATScheduler(this->g, this->resourceModel, this->candidateII));
+					dynamic_cast<SATScheduler*>(s2.get())->setSolverTimeout(satTimeout);
+					dynamic_cast<SATScheduler*>(s2.get())->setQuiet(this->quiet);
+					break;
+				case BACKEND_SATLAT:
+					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerLatOpt(this->g, this->resourceModel, this->candidateII));
+					dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setSolverTimeout(satTimeout);
+					dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setQuiet(this->quiet);
+					break;
+				case BACKEND_SATBIN:
+					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEnc(this->g, this->resourceModel, this->candidateII));
+					dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setSolverTimeout(satTimeout);
+					dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setQuiet(this->quiet);
+					break;
+				default:
+					throw HatScheT::Exception("Requested unsupported backend scheduler type");
 			}
 			if (this->maxLatencyConstraint >= 0) {
 				lat = min(this->maxLatencyConstraint, lat);
@@ -128,8 +138,8 @@ namespace HatScheT {
 		this->secondObjectiveOptimal = true;
 	}
 
-	void SATCombinedScheduler::setUseOptLatScheduler(bool newUseOptLatScheduler) {
-		this->useOptLatScheduler = newUseOptLatScheduler;
+	void SATCombinedScheduler::setBackendSchedulerType(backendSchedulerType_t newBackendSchedulerType) {
+		this->backendSchedulerType = newBackendSchedulerType;
 	}
 }
 #endif //USE_CADICAL

@@ -217,6 +217,7 @@ ostream& operator<<(ostream& os, const Graph& g){
   os << "------------------------------------------------------------------------------------" << endl;
   os << "---------------------------------- Graph Model -------------------------------------" << endl;
   os << "------------------------------------------------------------------------------------" << endl;
+	os << "Graph with " << g.vertices.size() << " vertices and " << g.edges.size() << " edges" << endl;
 
   for(auto a:g.vertices){
     Vertex* v = a;

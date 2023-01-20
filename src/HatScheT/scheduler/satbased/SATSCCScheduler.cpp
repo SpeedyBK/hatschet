@@ -6,6 +6,7 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <algorithm>
 #include <limits>
@@ -17,8 +18,9 @@
 #include <ScaLP/Solver.h>
 namespace HatScheT {
 
-	SATSCCScheduler::SATSCCScheduler(Graph &g, ResourceModel &resourceModel, int II) :
-		SchedulerBase(g, resourceModel), solverTimeout(300), IIFeasible(true), solvingTime(-1.0) {
+	SATSCCScheduler::SATSCCScheduler(Graph &g, ResourceModel &resourceModel, int II, bool useBinEncScheduler) :
+		SchedulerBase(g, resourceModel), solverTimeout(300), IIFeasible(true), solvingTime(-1.0),
+		useBinEncScheduler(useBinEncScheduler) {
 		this->II = II;
 	}
 
@@ -126,20 +128,31 @@ namespace HatScheT {
 		}
 
 		// schedule graph with SAT-based scheduler
-		SATScheduler s(this->complexSCCG, this->complexSCCR, (int)this->II);
-		s.setQuiet(this->quiet);
-		s.setSolverTimeout(this->solverTimeout);
-		s.setEarliestStartTimes(this->earliestStartTimes);
-		s.setLatestStartTimeDifferences(this->latestStartTimeDifferences);
-		s.setTargetLatency(this->sccGraphMaxLat);
-		s.schedule();
-		this->scheduleFound = s.getScheduleFound();
+		std::unique_ptr<SchedulerBase> s;
+		if (this->useBinEncScheduler) {
+			s = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEnc(this->complexSCCG, this->complexSCCR, (int)this->II));
+			s->setQuiet(this->quiet);
+			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setSolverTimeout(this->solverTimeout);
+			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+		}
+		else {
+			s = std::unique_ptr<SchedulerBase>(new SATScheduler(this->complexSCCG, this->complexSCCR, (int)this->II));
+			s->setQuiet(this->quiet);
+			dynamic_cast<SATScheduler*>(s.get())->setSolverTimeout(this->solverTimeout);
+			dynamic_cast<SATScheduler*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+			dynamic_cast<SATScheduler*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+			dynamic_cast<SATScheduler*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+		}
+		s->schedule();
+		this->scheduleFound = s->getScheduleFound();
 		if (!this->scheduleFound) {
 			if (!this->quiet) {
 				std::cout << "SATSCCScheduler: failed to find schedule for II=" << this->II << std::endl;
 			}
 			this->II = -1;
-			this->IIFeasible = s.getTimeouts() > 0; // can't tell if II is feasible when the solver encounters a timeout :(
+			this->IIFeasible = dynamic_cast<IterativeSchedulerBase*>(s.get())->getTimeouts() > 0; // can't tell if II is feasible when the solver encounters a timeout :(
 			return;
 		}
 		if (!this->quiet) {
@@ -148,7 +161,7 @@ namespace HatScheT {
 		// get results
 		this->IIFeasible = true;
 		this->relativeSchedule.clear();
-		auto sccSchedule = s.getSchedule();
+		auto sccSchedule = s->getSchedule();
 		for (auto &v : this->complexSCCG.Vertices()) {
 			auto origV = this->sccVertexToVertexMap.at(v);
 			auto t = sccSchedule.at(v);

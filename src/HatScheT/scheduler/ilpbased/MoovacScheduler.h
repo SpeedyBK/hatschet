@@ -168,5 +168,13 @@ protected:
    * \brief whether a latency estimation should be used to reduce the search space for the ILP solver
    */
 	bool useLatencyEstimation = true;
+	/*!
+	 * \brief counter for ILP variables
+	 */
+	int variableCounter;
+	/*!
+	 * \brief counter for ILP constraints
+	 */
+	int constraintCounter;
 };
 }

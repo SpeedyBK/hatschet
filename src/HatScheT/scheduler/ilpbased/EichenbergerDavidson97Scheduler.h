@@ -66,5 +66,13 @@ protected:
 	int maxLatency = -1;
 	int minLatency = -1;
   bool useLatencyEstimation = true;
+	/*!
+	 * \brief counter for ILP variables
+	 */
+	int variableCounter;
+	/*!
+	 * \brief counter for ILP constraints
+	 */
+	int constraintCounter;
 };
 }

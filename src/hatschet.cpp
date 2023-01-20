@@ -81,6 +81,7 @@
 
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
 #include <HatScheT/scheduler/satbased/SATRatIIScheduler.h>
 #include <HatScheT/scheduler/satbased/SATMinRegScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
@@ -247,9 +248,11 @@ int main(int argc, char *args[]) {
 		SMT,
 		SAT,
 		SATLAT,
+		SATBIN,
 		SATSCC,
 		SATCOMBINED,
 		SATCOMBINEDLAT,
+		SATCOMBINEDBIN,
 		SATCOMBINEDRATII,
 		SATMINREG,
 		SATRATII,
@@ -380,6 +383,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SAT;
 				} else if (schedulerSelectionStr == "satlat") {
 					schedulerSelection = SATLAT;
+				} else if (schedulerSelectionStr == "satbin") {
+					schedulerSelection = SATBIN;
 				} else if (schedulerSelectionStr == "satminreg") {
 					schedulerSelection = SATMINREG;
 				} else if (schedulerSelectionStr == "satscc") {
@@ -388,6 +393,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SATCOMBINED;
 				} else if (schedulerSelectionStr == "satcombinedlat") {
 					schedulerSelection = SATCOMBINEDLAT;
+				} else if (schedulerSelectionStr == "satcombinedbin") {
+					schedulerSelection = SATCOMBINEDBIN;
 				} else if (schedulerSelectionStr == "satcombinedratii") {
 					schedulerSelection = SATCOMBINEDRATII;
 				} else if (schedulerSelectionStr == "satratii") {
@@ -556,6 +563,9 @@ int main(int argc, char *args[]) {
 			case SATLAT:
 				cout << "SATLAT";
 				break;
+			case SATBIN:
+				cout << "SATBIN";
+				break;
 			case SATMINREG:
 				cout << "SATMINREG";
 				break;
@@ -566,6 +576,9 @@ int main(int argc, char *args[]) {
 				cout << "SATCOMBINED";
 			case SATCOMBINEDLAT:
 				cout << "SATCOMBINEDLAT";
+				break;
+			case SATCOMBINEDBIN:
+				cout << "SATCOMBINEDBIN";
 				break;
 			case SATCOMBINEDRATII:
 				cout << "SATCOMBINEDRATII";
@@ -751,6 +764,12 @@ int main(int argc, char *args[]) {
 					if (timeout > 0) ((HatScheT::SATSchedulerLatOpt *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0) ((HatScheT::SATSchedulerLatOpt *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
+				case SATBIN:
+					scheduler = new HatScheT::SATSchedulerBinEnc(g, rm);
+					isModuloScheduler = true;
+					if (timeout > 0) ((HatScheT::SATSchedulerBinEnc *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::SATSchedulerBinEnc *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
 				case SATRATII:
 					scheduler = new HatScheT::SATRatIIScheduler(g, rm);
 					isRationalIIScheduler = true;
@@ -767,7 +786,15 @@ int main(int argc, char *args[]) {
 				case SATCOMBINEDLAT:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
-					((HatScheT::SATCombinedScheduler *) scheduler)->setUseOptLatScheduler(true);
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::SATCombinedScheduler::BACKEND_SATLAT);
+					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0)
+						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATCOMBINEDBIN:
+					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
+					isModuloScheduler = true;
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::SATCombinedScheduler::BACKEND_SATBIN);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
