@@ -94,6 +94,12 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         }
         // Passing II from II - search - loop to class, so scheduler can use it.
         this->II = ii;
+				// schedule length estimation
+				this->calculateScheduleLengthEstimation();
+				if (!this->boundSL) {
+					this->minSL = -1;
+					this->maxSL = this->maxLatencyConstraint;
+				}
         // Schedule Iteration.
         scheduleIteration();
         updateSolvingTimeTotal();
@@ -107,6 +113,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         // Scheduler has to fill the solution structure by itself!!!
         if (scheduleFound)
         {
+						scheduleCleanup();
             if (!this->quiet or !this->layerQuiet){
                 cout << "1st. Objective Optimal: " << firstObjectiveOptimal << endl;
                 cout << "2nd. Objective Optimal: " << secondObjectiveOptimal << endl;
@@ -136,4 +143,34 @@ void HatScheT::IterativeModuloSchedulerLayer::getDebugPrintouts() {
     cout << "RecMin II is " << this->recMinII << endl;
     cout << "ResMin II is " << this->resMinII << endl;
 
+}
+
+void HatScheT::IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation() {
+	// create object
+	this->scheduleLengthEstimation = std::unique_ptr<ILPScheduleLengthEstimation>(new ILPScheduleLengthEstimation(&this->g, &this->resourceModel, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, 1));
+	//ILPScheduleLengthEstimation scheduleLengthEstimation(&this->g, &this->resourceModel, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, 1);
+	this->scheduleLengthEstimation->setQuiet(this->quiet);
+	if (!this->boundSL) return; // only init object but don't actually do the work
+
+	// min SL estimation
+	this->scheduleLengthEstimation->estimateMinSL((int)this->II, (int)this->solverTimeout);
+	if (this->scheduleLengthEstimation->minSLEstimationFound()) {
+		this->minSL = this->scheduleLengthEstimation->getMinSLEstimation();
+	}
+	// max SL estimation
+	this->scheduleLengthEstimation->estimateMaxSL((int)this->II, (int)this->solverTimeout);
+	if (this->scheduleLengthEstimation->maxSLEstimationFound()) {
+		this->maxSL = this->scheduleLengthEstimation->getMaxSLEstimation();
+	}
+	if (!this->quiet) {
+		std::cerr << "IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation: II=" << (int)this->II << " SL >= " << this->minSL << std::endl;
+		std::cerr << "IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation: II=" << (int)this->II << " SL <= " << this->maxSL << std::endl;
+	}
+	// consider max latency constraint if it was given by the user
+	if (this->maxLatencyConstraint >= 0) {
+		this->maxSL = std::min(this->maxSL, this->maxLatencyConstraint);
+		if (!this->quiet) {
+			std::cerr << "IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation: corrected max SL to " << this->maxSL << std::endl;
+		}
+	}
 }

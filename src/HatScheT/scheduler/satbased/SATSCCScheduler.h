@@ -26,8 +26,8 @@ namespace HatScheT {
 		void setSolverTimeout(unsigned int newTimeoutInSec);
 		bool getIIFeasible() const;
 		double getSolvingTime() const;
-
-        map <Vertex*, pair<int, int>> printVertexStarttimes();
+		map <Vertex*, pair<int, int>> printVertexStarttimes();
+		bool useBinEncScheduler;
 
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;
@@ -59,7 +59,6 @@ namespace HatScheT {
 		std::map<Vertex*, Vertex*> sccVertexToVertexMap;
 		std::vector<std::vector<SCC*>> topologicallySortedSCCs;
 		std::vector<SCC*> sccs;
-		bool useBinEncScheduler;
 	};
 }
 #endif

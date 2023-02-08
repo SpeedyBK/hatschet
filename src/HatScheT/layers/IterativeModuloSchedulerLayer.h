@@ -9,6 +9,7 @@
 #include "HatScheT/base/SchedulerBase.h"
 #include "HatScheT/base/ModuloSchedulerBase.h"
 #include "HatScheT/base/IterativeSchedulerBase.h"
+#include <HatScheT/utility/ILPScheduleLengthEstimation.h>
 
 namespace HatScheT {
   class IterativeModuloSchedulerLayer : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
@@ -37,6 +38,11 @@ namespace HatScheT {
     void setLayerQuiet(bool q) { this->layerQuiet = q; }
 
     void getDebugPrintouts();
+		/*!
+		 * setter for this->boundSL
+		 * @param b new value
+		 */
+		void setBoundSL(bool b) { this->boundSL = b; }
 
   protected:
    /*!
@@ -57,6 +63,15 @@ namespace HatScheT {
         if (!this->quiet) { cout << "IterativeModuloSchedulerLayer: nothing to init..." << endl; }
     }
 
+		/*!
+		 * if a scheduler needs to setup stuff after iterative scheduling, than this function has to be overloaded.
+		 * Per default it just does nothing.
+		 */
+		virtual void scheduleCleanup()
+		{
+			if (!this->quiet) { cout << "IterativeModuloSchedulerLayer: nothing to clean up..." << endl; }
+		}
+
     /*!
      * \brief use this flag to disable the secondary objective (No Latency minimization)
      */
@@ -66,6 +81,29 @@ namespace HatScheT {
      * Surpresses couts from layerclass.
      */
     bool layerQuiet;
+		/*!
+		 * calculate bounds for the schedule length if this is set
+		 * -> this might help the schedulers in their search procedure and (massively) speed up scheduling
+		 */
+		bool boundSL = false;
+		/*!
+		 * a value for the optimal schedule length (SL) with minSL <= SL
+		 */
+		int minSL = -1;
+		/*!
+		 * a value for the optimal schedule length (SL) with maxSL >= SL
+		 */
+		int maxSL = -1;
+		/*!
+		 * object to estimate the schedule length
+		 */
+		std::unique_ptr<ILPScheduleLengthEstimation> scheduleLengthEstimation;
+
+	private:
+		/*!
+		 * Calculate upper/lower bounds for the schedule length if wanted by the user
+		 */
+		void calculateScheduleLengthEstimation();
   };
 
 }

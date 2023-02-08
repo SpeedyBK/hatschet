@@ -230,6 +230,7 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/subgraphs/OccurrenceSet.h
         src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
         src/HatScheT/utility/Tests.h
+        src/HatScheT/utility/ILPScheduleLengthEstimation.h
         src/HatScheT/utility/Utility.h
         src/HatScheT/utility/Binding.h
         src/HatScheT/utility/BindingBase.h
@@ -300,6 +301,7 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/scheduler/dev/NonUniformRationalIIScheduler.cpp
             src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
             src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
+            src/HatScheT/utility/ILPScheduleLengthEstimation.cpp
             src/HatScheT/utility/Tests.cpp
             src/HatScheT/utility/OptimalIntegerIIBinding.cpp
             src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp

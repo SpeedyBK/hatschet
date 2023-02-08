@@ -67,6 +67,7 @@ namespace HatScheT
 	}
 
 	void MoovacScheduler::setMaxLatency() {
+		/*
 		//case unlimited
 		if(this->maxLatencyConstraint == -1){
 			this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
@@ -74,6 +75,13 @@ namespace HatScheT
 			this->SLMax = this->maxLatencyConstraint;
 		} else {
 			throw HatScheT::Exception("MoovacScheduler::constructProblem: irregular maxLatencyConstraint " + to_string(this->maxLatencyConstraint));
+		}
+		 */
+		if (this->maxSL < 0) {
+			this->SLMax = this->g.getNumberOfVertices() * ( this->resourceModel.getMaxLatency() + 1);
+		}
+		else {
+			this->SLMax = this->maxSL;
 		}
 	}
 

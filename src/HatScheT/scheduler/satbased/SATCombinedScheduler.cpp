@@ -13,7 +13,7 @@
 namespace HatScheT {
 
 	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SAT)
+		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SATBIN)
 	{
 		this->II = -1;
 		this->timeouts = 0;
@@ -42,6 +42,7 @@ namespace HatScheT {
 			}
 			// prove II infeasible or compute valid schedule with SCC-based scheduler
 			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII);
+			s1.useBinEncScheduler = this->backendSchedulerType == backendSchedulerType_t::BACKEND_SATBIN;
 			s1.setSolverTimeout(this->solverTimeout);
 			s1.setQuiet(this->quiet);
 			s1.setMaxLatencyConstraint(this->maxLatencyConstraint);

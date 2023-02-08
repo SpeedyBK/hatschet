@@ -11,7 +11,7 @@
 #include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
-#include "HatScheT/scheduler/satbased/SATScheduler.h"
+#include "HatScheT/scheduler/satbased/SATSchedulerBinEnc.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
@@ -31,7 +31,7 @@ namespace HatScheT {
 
       this->sccScheduler = sccScheduler;
       this->finalScheduler = finalScheduler;
-      this->sccMode = sccExpandMode::fast;
+      this->sccMode = sccExpandMode::automatic;
 
       this->threads = 1;
 
@@ -66,11 +66,19 @@ namespace HatScheT {
 
       buildComplexGraph();
 
+			this->backboneSchedulerBoundSL = this->boundSL;
+			this->boundSL = false;
   }
+
+	void SCCSchedulerTemplate::scheduleCleanup() {
+		this->resetResourceModel();
+
+		this->boundSL = this->backboneSchedulerBoundSL;
+	}
 
   void SCCSchedulerTemplate::scheduleIteration() {
 
-      calcStarttimesPerComplexSCC();
+      if (this->sccMode != sccExpandMode::automatic) calcStarttimesPerComplexSCC();
 
       if (!complexSCCs.empty()) {
           bigComplexSchedule = scheduleComplexGraph();
@@ -101,11 +109,12 @@ namespace HatScheT {
           }
           if (!this->quiet) { cout << "Computing final schedule..." << endl; }
           auto finalSchedulerSelected = selectSccScheduler(finalScheduler, g, resourceModel);
-          finalSchedulerSelected->setQuiet(false);
+          finalSchedulerSelected->setQuiet(this->quiet);
           cout << "Time Remaining:" << this->timeRemaining << endl;
           finalSchedulerSelected->setSolverTimeout(this->timeRemaining);
           finalSchedulerSelected->disableSecObjective(false);
           finalSchedulerSelected->setMaxLatencyConstraint(this->getScheduleLength());
+					finalSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
           sharedPointerCastAndSetup(finalSchedulerSelected);
           finalSchedulerSelected->schedule();
           if (finalSchedulerSelected->getScheduleFound()){
@@ -288,9 +297,12 @@ namespace HatScheT {
       map<Vertex *, int> relSched;
       map<Vertex *, int> relSchedTemp;
       auto sccSchedulerSelected = selectSccScheduler(sccScheduler, *complexGraph, *complexRm);
-      sccSchedulerSelected->setQuiet(quiet);
+      sccSchedulerSelected->setQuiet(this->quiet);
       sccSchedulerSelected->setSolverTimeout(this->getSolverTimeout());
       sccSchedulerSelected->disableSecObjective(true);
+			if (this->sccMode == sccExpandMode::automatic) {
+				sccSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
+			}
       int maxSCCslat;
       if (sccMode == sccExpandMode::fast) {
           //maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
@@ -468,16 +480,21 @@ namespace HatScheT {
               if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
-          case scheduler::NONE:{
-              return nullptr;
-          }
           case scheduler::SAT:{
-              throw(HatScheT::Exception("SAT-Scheduler not moved to IterativeSchedulerLayer, yet!"));
-//              auto schedulePtr = std::make_shared<SATScheduler>(gr, rm, this->II);
-//              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
-//              if (!quiet) schedulePtr->getDebugPrintouts();
-//              return schedulePtr;
+              auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
+              if (this->recMinII > 1.0) {
+								schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::REVERSE_LINEAR);
+              }
+              else {
+								schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::LINEAR_JUMP);
+              }
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              //if (!quiet) schedulePtr->getDebugPrintouts();
+              return schedulePtr;
           }
+					case scheduler::NONE:{
+						return nullptr;
+					}
           default:
               throw (HatScheT::Exception("SCCSchedulerTemplate: No SCC-Scheduler specified, terminating..."));
       }

@@ -76,6 +76,13 @@ namespace HatScheT {
      * - build the graph of all complex SCCs.
      */
     void scheduleInit() override;
+		/*!
+		 * Virtual function from IterativeModuloSchedulerLayer. Is called after the schedule loop ends. So everything
+		 * needed to cleanup after scheduling should be done here. In this case:
+		 * - clean up the resourcemodel
+		 * - set schedule length bound to original value
+		 */
+		void scheduleCleanup() override;
     /*!
      * Is called in the scheduleloop. So everything which has to be done in an iteration of the scheduleloop should be
      * done here. In this case:
@@ -254,6 +261,11 @@ namespace HatScheT {
      * How many threads solvers can use.
      */
     int threads;
+
+		/*!
+		 * if the backbone scheduler(s) should use the schedule length estimation
+		 */
+		bool backboneSchedulerBoundSL;
 
   };
 }

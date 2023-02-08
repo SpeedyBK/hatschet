@@ -328,6 +328,11 @@ namespace HatScheT {
 		 * @return if test was passed
 		 */
 		static bool utilityLatencyEstimation();
+		/*!
+		 * test functionality of the ILP-based latency estimation algorithms
+		 * @return if the test was passed
+		 */
+		static bool ilpMinMaxLatencyEstimationTest();
         /*!
          * test functionality of SAT based binding algorithm
          * @return if test was passed

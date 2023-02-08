@@ -190,6 +190,7 @@ void print_short_help() {
 	std::cout << "--quiet=[0/1]               Set scheduling algorithm quiet for no couts (default: 1)" << std::endl;
 	std::cout << "--writeLPFile=[0/1]         Write LP file (only available for some schedulers; default: 0)" << std::endl;
 	std::cout << "--set_bounds=[string]       Set bounds (i.e., II, max latency, and optional max #registers) from scheduling file" << std::endl;
+	std::cout << "--boundSL=[0/1]             Automatically bound the schedule length to accelerate the solvers in proving infeasible IIs and optimal schedule lengths" << std::endl;
 	std::cout << std::endl;
 
 	std::cout << "Options for ILP-based schedulers:" << std::endl;
@@ -229,6 +230,7 @@ int main(int argc, char *args[]) {
 	int maxLatency = -1;
 	bool quiet = true;
 	int maxRuns = -1;
+	bool boundSL = false;
 
 	//variables for Rational II scheduling
 	int samples = -1; //default
@@ -285,8 +287,8 @@ int main(int argc, char *args[]) {
 		NONE
 	};
 	SchedulersSelection schedulerSelection = NONE;
-	SchedulersSelection sccSchedulerSelection = NONE;
-	SchedulersSelection finalSchedulerSelection = NONE;
+	SchedulersSelection sccSchedulerSelection = SAT;
+	SchedulersSelection finalSchedulerSelection = SAT;
 	string schedulerSelectionStr;
 
 	std::string graphMLFile = "";
@@ -319,6 +321,8 @@ int main(int argc, char *args[]) {
 				timeout = atol(value);
 			} else if (getCmdParameter(args[i], "--max_runs=", value)) {
 				maxRuns = atol(value);
+			} else if (getCmdParameter(args[i], "--boundSL=", value)) {
+				boundSL = (bool)atol(value);
 			} else if (getCmdParameter(args[i], "--max_regs=", value)) {
 				maxRegs = atol(value);
 			} else if (getCmdParameter(args[i], "--set_bounds=", value)) {
@@ -562,7 +566,8 @@ int main(int argc, char *args[]) {
 				if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
 				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
 				if (str == "ITLAYER" && HatScheT::Tests::iterativeLayerTest() == false) exit(-1);
-                if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
+				if (str == "ILPLATENCY" && HatScheT::Tests::ilpMinMaxLatencyEstimationTest() == false) exit(-1);
+        if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
@@ -1062,9 +1067,12 @@ int main(int argc, char *args[]) {
                         case SH11 :
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SH11;
                             break;
-                        case MODULOSDC :
-                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
-                            break;
+												case MODULOSDC :
+													sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
+													break;
+												case SAT :
+													sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SAT;
+													break;
                         default:
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
                             break;
@@ -1075,7 +1083,7 @@ int main(int argc, char *args[]) {
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::MOOVAC;
                             break;
                         case SMTCDL :
-                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
+														finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMTCDL;
                             break;
                         case ED97 :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::ED97;
@@ -1086,11 +1094,14 @@ int main(int argc, char *args[]) {
                         case MODULOSDC :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
                             break;
-                        case NONE :
-                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
+												case SAT :
+														finSched = HatScheT::SCCSchedulerTemplate::scheduler::SAT;
+														break;
+                        case SMT :
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
                             break;
                         default:
-                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
                             break;
                     }
                     scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
@@ -1171,6 +1182,14 @@ int main(int argc, char *args[]) {
 				ilpSchedulerBase->setWriteLPFile(writeLPFile);
 			}
 #endif //USE_SCALP
+
+			// bound schedule length if wanted
+			if (boundSL) {
+				auto modSchedLayer = dynamic_cast<HatScheT::IterativeModuloSchedulerLayer*>(scheduler);
+				if (modSchedLayer != nullptr) {
+					modSchedLayer->setBoundSL(boundSL);
+				}
+			}
 
 			// set quiet or loud
 			scheduler->setQuiet(quiet);

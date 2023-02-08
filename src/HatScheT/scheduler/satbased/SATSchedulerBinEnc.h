@@ -1,106 +1,64 @@
 //
-// Created by nfiege on 8/26/22.
+// Created by nfiege on 12/20/22.
 //
 
 #ifndef HATSCHET_SATSCHEDULERBINENC_H
 #define HATSCHET_SATSCHEDULERBINENC_H
-#ifdef USE_CADICAL
-#include <cadical.hpp>
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
-#include <HatScheT/base/IterativeSchedulerBase.h>
-#include <string>
-#include <map>
-#include <utility>
-#include <memory>
-#include <HatScheT/scheduler/satbased/CaDiCaLTerminator.h>
+
+#include <HatScheT/base/SATSchedulerBase.h>
 
 namespace HatScheT {
-
-	class SATSchedulerBinEnc : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
+	class SATSchedulerBinEnc : public SATSchedulerBase {
 	public:
 		SATSchedulerBinEnc(Graph& g, ResourceModel &resourceModel, int II=-1);
-		double getSolvingTime() const { return this->solvingTime; }
-		void schedule() override;
-		void setSolverTimeout(unsigned int newTimeoutInSec);
-		void setTargetLatency(const int &newTargetLatency);
-		void setEarliestStartTimes(const std::map<Vertex*, int> &newEarliestStartTimes);
-		void setLatestStartTimeDifferences(const std::map<Vertex*, int> &newLatestStartTimeDifferences);
+
+	protected:
+		void scheduleIteration() override;
 
 	private:
-		bool computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful);
-		void calcMinLatency();
-		void calcMaxLatency();
-		void calculateLatestStartTimes();
-		void calculateLatestStartTimeDifferences();
-		void calculateEarliestStartTimes();
-		void simplifyResourceLimits();
-		void restoreResourceLimits();
-
-		void initScheduler();
+		enum trivialDecision {
+			triviallySAT,
+			triviallyUNSAT,
+			noTrivialDecisionPossible
+		};
 		void defineLatLimits();
-		void defineEarliestStartTimeOffsets();
-		void setUpSolver();
+		trivialDecision setUpSolver();
 		void resetContainer();
 		void createLiterals();
-		void createBaseClauses();
-		void createAdditionalClauses();
+		trivialDecision createClauses();
+		void createIncrementalClauses();
 		void fillSolutionStructure();
 
-		void getNumberRepr(Vertex* v, int t, bool negate, std::vector<int>* literals);
-		void getNumberRepr(std::map<std::pair<Vertex*, int>, int>* container, Vertex* v, const int &numDigits, const int &num, const int &globalMultiplier, std::vector<int>* literals);
+		bool inIncrementalMode();
 
-		bool optimalResult;
-		bool enableIIBasedLatencyLowerBound;
-		int candidateII;
-		int candidateLatency;
-		int lastCandidateLatency;
-		int minLatency;
-		int maxLatency;
-		int latencyLowerBound;
-		int latencyUpperBound;
+		void createTimeSlotLimitationClauses();
+		trivialDecision createDependencyClauses();
+		void createResourceLimitationClauses();
+		void createResourceLimitationClauses2();
 
-		unsigned int solverTimeout;
+		int create_arbitrary_clause(const std::vector<std::pair<int, bool>> &a);
+		int create_arbitrary_clause(const std::vector<std::pair<int, bool>> &a, bool quiet);
+		int create_full_adder_clauses(std::pair<int, bool> a, std::pair<int, bool> b, std::pair<int, bool> c_i, std::pair<int, bool> sum, std::pair<int, bool> c_o={-1, false});
+		int create_half_adder_clauses(std::pair<int, bool> a, std::pair<int, bool> b, std::pair<int, bool> sum, std::pair<int, bool> c_o={-1, false});
+		int create_not(int x, int not_x);
+		int create_2x1_and(int a, int b, int y);
+		int create_2x1_or(int a, int b, int y);
+		int create_2x1_mux(int a, int b, int s, int y);
 
-		double solvingTime;
-		std::unique_ptr<CaDiCaL::Solver> solver;
-		CaDiCaLTerminator terminator;
+		std::map<std::pair<Vertex*, int>, int> scheduleTimeVariables;
+		std::map<Vertex*, int> scheduleTimeWordSize;
+		std::map<std::pair<Edge*, int>, int> diffVariables;
+		std::map<std::pair<Vertex*, int>, int> moduloSlotVariables;
+		std::map<Vertex*, int> lastForbiddenTime;
+		int constOneVar;
+		int constZeroVar;
 
-		int literalCounter;
-		int unlimitedScheduleTimeLiteralCounter;
-		int moduloSlotLiteralCounter;
-		int timeOffsetLiteralCounter;
-		int bindingLiteralCounter;
-		//int timeOverlapLiteralCounter;
-		//int bindingOverlapLiteralCounter;
-		int clauseCounter;
-		int dependencyConstraintClauseCounter;
-		int resourceConstraintClauseCounter;
-		int scheduleTimeConstraintClauseCounter;
-		int bindingConstraintClauseCounter;
-		int scheduleTimeInRangeClauseCounter;
-		//int timeOverlapClauseCounter;
-		//int bindingOverlapClauseCounter;
-		std::map<Vertex*, int> resourceLimit;
-		std::map<Vertex*, bool> vertexIsUnlimited;
-		std::map<std::pair<Vertex*, int>, int> unlimitedScheduleTimeLiterals; // t_i for unlimited vertices
-		std::map<std::pair<Vertex*, int>, int> moduloSlotLiterals; // m_i for limited vertices
-		std::map<std::pair<Vertex*, int>, int> timeOffsetLiterals; // y_i for limited vertices
-		std::map<std::pair<Vertex*, int>, int> bindingLiterals; // b_i for limited vertices
-		//std::map<std::pair<Vertex*, Vertex*>, int> timeOverlapLiterals; // T_ij for pairs of limited vertices of the same resource type
-		//std::map<std::pair<Vertex*, Vertex*>, int> bindingOverlapLiterals; // B_ij for pairs of limited vertices of the same resource type
-		std::map<Vertex*, int> greatestExpressibleNumber; // greatest start time expressible with the given variables
-		std::map<Vertex*, int> earliestStartTime; // tMin_i
-		std::map<Vertex*, int> earliestStartTimeOffsets; // C_i
-		std::map<Vertex*, int> numUnlimitedScheduleTimeVariables; // # t_i (unlimited)
-		std::map<Vertex*, int> numModuloSlotVariables; // # m_i (limited)
-		std::map<Vertex*, int> numTimeOffsetVariables; // # y_i (limited)
-		std::map<Vertex*, int> numBindingVariables; // # b_i (limited)
-		std::map<Vertex*, int> latestStartTime; // tMax_i
-		std::map<Vertex*, int> lastLatestStartTime; // tMax_i for the last candidate latency
-		std::map<Vertex*, int> latestStartTimeDifferences; // L - tMax_i = const
-		std::map<const Resource*, int> originalResourceLimits;
+		int resourceConstraintLiteralCounter = 0;
+		int moduloSlotLiteralCounter = 0;
+		int dependencyConstraintLiteralCounter = 0;
+
+		int dependencyConstraintClauseCounter = 0;
 	};
 }
-#endif
+
 #endif //HATSCHET_SATSCHEDULERBINENC_H

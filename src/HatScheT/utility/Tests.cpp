@@ -4183,5 +4183,120 @@ namespace HatScheT {
 
       cout << endl;
       return success;
-  }
+  }bool Tests::ilpMinMaxLatencyEstimationTest() {
+#ifdef USE_SCALP
+		HatScheT::Graph g;
+		HatScheT::ResourceModel rm;
+#if 0
+		auto &a1 = g.createVertex();
+		auto &a2 = g.createVertex();
+		auto &a3 = g.createVertex();
+		auto &a4 = g.createVertex();
+		auto &b1 = g.createVertex();
+		auto &b2 = g.createVertex();
+		auto &b3 = g.createVertex();
+		auto &b4 = g.createVertex();
+		g.createEdge(a1,a2,0);
+		g.createEdge(a2,a3,0);
+		g.createEdge(a3,a4,0);
+		g.createEdge(a4,b1,0);
+		g.createEdge(b1,b2,0);
+		g.createEdge(b2,b3,0);
+		g.createEdge(b3,b4,0);
+
+		auto &a = rm.makeResource("a",2,2);
+		auto &b = rm.makeResource("b",2,2);
+		rm.registerVertex(&a1,&a);
+		rm.registerVertex(&a2,&a);
+		rm.registerVertex(&a3,&a);
+		rm.registerVertex(&a4,&a);
+		rm.registerVertex(&b1,&b);
+		rm.registerVertex(&b2,&b);
+		rm.registerVertex(&b3,&b);
+		rm.registerVertex(&b4,&b);
+#else
+		HatScheT::XMLResourceReader readerRes(&rm); // 6, 7, 14, 15
+		string resStr = "benchmarks/MachSuite/aes2/graph15_RM.xml";
+		string graphStr = "benchmarks/MachSuite/aes2/graph15.graphml";
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+#endif
+
+		std::cout << g;
+		std::cout << rm;
+
+		auto minResII = Utility::calcResMII(&rm);
+		auto minRecII = Utility::calcRecMII(&g, &rm);
+		auto minII = (int)std::ceil(Utility::calcMinII(minResII, minRecII));
+		//minII = 28; // it is known...
+		ILPScheduleLengthEstimation est(&g, &rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, 1);
+		est.setQuiet(false);
+		std::cout << "Computing min SL estimation now..." << std::endl;
+		auto startMinILP = std::chrono::steady_clock::now();
+		est.estimateMinSL(minII, 300);
+		auto endMinILP = std::chrono::steady_clock::now();
+		if (!est.minSLEstimationFound()) {
+			std::cout << "Failed to find min SL estimation" << std::endl;
+			return false;
+		}
+		auto minLatILP = est.getMinSLEstimation();
+		std::cout << "Computing max SL estimation now..." << std::endl;
+		auto startMaxILP = std::chrono::steady_clock::now();
+		est.estimateMaxSL(minII, 300);
+		auto endMaxILP = std::chrono::steady_clock::now();
+		if (!est.maxSLEstimationFound()) {
+			std::cout << "Failed to find max SL estimation" << std::endl;
+			return false;
+		}
+		auto maxLatILP = est.getMaxSLEstimation();
+		auto elapsedTimeMinEstimation = std::chrono::duration_cast<std::chrono::milliseconds>(endMinILP - startMinILP).count() / 1000.0;
+		auto elapsedTimeMaxEstimation = std::chrono::duration_cast<std::chrono::milliseconds>(endMaxILP - startMaxILP).count() / 1000.0;
+		std::cout << "Elapsed times: minILP = " << elapsedTimeMinEstimation << "s and maxILP = " << elapsedTimeMaxEstimation << "s" << std::endl;
+		int maxLatOpp = 0;
+		for (auto &v : g.Vertices()) {
+			int maxChainingDelay = 0;
+			for (auto &e : g.Edges()) {
+				if (&e->getVertexSrc() != v) continue;
+				auto d = e->getDelay();
+				if (d > maxChainingDelay) maxChainingDelay = d;
+			}
+			maxLatOpp += (rm.getVertexLatency(v) + maxChainingDelay);
+		}
+		for (auto &r : rm.Resources()) {
+			if (r->isUnlimited()) continue;
+			auto numRegistrations = rm.getNumVerticesRegisteredToResource(r);
+			auto limit = (float)r->getLimit();
+			for (int i=0; i<numRegistrations; i++) {
+				maxLatOpp += (int)floor(((float)i) / limit);
+			}
+		}
+		auto solutionContainerKessler = Utility::getLatencyEstimation(&g, &rm, minII);
+		auto minLatKes = solutionContainerKessler.minLat;
+		auto maxLatKes = solutionContainerKessler.maxLat;
+		std::cout << "ILP: " << minLatILP << " <= SL <= " << maxLatILP << " for II=" << minII << std::endl;
+		std::cout << "Kes: " << minLatKes << " <= SL <= " << maxLatKes << " for II=" << minII << std::endl;
+		std::cout << "Opp: ??? <= SL <= " << maxLatOpp << " for II=" << minII << std::endl;
+
+		SCCSchedulerTemplate s(g, rm, SCCSchedulerTemplate::scheduler::SAT, SCCSchedulerTemplate::scheduler::SAT);
+		s.setQuiet(false);
+		//EichenbergerDavidson97Scheduler s(g, rm, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, minII);
+		//s.setMaxLatencyConstraint(maxLatILP);
+		s.schedule();
+		if (!s.getScheduleFound()) {
+			std::cout << "oh no -> ED97 failed to find schedule" << std::endl;
+			return false;
+		}
+		auto SL = s.getScheduleLength();
+		std::cout << "Optimal SL = " << SL << std::endl;
+		if (SL > maxLatILP or SL < minLatILP) {
+			std::cout << "oh no -> minSL = " << minLatILP << ", maxSL = " << maxLatILP << " but optSL = " << SL << std::endl;
+			return false;
+		}
+		std::cout << "Test passed :)" << std::endl;
+		return true;
+#else
+		return true; // test disabled
+#endif
+	}
 }

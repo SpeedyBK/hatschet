@@ -142,9 +142,9 @@ namespace HatScheT
 
 			solver->addConstraint(k[i] >= 0);
 			solver->addConstraint(time[i] >= 0);
-			if (maxLatencyConstraint >= 0) {
-				solver->addConstraint(k[i]    <= maxLatencyConstraint / candII);
-				solver->addConstraint(time[i] <= maxLatencyConstraint);
+			if (this->maxSL >= 0) {
+				solver->addConstraint(k[i]    <= maxSL / candII);
+				solver->addConstraint(time[i] <= maxSL);
 			}
 		}
 	}
@@ -153,9 +153,17 @@ namespace HatScheT
 	{
 		// currently only one objective: minimise the schedule length
 		ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
-		solver->addConstraint(ss >= 0);
-		if (maxLatencyConstraint >= 0)
-			solver->addConstraint(ss <= maxLatencyConstraint);
+		// min latency constraint to help the solving process
+		if (this->boundSL) {
+			solver->addConstraint(ss >= this->minSL);
+		}
+		else {
+			solver->addConstraint(ss >= 0);
+		}
+		// max latency constraint
+		if (this->maxSL >= 0) {
+			solver->addConstraint(ss <= this->maxSL);
+		}
 
 		for (auto *i : g.Vertices()) {
 			// nfiege: this is not enough!
