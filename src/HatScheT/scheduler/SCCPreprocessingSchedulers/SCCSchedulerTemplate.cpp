@@ -12,6 +12,7 @@
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
 #include "HatScheT/scheduler/satbased/SATSchedulerBinEnc.h"
+#include "HatScheT/scheduler/satbased/SATSchedulerRes.h"
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
@@ -481,13 +482,17 @@ namespace HatScheT {
               return schedulePtr;
           }
           case scheduler::SAT:{
-              auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
-              if (this->recMinII > 1.0) {
-								schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::REVERSE_LINEAR);
-              }
-              else {
-								schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::LINEAR_JUMP);
-              }
+#if 0
+						auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
+						if (this->recMinII > 1.0) {
+							schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::REVERSE_LINEAR);
+						}
+						else {
+							schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::LINEAR_JUMP);
+						}
+#else
+						auto schedulePtr = std::make_shared<SATSchedulerRes>(gr, rm, this->II);
+#endif
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               //if (!quiet) schedulePtr->getDebugPrintouts();
               return schedulePtr;

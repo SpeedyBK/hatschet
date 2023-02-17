@@ -78,8 +78,9 @@ namespace HatScheT {
 		int candidateLatency = -1;
 		int minLatency = -1;
 		int maxLatency = -1;
-		bool minLatencyUserDef = false;
-		bool maxLatencyUserDef = false;
+		//bool minLatencyUserDef = false;
+		//bool maxLatencyUserDef = false;
+		bool targetSLUserDef = false;
 
 	}; // class SATSchedulerBase
 }

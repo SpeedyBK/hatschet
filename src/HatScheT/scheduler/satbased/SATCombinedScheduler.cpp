@@ -6,6 +6,7 @@
 #include <cmath>
 #ifdef USE_CADICAL
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerRes.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
@@ -13,7 +14,7 @@
 namespace HatScheT {
 
 	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SATBIN)
+		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SATRES)
 	{
 		this->II = -1;
 		this->timeouts = 0;
@@ -42,7 +43,7 @@ namespace HatScheT {
 			}
 			// prove II infeasible or compute valid schedule with SCC-based scheduler
 			SATSCCScheduler s1(this->g, this->resourceModel, this->candidateII);
-			s1.useBinEncScheduler = this->backendSchedulerType == backendSchedulerType_t::BACKEND_SATBIN;
+			s1.backendSchedulerType = this->backendSchedulerType;
 			s1.setSolverTimeout(this->solverTimeout);
 			s1.setQuiet(this->quiet);
 			s1.setMaxLatencyConstraint(this->maxLatencyConstraint);
@@ -94,19 +95,37 @@ namespace HatScheT {
 			std::unique_ptr<SchedulerBase> s2;
 			switch (this->backendSchedulerType) {
 				case BACKEND_SAT:
+					std::cout << "LAT BACKEND: SAT!" << std::endl;
 					s2 = std::unique_ptr<SchedulerBase>(new SATScheduler(this->g, this->resourceModel, this->candidateII));
 					dynamic_cast<SATScheduler*>(s2.get())->setSolverTimeout(satTimeout);
 					dynamic_cast<SATScheduler*>(s2.get())->setQuiet(this->quiet);
 					break;
 				case BACKEND_SATLAT:
+					std::cout << "LAT BACKEND: SATLAT!" << std::endl;
 					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerLatOpt(this->g, this->resourceModel, this->candidateII));
 					dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setSolverTimeout(satTimeout);
 					dynamic_cast<SATSchedulerLatOpt*>(s2.get())->setQuiet(this->quiet);
 					break;
 				case BACKEND_SATBIN:
+					std::cout << "LAT BACKEND: SATBIN!" << std::endl;
 					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEnc(this->g, this->resourceModel, this->candidateII));
 					dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setSolverTimeout(satTimeout);
 					dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setQuiet(this->quiet);
+					/*
+					if (this->recMinII > 1.0) {
+						dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setLatencyOptimizationStrategy(SATSchedulerBase::REVERSE_LINEAR);
+					}
+					else {
+						dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setLatencyOptimizationStrategy(SATSchedulerBase::LINEAR_JUMP);
+					}
+					 */
+					//dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setBoundSL(true);
+					break;
+				case BACKEND_SATRES:
+					std::cout << "LAT BACKEND: SATRES!" << std::endl;
+					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerRes(this->g, this->resourceModel, this->candidateII));
+					dynamic_cast<SATSchedulerRes*>(s2.get())->setSolverTimeout(satTimeout);
+					dynamic_cast<SATSchedulerRes*>(s2.get())->setQuiet(this->quiet);
 					break;
 				default:
 					throw HatScheT::Exception("Requested unsupported backend scheduler type");

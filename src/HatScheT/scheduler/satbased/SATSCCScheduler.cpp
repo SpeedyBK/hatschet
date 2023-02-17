@@ -6,6 +6,7 @@
 #include <HatScheT/scheduler/ASAPScheduler.h>
 #include <HatScheT/scheduler/ALAPScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerRes.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <algorithm>
@@ -130,31 +131,37 @@ namespace HatScheT {
 		}
 
 		std::unique_ptr<SchedulerBase> s;
-		if (this->useBinEncScheduler) {
-			s = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEnc(this->complexSCCG, this->complexSCCR, (int) this->II));
-		}
-		else {
-			s = std::unique_ptr<SchedulerBase>(new SATScheduler(this->complexSCCG, this->complexSCCR, (int) this->II));
+		switch (this->backendSchedulerType) {
+			case BACKEND_SATBIN: {
+				std::cout << "SCC BACKEND: SATBIN!" << std::endl;
+				s = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEnc(this->complexSCCG, this->complexSCCR, (int) this->II));
+				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+				break;
+			}
+			case BACKEND_SATRES: {
+				std::cout << "SCC BACKEND: SATRES!" << std::endl;
+				s = std::unique_ptr<SchedulerBase>(new SATSchedulerRes(this->complexSCCG, this->complexSCCR, (int) this->II));
+				dynamic_cast<SATSchedulerRes*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+				dynamic_cast<SATSchedulerRes*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+				dynamic_cast<SATSchedulerRes*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+				break;
+			}
+			default: {
+				std::cout << "SCC BACKEND: SAT!" << std::endl;
+				s = std::unique_ptr<SchedulerBase>(new SATScheduler(this->complexSCCG, this->complexSCCR, (int) this->II));
+				dynamic_cast<SATScheduler*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+				dynamic_cast<SATScheduler*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+				dynamic_cast<SATScheduler*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+				break;
+			}
 		}
 
 		// schedule graph with SAT-based scheduler
 		//SATScheduler s(this->complexSCCG, this->complexSCCR, (int) this->II);
 		s->setQuiet(this->quiet);
 		s->setSolverTimeout(this->solverTimeout);
-		if (this->useBinEncScheduler) {
-			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
-			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
-			dynamic_cast<SATSchedulerBinEnc*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
-		}
-		else {
-			dynamic_cast<SATScheduler*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
-			dynamic_cast<SATScheduler*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
-			dynamic_cast<SATScheduler*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
-		}
-		//s.setEarliestStartTimes(this->earliestStartTimes);
-		//s.setLatestStartTimeDifferences(this->latestStartTimeDifferences);
-		//s.setTargetLatency(this->sccGraphMaxLat);
-		//cout << "sccGraphMaxLat: " << sccGraphMaxLat << endl;
 		s->schedule();
 		this->scheduleFound = s->getScheduleFound();
 		if (!this->scheduleFound) {

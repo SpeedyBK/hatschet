@@ -11,6 +11,12 @@
 #include <chrono>
 
 namespace HatScheT {
+	enum backendSchedulerType_t {
+		BACKEND_SAT,
+		BACKEND_SATLAT,
+		BACKEND_SATBIN,
+		BACKEND_SATRES
+	};
 #define CADICAL_SAT 10
 #define CADICAL_UNSAT 20
 	// Use this class to track time and add a timeout to CaDiCaL solver

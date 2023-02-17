@@ -156,7 +156,9 @@ void HatScheT::IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation(
 	this->scheduleLengthEstimation->estimateMinSL((int)this->II, (int)this->solverTimeout);
 	if (this->scheduleLengthEstimation->minSLEstimationFound()) {
 		this->minSL = this->scheduleLengthEstimation->getMinSLEstimation();
+		this->earliestStartTimes = this->scheduleLengthEstimation->getASAPTimesSDC();
 	}
+	/*
 	// max SL estimation
 	this->scheduleLengthEstimation->estimateMaxSL((int)this->II, (int)this->solverTimeout);
 	if (this->scheduleLengthEstimation->maxSLEstimationFound()) {
@@ -173,4 +175,5 @@ void HatScheT::IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation(
 			std::cerr << "IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation: corrected max SL to " << this->maxSL << std::endl;
 		}
 	}
+	 */
 }

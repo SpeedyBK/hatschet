@@ -49,6 +49,7 @@
 
 #ifdef USE_SCALP
 
+#include <HatScheT/scheduler/dev/ILPScheduleLengthSweeper.h>
 #include <HatScheT/layers/RationalIISchedulerLayer.h>
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include <HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.h>
@@ -249,7 +250,8 @@ int main(int argc, char *args[]) {
 	bool writeLPFile = false;
 
 	enum SchedulersSelection {
-	    SCC,
+		ILPSLSWEEPER,
+		SCC,
 	    SMTCOMBINED,
 		SMTCDL,
 	    SMTSCC,
@@ -387,6 +389,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = ASAP;
 				} else if (schedulerSelectionStr == "alap") {
 					schedulerSelection = ALAP;
+				} else if (schedulerSelectionStr == "ilpslsweeper") {
+					schedulerSelection = ILPSLSWEEPER;
 				} else if (schedulerSelectionStr == "smt") {
                     schedulerSelection = SMT;
                 } else if (schedulerSelectionStr == "smtscc") {
@@ -605,6 +609,9 @@ int main(int argc, char *args[]) {
 		switch (schedulerSelection) {
 			case ASAP:
 				cout << "ASAP";
+				break;
+			case ILPSLSWEEPER:
+				cout << "ILPSLSWEEPER";
 				break;
 			case ALAP:
 				cout << "ALAP";
@@ -843,6 +850,7 @@ int main(int argc, char *args[]) {
 				case SATCOMBINED:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::BACKEND_SAT);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
@@ -850,7 +858,7 @@ int main(int argc, char *args[]) {
 				case SATCOMBINEDLAT:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
-					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::SATCombinedScheduler::BACKEND_SATLAT);
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::BACKEND_SATLAT);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
@@ -858,7 +866,7 @@ int main(int argc, char *args[]) {
 				case SATCOMBINEDBIN:
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
-					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::SATCombinedScheduler::BACKEND_SATBIN);
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::BACKEND_SATBIN);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
@@ -887,6 +895,16 @@ int main(int argc, char *args[]) {
 					break;
 #endif
 #ifdef USE_SCALP
+				case ILPSLSWEEPER:
+					if (scheduleFile.empty()) {
+						std::cerr << "specify result file for ILP schedule length sweeper" << std::endl;
+						exit(0);
+					}
+					scheduler = new HatScheT::ILPScheduleLengthSweeper(g, rm, solverWishList, scheduleFile);
+					if (timeout > 0) ((HatScheT::ILPScheduleLengthSweeper *) scheduler)->setSolverTimeout(timeout);
+					isModuloScheduler = true;
+					scheduleFile.clear(); // don't override schedule file again later
+					break;
 				case MOOVAC:
 					isModuloScheduler = true;
 					scheduler = new HatScheT::MoovacScheduler(g, rm, solverWishList);

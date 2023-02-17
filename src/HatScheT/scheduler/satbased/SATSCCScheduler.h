@@ -27,8 +27,8 @@ namespace HatScheT {
 		bool getIIFeasible() const;
 		double getSolvingTime() const;
 		map <Vertex*, pair<int, int>> printVertexStarttimes();
-		bool useBinEncScheduler;
-
+		//bool useBinEncScheduler;
+		backendSchedulerType_t backendSchedulerType;
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;
 		void initMRT();

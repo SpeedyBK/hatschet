@@ -98,6 +98,10 @@ namespace HatScheT {
 		 * object to estimate the schedule length
 		 */
 		std::unique_ptr<ILPScheduleLengthEstimation> scheduleLengthEstimation;
+		/*!
+		 * store earliest start times based on the min SL estimation
+		 */
+		std::map<Vertex*, int> earliestStartTimes;
 
 	private:
 		/*!

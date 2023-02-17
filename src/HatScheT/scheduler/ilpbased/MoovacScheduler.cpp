@@ -137,11 +137,18 @@ namespace HatScheT
 			int id = v->getId();
 
 			//17
-			this->ti.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),0,this->SLMax - this->resourceModel.getVertexLatency(v)));
+			int tMin;
+			try {
+				tMin = this->earliestStartTimes.at(v);
+			}
+			catch (std::out_of_range&) {
+				tMin = 0;
+			}
+			this->ti.push_back(ScaLP::newIntegerVariable("t_" + std::to_string(id),tMin,this->SLMax - this->resourceModel.getVertexLatency(v)));
 			//store tIndex
 			this->tIndices.insert(make_pair(v,ti.size()-1));
 			//16
-			this->solver->addConstraint(ti.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax);
+			//this->solver->addConstraint(ti.back() + this->resourceModel.getVertexLatency(v) <= this->SLMax); // this is obsolete due to the range declaration during variable creation
 		}
 
 		for(std::list<Resource*>::iterator it = this->resourceModel.resourcesBegin(); it != this->resourceModel.resourcesEnd(); ++it) {
@@ -394,7 +401,14 @@ namespace HatScheT
 				//19
 				m_vector.push_back(ScaLP::newIntegerVariable("m_" + std::to_string(v1->getId()),0,10000));
 				//20
-				y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),0,10000));
+				double yMin;
+				try {
+					yMin = floor(((double)this->earliestStartTimes.at(const_cast<Vertex*>(v1))) / this->II);
+				}
+				catch (std::out_of_range&) {
+					yMin = 0.0;
+				}
+				y_vector.push_back(ScaLP::newIntegerVariable("y_" + std::to_string(v1->getId()),yMin,10000));
 
 				//13
 				this->solver->addConstraint(this->ti[tIndex] - y_vector.back()*((int)this->II) - m_vector.back() == 0);

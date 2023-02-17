@@ -231,6 +231,7 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/subgraphs/OccurrenceSetCombination.h
         src/HatScheT/utility/Tests.h
         src/HatScheT/utility/ILPScheduleLengthEstimation.h
+        src/HatScheT/scheduler/dev/ILPScheduleLengthSweeper.h
         src/HatScheT/utility/Utility.h
         src/HatScheT/utility/Binding.h
         src/HatScheT/utility/BindingBase.h
@@ -256,6 +257,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATSchedulerLatOpt.h
         src/HatScheT/scheduler/satbased/SATSchedulerBinEnc.h
+        src/HatScheT/scheduler/satbased/SATSchedulerRes.h
         src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATSCCScheduler.h
         src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
@@ -302,6 +304,7 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/scheduler/dev/DaiZhang19Scheduler.cpp
             src/HatScheT/scheduler/graphBased/SGMScheduler.cpp
             src/HatScheT/utility/ILPScheduleLengthEstimation.cpp
+            src/HatScheT/scheduler/dev/ILPScheduleLengthSweeper.cpp
             src/HatScheT/utility/Tests.cpp
             src/HatScheT/utility/OptimalIntegerIIBinding.cpp
             src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
@@ -319,6 +322,7 @@ IF (CADICAL_H AND CADICAL_LIB)
             src/HatScheT/base/SATSchedulerBase.cpp
             src/HatScheT/scheduler/dev/SDSScheduler.cpp
             src/HatScheT/scheduler/satbased/SATScheduler.cpp
+            src/HatScheT/scheduler/satbased/SATSchedulerRes.cpp
             src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
             src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
             src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp

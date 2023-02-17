@@ -4,18 +4,18 @@
 
 #include "SATSchedulerBinEnc.h"
 #include <HatScheT/utility/Utility.h>
+#include <HatScheT/utility/Verifier.h>
 #include <iomanip>
+
+#define RESOURCES_VERSION_2 1
+#define TIME_SLOT_LIMITATION_VERSION_2 0
+#define ADDER_OPT 1
 
 namespace HatScheT {
 
 	SATSchedulerBinEnc::SATSchedulerBinEnc(Graph &g, ResourceModel &resourceModel, int II) :
 		SATSchedulerBase(g, resourceModel, II) {
-		if (this->recMinII > 1.0) {
-			this->los = LatencyOptimizationStrategy::REVERSE_LINEAR; // reverse linear for graphs with cycles
-		}
-		else {
-			this->los = LatencyOptimizationStrategy::LINEAR_JUMP; // linear jump for graphs without cycles
-		}
+		this->los = LatencyOptimizationStrategy::LINEAR_JUMP;
 	}
 
 	void SATSchedulerBinEnc::scheduleIteration() {
@@ -29,11 +29,18 @@ namespace HatScheT {
 		this->lastForbiddenTime.clear();
 		this->constOneVar = 0;
 		this->constZeroVar = 0;
+
+		this->timeSlotLiteralCounter = 0;
 		this->resourceConstraintLiteralCounter = 0;
 		this->moduloSlotLiteralCounter = 0;
-		this->dependencyConstraintLiteralCounter = 0;
+		this->dependencyConstraintSubLiteralCounter = 0;
+		this->dependencyConstraintCompLiteralCounter = 0;
 
-		this->dependencyConstraintClauseCounter = 0;
+		this->timeSlotConstraintClauseCounter = 0;
+		this->dependencyConstraintSubClauseCounter = 0;
+		this->dependencyConstraintCompClauseCounter = 0;
+		this->moduloConstraintClauseCounter = 0;
+		this->resourceConstraintClauseCounter = 0;
 
 		//if (!this->quiet) {
 		auto currentTime1 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -112,10 +119,17 @@ namespace HatScheT {
 			if (!this->quiet) {
 				std::cout << "SATSchedulerBinEnc: start scheduling for II=" << this->candidateII << " and latency=" << this->candidateLatency << " with '" << this->literalCounter << "' literals and '"
 									<< this->clauseCounter << "' clauses" << std::endl;
+				std::cout << "  '" << this->timeSlotLiteralCounter << "' time slot literals" << std::endl;
 				std::cout << "  '" << this->moduloSlotLiteralCounter << "' modulo slot literals" << std::endl;
 				std::cout << "  '" << this->resourceConstraintLiteralCounter << "' resource constraint literals" << std::endl;
-				std::cout << "  '" << this->dependencyConstraintLiteralCounter << "' dependency constraint literals" << std::endl;
-				std::cout << "  '" << this->dependencyConstraintClauseCounter << "' dependency constraint clauses" << std::endl;
+				std::cout << "  '" << this->dependencyConstraintSubLiteralCounter << "' dependency constraint subtract literals" << std::endl;
+				std::cout << "  '" << this->dependencyConstraintCompLiteralCounter << "' dependency constraint comparator literals" << std::endl;
+
+				std::cout << "  '" << this->timeSlotConstraintClauseCounter << "' time slot constraint clauses" << std::endl;
+				std::cout << "  '" << this->dependencyConstraintSubClauseCounter << "' dependency constraint subtract clauses" << std::endl;
+				std::cout << "  '" << this->dependencyConstraintCompClauseCounter << "' dependency constraint comparator clauses" << std::endl;
+				std::cout << "  '" << this->moduloConstraintClauseCounter << "' modulo constraint clauses" << std::endl;
+				std::cout << "  '" << this->resourceConstraintClauseCounter << "' resource constraint clauses" << std::endl;
 
 				/*
 				std::cout << "  '" << this->scheduleTimeLiteralCounter << "' schedule time literals" << std::endl;
@@ -147,15 +161,26 @@ namespace HatScheT {
 			//}
 			auto stat = this->solver->solve();
 			lastAttemptSuccess = stat == CADICAL_SAT;
+			auto unsat = stat == CADICAL_UNSAT;
+			std::string statusStr;
+			if (lastAttemptSuccess) {
+				statusStr = "SAT";
+			}
+			else if (unsat) {
+				statusStr = "UNSAT";
+			}
+			else {
+				statusStr = "TIMEOUT";
+			}
 			if (!this->quiet) {
-				std::cout << "SATSchedulerBinEnc: finished solving with status '" <<
-									(lastAttemptSuccess?"SAT":"UNSAT") << "' (code '" << stat << "') after " << this->terminator.getElapsedTime()
-									<< " sec (total: " << this->solvingTimeTotal << " sec)" << std::endl;
+				std::cout << "SATSchedulerBinEnc: finished solving with status '" << statusStr
+					<< "' (code '" << stat << "') after " << this->terminator.getElapsedTime()
+					<< " sec (total: " << this->solvingTimeTotal << " sec)" << std::endl;
 			}
 			if(!lastAttemptSuccess) {
 				//if (!this->quiet) {
 				auto currentTime4 = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-				std::cerr << "SATSchedulerBinEnc: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << std::endl;
+				std::cerr << "SATSchedulerBinEnc: failed to find solution for II=" << this->candidateII << " and SL=" << this->candidateLatency << " at " << std::put_time(std::localtime(&currentTime4), "%Y-%m-%d %X") << " (" << statusStr << ")" << std::endl;
 				//}
 				// check if it was due to a timeout
 				if (this->terminator.getElapsedTime() >= this->solverTimeout) {
@@ -200,6 +225,38 @@ namespace HatScheT {
 
 	void SATSchedulerBinEnc::defineLatLimits() {
 #if 1
+		if (this->targetSLUserDef) {
+			// limits were defined by the user
+			// only set min and max times based on SDC schedule
+			if (!this->scheduleLengthEstimation->minSLEstimationFound()) {
+				this->scheduleLengthEstimation->estimateMinSL(this->candidateII, (int) this->solverTimeout);
+			}
+			this->earliestStartTime = this->scheduleLengthEstimation->getASAPTimesSDC();
+			this->latestStartTimeDifferences = this->scheduleLengthEstimation->getALAPTimeDiffsSDC();
+		}
+		else {
+			// set max latency if required...
+			if (this->maxSL >= 0) {
+				this->maxLatency = this->maxSL;
+			}
+			else {
+				this->scheduleLengthEstimation->estimateMaxSL(this->candidateII, (int) this->solverTimeout);
+				this->maxLatency = this->scheduleLengthEstimation->getMaxSLEstimation();
+				this->maxLatency = std::min(this->maxLatency, this->maxLatencyConstraint);
+			}
+			// ... and set min latency if required ...
+			if (this->minSL >= 0) {
+				this->minLatency = this->minSL;
+			}
+			else {
+				this->scheduleLengthEstimation->estimateMinSL(this->candidateII, (int) this->solverTimeout);
+				this->minLatency = this->scheduleLengthEstimation->getMinSLEstimation();
+			}
+			// ... and always set min and max times
+			this->earliestStartTime = this->scheduleLengthEstimation->getASAPTimesSDC();
+			this->latestStartTimeDifferences = this->scheduleLengthEstimation->getALAPTimeDiffsSDC();
+		}
+#else
 		if (this->minLatencyUserDef and this->maxLatencyUserDef) {
 			// limits were defined by the user
 			// only set min and max times based on SDC schedule
@@ -247,127 +304,26 @@ namespace HatScheT {
 		if (this->maxSL >= 0) {
 			this->maxLatency = std::min(this->maxLatency, this->maxSL);
 		}
-#else
-		if (this->minLatencyUserDef and this->maxLatencyUserDef) {
-			if (!this->quiet) {
-				std::cout << "SATSchedulerBinEnc: min & max latency defined by user: " << this->minLatency << " & " << this->maxLatency << std::endl;
-			}
-			// limits were defined by the user
-			// only set min and max times based on SDC schedule
-			auto result = Utility::getSDCAsapAndAlapTimes(&this->g, &this->resourceModel, this->candidateII, this->quiet);
-			this->earliestStartTime = result.first;
-			int sdcScheduleLength = 0;
-			for (auto &v : this->g.Vertices()) {
-				auto t = result.second.at(v) + this->resourceModel.getVertexLatency(v);
-				if (t > sdcScheduleLength) sdcScheduleLength = t;
-			}
-			for (auto &v : this->g.Vertices()) {
-				this->latestStartTimeDifferences[v] = sdcScheduleLength - result.second.at(v);
-			}
-		}
-		else if (this->maxLatencyUserDef and !this->minLatencyUserDef) {
-			// only max latency defined by the user
-			// set min and max times and also min latency
-			if (!this->quiet) {
-				std::cout << "SATSchedulerBinEnc: max latency defined by user: " << this->maxLatency << std::endl;
-			}
-			auto result = Utility::getLatencyEstimation(&this->g, &this->resourceModel, this->candidateII, Utility::latencyBounds::minLatency, this->quiet);
-			this->minLatency = result.minLat;
-			this->earliestStartTime = result.asapStartTimes;
-			int sdcScheduleLength = 0;
-			for (auto &v : this->g.Vertices()) {
-				auto t = result.alapStartTimes.at(v) + this->resourceModel.getVertexLatency(v);
-				if (t > sdcScheduleLength) sdcScheduleLength = t;
-			}
-			for (auto &v : this->g.Vertices()) {
-				this->latestStartTimeDifferences[v] = sdcScheduleLength - result.alapStartTimes.at(v);
-			}
-		}
-		else if (this->minLatencyUserDef and !this->maxLatencyUserDef) {
-			// only min latency defined by the user
-			// set min and max times and also max latency
-			if (!this->quiet) {
-				std::cout << "SATSchedulerBinEnc: min latency defined by user: " << this->minLatency << std::endl;
-			}
-			auto result = Utility::getLatencyEstimation(&this->g, &this->resourceModel, this->candidateII, Utility::latencyBounds::maxLatency, this->quiet);
-			this->maxLatency = result.maxLat;
-			this->earliestStartTime = result.asapStartTimes;
-			int sdcScheduleLength = 0;
-			for (auto &v : this->g.Vertices()) {
-				auto t = result.alapStartTimes.at(v) + this->resourceModel.getVertexLatency(v);
-				if (t > sdcScheduleLength) sdcScheduleLength = t;
-			}
-			for (auto &v : this->g.Vertices()) {
-				this->latestStartTimeDifferences[v] = sdcScheduleLength - result.alapStartTimes.at(v);
-			}
-		}
-		else {
-			// nothing requested by the user
-			// set everything
-			// i.e. min and max times and also min and max latencies
-			if (!this->quiet) {
-				std::cout << "SATSchedulerBinEnc: no latency defined by user" << std::endl;
-			}
-			auto result = Utility::getLatencyEstimation(&this->g, &this->resourceModel, this->candidateII, Utility::latencyBounds::both, this->quiet);
-			this->minLatency = result.minLat;
-			this->maxLatency = result.maxLat;
-			this->earliestStartTime = result.asapStartTimes;
-			int sdcScheduleLength = 0;
-			for (auto &v : this->g.Vertices()) {
-				auto t = result.alapStartTimes.at(v) + this->resourceModel.getVertexLatency(v);
-				if (t > sdcScheduleLength) sdcScheduleLength = t;
-			}
-			for (auto &v : this->g.Vertices()) {
-				this->latestStartTimeDifferences[v] = sdcScheduleLength - result.alapStartTimes.at(v);
-			}
-		}
-		if (!this->quiet) {
-			std::cout << "SATSchedulerBinEnc: determined min latency = " << this->minLatency << std::endl;
-			std::cout << "SATSchedulerBinEnc: determined max latency = " << this->maxLatency << std::endl;
-		}
-		// handle max latency constraint
-		if (this->maxLatencyConstraint >= 0 and this->maxLatency > this->maxLatencyConstraint) {
-			this->maxLatency = this->maxLatencyConstraint;
-			std::cout << "SATSchedulerBinEnc: max latency overridden due to user constraint = " << this->maxLatency << std::endl;
-		}
-		// DEBUG
-		/*for (auto &v : this->g.Vertices()) {
-			this->earliestStartTime[v] = 0;
-			this->latestStartTimeDifferences[v] = this->resourceModel.getVertexLatency(v);
-		}*/
-		// DEBUG
-		// user feedback
-		if (!this->quiet) {
-			std::cout << "SATSchedulerBinEnc: latency limits: " << this->minLatency << " <= L <= " << this->maxLatency << std::endl;
-			// sort vertices by name
-			std::set<std::string> vertexNames;
-			for (auto &v : this->g.Vertices()) {
-				vertexNames.insert(v->getName());
-			}
-			// print sorted times
-			std::cout << "SATSchedulerBinEnc: printing all start time limits" << std::endl;
-			for (auto &vn : vertexNames) {
-				auto *v = &this->g.getVertexByName(vn);
-				std::cout << "  " << v->getName() << " earliest: " << this->earliestStartTime.at(v) << ", latest diff: "
-									<< this->latestStartTimeDifferences.at(v) << std::endl;
-			}
-		}
 #endif
 	}
 
 	void SATSchedulerBinEnc::resetContainer() {
+		if (this->inIncrementalMode()) return;
 		// reset literal containers
-		//this->scheduleTimeVariables.clear();
-		//this->moduloSlotVariables.clear();
+		this->scheduleTimeVariables.clear();
+		this->moduloSlotVariables.clear();
+		this->diffVariables.clear();
 		/*
 		this->scheduleTimeLiterals.clear();
 		this->bindingLiterals.clear();
 		 */
 		// reset literal counter(s)
-		//this->literalCounter = 0;
-		//this->moduloSlotLiteralCounter = 0;
-		//this->resourceConstraintLiteralCounter = 0;
-		//this->dependencyConstraintLiteralCounter = 0;
+		this->literalCounter = 0;
+		this->timeSlotLiteralCounter = 0;
+		this->moduloSlotLiteralCounter = 0;
+		this->resourceConstraintLiteralCounter = 0;
+		this->dependencyConstraintSubClauseCounter = 0;
+		this->dependencyConstraintCompClauseCounter = 0;
 		/*
 		this->scheduleTimeLiteralCounter = 0;
 		this->bindingLiteralCounter = 0;
@@ -375,8 +331,12 @@ namespace HatScheT {
 		this->bindingOverlapLiteralCounter = 0;
 		 */
 		// reset clause counter(s)
-		//this->clauseCounter = 0;
-		//this->dependencyConstraintClauseCounter = 0;
+		this->clauseCounter = 0;
+		this->timeSlotConstraintClauseCounter = 0;
+		this->dependencyConstraintSubClauseCounter = 0;
+		this->dependencyConstraintCompClauseCounter = 0;
+		this->moduloConstraintClauseCounter = 0;
+		this->resourceConstraintClauseCounter = 0;
 		/*
 		this->dependencyConstraintClauseCounter = 0;
 		this->resourceConstraintClauseCounter = 0;
@@ -426,6 +386,7 @@ namespace HatScheT {
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			for (int w=0; w<wordSize; w++) {
 				this->scheduleTimeVariables[{v, w}] = ++this->literalCounter;
+				this->timeSlotLiteralCounter++;
 			}
 		}
 	}
@@ -460,6 +421,12 @@ namespace HatScheT {
 
 	void SATSchedulerBinEnc::createTimeSlotLimitationClauses() {
 		for (auto &v : this->g.Vertices()) {
+#if TIME_SLOT_LIMITATION_VERSION_2
+			if (!this->g.hasNoZeroDistanceOutgoingEdges(v)) {
+				continue;
+			}
+			std::cout << "#q# creating time slot limitation clauses for '" << v->getName() << "'" << std::endl;
+#endif
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			if (wordSize < 1) {
 				throw HatScheT::Exception("SATSchedulerBinEnc::createClauses: detected wordSize = '"+std::to_string(wordSize)+"' for vertex '"+v->getName()+"' -> this should never happen!");
@@ -476,7 +443,7 @@ namespace HatScheT {
 				}
 				auto clause = clauseBase;
 				clause.emplace_back(this->scheduleTimeVariables.at({v, idx}), true);
-				this->create_arbitrary_clause(clause);
+				this->timeSlotConstraintClauseCounter += this->create_arbitrary_clause(clause);
 			}
 #else
 			for (int t = maxValue; t > upperLimit; t--) {
@@ -557,15 +524,42 @@ namespace HatScheT {
 				}
 				else {
 					carryOut = ++this->literalCounter;
-					this->dependencyConstraintLiteralCounter++;
+					this->dependencyConstraintSubLiteralCounter++;
 				}
 				int litSum = this->diffVariables[{e, w}] = ++this->literalCounter;
-				this->dependencyConstraintLiteralCounter++;
-				this->dependencyConstraintClauseCounter += this->create_full_adder_clauses({litSrc, false}, {litDst, true}, {litCarry, false}, {litSum, false}, {carryOut, false});
+				this->dependencyConstraintSubLiteralCounter++;
+				int clauseMode = 0;
+				if (w == wordSizeDiff - 1) {
+					clauseMode = -1;
+				}
+				else {
+					clauseMode = 1;
+				}
+				this->dependencyConstraintSubClauseCounter += this->create_full_adder_clauses({litSrc, false}, {litDst, true}, {litCarry, false}, {litSum, false}, {carryOut, false});
 				litCarry = carryOut;
 			}
 			// enforce diff_ij <= edgeConst
 #if 1
+			std::vector<std::pair<int, bool>> clauseBase;
+			for (int idx = wordSizeDiff-1; idx >= 0; idx--) {
+				auto bitSet = (bool)((edgeConst >> idx) & 1);
+				if (idx == wordSizeDiff-1 and !bitSet) {
+					clauseBase.emplace_back(this->diffVariables.at({e, idx}), false);
+					continue;
+				}
+				if (idx != wordSizeDiff-1 and bitSet) {
+					clauseBase.emplace_back(this->diffVariables.at({e, idx}), true);
+					continue;
+				}
+				/*if ((upperLimit >> idx) & 1) {
+					clauseBase.emplace_back(var, true);
+					continue;
+				}*/
+				auto clause = clauseBase;
+				clause.emplace_back(this->diffVariables.at({e, idx}), true);
+				this->dependencyConstraintCompClauseCounter += this->create_arbitrary_clause(clause);
+			}
+#else
 			// build a hardware comparator
 			int ok_last = -1;
 			int carry_last = -1;
@@ -586,93 +580,53 @@ namespace HatScheT {
 						ok_new = this->constOneVar;
 						if (w != 0) {
 							carry_new = ++this->literalCounter;
-							this->dependencyConstraintLiteralCounter++;
+							this->dependencyConstraintCompLiteralCounter++;
 							// carry_new = not x (via negated implications)
-							this->dependencyConstraintClauseCounter += this->create_not(x, carry_new);
+							this->dependencyConstraintCompClauseCounter += this->create_not(x, carry_new);
 						}
 					}
 				}
 				else {
 					// regular bit
 					ok_new = ++this->literalCounter;
-					this->dependencyConstraintLiteralCounter++;
+					this->dependencyConstraintCompLiteralCounter++;
 					if (w != 0) {
 						carry_new = ++this->literalCounter;
-						this->dependencyConstraintLiteralCounter++;
+						this->dependencyConstraintCompLiteralCounter++;
 					}
 					if (c) {
-						this->dependencyConstraintClauseCounter += this->create_2x1_or(ok_last, carry_last, ok_new);
+						this->dependencyConstraintCompClauseCounter += this->create_2x1_or(ok_last, carry_last, ok_new);
 						if (w != 0) {
-							this->dependencyConstraintClauseCounter += this->create_2x1_and(x, carry_last, carry_new);
+							this->dependencyConstraintCompClauseCounter += this->create_2x1_and(x, carry_last, carry_new);
 						}
 					}
 					else {
 						auto not_x = ++this->literalCounter;
-						this->dependencyConstraintLiteralCounter++;
-						this->dependencyConstraintClauseCounter += this->create_not(x, not_x);
-						this->dependencyConstraintClauseCounter += this->create_2x1_mux(ok_last, not_x, carry_last, ok_new);
+						this->dependencyConstraintCompLiteralCounter++;
+						this->dependencyConstraintCompClauseCounter += this->create_not(x, not_x);
+						this->dependencyConstraintCompClauseCounter += this->create_2x1_mux(ok_last, not_x, carry_last, ok_new);
 						if (w != 0) {
-							this->dependencyConstraintClauseCounter += this->create_2x1_and(carry_last, not_x, carry_new);
+							this->dependencyConstraintCompClauseCounter += this->create_2x1_and(carry_last, not_x, carry_new);
 						}
 					}
 				}
 				// force ok bit of this stage to 1
-				this->dependencyConstraintClauseCounter += this->create_arbitrary_clause({{ok_new, false}});
+				this->dependencyConstraintCompClauseCounter += this->create_arbitrary_clause({{ok_new, false}});
 				// pass ok and carry bits to next stage
 				ok_last = ok_new;
 				carry_last = carry_new;
-			}
-#else
-			for (int w1 = wordSizeDiff-1; w1 >= 0; w1--) {
-				// check: is it the sign bit and must it be set to 1?
-				if (w1 == wordSizeDiff-1 and edgeConst < 0) {
-					this->dependencyConstraintClauseCounter += this->create_arbitrary_clause({{this->diffVariables.at({e, w1}), false}});
-					continue;
-				}
-				// check: is it not the sign bit and must it be set to 0?
-				if (w1 != wordSizeDiff-1 and (1 << w1) > edgeConst) {
-					this->dependencyConstraintClauseCounter += this->create_arbitrary_clause({{this->diffVariables.at({e, w1}), true}});
-					continue;
-				}
-				for (int w2 = w1-1; w2 >= 0; w2--) {
-					int num = (1 << w2);
-					std::vector<std::pair<int, bool>> clause(2);
-					if (w1 == wordSizeDiff-1) {
-						num -= (1 << w1);
-						clause[0] = {this->diffVariables.at({e, w1}), false};
-					}
-					else {
-						num += (1 << w1);
-						clause[0] = {this->diffVariables.at({e, w1}), true};
-					}
-					if (num > edgeConst) {
-						clause[1] = {this->diffVariables.at({e, w2}), true};
-						this->dependencyConstraintClauseCounter += this->create_arbitrary_clause(clause);
-					}
-				}
 			}
 #endif
 		}
 		return td;
 	}
 
-	void SATSchedulerBinEnc::createResourceLimitationClauses2() {
-		std::map<std::pair<const Vertex*, int>, int> bindingVariables;
-		for (auto &v : this->g.Vertices()) {
-			auto *r = this->resourceModel.getResource(v);
-			auto rLim = r->getLimit();
-			if (rLim == UNLIMITED or rLim == 1) continue;
-			auto wLim = (int)std::ceil(std::log2(rLim));
-			for (int w=0; w<wLim; w++) {
-				bindingVariables[{v, w}] = ++this->literalCounter;
-			}
-			//
-		}
-	}
-
 	void SATSchedulerBinEnc::createResourceLimitationClauses() {
 		std::map<std::pair<const Resource*, int>, int> curMaxVal;
 		std::map<std::pair<const Resource*, int>, vector<int>> partialSumVars;
+		// exploit the case where II = 2^something
+		auto wII = (int)std::round(std::log2(this->candidateII));
+		bool twoToSomethingII = (std::pow(2, wII)) == this->candidateII;
 		// build partial sums for all resource-limited vertices
 		for (auto &v : this->g.Vertices()) {
 			// check if vertex can be skipped
@@ -684,6 +638,13 @@ namespace HatScheT {
 			auto &tOffset = this->earliestStartTime.at(v);
 			auto tDiff = this->latestStartTime.at(v) - this->earliestStartTime.at(v);
 			auto &tWordSize = this->scheduleTimeWordSize.at(v);
+#if TIME_SLOT_LIMITATION_VERSION_2
+			tDiff = (1 << tWordSize)-1;
+#endif
+			// exploit the case where II = 2^something
+			if (twoToSomethingII) {
+				tDiff = std::min(this->candidateII-1, tDiff);
+			}
 			// create implications for the adder input
 			for (int t=0; t<=tDiff; t++) {
 				auto tSched = t + tOffset;
@@ -694,16 +655,27 @@ namespace HatScheT {
 					this->moduloSlotLiteralCounter++;
 				}
 				// create implication
-				std::vector<std::pair<int, bool>> clause(tWordSize+1);
-				for (int w = 0; w < tWordSize; w++) {
+				int tNumBits;
+				if (twoToSomethingII) {
+					tNumBits = std::min(wII, tWordSize);
+				}
+				else {
+					tNumBits = tWordSize;
+				}
+				std::vector<std::pair<int, bool>> clause(tNumBits+1);
+				for (int w = 0; w < tNumBits; w++) {
 					auto bitVal = (bool)((t >> w) & 1);
 					clause[w] = {this->scheduleTimeVariables.at({v, w}), bitVal};
 				}
-				clause[tWordSize] = {addInput, false};
-				this->create_arbitrary_clause(clause);
+				clause[tNumBits] = {addInput, false};
+				this->moduloConstraintClauseCounter += this->create_arbitrary_clause(clause);
 			}
 			// create adders for all possible modulo slots where this vertex can be scheduled
 			// and forbid that the adder output exceeds the resource limit
+			int halfAdderClauseMode = 0;
+#if RESOURCES_VERSION_2
+			halfAdderClauseMode = 1;
+#endif
 			for (int m = 0; m < this->candidateII; m++) {
 				auto &addInputBit = this->moduloSlotVariables[{v, m}];
 				if (addInputBit == 0) {
@@ -720,10 +692,17 @@ namespace HatScheT {
 					continue;
 				}
 				// create adder
-				auto inputWordSize = addInputVector.size();
+				auto inputWordSize = (int)addInputVector.size();
+#if RESOURCES_VERSION_2
+				inputWordSize = std::min(inputWordSize, resLimWordSize);
+#endif
 				auto outputWordSize = (int)std::ceil(std::log2(curMaxVal[{r, m}]+1));
-				// calculating until the resource limit is enough
+#if RESOURCES_VERSION_2
+				outputWordSize = inputWordSize+1;
+#else
 				outputWordSize = std::min(outputWordSize, resLimWordSize);
+#endif
+				// calculating until the resource limit is enough
 				int carryIn = addInputBit;
 				std::vector<int> partialSumOutput(outputWordSize);
 				for (int w = 0; w < inputWordSize; w++) {
@@ -733,7 +712,7 @@ namespace HatScheT {
 						int carryOut = ++this->literalCounter;
 						this->resourceConstraintLiteralCounter++;
 						// normal half adder
-						this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false}, {carryOut, false});
+						this->resourceConstraintClauseCounter += this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false}, {carryOut, false}, halfAdderClauseMode);
 						// pass carry output to next stage
 						carryIn = carryOut;
 					}
@@ -741,29 +720,50 @@ namespace HatScheT {
 						int carryOut = ++this->literalCounter;
 						this->resourceConstraintLiteralCounter++;
 						// normal half adder
-						this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false}, {carryOut, false});
+						this->resourceConstraintClauseCounter += this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false}, {carryOut, false},halfAdderClauseMode);
 						// the carry output is the result MSB
 						partialSumOutput[w+1] = carryOut;
 					}
 					else {
 						// half adder without carry output
-						this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false});
+						this->resourceConstraintClauseCounter += this->create_half_adder_clauses({carryIn, false}, {addInputVector.at(w), false}, {sumBit, false},{-1, false});
 					}
 				}
 				// pass adder output to next stage
 				partialSumVars[{r, m}] = partialSumOutput;
 				// forbid that the adder output exceeds the resource limit
-				if (curMaxVal[{r, m}] <= resLim) {
+				if (
+#if RESOURCES_VERSION_2
+						(resLimWordSize > outputWordSize)
+#else
+						(halfAdderClauseMode == 0 and curMaxVal[{r, m}] <= resLim)
+#endif
+						) {
 					// limit cannot be exceeded because the partial sum is too small
 					continue;
 				}
+#if RESOURCES_VERSION_2
+				// force constraint "partial sum <= resource limit"
+				std::vector<std::pair<int, bool>> clauseBase;
+				for (int idx = (int)outputWordSize - 1; idx >= 0; idx--) {
+					if ((resLim >> idx) & 1) {
+						clauseBase.emplace_back(partialSumOutput.at(idx), true);
+						continue;
+					}
+					auto clause = clauseBase;
+					clause.emplace_back(partialSumOutput.at(idx), true);
+					this->resourceConstraintClauseCounter += this->create_arbitrary_clause(clause);
+				}
+#else
+				// constraint "partial sum != resource limit+1"
 				std::vector<std::pair<int, bool>> clause;
 				auto resLimViolated = resLim + 1;
 				for (int w = 0; w < outputWordSize; w++) {
-					auto resLimBit = (bool)((resLimViolated >> w) & 1);
+					auto resLimBit = (bool) ((resLimViolated >> w) & 1);
 					clause.emplace_back(partialSumOutput.at(w), resLimBit);
 				}
 				this->create_arbitrary_clause(clause);
+#endif
 			}
 		}
 	}
@@ -790,9 +790,10 @@ namespace HatScheT {
 			for (auto &it : this->startTimes) {
 				if (it.second + this->resourceModel.getVertexLatency(it.first) > this->candidateLatency) {
 					// start time is too late!
-					std::cout << "SATSchedulerBinEnc: vertex '" << it.first->getName() << "' (t='" << it.second << "', lat='" << this->resourceModel.getVertexLatency(it.first) << "') violates requested schedule length of '" << this->candidateLatency << "'" << std::endl;
+					std::cout << "SATSchedulerBinEnc: vertex '" << it.first->getName() << "' (t='" << it.second << "', lat='" << this->resourceModel.getVertexLatency(it.first) << "', wSize='" << this->scheduleTimeWordSize.at(it.first) << "', offset='" << this->earliestStartTime.at(it.first) << "', diff='" << this->latestStartTimeDifferences.at(it.first) << "') violates requested schedule length of '" << this->candidateLatency << "'" << std::endl;
 				}
 			}
+			verifyModuloSchedule(this->g, this->resourceModel, this->startTimes, this->candidateII);
 			throw Exception("SATSchedulerBinEnc: Found invalid schedule! Requested candidate schedule length was '"+std::to_string(this->candidateLatency)+"' but scheduler found schedule length '"+std::to_string(actualScheduleLength)+"'");
 		}
 		this->candidateLatency = actualScheduleLength;
@@ -886,59 +887,212 @@ namespace HatScheT {
 
 	int SATSchedulerBinEnc::create_full_adder_clauses(std::pair<int, bool> a, std::pair<int, bool> b,
 																										std::pair<int, bool> c_i, std::pair<int, bool> sum,
-																										std::pair<int, bool> c_o) {
+																										std::pair<int, bool> c_o, int clauseMode) {
+		// clause mode =  0: create all clauses
+		// clause mode =  1: create all clauses leading to true sum/c_o values
+		// clause mode = -1: create all clauses leading to false sum/c_o values
+		if (clauseMode > 1 or clauseMode < -1) {
+			throw Exception("SATSchedulerBinEnc::create_full_adder_clauses: invalid clause mode");
+		}
+		int clause_counter = 0;
+#if ADDER_OPT
+		if (c_o.first <= 0) {
+			// build only sum bit
+			// 1)
+			if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
+			// 2)
+			if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
+			// 3)
+			if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
+			// 4)
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
+			// 5)
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+			// 6)
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+			// 7)
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
+			// 8)
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
+			return clause_counter;
+		}
+		// build carry and use it to build sum
 		// 1)
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_o.first, c_o.second}});
 		// 2)
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
 		// 3)
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
 		// 4)
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
 		// 5)
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, b.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
 		// 6)
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
-		// 7)
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
-		// 8)
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_o.first, not c_o.second}});
 
-		if (c_o.first <= 0) return 8;
+		// 1)    a -c_o -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {c_o.first, not c_o.second}, {sum.first, not sum.second}});
+		// 2)    b -c_o -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, b.second}, {c_o.first, not c_o.second}, {sum.first, not sum.second}});
+		// 3)  c_i -c_o -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{c_i.first, c_i.second}, {c_o.first, not c_o.second}, {sum.first, not sum.second}});
+		// 4)    a    b  c_i -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+		// 5)   -a  c_o  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
+		// 6)   -b  c_o  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
+		// 7) -c_i  c_o  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{c_i.first, not c_i.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
+		// 8)   -a   -b -c_i  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
+#else
 		// 1)
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_o.first, c_o.second}});
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
 		// 2)
-		this->create_arbitrary_clause({{a.first, a.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, sum.second}});
 		// 3)
-		this->create_arbitrary_clause({{b.first, b.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
 		// 4)
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_o.first, not c_o.second}});
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, sum.second}});
 		// 5)
-		this->create_arbitrary_clause({{b.first, not b.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
 		// 6)
-		this->create_arbitrary_clause({{a.first, not a.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
-		return 14;
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_i.first, c_i.second}, {sum.first, not sum.second}});
+		// 7)
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
+		// 8)
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {c_i.first, not c_i.second}, {sum.first, not sum.second}});
+
+		if (c_o.first <= 0) return clause_counter;
+		// 1)
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_o.first, c_o.second}});
+		// 2)
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
+		// 3)
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
+		// 4)
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
+		// 5)
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, b.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
+		// 6)
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_o.first, not c_o.second}});
+#endif
+		return clause_counter;
 	}
 
 	int SATSchedulerBinEnc::create_half_adder_clauses(std::pair<int, bool> a, std::pair<int, bool> b,
-																										std::pair<int, bool> sum, std::pair<int, bool> c_o) {
-		// 1) a b -sum
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {sum.first, not sum.second}});
-		// 2) a -b sum
-		this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {sum.first, sum.second}});
-		// 3) -a b sum
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {sum.first, sum.second}});
-		// 4) -a -b -sum
-		this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {sum.first, not sum.second}});
-
-		if (c_o.first <= 0) return 4;
+																										std::pair<int, bool> sum, std::pair<int, bool> c_o,
+																										int clauseMode) {
+		// clause mode =  0: create all clauses
+		// clause mode =  1: create all clauses leading to true sum/c_o values
+		// clause mode = -1: create all clauses leading to false sum/c_o values
+		// clause mode =  1 and c_o = -1: sum = a or b (for resource constraints)
+		if (clauseMode > 1 or clauseMode < -1) throw Exception("SATSchedulerBinEnc::create_half_adder_clauses: invalid clause mode");
+		int clause_counter = 0;
+		if (clauseMode != 0 and c_o.first == -1) {
+			throw Exception("SATSchedulerBinEnc::create_half_adder_clauses: cannot create half adder in clause mode 1/-1 without carry output");
+		}
+#if ADDER_OPT
+		if (c_o.first <= 0) {
+			// only build sum
+			// 1) a b -sum
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {sum.first, not sum.second}});
+			// 2) -a -b -sum
+			if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {sum.first, not sum.second}});
+			// 3) a -b sum
+			if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {sum.first, sum.second}});
+			// 4) -a b sum
+			if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+				clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {sum.first, sum.second}});
+			return clause_counter;
+		}
+		// build carry and use it to build sum
 		// 1) -a -b c_o
-		this->create_arbitrary_clause({{a.first, not a.second},{b.first, not b.second},{c_o.first, c_o.second}});
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second},{b.first, not b.second},{c_o.first, c_o.second}});
 		// 2) a -c_o
-		this->create_arbitrary_clause({{a.first, a.second},{c_o.first, not c_o.second}});
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second},{c_o.first, not c_o.second}});
 		// 3) b -c_o
-		this->create_arbitrary_clause({{b.first, b.second},{c_o.first, not c_o.second}});
-		return 7;
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, b.second},{c_o.first, not c_o.second}});
+
+		// 1) -c_o -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{c_o.first, not c_o.second}, {sum.first, not sum.second}});
+		// 2) -a  c_o  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
+		// 3) -b  c_o  sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
+#else
+		// "normal" sum clauses
+		// 1) a b -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {sum.first, not sum.second}});
+		// 2) -a -b -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {sum.first, not sum.second}});
+		// 3) a -b sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, not b.second}, {sum.first, sum.second}});
+		// 4) -a b sum
+		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, b.second}, {sum.first, sum.second}});
+
+		if (c_o.first <= 0) return clause_counter;
+		// 1) -a -b c_o
+		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, not a.second},{b.first, not b.second},{c_o.first, c_o.second}});
+		// 2) a -c_o
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second},{c_o.first, not c_o.second}});
+		// 3) b -c_o
+		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{b.first, b.second},{c_o.first, not c_o.second}});luzel
+#endif
+		return clause_counter;
 	}
 
 	int SATSchedulerBinEnc::create_not(int x, int not_x) {
@@ -985,8 +1139,22 @@ namespace HatScheT {
 		return 6;
 	}
 
+	int SATSchedulerBinEnc::create_nand(int a, int b, int y) {
+		// 1)
+		this->create_arbitrary_clause({{a, false}, {y, false}});
+		// 2)
+		this->create_arbitrary_clause({{b, false}, {y, false}});
+		// 3)
+		this->create_arbitrary_clause({{a, true}, {b, true}, {y, true}});
+		return 3;
+	}
+
 	void SATSchedulerBinEnc::createIncrementalClauses() {
 		for (auto &v : this->g.Vertices()) {
+#if TIME_SLOT_LIMITATION_VERSION_2
+			if (!this->g.hasNoZeroDistanceOutgoingEdges(v)) continue;
+			std::cout << "#q# creating incremental clauses for '" << v->getName() << "'" << std::endl;
+#endif
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			auto tForbidden = this->latestStartTime.at(v) - this->earliestStartTime.at(v) + 1;
 

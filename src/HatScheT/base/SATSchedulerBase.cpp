@@ -22,8 +22,9 @@ namespace HatScheT {
 		this->minLatency = newTargetLatency;
 		this->maxLatency = newTargetLatency;
 		this->enableIIBasedLatencyLowerBound = false;
-		this->minLatencyUserDef = true;
-		this->maxLatencyUserDef = true;
+		//this->minLatencyUserDef = true;
+		//this->maxLatencyUserDef = true;
+		this->targetSLUserDef = true;
 	}
 
 	void SATSchedulerBase::setEarliestStartTimes(const map<Vertex *, int> &newEarliestStartTimes) {
@@ -68,6 +69,12 @@ namespace HatScheT {
 			else {
 				return false;
 			}
+		}
+		// for most searches just start 10% above the minimum latency
+		// that always worked quite well :)
+		if (this->candidateLatency < 0 and this->los != LINEAR) {
+			this->candidateLatency = std::min((int)std::ceil(1.1 * (double)this->latencyLowerBound), this->latencyUpperBound);
+			return true;
 		}
 		switch (this->los) {
 			case REVERSE_LINEAR: {

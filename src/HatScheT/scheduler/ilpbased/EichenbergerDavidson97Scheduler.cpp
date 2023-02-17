@@ -140,10 +140,17 @@ namespace HatScheT
 			row[i]  = ScaLP::newIntegerVariable("row" + id, 0, candII - 1);
 			time[i] = ScaLP::newIntegerVariable("time" + id);
 
-			solver->addConstraint(k[i] >= 0);
-			solver->addConstraint(time[i] >= 0);
+			if (this->earliestStartTimes.empty()) {
+				solver->addConstraint(k[i] >= 0);
+				solver->addConstraint(time[i] >= 0);
+			}
+			else {
+				auto tMin = (double)earliestStartTimes.at(i);
+				solver->addConstraint(k[i] >= std::floor(tMin / candII));
+				solver->addConstraint(time[i] >= tMin);
+			}
 			if (this->maxSL >= 0) {
-				solver->addConstraint(k[i]    <= maxSL / candII);
+				solver->addConstraint(k[i]    <= std::floor(((double)maxSL) / candII));
 				solver->addConstraint(time[i] <= maxSL);
 			}
 		}

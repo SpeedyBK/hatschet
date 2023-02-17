@@ -19,11 +19,6 @@
 namespace HatScheT {
 	class SATCombinedScheduler : public SchedulerBase, public ModuloSchedulerBase, public IterativeSchedulerBase {
 	public:
-		enum backendSchedulerType_t {
-			BACKEND_SAT,
-			BACKEND_SATLAT,
-			BACKEND_SATBIN
-		};
 		SATCombinedScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
 		double getSolvingTime() const { return this->solvingTime; }
 		void schedule() override;
