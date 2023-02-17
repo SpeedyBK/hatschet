@@ -1,9 +1,8 @@
 /*
     This file is part of the HatScheT project, developed at University of Kassel and TU Darmstadt, Germany
-    Author: Patrick Sittel (sittel@uni-kassel.de)
-            Benjamin Lagershausen-Kessler (benjaminkessler@student.uni-kassel.de)
+    Author: Nicolai Fiege (nfiege@uni-kassel.de)
 
-    Copyright (C) 2019
+    Copyright (C) 2023
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
@@ -21,37 +20,81 @@
 
 /*
  * General Idea:
- * Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
+ * [1] Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
  * SDC and SAT Formulation; FPGA 2018
  *
+ * Extension to Modulo Scheduling:
+ * [2] Steve Dai, Zhiru Zhang; Improving Scalability of Exact Modulo Scheduling with Specialized Conflict-Driven Learning;
+ * DAC 2019
+ *
  * CaDiCaL SAT-Solver:
- * Armin Biere; CADICAL, LINGELING, PLINGELING, TREENGELING and YALSAT Entering the SAT Competition; 2018
+ * [3] Armin Biere; CADICAL, LINGELING, PLINGELING, TREENGELING and YALSAT Entering the SAT Competition; 2018
  *
  * SDC Incremental Solver:
- * G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
+ * [4] G.Ramalingam, J. Song, L. Joskowicz, R.E. Miller; Solving Systems of Difference Constraints Incrementally;
  * Algorithmica 1999
  *
  * Fibonacci Heap:
- * Michael L. Fredman, Robert E. Tarjan; Fibonacci Heaps and Their Uses in Improved Network Optimization Algorithms
+ * [5] Michael L. Fredman, Robert E. Tarjan; Fibonacci Heaps and Their Uses in Improved Network Optimization Algorithms
  * Journal of the Association for Computing Machinery 1987
+ *
+ *
  */
 
 #ifndef HATSCHET_SDSSCHEDULER_H
 #define HATSCHET_SDSSCHEDULER_H
 #ifdef USE_CADICAL
 
-#include <HatScheT/base/SchedulerBase.h>
-#include <HatScheT/base/ModuloSchedulerBase.h>
+#include <HatScheT/base/SATSchedulerBase.h>
 #include <HatScheT/base/ILPSchedulerBase.h>
 #include <vector>
+#include <map>
+#include <utility>
 #include <cstdlib>
 
 #include "cadical.hpp"
 #include "HatScheT/utility/Verifier.h"
+#include <HatScheT/utility/SDCSolverIncremental.h>
+#include <HatScheT/utility/SDCSolverBellmanFord.h>
 
 namespace HatScheT {
 
-  struct bindingVariable {
+
+#if 1
+	/*!
+	 * this class implements the adaption of [1] to modulo scheduling as described in [2]
+	 * without the SCC preprocessing engine
+	 */
+	class SDSScheduler : public SATSchedulerBase {
+	public:
+		SDSScheduler(Graph &g, ResourceModel &resourceModel, int II = -1);
+
+		void scheduleIteration() override;
+
+	private:
+		void computeLatencyBounds();
+		void initSATSolver();
+		void initSDCSolver();
+		void forbidConflictingResourceConstraints(std::set<int> conflictingResourceConstraints);
+		std::set<int> solveSDC(const std::list<std::tuple<const Vertex*, const Vertex*, int, int>> &additionalSDCConstraints);
+		std::pair<bool, std::list<std::tuple<const Vertex*, const Vertex*, int, int>>> getAdditionalSDCConstraints();
+		int kMax = INT32_MAX;
+		int kMin = INT32_MIN;
+		// SDC solver
+		//SDCSolverIncremental sdcSolver;
+		SDCSolverBellmanFord sdcSolver;
+		// SAT variables
+		std::map<std::pair<const Vertex*, int>, int> B_ir; // originally called B_ik but we use the index k for O_ijk
+		std::map<std::pair<const Vertex*, const Vertex*>, int> R_ij;
+		std::map<std::pair<const Vertex*, const Vertex*>, int> O_ij;
+		std::map<std::pair<const Vertex*, const Vertex*>, std::map<int, int>> O_ijk;
+
+		std::set<std::set<int>> learnedClauses;
+
+#else
+
+
+		struct bindingVariable {
     int index;
     Resource *resource;
     int resourceID;
@@ -259,7 +302,8 @@ namespace HatScheT {
 
     ScaLP::Variable newVar = ScaLP::newIntegerVariable("SuperINGO", 0, ScaLP::INF());
 
-  };
+#endif
+	}; // class SDSScheduler
 
 }
 

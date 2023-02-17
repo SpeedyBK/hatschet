@@ -1353,10 +1353,10 @@ namespace HatScheT {
 
 		cout << "SDS:" << endl;
 		list <string> sw = {"CPLEX","Gurobi", "SCIP", "LPSolve"};
-		SDSScheduler sds(g, rm, sw);
+		SDSScheduler sds(g, rm);
 		cout << "*******************************************************" << endl << endl;
 		sds.setQuiet(false);
-		sds.setBindingType('S');
+		//sds.setBindingType('S');
 		std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 		sds.schedule();
 		std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();

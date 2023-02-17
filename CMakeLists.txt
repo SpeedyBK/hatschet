@@ -169,6 +169,9 @@ set(HatScheT_SOURCES
         src/HatScheT/utility/Binding.cpp
         src/HatScheT/utility/BindingBase.cpp
         src/HatScheT/utility/TreeBind.cpp
+        src/HatScheT/utility/SDCSolver.cpp
+        src/HatScheT/utility/SDCSolverBellmanFord.cpp
+        src/HatScheT/utility/SDCSolverIncremental.cpp
         src/HatScheT/scheduler/ASAPScheduler.cpp
         src/HatScheT/scheduler/ALAPScheduler.cpp
         src/HatScheT/scheduler/ULScheduler.cpp
@@ -267,6 +270,8 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
         src/HatScheT/scheduler/smtbased/SMTModScheduler.h
         src/HatScheT/utility/SDCSolver.h
+        src/HatScheT/utility/SDCSolverBellmanFord.h
+        src/HatScheT/utility/SDCSolverIncremental.h
         src/HatScheT/utility/FibonacciHeap.h
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/TempLatencyTest.h
