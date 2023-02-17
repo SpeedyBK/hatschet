@@ -253,6 +253,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/dev/DaiZhang19Scheduler.h
         src/HatScheT/scheduler/dev/SDSScheduler.h
         src/HatScheT/scheduler/satbased/SATScheduler.h
+        src/HatScheT/scheduler/satbased/SATCDLScheduler.h
         src/HatScheT/scheduler/satbased/SATSCCScheduler.h
         src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
@@ -332,6 +333,7 @@ IF (CADICAL_H AND CADICAL_LIB)
             src/HatScheT/base/SATSchedulerBase.cpp
             src/HatScheT/scheduler/dev/SDSScheduler.cpp
             src/HatScheT/scheduler/satbased/SATScheduler.cpp
+            src/HatScheT/scheduler/satbased/SATCDLScheduler.cpp
             src/HatScheT/scheduler/satbased/SATSchedulerRes.cpp
             src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
             src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
