@@ -4034,7 +4034,7 @@ namespace HatScheT {
   }
 
   bool Tests::smtCombined() {
-#ifdef USE_Z3
+#if defined(USE_Z3) && defined(USE_CADICAL)
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
@@ -4184,7 +4184,7 @@ namespace HatScheT {
       cout << endl;
       return success;
   }bool Tests::ilpMinMaxLatencyEstimationTest() {
-#ifdef USE_SCALP
+#if defined(USE_SCALP) && defined(USE_Z3)
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
 #if 0

@@ -150,7 +150,6 @@ set(HatScheT_SOURCES
         src/HatScheT/utility/Exception.cpp
         src/HatScheT/base/SchedulerBase.cpp
         src/HatScheT/layers/RationalIISchedulerLayer.cpp
-        src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
         src/HatScheT/ResourceModel.cpp
         src/HatScheT/utility/reader/Reader.cpp
         src/HatScheT/utility/reader/GraphMLGraphReader.cpp
@@ -180,8 +179,7 @@ set(HatScheT_SOURCES
         src/HatScheT/utility/writer/XMLResourceWriter.cpp
         src/HatScheT/base/IterativeSchedulerBase.cpp
         src/HatScheT/utility/subgraphs/SCC.cpp
-        src/HatScheT/utility/SDCSolver.cpp
-        src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp)
+        src/HatScheT/utility/SDCSolver.cpp)
 
 
 set(HatScheT_HEADERS
@@ -284,6 +282,7 @@ IF (SCALP_H AND SCALP_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/ILPSchedulerBase.cpp
             src/HatScheT/base/ModuloSchedulerBase.cpp
+            src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
             src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp
             src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
             src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
@@ -315,6 +314,12 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
             src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
+
+IF (SCALP_H AND SCALP_LIB AND Z3_H AND Z3_LIB)
+    list(APPEND HatScheT_SOURCES
+            src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp
+            )
+ENDIF (SCALP_H AND SCALP_LIB AND Z3_H AND Z3_LIB)
 
 IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
     list(APPEND HatScheT_SOURCES
@@ -354,7 +359,7 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
-IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
+IF ((Z3_H AND Z3_LIB) AND (SCALP_H AND SCALP_LIB))
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
             )

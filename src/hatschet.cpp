@@ -1177,6 +1177,7 @@ int main(int argc, char *args[]) {
 					throw HatScheT::Exception("Scheduler " + schedulerSelectionStr + " not available!");
 			}
 
+#ifdef USE_SCALP
 			// set max runs
 			if (maxRuns > 0) {
 				auto iterativeSchedulerBase = dynamic_cast<HatScheT::IterativeSchedulerBase *>(scheduler);
@@ -1193,13 +1194,11 @@ int main(int argc, char *args[]) {
 				}
 			}
 
-#ifdef USE_SCALP
 			// set writeILPFile
 			auto ilpSchedulerBase = dynamic_cast<HatScheT::ILPSchedulerBase *>(scheduler);
 			if (ilpSchedulerBase != nullptr) {
 				ilpSchedulerBase->setWriteLPFile(writeLPFile);
 			}
-#endif //USE_SCALP
 
 			// bound schedule length if wanted
 			if (boundSL) {
@@ -1208,6 +1207,7 @@ int main(int argc, char *args[]) {
 					modSchedLayer->setBoundSL(boundSL);
 				}
 			}
+#endif
 
 			// set quiet or loud
 			scheduler->setQuiet(quiet);
@@ -1306,12 +1306,12 @@ int main(int argc, char *args[]) {
 #endif //USE_SCALP
 				}
 				std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
-				auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase *>(scheduler);
 				std::pair<bool, bool> objectivesOptimal(false, false);
+#ifdef USE_SCALP
+				auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase *>(scheduler);
 				if (modSchedBase != nullptr) {
 					objectivesOptimal = modSchedBase->getObjectivesOptimal();
 				}
-#ifdef USE_SCALP
 				if (ratIILayer == nullptr) {
 					sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(
 						new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings,
@@ -1324,8 +1324,10 @@ int main(int argc, char *args[]) {
 #else
 				sBWriter = std::unique_ptr<HatScheT::ScheduleAndBindingWriter>(new HatScheT::ScheduleAndBindingWriter(scheduleFile, intIISchedule, intIIBindings, (int)scheduler->getII()));
 #endif //USE_SCALP
+#ifdef USE_SCALP
 				sBWriter->setMinII(HatScheT::Utility::calcMinII(HatScheT::Utility::calcResMII(&rm),
 																												HatScheT::Utility::calcRecMII(&g, &rm)));
+#endif
 				sBWriter->setRMPath(resourceModelFile);
 				sBWriter->setGraphPath(graphMLFile);
 				sBWriter->setScheduleLength(scheduler->getScheduleLength());

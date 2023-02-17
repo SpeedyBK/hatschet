@@ -11,8 +11,10 @@
 #include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATSchedulerBinEnc.h"
 #include "HatScheT/scheduler/satbased/SATSchedulerRes.h"
+#endif
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
@@ -481,6 +483,7 @@ namespace HatScheT {
               if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
           }
+#ifdef USE_CADICAL
           case scheduler::SAT:{
 #if 0
 						auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
@@ -497,6 +500,7 @@ namespace HatScheT {
               //if (!quiet) schedulePtr->getDebugPrintouts();
               return schedulePtr;
           }
+#endif
 					case scheduler::NONE:{
 						return nullptr;
 					}
