@@ -57,6 +57,7 @@
 #include "HatScheT/scheduler/dev/SDSScheduler.h"
 #include "HatScheT/utility/FibonacciHeap.h"
 #include "HatScheT/utility/SDCSolver.h"
+#include "HatScheT/utility/SDCSolverIncremental.h"
 #include "HatScheT/utility/writer/ScheduleAndBindingWriter.h"
 #include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
@@ -4298,5 +4299,116 @@ namespace HatScheT {
 #else
 		return true; // test disabled
 #endif
+	}
+
+	bool Tests::sdcSolverIncrementalTest() {
+		std::map<std::pair<int,int>,int> baseConstraints;
+		baseConstraints[{1,11}] = -1;
+		baseConstraints[{1,12}] = -1;
+		baseConstraints[{1,13}] = -1;
+		baseConstraints[{1,14}] = -1;
+		baseConstraints[{2,11}] = -1;
+		baseConstraints[{3,12}] = -1;
+		baseConstraints[{4,13}] = -1;
+		baseConstraints[{5,14}] = -1;
+		baseConstraints[{6,7}] = 0;
+		baseConstraints[{7,8}] = 0;
+		baseConstraints[{8,9}] = 0;
+		baseConstraints[{9,15}] = -4;
+		baseConstraints[{10,9}] = -1;
+		baseConstraints[{11,6}] = 1;
+		baseConstraints[{12,6}] = -4;
+		baseConstraints[{13,7}] = -4;
+		baseConstraints[{14,8}] = -4;
+		SDCSolverIncremental s;
+		s.setQuiet(false);
+		for (auto &it : baseConstraints) {
+			s.addBaseConstraint(it.first.first, it.first.second, it.second);
+		}
+		s.computeInitialSolution();
+		if (s.getSolutionFound()) {
+			std::cout << "SDC feasible" << std::endl;
+		}
+		else {
+			std::cout << "Initial SDC infeasible" << std::endl;
+			return false;
+		}
+		auto initSolution = s.getSolution();
+		bool allOk = true;
+		for (auto &it : baseConstraints) {
+			auto tU = initSolution.at(it.first.first);
+			auto tV = initSolution.at(it.first.second);
+			auto rhs = it.second;
+			auto ok = tU-tV <= rhs;
+			if (not ok) {
+				allOk = false;
+				std::cout << "Constraint 't_" << it.first.first << " - t_" << it.first.second << " <= " << it.second << "' violated!" << std::endl;
+				std::cout << "Constraint '" << tU << " - " << tV << " > " << rhs << "'!!!" << std::endl;
+			}
+		}
+		if (allOk) {
+			std::cout << "Init solution OK" << std::endl;
+		}
+		else {
+			std::cout << "Init solution invalid!" << std::endl;
+			return false;
+		}
+		// override solution
+		std::map<int,int> overrideSolution;
+		overrideSolution[1] = -14;
+		overrideSolution[2] = -7;
+		overrideSolution[3] = -11;
+		overrideSolution[4] = -12;
+		overrideSolution[5] = -12;
+		overrideSolution[6] = -18;
+		overrideSolution[7] = -7;
+		overrideSolution[8] = -6;
+		overrideSolution[9] = -8;
+		overrideSolution[10] = -9;
+		overrideSolution[11] = -12;
+		overrideSolution[12] = -22;
+		overrideSolution[13] = -11;
+		overrideSolution[14] = -11;
+		overrideSolution[15] = 0;
+		s.overrideSolution(overrideSolution);
+		initSolution = s.getSolution();
+		allOk = true;
+		for (auto &it : baseConstraints) {
+			auto tU = initSolution.at(it.first.first);
+			auto tV = initSolution.at(it.first.second);
+			auto rhs = it.second;
+			auto ok = tU-tV <= rhs;
+			if (not ok) {
+				allOk = false;
+				std::cout << "Constraint 't_" << it.first.first << " - t_" << it.first.second << " <= " << it.second << "' violated!" << std::endl;
+				std::cout << "Constraint '" << tU << " - " << tV << " > " << rhs << "'!!!" << std::endl;
+			}
+		}
+		if (allOk) {
+			std::cout << "Overridden init solution OK" << std::endl;
+		}
+		else {
+			std::cout << "Overridden init solution invalid!" << std::endl;
+			return false;
+		}
+		return true;
+		// add additional constraints
+		s.addAdditionalConstraint(7,6,14);
+		s.addAdditionalConstraint(6,7,-11);
+		s.addAdditionalConstraint(8,6,14);
+		s.addAdditionalConstraint(6,8,-11);
+		s.addAdditionalConstraint(8,7,4);
+		s.addAdditionalConstraint(7,8,-1);
+		s.addAdditionalConstraint(11,9,-1);
+		s.addAdditionalConstraint(9,11,4);
+		s.addAdditionalConstraint(12,9,14);
+		s.addAdditionalConstraint(9,12,-11);
+		if (s.getSolutionFound()) {
+			std::cout << "SDC after adding additional constraints is feasible" << std::endl;
+		}
+		else {
+			std::cout << "SDC after adding additional constraints is infeasible" << std::endl;
+		}
+		return true;
 	}
 }

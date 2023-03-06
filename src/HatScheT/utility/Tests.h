@@ -264,6 +264,8 @@ namespace HatScheT {
 
 		static bool sdcSolverTest();
 
+		static bool sdcSolverIncrementalTest();
+
 		/*!
 		 * test getILPBasedIntIIBindingCong function
 		 * @return

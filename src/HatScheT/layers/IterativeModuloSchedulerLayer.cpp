@@ -52,7 +52,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
     // Define maxII if maxRuns Constraint is given:
     if (this->maxRuns > 0)
     {
-        maxII = (int)this->minII + maxRuns;
+        maxII = (int)this->minII + maxRuns - 1;
         if(!this->quiet or !this->layerQuiet)
         {
             std::cout << "IterativeModuloSchedulerLayer: maxII changed due to maxRuns value set by user to " << this->maxRuns << endl;

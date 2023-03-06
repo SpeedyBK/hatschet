@@ -78,6 +78,7 @@
 
 #ifdef USE_CADICAL
 
+#include <HatScheT/scheduler/dev/SDSScheduler.h>
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include <HatScheT/scheduler/satbased/SATCDLScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
@@ -257,6 +258,7 @@ int main(int argc, char *args[]) {
 		SMTCDL,
 	    SMTSCC,
 	    SMT,
+		SDS,
 		SAT,
 		SATLAT,
 		SATBIN,
@@ -292,7 +294,7 @@ int main(int argc, char *args[]) {
 	};
 	SchedulersSelection schedulerSelection = NONE;
 	SchedulersSelection sccSchedulerSelection = SAT;
-	SchedulersSelection finalSchedulerSelection = SAT;
+	SchedulersSelection finalSchedulerSelection = NONE;
 	string schedulerSelectionStr;
 
 	std::string graphMLFile = "";
@@ -409,6 +411,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SATBIN;
 				} else if (schedulerSelectionStr == "satcdl") {
 					schedulerSelection = SATCDL;
+				} else if (schedulerSelectionStr == "sds") {
+					schedulerSelection = SDS;
 				} else if (schedulerSelectionStr == "satminreg") {
 					schedulerSelection = SATMINREG;
 				} else if (schedulerSelectionStr == "satscc") {
@@ -476,8 +480,10 @@ int main(int argc, char *args[]) {
                     sccSchedulerSelection = SH11;
                 }else if (schedulerSelectionStr == "smtcdl") {
                     sccSchedulerSelection = SMTCDL;
-                } else if (schedulerSelectionStr == "modulosdc") {
-                    sccSchedulerSelection = MODULOSDC;
+								} else if (schedulerSelectionStr == "modulosdc") {
+									sccSchedulerSelection = MODULOSDC;
+								} else if (schedulerSelectionStr == "sds") {
+									sccSchedulerSelection = SDS;
                 } else {
                     sccSchedulerSelection = SMT;
                 }
@@ -492,9 +498,11 @@ int main(int argc, char *args[]) {
                 } else if (schedulerSelectionStr == "sh11") {
                     finalSchedulerSelection = SH11;
                 }else if (schedulerSelectionStr == "smtcdl") {
-                    sccSchedulerSelection = SMTCDL;
-                } else if (schedulerSelectionStr == "modulosdc") {
-                    finalSchedulerSelection = MODULOSDC;
+									finalSchedulerSelection = SMTCDL;
+								} else if (schedulerSelectionStr == "modulosdc") {
+									finalSchedulerSelection = MODULOSDC;
+								} else if (schedulerSelectionStr == "sds") {
+									finalSchedulerSelection = SDS;
                 } else if (schedulerSelectionStr == "none"){
                     finalSchedulerSelection = NONE;
                 } else {
@@ -575,7 +583,8 @@ int main(int argc, char *args[]) {
 				if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
 				if (str == "ITLAYER" && HatScheT::Tests::iterativeLayerTest() == false) exit(-1);
 				if (str == "ILPLATENCY" && HatScheT::Tests::ilpMinMaxLatencyEstimationTest() == false) exit(-1);
-        if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
+				if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
+				if (str == "SDCSOLVERINCREMENTAL" && HatScheT::Tests::sdcSolverIncrementalTest() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
@@ -633,6 +642,9 @@ int main(int argc, char *args[]) {
 				break;
 			case SATCDL:
 				cout << "SATCDL";
+				break;
+			case SDS:
+				cout << "SDS";
 				break;
 			case SATMINREG:
 				cout << "SATMINREG";
@@ -853,6 +865,12 @@ int main(int argc, char *args[]) {
 					isModuloScheduler = true;
 					if (timeout > 0) ((HatScheT::SATCDLScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0) ((HatScheT::SATCDLScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SDS:
+					scheduler = new HatScheT::SDSScheduler(g, rm);
+					isModuloScheduler = true;
+					if (timeout > 0) ((HatScheT::SDSScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0) ((HatScheT::SDSScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
 					break;
 				case SATRATII:
 					scheduler = new HatScheT::SATRatIIScheduler(g, rm);
@@ -1101,9 +1119,12 @@ int main(int argc, char *args[]) {
 												case MODULOSDC :
 													sccSched = HatScheT::SCCSchedulerTemplate::scheduler::MODSDC;
 													break;
-												case SAT :
-													sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SAT;
-													break;
+											case SAT :
+												sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SAT;
+												break;
+											case SDS :
+												sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SDS;
+												break;
                         default:
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
                             break;
@@ -1128,9 +1149,12 @@ int main(int argc, char *args[]) {
 												case SAT :
 														finSched = HatScheT::SCCSchedulerTemplate::scheduler::SAT;
 														break;
-                        case SMT :
-                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
-                            break;
+											case SMT :
+												finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
+												break;
+											case SDS :
+												finSched = HatScheT::SCCSchedulerTemplate::scheduler::SDS;
+												break;
                         default:
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
                             break;

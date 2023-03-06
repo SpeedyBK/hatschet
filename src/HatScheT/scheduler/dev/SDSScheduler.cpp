@@ -7,6 +7,7 @@
 #ifdef USE_CADICAL
 #include "SDSScheduler.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
+#include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/SDCSolver.h"
@@ -16,7 +17,6 @@
 #include <cmath>
 #include <chrono>
 
-#define USE_BELLMAN_FORD 1
 
 #if 1
 namespace HatScheT {
@@ -38,9 +38,17 @@ namespace HatScheT {
 		if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration: successfully initialized SDC solver" << std::endl;
 		int tries = 0;
 		int maxTries = INT_MAX;
+		double timeSATSolver = 0.0;
+		double timeSDCSolver = 0.0;
+		double currentTime;
 		while (!this->scheduleFound) {
 			tries++;
-			if(tries % 100 == 99) std::cout << "#q# iteration #" << tries+1 << std::endl;
+			if(tries % 100 == 99) {
+				std::cout << "#q# iteration #" << tries + 1 << std::endl;
+				std::cout << "    -> total time: " << this->terminator.getElapsedTime() << "sec" << std::endl;
+				std::cout << "    -> SAT solver time: " << timeSATSolver << "sec" << std::endl;
+				std::cout << "    -> SDC solver time: " << timeSDCSolver << "sec" << std::endl;
+			}
 			if (tries > maxTries) {
 				std::cout << "#q# ITERATION LIMIT (" << maxTries << ") REACHED!" << std::endl;
 				return;
@@ -48,16 +56,20 @@ namespace HatScheT {
 			if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration: start new iteration" << std::endl;
 			// solve SDC
 			if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     start SDC solving" << std::endl;
+			currentTime = this->terminator.getElapsedTime();
 			auto conflictingResourceConstraints = this->solveSDC(additionalSDCConstraints);
+			timeSDCSolver += this->terminator.getElapsedTime() - currentTime;
 			if (conflictingResourceConstraints.empty()) {
 				if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     did not encounter resource constraint conflicts in SDC solver" << std::endl;
 				// SDC solver found solution
 				// check if SDC solution meets resource constraints
-				auto valid = verifyModuloSchedule(this->g, this->resourceModel, this->startTimes, this->candidateII, this->quiet);
-				if (!valid) {
+				this->scheduleFound = verifyModuloSchedule(this->g, this->resourceModel, this->startTimes, this->candidateII, this->quiet);
+				if (not this->scheduleFound) {
 					if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     computed schedule is invalid" << std::endl;
 					// if not: start SAT solver to get additional SDC constraints
+					currentTime = this->terminator.getElapsedTime();
 					auto additionalSDCConstraintsPair = this->getAdditionalSDCConstraints();
+					timeSATSolver += this->terminator.getElapsedTime() - currentTime;
 					if (!additionalSDCConstraintsPair.first) {
 						// SAT search space is exhausted or we ran into a timeout
 						if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     SAT solver failed to find solution (search space exhausted or timeout)" << std::endl;
@@ -72,7 +84,9 @@ namespace HatScheT {
 				// forbid proposal for conflicting edges and compute new additional SDC constraints
 				this->forbidConflictingResourceConstraints(conflictingResourceConstraints);
 				if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     start computing new SDC constraints" << std::endl;
+				currentTime = this->terminator.getElapsedTime();
 				auto additionalSDCConstraintsPair = this->getAdditionalSDCConstraints();
+				timeSATSolver += this->terminator.getElapsedTime() - currentTime;
 				if (!additionalSDCConstraintsPair.first) {
 					// SAT search space is exhausted
 					if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration:     SAT solver failed to find solution (search space exhausted or timeout)" << std::endl;
@@ -82,14 +96,22 @@ namespace HatScheT {
 				additionalSDCConstraints = additionalSDCConstraintsPair.second;
 			}
 		}
+#if USE_BELLMAN_FORD
+		// we already have the shortest path solution
+#else
+		// incremental SDC solver only produces a feasible solution but not the shortest path solution
+		// => run bellman ford to get shortest path solution
+		this->computeShortestPathSolution();
+#endif
 		if (!this->quiet) std::cout << "SDSScheduler::scheduleIteration: finished for II = " << this->candidateII << std::endl;
 	}
 
 	void SDSScheduler::computeLatencyBounds() {
 		// max latency = latency of heuristic non-modulo schedule
-		HatScheT::ASAPScheduler asap(this->g, this->resourceModel);
-		asap.schedule();
-		this->latencyUpperBound = asap.getScheduleLength();
+		//ASAPScheduler scheduler(this->g, this->resourceModel);
+		ULScheduler scheduler(this->g, this->resourceModel);
+		scheduler.schedule();
+		this->latencyUpperBound = scheduler.getScheduleLength();
 		/*
 		if (this->maxLatencyUserDef) {
 			this->latencyUpperBound = std::min(this->maxLatency, this->latencyUpperBound);
@@ -112,11 +134,17 @@ namespace HatScheT {
 		this->B_ir.clear();
 		this->R_ij.clear();
 		this->O_ij.clear();
+#if USE_OIJK
 		this->O_ijk.clear();
+#endif
 		// create variables
-		this->kMax = (int)std::ceil(((double)this->latencyUpperBound) / ((double)this->candidateII));
+#if USE_OIJK
+		//this->kMax = (int)std::ceil(((double)this->latencyUpperBound) / ((double)this->candidateII));
+		//this->kMin = 0;
+		this->kMax = 0;
 		this->kMin = 0;
-		std::cout << "kMin=" << this->kMin << " and kMax=" << this->kMax << std::endl;
+		if (!this->quiet) std::cout << "kMin=" << this->kMin << " and kMax=" << this->kMax << std::endl;
+#endif
 		for (auto &i : this->g.Vertices()) {
 			auto res = this->resourceModel.getResource(i);
 			auto rLim = res->getLimit();
@@ -132,10 +160,12 @@ namespace HatScheT {
 				this->R_ij[{i, j}] = ++this->literalCounter;
 				// O_ij
 				this->O_ij[{i, j}] = ++this->literalCounter;
+#if USE_OIJK
 				// O_ijk
 				for (int k=this->kMin; k<=this->kMax; k++) {
 					this->O_ijk[{i, j}][k] = ++this->literalCounter;
 				}
+#endif
 			}
 		}
 		// create base clauses
@@ -170,6 +200,7 @@ namespace HatScheT {
 					this->solver->add(0);
 				}
 
+#if USE_OIJK
 				// Eq. (7) from the paper
 				// part 1: sum over all O_ijk <= 1
 				for (int k1=this->kMin; k1<=this->kMax; k1++) {
@@ -188,10 +219,11 @@ namespace HatScheT {
 				}
 				// part 3: O_ij implies that at least one O_ijk is true
 				this->solver->add(-this->O_ij.at({i, j}));
-				for (int k=0; k<=this->kMax; k++) {
+				for (int k=this->kMin; k<=this->kMax; k++) {
 					this->solver->add(this->O_ijk.at({i, j}).at(k));
 				}
 				this->solver->add(0);
+#endif
 
 				// Eq. (8) from the paper
 				this->solver->add(-this->R_ij.at({i, j}));
@@ -233,6 +265,8 @@ namespace HatScheT {
 		// PRINT SOLUTION END (DEBUG)
 		std::pair<bool, std::list<std::tuple<const Vertex *, const Vertex *, int, int>>> returnMe;
 		returnMe.first = true;
+
+#if USE_OIJK
 		for (auto &it : this->O_ijk) {
 			auto i = it.first.first;
 			auto j = it.first.second;
@@ -251,6 +285,23 @@ namespace HatScheT {
 				}
 			}
 		}
+#else
+		for (auto &it : this->O_ij) {
+			auto i = it.first.first;
+			auto j = it.first.second;
+			auto satVar = it.second;
+			if (this->solver->val(satVar) > 0) {
+				// add additional SDC constraints
+				auto rhs1 = this->candidateII-1;
+				//std::cout << "#q# O_" << i->getId() << "_" << j->getId() << "_" << k << std::endl;
+				returnMe.second.emplace_back(i, j, rhs1, satVar);
+				//std::cout << "     => resource constraint t_" << i->getId() << " - t_" << j->getId() << " <= " << rhs1 << " = " << k << "*" << this->candidateII << "-1" << std::endl;
+				auto rhs2 = -1;
+				returnMe.second.emplace_back(j, i, rhs2, satVar);
+				//std::cout << "     => resource constraint t_" << j->getId() << " - t_" << i->getId() << " <= " << rhs2 << " = (-(" << k << "-1)*" << this->candidateII << ")-1" << std::endl;
+			}
+		}
+#endif
 		return returnMe;
 	}
 
@@ -259,8 +310,8 @@ namespace HatScheT {
 		this->sdcSolver = SDCSolverBellmanFord();
 		this->sdcSolver.setQuiet(true);
 #else
-		this->sdcSolver.setQuiet(false);
 		this->sdcSolver = SDCSolverIncremental();
+		this->sdcSolver.setQuiet(this->quiet);
 #endif
 		for (auto &e : this->g.Edges()) {
 			auto vSrc = &e->getVertexSrc();
@@ -269,12 +320,28 @@ namespace HatScheT {
 			auto u = vSrc->getId();
 			auto v = vDst->getId();
 			this->sdcSolver.addBaseConstraint(u, v, c);
+			this->dependencyConstraints[{vSrc, vDst}] = c;
 		}
 #if USE_BELLMAN_FORD
 		// do nothing I guess?!
 #else
 		this->sdcSolver.computeInitialSolution();
 #endif
+		for (auto &r : this->resourceModel.Resources()) {
+			auto vertices = this->resourceModel.getVerticesOfResource(r);
+			for (auto &v1 : vertices) {
+				for (auto &v2 : vertices) {
+					try {
+						// check if a dependency constraint between these vertices exists
+						this->dependencyConstraints.at({v1, v2});
+					}
+					catch (std::out_of_range&) {
+						// create dependency constraint "infinity" just so accessing that pair works without problems
+						this->dependencyConstraints[{v1, v2}] = INT32_MAX;
+					}
+				}
+			}
+		}
 	}
 
 	std::set<int> SDSScheduler::solveSDC(const list<std::tuple<const Vertex *, const Vertex *, int, int>> &additionalSDCConstraints) {
@@ -341,23 +408,71 @@ namespace HatScheT {
 		}
 #else
 		for (auto &it : additionalSDCConstraints) {
-			std::cout << "#q# addAdditionalConstraint START" << std::endl;
-			valid = this->sdcSolver.addAdditionalConstraint(std::get<0>(it)->getId(), std::get<1>(it)->getId(), std::get<2>(it));
-			std::cout << "#q# addAdditionalConstraint END" << std::endl;
+			// check if we can skip that constraint
+			auto &vSrc = std::get<0>(it);
+			auto &vDst = std::get<1>(it);
+			auto &c = std::get<2>(it);
+			if (c >= this->dependencyConstraints.at({vSrc, vDst})) continue;
+			//std::cout << "#q# addAdditionalConstraint START" << std::endl;
+			valid = this->sdcSolver.addAdditionalConstraint(vSrc->getId(), vDst->getId(), c);
+			//std::cout << "#q# addAdditionalConstraint END" << std::endl;
+			//addedConstraints.emplace_back(it);
 			addedConstraints.emplace_front(it);
-			if (!valid) {
-				std::cout << "#q# CONFLICT CONSTRAINTS 1" << std::endl;
+			if (valid) {
+				// check if solution is still valid
+				auto sdcSolution = this->sdcSolver.getSolution();
+				if (!this->quiet) {
+					std::cout << "SDSScheduler::solveSDC: adding constraint DID NOT cause infeasibility" << std::endl;
+					std::cout << "SDSScheduler::solveSDC: current solution:" << std::endl;
+					for (auto &itSDCSol : sdcSolution) {
+						std::cout << "    " << itSDCSol.first << " = " << itSDCSol.second << std::endl;
+					}
+				}
+				bool allOk = true;
+				for (auto &e : this->g.Edges()) {
+					auto *u = &e->getVertexSrc();
+					auto *v = &e->getVertexDst();
+					auto dist = e->getDistance();
+					auto delay = e->getDelay();
+					auto lu = this->resourceModel.getVertexLatency(u);
+					auto rhs = -(lu + delay - (this->candidateII * dist));
+					auto tu = sdcSolution.at(u->getId());
+					auto tv = sdcSolution.at(v->getId());
+					auto ok = tu - tv <= rhs;
+					if (not ok) {
+						allOk = false;
+						std::cerr << "Constraint 't_" << u->getId() << " - t_" << v->getId() << " <= " << rhs << "' violated!" << std::endl;
+						std::cerr << "    u = " << u->getName() << std::endl;
+						std::cerr << "    v = " << v->getName() << std::endl;
+						std::cerr << "    t_u = " << tu << std::endl;
+						std::cerr << "    t_v = " << tv << std::endl;
+					}
+				}
+				if (not allOk) {
+					throw Exception("SDSScheduler::solveSDC: Found bug in SDC solver");
+				}
+			}
+			else {
+				// adding constraint caused infeasibility
+#if USE_OIJK
+				//std::cout << "#q# CONFLICT CONSTRAINTS 1" << std::endl;
 				auto conflictConstraints = this->sdcSolver.getConflicts();
-				std::cout << "#q# CONFLICT CONSTRAINTS 2" << std::endl;
+				//std::cout << "#q# CONFLICT CONSTRAINTS 2" << std::endl;
 				for (auto &conflictConstraint : conflictConstraints) {
-					std::cout << "#q#   conflict constraint: t_" << std::get<0>(conflictConstraint) << " - t_" << std::get<1>(conflictConstraint) << " <= " << std::get<2>(conflictConstraint) << std::endl;
+					//std::cout << "#q#   conflict constraint: t_" << std::get<0>(conflictConstraint) << " - t_" << std::get<1>(conflictConstraint) << " <= " << std::get<2>(conflictConstraint) << std::endl;
 					for (auto &addedConstraint : addedConstraints) {
 						if (std::get<0>(addedConstraint)->getId() != std::get<0>(conflictConstraint)) continue;
 						if (std::get<1>(addedConstraint)->getId() != std::get<1>(conflictConstraint)) continue;
 						if (std::get<2>(addedConstraint) != std::get<2>(conflictConstraint)) continue;
-						conflictResourceConstraints.insert({std::get<0>(addedConstraint), std::get<1>(addedConstraint), std::get<3>(addedConstraint)});
+						//conflictResourceConstraints.insert({std::get<0>(addedConstraint), std::get<1>(addedConstraint), std::get<3>(addedConstraint)});
+						conflictResourceConstraints.insert(std::get<3>(addedConstraint));
 					}
 				}
+#else
+				for (auto &addedConstraint : addedConstraints) {
+					conflictResourceConstraints.insert(std::get<3>(addedConstraint));
+				}
+#endif
 				break;
 			}
 		}
@@ -381,39 +496,130 @@ namespace HatScheT {
 				}
 			}
 		}
+		if (not valid) {
 #if USE_BELLMAN_FORD
-		this->sdcSolver.clearAdditionalConstraints();
+			this->sdcSolver.clearAdditionalConstraints();
 #else
-		for (auto &it : addedConstraints) {
-			this->sdcSolver.removeAdditionalConstraint(std::get<0>(it)->getId(), std::get<1>(it)->getId(), std::get<2>(it));
-		}
+			// remove added constraints again in case of an invalid solution
+			for (auto &it : addedConstraints) {
+				this->sdcSolver.removeAdditionalConstraint(std::get<0>(it)->getId(), std::get<1>(it)->getId(), std::get<2>(it));
+			}
 #endif
+			if (!this->quiet) std::cout << "SDSScheduler::solveSDC: cleared additional constraints" << std::endl;
+		}
+		// validation
+		if (this->sdcSolver.getSolutionFound()) {
+			auto sdcSolution = this->sdcSolver.getSolution();
+			if (!this->quiet) {
+				std::cout << "SDSScheduler::solveSDC: current solution:" << std::endl;
+				for (auto &it : sdcSolution) {
+					std::cout << "    " << it.first << " = " << it.second << std::endl;
+				}
+			}
+			bool allOk = true;
+			for (auto &e : this->g.Edges()) {
+				auto *u = &e->getVertexSrc();
+				auto *v = &e->getVertexDst();
+				auto dist = e->getDistance();
+				auto delay = e->getDelay();
+				auto lu = this->resourceModel.getVertexLatency(u);
+				auto rhs = -(lu + delay - (this->candidateII * dist));
+				auto tu = sdcSolution.at(u->getId());
+				auto tv = sdcSolution.at(v->getId());
+				auto ok = tu - tv <= rhs;
+				if (not ok) {
+					allOk = false;
+					std::cerr << "Constraint 't_" << u->getId() << " - t_" << v->getId() << " <= " << rhs << "' violated!" << std::endl;
+					std::cerr << "    u = " << u->getName() << std::endl;
+					std::cerr << "    v = " << v->getName() << std::endl;
+					std::cerr << "    t_u = " << tu << std::endl;
+					std::cerr << "    t_v = " << tv << std::endl;
+				}
+			}
+			if (not allOk) {
+				throw Exception("SDSScheduler::solveSDC: Found bug in SDC solver -> it computed an infeasible solution!");
+			}
+		}
 		return conflictResourceConstraints;
 	}
 
-	void SDSScheduler::forbidConflictingResourceConstraints(std::set<int> conflictingResourceConstraints) {
+	void SDSScheduler::forbidConflictingResourceConstraints(const std::set<int> &conflictingResourceConstraints) {
+		if (conflictingResourceConstraints.empty()) {
+			throw Exception("SDSScheduler::forbidConflictingResourceConstraints: no resource constraints given -> that should never happen!");
+		}
 		std::stringstream clause;
 		bool begin = true;
 		std::set<int> learnedClause;
-		if (!this->quiet) std::cout << "Add clause";
+		if (!this->quiet) {
+			std::cout << "Add clause";
+		}
 		for (auto &oijk : conflictingResourceConstraints) {
 			if (begin) {
 				begin = false;
-				if (!this->quiet) std::cout << " ";
+				if (!this->quiet) {
+					std::cout << " ";
+				}
 			}
 			else {
-				if (!this->quiet) std::cout << " OR ";
+				if (!this->quiet) {
+					std::cout << " OR ";
+				}
 			}
 			this->solver->add(-oijk);
 			learnedClause.insert(-oijk);
-			if (!this->quiet) std::cout << -oijk;
+			if (!this->quiet) {
+				std::cout << -oijk;
+			}
 		}
 		this->solver->add(0);
-		auto ret = this->learnedClauses.insert(learnedClause);
+		// FOR DEBUGGING ONLY BEGIN
+		/*auto ret = this->learnedClauses.insert(learnedClause);
 		if (!ret.second) {
 			throw HatScheT::Exception("Learned clause twice - this should never happen!!!");
+		}*/
+		// FOR DEBUGGING ONLY END
+
+		if (!this->quiet) {
+			std::cout << std::endl;
 		}
-		if (!this->quiet) std::cout << std::endl;
+	}
+
+	void SDSScheduler::computeShortestPathSolution() {
+		if (!this->scheduleFound) return; // can only compute the shortest path solution for feasible constraints
+		if (!this->quiet) {
+			std::cout
+				<< "SDSScheduler::computeShortestPathSolution: Schedule before refining:" << std::endl;
+			for (auto &it : this->startTimes) {
+				std::cout << "  '" << it.first->getName() << "' : t = " << it.second << std::endl;
+			}
+		}
+		SDCSolverBellmanFord s;
+		s.setQuiet(this->quiet);
+		auto constraints = this->sdcSolver.getCurrentConstraints();
+		if (!this->quiet) {
+			std::cout
+				<< "SDSScheduler::computeShortestPathSolution: refine final schedule with bellman ford algorithm and following constraints:"
+				<< std::endl;
+		}
+		for (auto &it : constraints) {
+			auto &u = std::get<0>(it);
+			auto &v = std::get<1>(it);
+			auto &c = std::get<2>(it);
+			if (u < 0 or v < 0) continue; // skip constraints that belong to the virtual source node
+			if (!this->quiet) {
+				std::cout << "  -> '" << this->g.getVertexById(u).getName() << "' - '" << this->g.getVertexById(v).getName() << "' <= " << c << std::endl;
+			}
+			s.addBaseConstraint(u, v, c);
+		}
+		s.solve();
+		if (!s.getSolutionFound()) {
+			// that should never happen!
+			throw Exception("SDSScheduler::computeShortestPathSolution: Applying Bellman Ford to a feasible SDC should never fail!");
+		}
+		auto solution = s.getNormalizedSolution();
+		for (auto &it : solution) {
+			this->startTimes[&this->g.getVertexById(it.first)] = it.second;
+		}
 	}
 }
 

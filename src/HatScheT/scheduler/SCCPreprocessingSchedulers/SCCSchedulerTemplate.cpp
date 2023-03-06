@@ -14,6 +14,7 @@
 #ifdef USE_CADICAL
 #include "HatScheT/scheduler/satbased/SATSchedulerBinEnc.h"
 #include "HatScheT/scheduler/satbased/SATSchedulerRes.h"
+#include "HatScheT/scheduler/dev/SDSScheduler.h"
 #endif
 #include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -112,6 +113,9 @@ namespace HatScheT {
           }
           if (!this->quiet) { cout << "Computing final schedule..." << endl; }
           auto finalSchedulerSelected = selectSccScheduler(finalScheduler, g, resourceModel);
+          if (finalSchedulerSelected->getName() == "SDSScheduler") {
+          	throw Exception("SCCSchedulerTemplate::scheduleIteration: SDS Scheduler does not support latency optimization, yet -> choose another scheduler");
+          }
           finalSchedulerSelected->setQuiet(this->quiet);
           cout << "Time Remaining:" << this->timeRemaining << endl;
           finalSchedulerSelected->setSolverTimeout(this->timeRemaining);
@@ -499,6 +503,11 @@ namespace HatScheT {
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               //if (!quiet) schedulePtr->getDebugPrintouts();
               return schedulePtr;
+          }
+          case scheduler::SDS: {
+          	auto schedulePtr = std::make_shared<SDSScheduler>(gr, rm, this->II);
+						if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+						return schedulePtr;
           }
 #endif
 					case scheduler::NONE:{

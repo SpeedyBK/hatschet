@@ -5,8 +5,11 @@
 #include "SATCDLScheduler.h"
 #include <cmath>
 #include <HatScheT/utility/SDCSolverBellmanFord.h>
+#include <HatScheT/utility/SDCSolverIncremental.h>
 
 namespace HatScheT {
+#define SATCDL_USE_INCREMENTAL 0
+
 	SATCDLScheduler::SATCDLScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
 		: SATSchedulerBase(g, resourceModel, II) {}
 
@@ -107,7 +110,11 @@ namespace HatScheT {
 	}
 
 	set<std::pair<const Vertex *, int>> SATCDLScheduler::solveSDC(map<const Vertex *, int> &moduloSlots) {
+#if SATCDL_USE_INCREMENTAL
+		SDCSolverIncremental s;
+#else
 		SDCSolverBellmanFord s;
+#endif
 		s.setQuiet(this->quiet);
 		for (auto &e : this->g.Edges()) {
 			auto *vSrc = &e->getVertexSrc();
@@ -120,18 +127,30 @@ namespace HatScheT {
 			auto numerator = (double)(lSrc + delay + mSrc - mDst);
 			auto denominator = (double)(this->candidateII);
 			auto c = - (int)std::ceil(numerator / denominator) + distance;
+#if SATCDL_USE_INCREMENTAL
+			s.addBaseConstraint(vSrc->getId(), vDst->getId(), c);
+#else
 			s.addAdditionalConstraint(vSrc->getId(), vDst->getId(), c);
+#endif
 		}
 		if (!this->quiet) std::cout << "SATCDLScheduler::solveSDC: start Bellman Ford algorithm" << std::endl;
 		auto startTime = this->terminator.getElapsedTime();
+#if SATCDL_USE_INCREMENTAL
+		s.computeInitialSolution();
+#else
 		s.solve();
+#endif
 		auto endTime = this->terminator.getElapsedTime();
 		this->SDCSolverTime += (endTime - startTime);
 		if (!this->quiet) std::cout << "SATCDLScheduler::solveSDC: Bellman Ford algorithm finished" << std::endl;
 		if (s.getSolutionFound()) {
 			if (!this->quiet) std::cout << "SATCDLScheduler::solveSDC: valid solution found!" << std::endl;
 			// yay, no conflict!
+#if SATCDL_USE_INCREMENTAL
+			auto solution = s.getSolution();
+#else
 			auto solution = s.getNormalizedSolution();
+#endif
 			for (auto &it : solution) {
 				auto *v = &this->g.getVertexById(it.first);
 				this->startTimes[v] = moduloSlots.at(v) + (this->candidateII * it.second);
@@ -140,7 +159,11 @@ namespace HatScheT {
 			return set<std::pair<const Vertex *, int>>();
 		}
 		if (!this->quiet) std::cout << "SATCDLScheduler::solveSDC: failed to find solution :(" << std::endl;
+#if SATCDL_USE_INCREMENTAL
+		auto conflicts = s.getConflicts();
+#else
 		auto conflicts = s.getAdditionalConflicts();
+#endif
 		set<std::pair<const Vertex *, int>> conflictSlots;
 		for (auto &it : conflicts) {
 			auto *v = &this->g.getVertexById(std::get<0>(it));

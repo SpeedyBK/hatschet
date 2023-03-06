@@ -12,8 +12,11 @@
 #include <utility>
 #include <queue>
 #include <HatScheT/utility/FibonacciHeap.h>
+#include <boost/heap/fibonacci_heap.hpp>
 
 namespace HatScheT {
+#define BOOST_QUEUE 1
+
 	class PriorityQueueElement {
 	public:
 		bool operator < (PriorityQueueElement const & obj) const {
@@ -26,6 +29,13 @@ namespace HatScheT {
 		int key;
 		int data;
 	};
+
+	typedef struct PriorityQueueElementCompare {
+		bool operator()(const PriorityQueueElement &p1,
+										const PriorityQueueElement &p2) const {
+			return p1.key > p2.key;
+		}
+	} PriorityQueueElementCompare;
 
 	/*!
 	 * hash function for a pair of hashable types
@@ -76,6 +86,12 @@ namespace HatScheT {
 		 */
 		void setQuiet(bool q) {this->quiet = q;}
 		/*!
+		 * override current solution with a new one
+		 * -> should only be used for debugging purposes!
+		 * @param newSolution has to be valid!!!!
+		 */
+		void overrideSolution(const std::map<int,int> &newSolution);
+		/*!
 		 * add base constraint t_u - t_v <= c
 		 * -> a base constraint cannot be removed anymore after it has been added!
 		 * @param u
@@ -117,8 +133,8 @@ namespace HatScheT {
 		/*!
 		 * @return the solver's current predecessor state
 		 */
-		//std::unordered_map<int, int> getCurrentPredecessorState() const { return this->currentPredecessors; }
-		std::map<int, int> getCurrentPredecessorState() const { return this->currentPredecessors; }
+		std::unordered_map<int, int> getCurrentPredecessorState() const { return this->currentPredecessors; }
+		//std::map<int, int> getCurrentPredecessorState() const { return this->currentPredecessors; }
 		/*!
 		 * @return the solver's current conflicts
 		 */
@@ -132,6 +148,16 @@ namespace HatScheT {
 		std::list<std::tuple<int, int, int>> getCurrentConstraints() const;
 
 	private:
+		//std::map<std::tuple<int, int, int>, int> constraintInContainers;
+		std::unordered_map<std::tuple<int, int, int>, int, hashTuple3> constraintInContainers;
+		void addConstraintToContainers(const int& u, const int& v, const int& c);
+		void removeConstraintFromContainers(const int& u, const int& v, const int& c);
+		void clearQueue();
+		/*!
+		 * verifier for debugging
+		 * @return whether the current solution is valid (if it should be)
+		 */
+		bool currentSolutionValid();
 		/*!
 		 * suppress debug outputs if quiet = true
 		 */
@@ -144,29 +170,25 @@ namespace HatScheT {
 		 * map < SDC node v -> v's successors >
 		 * i.e., all u for which there is a constraint u - v <= c
 		 */
-		//std::unordered_map<int, std::unordered_set<int>> succ;
-		std::map<int, std::set<int>> succ;
+		std::unordered_map<int, std::unordered_set<int>> succ;
+		//std::map<int, std::set<int>> succ;
 		/*!
 		 * map < SDC node v -> its predecessor in the current solver state >
 		 */
-		//std::unordered_map<int, int> currentPredecessors;
-		std::map<int, int> currentPredecessors;
+		std::unordered_map<int, int> currentPredecessors;
+		//std::map<int, int> currentPredecessors;
 		/*!
 		 * accesses this->solution to get a value for u
 		 * @param u
 		 * @return u's value if it exists or 0 if it doesn't
 		 */
-		//int getCurrentSDCSolutionValue(const std::unordered_map<int, int> &solutionContainer, const int &u);
-		int getCurrentSDCSolutionValue(const std::map<int, int> &solutionContainer, const int &u);
-		/*!
-		 * map < SDC node -> its Fibonacci node in the heap >
-		 */
-		//std::unordered_map<int, FibonacciHeap<int>::FibNode*> fibNode;
+		int getCurrentSDCSolutionValue(const std::unordered_map<int, int> &solutionContainer, const int &u);
+		//int getCurrentSDCSolutionValue(const std::map<int, int> &solutionContainer, const int &u);
 		/*!
 		 * map < SDC node -> whether it is in the current heap >
 		 */
-		//std::unordered_map<int, bool> isInHeap;
-		std::map<int, bool> isInHeap;
+		std::unordered_map<int, bool> isInHeap;
+		//std::map<int, bool> isInHeap;
 		/*!
 		 * implements the AdjustHeap function from the paper
 		 * @param u
@@ -194,8 +216,8 @@ namespace HatScheT {
 		 * store the priority queue key of each node in the SDC
 		 * map < node idx -> key queue key >
 		 */
-		//std::unordered_map<int, int> keyOf;
-		std::map<int, int> keyOf;
+		std::unordered_map<int, int> keyOf;
+		//std::map<int, int> keyOf;
 		/*!
 		 * removes constraint t_u - t_v <= c from unprocessed container
 		 * @param u
@@ -210,8 +232,8 @@ namespace HatScheT {
 		 *   tuple<1>: v
 		 *   tuple<2>: c
 		 */
-		//std::unordered_set<std::tuple<int, int, int>, hashTuple3> unprocessed;
-		std::set<std::tuple<int, int, int>> unprocessed;
+		std::unordered_set<std::tuple<int, int, int>, hashTuple3> unprocessed;
+		//std::set<std::tuple<int, int, int>> unprocessed;
 		/*!
 		 * function AddToFeasible from paper (Fig. 1)
 		 * @param u
@@ -240,14 +262,27 @@ namespace HatScheT {
 		 * a fibonacci heap to implement the PriorityQueue from the paper
 		 * the heap's key is a simple integer
 		 */
+#if BOOST_QUEUE
+		typedef boost::heap::fibonacci_heap<PriorityQueueElement, boost::heap::compare<PriorityQueueElementCompare>> queue_t;
+		typedef typename queue_t::handle_type handle_t;
+		queue_t priorityQueue;
+		/*!
+		 * map < SDC node -> its Fibonacci node in the heap >
+		 */
+		//std::unordered_map<int, FibonacciHeap<int>::FibNode*> fibNode;
+		//std::map<int, handle_t> fibNodeHandle;
+		std::unordered_map<int, handle_t> fibNodeHandle;
+		//std::map<int, PriorityQueueElement> fibNode;
+#else
 		std::priority_queue<PriorityQueueElement, std::vector<PriorityQueueElement>, std::greater<PriorityQueueElement>> priorityQueue;
+#endif
 		//FibonacciHeap<int> priorityQueue;
 		//std::priority_queue<std::pair<int, int>, std::vector<std::pair<int,int>>, SDCSolverIncrementalPriorityQueueComp> priorityQueue;
 		/*!
 		 * container to store all variables
 		 */
-		//std::unordered_set<int> variables;
-		std::set<int> variables;
+		std::unordered_set<int> variables;
+		//std::set<int> variables;
 		/*!
 		 * current solution status
 		 *   0 : unsolved
@@ -260,32 +295,32 @@ namespace HatScheT {
 		 * resulting from base constraints and additional constraints
 		 * map< <u, v> -> c>
 		 */
-		//std::unordered_map<std::pair<int, int>, int, hashPair> constraints;
-		std::map<std::pair<int, int>, int> constraints;
+		std::unordered_map<std::pair<int, int>, int, hashPair> constraints;
+		//std::map<std::pair<int, int>, int> constraints;
 		/*!
 		 * this container holds current constraints in the form "t_u - t_v <= c"
 		 * resulting from base constraints and additional constraints
 		 * map< <u, v> -> all values for c in ascending order >
 		 */
-		//std::unordered_map<std::pair<int, int>, std::multiset<int>, hashPair> rightHandSides;
-		std::map<std::pair<int, int>, std::multiset<int>> rightHandSides;
+		std::unordered_map<std::pair<int, int>, std::multiset<int>, hashPair> rightHandSides;
+		//std::map<std::pair<int, int>, std::multiset<int>> rightHandSides;
 		/*!
 		 * this container holds only base constraints in the form "t_u - t_v <= c"
 		 * map< <u, v> -> c>
 		 */
-		//std::unordered_map<std::pair<int, int>, int, hashPair> baseConstraints;
-		std::map<std::pair<int, int>, int> baseConstraints;
+		std::unordered_map<std::pair<int, int>, int, hashPair> baseConstraints;
+		//std::map<std::pair<int, int>, int> baseConstraints;
 		/*!
 		 * this container holds only additional constraints in the form "t_u - t_v <= c"
 		 * map< <u, v> -> c>
 		 */
-		//std::unordered_map<std::pair<int, int>, int, hashPair> additionalConstraints;
-		std::map<std::pair<int, int>, int> additionalConstraints;
+		std::unordered_map<std::pair<int, int>, int, hashPair> additionalConstraints;
+		//std::map<std::pair<int, int>, int> additionalConstraints;
 		/*!
 		 * integer for all variables that satisfy the constraints
 		 */
-		//std::unordered_map<int, int> solution;
-		std::map<int, int> solution;
+		std::unordered_map<int, int> solution;
+		//std::map<int, int> solution;
 	};
 }
 

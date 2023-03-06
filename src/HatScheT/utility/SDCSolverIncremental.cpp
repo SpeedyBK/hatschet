@@ -71,35 +71,52 @@ namespace HatScheT {
 
 	bool SDCSolverIncremental::addToFeasible(const int &u, const int &v, const int &c) {
 		if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible t_" << u << " - t_" << v << " <= " << c << std::endl;
-		this->constraints[{u, v}] = c;
+		//this->constraints[{u, v}] = c;
+		// manage constraint containers
+		this->addConstraintToContainers(u, v, c);
+		//auto &length = c;
+		auto &length = this->constraints.at({u, v});
+		if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible: active constraint for u=" << u << " and v=" << v << " is 't_" << u << " - t_" << v << " <= " << this->constraints.at({u,v}) << "'" << std::endl;
 		auto solutionDash = this->solution;
 		//this->priorityQueue.clear();
-		this->priorityQueue = std::priority_queue<PriorityQueueElement, std::vector<PriorityQueueElement>, std::greater<PriorityQueueElement>>();
+		this->clearQueue();
 		this->insertHeap(u, 0);
 		//std::unordered_map<int, int> potentialNewPredecessor;
 		std::map<int, int> potentialNewPredecessor;
+		std::map<int, int> idxDone;
 		potentialNewPredecessor[u] = v;
 		while (!this->priorityQueue.empty()) {
 			auto xPair = this->findAndDeleteMin();
 			auto x = xPair.first;
 			auto distX = xPair.second;
+			idxDone[x]++;
+#if BOOST_QUEUE
+#else
 			if (x == INT_MIN) {
 				// key queue is actually empty and only contained duplicate elements with invalid keys
 				break;
 			}
-			auto newVal = this->getCurrentSDCSolutionValue(this->solution, v) + this->constraints.at({u, v}) + (this->getCurrentSDCSolutionValue(this->solution, x) + distX - this->getCurrentSDCSolutionValue(this->solution, u));
-			if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible got from heap x=" << x << " with distX=" << distX << " and newVal=" << newVal << " and curVal=" << this->getCurrentSDCSolutionValue(this->solution, x) << std::endl;
+#endif
+			//auto newVal = this->getCurrentSDCSolutionValue(this->solution, v) + this->constraints.at({u, v}) + (this->getCurrentSDCSolutionValue(this->solution, x) + distX - this->getCurrentSDCSolutionValue(this->solution, u));
+			auto newVal = this->getCurrentSDCSolutionValue(this->solution, v) + length + (this->getCurrentSDCSolutionValue(this->solution, x) + distX - this->getCurrentSDCSolutionValue(this->solution, u));
+			if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible got from heap x=" << x << " with distX=" << distX << " and length=" << length << " and newVal=" << newVal << " and curVal=" << this->getCurrentSDCSolutionValue(this->solution, x) << std::endl;
 			if (newVal < this->getCurrentSDCSolutionValue(this->solution, x)) {
 				this->currentPredecessors[x] = potentialNewPredecessor[x];
 				if (x == v) {
 					// infeasible system -> remove constraint again
-					this->constraints.erase({u, v});
+					//this->constraints.erase({u, v});
+					this->removeConstraintFromContainers(u, v, c);
 					return false;
 				}
 				else {
 					solutionDash[x] = newVal;
 					for (auto &y : this->succ[x]) {
 						auto scaledPathLength = distX + (this->getCurrentSDCSolutionValue(this->solution, x) + this->constraints.at({y, x}) - this->getCurrentSDCSolutionValue(this->solution, y));
+						if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible: y=" << y << " is successor of x=" << x << " with key " << this->getKeyOf(y) << " and constraint=" << this->constraints.at({y, x}) << std::endl;
+						if (idxDone[y] >= 1) {
+							if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible: already adjusted y=" << y << std::endl;
+							continue; // already adjusted this idx
+						}
 						if (scaledPathLength < this->getKeyOf(y)) {
 							if (!this->quiet) std::cout << "SDCSolverIncremental::addToFeasible: adjust heap y=" << y << " with scaledPathLength=" << scaledPathLength << std::endl;
 							this->adjustHeap(y, scaledPathLength);
@@ -114,9 +131,7 @@ namespace HatScheT {
 		return true;
 	}
 
-	bool SDCSolverIncremental::addConstraint(const int &u, const int &v, const int &c) {
-		if (!this->quiet) std::cout << "SDCSolverIncremental::addConstraint: adding constraint t_" << u << " - t_" << v << " <= " << c << std::endl;
-		// manage constraint containers
+	void SDCSolverIncremental::addConstraintToContainers(const int &u, const int &v, const int &c) {
 		int currentConstraintValue;
 		try {
 			currentConstraintValue = this->constraints.at({u, v});
@@ -125,10 +140,18 @@ namespace HatScheT {
 			currentConstraintValue = INT32_MAX;
 		}
 		if (c < currentConstraintValue) {
-			this->constraints[{u, v}] = currentConstraintValue;
+			currentConstraintValue = c;
 		}
+		this->constraints[{u, v}] = currentConstraintValue;
 		this->rightHandSides[{u, v}].insert(c);
 		this->succ[v].insert(u);
+		this->constraintInContainers[{u, v, c}]++;
+	}
+
+	bool SDCSolverIncremental::addConstraint(const int &u, const int &v, const int &c) {
+		if (!this->quiet) std::cout << "SDCSolverIncremental::addConstraint: adding constraint t_" << u << " - t_" << v << " <= " << c << std::endl;
+		// manage constraint containers
+		//this->addConstraintToContainers(u, v, c); // -> already happens in addToFeasible
 		// actually perform the constraint insertion algorithm
 		if (this->unprocessed.empty()) {
 			// system is feasible before addition of new constraint
@@ -153,6 +176,10 @@ namespace HatScheT {
 			}
 			else {
 				// adding constraint does not cause infeasibility
+				// verify current solution
+				if (!this->currentSolutionValid()) {
+					throw Exception("SDCSolverIncremental::addConstraint: computed invalid solution after adding constraint -> that should never happen!");
+				}
 				return true;
 			}
 		}
@@ -164,8 +191,9 @@ namespace HatScheT {
 		}
 	}
 
-	bool SDCSolverIncremental::deleteConstraint(const int &u, const int &v, const int &c) {
-		// manage constraint containers
+	void SDCSolverIncremental::removeConstraintFromContainers(const int &u, const int &v, const int &c) {
+		if (this->constraintInContainers[{u, v, c}] == 0) return; // constraint was already removed
+		this->constraintInContainers[{u, v, c}]--;
 		auto *rhsSet = &this->rightHandSides.at({u, v});
 		auto it = rhsSet->find(c);
 		rhsSet->erase(it);
@@ -184,6 +212,14 @@ namespace HatScheT {
 			// update constraint to new minimum value
 			this->constraints[{u, v}] = *newRhsIt;
 		}
+	}
+
+	bool SDCSolverIncremental::deleteConstraint(const int &u, const int &v, const int &c) {
+		if (!this->quiet) {
+			std::cout << "SDCSolverIncremental::deleteConstraint: start removing constraint 't_" << u << " - t_" << v << " <= " << c << "'" << std::endl;
+		}
+		// manage constraint containers
+		this->removeConstraintFromContainers(u, v, c);
 		// actually perform the algorithm
 		if (this->unprocessed.find({u, v, c}) != this->unprocessed.end()) {
 			this->removeFromUnprocessed(u, v, c);
@@ -206,24 +242,32 @@ namespace HatScheT {
 		if (this->unprocessed.empty()) {
 			this->conflictConstraints.clear();
 			this->solutionStatus = 1;
+			if (!this->quiet) {
+				std::cout << "SDCSolverIncremental::deleteConstraint: finished removing constraint 't_" << u << " - t_" << v << " <= " << c << "'; solution is valid now" << std::endl;
+			}
 			return true;
 		}
 		else {
 			this->solutionStatus = -1;
+			if (!this->quiet) {
+				std::cout << "SDCSolverIncremental::deleteConstraint: finished removing constraint 't_" << u << " - t_" << v << " <= " << c << "'; solution remains invalid" << std::endl;
+			}
 			return false;
 		}
 	}
 
 	void SDCSolverIncremental::adjustHeap(const int &u, int key) {
-		this->insertHeap(u, key); // just put it in again and handle double elements when popping
-		/*
+#if BOOST_QUEUE
 		if (!this->isInHeap[u]) {
 			this->insertHeap(u, key);
 		}
 		else {
-			this->priorityQueue.decrease_key(this->fibNode.at(u), key);
+			this->priorityQueue.decrease(this->fibNodeHandle.at(u), PriorityQueueElement(key, u));
+			this->keyOf[u] = key;
 		}
-		 */
+#else
+		this->insertHeap(u, key); // just put it in again and handle double elements when popping
+#endif
 	}
 
 	std::pair<int, int> SDCSolverIncremental::findAndDeleteMin() {
@@ -241,23 +285,37 @@ namespace HatScheT {
 		std::cout << "#q# 6" << std::endl;
 		return std::make_pair(x, key);
 		 */
+#if BOOST_QUEUE
+#else
 		do {
+#endif
 			auto minElement = this->priorityQueue.top();
 			this->priorityQueue.pop();
+#if BOOST_QUEUE
+			this->isInHeap[minElement.data] = false;
+#else
 			if (!this->isInHeap[minElement.data]) {
 				continue;
 			}
 			this->isInHeap[minElement.data] = false;
+#endif
 			this->keyOf.erase(this->keyOf.find(minElement.data));
 			return {minElement.data, minElement.key};
+#if BOOST_QUEUE
+#else
 		}
 		while (!this->priorityQueue.empty());
 		return {INT_MIN, INT_MIN};
+#endif
 	}
 
 	void SDCSolverIncremental::insertHeap(const int &u, int key) {
+#if BOOST_QUEUE
+		this->fibNodeHandle[u] = this->priorityQueue.push(PriorityQueueElement(key, u));
+#else
 		//this->fibNode[u] = this->priorityQueue.push(key, (void*)(&u));
 		this->priorityQueue.push(PriorityQueueElement(key, u));
+#endif
 		this->keyOf[u] = key;
 		this->isInHeap[u] = true;
 	}
@@ -271,8 +329,8 @@ namespace HatScheT {
 		}
 	}
 
-	//int SDCSolverIncremental::getCurrentSDCSolutionValue(const std::unordered_map<int, int> &solutionContainer, const int &u) {
-	int SDCSolverIncremental::getCurrentSDCSolutionValue(const std::map<int, int> &solutionContainer, const int &u) {
+	int SDCSolverIncremental::getCurrentSDCSolutionValue(const std::unordered_map<int, int> &solutionContainer, const int &u) {
+	//int SDCSolverIncremental::getCurrentSDCSolutionValue(const std::map<int, int> &solutionContainer, const int &u) {
 		try {
 			return solutionContainer.at(u);
 		}
@@ -291,12 +349,60 @@ namespace HatScheT {
 
 	std::list<std::tuple<int, int, int>> SDCSolverIncremental::getCurrentConstraints() const {
 		std::list<std::tuple<int, int, int>> returnMe;
+		/*
 		for (auto &it : this->baseConstraints) {
 			returnMe.emplace_back(it.first.first, it.first.second, it.second);
 		}
 		for (auto &it : this->additionalConstraints) {
 			returnMe.emplace_back(it.first.first, it.first.second, it.second);
 		}
+		 */
+		for (auto &it : this->constraints) {
+			returnMe.emplace_back(it.first.first, it.first.second, it.second);
+		}
 		return returnMe;
+	}
+
+	void SDCSolverIncremental::overrideSolution(const std::map<int, int> &newSolution) {
+		int maxVal = INT32_MIN;
+		for (auto &it : newSolution) {
+			maxVal = std::max(maxVal, it.second);
+			this->solution[it.first] = it.second;
+		}
+		this->solution[-1] = maxVal;
+	}
+
+	bool SDCSolverIncremental::currentSolutionValid() {
+		if (!this->unprocessed.empty()) return true; // cannot verify invalid solution
+		bool allGood = true;
+		for (auto &it : this->constraints) {
+			auto u = it.first.first;
+			auto v = it.first.second;
+			auto c = it.second;
+			auto t_u = this->solution.at(u);
+			auto t_v = this->solution.at(v);
+			if (t_u - t_v > c) {
+				if (!this->quiet) {
+					std::cout << "SDCSolverIncremental::currentSolutionValid: constraint 't_" << u << " - t_" << v << " <= " << c << "' violated!" << std::endl;
+					std::cout << "  -> t_" << u << " = " << t_u << std::endl;
+					std::cout << "  -> t_" << v << " = " << t_v << std::endl;
+					std::cout << "  -> c = " << c << std::endl;
+				}
+				allGood = false;
+			}
+		}
+		return allGood;
+	}
+
+	void SDCSolverIncremental::clearQueue() {
+#if BOOST_QUEUE
+		this->priorityQueue = queue_t();
+		this->fibNodeHandle.clear();
+#else
+		this->priorityQueue = std::priority_queue<PriorityQueueElement, std::vector<PriorityQueueElement>, std::greater<PriorityQueueElement>>();
+#endif
+		this->isInHeap.clear();
+		this->keyOf.clear();
+
 	}
 }

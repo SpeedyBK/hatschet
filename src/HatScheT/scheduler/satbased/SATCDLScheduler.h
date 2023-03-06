@@ -55,11 +55,11 @@ namespace HatScheT {
 		/*!
 		 * time tracker for SAT solver
 		 */
-		double SATSolverTime;
+		double SATSolverTime = 0.0;
 		/*!
 		 * time tracker for SDC solver
 		 */
-		double SDCSolverTime;
+		double SDCSolverTime = 0.0;
 	};
 }
 #endif

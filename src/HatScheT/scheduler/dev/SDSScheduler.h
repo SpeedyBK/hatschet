@@ -19,7 +19,7 @@
 */
 
 /*
- * General Idea:
+ * General Idea (non-modulo scheduling):
  * [1] Steve Dai, Gai Liu, Zhiru Zhang; A Scalable Approach to Exact Ressource-Constraint Scheduling Based on a Joint
  * SDC and SAT Formulation; FPGA 2018
  *
@@ -58,6 +58,8 @@
 #include <HatScheT/utility/SDCSolverBellmanFord.h>
 
 namespace HatScheT {
+#define USE_BELLMAN_FORD 1
+#define USE_OIJK 1
 
 
 #if 1
@@ -68,28 +70,40 @@ namespace HatScheT {
 	class SDSScheduler : public SATSchedulerBase {
 	public:
 		SDSScheduler(Graph &g, ResourceModel &resourceModel, int II = -1);
+		std::string getName() override { return "SDSScheduler"; }
 
+	protected:
 		void scheduleIteration() override;
 
 	private:
 		void computeLatencyBounds();
 		void initSATSolver();
 		void initSDCSolver();
-		void forbidConflictingResourceConstraints(std::set<int> conflictingResourceConstraints);
+		void forbidConflictingResourceConstraints(const std::set<int> &conflictingResourceConstraints);
 		std::set<int> solveSDC(const std::list<std::tuple<const Vertex*, const Vertex*, int, int>> &additionalSDCConstraints);
 		std::pair<bool, std::list<std::tuple<const Vertex*, const Vertex*, int, int>>> getAdditionalSDCConstraints();
+		void computeShortestPathSolution();
+#if USE_OIJK
 		int kMax = INT32_MAX;
 		int kMin = INT32_MIN;
+#endif
 		// SDC solver
-		//SDCSolverIncremental sdcSolver;
+#if USE_BELLMAN_FORD
 		SDCSolverBellmanFord sdcSolver;
+#else
+		SDCSolverIncremental sdcSolver;
+#endif
 		// SAT variables
 		std::map<std::pair<const Vertex*, int>, int> B_ir; // originally called B_ik but we use the index k for O_ijk
 		std::map<std::pair<const Vertex*, const Vertex*>, int> R_ij;
 		std::map<std::pair<const Vertex*, const Vertex*>, int> O_ij;
+#if USE_OIJK
 		std::map<std::pair<const Vertex*, const Vertex*>, std::map<int, int>> O_ijk;
+#endif
 
 		std::set<std::set<int>> learnedClauses;
+
+		std::map<std::pair<const Vertex*, const Vertex*>, int> dependencyConstraints;
 
 #else
 
