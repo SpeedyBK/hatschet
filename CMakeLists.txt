@@ -259,6 +259,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATSchedulerLatOpt.h
         src/HatScheT/scheduler/satbased/SATSchedulerBinEnc.h
+        src/HatScheT/scheduler/satbased/SATSchedulerBinEncOverlap.h
         src/HatScheT/scheduler/satbased/SATSchedulerRes.h
         src/HatScheT/scheduler/satbased/SATRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATSCCScheduler.h
@@ -340,6 +341,7 @@ IF (CADICAL_H AND CADICAL_LIB)
             src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp
             src/HatScheT/scheduler/satbased/SATSchedulerLatOpt.cpp
             src/HatScheT/scheduler/satbased/SATSchedulerBinEnc.cpp
+            src/HatScheT/scheduler/satbased/SATSchedulerBinEncOverlap.cpp
             src/HatScheT/scheduler/satbased/SATRatIIScheduler.cpp
             src/HatScheT/scheduler/satbased/SATSCCScheduler.cpp
             src/HatScheT/scheduler/satbased/SATSCCRatIIScheduler.cpp

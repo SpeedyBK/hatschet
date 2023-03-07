@@ -9,6 +9,7 @@
 #include <HatScheT/scheduler/satbased/SATSchedulerRes.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerLatOpt.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerBinEncOverlap.h>
 #include <HatScheT/scheduler/satbased/SATSCCScheduler.h>
 #include <memory>
 namespace HatScheT {
@@ -120,6 +121,12 @@ namespace HatScheT {
 					}
 					 */
 					//dynamic_cast<SATSchedulerBinEnc*>(s2.get())->setBoundSL(true);
+					break;
+				case BACKEND_SATBINOVERLAP:
+					std::cout << "LAT BACKEND: SATBIN OVERLAP!" << std::endl;
+					s2 = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEncOverlap(this->g, this->resourceModel, this->candidateII));
+					dynamic_cast<SATSchedulerBinEncOverlap*>(s2.get())->setSolverTimeout(satTimeout);
+					dynamic_cast<SATSchedulerBinEncOverlap*>(s2.get())->setQuiet(this->quiet);
 					break;
 				case BACKEND_SATRES:
 					std::cout << "LAT BACKEND: SATRES!" << std::endl;

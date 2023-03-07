@@ -8,6 +8,7 @@
 #include <HatScheT/scheduler/satbased/SATScheduler.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerRes.h>
 #include <HatScheT/scheduler/satbased/SATSchedulerBinEnc.h>
+#include <HatScheT/scheduler/satbased/SATSchedulerBinEncOverlap.h>
 #include "HatScheT/utility/subgraphs/KosarajuSCC.h"
 #include <algorithm>
 #include <limits>
@@ -138,6 +139,14 @@ namespace HatScheT {
 				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
 				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
 				dynamic_cast<SATSchedulerBinEnc*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
+				break;
+			}
+			case BACKEND_SATBINOVERLAP: {
+				std::cout << "SCC BACKEND: SATBIN OVERLAP!" << std::endl;
+				s = std::unique_ptr<SchedulerBase>(new SATSchedulerBinEncOverlap(this->complexSCCG, this->complexSCCR, (int) this->II));
+				dynamic_cast<SATSchedulerBinEncOverlap*>(s.get())->setEarliestStartTimes(this->earliestStartTimes);
+				dynamic_cast<SATSchedulerBinEncOverlap*>(s.get())->setLatestStartTimeDifferences(this->latestStartTimeDifferences);
+				dynamic_cast<SATSchedulerBinEncOverlap*>(s.get())->setTargetLatency(this->sccGraphMaxLat);
 				break;
 			}
 			case BACKEND_SATRES: {

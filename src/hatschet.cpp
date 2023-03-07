@@ -267,6 +267,7 @@ int main(int argc, char *args[]) {
 		SATCOMBINED,
 		SATCOMBINEDLAT,
 		SATCOMBINEDBIN,
+		SATCOMBINEDBINOVERLAP,
 		SATCOMBINEDRATII,
 		SATMINREG,
 		SATRATII,
@@ -423,6 +424,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = SATCOMBINEDLAT;
 				} else if (schedulerSelectionStr == "satcombinedbin") {
 					schedulerSelection = SATCOMBINEDBIN;
+				} else if (schedulerSelectionStr == "satcombinedbinoverlap") {
+					schedulerSelection = SATCOMBINEDBINOVERLAP;
 				} else if (schedulerSelectionStr == "satcombinedratii") {
 					schedulerSelection = SATCOMBINEDRATII;
 				} else if (schedulerSelectionStr == "satratii") {
@@ -659,6 +662,9 @@ int main(int argc, char *args[]) {
 				break;
 			case SATCOMBINEDBIN:
 				cout << "SATCOMBINEDBIN";
+				break;
+			case SATCOMBINEDBINOVERLAP:
+				cout << "SATCOMBINEDBINOVERLAP";
 				break;
 			case SATCOMBINEDRATII:
 				cout << "SATCOMBINEDRATII";
@@ -898,6 +904,14 @@ int main(int argc, char *args[]) {
 					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
 					isModuloScheduler = true;
 					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::BACKEND_SATBIN);
+					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
+					if (maxLatency > 0)
+						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
+					break;
+				case SATCOMBINEDBINOVERLAP:
+					scheduler = new HatScheT::SATCombinedScheduler(g, rm);
+					isModuloScheduler = true;
+					((HatScheT::SATCombinedScheduler *) scheduler)->setBackendSchedulerType(HatScheT::BACKEND_SATBINOVERLAP);
 					if (timeout > 0) ((HatScheT::SATCombinedScheduler *) scheduler)->setSolverTimeout(timeout);
 					if (maxLatency > 0)
 						((HatScheT::SATCombinedScheduler *) scheduler)->setMaxLatencyConstraint(maxLatency);
