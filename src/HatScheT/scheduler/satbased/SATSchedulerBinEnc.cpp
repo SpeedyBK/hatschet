@@ -1060,10 +1060,13 @@ namespace HatScheT {
 		// 1) -c_o -sum
 		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{c_o.first, not c_o.second}, {sum.first, not sum.second}});
-		// 2) -a  c_o  sum
+		// 2)  a  b -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {sum.first, not sum.second}}, false);
+		// 3) -a  c_o  sum
 		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
-		// 3) -b  c_o  sum
+		// 4) -b  c_o  sum
 		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
 #else

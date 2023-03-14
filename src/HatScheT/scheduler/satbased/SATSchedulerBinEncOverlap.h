@@ -13,6 +13,11 @@ namespace HatScheT {
 	public:
 		SATSchedulerBinEncOverlap(Graph& g, ResourceModel &resourceModel, int II=-1);
 
+		enum SATFormulationMode {
+			implication, // compute m_i = t_i mod II using implications for all values that t_i can take (kind of inefficient but it works just fine)
+			constMult // compute t_i = y_i * II + m_i using shift and add operations in SAT -> only works if SAT SCM lib is linked to HatScheT
+		} satFormulationMode = implication;
+
 	protected:
 		void scheduleIteration() override;
 
@@ -36,6 +41,8 @@ namespace HatScheT {
 		void createBindingLimitationClauses();
 		trivialDecision createDependencyClauses();
 		void createModuloComputationClauses();
+		void createModuloComputationImplicationClauses();
+		void createModuloComputationConstMultClauses();
 		void createOverlapClauses();
 
 		int create_arbitrary_clause(const std::vector<std::pair<int, bool>> &a);
@@ -47,10 +54,15 @@ namespace HatScheT {
 		int create_2x1_or(int a, int b, int y);
 		int create_2x1_mux(int a, int b, int s, int y);
 		int create_nand(int a, int b, int y);
+		std::vector<int> create_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr=nullptr, int* clauseCounterPtr=nullptr);
 
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeVariables;
 		std::map<const Vertex*, int> scheduleTimeWordSize;
+		std::map<const Vertex*, int> offsetIIWordSize;
+		std::map<const Vertex*, int> offsetIIMultWordSize;
 		std::map<std::pair<Edge*, int>, int> diffVariables;
+		std::map<std::pair<const Vertex*, int>, int> offsetIIVariables;
+		std::map<std::pair<const Vertex*, int>, int> offsetIIMultVariables;
 		std::map<std::pair<const Vertex*, int>, int> moduloSlotVariables;
 		std::map<std::pair<const Vertex*, int>, int> bindingVariables;
 		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> bindingOverlapVariables;
@@ -59,9 +71,17 @@ namespace HatScheT {
 		int constOneVar = -1;
 		int constZeroVar = -1;
 
+		// used to compute t_i = II * y_i + m_i using shift and add operations
+		void computeAdderGraph();
+		std::unique_ptr<Graph> scmAdderGraph;
+		std::vector<Vertex*> scmAdderGraphVertexOrder;
+		int scmOutputShift = 0;
+		int scmOutputConst = 0;
+
 		// new
 		int bindingLiteralCounter = 0;
 		int overlapLiteralCounter = 0;
+		int moduloComputationLiteralCounter = 0;
 
 		int overlapClauseCounter = 0;
 		int moduloComputationClauseCounter = 0;

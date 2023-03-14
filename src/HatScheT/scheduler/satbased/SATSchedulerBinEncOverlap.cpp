@@ -6,12 +6,23 @@
 #include <HatScheT/utility/Utility.h>
 #include <HatScheT/utility/Verifier.h>
 #include <iomanip>
+#include <algorithm>
+
+#ifdef USE_SATSCM
+#include <scm_cadical.h>
+#endif
 
 namespace HatScheT {
 
 	SATSchedulerBinEncOverlap::SATSchedulerBinEncOverlap(Graph &g, ResourceModel &resourceModel, int II) :
 		SATSchedulerBase(g, resourceModel, II) {
 		this->los = LatencyOptimizationStrategy::LINEAR_JUMP;
+#ifdef USE_SATSCM
+		this->satFormulationMode = constMult;
+		//this->satFormulationMode = implication; // DEBUG
+#else
+		this->satFormulationMode = implication;
+#endif
 	}
 
 	void SATSchedulerBinEncOverlap::scheduleIteration() {
@@ -20,8 +31,12 @@ namespace HatScheT {
 
 		this->scheduleTimeVariables.clear();
 		this->scheduleTimeWordSize.clear();
+		this->offsetIIWordSize.clear();
+		this->offsetIIMultWordSize.clear();
 		this->diffVariables.clear();
 		this->moduloSlotVariables.clear();
+		this->offsetIIVariables.clear();
+		this->offsetIIMultVariables.clear();
 		this->lastForbiddenTime.clear();
 		this->constOneVar = 0;
 		this->constZeroVar = 0;
@@ -29,6 +44,7 @@ namespace HatScheT {
 		this->timeSlotLiteralCounter = 0;
 		this->bindingLiteralCounter = 0;
 		this->overlapLiteralCounter = 0;
+		this->moduloComputationLiteralCounter = 0;
 		this->resourceConstraintLiteralCounter = 0;
 		this->moduloSlotLiteralCounter = 0;
 		this->dependencyConstraintSubLiteralCounter = 0;
@@ -71,6 +87,12 @@ namespace HatScheT {
 			std::cout << "SATSchedulerBinEncOverlap: candidate II=" << this->candidateII << " with min latency="
 								<< this->latencyLowerBound << " and max latency=" << this->latencyUpperBound << std::endl;
 		}
+
+		// compute adder graph for const mult mode
+		if (this->satFormulationMode == constMult) {
+			this->computeAdderGraph();
+		}
+
 		while (this->computeNewLatencySuccess(lastAttemptSuccess)) {
 			if (!this->quiet) {
 				std::cout << "SATSchedulerBinEncOverlap: new latency limit = " << this->candidateLatency << std::endl;
@@ -124,6 +146,7 @@ namespace HatScheT {
 				std::cout << "  '" << this->moduloSlotLiteralCounter << "' modulo slot literals" << std::endl;
 				std::cout << "  '" << this->resourceConstraintLiteralCounter << "' resource constraint literals" << std::endl;
 				std::cout << "  '" << this->overlapLiteralCounter << "' overlap literals" << std::endl;
+				std::cout << "  '" << this->moduloComputationLiteralCounter << "' modulo computation literals" << std::endl;
 				std::cout << "  '" << this->dependencyConstraintSubLiteralCounter << "' dependency constraint subtract literals" << std::endl;
 				std::cout << "  '" << this->dependencyConstraintCompLiteralCounter << "' dependency constraint comparator literals" << std::endl;
 
@@ -248,6 +271,19 @@ namespace HatScheT {
 			this->earliestStartTime = this->scheduleLengthEstimation->getASAPTimesSDC();
 			this->latestStartTimeDifferences = this->scheduleLengthEstimation->getALAPTimeDiffsSDC();
 		}
+		// the const mult mode needs earliest start times to be a multiple of the II
+		//if (this->satFormulationMode == constMult) { //DEBUG
+			/*for (auto &it : this->earliestStartTime) {
+				// we need the floor anyways so just directly divide the integers instead of casting to float
+				it.second = this->candidateII * (it.second / this->candidateII);
+				//it.second = 0;
+				//this->earliestStartTime.at(it.first) = 0;
+			}*/
+			for (auto &v : this->g.Vertices()) {
+				auto *val = &this->earliestStartTime[v];
+				*val = this->candidateII * ((*val) / this->candidateII);
+			}
+		//} //DEBUG
 	}
 
 	void SATSchedulerBinEncOverlap::resetContainer() {
@@ -255,6 +291,8 @@ namespace HatScheT {
 		// reset literal containers
 		this->scheduleTimeVariables.clear();
 		this->moduloSlotVariables.clear();
+		this->offsetIIVariables.clear();
+		this->offsetIIMultVariables.clear();
 		this->bindingVariables.clear();
 		this->diffVariables.clear();
 		this->bindingOverlapVariables.clear();
@@ -268,6 +306,7 @@ namespace HatScheT {
 		this->dependencyConstraintCompClauseCounter = 0;
 		this->bindingLiteralCounter = 0;
 		this->overlapLiteralCounter = 0;
+		this->moduloComputationLiteralCounter = 0;
 		// reset clause counter(s)
 		this->clauseCounter = 0;
 		this->timeSlotConstraintClauseCounter = 0;
@@ -289,7 +328,7 @@ namespace HatScheT {
 		trivialDecision td = noTrivialDecisionPossible;
 		for (auto &v : this->g.Vertices()) {
 			this->latestStartTime[v] = this->candidateLatency - this->latestStartTimeDifferences.at(v);
-			auto diff = this->latestStartTime[v] - this->earliestStartTime.at(v);
+			auto diff = this->latestStartTime.at(v) - this->earliestStartTime.at(v);
 			if (diff < 0) {
 				// maxLatencyConstraint is too tight! scheduling for this II is trivially impossible
 				td = triviallyUNSAT;
@@ -299,6 +338,7 @@ namespace HatScheT {
 				continue;
 			}
 			if (this->inIncrementalMode()) continue;
+			if (this->satFormulationMode == constMult and !this->resourceModel.getResource(v)->isUnlimited()) continue;
 			auto wSize = (int)std::ceil(std::log2(diff+1));
 			if (wSize < 1) wSize = 1;
 			this->scheduleTimeWordSize[v] = wSize;
@@ -313,11 +353,14 @@ namespace HatScheT {
 		this->constZeroVar = ++this->literalCounter;
 		// create schedule time literals
 		for (auto &v : this->g.Vertices()) {
+			// in const mult mode, we create schedule time variables when setting up clauses for modulo slot computation
+			if (this->satFormulationMode == constMult and !this->resourceModel.getResource(v)->isUnlimited()) continue;
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			for (int w=0; w<wordSize; w++) {
 				this->scheduleTimeVariables[{v, w}] = ++this->literalCounter;
 				this->timeSlotLiteralCounter++;
 			}
+
 		}
 		// create modulo slot literals
 		auto modSlotWordSize = (int)std::ceil(std::log2(this->candidateII));
@@ -328,6 +371,29 @@ namespace HatScheT {
 			for (int w=0; w<modSlotWordSize; w++) {
 				this->moduloSlotVariables[{v, w}] = ++this->literalCounter;
 				this->moduloSlotLiteralCounter++;
+			}
+		}
+		// create offset II literals
+		if (this->satFormulationMode == constMult) {
+			for (auto &v : this->g.Vertices()) {
+				auto r = this->resourceModel.getResource(v);
+				auto limit = r->getLimit();
+				if (limit == UNLIMITED) continue;
+				// todo: check if floor also works
+				auto maxVal = static_cast<int>(std::ceil(
+					static_cast<double>(this->latestStartTime.at(v) - this->earliestStartTime.at(v)) /
+					static_cast<double>(this->candidateII)));
+				int wordSize;
+				if (maxVal > 1) {
+					wordSize = static_cast<int>(std::ceil(std::log2(maxVal + 1)));
+				} else {
+					wordSize = 1;
+				}
+				this->offsetIIWordSize[v] = wordSize;
+				for (int w = 0; w < wordSize; w++) {
+					this->offsetIIVariables[{v, w}] = ++this->literalCounter;
+					this->moduloComputationLiteralCounter++;
+				}
 			}
 		}
 		// create binding literals
@@ -376,6 +442,9 @@ namespace HatScheT {
 		// create all base clauses
 		this->create_arbitrary_clause({{this->constOneVar, false}});
 		this->create_arbitrary_clause({{this->constZeroVar, true}});
+		// first of all, create clauses to compute modulo slots for resource-limited vertices
+		if (!this->quiet) std::cout << "SATSchedulerBinEncOverlap::createClauses: creating clauses for modulo computation (m_i = t_i mod " << this->candidateII << ")" << std::endl;
+		this->createModuloComputationClauses();
 		// upper limit for time slots
 		if (!this->quiet) std::cout << "SATSchedulerBinEncOverlap::createClauses: creating clauses for start time limitations" << std::endl;
 		this->createTimeSlotLimitationClauses();
@@ -389,8 +458,6 @@ namespace HatScheT {
 			return triviallyUNSAT;
 		}
 		// resource constraints
-		if (!this->quiet) std::cout << "SATSchedulerBinEncOverlap::createClauses: creating clauses for modulo computation (m_i = t_i mod " << this->candidateII << ")" << std::endl;
-		this->createModuloComputationClauses();
 		if (!this->quiet) std::cout << "SATSchedulerBinEncOverlap::createClauses: creating overlap clauses for resource constraints" << std::endl;
 		this->createOverlapClauses();
 		if (!this->quiet) std::cout << "SATSchedulerBinEncOverlap::createClauses: finished" << std::endl;
@@ -403,10 +470,16 @@ namespace HatScheT {
 			if (wordSize < 1) {
 				throw HatScheT::Exception("SATSchedulerBinEncOverlap::createClauses: detected wordSize = '"+std::to_string(wordSize)+"' for vertex '"+v->getName()+"' -> this should never happen!");
 			}
-			auto maxValue = (1 << wordSize)-1;
+			//auto maxValue = (1 << wordSize)-1;
 			auto upperLimit = this->latestStartTime.at(v) - this->earliestStartTime.at(v);
 			this->lastForbiddenTime[v] = upperLimit+1;
 			std::vector<std::pair<int, bool>> clauseBase;
+			/*std::cout << "#q# time slot limitation clauses for '" << v->getName() << "' with upper limit " << upperLimit << " and word size " << wordSize << std::endl;
+			std::cout << "      ->";
+			for (int idx = wordSize-1; idx >= 0; idx--) {
+				std::cout << " " << this->scheduleTimeVariables.at({v, idx});
+			}
+			std::cout << std::endl;*/
 			for (int idx = wordSize-1; idx >= 0; idx--) {
 				if ((upperLimit >> idx) & 1) {
 					clauseBase.emplace_back(this->scheduleTimeVariables.at({v, idx}), true);
@@ -414,6 +487,21 @@ namespace HatScheT {
 				}
 				auto clause = clauseBase;
 				clause.emplace_back(this->scheduleTimeVariables.at({v, idx}), true);
+				this->timeSlotConstraintClauseCounter += this->create_arbitrary_clause(clause);
+			}
+
+			// also limit modulo slots if they exist
+			if (this->satFormulationMode != constMult or this->resourceModel.getResource(v)->isUnlimited()) continue;
+			upperLimit = this->candidateII-1;
+			wordSize = static_cast<int>(std::ceil(std::log2(this->candidateII)));
+			clauseBase.clear();
+			for (int idx = wordSize-1; idx >= 0; idx--) {
+				if ((upperLimit >> idx) & 1) {
+					clauseBase.emplace_back(this->moduloSlotVariables.at({v, idx}), true);
+					continue;
+				}
+				auto clause = clauseBase;
+				clause.emplace_back(this->moduloSlotVariables.at({v, idx}), true);
 				this->timeSlotConstraintClauseCounter += this->create_arbitrary_clause(clause);
 			}
 		}
@@ -458,11 +546,13 @@ namespace HatScheT {
 			auto tDstMax = this->latestStartTime.at(vDst);
 			auto tSrcDiff = tSrcMax - tSrcMin;
 			auto tDstDiff = tDstMax - tDstMin;
-			auto edgeConst = -(lSrc + delay - (dist * this->candidateII) + tSrcMin - tDstMin);
+			//auto edgeConst = -(lSrc + delay - (dist * this->candidateII) + tSrcMin - tDstMin);
+			auto edgeConst = (dist * this->candidateII) - lSrc - delay - tSrcMin + tDstMin;
 			// enforce diff_ij = t_i - t_j <= edgeConst
 			// check if edge is trivially satisfied
 			auto worstCaseDiff = tSrcDiff; // t_j = 0 => diff_ij = t_i
 			if (worstCaseDiff <= edgeConst) {
+				//std::cout << "#q# edge '" << vSrc->getName() << "' -> '" << vDst->getName() << "' is trivially satisfied" << std::endl;
 				continue;
 			}
 			// check if edge is trivially violated
@@ -521,16 +611,17 @@ namespace HatScheT {
 			std::vector<std::pair<int, bool>> clauseBase;
 			for (int idx = wordSizeDiff-1; idx >= 0; idx--) {
 				auto bitSet = (bool)((edgeConst >> idx) & 1);
+				auto polarity = idx != wordSizeDiff-1;
 				if (idx == wordSizeDiff-1 and !bitSet) {
-					clauseBase.emplace_back(this->diffVariables.at({e, idx}), false);
+					clauseBase.emplace_back(this->diffVariables.at({e, idx}), polarity);
 					continue;
 				}
 				if (idx != wordSizeDiff-1 and bitSet) {
-					clauseBase.emplace_back(this->diffVariables.at({e, idx}), true);
+					clauseBase.emplace_back(this->diffVariables.at({e, idx}), polarity);
 					continue;
 				}
 				auto clause = clauseBase;
-				clause.emplace_back(this->diffVariables.at({e, idx}), true);
+				clause.emplace_back(this->diffVariables.at({e, idx}), polarity);
 				this->dependencyConstraintCompClauseCounter += this->create_arbitrary_clause(clause);
 			}
 		}
@@ -538,7 +629,23 @@ namespace HatScheT {
 	}
 
 	void SATSchedulerBinEncOverlap::createModuloComputationClauses() {
-		// compute m_i = t_i mod II for all resource-limited vertices v_i
+		switch (this->satFormulationMode) {
+			case implication: {
+				this->createModuloComputationImplicationClauses();
+				break;
+			}
+			case constMult: {
+				this->createModuloComputationConstMultClauses();
+				break;
+			}
+			default: {
+				throw Exception("SATSchedulerBinEncOverlap: invalid SAT formulation mode");
+			}
+		}
+	}
+
+	void SATSchedulerBinEncOverlap::createModuloComputationImplicationClauses() {
+		// compute m_i = t_i mod II for all resource-limited vertices v_i using implication
 		auto mWordSize = (int)std::ceil(std::log2(this->candidateII));
 		for (auto &v : this->g.Vertices()) {
 			if (this->resourceModel.getResource(v)->isUnlimited()) continue;
@@ -558,6 +665,132 @@ namespace HatScheT {
 					clause.emplace_back(this->moduloSlotVariables.at({v, w}), not bitSet);
 					this->moduloComputationClauseCounter += this->create_arbitrary_clause(clause);
 				}
+			}
+		}
+	}
+
+	void SATSchedulerBinEncOverlap::createModuloComputationConstMultClauses() {
+		auto moduloSlotWordSize = static_cast<int>(std::ceil(std::log2(this->candidateII)));
+		for (auto &v : this->g.Vertices()) {
+			auto r = this->resourceModel.getResource(v);
+			auto limit = r->getLimit();
+			if (limit == UNLIMITED) continue;
+			// we represent the II as an odd number multiplied by a power of 2:
+			// II = II_odd << II_shift = II_odd * 2^II_shift
+			// compute z_i = y_i * II_odd based on the adder graph that we computed earlier
+			std::vector<int> z_i;
+			std::map<int, std::vector<int>> adderGraphVars;
+			int yWordSize = this->offsetIIWordSize.at(v);
+			for (auto w=0; w<yWordSize; w++) {
+				adderGraphVars[1].emplace_back(this->offsetIIVariables.at({v, w}));
+			}
+			if (this->scmAdderGraphVertexOrder.empty()) {
+				z_i = adderGraphVars[1];
+			}
+			else {
+				for (auto &c : this->scmAdderGraphVertexOrder) {
+					auto nodeValue = c->getId();
+					auto incomingEdges = this->scmAdderGraph->getIncomingEdges(c);
+					if (incomingEdges.size() != 2) {
+						throw Exception("SATSchedulerBinEncOverlap: invalid adder graph computed (incoming edges != 2)");
+					}
+					auto firstInputEdge = *incomingEdges.begin();
+					auto secondInputEdge = *incomingEdges.rbegin();
+					int leftInputValue;
+					int rightInputValue;
+					int leftShift;
+					int rightShift;
+					bool sub = c->getName() == "-";
+					if (firstInputEdge->getDelay() == 0) {
+						// first input is left input
+						// second input is right input
+						leftInputValue = firstInputEdge->getVertexSrc().getId();
+						leftShift = firstInputEdge->getDistance();
+						rightInputValue = secondInputEdge->getVertexSrc().getId();
+						rightShift = secondInputEdge->getDistance();
+					}
+					else {
+						// second input is left input
+						// first input is right input
+						leftInputValue = secondInputEdge->getVertexSrc().getId();
+						leftShift = secondInputEdge->getDistance();
+						rightInputValue = firstInputEdge->getVertexSrc().getId();
+						rightShift = firstInputEdge->getDistance();
+					}
+					auto leftInputVars = adderGraphVars.at(leftInputValue);
+					auto rightInputVars = adderGraphVars.at(rightInputValue);
+					auto wLeft = leftInputVars.size() + leftShift;
+					auto wRight = rightInputVars.size() + rightShift;
+					std::vector<std::tuple<std::vector<int>, bool, int>> bitheapInput = {
+						{leftInputVars, false, leftShift},
+						{rightInputVars, sub, rightShift}
+					};
+					auto bitheapOutput = this->create_bitheap(bitheapInput, &this->moduloComputationLiteralCounter, &this->moduloComputationClauseCounter);
+					auto constMultMax = ((1 << yWordSize)-1) * nodeValue;
+					auto wConstMult = static_cast<int>(std::ceil(std::log2(constMultMax+1)));
+					if (wConstMult > bitheapOutput.size()) {
+						// word size is not enough -> something went wrong :(
+						throw Exception("SATSchedulerBinEncOverlap: invalid bitheap compression (output word size too small)");
+					}
+					//bitheapOutput.resize(wConstMult);
+					adderGraphVars[nodeValue] = bitheapOutput;
+				}
+				z_i = adderGraphVars.at(this->scmOutputConst);
+			}
+			this->offsetIIMultWordSize[v] = static_cast<int>(z_i.size());
+			for (auto w=0; w<z_i.size(); w++) {
+				this->offsetIIMultVariables[{v, w}] = z_i.at(w);
+			}
+			// compute t_i = (z_i << II_shift) + m_i
+			std::vector<int> m_i(moduloSlotWordSize);
+			for (auto w=0; w<moduloSlotWordSize; w++) {
+				m_i[w] = this->moduloSlotVariables.at({v, w});
+			}
+			std::vector<std::tuple<std::vector<int>, bool, int>> bitheapInput = {
+				{z_i, false, this->scmOutputShift}, // z_i << II_shift
+				{m_i, false, 0}  // m_i
+			};
+			auto tMinVal = this->earliestStartTime.at(v);
+			auto tMinValWordSize = static_cast<int>(std::ceil(std::log2(tMinVal+1)));
+			if (tMinVal % this->candidateII != 0) {
+				throw Exception("Earliest start time must always be a multiple of the II for const mult mode");
+				/*std::vector<int> tMin_i(tMinValWordSize);
+				for (auto w=0; w<tMinValWordSize; w++) {
+					auto bitSet = static_cast<bool>((tMinVal >> w) & 1);
+					if (bitSet) {
+						tMin_i[w] = this->constOneVar;
+					}
+					else {
+						tMin_i[w] = this->constZeroVar;
+					}
+				}
+				bitheapInput.emplace_back(tMin_i, false, 0);*/
+			}
+			auto bitheapOutput = this->create_bitheap(bitheapInput, &this->moduloComputationLiteralCounter, &this->moduloComputationClauseCounter);
+			/*
+			std::cout << "#q# sched time sum for '" << v->getName() << "':" << std::endl;
+			std::cout << "      -> z_i << " << this->scmOutputShift << " with " << z_i.size() << " bits:";
+			for (int w=(int)z_i.size()-1; w>=0; w--) {
+				auto it = z_i.at(w);
+				std::cout << " " << it;
+			}
+			std::cout << std::endl;
+			std::cout << "      -> m_i with " << m_i.size() << " bits:";
+			for (int w=(int)m_i.size()-1; w>=0; w--) {
+				auto it = m_i.at(w);
+				std::cout << " " << it;
+			}
+			std::cout << std::endl;
+			std::cout << "      -> t_i with " << bitheapOutput.size() << " bits:";
+			for (int w=(int)bitheapOutput.size()-1; w>=0; w--) {
+				auto it = bitheapOutput.at(w);
+				std::cout << " " << it;
+			}
+			std::cout << std::endl << std::endl;
+			 */
+			this->scheduleTimeWordSize[v] = bitheapOutput.size();
+			for (auto w=0; w<bitheapOutput.size(); w++) {
+				this->scheduleTimeVariables[{v, w}] = bitheapOutput.at(w);
 			}
 		}
 	}
@@ -615,6 +848,7 @@ namespace HatScheT {
 
 	void SATSchedulerBinEncOverlap::fillSolutionStructure() {
 		// define schedule times from schedule time literals
+		bool foundError = false;
 		for (auto &v : this->g.Vertices()) {
 			int t = 0;
 			auto wordSize = this->scheduleTimeWordSize.at(v);
@@ -623,9 +857,58 @@ namespace HatScheT {
 				t += (bitResult << w);
 			}
 			this->startTimes[v] = t + this->earliestStartTime.at(v);
-			for (int m = 0; m < this->candidateII; m++) {
-				if (this->moduloSlotVariables[{v, m}] == 0) continue;
+			// DEBUG START
+			if (this->satFormulationMode != constMult or this->resourceModel.getResource(v)->isUnlimited()) continue;
+			int moduloSlot = 0;
+			int offsetII = 0;
+			int offsetIIMult = 0;
+			wordSize = static_cast<int>(std::ceil(std::log2(this->candidateII)));
+			for (int w = 0; w < wordSize; w++) {
+				auto bitResult = this->solver->val(this->moduloSlotVariables.at({v, w})) > 0 ? 1 : 0;
+				moduloSlot += (bitResult << w);
 			}
+			wordSize = this->offsetIIWordSize.at(v);
+			for (int w = 0; w < wordSize; w++) {
+				auto bitResult = this->solver->val(this->offsetIIVariables.at({v, w})) > 0 ? 1 : 0;
+				offsetII += (bitResult << w);
+			}
+			wordSize = this->offsetIIMultWordSize.at(v);
+			for (int w = 0; w < wordSize; w++) {
+				auto bitResult = this->solver->val(this->offsetIIMultVariables.at({v, w})) > 0 ? 1 : 0;
+				offsetIIMult += (bitResult << w);
+			}
+			if (t % this->candidateII != moduloSlot
+			 or t != moduloSlot + (this->candidateII * offsetII)
+			 or offsetIIMult != this->candidateII * offsetII) {
+				std::cout << "Vertex '" << v->getName() << "'" << std::endl;
+				std::cout << "  start time = " << this->startTimes.at(v) << std::endl;
+				std::cout << "  t_i = " << t << " :";
+				for (int w=this->scheduleTimeWordSize.at(v)-1; w>=0; w--) {
+					std::cout << " " << this->scheduleTimeVariables.at({v, w});
+				}
+				std::cout << std::endl;
+				std::cout << "  m_i = " << moduloSlot << " :";
+				for (int w=static_cast<int>(std::ceil(std::log2(this->candidateII)))-1; w>=0; w--) {
+					std::cout << " " << this->moduloSlotVariables.at({v, w});
+				}
+				std::cout << std::endl;
+				std::cout << "  y_i = " << offsetII << " :";
+				for (int w=this->offsetIIWordSize.at(v)-1; w>=0; w--) {
+					std::cout << " " << this->offsetIIVariables.at({v, w});
+				}
+				std::cout << std::endl;
+				std::cout << "  yMult_i = " << offsetIIMult << " :";
+				for (int w=this->offsetIIMultWordSize.at(v)-1; w>=0; w--) {
+					std::cout << " " << this->offsetIIMultVariables.at({v, w});
+				}
+				std::cout << std::endl;
+				std::cout << "  t_min = " << this->earliestStartTime.at(v) << std::endl;
+				foundError = true;
+			}
+			// DEBUG END
+		}
+		if (foundError) {
+			throw Exception("Wrong modulo slot computation");
 		}
 		// override candidate latency in case the scheduler found a solution with a schedule length
 		// which is smaller than the given candidate latency (unlikely I guess, but who knows...)
@@ -646,17 +929,22 @@ namespace HatScheT {
 
 	int SATSchedulerBinEncOverlap::create_arbitrary_clause(const vector<std::pair<int, bool>> &a) {
 		this->clauseCounter++;
+		std::stringstream ss;
+		ss << "  -> clause";
 		for (auto &it : a) {
 			if (it.second) {
 				// negated literal
 				this->solver->add(-it.first);
+				ss << " " << -it.first;
 			}
 			else {
 				// non-negated literal
 				this->solver->add(it.first);
+				ss << " " << it.first;
 			}
 		}
 		this->solver->add(0);
+		if (!this->quiet) std::cout << ss.str() << std::endl;
 		return 1;
 	}
 
@@ -809,10 +1097,13 @@ namespace HatScheT {
 		// 1) -c_o -sum
 		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{c_o.first, not c_o.second}, {sum.first, not sum.second}});
-		// 2) -a  c_o  sum
+		// 2)  a  b -sum
+		if (clauseMode == 0 or (sum.second and clauseMode == 1) or (not sum.second and clauseMode == -1))
+			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {sum.first, not sum.second}});
+		// 3) -a  c_o  sum
 		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
-		// 3) -b  c_o  sum
+		// 4) -b  c_o  sum
 		if (clauseMode == 0 or (not sum.second and clauseMode == 1) or (sum.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_o.first, c_o.second}, {sum.first, sum.second}});
 		return clause_counter;
@@ -893,5 +1184,242 @@ namespace HatScheT {
 
 	bool SATSchedulerBinEncOverlap::inIncrementalMode() {
 		return this->scheduleFound and (this->los == LINEAR_JUMP or this->los == REVERSE_LINEAR);
+	}
+
+	void SATSchedulerBinEncOverlap::computeAdderGraph() {
+#ifdef USE_SATSCM
+		// init adder graph
+		this->scmAdderGraph = std::unique_ptr<Graph>(new Graph);
+		this->scmAdderGraphVertexOrder.clear();
+		auto &adderGraphInputNode = this->scmAdderGraph->createVertex(1);
+		adderGraphInputNode.setName("src");
+		// solve scm problem
+		this->scmOutputShift = 0;
+		this->scmOutputConst = this->candidateII;
+		if (this->scmOutputConst < 1) {
+			// oh well, something went terribly wrong here :/
+			throw Exception("SATSchedulerBinEncOverlap: invalid II requested (II="+std::to_string(this->scmOutputConst)+")");
+		}
+		while ((this->scmOutputConst & 1) == 0) {
+			// it's still odd
+			this->scmOutputShift++;
+			this->scmOutputConst = this->scmOutputConst >> 1;
+		}
+		// no negative numbers allowed (it's easier and negative numbers should not be necessary here)
+		// don't write cnf (also not needed)
+		scm_cadical scm({this->scmOutputConst}, static_cast<int>(std::round(this->solverTimeout-this->terminator.getElapsedTime())), this->quiet, false, false);
+		// minimize the number of bit computations we need to do in SAT
+		scm.also_minimize_full_adders();
+		// solve it
+		scm.solve();
+		// get result and build graph from that
+		auto adderGraph = scm.get_adder_graph_description();
+		if (adderGraph.size() < 2) {
+			throw Exception("SATSchedulerBinEncOverlap: got invalid adder graph for C="+std::to_string(this->scmOutputConst)+" (wrong size)");
+		}
+		// build hatschet graph from adder graph string representation
+		// remove all '{', '}', '[' and ']'
+		adderGraph.erase(std::remove(adderGraph.begin(), adderGraph.end(), '{'), adderGraph.end());
+		adderGraph.erase(std::remove(adderGraph.begin(), adderGraph.end(), '}'), adderGraph.end());
+		adderGraph.erase(std::remove(adderGraph.begin(), adderGraph.end(), '['), adderGraph.end());
+		adderGraph.erase(std::remove(adderGraph.begin(), adderGraph.end(), ']'), adderGraph.end());
+		if (adderGraph.empty()) {
+			return;
+		}
+		std::stringstream adderGraphStr(adderGraph);
+		std::string buffer;
+		int nodeValue = -1;
+		int srcLeft = -1;
+		int srcRight = -1;
+		int shiftLeft = -1;
+		int shiftRight = -1;
+		bool sub = false;
+		int cnt = 0;
+		while(std::getline(adderGraphStr, buffer, ',')) {
+			if (buffer == "'A'") {
+				nodeValue = -1;
+				srcLeft = -1;
+				srcRight = -1;
+				shiftLeft = -1;
+				shiftRight = -1;
+				sub = false;
+				cnt = 0;
+				continue;
+			}
+			switch (cnt) {
+				case 0: {
+					nodeValue = std::stoi(buffer);
+				}
+				case 1: {
+					// stage is irrelevant
+					break;
+				}
+				case 2: {
+					srcLeft = std::stoi(buffer);
+					if (srcLeft < 0) {
+						throw Exception("SATSchedulerBinEncOverlap: got invalid adder graph for C="+std::to_string(this->scmOutputConst)+" (wrong subtraction)");
+					}
+					break;
+				}
+				case 3: {
+					// stage is irrelevant
+					break;
+				}
+				case 4: {
+					shiftLeft = std::stoi(buffer);
+					if (shiftLeft < 0) {
+						throw Exception("SATSchedulerBinEncOverlap: got invalid adder graph for C="+std::to_string(this->scmOutputConst)+" (wrong shift)");
+					}
+					break;
+				}
+				case 5: {
+					srcRight = std::stoi(buffer);
+					if (srcRight < 0) {
+						srcRight = -srcRight;
+						sub = true;
+					}
+					break;
+				}
+				case 6: {
+					// stage is irrelevant
+					break;
+				}
+				case 7: {
+					shiftRight = std::stoi(buffer);
+					if (shiftRight < 0) {
+						throw Exception("SATSchedulerBinEncOverlap: got invalid adder graph for C="+std::to_string(this->scmOutputConst)+" (wrong shift)");
+					}
+					// create vertex
+					auto &vertex = this->scmAdderGraph->createVertex(nodeValue);
+					if (sub) {
+						vertex.setName("-");
+					}
+					else {
+						vertex.setName("+");
+					}
+					this->scmAdderGraphVertexOrder.emplace_back(&vertex);
+					// create left src edge
+					// distance represents shift length
+					// set delay = 0 to represent left input
+					auto &lSrc = this->scmAdderGraph->getVertexById(srcLeft);
+					auto &edgeLeft = this->scmAdderGraph->createEdge(lSrc, vertex, shiftLeft, Edge::Data);
+					edgeLeft.setDelay(0);
+					// create right src edge
+					// distance represents shift length
+					// set delay = 1 to represent right input
+					auto &rSrc = this->scmAdderGraph->getVertexById(srcRight);
+					auto &edgeRight = this->scmAdderGraph->createEdge(rSrc, vertex, shiftRight, Edge::Data);
+					edgeRight.setDelay(1);
+					break;
+				}
+				default: {
+					throw Exception("SATSchedulerBinEncOverlap: got invalid adder graph for C="+std::to_string(this->scmOutputConst)+" (wrong format)");
+				}
+			}
+			cnt++;
+		}
+#else
+		throw Exception("SATSchedulerBinEncOverlap: Link SAT SCM library to use constMult mode");
+#endif
+	}
+
+	std::vector<int> SATSchedulerBinEncOverlap::create_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr, int* clauseCounterPtr) {
+		std::vector<int> result_variables;
+		std::map<int, std::vector<std::pair<int, bool>>> y;
+		int num_bits = 0;
+		for (auto &it : x) {
+			auto bits = std::get<0>(it);
+			auto sub = std::get<1>(it);
+			auto shift = std::get<2>(it);
+			//std::cout << "bitheap input: w=" << bits.size() << " shift=" << shift << " and op=" << (sub?"sub":"add") << std::endl;
+			if (bits.size()+shift > num_bits) num_bits = static_cast<int>(bits.size())+shift;
+			if (sub) {
+				// add 1 for 2k inversion
+				y[shift].emplace_back(this->constOneVar, false);
+				// add inverted bits
+				for (int bit_pos=0; bit_pos<bits.size(); bit_pos++) {
+					y[bit_pos+shift].emplace_back(bits[bit_pos], true);
+				}
+			}
+			else {
+				// add bits
+				for (int bit_pos=0; bit_pos<bits.size(); bit_pos++) {
+					y[bit_pos+shift].emplace_back(bits[bit_pos], false);
+				}
+			}
+		}
+		//for (auto &it : y) {
+		//	std::cout << "y[" << it.first << "] has " << it.second.size() << " bits" << std::endl;
+		//}
+		int i = 0;
+		while (i < num_bits) {
+			while (y[i].size() > 1) {
+				if (y[i].size() == 2) {
+					// half adder
+					// create new literals for sum and carry
+					auto sum = ++this->literalCounter;
+					auto carry = ++this->literalCounter;
+					if (literalCounterPtr != nullptr) {
+						*literalCounterPtr += 2;
+					}
+					// get bits to add from container
+					auto a = y[i].back();
+					y[i].pop_back();
+					auto b = y[i].back();
+					y[i].pop_back();
+					// create clauses
+					//std::cout << "i=" << i << ": half adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+					auto numClauses = this->create_half_adder_clauses(a, b, {sum, false}, {carry, false});
+					if (clauseCounterPtr != nullptr) {
+						*clauseCounterPtr += numClauses;
+					}
+					// add new bits to bitheap
+					y[i].emplace_back(sum, false);
+					y[i+1].emplace_back(carry, false);
+					if (i+2 > num_bits) num_bits = i+2;
+				}
+				else {
+					// full adder
+					// create new literals for sum and carry
+					auto sum = ++this->literalCounter;
+					auto carry = ++this->literalCounter;
+					if (literalCounterPtr != nullptr) {
+						*literalCounterPtr += 2;
+					}
+					// get bits to add from container
+					auto a = y[i].back();
+					y[i].pop_back();
+					auto b = y[i].back();
+					y[i].pop_back();
+					auto c = y[i].back();
+					y[i].pop_back();
+					// create clauses
+					//std::cout << "i=" << i << ": full adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << ", c=" << (c.second?-c.first:c.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+					auto numClauses = this->create_full_adder_clauses(a, b, c, {sum, false}, {carry, false});
+					if (clauseCounterPtr != nullptr) {
+						*clauseCounterPtr += numClauses;
+					}
+					y[i].emplace_back(sum, false);
+					y[i+1].emplace_back(carry, false);
+					if (i+2 > num_bits) num_bits = i+2;
+				}
+			}
+			if (y[i].empty()) {
+				// add constant zero to empty positions
+				y[i].emplace_back(this->constZeroVar, false);
+			}
+			if (y[i].size() != 1) {
+				std::cerr << "Failed compressing bits at position " << i << " -> " << y[i].size() << " bits are left instead of 1" << std::endl;
+				throw std::runtime_error("error during bitheap clause generation");
+			}
+			if (y[i][0].second) {
+				std::cerr << "Failed compressing bits at position " << i << " -> the output bit is inverted..." << std::endl;
+				throw std::runtime_error("error during bitheap clause generation");
+			}
+			result_variables.emplace_back(y[i][0].first);
+			// advance to next bit position
+			i++;
+		}
+		return result_variables;
 	}
 }

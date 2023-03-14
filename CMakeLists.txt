@@ -119,6 +119,26 @@ ELSE (CADICAL_H AND CADICAL_LIB)
     MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}) or CaDiCaL Header (${CADICAL_H}). Please specify paths by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>) and CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
 ENDIF (CADICAL_H AND CADICAL_LIB)
 
+####################
+#Find SAT SCM
+####################
+FIND_LIBRARY(SATSCM_LIB
+        NAMES libsatscm.a
+        HINTS "${SATSCM_LIBRARY_PATH}"
+        DOC "Directory of the SAT SCM library")
+
+FIND_PATH(SATSCM_H
+        scm_cadical.h
+        HINTS "${SATSCM_INCLUDE_PATH}"
+        DOC "Path to CaDiCaL SAT SCM header file"
+        )
+
+IF (SATSCM_H AND SATSCM_LIB)
+    add_definitions(-DUSE_SATSCM)
+    MESSAGE(STATUS "Found SAT SCM Lib: ${SATSCM_LIB} and Headers: ${SATSCM_H}")
+ELSE (SATSCM_H AND SATSCM_LIB)
+    MESSAGE(STATUS "Could not find SAT SCM Lib (${SATSCM_LIB}) or SAT SCM Header (${SATSCM_H}). Please specify paths by either appending CMAKE_PREFIX_PATH or by setting SATSCM_LIBRARY_PATH (-DSATSCM_LIBRARY_PATH=<path to SAT SCM lib dir>) and SATSCM_INCLUDE_PATH (-DSATSCM_INCLUDE_PATH=<path to SAT SCM include dir>)")
+ENDIF (SATSCM_H AND SATSCM_LIB)
 
 ####################
 #Find Z3-smtbased
@@ -384,6 +404,9 @@ ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
     target_link_libraries(hatschet-bin ${CADICAL_LIB})
 ENDIF (CADICAL_H AND CADICAL_LIB)
+IF (SATSCM_H AND SATSCM_LIB)
+    target_link_libraries(hatschet-bin ${SATSCM_LIB})
+ENDIF (SATSCM_H AND SATSCM_LIB)
 
 include_directories(src/)
 
@@ -398,6 +421,10 @@ ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
     include_directories(${CADICAL_H})
 ENDIF (CADICAL_H AND CADICAL_LIB)
+
+IF (SATSCM_H AND SATSCM_LIB)
+    include_directories(${SATSCM_H})
+ENDIF (SATSCM_H AND SATSCM_LIB)
 
 ####################
 #Z3 related
