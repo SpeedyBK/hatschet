@@ -879,7 +879,7 @@ namespace HatScheT {
 			}
 			if (t % this->candidateII != moduloSlot
 			 or t != moduloSlot + (this->candidateII * offsetII)
-			 or offsetIIMult != this->candidateII * offsetII) {
+			 or offsetIIMult != this->scmOutputConst * offsetII) {
 				std::cout << "Vertex '" << v->getName() << "'" << std::endl;
 				std::cout << "  start time = " << this->startTimes.at(v) << std::endl;
 				std::cout << "  t_i = " << t << " :";
