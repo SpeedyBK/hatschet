@@ -10,6 +10,8 @@
 
 #ifdef USE_SATSCM
 #include <scm_cadical.h>
+#include <scm_syrup.h>
+#include <scm_z3.h>
 #endif
 
 #define DEBUG_MODE 0
@@ -1263,7 +1265,14 @@ namespace HatScheT {
 		}
 		// no negative numbers allowed (it's easier and negative numbers should not be necessary here)
 		// don't write cnf (also not needed)
-		scm_cadical scm({this->scmOutputConst}, static_cast<int>(std::round(this->solverTimeout-this->terminator.getElapsedTime())), this->quiet, false, false);
+		scm_cadical scm
+									(
+									{this->scmOutputConst},
+									static_cast<int>(std::round(this->solverTimeout-this->terminator.getElapsedTime())),
+									(this->quiet?scm::verbosity_mode::quiet_mode:scm::verbosity_mode::normal_mode),
+									false,
+									false
+									);
 		// minimize the number of bit computations we need to do in SAT
 		scm.also_minimize_full_adders();
 		// solve it
