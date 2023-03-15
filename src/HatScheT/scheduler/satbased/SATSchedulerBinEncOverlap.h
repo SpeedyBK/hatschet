@@ -56,21 +56,23 @@ namespace HatScheT {
 		int create_nand(int a, int b, int y);
 		std::vector<int> create_unsigned_result_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr= nullptr, int* clauseCounterPtr= nullptr);
 
-		std::map<std::pair<Vertex*, int>, int> scheduleTimeVariables;
 		std::map<const Vertex*, int> scheduleTimeWordSize;
 		std::map<const Vertex*, int> offsetIIWordSize;
 		std::map<const Vertex*, int> offsetIIMultWordSize;
-		std::map<std::pair<Edge*, int>, int> diffVariables;
+
+		std::map<std::pair<Vertex*, int>, int> scheduleTimeVariables;
 		std::map<std::pair<const Vertex*, int>, int> offsetIIVariables;
 		std::map<std::pair<const Vertex*, int>, int> offsetIIMultVariables;
 		std::map<std::pair<const Vertex*, int>, int> moduloSlotVariables;
 		std::map<std::pair<const Vertex*, int>, int> bindingVariables;
-		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> bindingOverlapVariables;
 		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> moduloOverlapVariables;
+		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> bindingOverlapVariables;
 		std::map<const Vertex*, std::map<int, std::vector<int>>> adderGraphVariables;
-		std::map<const Vertex*, int> lastForbiddenTime;
+		std::map<std::pair<Edge*, int>, int> diffVariables;
 		int constOneVar = -1;
 		int constZeroVar = -1;
+
+		std::map<const Vertex*, int> lastForbiddenTime;
 
 		// used to compute t_i = II * y_i + m_i using shift and add operations
 		void computeAdderGraph();
@@ -79,26 +81,24 @@ namespace HatScheT {
 		int scmOutputShift = 0;
 		int scmOutputConst = 0;
 
-		// new
+		// variable counters
+		int timeSlotLiteralCounter = 0;
+		int moduloSlotLiteralCounter = 0;
 		int bindingLiteralCounter = 0;
 		int overlapLiteralCounter = 0;
-		int moduloComputationLiteralCounter = 0;
-
-		int overlapClauseCounter = 0;
-		int moduloComputationClauseCounter = 0;
-		int bindingConstraintClauseCounter = 0;
-
-		// old
-		int timeSlotLiteralCounter = 0;
 		int resourceConstraintLiteralCounter = 0;
-		int moduloSlotLiteralCounter = 0;
+		int moduloComputationLiteralCounter = 0;
 		int dependencyConstraintSubLiteralCounter = 0;
 		int dependencyConstraintCompLiteralCounter = 0;
 
+		// clause counters
 		int timeSlotConstraintClauseCounter = 0;
+		int resourceConstraintClauseCounter = 0;
+		int overlapClauseCounter = 0;
+		int bindingConstraintClauseCounter = 0;
+		int moduloComputationClauseCounter = 0;
 		int dependencyConstraintSubClauseCounter = 0;
 		int dependencyConstraintCompClauseCounter = 0;
-		int resourceConstraintClauseCounter = 0;
 	};
 }
 

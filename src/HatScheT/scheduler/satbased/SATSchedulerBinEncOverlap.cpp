@@ -12,6 +12,8 @@
 #include <scm_cadical.h>
 #endif
 
+#define DEBUG_MODE 0
+
 namespace HatScheT {
 
 	SATSchedulerBinEncOverlap::SATSchedulerBinEncOverlap(Graph &g, ResourceModel &resourceModel, int II) :
@@ -29,18 +31,28 @@ namespace HatScheT {
 		// call parent's method for some basic stuff
 		SATSchedulerBase::scheduleIteration();
 
-		this->scheduleTimeVariables.clear();
+		// clear word sizes
 		this->scheduleTimeWordSize.clear();
 		this->offsetIIWordSize.clear();
 		this->offsetIIMultWordSize.clear();
-		this->diffVariables.clear();
-		this->moduloSlotVariables.clear();
+
+		// clear variable containers
+		this->scheduleTimeVariables.clear();
 		this->offsetIIVariables.clear();
 		this->offsetIIMultVariables.clear();
-		this->lastForbiddenTime.clear();
+		this->moduloSlotVariables.clear();
+		this->bindingVariables.clear();
+		this->moduloOverlapVariables.clear();
+		this->bindingOverlapVariables.clear();
+		this->adderGraphVariables.clear();
+		this->diffVariables.clear();
 		this->constOneVar = 0;
 		this->constZeroVar = 0;
 
+		// clear forbidden time container
+		this->lastForbiddenTime.clear();
+
+		// reset variable counters
 		this->timeSlotLiteralCounter = 0;
 		this->bindingLiteralCounter = 0;
 		this->overlapLiteralCounter = 0;
@@ -50,6 +62,7 @@ namespace HatScheT {
 		this->dependencyConstraintSubLiteralCounter = 0;
 		this->dependencyConstraintCompLiteralCounter = 0;
 
+		// reset clause counters
 		this->moduloComputationClauseCounter = 0;
 		this->overlapClauseCounter = 0;
 		this->bindingConstraintClauseCounter = 0;
@@ -288,34 +301,39 @@ namespace HatScheT {
 
 	void SATSchedulerBinEncOverlap::resetContainer() {
 		if (this->inIncrementalMode()) return;
+		// clear word sizes
+		this->scheduleTimeWordSize.clear();
+		this->offsetIIWordSize.clear();
+		this->offsetIIMultWordSize.clear();
 		// reset literal containers
 		this->scheduleTimeVariables.clear();
-		this->moduloSlotVariables.clear();
 		this->offsetIIVariables.clear();
 		this->offsetIIMultVariables.clear();
+		this->moduloSlotVariables.clear();
 		this->bindingVariables.clear();
-		this->diffVariables.clear();
-		this->bindingOverlapVariables.clear();
 		this->moduloOverlapVariables.clear();
+		this->bindingOverlapVariables.clear();
+		this->adderGraphVariables.clear();
+		this->diffVariables.clear();
+		this->constOneVar = 0;
+		this->constZeroVar = 0;
 		// reset literal counter(s)
-		this->literalCounter = 0;
 		this->timeSlotLiteralCounter = 0;
 		this->moduloSlotLiteralCounter = 0;
-		this->resourceConstraintLiteralCounter = 0;
-		this->dependencyConstraintSubClauseCounter = 0;
-		this->dependencyConstraintCompClauseCounter = 0;
 		this->bindingLiteralCounter = 0;
 		this->overlapLiteralCounter = 0;
+		this->resourceConstraintLiteralCounter = 0;
 		this->moduloComputationLiteralCounter = 0;
+		this->dependencyConstraintSubLiteralCounter = 0;
+		this->dependencyConstraintCompLiteralCounter = 0;
 		// reset clause counter(s)
-		this->clauseCounter = 0;
 		this->timeSlotConstraintClauseCounter = 0;
+		this->resourceConstraintClauseCounter = 0;
+		this->overlapClauseCounter = 0;
 		this->bindingConstraintClauseCounter = 0;
+		this->moduloComputationClauseCounter = 0;
 		this->dependencyConstraintSubClauseCounter = 0;
 		this->dependencyConstraintCompClauseCounter = 0;
-		this->moduloComputationClauseCounter = 0;
-		this->overlapClauseCounter = 0;
-		this->resourceConstraintClauseCounter = 0;
 	}
 
 	SATSchedulerBinEncOverlap::trivialDecision SATSchedulerBinEncOverlap::setUpSolver() {
@@ -725,7 +743,8 @@ namespace HatScheT {
 						{leftInputVars, false, leftShift},
 						{rightInputVars, sub, rightShift}
 					};
-					/*std::cout << "creating bitheap for '" << v->getName() << "': " << nodeValue << " = (" << leftInputValue << " << " << leftShift << ") " << (sub?"-":"+") << " (" << rightInputValue << " << " << rightShift << ")" << std::endl;
+#if DEBUG_MODE
+					std::cout << "creating bitheap for '" << v->getName() << "': " << nodeValue << " = (" << leftInputValue << " << " << leftShift << ") " << (sub?"-":"+") << " (" << rightInputValue << " << " << rightShift << ")" << std::endl;
 					std::cout << "  -> left input vars:";
 					for (int i=leftInputVars.size()-1; i>=0; i--) {
 						std::cout << " " << leftInputVars.at(i);
@@ -735,15 +754,18 @@ namespace HatScheT {
 					for (int i=rightInputVars.size()-1; i>=0; i--) {
 						std::cout << " " << rightInputVars.at(i)*(sub?-1:1);
 					}
-					std::cout << std::endl;*/
+					std::cout << std::endl;
+#endif
 					auto bitheapOutput = this->create_unsigned_result_bitheap(bitheapInput,
 																																		&this->moduloComputationLiteralCounter,
 																																		&this->moduloComputationClauseCounter);
-					/*std::cout << "  -> output vars:";
+#if DEBUG_MODE
+					std::cout << "  -> output vars:";
 					for (int i=bitheapOutput.size()-1; i>=0; i--) {
 						std::cout << " " << bitheapOutput.at(i);
 					}
-					std::cout << std::endl << std::endl;*/
+					std::cout << std::endl << std::endl;
+#endif
 					auto constMultMax = ((1 << yWordSize)-1) * nodeValue;
 					auto wConstMult = static_cast<int>(std::ceil(std::log2(constMultMax+1)));
 					if (wConstMult > bitheapOutput.size()) {
@@ -786,7 +808,7 @@ namespace HatScheT {
 			}
 			auto bitheapOutput = this->create_unsigned_result_bitheap(bitheapInput, &this->moduloComputationLiteralCounter,
 																																&this->moduloComputationClauseCounter);
-			/*
+#if DEBUG_MODE
 			std::cout << "#q# sched time sum for '" << v->getName() << "':" << std::endl;
 			std::cout << "      -> z_i << " << this->scmOutputShift << " with " << z_i.size() << " bits:";
 			for (int w=(int)z_i.size()-1; w>=0; w--) {
@@ -806,7 +828,7 @@ namespace HatScheT {
 				std::cout << " " << it;
 			}
 			std::cout << std::endl << std::endl;
-			 */
+#endif
 			this->scheduleTimeWordSize[v] = bitheapOutput.size();
 			for (auto w=0; w<bitheapOutput.size(); w++) {
 				this->scheduleTimeVariables[{v, w}] = bitheapOutput.at(w);
@@ -1370,12 +1392,14 @@ namespace HatScheT {
 			auto &bits = std::get<0>(it);
 			auto sub = std::get<1>(it);
 			auto shift = std::get<2>(it);
-			/*std::cout << "bitheap input: w=" << bits.size() << " shift=" << shift << " and op=" << (sub?"sub:":"add:");
+#if DEBUG_MODE
+			std::cout << "bitheap input: w=" << bits.size() << " shift=" << shift << " and op=" << (sub?"sub:":"add:");
 			for (int i=bits.size()-1; i>=0; i--) {
 				auto var = bits.at(i);
 				std::cout << " " << var;
 			}
-			std::cout << std::endl;*/
+			std::cout << std::endl;
+#endif
 			//if (bits.size()+shift > num_bits) num_bits = static_cast<int>(bits.size())+shift;
 			if (sub) {
 				// add 1 for 2k inversion
@@ -1396,14 +1420,16 @@ namespace HatScheT {
 				}
 			}
 		}
-		/*for (auto &it : y) {
+#if DEBUG_MODE
+		for (auto &it : y) {
 			std::cout << "y[" << it.first << "] has " << it.second.size() << " bits:";
 			for (int i=it.second.size()-1; i>=0; i--) {
 				auto var = it.second.at(i);
 				std::cout << " " << (var.second?-var.first:var.first);
 			}
 			std::cout << std::endl;
-		}*/
+		}
+#endif
 		int i = 0;
 		while (i < num_bits) {
 			while (y[i].size() > 1) {
@@ -1421,7 +1447,9 @@ namespace HatScheT {
 					auto b = y[i].back();
 					y[i].pop_back();
 					// create clauses
-					//std::cout << "i=" << i << ": half adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+#if DEBUG_MODE
+					std::cout << "i=" << i << ": half adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+#endif
 					auto numClauses = this->create_half_adder_clauses(a, b, {sum, false}, {carry, false});
 					if (clauseCounterPtr != nullptr) {
 						*clauseCounterPtr += numClauses;
@@ -1447,7 +1475,9 @@ namespace HatScheT {
 					auto c = y[i].back();
 					y[i].pop_back();
 					// create clauses
-					//std::cout << "i=" << i << ": full adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << ", c=" << (c.second?-c.first:c.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+#if DEBUG_MODE
+					std::cout << "i=" << i << ": full adder with a=" << (a.second?-a.first:a.first) << ", b=" << (b.second?-b.first:b.first) << ", c=" << (c.second?-c.first:c.first) << " sum=" << sum << ", carry=" << carry << std::endl;
+#endif
 					auto numClauses = this->create_full_adder_clauses(a, b, c, {sum, false}, {carry, false});
 					if (clauseCounterPtr != nullptr) {
 						*clauseCounterPtr += numClauses;
