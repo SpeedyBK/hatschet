@@ -679,7 +679,7 @@ namespace HatScheT {
 			// II = II_odd << II_shift = II_odd * 2^II_shift
 			// compute z_i = y_i * II_odd based on the adder graph that we computed earlier
 			std::vector<int> z_i;
-			std::map<int, std::vector<int>> adderGraphVars;
+			std::map<int, std::vector<int>> &adderGraphVars = this->adderGraphVariables[v];
 			int yWordSize = this->offsetIIWordSize.at(v);
 			for (auto w=0; w<yWordSize; w++) {
 				adderGraphVars[1].emplace_back(this->offsetIIVariables.at({v, w}));
@@ -725,14 +725,32 @@ namespace HatScheT {
 						{leftInputVars, false, leftShift},
 						{rightInputVars, sub, rightShift}
 					};
-					auto bitheapOutput = this->create_bitheap(bitheapInput, &this->moduloComputationLiteralCounter, &this->moduloComputationClauseCounter);
+					/*std::cout << "creating bitheap for '" << v->getName() << "': " << nodeValue << " = (" << leftInputValue << " << " << leftShift << ") " << (sub?"-":"+") << " (" << rightInputValue << " << " << rightShift << ")" << std::endl;
+					std::cout << "  -> left input vars:";
+					for (int i=leftInputVars.size()-1; i>=0; i--) {
+						std::cout << " " << leftInputVars.at(i);
+					}
+					std::cout << std::endl;
+					std::cout << "  -> right input vars:";
+					for (int i=rightInputVars.size()-1; i>=0; i--) {
+						std::cout << " " << rightInputVars.at(i)*(sub?-1:1);
+					}
+					std::cout << std::endl;*/
+					auto bitheapOutput = this->create_unsigned_result_bitheap(bitheapInput,
+																																		&this->moduloComputationLiteralCounter,
+																																		&this->moduloComputationClauseCounter);
+					/*std::cout << "  -> output vars:";
+					for (int i=bitheapOutput.size()-1; i>=0; i--) {
+						std::cout << " " << bitheapOutput.at(i);
+					}
+					std::cout << std::endl << std::endl;*/
 					auto constMultMax = ((1 << yWordSize)-1) * nodeValue;
 					auto wConstMult = static_cast<int>(std::ceil(std::log2(constMultMax+1)));
 					if (wConstMult > bitheapOutput.size()) {
 						// word size is not enough -> something went wrong :(
 						throw Exception("SATSchedulerBinEncOverlap: invalid bitheap compression (output word size too small)");
 					}
-					//bitheapOutput.resize(wConstMult);
+					bitheapOutput.resize(wConstMult);
 					adderGraphVars[nodeValue] = bitheapOutput;
 				}
 				z_i = adderGraphVars.at(this->scmOutputConst);
@@ -766,7 +784,8 @@ namespace HatScheT {
 				}
 				bitheapInput.emplace_back(tMin_i, false, 0);*/
 			}
-			auto bitheapOutput = this->create_bitheap(bitheapInput, &this->moduloComputationLiteralCounter, &this->moduloComputationClauseCounter);
+			auto bitheapOutput = this->create_unsigned_result_bitheap(bitheapInput, &this->moduloComputationLiteralCounter,
+																																&this->moduloComputationClauseCounter);
 			/*
 			std::cout << "#q# sched time sum for '" << v->getName() << "':" << std::endl;
 			std::cout << "      -> z_i << " << this->scmOutputShift << " with " << z_i.size() << " bits:";
@@ -905,6 +924,21 @@ namespace HatScheT {
 				std::cout << "  t_min = " << this->earliestStartTime.at(v) << std::endl;
 				foundError = true;
 			}
+			// adder graph
+			auto &adderGraphVars = this->adderGraphVariables.at(v);
+			for (auto &it : adderGraphVars) {
+				int val = 0;
+				int w = 0;
+				for (auto &var : it.second) {
+					auto bitResult = this->solver->val(var) > 0 ? 1 : 0;
+					val += (bitResult << w);
+					w++;
+				}
+				if (val != (offsetII * it.first)) {
+					std::cout << "  y_i * " << it.first << " = " << val << std::endl;
+					foundError = true;
+				}
+			}
 			// DEBUG END
 		}
 		if (foundError) {
@@ -1009,22 +1043,22 @@ namespace HatScheT {
 			return clause_counter;
 		}
 		// build carry and use it to build sum
-		// 1)
+		// 1) -a -b c_o
 		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {b.first, not b.second}, {c_o.first, c_o.second}});
-		// 2)
+		// 2) -b -c_i c_o
 		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{b.first, not b.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
-		// 3)
+		// 3) -a -c_i c_o
 		if (clauseMode == 0 or (not c_o.second and clauseMode == 1) or (c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, not a.second}, {c_i.first, not c_i.second}, {c_o.first, c_o.second}});
-		// 4)
+		// 4)  a  c_i -c_o
 		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
-		// 5)
+		// 5)  b  c_i -c_o
 		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{b.first, b.second}, {c_i.first, c_i.second}, {c_o.first, not c_o.second}});
-		// 6)
+		// 6)  a  b -c_o
 		if (clauseMode == 0 or (c_o.second and clauseMode == 1) or (not c_o.second and clauseMode == -1))
 			clause_counter += this->create_arbitrary_clause({{a.first, a.second}, {b.first, b.second}, {c_o.first, not c_o.second}});
 
@@ -1323,22 +1357,36 @@ namespace HatScheT {
 #endif
 	}
 
-	std::vector<int> SATSchedulerBinEncOverlap::create_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr, int* clauseCounterPtr) {
+	std::vector<int> SATSchedulerBinEncOverlap::create_unsigned_result_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr, int* clauseCounterPtr) {
 		std::vector<int> result_variables;
 		std::map<int, std::vector<std::pair<int, bool>>> y;
 		int num_bits = 0;
 		for (auto &it : x) {
-			auto bits = std::get<0>(it);
+			auto &bits = std::get<0>(it);
+			auto &shift = std::get<2>(it);
+			num_bits = std::max(num_bits, static_cast<int>(bits.size()+shift));
+		}
+		for (auto &it : x) {
+			auto &bits = std::get<0>(it);
 			auto sub = std::get<1>(it);
 			auto shift = std::get<2>(it);
-			//std::cout << "bitheap input: w=" << bits.size() << " shift=" << shift << " and op=" << (sub?"sub":"add") << std::endl;
-			if (bits.size()+shift > num_bits) num_bits = static_cast<int>(bits.size())+shift;
+			/*std::cout << "bitheap input: w=" << bits.size() << " shift=" << shift << " and op=" << (sub?"sub:":"add:");
+			for (int i=bits.size()-1; i>=0; i--) {
+				auto var = bits.at(i);
+				std::cout << " " << var;
+			}
+			std::cout << std::endl;*/
+			//if (bits.size()+shift > num_bits) num_bits = static_cast<int>(bits.size())+shift;
 			if (sub) {
 				// add 1 for 2k inversion
 				y[shift].emplace_back(this->constOneVar, false);
 				// add inverted bits
 				for (int bit_pos=0; bit_pos<bits.size(); bit_pos++) {
 					y[bit_pos+shift].emplace_back(bits[bit_pos], true);
+				}
+				// sign extension
+				for (int bit_pos=static_cast<int>(bits.size()+shift); bit_pos < num_bits; bit_pos++) {
+					y[bit_pos].emplace_back(this->constOneVar, false);
 				}
 			}
 			else {
@@ -1348,9 +1396,14 @@ namespace HatScheT {
 				}
 			}
 		}
-		//for (auto &it : y) {
-		//	std::cout << "y[" << it.first << "] has " << it.second.size() << " bits" << std::endl;
-		//}
+		/*for (auto &it : y) {
+			std::cout << "y[" << it.first << "] has " << it.second.size() << " bits:";
+			for (int i=it.second.size()-1; i>=0; i--) {
+				auto var = it.second.at(i);
+				std::cout << " " << (var.second?-var.first:var.first);
+			}
+			std::cout << std::endl;
+		}*/
 		int i = 0;
 		while (i < num_bits) {
 			while (y[i].size() > 1) {

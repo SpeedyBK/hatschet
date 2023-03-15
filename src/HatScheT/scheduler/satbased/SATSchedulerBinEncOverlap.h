@@ -54,7 +54,7 @@ namespace HatScheT {
 		int create_2x1_or(int a, int b, int y);
 		int create_2x1_mux(int a, int b, int s, int y);
 		int create_nand(int a, int b, int y);
-		std::vector<int> create_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr=nullptr, int* clauseCounterPtr=nullptr);
+		std::vector<int> create_unsigned_result_bitheap(const std::vector<std::tuple<std::vector<int>, bool, int>> &x, int* literalCounterPtr= nullptr, int* clauseCounterPtr= nullptr);
 
 		std::map<std::pair<Vertex*, int>, int> scheduleTimeVariables;
 		std::map<const Vertex*, int> scheduleTimeWordSize;
@@ -67,6 +67,7 @@ namespace HatScheT {
 		std::map<std::pair<const Vertex*, int>, int> bindingVariables;
 		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> bindingOverlapVariables;
 		std::map<std::tuple<const Vertex*, const Vertex*, int>, int> moduloOverlapVariables;
+		std::map<const Vertex*, std::map<int, std::vector<int>>> adderGraphVariables;
 		std::map<const Vertex*, int> lastForbiddenTime;
 		int constOneVar = -1;
 		int constZeroVar = -1;

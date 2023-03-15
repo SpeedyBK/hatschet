@@ -260,11 +260,11 @@ namespace HatScheT {
 				}
 			}
 			if (y[i].size() != 1) {
-				std::cerr << "SATCDLScheduler::create_bitheap: Failed compressing bits at position " << i << " -> " << y[i].size() << " bits are left instead of 1" << std::endl;
+				std::cerr << "SATCDLScheduler::create_unsigned_result_bitheap: Failed compressing bits at position " << i << " -> " << y[i].size() << " bits are left instead of 1" << std::endl;
 				throw std::runtime_error("error during bitheap clause generation");
 			}
 			if (y[i][0].second) {
-				std::cerr << "SATCDLScheduler::create_bitheap: Failed compressing bits at position " << i << " -> the output bit is inverted..." << std::endl;
+				std::cerr << "SATCDLScheduler::create_unsigned_result_bitheap: Failed compressing bits at position " << i << " -> the output bit is inverted..." << std::endl;
 				throw std::runtime_error("error during bitheap clause generation");
 			}
 			result_variables.emplace_back(y[i][0].first);
