@@ -162,15 +162,19 @@ namespace HatScheT
 		ScaLP::Variable ss = ScaLP::newIntegerVariable("supersink");
 		// min latency constraint to help the solving process
 		if (this->boundSL) {
+			if (!quiet) std::cout << "Limiting schedule length SL >= " << this->minSL << std::endl;
 			solver->addConstraint(ss >= this->minSL);
 		}
 		else {
+			if (!quiet) std::cout << "No lower bound for the schedule length" << std::endl;
 			solver->addConstraint(ss >= 0);
 		}
 		// max latency constraint
 		if (this->maxSL >= 0) {
+			if (!quiet) std::cout << "Limiting schedule length SL <= " << this->maxSL << std::endl;
 			solver->addConstraint(ss <= this->maxSL);
 		}
+		else if (!quiet) std::cout << "No upper bound for the schedule length" << std::endl;
 
 		for (auto *i : g.Vertices()) {
 			// nfiege: this is not enough!
@@ -184,7 +188,7 @@ namespace HatScheT
 
 			// now, let's do it correctly
 			if (g.hasNoZeroDistanceOutgoingEdges(i)) {
-				cout << "Adding Constraint for: " << i->getName() << endl;
+				cout << "Adding super sink constraint for: " << i->getName() << endl;
 				solver->addConstraint(ss - time[i] >= resourceModel.getVertexLatency(i));
 			}
 		}
