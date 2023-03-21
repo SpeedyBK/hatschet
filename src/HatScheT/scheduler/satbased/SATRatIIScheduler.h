@@ -28,7 +28,6 @@ namespace HatScheT {
 		};
 		SATRatIIScheduler(Graph& g, ResourceModel &resourceModel, int M=-1, int S=-1);
 		void scheduleIteration() override;
-		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setLatencyOptimizationStrategy(const LatencyOptimizationStrategy &newLos);
 		void setTargetLatency(const int &newTargetLatency);
 		void setEarliestStartTimes(const std::map<Vertex*, int> &newEarliestStartTimes);
@@ -60,8 +59,6 @@ namespace HatScheT {
 		int maxLatency;
 		int latencyLowerBound;
 		int latencyUpperBound;
-
-		unsigned int solverTimeout;
 
 		double solvingTime;
 		std::unique_ptr<CaDiCaL::Solver> solver;

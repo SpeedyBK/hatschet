@@ -22,11 +22,9 @@ namespace HatScheT {
 		SATCombinedScheduler(Graph& g, ResourceModel &resourceModel, int II=-1);
 		double getSolvingTime() const { return this->solvingTime; }
 		void schedule() override;
-		void setSolverTimeout(unsigned int newTimeoutInSec);
 		void setBackendSchedulerType(backendSchedulerType_t newBackendSchedulerType);
 	private:
 		void initScheduler();
-		unsigned int solverTimeout;
 		bool optimalResult;
 		int candidateII;
 		double solvingTime;

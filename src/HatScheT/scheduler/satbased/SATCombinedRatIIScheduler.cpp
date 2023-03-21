@@ -12,7 +12,7 @@
 namespace HatScheT {
 
 	SATCombinedRatIIScheduler::SATCombinedRatIIScheduler(Graph &g, ResourceModel &resourceModel)
-		: RationalIISchedulerLayer(g, resourceModel), solverTimeout(300), solvingTime(-1.0)
+		: RationalIISchedulerLayer(g, resourceModel), solvingTime(-1.0)
 	{
 		// nothing to do here
 	}
@@ -140,10 +140,6 @@ namespace HatScheT {
 		this->unrolledResourceModel.reset();
 		// unroll the graph + resource model
 		//Utility::unroll(&this->unrolledGraph, &this->unrolledResourceModel, this->samples, this->modulo, &this->g, &this->resourceModel, &this->vertexMappings);
-	}
-
-	void SATCombinedRatIIScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 }
 #endif //USE_SCALP

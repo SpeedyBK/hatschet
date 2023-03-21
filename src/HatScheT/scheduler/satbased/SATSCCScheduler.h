@@ -23,11 +23,9 @@ namespace HatScheT {
 		SATSCCScheduler(Graph& g, ResourceModel &resourceModel, int II);
 		~SATSCCScheduler() override;
 		void schedule() override;
-		void setSolverTimeout(unsigned int newTimeoutInSec);
 		bool getIIFeasible() const;
 		double getSolvingTime() const;
 		map <Vertex*, pair<int, int>> printVertexStarttimes();
-		//bool useBinEncScheduler;
 		backendSchedulerType_t backendSchedulerType;
 	private:
 		std::map<const Resource*, std::map<int, int>> MRT;
@@ -46,7 +44,6 @@ namespace HatScheT {
 		int numBasicSCCs;
 		std::vector<std::shared_ptr<Graph>> basicSCCG;
 		std::vector<std::shared_ptr<ResourceModel>> basicSCCR;
-		unsigned int solverTimeout;
 		double solvingTime;
 		bool IIFeasible;
 		std::map<Vertex*, int> earliestStartTimes;

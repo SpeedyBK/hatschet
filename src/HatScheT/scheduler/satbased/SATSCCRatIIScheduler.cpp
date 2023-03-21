@@ -19,7 +19,7 @@
 namespace HatScheT {
 
 	SATSCCRatIIScheduler::SATSCCRatIIScheduler(Graph &g, ResourceModel &resourceModel, int M, int S) :
-		RationalIISchedulerLayer(g, resourceModel, M, S), solverTimeout(300), IIFeasible(true), solvingTime(-1.0) {
+		RationalIISchedulerLayer(g, resourceModel, M, S), IIFeasible(true), solvingTime(-1.0) {
 	}
 
 	void SATSCCRatIIScheduler::scheduleIteration() {
@@ -47,10 +47,6 @@ namespace HatScheT {
 		this->postProcessSchedule();
 		if (!this->startTimesVector.empty()) this->startTimes = this->startTimesVector.at(0);
 		this->solvingTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() / 1000.0;
-	}
-
-	void SATSCCRatIIScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 
 	void SATSCCRatIIScheduler::computeSCCs() {

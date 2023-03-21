@@ -21,7 +21,7 @@
 namespace HatScheT {
 
 	SATSCCScheduler::SATSCCScheduler(Graph &g, ResourceModel &resourceModel, int II) :
-		SchedulerBase(g, resourceModel), solverTimeout(300), IIFeasible(true), solvingTime(-1.0) {
+		SchedulerBase(g, resourceModel), IIFeasible(true), solvingTime(-1.0) {
 		this->II = II;
 	}
 
@@ -45,10 +45,6 @@ namespace HatScheT {
 		this->solvingTime =
 			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - timerStart).count() /
 			1000.0;
-	}
-
-	void SATSCCScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 
 	void SATSCCScheduler::computeSCCs() {
@@ -170,6 +166,7 @@ namespace HatScheT {
 		// schedule graph with SAT-based scheduler
 		//SATScheduler s(this->complexSCCG, this->complexSCCR, (int) this->II);
 		s->setQuiet(this->quiet);
+		std::cout << "#q# SATSCCScheduler: setting backend solver timeout to " << this->solverTimeout << std::endl;
 		s->setSolverTimeout(this->solverTimeout);
 		s->schedule();
 		this->scheduleFound = s->getScheduleFound();

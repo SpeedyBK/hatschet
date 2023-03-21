@@ -15,7 +15,7 @@
 namespace HatScheT {
 
 	SATCombinedScheduler::SATCombinedScheduler(Graph &g, ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), backendSchedulerType(BACKEND_SATRES)
+		: SchedulerBase(g,resourceModel), backendSchedulerType(BACKEND_SATRES)
 	{
 		this->II = -1;
 		this->timeouts = 0;
@@ -153,10 +153,6 @@ namespace HatScheT {
 			}
 			break;
 		}
-	}
-
-	void SATCombinedScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 
 	void SATCombinedScheduler::initScheduler() {
