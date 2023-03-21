@@ -16,7 +16,7 @@ namespace HatScheT {
 #define NEW_RESOURCE_CONSTRAINTS 1
 
 	SATScheduler::SATScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int II)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0),
+		: SchedulerBase(g,resourceModel), terminator(0.0),
 			los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
 			latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
 		this->II = -1;
@@ -72,6 +72,7 @@ namespace HatScheT {
 			bool lastAttemptSuccess = false;
 			bool breakByTimeout = false;
 			double elapsedTime = 0.0;
+			std::cout << "#q# SATScheduler: creating cadical terminator with timeout = " << (double)this->solverTimeout << std::endl;
 			this->terminator = CaDiCaLTerminator((double)this->solverTimeout);
 			if (!this->quiet) {
 				std::cout << "SATScheduler: candidate II=" << this->candidateII << " with min latency="
@@ -616,10 +617,6 @@ namespace HatScheT {
 			}
 		}
 #endif
-	}
-
-	void SATScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 
 	bool SATScheduler::computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful) {

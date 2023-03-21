@@ -14,7 +14,7 @@ namespace HatScheT {
 #define CADICAL_SAT 10
 
 	SATRatIIScheduler::SATRatIIScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel, int M, int S)
-		: RationalIISchedulerLayer(g,resourceModel, M, S), solverTimeout(300), terminator(0.0),
+		: RationalIISchedulerLayer(g,resourceModel, M, S), terminator(0.0),
 			los(LatencyOptimizationStrategy::LINEAR_JUMP), linearJumpLength(-1), latencyLowerBound(-1),
 			latencyUpperBound(-1) {
 		this->timeouts = 0;
@@ -602,10 +602,6 @@ namespace HatScheT {
 				}
 			}
 		}
-	}
-
-	void SATRatIIScheduler::setSolverTimeout(unsigned int newTimeoutInSec) {
-		this->solverTimeout = newTimeoutInSec;
 	}
 
 	bool SATRatIIScheduler::computeNewLatencySuccess(const bool &lastSchedulingAttemptSuccessful) {

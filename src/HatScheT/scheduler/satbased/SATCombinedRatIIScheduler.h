@@ -20,10 +20,8 @@ namespace HatScheT {
 		SATCombinedRatIIScheduler(Graph& g, ResourceModel &resourceModel);
 		double getSolvingTime() const { return this->solvingTime; }
 		void scheduleIteration() override;
-		void setSolverTimeout(unsigned int newTimeoutInSec);
 	private:
 		void initScheduler();
-		unsigned int solverTimeout;
 		bool optimalResult;
 		double solvingTime;
 		Graph unrolledGraph;
