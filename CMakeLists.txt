@@ -294,7 +294,6 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/SDCSolverIncremental.h
         src/HatScheT/utility/FibonacciHeap.h
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
-        src/HatScheT/scheduler/smtbased/TempLatencyTest.h
         src/HatScheT/scheduler/smtbased/SMTSCCScheduler.h
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
         src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h
@@ -379,8 +378,7 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.cpp
-            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
-            src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
+            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) AND (SCALP_H AND SCALP_LIB))

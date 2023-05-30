@@ -4083,8 +4083,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
-      string resStr = "benchmarks/ChStone/adpcm/graph2_RM.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_gen/fir_gen.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_gen/RM1.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());

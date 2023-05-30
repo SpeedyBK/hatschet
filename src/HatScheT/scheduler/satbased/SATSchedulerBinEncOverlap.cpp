@@ -7,6 +7,7 @@
 #include <HatScheT/utility/Verifier.h>
 #include <iomanip>
 #include <algorithm>
+#include <sstream>
 
 #ifdef USE_SATSCM
 #include <scm_cadical.h>

@@ -98,7 +98,6 @@
 #include <HatScheT/scheduler/smtbased/SMTSCCScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTSCCCOMBINED.h>
-#include <HatScheT/scheduler/smtbased/TempLatencyTest.h>
 
 #endif
 
@@ -829,15 +828,6 @@ int main(int argc, char *args[]) {
 
 		if (rm.isEmpty() == false && g.isEmpty() == false) {
 			switch (schedulerSelection) {
-			    case LATENCYTEST:
-#ifdef USE_Z3
-			        scheduler = new HatScheT::TempLatencyTest(g, rm);
-                    isModuloScheduler = true;
-                    ((HatScheT::TempLatencyTest *) scheduler)->setnames(graphMLFile, resourceModelFile);
-#else
-							throw HatScheT::Exception("Link Z3 to enable latency test");
-#endif
-			        break;
 			    case ASAP:
 					scheduler = new HatScheT::ASAPScheduler(g, rm);
 					break;

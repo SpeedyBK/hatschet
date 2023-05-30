@@ -6,7 +6,6 @@
 
 #ifdef USE_Z3
 #ifdef USE_SCALP
-
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
 #include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
