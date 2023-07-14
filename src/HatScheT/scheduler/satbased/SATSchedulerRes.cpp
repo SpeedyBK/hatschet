@@ -285,8 +285,12 @@ namespace HatScheT {
 	void SATSchedulerRes::setUpSolver() {
 		// reset solver
 		//this->terminator = CaDiCaLTerminator(this->solverTimeout);
+#ifdef USE_KISSAT
+		this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(this->solverTimeout - this->terminator.getElapsedTime()));
+#else
 		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->solver->connect_terminator(&this->terminator);
+#endif
 		// update latest start times based on candidate latency
 		for (auto &v : this->g.Vertices()) {
 			this->latestStartTime[v] = this->candidateLatency - this->latestStartTimeDifferences.at(v);
@@ -499,7 +503,13 @@ namespace HatScheT {
 			auto tMax = this->latestStartTime.at(v);
 			bool assignedStartTime = false;
 			for (int t=tMin; t<=tMax; t++) {
-				auto bitSet = this->solver->val(this->scheduleTimeVariables.at({v, t})) > 0;
+				auto bitSet =
+#ifdef USE_KISSAT
+					this->solver->value(this->scheduleTimeVariables.at({v, t}))
+#else
+					this->solver->val(this->scheduleTimeVariables.at({v, t}))
+#endif
+					> 0;
 				if (bitSet) {
 					this->startTimes[v] = t;
 					assignedStartTime = true;

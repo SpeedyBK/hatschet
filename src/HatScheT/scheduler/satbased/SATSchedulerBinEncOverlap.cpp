@@ -341,8 +341,12 @@ namespace HatScheT {
 	SATSchedulerBinEncOverlap::trivialDecision SATSchedulerBinEncOverlap::setUpSolver() {
 		// reset solver
 		if (!this->inIncrementalMode()) {
+#ifdef USE_KISSAT
+			this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(static_cast<int>(std::ceil(this->solverTimeout - this->terminator.getElapsedTime()))));
+#else
 			this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 			this->solver->connect_terminator(&this->terminator);
+#endif
 		}
 		// update latest start times based on candidate latency
 		trivialDecision td = noTrivialDecisionPossible;
@@ -896,7 +900,13 @@ namespace HatScheT {
 			int t = 0;
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			for (int w = 0; w < wordSize; w++) {
-				auto bitResult = this->solver->val(this->scheduleTimeVariables.at({v, w})) > 0 ? 1 : 0;
+				auto bitResult =
+#ifdef USE_KISSAT
+					this->solver->value(this->scheduleTimeVariables.at({v, w}))
+#else
+					this->solver->val(this->scheduleTimeVariables.at({v, w}))
+#endif
+					> 0 ? 1 : 0;
 				t += (bitResult << w);
 			}
 			this->startTimes[v] = t + this->earliestStartTime.at(v);
@@ -907,17 +917,35 @@ namespace HatScheT {
 			int offsetIIMult = 0;
 			wordSize = static_cast<int>(std::ceil(std::log2(this->candidateII)));
 			for (int w = 0; w < wordSize; w++) {
-				auto bitResult = this->solver->val(this->moduloSlotVariables.at({v, w})) > 0 ? 1 : 0;
+				auto bitResult =
+#ifdef USE_KISSAT
+					this->solver->value(this->moduloSlotVariables.at({v, w}))
+#else
+					this->solver->val(this->moduloSlotVariables.at({v, w}))
+#endif
+					> 0 ? 1 : 0;
 				moduloSlot += (bitResult << w);
 			}
 			wordSize = this->offsetIIWordSize.at(v);
 			for (int w = 0; w < wordSize; w++) {
-				auto bitResult = this->solver->val(this->offsetIIVariables.at({v, w})) > 0 ? 1 : 0;
+				auto bitResult =
+#ifdef USE_KISSAT
+					this->solver->value(this->offsetIIVariables.at({v, w}))
+#else
+					this->solver->val(this->offsetIIVariables.at({v, w}))
+#endif
+					> 0 ? 1 : 0;
 				offsetII += (bitResult << w);
 			}
 			wordSize = this->offsetIIMultWordSize.at(v);
 			for (int w = 0; w < wordSize; w++) {
-				auto bitResult = this->solver->val(this->offsetIIMultVariables.at({v, w})) > 0 ? 1 : 0;
+				auto bitResult =
+#ifdef USE_KISSAT
+					this->solver->value(this->offsetIIMultVariables.at({v, w}))
+#else
+					this->solver->val(this->offsetIIMultVariables.at({v, w}))
+#endif
+					> 0 ? 1 : 0;
 				offsetIIMult += (bitResult << w);
 			}
 			if (t % this->candidateII != moduloSlot
@@ -954,7 +982,13 @@ namespace HatScheT {
 				int val = 0;
 				int w = 0;
 				for (auto &var : it.second) {
-					auto bitResult = this->solver->val(var) > 0 ? 1 : 0;
+					auto bitResult =
+#ifdef USE_KISSAT
+						this->solver->value(var)
+#else
+						this->solver->val(var)
+#endif
+						> 0 ? 1 : 0;
 					val += (bitResult << w);
 					w++;
 				}

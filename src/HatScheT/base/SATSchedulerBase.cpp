@@ -8,9 +8,14 @@
 namespace HatScheT {
 
 	SATSchedulerBase::SATSchedulerBase(Graph &g, ResourceModel &resourceModel, int II) :
-		IterativeModuloSchedulerLayer(g, resourceModel, II), terminator(0.0),
-		los(LatencyOptimizationStrategy::REVERSE_LINEAR), linearJumpLength(-1), latencyLowerBound(-1),
-		latencyUpperBound(-1), enableIIBasedLatencyLowerBound(true) {
+		IterativeModuloSchedulerLayer(g, resourceModel, II),
+		terminator(0.0),
+		los(LatencyOptimizationStrategy::REVERSE_LINEAR),
+		linearJumpLength(-1),
+		latencyLowerBound(-1),
+		latencyUpperBound(-1),
+		enableIIBasedLatencyLowerBound(true)
+	{
 
 	}
 

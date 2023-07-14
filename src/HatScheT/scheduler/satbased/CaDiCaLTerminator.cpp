@@ -18,6 +18,6 @@ namespace HatScheT {
 	}
 
 	double CaDiCaLTerminator::getElapsedTime() const {
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->timerStart).count() / 1000.0;
+		return static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->timerStart).count()) / 1000.0;
 	}
 }

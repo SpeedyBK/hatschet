@@ -116,8 +116,29 @@ IF (CADICAL_H AND CADICAL_LIB)
     add_definitions(-DUSE_CADICAL)
     MESSAGE(STATUS "Found CaDiCaL Lib: ${CADICAL_LIB} and Headers: ${CADICAL_H}")
 ELSE (CADICAL_H AND CADICAL_LIB)
-    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}) or CaDiCaL Header (${CADICAL_H}). Please specify paths by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>) and CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
+    MESSAGE(STATUS "Could not find CaDiCaL Lib (${CADICAL_LIB}) or CaDiCaL Header (${CADICAL_H}). Please specify paths by appending CaDiCaL install dir to CMAKE_PREFIX_PATH or by setting CADICAL_LIBRARY_PATH (-DCADICAL_LIBRARY_PATH=<path to CaDiCaL lib dir>) and CADICAL_INCLUDE_PATH (-DCADICAL_INCLUDE_PATH=<path to CaDiCaL include dir>)")
 ENDIF (CADICAL_H AND CADICAL_LIB)
+
+####################
+#Find Kissat (C++ API version)
+####################
+FIND_LIBRARY(KISSAT_LIB
+        NAMES libkissatpp.a
+        HINTS "${KISSAT_LIBRARY_PATH}"
+        DOC "Directory of the kissat library")
+
+FIND_PATH(KISSAT_H
+        kissatpp.hpp
+        HINTS "${KISSAT_INCLUDE_PATH}"
+        DOC "Path to main kissat header file"
+        )
+
+IF (KISSAT_H AND KISSAT_LIB)
+    add_definitions(-DUSE_KISSAT)
+    MESSAGE(STATUS "Found Kissat Lib: ${KISSAT_LIB} and Headers: ${KISSAT_H}")
+ELSE (KISSAT_H AND KISSAT_LIB)
+    MESSAGE(STATUS "Could not find Kissat Lib (${KISSAT_LIB}) or Kissat Header (${KISSAT_H}). Please specify paths by appending Kissat install dir to CMAKE_PREFIX_PATH or by setting KISSAT_LIBRARY_PATH (-DKISSAT_LIBRARY_PATH=<path to KISSAT lib dir>) and KISSAT_INCLUDE_PATH (-DKISSAT_INCLUDE_PATH=<path to Kissat include dir>)")
+ENDIF (KISSAT_H AND KISSAT_LIB)
 
 ####################
 #Find SAT SCM
@@ -392,7 +413,7 @@ ENDIF ()
 add_library(hatschet ${HatScheT_SOURCES})
 add_executable(hatschet-bin src/hatschet.cpp)
 set_target_properties(hatschet-bin PROPERTIES OUTPUT_NAME hatschet)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 target_link_libraries(hatschet-bin hatschet)
 
 IF (SCALP_H AND SCALP_LIB)
@@ -404,6 +425,9 @@ ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
     target_link_libraries(hatschet-bin ${CADICAL_LIB})
 ENDIF (CADICAL_H AND CADICAL_LIB)
+IF (KISSAT_H AND KISSAT_LIB)
+    target_link_libraries(hatschet-bin ${KISSAT_LIB})
+ENDIF (KISSAT_H AND KISSAT_LIB)
 IF (SATSCM_H AND SATSCM_LIB)
     target_link_libraries(hatschet-bin ${SATSCM_LIB})
 ENDIF (SATSCM_H AND SATSCM_LIB)
@@ -421,6 +445,10 @@ ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
     include_directories(${CADICAL_H})
 ENDIF (CADICAL_H AND CADICAL_LIB)
+
+IF (KISSAT_H AND KISSAT_LIB)
+    include_directories(${KISSAT_H})
+ENDIF (KISSAT_H AND KISSAT_LIB)
 
 IF (SATSCM_H AND SATSCM_LIB)
     include_directories(${SATSCM_H})

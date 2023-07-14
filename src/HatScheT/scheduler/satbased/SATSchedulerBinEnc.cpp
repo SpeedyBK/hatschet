@@ -352,8 +352,12 @@ namespace HatScheT {
 		// reset solver
 		//this->terminator = CaDiCaLTerminator(this->solverTimeout);
 		if (!this->inIncrementalMode()) {
+#ifdef USE_KISSAT
+			this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(static_cast<int>(std::ceil(this->solverTimeout - this->terminator.getElapsedTime()))));
+#else
 			this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 			this->solver->connect_terminator(&this->terminator);
+#endif
 		}
 		// update latest start times based on candidate latency
 		trivialDecision td = noTrivialDecisionPossible;
@@ -774,7 +778,13 @@ namespace HatScheT {
 			int t = 0;
 			auto wordSize = this->scheduleTimeWordSize.at(v);
 			for (int w = 0; w < wordSize; w++) {
-				auto bitResult = this->solver->val(this->scheduleTimeVariables.at({v, w})) > 0 ? 1 : 0;
+				auto bitResult =
+#ifdef USE_KISSAT
+					this->solver->value(this->scheduleTimeVariables.at({v, w}))
+#else
+					this->solver->val(this->scheduleTimeVariables.at({v, w}))
+#endif
+					> 0 ? 1 : 0;
 				t += (bitResult << w);
 			}
 			this->startTimes[v] = t + this->earliestStartTime.at(v);

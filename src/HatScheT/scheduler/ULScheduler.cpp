@@ -114,7 +114,7 @@ void ULScheduler::schedule()
     // sort-object for the set to sort while inserting.
     struct sort_struct{
       std::map<Vertex*,int> *criterion;
-      bool operator()(Vertex *a,Vertex *b){
+      bool operator()(Vertex *a,Vertex *b) const {
         return criterion->at(a) <= criterion->at(b);
       }
     } sort_obj;
