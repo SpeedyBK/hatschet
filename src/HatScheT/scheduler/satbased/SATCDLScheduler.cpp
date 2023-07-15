@@ -46,9 +46,13 @@ namespace HatScheT {
 
 	void SATCDLScheduler::initSATSolver() {
 		// init solver
-		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->terminator = CaDiCaLTerminator(this->solverTimeout);
+#ifdef USE_KISSAT
+		this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(this->solverTimeout));
+#else
+		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->solver->connect_terminator(&this->terminator);
+#endif
 		// clear containers
 		this->mrtVariables.clear();
 		// create variables
@@ -103,7 +107,13 @@ namespace HatScheT {
 			auto *v = it.first.first;
 			auto m = it.first.second;
 			auto satVar = it.second;
-			if (this->solver->val(satVar) < 0) continue; // variable is set to false
+			if (
+#ifdef USE_KISSAT
+				this->solver->value(satVar)
+#else
+				this->solver->val(satVar)
+#endif
+				< 0) continue; // variable is set to false
 			moduloSlots[v] = m;
 		}
 		return moduloSlots;

@@ -126,9 +126,13 @@ namespace HatScheT {
 
 	void SDSScheduler::initSATSolver() {
 		// init solver
-		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->terminator = CaDiCaLTerminator(this->solverTimeout);
+#ifdef USE_KISSAT
+		this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(this->solverTimeout));
+#else
+		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
 		this->solver->connect_terminator(&this->terminator);
+#endif
 		// clear containers
 		this->learnedClauses.clear();
 		this->B_ir.clear();
@@ -273,7 +277,13 @@ namespace HatScheT {
 			for (auto &it2 : it.second) {
 				auto k = it2.first;
 				auto satVar = it2.second;
-				if (this->solver->val(satVar) > 0) {
+				if (
+#ifdef USE_KISSAT
+					this->solver->value(satVar)
+#else
+					this->solver->val(satVar)
+#endif
+					> 0) {
 					// add additional SDC constraints
 					auto rhs1 = k*this->candidateII-1;
 					//std::cout << "#q# O_" << i->getId() << "_" << j->getId() << "_" << k << std::endl;

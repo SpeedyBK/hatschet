@@ -17,6 +17,9 @@
 #ifdef USE_SCALP
 #include <ScaLP/Solver.h>
 #endif // USE_SCALP
+#ifdef USE_KISSAT
+#include "kissatpp.hpp"
+#endif
 
 namespace HatScheT {
 
@@ -59,7 +62,11 @@ namespace HatScheT {
 		unsigned int solverTimeout;
 
 		double solvingTime;
+#ifdef USE_KISSAT
+		std::unique_ptr<kissatpp::kissatpp> solver;
+#else
 		std::unique_ptr<CaDiCaL::Solver> solver;
+#endif
 		CaDiCaLTerminator terminator;
 
 		RegisterOptimizationStrategy ros;

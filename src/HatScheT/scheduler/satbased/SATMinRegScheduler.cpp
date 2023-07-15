@@ -15,7 +15,9 @@ namespace HatScheT {
 #define CADICAL_SAT 10
 
 	SATMinRegScheduler::SATMinRegScheduler(HatScheT::Graph &g, HatScheT::ResourceModel &resourceModel)
-		: SchedulerBase(g,resourceModel), solverTimeout(300), terminator(0.0), numRegs(-1),
+		: SchedulerBase(g,resourceModel), solverTimeout(300),
+		terminator(0.0),
+		numRegs(-1),
 		  ros(RegisterOptimizationStrategy::SQRT), skipFirstRegAttempt(true), sqrtJumpLength(-1) {
 		this->II = -1;
 		this->scheduleFound = false;
@@ -229,7 +231,11 @@ namespace HatScheT {
 
 	void SATMinRegScheduler::resetContainer() {
 		// just create a new solver lol
+#ifdef USE_KISSAT
+		this->solver = std::unique_ptr<kissatpp::kissatpp>(new kissatpp::kissatpp(static_cast<double>(this->solverTimeout) - this->terminator.getElapsedTime()));
+#else
 		this->solver = std::unique_ptr<CaDiCaL::Solver>(new CaDiCaL::Solver);
+#endif
 		this->scheduleTimeLiterals.clear();
 		this->bindingLiterals.clear();
 		this->literalCounter = 0;
@@ -407,15 +413,33 @@ namespace HatScheT {
 			for (auto &v : this->g.Vertices()) {
 				std::cout << "  vertex " << v->getName() << std::endl;
 				for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
-					std::cout << "    t=" << tau << " - " << this->solver->val(this->scheduleTimeLiterals.at({v, tau})) << std::endl;
+					std::cout << "    t=" << tau << " - " <<
+#ifdef USE_KISSAT
+					this->solver->value(this->scheduleTimeLiterals.at({v, tau}))
+#else
+					this->solver->val(this->scheduleTimeLiterals.at({v, tau}))
+#endif
+					<< std::endl;
 				}
 				if (!this->vertexIsUnlimited.at(v) and this->resourceLimit.at(v) != 1) {
 					for (int l=0; l< this->resourceLimit.at(v); l++) {
-						std::cout << "    b=" << l << " - " << this->solver->val(this->bindingLiterals.at({v, l})) << std::endl;
+						std::cout << "    b=" << l << " - " <<
+#ifdef USE_KISSAT
+						this->solver->value(this->bindingLiterals.at({v, l}))
+#else
+						this->solver->val(this->bindingLiterals.at({v, l}))
+#endif
+						<< std::endl;
 					}
 				}
 				for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
-					std::cout << "    z=" << tau << " - " << this->solver->val(this->variableLiterals.at({v, tau})) << std::endl;
+					std::cout << "    z=" << tau << " - " <<
+#ifdef USE_KISSAT
+					this->solver->value(this->variableLiterals.at({v, tau}))
+#else
+					this->solver->val(this->variableLiterals.at({v, tau}))
+#endif
+					<< std::endl;
 				}
 			}
 			for (auto reg=0; reg< this->candidateNumRegs; reg++) {
@@ -423,7 +447,13 @@ namespace HatScheT {
 				for (auto &v : this->g.Vertices()) {
 					std::cout << "    vertex " << v->getName() << std::endl;
 					for (int tau=this->earliestStartTime.at(v); tau<this->latestVariableReadTime.at(v); tau++) {
-						std::cout << "      r=" << tau << " - " << this->solver->val(this->registerBindingLiterals.at({v, tau, reg})) << std::endl;
+						std::cout << "      r=" << tau << " - " <<
+#ifdef USE_KISSAT
+						this->solver->value(this->registerBindingLiterals.at({v, tau, reg}))
+#else
+						this->solver->val(this->registerBindingLiterals.at({v, tau, reg}))
+#endif
+						<< std::endl;
 					}
 				}
 			}
@@ -432,7 +462,13 @@ namespace HatScheT {
 		for (auto &v : this->g.Vertices()) {
 			// schedule time
 			for (int tau=this->earliestStartTime.at(v); tau<= this->latestStartTime.at(v); tau++) {
-				if (this->solver->val(this->scheduleTimeLiterals.at({v, tau})) < 0) {
+				if (
+#ifdef USE_KISSAT
+					this->solver->value(this->scheduleTimeLiterals.at({v, tau}))
+#else
+					this->solver->val(this->scheduleTimeLiterals.at({v, tau}))
+#endif
+					< 0) {
 					continue;
 				}
 				this->startTimesContainer[v].insert(tau);
@@ -450,8 +486,12 @@ namespace HatScheT {
 	}
 
 	void SATMinRegScheduler::setUpSolver() {
+#ifdef USE_KISSAT
+		// no need to connect terminator with kissat
+#else
 		// attach terminator to support timeout
 		this->solver->connect_terminator(&this->terminator);
+#endif
 	}
 
 	void SATMinRegScheduler::createLiterals() {

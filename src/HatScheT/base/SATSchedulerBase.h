@@ -12,6 +12,10 @@
 #include <cadical.hpp>
 #include <memory>
 
+#ifdef USE_KISSAT
+#include "kissatpp.hpp"
+#endif
+
 namespace HatScheT {
 
 	class SATSchedulerBase : public IterativeModuloSchedulerLayer {
@@ -53,8 +57,12 @@ namespace HatScheT {
 		 * members
 		 */
 		// solver related
+#ifdef USE_KISSAT
+		std::unique_ptr<kissatpp::kissatpp> solver;
+#else
 		std::unique_ptr<CaDiCaL::Solver> solver;
-		CaDiCaLTerminator terminator;
+#endif
+		CaDiCaLTerminator terminator; // used for time tracking independent of kissat/cadical backend
 		int literalCounter = 0;
 		int clauseCounter = 0;
 
