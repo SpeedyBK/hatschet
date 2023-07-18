@@ -78,6 +78,7 @@
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
+#include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4410,5 +4411,73 @@ namespace HatScheT {
 			std::cout << "SDC after adding additional constraints is infeasible" << std::endl;
 		}
 		return true;
+	}
+
+	bool Tests::clockGatingSchedulerTest() {
+#if defined(USE_SCALP) && defined(USE_XERCESC)
+		Graph g;
+		ResourceModel rm;
+		std::string model = "fir_GM";
+		std::string resource = "RM2";
+		string resStr = "benchmarks/Origami_Pareto/"+model+"/"+resource+".xml";
+		string graphStr = "benchmarks/Origami_Pareto/"+model+"/"+model+".graphml";
+		HatScheT::XMLResourceReader readerRes(&rm);
+		readerRes.readResourceModel(resStr.c_str());
+		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+		readerGraph.readGraph(graphStr.c_str());
+
+		ClockGatingModuloScheduler cgms(g, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"});
+		//cgms.setMaxLatencyConstraint(37);
+		cgms.setThreads(1);
+		cgms.setMaxRuns(1);
+		cgms.setNumberOfClockDomains(2);
+		for (auto &r : rm.Resources()) {
+			if (r->getLatency() >= 2) {
+				cgms.setEnergyPerSample(r, 1.0);
+				cgms.setMaxClockGatingDelay(r, 5);
+			}
+			else {
+				cgms.setEnergyPerSample(r, 0.0);
+				cgms.setMaxClockGatingDelay(r, 0);
+			}
+		}
+		cgms.schedule();
+		if (!cgms.getScheduleFound()) {
+			std::cout << "Failed to find schedule :( test not passed!" << std::endl;
+			return false;
+		}
+		auto II = cgms.getII();
+		auto SL = cgms.getScheduleLength();
+		auto schedule = cgms.getSchedule();
+		auto bindings = cgms.getBindings();
+		auto clockDomainBindings = cgms.getClockDomainBinding();
+		auto clockOffTimes = cgms.getClockOffTimes();
+		std::cout << "II = " << II << std::endl;
+		std::cout << "SL = " << SL << std::endl;
+		for (auto &it : schedule) {
+			std::cout << "  t(" << it.first->getName() << ") = " << it.second << std::endl;
+		}
+		for (auto &it : bindings) {
+			std::cout << "  b(" << it.first->getName() << ") = " << it.second << std::endl;
+		}
+		for (auto &it : clockDomainBindings) {
+			std::cout << "  c(" << it.first.first->getName() << ", " << it.first.second << ") = " << it.second << std::endl;
+		}
+		for (auto &it : clockOffTimes) {
+			std::cout << "  clock(" << it.first << "):";
+			for (auto it2 : it.second) {
+				std::cout << " " << it2;
+			}
+			std::cout << std::endl;
+		}
+		if (!verifyModuloSchedule(g, rm, schedule, static_cast<int>(std::round(II)))) {
+			std::cout << "Invalid modulo schedule found :( test not passed!" << std::endl;
+			return false;
+		}
+		return true;
+#else
+		std::cout << "clock gating scheduler test only available when using scalp and xercesc" << std::endl;
+		return true;
+#endif
 	}
 }

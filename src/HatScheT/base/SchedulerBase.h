@@ -189,11 +189,16 @@ public:
    * @return solvingTimePerIteration if set by the scheduler, -1 otherwise.
    */
   double getSolvingTimePerIteration() const { return this->solvingTimePerIteration; }
-  /*!
-   * Getter for solvingTimeTotal, look above.
-   * @return solvingTimeTotal if set by the scheduler, 0 otherwise.
-   */
-  double getSolvingTimeTotal() const { return this->solvingTimeTotal; }
+	/*!
+	 * Getter for solvingTimeTotal, look above.
+	 * @return solvingTimeTotal if set by the scheduler, 0 otherwise.
+	 */
+	double getSolvingTimeTotal() const { return this->solvingTimeTotal; }
+	/*!
+	 * Alias for getSolvingTimeTotal, look above.
+	 * @return solvingTimeTotal if set by the scheduler, 0 otherwise.
+	 */
+	double getSolvingTime() const { return this->getSolvingTimeTotal(); }
   /*!
    * Getter for timeRemaining, look above
    * From outside of the Scheduler only accessable for the last Iteration.

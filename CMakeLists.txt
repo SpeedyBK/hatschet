@@ -249,6 +249,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/ilpbased/RationalIIScheduler.h
         src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.h
         src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.h
+        src/HatScheT/scheduler/dev/ClockGatingModuloScheduler.h
         src/HatScheT/scheduler/dev/MinRegMultiScheduler.h
         src/HatScheT/scheduler/graphBased/PBScheduler.h
         src/HatScheT/scheduler/dev/ModuloQScheduler.h
@@ -336,6 +337,7 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/scheduler/ilpbased/RationalIIScheduler.cpp
             src/HatScheT/scheduler/ilpbased/RationalIISchedulerFimmel.cpp
             src/HatScheT/scheduler/ilpbased/MoovacResAwScheduler.cpp
+            src/HatScheT/scheduler/dev/ClockGatingModuloScheduler.cpp
             src/HatScheT/scheduler/dev/IntegerIINonRectScheduler.cpp
             src/HatScheT/scheduler/dev/MinRegMultiScheduler.cpp
             src/HatScheT/scheduler/graphBased/PBScheduler.cpp
@@ -506,7 +508,7 @@ IF (SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
     add_test("treeBindCommutative" "./hatschet" "--test=TREEBINDCOMMUTATIVE")
     add_test("congBind" "./hatschet" "--test=ILPBASEDINTIIBINDINGCONG")
     add_test("LatencyEstimation" "./hatschet" "--test=LATENCY")
-    add_test("IterativeModSchedulerLayer" "./hatschet" "--test=ITLAYER")
+    add_test("clockGatingScheduler" "./hatschet" "--test=CLOCKGATING")
 ENDIF (SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
 
 IF (CADICAL_H AND CADICAL_LIB)
