@@ -3960,14 +3960,14 @@ namespace HatScheT {
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
-      /*HatScheT::XMLResourceReader readerRes(&rm);
+      HatScheT::XMLResourceReader readerRes(&rm);
       string resStr = "benchmarks/ChStone/adpcm/graph2_RM.xml";
       string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());*/
+      readerGraph.readGraph(graphStr.c_str());
 
-      auto &add = rm.makeResource("add", 1, 2, 1);
+      /*auto &add = rm.makeResource("add", 1, 2, 1);
       auto &prod = rm.makeResource("prod", 1, 3, 1);
       auto &io = rm.makeResource("io", 1, 1, 1);
       auto &c = rm.makeResource("const", UNLIMITED, 1, 1);
@@ -4004,9 +4004,9 @@ namespace HatScheT {
       g.createEdge(sum0, sum1, 0);
       g.createEdge(prod0, sum0, 0);
       g.createEdge(prod1, sum1, 0);
-      g.createEdge(sum1, out, 0);
+      g.createEdge(sum1, out, 0);*/
 
-      SCCSchedulerTemplate smtcdl(g, rm, SCCSchedulerTemplate::scheduler::SMTCDL, SCCSchedulerTemplate::scheduler::SMTCDL);
+      SCCSchedulerTemplate smtcdl(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::SMT);
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdl.setQuiet(false);
       smtcdl.setSolverTimeout(600);
