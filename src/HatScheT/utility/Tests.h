@@ -285,12 +285,6 @@ namespace HatScheT {
 		static bool optimalIntegerIIGeneralizedBindingTest();
 
 		/*!
-		 * test getILPMinMuxBinding function
-		 * @return
-		 */
-		static bool ilpBasedIntIIMinMuxBindingTest();
-
-		/*!
 		 * test treeBindTest function
 		 * @return if test was passed
 		 */
@@ -360,6 +354,11 @@ namespace HatScheT {
         * @return if test was passed
         */
         static bool iterativeLayerTest();
+		/*!
+		 * tests functionality of the clock gating scheduler
+		 * @return if test was passed
+		 */
+		static bool clockGatingSchedulerTest();
 
 	};
 }

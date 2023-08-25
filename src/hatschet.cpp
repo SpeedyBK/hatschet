@@ -587,6 +587,7 @@ int main(int argc, char *args[]) {
 				if (str == "ILPLATENCY" && HatScheT::Tests::ilpMinMaxLatencyEstimationTest() == false) exit(-1);
 				if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
 				if (str == "SDCSOLVERINCREMENTAL" && HatScheT::Tests::sdcSolverIncrementalTest() == false) exit(-1);
+				if (str == "CLOCKGATING" && HatScheT::Tests::clockGatingSchedulerTest() == false) exit(-1);
 #else
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
