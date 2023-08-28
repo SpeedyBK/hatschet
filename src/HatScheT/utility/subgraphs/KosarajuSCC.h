@@ -25,6 +25,7 @@
 #include <list>
 #include <stack>
 #include <vector>
+#include <set>
 
 #include "HatScheT/Graph.h"
 #include "HatScheT/utility/subgraphs/SCC.h"
