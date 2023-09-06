@@ -220,7 +220,8 @@ set(HatScheT_SOURCES
         src/HatScheT/utility/writer/XMLResourceWriter.cpp
         src/HatScheT/base/IterativeSchedulerBase.cpp
         src/HatScheT/utility/subgraphs/SCC.cpp
-        src/HatScheT/utility/SDCSolver.cpp)
+        src/HatScheT/utility/SDCSolver.cpp
+        )
 
 
 set(HatScheT_HEADERS

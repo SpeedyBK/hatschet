@@ -72,7 +72,6 @@
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTModScheduler.h>
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
@@ -3960,8 +3959,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone/adpcm/graph2_RM.xml";
-      string graphStr = "benchmarks/ChStone/adpcm/graph2.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4005,7 +4004,7 @@ namespace HatScheT {
       g.createEdge(prod1, sum1, 0);
       g.createEdge(sum1, out, 0);*/
 
-      SCCSchedulerTemplate smtcdl(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::SMT);
+      SMTCDLScheduler smtcdl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
       smtcdl.setQuiet(false);
       smtcdl.setSolverTimeout(600);
@@ -4030,48 +4029,6 @@ namespace HatScheT {
 #else
 			std::cout << "Tests::smtCDLTest: link Z3 to enable test" << std::endl;
       return true;
-#endif
-  }
-
-  bool Tests::smtCombined() {
-#if defined(USE_Z3) && defined(USE_CADICAL)
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
-
-      HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "BenchmarkSpeicher/adpcm/graph2.graphml";
-      string resStr = "BenchmarkSpeicher/adpcm/graph2_RM.xml";
-      readerRes.readResourceModel(resStr.c_str());
-      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
-
-      SATSCCScheduler smtComb(g, rm, 50);
-      smtComb.setQuiet(true);
-      smtComb.setSolverTimeout(600);
-      auto start_t = std::chrono::high_resolution_clock::now();
-      smtComb.schedule();
-      auto II = smtComb.getII();
-      auto end_t = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-      auto t = ((double)duration / 1000);
-
-      //cout << "Solving Time: " << t << endl;
-      if (verifyModuloSchedule(g, rm, smtComb.getSchedule(), II)){
-          //std::cout << "Tests::smtSCCScheduler: valid modulo schedule found. :-) "<< endl;
-          //std::cout << "II=" << II << " Latency: " << smtComb.getScheduleLength() << std::endl;
-          for (auto &it : smtComb.getSchedule()){
-              //cout << it.first->getName() << ": " << it.second << endl;
-          }
-          return true;
-      }else{
-          //std::cout << "Tests::smtSCCScheduler: invalid modulo schedule found :( II=" << smtComb.getII() << std::endl;
-          return false;
-      }
-
-      return false;
-#else
-			std::cout << "Tests::smtCombined: link Z3 to enable test" << std::endl;
-			return true;
 #endif
   }
 
@@ -4183,7 +4140,9 @@ namespace HatScheT {
 
       cout << endl;
       return success;
-  }bool Tests::ilpMinMaxLatencyEstimationTest() {
+  }
+
+  bool Tests::ilpMinMaxLatencyEstimationTest() {
 #if defined(USE_SCALP) && defined(USE_Z3)
 		HatScheT::Graph g;
 		HatScheT::ResourceModel rm;
@@ -4478,4 +4437,5 @@ namespace HatScheT {
 		return true;
 #endif
 	}
+
 }

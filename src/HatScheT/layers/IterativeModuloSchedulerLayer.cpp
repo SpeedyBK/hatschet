@@ -92,7 +92,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
             cout << "IterativeModuloSchedulerLayer: " << ii - minII + 1 << ". Iteration, time budget: ";
             cout << solverTimeout << " seconds." << endl;
         }
-        // Passing II from II - search - loop to class, so scheduler can use it.
+        // Passing II from II-search-loop to class, so scheduler can use it.
         this->II = ii;
 				// schedule length estimation
 				this->calculateScheduleLengthEstimation();
@@ -113,7 +113,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
         // Scheduler has to fill the solution structure by itself!!!
         if (scheduleFound)
         {
-						scheduleCleanup();
+            scheduleCleanup();
             if (!this->quiet or !this->layerQuiet){
                 cout << "1st. Objective Optimal: " << firstObjectiveOptimal << endl;
                 cout << "2nd. Objective Optimal: " << secondObjectiveOptimal << endl;

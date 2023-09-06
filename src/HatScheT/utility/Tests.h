@@ -265,7 +265,6 @@ namespace HatScheT {
 		static bool sdcSolverTest();
 
 		static bool sdcSolverIncrementalTest();
-
 		/*!
 		 * test getILPBasedIntIIBindingCong function
 		 * @return
@@ -277,43 +276,36 @@ namespace HatScheT {
 		 * @return
 		 */
 		static bool ilpBasedIntIIBindingTest();
-
 		/*!
 		 * test OptimalIntegerIIGeneralizedBinding class
 		 * @return
 		 */
 		static bool optimalIntegerIIGeneralizedBindingTest();
-
 		/*!
 		 * test treeBindTest function
 		 * @return if test was passed
 		 */
 		static bool treeBindTest();
-
 		/*!
 		 * test treeBindTest function with commutative resource types
 		 * @return if test was passed
 		 */
 		static bool treeBindCommutativeTest();
-
 		/*!
 		 * use tree bind algorithm for motivating example for FCCM paper about optimal binding
 		 * @return if test was passed
 		 */
 		static bool fccmPaperTest();
-
 		/*!
 		 * test functionality of multi min reg scheduler
 		 * @return if test was passed
 		 */
 		static bool multiMinRegSchedulerTest();
-
 		/*!
 		 * test functionality of multi min reg scheduler
 		 * @return if test was passed
 		 */
 		static bool satSchedulerTest();
-
 		/*!
 		 * test functionality of Z3 Theorem Prover
 		 * @return if test was passed
@@ -339,11 +331,6 @@ namespace HatScheT {
         * @return if test was passed
         */
 		static bool smtCDLTest();
-	   /*!
-        * test functionality of Z3 based scheduler with SCC - preprocessing
-        * @return if test was passed
-        */
-        static bool smtCombined();
        /*!
         * test functionality of SCC-Preprocessor
         * @return if test was passed
