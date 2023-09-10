@@ -582,6 +582,8 @@ int main(int argc, char *args[]) {
 				throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
 
+                if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);
+
 #ifdef USE_Z3
 				if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
                 if (str == "SMTCDL" && !HatScheT::Tests::smtCDLTest()) exit(-1);

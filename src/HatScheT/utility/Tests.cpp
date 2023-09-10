@@ -4033,19 +4033,18 @@ namespace HatScheT {
   }
 
   bool Tests::SCCTemplateTest() {
-#ifdef USE_Z3
-#ifdef USE_SCALP
+#if defined(USE_Z3) || defined(USE_SCALP)
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/Origami_Pareto/fir_gen/fir_gen.graphml";
-      string resStr = "benchmarks/Origami_Pareto/fir_gen/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/iir_sos2/iir_sos2.graphml";
+      string resStr = "benchmarks/Origami_Pareto/iir_sos2/RM1.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::SMT);
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::ED97, SCCSchedulerTemplate::scheduler::MOOVAC);
       auto start_t = std::chrono::high_resolution_clock::now();
       scc.setQuiet(false);
       scc.setSolverTimeout(600);
@@ -4066,12 +4065,8 @@ namespace HatScheT {
           return false;
       }
 #else
-			// test disabled
+      // test disabled
       return true;
-#endif
-#else
-		// test disabled
-		return true;
 #endif
   }
 

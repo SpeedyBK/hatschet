@@ -5,18 +5,28 @@
 #include "SCCSchedulerTemplate.h"
 
 #ifdef USE_Z3
-#ifdef USE_SCALP
+
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
 #include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
+
+#endif
+
+#ifdef USE_SCALP
+
 #include "HatScheT/scheduler/ilpbased/EichenbergerDavidson97Scheduler.h"
 #include "HatScheT/scheduler/ilpbased/MoovacScheduler.h"
+#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
+#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
+
+#endif
+
 #ifdef USE_CADICAL
+
 #include "HatScheT/scheduler/satbased/SATSchedulerBinEnc.h"
 #include "HatScheT/scheduler/satbased/SATSchedulerRes.h"
 #include "HatScheT/scheduler/dev/SDSScheduler.h"
+
 #endif
-#include "HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h"
-#include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 
 #include <cmath>
 #include <chrono>
@@ -29,8 +39,10 @@
 
 namespace HatScheT {
 
-  SCCSchedulerTemplate::SCCSchedulerTemplate(Graph &g, ResourceModel &resourceModel, SCCSchedulerTemplate::scheduler sccScheduler,
-                                             SCCSchedulerTemplate::scheduler finalScheduler, double II) : IterativeModuloSchedulerLayer(g, resourceModel, II) {
+  SCCSchedulerTemplate::SCCSchedulerTemplate(Graph &g, ResourceModel &resourceModel,
+                                             SCCSchedulerTemplate::scheduler sccScheduler,
+                                             SCCSchedulerTemplate::scheduler finalScheduler, double II)
+      : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
       this->sccScheduler = sccScheduler;
       this->finalScheduler = finalScheduler;
@@ -44,7 +56,7 @@ namespace HatScheT {
           }
       }
 
-      for (auto &v : g.Vertices()){
+      for (auto &v : g.Vertices()) {
           this->startTimes[v] = 0;
       }
 
@@ -69,19 +81,27 @@ namespace HatScheT {
 
       buildComplexGraph();
 
-			this->backboneSchedulerBoundSL = this->boundSL;
-			this->boundSL = false;
+      this->backboneSchedulerBoundSL = this->boundSL;
+      this->boundSL = false;
   }
 
-	void SCCSchedulerTemplate::scheduleCleanup() {
-		this->resetResourceModel();
+  void SCCSchedulerTemplate::scheduleCleanup() {
+      this->resetResourceModel();
 
-		this->boundSL = this->backboneSchedulerBoundSL;
-	}
+      this->boundSL = this->backboneSchedulerBoundSL;
+  }
 
   void SCCSchedulerTemplate::scheduleIteration() {
 
+#if defined(USE_Z3)
+      if (!this->quiet) { cout << "Using Z3 ..." << endl;}
       if (this->sccMode != sccExpandMode::automatic) calcStarttimesPerComplexSCC();
+#elif defined(USE_SCALP)
+      if (!this->quiet) { cout << "Using ScaLP ..." << endl;}
+      if (this->sccMode != sccExpandMode::automatic) calcStarttimesPerComplexSCCScaLP();
+#else
+      throw (HatScheT::Exception("Either Z3 or ScaLP is needed for this Scheduler"));
+#endif
 
       if (!complexSCCs.empty()) {
           bigComplexSchedule = scheduleComplexGraph();
@@ -92,7 +112,7 @@ namespace HatScheT {
           }
       }
       if (!quiet) { cout << "Complex Done!" << endl; }
-      if (scheduleFound or complexSCCs.empty()){
+      if (scheduleFound or complexSCCs.empty()) {
           finalizeComplexSchedule();
           if (!basicSCCs.empty()) {
               for (auto &sc : basicSCCs) {
@@ -107,23 +127,24 @@ namespace HatScheT {
       scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int) II);
 
       if (this->scheduleFound and finalScheduler != scheduler::NONE) {
-          if (this->timeRemaining == -1){
+          if (this->timeRemaining == -1) {
               this->timeRemaining = this->solverTimeout;
           }
           if (!this->quiet) { cout << "Computing final schedule..." << endl; }
           auto finalSchedulerSelected = selectSccScheduler(finalScheduler, g, resourceModel);
           if (finalSchedulerSelected->getName() == "SDSScheduler") {
-          	throw Exception("SCCSchedulerTemplate::scheduleIteration: SDS Scheduler does not support latency optimization, yet -> choose another scheduler");
+              throw Exception(
+                  "SCCSchedulerTemplate::scheduleIteration: SDS Scheduler does not support latency optimization, yet -> choose another scheduler");
           }
           finalSchedulerSelected->setQuiet(this->quiet);
           cout << "Time Remaining:" << this->timeRemaining << endl;
           finalSchedulerSelected->setSolverTimeout(this->timeRemaining);
           finalSchedulerSelected->disableSecObjective(false);
           finalSchedulerSelected->setMaxLatencyConstraint(this->getScheduleLength());
-					finalSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
+          finalSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
           sharedPointerCastAndSetup(finalSchedulerSelected);
           finalSchedulerSelected->schedule();
-          if (finalSchedulerSelected->getScheduleFound()){
+          if (finalSchedulerSelected->getScheduleFound()) {
               startTimes = finalSchedulerSelected->getSchedule();
               scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int) II);
               this->secondObjectiveOptimal = finalSchedulerSelected->getObjectivesOptimal().second;
@@ -135,16 +156,16 @@ namespace HatScheT {
   }
 
   void SCCSchedulerTemplate::modifyResourceModel() {
-      for (auto &r : resourceModel.Resources()){
-          resourceLimits[r]=r->getLimit();
-          if (resourceModel.getNumVerticesRegisteredToResource(r) <= r->getLimit()){
+      for (auto &r : resourceModel.Resources()) {
+          resourceLimits[r] = r->getLimit();
+          if (resourceModel.getNumVerticesRegisteredToResource(r) <= r->getLimit()) {
               r->setLimit(UNLIMITED, false);
           }
       }
   }
 
   void SCCSchedulerTemplate::resetResourceModel() {
-      for (auto &r : resourceLimits){
+      for (auto &r : resourceLimits) {
           r.first->setLimit(resourceLimits.at(r.first), false);
       }
   }
@@ -152,30 +173,30 @@ namespace HatScheT {
   void SCCSchedulerTemplate::computeSCCs() {
       KosarajuSCC kscc(g);
       auto sccs = kscc.getSCCs();
-      for (auto &sc : sccs){
+      for (auto &sc : sccs) {
           sc->getSccType(&resourceModel);
-          for (auto &v_in_SCC : sc->getVerticesOfSCC()){
+          for (auto &v_in_SCC : sc->getVerticesOfSCC()) {
               vertexToSCC[v_in_SCC] = sc;
           }
       }
       inversePriority = computeTopologicalSCCOrder(sccs);
 
-      for (auto &ip : inversePriority){
+      for (auto &ip : inversePriority) {
           topoSortedSccs.insert(ip);
       }
   }
 
   map<SCC *, int> SCCSchedulerTemplate::computeTopologicalSCCOrder(vector<SCC *> &tempsccs) {
       // Creating maps
-      map<SCC*, Vertex*> sccToVertex;
-      map<Vertex*, SCC*> locVertexToScc;
+      map<SCC *, Vertex *> sccToVertex;
+      map<Vertex *, SCC *> locVertexToScc;
       // Generate Graph and ResourceModel
       auto gr = std::make_shared<Graph>();
       auto rm = std::make_shared<ResourceModel>();
       // Create a Dummyresource
       auto &dummyRes = rm->makeResource("SCC_DUMMY", UNLIMITED, 1);
       // Insert SCCs
-      for (auto &sc : tempsccs){
+      for (auto &sc : tempsccs) {
           auto &sccV = gr->createVertex(sc->getId());
           sccToVertex[sc] = &sccV;
           locVertexToScc[&sccV] = sc;
@@ -192,7 +213,7 @@ namespace HatScheT {
                   break;
               }
           }
-          if (isInsideSCC){
+          if (isInsideSCC) {
               continue;
           }
           //Saving Edge for later.
@@ -207,11 +228,11 @@ namespace HatScheT {
       }
 
       // Topological Order with Asap Schedule:
-      ALAPScheduler alap (*gr, *rm);
-      map<SCC*, int> inverseSccPriority;
+      ALAPScheduler alap(*gr, *rm);
+      map<SCC *, int> inverseSccPriority;
       alap.schedule();
       auto asapSched = alap.getSchedule();
-      for (auto &vtPair: asapSched){
+      for (auto &vtPair: asapSched) {
           inverseSccPriority[locVertexToScc.at(vtPair.first)] = vtPair.second;
       }
 
@@ -220,27 +241,30 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::sortSCCsByType() {
 
-      struct sccComp{
-        bool operator ()(const SCC* a, const SCC* b){
+      struct sccComp {
+        bool operator()(const SCC *a, const SCC *b) {
             return !(*a < *b);
         }
       };
 
-      for (auto &sc : topoSortedSccs){
-          if(sc.first->getSccType() == unknown){
+      for (auto &sc : topoSortedSccs) {
+          if (sc.first->getSccType() == unknown) {
               cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Unknown" << endl;
-              throw(HatScheT::Exception("SMTSCCScheduler::schedule() : SCC-Type not determined!"));
+              throw (HatScheT::Exception("SMTSCCScheduler::schedule() : SCC-Type not determined!"));
           }
-          if (sc.first->getSccType() == trivial){
-              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Trivial - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == trivial) {
+              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Trivial - Vertices: "
+                   << sc.first->getNumberOfVertices() << endl;
               continue;
           }
-          if (sc.first->getSccType() == basic){
-              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Basic - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == basic) {
+              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Basic - Vertices: "
+                   << sc.first->getNumberOfVertices() << endl;
               basicSCCs.push_back(sc.first);
           }
-          if (sc.first->getSccType() == complex){
-              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Complex - Vertices: " << sc.first->getNumberOfVertices() << endl;
+          if (sc.first->getSccType() == complex) {
+              cout << sc.second << ": SCC_" << sc.first->getId() << " - " << "Complex - Vertices: "
+                   << sc.first->getNumberOfVertices() << endl;
               complexSCCs.push_back(sc.first);
           }
       }
@@ -254,7 +278,7 @@ namespace HatScheT {
   void SCCSchedulerTemplate::buildComplexGraph() {
 
       // Creating maps and Generate Graph and ResourceModel and Inset Vertices
-      for (auto &sc : complexSCCs){
+      for (auto &sc : complexSCCs) {
           for (auto &v : sc->getVerticesOfSCC()) {
               auto &newV = complexGraph->createVertex(v->getId());
               sccVertexToVertex[&newV] = v;
@@ -263,13 +287,14 @@ namespace HatScheT {
       }
       resetResourceModel(); // Needed because of strange exception in constructor of resource class.
       // Create Resources
-      for (auto &v : complexGraph->Vertices()){
+      for (auto &v : complexGraph->Vertices()) {
           auto res = resourceModel.getResource(sccVertexToVertex.at(v));
-          Resource* newRes;
+          Resource *newRes;
           try {
               newRes = complexRm->getResource(res->getName());
-          }catch (HatScheT::Exception&){
-              newRes = &complexRm->makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
+          } catch (HatScheT::Exception &) {
+              newRes = &complexRm->makeResource(res->getName(), res->getLimit(), res->getLatency(),
+                                                res->getBlockingTime());
           }
           complexRm->registerVertex(v, newRes);
       }
@@ -288,11 +313,11 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::setExpandMode(SCCSchedulerTemplate::sccExpandMode expandMode) {
 
-      if (expandMode == sccExpandMode::fast){
+      if (expandMode == sccExpandMode::fast) {
           cout << "'Fast-Mode'" << endl;
-      }else if (expandMode == sccExpandMode::optimal){
+      } else if (expandMode == sccExpandMode::optimal) {
           cout << "'Optimal-Mode'" << endl;
-      }else if (expandMode == sccExpandMode::automatic){
+      } else if (expandMode == sccExpandMode::automatic) {
           cout << "'Automatic-Mode'" << endl;
       }
       this->sccMode = expandMode;
@@ -306,9 +331,9 @@ namespace HatScheT {
       sccSchedulerSelected->setQuiet(this->quiet);
       sccSchedulerSelected->setSolverTimeout(this->getSolverTimeout());
       sccSchedulerSelected->disableSecObjective(true);
-			if (this->sccMode == sccExpandMode::automatic) {
-				sccSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
-			}
+      if (this->sccMode == sccExpandMode::automatic) {
+          sccSchedulerSelected->setBoundSL(this->backboneSchedulerBoundSL);
+      }
       int maxSCCslat;
       if (sccMode == sccExpandMode::fast) {
           //maxSCCslat = std::max(expandSCC() + numOfCmplxSCCs-1, (int) II+1);
@@ -322,7 +347,7 @@ namespace HatScheT {
           //Let Scheduler Search...
       }
       sccSchedulerSelected->schedule();
-      if (!sccSchedulerSelected->getObjectivesOptimal().first){
+      if (!sccSchedulerSelected->getObjectivesOptimal().first) {
           this->firstObjectiveOptimal = false;
       }
       this->timeRemaining = sccSchedulerSelected->getTimeRemaining();
@@ -363,155 +388,110 @@ namespace HatScheT {
 
   }
 
-  int SCCSchedulerTemplate::expandSCC() {
-
-      KosarajuSCC kscc(*complexGraph);
-      auto locSCCs = kscc.getSCCs();
-
-      set<int> maxtimes;
-
-      for (auto sc : locSCCs) {
-          z3::context c;
-          z3::optimize opti(c);
-          opti.push();
-          map<Vertex *, z3::expr> tvars;
-          map<Vertex *, z3::expr> svars;
-
-          //Create T-Variables and allow only pos. integers:
-          for (auto &v : sc->getVerticesOfSCC()) {
-              std::stringstream name;
-              name << v->getName();
-              z3::expr tvar(c.int_const(name.str().c_str()));
-              z3::expr svar(c.bool_const(name.str().c_str()));
-              tvars.insert({v, tvar});
-              svars.insert({v, svar});
-              opti.add(tvar >= 0);
-          }
-
-          //Dependecy Constraints
-          for (auto &e : sc->getSCCEdges()) {
-              Vertex *src = &e->getVertexSrc();
-              Vertex *dst = &e->getVertexDst();
-              int delay = e->getDelay();
-              int distance = e->getDistance();
-              opti.add(
-                  tvars.at(dst) - tvars.at(src) >=
-                  complexRm->getResource(src)->getLatency() + delay - (distance * (int) II));
-          }
-
-          z3::expr_vector zeroPoints(c);
-          z3::expr_vector timeVars(c);
-          for (auto &v : sc->getVerticesOfSCC()) {
-              opti.add(z3::implies(svars.at(v), tvars.at(v) == 0));
-              zeroPoints.push_back(svars.at(v));
-              timeVars.push_back(tvars.at(v));
-          }
-
-          opti.add(z3::atleast(zeroPoints, 1));
-          opti.maximize(sum(timeVars));
-
-          z3::check_result sati = opti.check();
-          if (!quiet) { cout << "Searching Max Latency of SCC: " << sati << ": "; }
-
-          auto m = opti.get_model();
-
-          int max = 0;
-          for (auto &v : sc->getVerticesOfSCC()) {
-              if ((m.eval(tvars.at(v)).get_numeral_int() + complexRm->getVertexLatency(v)) > max) {
-                  max = m.eval(tvars.at(v)).get_numeral_int() + complexRm->getVertexLatency(v);
-              }
-          }
-          if (!quiet) { cout << max << endl; }
-          maxtimes.insert(max);
-          opti.pop();
-          while (!timeVars.empty()) {
-              timeVars.pop_back();
-          }
-          while (!zeroPoints.empty()) {
-              zeroPoints.pop_back();
-          }
-          tvars.clear();
-          svars.clear();
-      }
-      return *std::max_element(maxtimes.begin(), maxtimes.end());
-  }
-
-  shared_ptr<IterativeModuloSchedulerLayer> SCCSchedulerTemplate::selectSccScheduler(scheduler schedEnum, Graph& gr, ResourceModel& rm) {
-      switch (schedEnum){
+  shared_ptr<IterativeModuloSchedulerLayer>
+  SCCSchedulerTemplate::selectSccScheduler(scheduler schedEnum, Graph &gr, ResourceModel &rm) {
+      switch (schedEnum) {
           case scheduler::SMT: {
+#if defined(USE_Z3)
               auto schedulePtr = std::make_shared<SMTUnaryScheduler>(gr, rm, this->II);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
               schedulePtr->setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::BINARY);
               schedulePtr->setSchedulePreference(SMTUnaryScheduler::schedulePreference::MOD_ASAP);
               if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
               return schedulePtr;
-          }
-          case scheduler::ED97:{
-              auto ED = new EichenbergerDavidson97Scheduler (gr, rm, {"Gurobi"}, (int)this->II);
-              shared_ptr<EichenbergerDavidson97Scheduler>schedulePtr(ED);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
-              if (!quiet) schedulePtr->getDebugPrintouts();
-              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
-              return schedulePtr;
-          }
-          case scheduler::MOOVAC:{
-              auto MOOVAC = new MoovacScheduler (gr, rm, {"Gurobi"}, (int)this->II);
-              shared_ptr<MoovacScheduler>schedulePtr(MOOVAC);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
-              if (!quiet) schedulePtr->getDebugPrintouts();
-              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
-              return schedulePtr;
-          }
-          case scheduler::SH11:{
-              auto SH = new SuchaHanzalek11Scheduler (gr, rm, {"Gurobi"}, (int)this->II);
-              shared_ptr<SuchaHanzalek11Scheduler>schedulePtr(SH);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
-              if (!quiet) schedulePtr->getDebugPrintouts();
-              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
-              return schedulePtr;
-          }
-          case scheduler::MODSDC:{
-              auto MODSDC = new ModuloSDCScheduler (gr, rm, {"Gurobi"}, (int)this->II);
-              shared_ptr<ModuloSDCScheduler>schedulePtr(MODSDC);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
-              if (!quiet) schedulePtr->getDebugPrintouts();
-              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
-              return schedulePtr;
-          }
-          case scheduler::SMTCDL:{
-              auto SMTCDL = std::make_shared<SMTCDLScheduler>(gr, rm, (int)this->II);
-              shared_ptr<SMTCDLScheduler>schedulePtr(SMTCDL);
-              if (!quiet) { cout << "Using "<< schedulePtr->getName() << endl; }
-              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
-              return schedulePtr;
-          }
-#ifdef USE_CADICAL
-          case scheduler::SAT:{
-#if 0
-						auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
-						if (this->recMinII > 1.0) {
-							schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::REVERSE_LINEAR);
-						}
-						else {
-							schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::LINEAR_JUMP);
-						}
 #else
-						auto schedulePtr = std::make_shared<SATSchedulerRes>(gr, rm, this->II);
+              throw (HatScheT::Exception("SCC-Template: SMT-Unary-Scheduler needs Z3... Z3 not linked"));
+#endif
+          }
+          case scheduler::ED97: {
+#if defined(USE_SCALP)
+              auto ED = new EichenbergerDavidson97Scheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              shared_ptr<EichenbergerDavidson97Scheduler> schedulePtr(ED);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: ED97-Scheduler needs ScaLP... ScaLP not linked"));
+#endif
+          }
+          case scheduler::MOOVAC: {
+#if defined(USE_SCALP)
+              auto MOOVAC = new MoovacScheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              shared_ptr<MoovacScheduler> schedulePtr(MOOVAC);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: MOOVAC-Scheduler needs ScaLP... ScaLP not linked"));
+#endif
+          }
+          case scheduler::SH11: {
+#if defined(USE_SCALP)
+              auto SH = new SuchaHanzalek11Scheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              shared_ptr<SuchaHanzalek11Scheduler> schedulePtr(SH);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: SH11-Scheduler needs ScaLP... ScaLP not linked"));
+#endif
+          }
+          case scheduler::MODSDC: {
+#if defined(USE_SCALP)
+              auto MODSDC = new ModuloSDCScheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              shared_ptr<ModuloSDCScheduler> schedulePtr(MODSDC);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (!quiet) schedulePtr->getDebugPrintouts();
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: MODSDC-Scheduler needs ScaLP... ScaLP not linked"));
+#endif
+          }
+          case scheduler::SMTCDL: {
+#if defined(USE_Z3)
+              auto SMTCDL = std::make_shared<SMTCDLScheduler>(gr, rm, (int) this->II);
+              shared_ptr<SMTCDLScheduler> schedulePtr(SMTCDL);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (this->threads > 1) { schedulePtr->setThreads(this->threads); }
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: SMT-CDL-Scheduler needs Z3... Z3 not linked"));
+#endif
+          }
+          /*!
+           * Stuff from Nico, will check that later... BLK
+           */
+#ifdef USE_CADICAL
+          case scheduler::SAT: {
+#if 0
+              auto schedulePtr = std::make_shared<SATSchedulerBinEnc>(gr, rm, this->II);
+              if (this->recMinII > 1.0) {
+                  schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::REVERSE_LINEAR);
+              }
+              else {
+                  schedulePtr->setLatencyOptimizationStrategy(SATSchedulerBase::LatencyOptimizationStrategy::LINEAR_JUMP);
+              }
+#else
+              auto schedulePtr = std::make_shared<SATSchedulerRes>(gr, rm, this->II);
 #endif
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               //if (!quiet) schedulePtr->getDebugPrintouts();
               return schedulePtr;
           }
           case scheduler::SDS: {
-          	auto schedulePtr = std::make_shared<SDSScheduler>(gr, rm, this->II);
-						if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
-						return schedulePtr;
+              auto schedulePtr = std::make_shared<SDSScheduler>(gr, rm, this->II);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              return schedulePtr;
           }
 #endif
-					case scheduler::NONE:{
-						return nullptr;
-					}
+          case scheduler::NONE: {
+              return nullptr;
+          }
           default:
               throw (HatScheT::Exception("SCCSchedulerTemplate: No SCC-Scheduler specified, terminating..."));
       }
@@ -519,32 +499,33 @@ namespace HatScheT {
 
   map<Vertex *, int> SCCSchedulerTemplate::computeBasicSchedules(SCC *sc) {
       // Creating maps
-      map<Vertex*, Vertex*> _sccVertexToVertex;
-      map<Vertex*, Vertex*> _vertexToSccVertex;
+      map<Vertex *, Vertex *> _sccVertexToVertex;
+      map<Vertex *, Vertex *> _vertexToSccVertex;
       // Generate Graph and ResourceModel
       auto gr = std::make_shared<Graph>();
       auto rm = std::make_shared<ResourceModel>();
       // Inset Vertices
       auto vertices = sc->getVerticesOfSCC();
-      for (auto &v : vertices){
+      for (auto &v : vertices) {
           auto &newV = gr->createVertex(v->getId());
           _sccVertexToVertex[&newV] = v;
           _vertexToSccVertex[v] = &newV;
       }
       // Create Resources
-      for (auto &v : gr->Vertices()){
+      for (auto &v : gr->Vertices()) {
           auto res = resourceModel.getResource(_sccVertexToVertex.at(v));
-          Resource* newRes;
+          Resource *newRes;
           try {
               newRes = rm->getResource(res->getName());
-          }catch (HatScheT::Exception&){
-              newRes = &rm->makeResource(res->getName(), resourceLimits.at((Resource*)res), res->getLatency(), res->getBlockingTime());
+          } catch (HatScheT::Exception &) {
+              newRes = &rm->makeResource(res->getName(), resourceLimits.at((Resource *) res), res->getLatency(),
+                                         res->getBlockingTime());
           }
           rm->registerVertex(v, newRes);
       }
       // Create Edges
       auto edges = sc->getSCCEdges();
-      for (auto &e : edges){
+      for (auto &e : edges) {
           auto &newSrc = _vertexToSccVertex.at(&e->getVertexSrc());
           auto &newDst = _vertexToSccVertex.at(&e->getVertexDst());
           auto &newE = gr->createEdge(*newSrc, *newDst, e->getDistance(), e->getDependencyType());
@@ -556,10 +537,10 @@ namespace HatScheT {
 
   map<Vertex *, int> SCCSchedulerTemplate::sdcSchedule(shared_ptr<Graph> &gr, shared_ptr<ResourceModel> &rm,
                                                        map<Vertex *, Vertex *> &_sccVertexToVertex) {
-      map<Vertex*, int> relSched;
-      map<Vertex*, int> relSchedTemp;
+      map<Vertex *, int> relSched;
+      map<Vertex *, int> relSchedTemp;
       relSchedTemp = Utility::getSDCAsapAndAlapTimes(&(*gr), &(*rm), this->II).first;
-      for (auto &vtPair : relSchedTemp){
+      for (auto &vtPair : relSchedTemp) {
           relSched[_sccVertexToVertex.at(vtPair.first)] = vtPair.second;
       }
       return relSched;
@@ -572,7 +553,8 @@ namespace HatScheT {
           if (sccType == unknown) {
               // Should never happen, throw Error.
               cout << "SCC_" << sc.first->getId() << " is Unknown!" << endl;
-              throw (HatScheT::Exception("SCCSchedulerTemplate::combineRelativeSchedules(): SCC of Type 'Unknown' found!"));
+              throw (HatScheT::Exception(
+                  "SCCSchedulerTemplate::combineRelativeSchedules(): SCC of Type 'Unknown' found!"));
           }
           if (sccType == trivial) {
               //if (!quiet) { cout << "SCC_" << sc.first->getId() << " is trivial!" << endl; }
@@ -611,7 +593,7 @@ namespace HatScheT {
                               usedFUsInModSlot.at({rp, slot})++;
                               break;
                           }
-                      }catch (std::out_of_range&){
+                      } catch (std::out_of_range &) {
                           cout << rp->getName() << " Slot " << slot << " II: " << II << endl;
                           throw (HatScheT::Exception("Doofer Error"));
                       }
@@ -658,13 +640,14 @@ namespace HatScheT {
                   auto tDstRel = this->complexRelSchedules.at(sc.first).at(vDst);
                   auto distance = e->getDistance();
                   auto delay = e->getDelay();
-                  auto minOffset = (int) std::ceil(((double) tSrc - tDstRel + lSrc + delay - (distance * this->II)) / (this->II));
+                  auto minOffset = (int) std::ceil(
+                      ((double) tSrc - tDstRel + lSrc + delay - (distance * this->II)) / (this->II));
                   minOffset = std::max(minOffset, 0);
                   maxMinOffset = std::max(maxMinOffset, minOffset);
               }
               // offset every vertex by the minimum offset
               for (auto &vtpair : complexRelSchedules.at(sc.first)) {
-                  int tSrc = vtpair.second + (int)(maxMinOffset * II);
+                  int tSrc = vtpair.second + (int) (maxMinOffset * II);
                   startTimes.at(vtpair.first) = tSrc;
               }
           }
@@ -672,15 +655,15 @@ namespace HatScheT {
   }
 
   void SCCSchedulerTemplate::finalizeComplexSchedule() {
-      for (auto &sc : complexSCCs){
-          map<Vertex*, int> cmplxRelSchedTemp;
-          for (auto &v : sc->getVerticesOfSCC()){
+      for (auto &sc : complexSCCs) {
+          map<Vertex *, int> cmplxRelSchedTemp;
+          for (auto &v : sc->getVerticesOfSCC()) {
               cmplxRelSchedTemp[v] = bigComplexSchedule.at(v); // % (int)II;
-              auto rp = (Resource*)resourceModel.getResource(v);
+              auto rp = (Resource *) resourceModel.getResource(v);
               try {
                   usedFUsInModSlot.at({rp, bigComplexSchedule.at(v) % (int) II})++;
-              }catch(std::out_of_range&){
-                  usedFUsInModSlot[{rp, bigComplexSchedule.at(v) % (int)II}] = 1;
+              } catch (std::out_of_range &) {
+                  usedFUsInModSlot[{rp, bigComplexSchedule.at(v) % (int) II}] = 1;
               }
           }
           complexRelSchedules[sc] = cmplxRelSchedTemp;
@@ -691,21 +674,26 @@ namespace HatScheT {
       this->solverTimeout = seconds;
   }
 
-  void SCCSchedulerTemplate::sharedPointerCastAndSetup(shared_ptr<IterativeModuloSchedulerLayer>& ssptr) {
-      if (finalScheduler == scheduler::SMT){
+  void SCCSchedulerTemplate::sharedPointerCastAndSetup(shared_ptr<IterativeModuloSchedulerLayer> &ssptr) {
+      if (finalScheduler == scheduler::SMT) {
+#if defined(USE_Z3)
           auto ptr = std::dynamic_pointer_cast<SMTUnaryScheduler>(ssptr);
           ptr->setLatencySearchMethod(SMTUnaryScheduler::latSearchMethod::LINEAR);
+#else
+          throw (HatScheT::Exception("SCC-Template: SMT-Unary-Scheduler needs Z3... Z3 not linked"));
+#endif
       }
   }
 
+#if defined(USE_Z3)
   void SCCSchedulerTemplate::calcStarttimesPerComplexSCC() {
 
-      map<Vertex*, Vertex*> scc2v;
-      map<Vertex*, Vertex*> v2scc;
+      map<Vertex *, Vertex *> scc2v;
+      map<Vertex *, Vertex *> v2scc;
 
       int sccCounter = 0;
       // Creating maps and Generate Graph and ResourceModel and Inset Vertices
-      for (auto &sc : complexSCCs){
+      for (auto &sc : complexSCCs) {
           Graph sccG;
           ResourceModel sccRM;
           for (auto &v : sc->getVerticesOfSCC()) {
@@ -715,13 +703,14 @@ namespace HatScheT {
           }
           // Create Resources
           resetResourceModel(); // Needed because of strange exception in constructor of resource class.
-          for (auto &vinSccG : sccG.Vertices()){
+          for (auto &vinSccG : sccG.Vertices()) {
               auto res = resourceModel.getResource(scc2v.at(vinSccG));
-              Resource* newRes;
+              Resource *newRes;
               try {
                   newRes = sccRM.getResource(res->getName());
-              }catch (HatScheT::Exception&){
-                  newRes = &sccRM.makeResource(res->getName(), res->getLimit(), res->getLatency(), res->getBlockingTime());
+              } catch (HatScheT::Exception &) {
+                  newRes = &sccRM.makeResource(res->getName(), res->getLimit(), res->getLatency(),
+                                               res->getBlockingTime());
               }
               sccRM.registerVertex(vinSccG, newRes);
           }
@@ -737,7 +726,7 @@ namespace HatScheT {
           auto sccStartTimes = Utility::getSDCAsapAndAlapTimes(&sccG, &sccRM, this->II, true);
 
           z3::context cLocal;
-          z3::optimize opti (cLocal);
+          z3::optimize opti(cLocal);
 
           map<Vertex *, z3::expr> tvars;
           map<Vertex *, z3::expr> svars;
@@ -759,7 +748,8 @@ namespace HatScheT {
               int delay = e->getDelay();
               int distance = e->getDistance();
               opti.add(
-                  tvars.at(dst) - tvars.at(src) >= resourceModel.getResource(src)->getLatency() + delay - (distance * (int) II));
+                  tvars.at(dst) - tvars.at(src) >=
+                  resourceModel.getResource(src)->getLatency() + delay - (distance * (int) II));
           }
 
           z3::expr_vector zeroPoints(cLocal);
@@ -774,7 +764,7 @@ namespace HatScheT {
           opti.maximize(sum(timeVars));
 
           z3::check_result sati = opti.check();
-          if (!quiet) { cout << "Searching Max Latency of SCC: " << sati << ": "; }
+          if (!quiet) { cout << "Searching Max Latency of SCC (z3) ... " << sati << ": "; }
 
           auto m = opti.get_model();
 
@@ -797,10 +787,10 @@ namespace HatScheT {
           tvars.clear();
           svars.clear();
 
-          unordered_map<Vertex*, int>ltTemp;
-          unordered_map<Vertex*, Vertex*> new2old;
+          unordered_map<Vertex *, int> ltTemp;
+          unordered_map<Vertex *, Vertex *> new2old;
 
-          for (auto &v : sccStartTimes.first){
+          for (auto &v : sccStartTimes.first) {
               earliestStarttimes[scc2v.at(v.first)] = v.second;
               ltTemp[scc2v.at(v.first)] = sccStartTimes.second.at(v.first);
               new2old[scc2v.at(v.first)] = scc2v.at(v.first);
@@ -808,14 +798,130 @@ namespace HatScheT {
 
           auto length = Utility::getSDCScheduleLength(ltTemp, new2old, &resourceModel);
 
-          for (auto &v : sccStartTimes.second){
+          for (auto &v : sccStartTimes.second) {
               latestStarttimes[scc2v.at(v.first)] = max - (length - v.second);
           }
 
           sccCounter++;
       }
   }
-}
 
-#endif // USE_Z3
-#endif // USE_SCALP
+#elif defined(USE_SCALP)
+  void SCCSchedulerTemplate::calcStarttimesPerComplexSCCScaLP() {
+
+      cout << "ScaLP Version!" << endl;
+
+      map<Vertex *, Vertex *> scc2v;
+      map<Vertex *, Vertex *> v2scc;
+
+      int sccCounter = 0;
+      // Creating maps and Generate Graph and ResourceModel and Inset Vertices
+      for (auto &sc : complexSCCs) {
+          Graph sccG;
+          ResourceModel sccRM;
+          for (auto &v : sc->getVerticesOfSCC()) {
+              Vertex &newV = sccG.createVertex(v->getId());
+              scc2v[&newV] = v;
+              v2scc[v] = &newV;
+          }
+          // Create Resources
+          resetResourceModel(); // Needed because of strange exception in constructor of resource class.
+          for (auto &vinSccG : sccG.Vertices()) {
+              auto res = resourceModel.getResource(scc2v.at(vinSccG));
+              Resource *newRes;
+              try {
+                  newRes = sccRM.getResource(res->getName());
+              } catch (HatScheT::Exception &) {
+                  newRes = &sccRM.makeResource(res->getName(), res->getLimit(), res->getLatency(),
+                                               res->getBlockingTime());
+              }
+              sccRM.registerVertex(vinSccG, newRes);
+          }
+          modifyResourceModel(); // Needed because of strange exception in constructor of resource class.
+          auto edges = sc->getSCCEdges();
+          for (auto &e : edges) {
+              auto &newSrc = v2scc.at(&e->getVertexSrc());
+              auto &newDst = v2scc.at(&e->getVertexDst());
+              auto &newE = sccG.createEdge(*newSrc, *newDst, e->getDistance(), e->getDependencyType());
+              newE.setDelay(e->getDelay());
+          }
+
+          auto sccStartTimes = Utility::getSDCAsapAndAlapTimes(&sccG, &sccRM, this->II, true);
+
+          ScaLP::Solver s{"Gurobi"};
+
+          s.quiet = true;
+
+          map<Vertex *, ScaLP::Variable> _svars;
+          map<Vertex *, ScaLP::Variable> _tvars;
+          ScaLP::Term ssum;
+          ScaLP::Term tsum;
+
+          const double M = 100000;
+
+          //Create T-Variables and allow only pos. integers:
+          for (auto &v : sc->getVerticesOfSCC()) {
+              std::stringstream name;
+              name << v->getName();
+              ScaLP::Variable _tvar = ScaLP::newIntegerVariable("t" + name.str());
+              ScaLP::Variable _svar = ScaLP::newIntegerVariable("s" + name.str());
+              _tvars.insert({v, _tvar});
+              _svars.insert({v, _svar});
+              s.addConstraint((M * (1 - _svar)) - _tvar >= 0);
+              s.addConstraint(_tvar >= 0);
+              tsum += _tvar;
+              ssum += _svar;
+          }
+
+          s.addConstraint(ssum >= 1);
+
+          for (auto &e : sc->getSCCEdges()) {
+              Vertex *src = &e->getVertexSrc();
+              Vertex *dst = &e->getVertexDst();
+              int delay = e->getDelay();
+              int distance = e->getDistance();
+              s.addConstraint(_tvars.at(dst) - _tvars.at(src) >=
+                              resourceModel.getResource(src)->getLatency() + delay - (distance * (int) II));
+          }
+
+          s.setObjective(ScaLP::maximize(tsum));
+          s.solve();
+
+          auto maxResult = s.getResult();
+          int max = 0;
+
+          for (auto &it : _tvars) {
+              int startTimePlusLAtency =
+                  (int) maxResult.values.at(it.second) + resourceModel.getResource(it.first)->getLatency();
+              if (startTimePlusLAtency > max) {
+                  max = startTimePlusLAtency;
+              }
+          }
+
+          max += sccCounter;
+          maxTimesSCC.insert(max);
+          if (!quiet) { cout << "Searching Max Latency of SCC (ScaLP) ... " << max << endl; }
+
+          sccCounter++;
+          s.reset();
+
+          unordered_map<Vertex *, int> ltTemp;
+          unordered_map<Vertex *, Vertex *> new2old;
+
+          for (auto &v : sccStartTimes.first) {
+              earliestStarttimes[scc2v.at(v.first)] = v.second;
+              ltTemp[scc2v.at(v.first)] = sccStartTimes.second.at(v.first);
+              new2old[scc2v.at(v.first)] = scc2v.at(v.first);
+          }
+
+          auto length = Utility::getSDCScheduleLength(ltTemp, new2old, &resourceModel);
+
+          for (auto &v : sccStartTimes.second) {
+              latestStarttimes[scc2v.at(v.first)] = max - (length - v.second);
+          }
+
+      }
+  }
+#endif
+
+}

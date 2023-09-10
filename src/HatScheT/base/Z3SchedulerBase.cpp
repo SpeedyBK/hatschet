@@ -1,6 +1,7 @@
 //
 // Created by bkessler on 11/8/22.
 //
+#if defined(USE_Z3)
 
 #include "Z3SchedulerBase.h"
 
@@ -62,6 +63,5 @@ namespace HatScheT {
   void Z3SchedulerBase::z3Reset() {
       s.reset();
   }
-
-
 }
+#endif
