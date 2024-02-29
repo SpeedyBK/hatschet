@@ -81,27 +81,29 @@ namespace HatScheT {
      * Surpresses couts from layerclass.
      */
     bool layerQuiet;
-	/*!
-	 * calculate bounds for the schedule length if this is set
-	 * -> this might help the schedulers in their search procedure and (massively) speed up scheduling
-	 */
-	bool boundSL = false;
-	/*!
-	 * a value for the optimal schedule length (SL) with minSL <= SL
-	 */
-	int minSL = -1;
-	/*!
-	 * a value for the optimal schedule length (SL) with maxSL >= SL
-	 */
-	int maxSL = -1;
-	/*!
-	 * object to estimate the schedule length
-	 */
-	std::unique_ptr<ILPScheduleLengthEstimation> scheduleLengthEstimation;
-	/*!
-	 * store earliest start times based on the min SL estimation
-	 */
-	std::map<Vertex*, int> earliestStartTimes;
+		/*!
+		 * calculate bounds for the schedule length if this is set
+		 * -> this might help the schedulers in their search procedure and (massively) speed up scheduling
+		 */
+		bool boundSL = false;
+		/*!
+		 * a value for the optimal schedule length (SL) with minSL <= SL
+		 */
+		int minSL = -1;
+		/*!
+		 * a value for the optimal schedule length (SL) with maxSL >= SL
+		 */
+		int maxSL = -1;
+		/*!
+		 * object to estimate the schedule length
+		 */
+#ifdef USE_SCALP
+		std::unique_ptr<ILPScheduleLengthEstimation> scheduleLengthEstimation;
+#endif
+		/*!
+		 * store earliest start times based on the min SL estimation
+		 */
+		std::map<Vertex*, int> earliestStartTimes;
 
 	private:
 	/*!

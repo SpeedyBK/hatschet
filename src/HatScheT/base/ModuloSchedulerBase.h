@@ -72,10 +72,12 @@ public:
 protected:
 	/*!
 	 * indicates whether the first optimization objective is proven to be optimal (usually the II)
+	 * derived classes must set this value accordingly!
 	 */
 	bool firstObjectiveOptimal;
 	/*!
 	 * indicates whether the second optimization objective is proven to be optimal (usually the schedule length)
+	 * derived classes must set this value accordingly!
 	 */
 	bool secondObjectiveOptimal;
   /*!

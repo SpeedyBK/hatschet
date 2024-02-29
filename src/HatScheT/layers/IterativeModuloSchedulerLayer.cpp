@@ -146,6 +146,7 @@ void HatScheT::IterativeModuloSchedulerLayer::getDebugPrintouts() {
 }
 
 void HatScheT::IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation() {
+#ifdef USE_SCALP
 	// create object
 	this->scheduleLengthEstimation = std::unique_ptr<ILPScheduleLengthEstimation>(new ILPScheduleLengthEstimation(&this->g, &this->resourceModel, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, 1));
 	//ILPScheduleLengthEstimation scheduleLengthEstimation(&this->g, &this->resourceModel, {"Gurobi", "CPLEX", "LPSolve", "SCIP"}, 1);
@@ -176,4 +177,5 @@ void HatScheT::IterativeModuloSchedulerLayer::calculateScheduleLengthEstimation(
 		}
 	}
 	 */
+#endif
 }

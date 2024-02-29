@@ -225,7 +225,6 @@ namespace HatScheT {
 //		return minRecII;
 	}
 
-#ifdef USE_SCALP
 
 	double Utility::calcResMII(ResourceModel *rm, Target *t) {
 		double resMII = 1.0f;
@@ -254,6 +253,7 @@ namespace HatScheT {
 		return resMII;
 	}
 
+#ifdef USE_SCALP
 	int Utility::getILPASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
 		HatScheT::ASAPScheduler a(*g, *rm);
 		a.schedule();
@@ -265,6 +265,7 @@ namespace HatScheT {
 
 		return asap.getScheduleLength();
 	}
+#endif
 
 	int Utility::getASAPScheduleLength(HatScheT::Graph *g, HatScheT::ResourceModel *rm) {
 		HatScheT::ASAPScheduler a(*g, *rm);
@@ -313,6 +314,7 @@ namespace HatScheT {
 		//do critical path calculation
 		ASAPScheduler asap(*g, *rm);
 		asap.schedule();
+#if USE_SCALP
 		int limitlat = asap.getScheduleLength();
 
 		ASAPILPScheduler ilp(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
@@ -320,6 +322,9 @@ namespace HatScheT {
 		ilp.schedule();
 
 		int criticalPath = ilp.getScheduleLength();
+#else
+        int criticalPath = asap.getScheduleLength(); // probably not optimal but what can you do without scalp...
+#endif
 
 		//restore old resource model
 		for (auto it = restoreLimits.begin(); it != restoreLimits.end(); ++it) {
@@ -387,10 +392,13 @@ namespace HatScheT {
 		asap.schedule();
 		int criticalPath = asap.getScheduleLength();
 
+#if USE_SCALP
 		if (g->getNumberOfVertices() > 200) {
+#endif
 			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), asap.getII())) {
 				throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
 			}
+#if USE_SCALP
 		} else {
 			//get optimal critical path using asap ilp scheduler
 			HatScheT::ASAPILPScheduler *asapilp = new HatScheT::ASAPILPScheduler(*g, *rm, {"CPLEX", "Gurobi", "SCIP"});
@@ -411,6 +419,7 @@ namespace HatScheT {
 				delete asapilp;
 			}
 		}
+#endif
 
 		//restore values
 		for (auto it = rm->resourcesBegin(); it != rm->resourcesEnd(); ++it) {
@@ -427,11 +436,14 @@ namespace HatScheT {
 		asap.schedule();
 		int criticalPath = asap.getScheduleLength();
 
+#if USE_SCALP
 		if (g->getNumberOfVertices() > 200) {
+#endif
 			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), asap.getII())) {
 				throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
 			}
 			return criticalPath;
+#if USE_SCALP
 		}
 
 		//get optimal critical path using asap ilp scheduler
@@ -450,9 +462,12 @@ namespace HatScheT {
 		}
 
 		return criticalPath;
+#endif
 	}
 
 	double Utility::calcRecMII(Graph *g, ResourceModel *rm) {
+
+#ifdef USE_SCALP
 		ScaLP::Solver solver({"Gurobi", "CPLEX"});
 
 		// construct decision variables
@@ -483,9 +498,12 @@ namespace HatScheT {
 		}
 
 		return max(1.0, (double) (solver.getResult().objectiveValue)); // RecMII could be 0 if instance has no backedges.
+#else
+		return 1.0; // just start at 1 when we cannot make a better prediction
+#endif
 	}
 
-#endif
+//#endif
 
 	int Utility::sumOfStarttimes(std::map<Vertex *, int> &startTimes) {
 		int sum = 0;
@@ -507,6 +525,25 @@ namespace HatScheT {
 
 		for (auto &startTime : startTimes) {
 			if (startTime.second == timeStep) {
+				Vertex *v = startTime.first;
+				if (checkV != v && rm->getResource(v) == r) instancesUsed++;
+			}
+		}
+
+		if (instancesUsed < r->getLimit()) return true;
+		return false;
+	}
+
+	bool
+	Utility::resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV,
+														 int timeStep, int ii) {
+		//unlimited
+		if (r->getLimit() == -1) return true;
+
+		int instancesUsed = 0;
+
+		for (auto &startTime : startTimes) {
+			if (startTime.second % ii == timeStep % ii) {
 				Vertex *v = startTime.first;
 				if (checkV != v && rm->getResource(v) == r) instancesUsed++;
 			}

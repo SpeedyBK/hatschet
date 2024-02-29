@@ -221,7 +221,9 @@ set(HatScheT_SOURCES
         src/HatScheT/base/IterativeSchedulerBase.cpp
         src/HatScheT/utility/subgraphs/SCC.cpp
         src/HatScheT/utility/SDCSolver.cpp
-        )
+        src/HatScheT/base/ModuloSchedulerBase.cpp
+        src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
+        src/HatScheT/scheduler/dev/DeSouzaRosa23NIS.cpp)
 
 
 set(HatScheT_HEADERS
@@ -261,6 +263,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/dev/UnrollRationalIIScheduler.h
         src/HatScheT/scheduler/dev/SCCQScheduler.h
         src/HatScheT/scheduler/dev/CombinedRationalIIScheduler.h
+        src/HatScheT/scheduler/dev/DeSouzaRosa23NIS.h
         src/HatScheT/scheduler/ULScheduler.h
         src/HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h
         src/HatScheT/utility/Exception.h
@@ -323,8 +326,6 @@ set(HatScheT_HEADERS
 IF (SCALP_H AND SCALP_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/ILPSchedulerBase.cpp
-            src/HatScheT/base/ModuloSchedulerBase.cpp
-            src/HatScheT/layers/IterativeModuloSchedulerLayer.cpp
             src/HatScheT/scheduler/ilpbased/ASAPILPScheduler.cpp
             src/HatScheT/scheduler/ilpbased/MoovacScheduler.cpp
             src/HatScheT/scheduler/ilpbased/MoovacMinRegScheduler.cpp
@@ -398,7 +399,10 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.cpp
+            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
+            src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) AND (SCALP_H AND SCALP_LIB))

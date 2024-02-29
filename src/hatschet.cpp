@@ -30,6 +30,7 @@
 #include "HatScheT/utility/Tests.h"
 #include "HatScheT/scheduler/ASAPScheduler.h"
 #include "HatScheT/scheduler/ALAPScheduler.h"
+#include "HatScheT/scheduler/dev/DeSouzaRosa23NIS.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
@@ -171,6 +172,9 @@ void print_short_help() {
 	std::cout
 		<< "                            SATMINREG: Experimental integer II scheduler based on Boolean Satisfiability including register minimization (uses CaDiCaL as backend)"
 		<< std::endl;
+	std::cout
+		<< "                            NIS: Non-iterative SDC Modulo Scheduler"
+		<< std::endl;
     std::cout << "                            SCC: Experimental. Has two stages. First stage trys to find a schedule for the optimal II,\n"
               << "                              but is not optimized for latency. If a schedule is found the second stage try to optimize latency. User can\n"
               << "                              set which schedulers are used as backend." << std::endl;
@@ -271,6 +275,7 @@ int main(int argc, char *args[]) {
 		MOOVACMINREG,
 		RAMS,
 		ED97,
+		NIS,
 		SH11,
 		SH11RA,
 		MODULOSDC,
@@ -429,6 +434,8 @@ int main(int argc, char *args[]) {
 					schedulerSelection = RAMS;
 				} else if (schedulerSelectionStr == "ed97") {
 					schedulerSelection = ED97;
+				}  else if (schedulerSelectionStr == "nis") {
+					schedulerSelection = NIS;
 				} else if (schedulerSelectionStr == "sh11") {
 					schedulerSelection = SH11;
 				} else if (schedulerSelectionStr == "sh11ra") {
@@ -681,6 +688,9 @@ int main(int argc, char *args[]) {
 			case ED97:
 				cout << "ED97";
 				break;
+			case NIS:
+				cout << "NIS";
+				break;
 			case SH11:
 				cout << "SH11";
 				break;
@@ -823,6 +833,16 @@ int main(int argc, char *args[]) {
 				case UL:
 					scheduler = new HatScheT::ULScheduler(g, rm);
 					break;
+                case NIS: {
+                    isModuloScheduler = true;
+                    auto *nis = new HatScheT::NonIterativeModuloScheduler(g, rm);
+                    //if (timeout > 0) ed97->setSolverTimeout(timeout);
+                    //if (maxLatency > 0) ed97->setMaxLatencyConstraint(maxLatency);
+                    //ed97->setThreads(threads);
+                    //ed97->setSolverQuiet(solverQuiet);
+                    scheduler = nis;
+                    break;
+                }
 #ifdef USE_CADICAL
 				case SAT:
 					scheduler = new HatScheT::SATScheduler(g, rm);

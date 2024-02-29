@@ -192,7 +192,6 @@ namespace HatScheT {
      */
     static int getCyclesOfLongestPath(Graph *g, ResourceModel *rm, double II);
 
-#ifdef USE_SCALP
 
     /*!
      * \brief calcResMII with or witout a specific target
@@ -233,6 +232,7 @@ namespace HatScheT {
      */
     static int getCriticalPath(Graph *g, ResourceModel *rm);
 
+#ifdef USE_SCALP
     /*!
      * @brief determine ILP based asap schedule and return schedule length
      * @param g
@@ -287,6 +287,20 @@ namespace HatScheT {
     static bool
     resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV,
                       int timeStep);
+
+    /*!
+     * \brief resourceAvailable
+     * \param startTimes map of starttimes
+     * \param ResourceModel the used resource model
+     * \param r the resource that is looked for
+     * \param checkV avoid self counting
+     * \param timeStep the time step that is checked
+     * \param ii the ii used for modulo scheduling
+     * \return
+     */
+    static bool
+    resourceAvailable(std::map<Vertex *, int> &startTimes, ResourceModel *rm, const Resource *r, Vertex *checkV,
+                      int timeStep, int ii);
 
     /*!
      * \brief edgeIsInGraph
