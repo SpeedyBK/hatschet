@@ -174,7 +174,7 @@ FIND_PATH(Z3_H
         )
 
 IF (Z3_H AND Z3_LIB)
-    #add_definitions(-DUSE_Z3)
+    add_definitions(-DUSE_Z3)
     MESSAGE(STATUS "Found Z3 Lib: ${Z3_LIB} and Headers: ${Z3_H}")
 ELSE (Z3_H AND Z3_LIB)
     MESSAGE(STATUS "Could not find Z3 Lib (${Z3_LIB}) or Z3 Header (${Z3_H}). Please specify paths by setting CMAKE_PREFIX_PATH (-DCMAKE_PREFIX_PATH=<path to Z3 install dir>)")
