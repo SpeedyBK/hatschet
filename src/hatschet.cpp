@@ -510,8 +510,8 @@ int main(int argc, char *args[]) {
             }
                 //HatScheT Auto Test Function
 			else if (getCmdParameter(args[i], "--test=", value)) {
+                string str = std::string(value);
 #ifdef USE_SCALP
-				string str = std::string(value);
 				if (str == "READ" && HatScheT::Tests::readTest() == false) exit(-1);
 				if (str == "MOOVAC" && HatScheT::Tests::moovacTest() == false) exit(-1);
 				if (str == "RWRS" && HatScheT::Tests::readWriteReadScheduleTest() == false) exit(-1);
