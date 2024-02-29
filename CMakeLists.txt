@@ -399,10 +399,7 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTSCCScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTSCCCOMBINED.cpp
-            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
-            src/HatScheT/scheduler/smtbased/TempLatencyTest.cpp)
+            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) AND (SCALP_H AND SCALP_LIB))
