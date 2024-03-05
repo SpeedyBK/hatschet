@@ -346,6 +346,11 @@ namespace HatScheT {
 		 * @return if test was passed
 		 */
 		static bool clockGatingSchedulerTest();
+        /*!
+         * tests functionality of the Non-Iterative scheduler
+         * @return if test was passed
+         */
+        static bool NISTest();
 
-	};
+    };
 }
