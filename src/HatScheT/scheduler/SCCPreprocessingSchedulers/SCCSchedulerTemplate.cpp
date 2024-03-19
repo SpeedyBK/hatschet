@@ -4,6 +4,8 @@
 
 #include "SCCSchedulerTemplate.h"
 
+#include <sstream>
+
 #ifdef USE_Z3
 
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
@@ -272,7 +274,7 @@ namespace HatScheT {
       std::sort(complexSCCs.begin(), complexSCCs.end(), sccComp());
       std::sort(basicSCCs.begin(), basicSCCs.end(), sccComp());
 
-      numOfCmplxSCCs = complexSCCs.size();
+      numOfCmplxSCCs = (int)complexSCCs.size();
   }
 
   void SCCSchedulerTemplate::buildComplexGraph() {
@@ -406,7 +408,7 @@ namespace HatScheT {
           }
           case scheduler::ED97: {
 #if defined(USE_SCALP)
-              auto ED = new EichenbergerDavidson97Scheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              auto ED = new EichenbergerDavidson97Scheduler(gr, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, (int) this->II);
               shared_ptr<EichenbergerDavidson97Scheduler> schedulePtr(ED);
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
@@ -418,7 +420,7 @@ namespace HatScheT {
           }
           case scheduler::MOOVAC: {
 #if defined(USE_SCALP)
-              auto MOOVAC = new MoovacScheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              auto MOOVAC = new MoovacScheduler(gr, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, (int) this->II);
               shared_ptr<MoovacScheduler> schedulePtr(MOOVAC);
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
@@ -430,7 +432,7 @@ namespace HatScheT {
           }
           case scheduler::SH11: {
 #if defined(USE_SCALP)
-              auto SH = new SuchaHanzalek11Scheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              auto SH = new SuchaHanzalek11Scheduler(gr, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, (int) this->II);
               shared_ptr<SuchaHanzalek11Scheduler> schedulePtr(SH);
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
@@ -442,7 +444,7 @@ namespace HatScheT {
           }
           case scheduler::MODSDC: {
 #if defined(USE_SCALP)
-              auto MODSDC = new ModuloSDCScheduler(gr, rm, {"Gurobi"}, (int) this->II);
+              auto MODSDC = new ModuloSDCScheduler(gr, rm, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, (int) this->II);
               shared_ptr<ModuloSDCScheduler> schedulePtr(MODSDC);
               if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
               if (!quiet) schedulePtr->getDebugPrintouts();
@@ -848,7 +850,7 @@ namespace HatScheT {
 
           auto sccStartTimes = Utility::getSDCAsapAndAlapTimes(&sccG, &sccRM, this->II, true);
 
-          ScaLP::Solver s{"Gurobi"};
+          ScaLP::Solver s{"Gurobi", "CPLEX", "SCIP", "LPSolve"};
 
           s.quiet = true;
 

@@ -330,7 +330,7 @@ namespace HatScheT {
         * test functionality of Z3 based scheduler with "Conflict Driven Clause" Learning
         * @return if test was passed
         */
-		static bool smtCDLTest();
+		static bool smtSchedulerTest();
        /*!
         * test functionality of SCC-Preprocessor
         * @return if test was passed
@@ -347,10 +347,10 @@ namespace HatScheT {
 		 */
 		static bool clockGatingSchedulerTest();
         /*!
-         * tests functionality of the Non-Iterative scheduler
+         * tests functionality of the ScaLP ILP solver interface
          * @return if test was passed
          */
-        static bool NISTest();
+        static bool ScaLPTest();
 
     };
 }

@@ -110,7 +110,7 @@ namespace HatScheT {
 		}
 
 		int maxLatencyConstraint = 18;
-		HatScheT::MoovacScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
+		HatScheT::MoovacScheduler sched(g, rm, {"SCIP", "CPLEX", "Gurobi", "LPSolve"});
 		sched.setMaxLatencyConstraint(maxLatencyConstraint);
 		sched.setSolverQuiet(false);
 		sched.setQuiet(false);
@@ -3926,7 +3926,7 @@ namespace HatScheT {
       int length = Utility::getSDCScheduleLength(tMaxUnordered, helperMap, &rm);
 
       auto start_t = std::chrono::high_resolution_clock::now();
-      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi"}, 100, -1, 1);
+      auto ilpMinLatency = Utility::getMinLatency(&g, &rm, aslapTimes.first, aslapTimes.second, (int)minII, {"Gurobi", "CPLEX", "SCIP", "LPSolve"}, 100, -1, 1);
       auto end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
       auto t = ((double)duration / 1000);
@@ -3954,56 +3954,18 @@ namespace HatScheT {
 #endif
   }
 
-  bool Tests::smtCDLTest() {
+  bool Tests::smtSchedulerTest() {
 #ifdef USE_Z3
+
       HatScheT::Graph g;
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
+      string resStr = "benchmarks/Origami_Pareto/fir_gen/RM1.xml";
+      string graphStr = "benchmarks/Origami_Pareto/fir_gen/fir_gen.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
-
-      /*auto &add = rm.makeResource("add", 1, 2, 1);
-      auto &prod = rm.makeResource("prod", 1, 3, 1);
-      auto &io = rm.makeResource("io", 1, 1, 1);
-      auto &c = rm.makeResource("const", UNLIMITED, 1, 1);
-
-      Vertex &sum0 = g.createVertex(0);
-      sum0.setName("Sum_0");
-      Vertex &sum1 = g.createVertex(1);
-      sum1.setName("Sum_1");
-      Vertex &prod0 = g.createVertex(2);
-      prod0.setName("Product_0");
-      Vertex &prod1 = g.createVertex(3);
-      prod1.setName("Product_1");
-      Vertex &in = g.createVertex(4);
-      in.setName("In");
-      Vertex &out = g.createVertex(5);
-      out.setName("Out");
-      Vertex &c0 = g.createVertex(6);
-      c0.setName("Constant_0");
-      Vertex &c1 = g.createVertex(7);
-      c1.setName("Constant_1");
-      rm.registerVertex(&sum0, &add);
-      rm.registerVertex(&sum1, &add);
-      rm.registerVertex(&prod0, &prod);
-      rm.registerVertex(&prod1, &prod);
-      rm.registerVertex(&in, &io);
-      rm.registerVertex(&out, &io);
-      rm.registerVertex(&c0, &c);
-      rm.registerVertex(&c1, &c);
-      g.createEdge(in, sum0, 0);
-      g.createEdge(c0, prod0, 0);
-      g.createEdge(c1, prod1, 0);
-      g.createEdge(sum0, prod0, 1);
-      g.createEdge(sum0, prod1, 1);
-      g.createEdge(sum0, sum1, 0);
-      g.createEdge(prod0, sum0, 0);
-      g.createEdge(prod1, sum1, 0);
-      g.createEdge(sum1, out, 0);*/
 
       SMTCDLScheduler smtcdl(g, rm);
       auto start_t = std::chrono::high_resolution_clock::now();
@@ -4039,13 +4001,13 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/Origami_Pareto/iir_sos2/iir_sos2.graphml";
-      string resStr = "benchmarks/Origami_Pareto/iir_sos2/RM1.xml";
+      string graphStr = "benchmarks/ChStone/jpeg/graph17.graphml";
+      string resStr = "benchmarks/ChStone/jpeg/graph17_RM.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::ED97, SCCSchedulerTemplate::scheduler::MOOVAC);
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::ED97, SCCSchedulerTemplate::scheduler::ED97);
       auto start_t = std::chrono::high_resolution_clock::now();
       scc.setQuiet(false);
       scc.setSolverTimeout(600);
@@ -4434,83 +4396,97 @@ namespace HatScheT {
 #endif
 	}
 
-  bool Tests::NISTest() {
+    bool Tests::ScaLPTest() {
 #ifdef USE_SCALP
-      HatScheT::Graph g;
-      HatScheT::ResourceModel rm;
 
-      HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
-      string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
-      readerRes.readResourceModel(resStr.c_str());
-      HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
-      readerGraph.readGraph(graphStr.c_str());
+        HatScheT::Graph g;
+        HatScheT::ResourceModel rm;
 
-      /*auto &add = rm.makeResource("add", 1, 2, 1);
-      auto &prod = rm.makeResource("prod", 1, 3, 1);
-      auto &io = rm.makeResource("io", 1, 1, 1);
-      auto &c = rm.makeResource("const", UNLIMITED, 1, 1);
+        HatScheT::XMLResourceReader readerRes(&rm);
+        string resStr = "benchmarks/Origami_Pareto/iir_sos2/RM1.xml";
+        string graphStr = "benchmarks/Origami_Pareto/iir_sos2/iir_sos2.graphml";
+        readerRes.readResourceModel(resStr.c_str());
+        HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+        readerGraph.readGraph(graphStr.c_str());
 
-      Vertex &sum0 = g.createVertex(0);
-      sum0.setName("Sum_0");
-      Vertex &sum1 = g.createVertex(1);
-      sum1.setName("Sum_1");
-      Vertex &prod0 = g.createVertex(2);
-      prod0.setName("Product_0");
-      Vertex &prod1 = g.createVertex(3);
-      prod1.setName("Product_1");
-      Vertex &in = g.createVertex(4);
-      in.setName("In");
-      Vertex &out = g.createVertex(5);
-      out.setName("Out");
-      Vertex &c0 = g.createVertex(6);
-      c0.setName("Constant_0");
-      Vertex &c1 = g.createVertex(7);
-      c1.setName("Constant_1");
-      rm.registerVertex(&sum0, &add);
-      rm.registerVertex(&sum1, &add);
-      rm.registerVertex(&prod0, &prod);
-      rm.registerVertex(&prod1, &prod);
-      rm.registerVertex(&in, &io);
-      rm.registerVertex(&out, &io);
-      rm.registerVertex(&c0, &c);
-      rm.registerVertex(&c1, &c);
-      g.createEdge(in, sum0, 0);
-      g.createEdge(c0, prod0, 0);
-      g.createEdge(c1, prod1, 0);
-      g.createEdge(sum0, prod0, 1);
-      g.createEdge(sum0, prod1, 1);
-      g.createEdge(sum0, sum1, 0);
-      g.createEdge(prod0, sum0, 0);
-      g.createEdge(prod1, sum1, 0);
-      g.createEdge(sum1, out, 0);*/
+        int i = 0;
+        map<string, bool> solvers;
+        solvers.insert(std::make_pair("Gurobi", true));
+        solvers.insert(std::make_pair("CPLEX", true));
+        solvers.insert(std::make_pair("SCIP", true));
+        solvers.insert(std::make_pair("LPSolve", true));
 
-      NonIterativeModuloScheduler nis(g, rm);
-      auto start_t = std::chrono::high_resolution_clock::now();
-      nis.setQuiet(false);
-      nis.setSolverTimeout(600);
-      nis.schedule();
-      auto II = nis.getII();
-      auto end_t = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-      auto t = ((double)duration / 1000);
+        try {
+            cout << "Checking Gurobi ... " << endl;
+            HatScheT::MoovacScheduler sched(g, rm, {"Gurobi"});
+            sched.setSolverQuiet(true);
+            sched.setQuiet(true);
+            sched.setSolverTimeout(5);
+            sched.schedule();
+        }catch (ScaLP::Exception &e) {
+            cout << e << endl;
+            i++;
+            solvers.at("Gurobi") = false;
+        }
 
-      cout << "Solving Time: " << t << endl;
-      if (verifyModuloSchedule(g, rm, nis.getSchedule(), II)){
-          std::cout << "Tests::smtCDLScheduler: valid modulo schedule found. :-) "<< endl;
-          std::cout << "II=" << II << " Latency: " << nis.getScheduleLength() << std::endl;
-          for (auto &it : nis.getSchedule()) {
-              cout << it.first->getName() << ": " << it.second << endl;
-          }
-          return true;
-      }else{
-          std::cout << "Tests::smtCDLScheduler: invalid modulo schedule found :( II=" << nis.getII() << std::endl;
-          return false;
-      }
+        try {
+            cout << "Checking CPLEX ... " << endl;
+            HatScheT::MoovacScheduler sched(g, rm, {"CPLEX"});
+            sched.setSolverQuiet(true);
+            sched.setQuiet(true);
+            sched.setSolverTimeout(5);
+            sched.schedule();
+        }catch (ScaLP::Exception &e) {
+            cout << e << endl;
+            i++;
+            solvers.at("CPLEX") = false;
+        }
+
+        try {
+            cout << "Checking SCIP ... " << endl;
+            HatScheT::MoovacScheduler sched(g, rm, {"SCIP"});
+            sched.setSolverQuiet(true);
+            sched.setQuiet(true);
+            sched.setSolverTimeout(5);
+            sched.schedule();
+        }catch (ScaLP::Exception &e) {
+            cout << e << endl;
+            i++;
+            solvers.at("SCIP") = false;
+        }
+
+        try {
+            cout << "Checking LPSolve ... " << endl;
+            HatScheT::MoovacScheduler sched(g, rm, {"LPSolve"});
+            sched.setSolverQuiet(true);
+            sched.setQuiet(true);
+            sched.setSolverTimeout(5);
+            sched.schedule();
+        }catch (ScaLP::Exception &e) {
+            cout << e << endl;
+            i++;
+            solvers.at("LPSolve") = false;
+        }
+
+        if (i != 4) {
+            cout << "At least one Solver is working! ... Test passed!" << endl;
+            cout << "Working Solvers: ";
+            for (auto &it : solvers) {
+                if (it.second) {
+                    cout << it.first << " ";
+                }
+            }
+            cout << endl;
+            return true;
+        }else {
+            cout << "No Solver is working! ... Test failed!" << endl;
+            return false;
+        }
+
 #else
-      std::cout << "Tests::NISTest: link ScaLP to enable test" << std::endl;
+        std::cout << "Tests::ScaLPTest: link ScaLP to enable test" << std::endl;
       return true;
 #endif
-  }
+    }
 
 }

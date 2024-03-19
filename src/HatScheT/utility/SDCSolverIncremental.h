@@ -12,10 +12,10 @@
 #include <utility>
 #include <queue>
 #include <HatScheT/utility/FibonacciHeap.h>
-#include <boost/heap/fibonacci_heap.hpp>
+//#include <boost/heap/fibonacci_heap.hpp>
 
 namespace HatScheT {
-#define BOOST_QUEUE 1
+#define BOOST_QUEUE 0
 
 	class PriorityQueueElement {
 	public:

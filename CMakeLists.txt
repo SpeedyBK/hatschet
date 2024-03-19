@@ -166,10 +166,12 @@ ENDIF (SATSCM_H AND SATSCM_LIB)
 ####################
 FIND_LIBRARY(Z3_LIB
         NAMES libz3.so
+	HINTS "${Z3_PREFIX_PATH}/lib64"
         DOC "Directory of the Z3 library")
 
 FIND_PATH(Z3_H
         z3++.h
+	HINTS "${Z3_PREFIX_PATH}/include"
         DOC "Path to main z3 header file"
         )
 
@@ -177,7 +179,7 @@ IF (Z3_H AND Z3_LIB)
     add_definitions(-DUSE_Z3)
     MESSAGE(STATUS "Found Z3 Lib: ${Z3_LIB} and Headers: ${Z3_H}")
 ELSE (Z3_H AND Z3_LIB)
-    MESSAGE(STATUS "Could not find Z3 Lib (${Z3_LIB}) or Z3 Header (${Z3_H}). Please specify paths by setting CMAKE_PREFIX_PATH (-DCMAKE_PREFIX_PATH=<path to Z3 install dir>)")
+    MESSAGE(STATUS "Could not find Z3 Lib (${Z3_LIB}) or Z3 Header (${Z3_H}). Please specify paths by setting Z3_PREFIX_PATH (-DZ3_PREFIX_PATH=<path to Z3 install dir>)")
 ENDIF (Z3_H AND Z3_LIB)
 
 ####################
@@ -314,7 +316,6 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/satbased/SATCombinedRatIIScheduler.h
         src/HatScheT/scheduler/satbased/SATMinRegScheduler.h
         src/HatScheT/scheduler/satbased/CaDiCaLTerminator.h
-        src/HatScheT/scheduler/smtbased/SMTModScheduler.h
         src/HatScheT/utility/SDCSolver.h
         src/HatScheT/utility/SDCSolverBellmanFord.h
         src/HatScheT/utility/SDCSolverIncremental.h
@@ -397,12 +398,11 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 IF (Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/Z3SchedulerBase.cpp
-            src/HatScheT/scheduler/smtbased/SMTModScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
-IF ((Z3_H AND Z3_LIB) AND (SCALP_H AND SCALP_LIB))
+IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
             )
@@ -418,7 +418,7 @@ IF (SCALP_H AND SCALP_LIB)
     target_link_libraries(hatschet-bin ${SCALP_LIB})
 ENDIF (SCALP_H AND SCALP_LIB)
 IF (XERCESC_H AND XERCESC_LIB)
-    target_link_libraries(hatschet-bin ${XERCESC_LIB})
+    target_link_libraries(hatschet-bin ${XERCESC_LIB}/libxerces-c.so)
 ENDIF (XERCESC_H AND XERCESC_LIB)
 IF (CADICAL_H AND CADICAL_LIB)
     target_link_libraries(hatschet-bin ${CADICAL_LIB})
@@ -477,6 +477,7 @@ enable_testing()
 
 IF (SCALP_H AND SCALP_LIB AND XERCESC_H AND XERCESC_LIB)
     add_test("Read" "./hatschet" "--test=READ")
+    add_test("ScaLP" "./hatschet" "--test=SCALP")
     add_test("Moovac" "./hatschet" "--test=MOOVAC")
     add_test("ReadWriteReadSchedule" "./hatschet" "--test=RWRS")
     add_test("ModuloSDC" "./hatschet" "--test=MODULOSDC")
@@ -514,6 +515,7 @@ ENDIF (CADICAL_H AND CADICAL_LIB)
 
 IF (Z3_H AND Z3_LIB)
     add_test("Z3" "./hatschet" "--test=Z3")
+    add_test("SMT" "./hatschet" "--test=SMT")
 ENDIF (Z3_H AND Z3_LIB)
 
 ####################

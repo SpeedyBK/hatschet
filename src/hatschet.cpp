@@ -73,7 +73,6 @@
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
-#include "HatScheT/utility/Tests.h"
 
 #endif
 
@@ -537,81 +536,71 @@ int main(int argc, char *args[]) {
                 //HatScheT Auto Test Function
             else if (getCmdParameter(args[i], "--test=", value)) {
                 string str = std::string(value);
+
 #ifdef USE_SCALP
-                if (str == "READ" && HatScheT::Tests::readTest() == false) exit(-1);
-                if (str == "MOOVAC" && HatScheT::Tests::moovacTest() == false) exit(-1);
-                if (str == "RWRS" && HatScheT::Tests::readWriteReadScheduleTest() == false) exit(-1);
-                if (str == "INTEGERIINONRECT" && HatScheT::Tests::integerIINonRectTest() == false) exit(-1);
-                if (str == "INTEGERIIPB" && HatScheT::Tests::integerIIPBTest() == false) exit(-1);
-                if (str == "MODULOSDCFIEGE" && HatScheT::Tests::moduloSDCTestFiege() == false) exit(-1);
-                if (str == "RATIONALIIMODULOSDC" && HatScheT::Tests::rationalIIModuloSDCTest() == false) exit(-1);
-                if (str == "COMBINEDRATIONALII" && HatScheT::Tests::rationalIICombinedSchedulerTest() == false)
-                    exit(-1);
-                if (str == "ILPBASEDINTIIBINDINGCONG" && HatScheT::Tests::ilpBasedIntIIBindingTestCong() == false)
-                    exit(-1);
-                if (str == "ILPBASEDINTIIBINDING" && HatScheT::Tests::ilpBasedIntIIBindingTest() == false) exit(-1);
-                if (str == "OPTIMALINTIIGENERALIZEDBINDING" &&
-                    HatScheT::Tests::optimalIntegerIIGeneralizedBindingTest() == false)
-                    exit(-1);
-                if (str == "API" && HatScheT::Tests::apiTest() == false) exit(-1);
-                if (str == "ASAPHC" && HatScheT::Tests::asapHCTest() == false) exit(-1);
-                if (str == "ALAPHC" && HatScheT::Tests::alapHCTest() == false) exit(-1);
-                if (str == "ULScheduler" && HatScheT::Tests::ulSchedulerTest() == false) exit(-1);
-                if (str == "RATMINII" && HatScheT::Tests::rationalMinIITest() == false) exit(-1);
-                if (str == "CRITPATH" && HatScheT::Tests::cpTest() == false) exit(-1);
-                if (str == "KOSARAJU" && HatScheT::Tests::KosarajuTest() == false) exit(-1);
-                if (str == "DAIZHANG" && HatScheT::Tests::DaiZhangTest() == false) exit(-1);
-                if (str == "DAIZHANGTWO" && HatScheT::Tests::DaiZhangTestTwo() == false) exit(-1);
-                if (str == "COMPAREMSALGORITHMS" && HatScheT::Tests::compareModuloSchedulerTest() == false) exit(-1);
-                if (str == "RATIONALIISCHEDULER" && HatScheT::Tests::rationalIISchedulerTest() == false) exit(-1);
-                if (str == "UNIFORMRATIONALIISCHEDULER" &&
-                    HatScheT::Tests::uniformRationalIISchedulerTest() == false)
-                    exit(-1);
-                if (str == "UNIFORMRATIONALIISCHEDULERNEW" &&
-                    HatScheT::Tests::uniformRationalIISchedulerNewTest() == false)
-                    exit(-1);
-                if (str == "NONUNIFORMRATIONALIISCHEDULER" &&
-                    HatScheT::Tests::nonUniformRationalIISchedulerTest() == false)
-                    exit(-1);
-                if (str == "UNROLLSCHEDULER" && HatScheT::Tests::ratIIUnrollSchedulerTest() == false) exit(-1);
-                if (str == "RATIONALIISCHEDULERFIMMEL" && HatScheT::Tests::rationalIISchedulerFimmelTest() == false)
-                    exit(-1);
-                if (str == "RATIONALIIMODULOQ" && HatScheT::Tests::rationalIIModuloQTest() == false) exit(-1);
-                if (str == "RATIONALIISCCQ" && HatScheT::Tests::rationalIISCCQTest() == false) exit(-1);
-                if (str == "CADICAL" && HatScheT::Tests::cadicalTest() == false) exit(-1);
-                if (str == "SDSSCHEDULER" && HatScheT::Tests::sdsSchedulerTest() == false) exit(-1);
-                if (str == "ratIIVerifierWrongMRTDetected" &&
-                    HatScheT::Tests::ratIIVerifierWrongMRTDetected() == false)
-                    exit(-1);
-                if (str == "ratIIVerifierWrongCausalityDetected" &&
-                    HatScheT::Tests::ratIIVerifierWrongCausalityDetected() == false)
-                    exit(-1);
-                if (str == "RATIIOPTIMALITERATION" && HatScheT::Tests::ratIIOptimalIterationTest() == false) exit(-1);
-                if (str == "FIRSAMRATIIIMPLEMENTATION" &&
-                    HatScheT::Tests::firSAMRatIIImplementationsTest() == false)
-                    exit(-1);
-                if (str == "FIRSHIRATIIIMPLEMENTATION" &&
-                    HatScheT::Tests::firSHIRatIIImplementationsTest() == false)
-                    exit(-1);
-                if (str == "TCADEXAMPLE" && HatScheT::Tests::tcadExampleTest() == false) exit(-1);
-                if (str == "MAFIEGE" && HatScheT::Tests::maFiegeTest() == false) exit(-1);
-                if (str == "SCCQFAIL" && HatScheT::Tests::sccqFailTest() == false) exit(-1);
-                if (str == "IISMALLERONE" && HatScheT::Tests::iiSmallerOneTest() == false) exit(-1);
-                if (str == "MININTIIFAIL" && HatScheT::Tests::minIntIIFailTest() == false) exit(-1);
-                if (str == "FIBONACCI" && HatScheT::Tests::fibonacciTest() == false) exit(-1);
-                if (str == "SDCSOLVE" && HatScheT::Tests::sdcSolverTest() == false) exit(-1);
-                if (str == "TREEBIND" && HatScheT::Tests::treeBindTest() == false) exit(-1);
-                if (str == "TREEBINDCOMMUTATIVE" && HatScheT::Tests::treeBindCommutativeTest() == false) exit(-1);
-                if (str == "FCCMPAPER" && HatScheT::Tests::fccmPaperTest() == false) exit(-1);
-                if (str == "MULTIMINREGSCHEDULER" && HatScheT::Tests::multiMinRegSchedulerTest() == false) exit(-1);
-                if (str == "SATSCHEDULER" && HatScheT::Tests::satSchedulerTest() == false) exit(-1);
-                if (str == "SATBINDING" && HatScheT::Tests::satBinding() == false) exit(-1);
-                if (str == "ITLAYER" && HatScheT::Tests::iterativeLayerTest() == false) exit(-1);
-                if (str == "ILPLATENCY" && HatScheT::Tests::ilpMinMaxLatencyEstimationTest() == false) exit(-1);
-                if (str == "LATENCY" && HatScheT::Tests::utilityLatencyEstimation() == false) exit(-1);
-                if (str == "SDCSOLVERINCREMENTAL" && HatScheT::Tests::sdcSolverIncrementalTest() == false) exit(-1);
-                if (str == "CLOCKGATING" && HatScheT::Tests::clockGatingSchedulerTest() == false) exit(-1);
-                if (str == "NIS" && !HatScheT::Tests::NISTest()) exit(-1);
+                if (str == "READ"                   && !HatScheT::Tests::readTest()) exit(-1);
+                if (str == "MOOVAC"                 && !HatScheT::Tests::moovacTest()) exit(-1);
+                if (str == "RWRS"                   && !HatScheT::Tests::readWriteReadScheduleTest()) exit(-1);
+                if (str == "INTEGERIINONRECT"       && !HatScheT::Tests::integerIINonRectTest()) exit(-1);
+                if (str == "INTEGERIIPB"            && !HatScheT::Tests::integerIIPBTest()) exit(-1);
+                if (str == "MODULOSDCFIEGE"         && !HatScheT::Tests::moduloSDCTestFiege()) exit(-1);
+                if (str == "RATIONALIIMODULOSDC"    && !HatScheT::Tests::rationalIIModuloSDCTest()) exit(-1);
+                if (str == "COMBINEDRATIONALII"     && !HatScheT::Tests::rationalIICombinedSchedulerTest()) exit(-1);
+                if (str == "ILPBASEDINTIIBINDINGCONG"
+                                                    && !HatScheT::Tests::ilpBasedIntIIBindingTestCong()) exit(-1);
+                if (str == "ILPBASEDINTIIBINDING"   && !HatScheT::Tests::ilpBasedIntIIBindingTest()) exit(-1);
+                if (str == "OPTIMALINTIIGENERALIZEDBINDING"
+                                                    && !HatScheT::Tests::optimalIntegerIIGeneralizedBindingTest()) exit(-1);
+                if (str == "API"                    && !HatScheT::Tests::apiTest()) exit(-1);
+                if (str == "ASAPHC"                 && !HatScheT::Tests::asapHCTest()) exit(-1);
+                if (str == "ALAPHC"                 && !HatScheT::Tests::alapHCTest()) exit(-1);
+                if (str == "ULScheduler"            && !HatScheT::Tests::ulSchedulerTest()) exit(-1);
+                if (str == "RATMINII"               && !HatScheT::Tests::rationalMinIITest()) exit(-1);
+                if (str == "CRITPATH"               && !HatScheT::Tests::cpTest()) exit(-1);
+                if (str == "KOSARAJU"               && !HatScheT::Tests::KosarajuTest()) exit(-1);
+                if (str == "DAIZHANG"               && !HatScheT::Tests::DaiZhangTest()) exit(-1);
+                if (str == "DAIZHANGTWO"            && !HatScheT::Tests::DaiZhangTestTwo()) exit(-1);
+                if (str == "COMPAREMSALGORITHMS"    && !HatScheT::Tests::compareModuloSchedulerTest()) exit(-1);
+                if (str == "RATIONALIISCHEDULER"    && !HatScheT::Tests::rationalIISchedulerTest()) exit(-1);
+                if (str == "UNIFORMRATIONALIISCHEDULER"
+                                                    && !HatScheT::Tests::uniformRationalIISchedulerTest())exit(-1);
+                if (str == "UNIFORMRATIONALIISCHEDULERNEW"
+                                                    && !HatScheT::Tests::uniformRationalIISchedulerNewTest()) exit(-1);
+                if (str == "NONUNIFORMRATIONALIISCHEDULER"
+                                                    && !HatScheT::Tests::nonUniformRationalIISchedulerTest()) exit(-1);
+                if (str == "UNROLLSCHEDULER"        && !HatScheT::Tests::ratIIUnrollSchedulerTest()) exit(-1);
+                if (str == "RATIONALIISCHEDULERFIMMEL"
+                                                    && !HatScheT::Tests::rationalIISchedulerFimmelTest()) exit(-1);
+                if (str == "RATIONALIIMODULOQ"      && !HatScheT::Tests::rationalIIModuloQTest()) exit(-1);
+                if (str == "RATIONALIISCCQ"         && !HatScheT::Tests::rationalIISCCQTest()) exit(-1);
+                if (str == "CADICAL"                && !HatScheT::Tests::cadicalTest()) exit(-1);
+                if (str == "SDSSCHEDULER"           && !HatScheT::Tests::sdsSchedulerTest()) exit(-1);
+                if (str == "ratIIVerifierWrongMRTDetected"
+                                                    && !HatScheT::Tests::ratIIVerifierWrongMRTDetected()) exit(-1);
+                if (str == "ratIIVerifierWrongCausalityDetected"
+                                                    && !HatScheT::Tests::ratIIVerifierWrongCausalityDetected()) exit(-1);
+                if (str == "RATIIOPTIMALITERATION"  && !HatScheT::Tests::ratIIOptimalIterationTest()) exit(-1);
+                if (str == "FIRSAMRATIIIMPL"        && !HatScheT::Tests::firSAMRatIIImplementationsTest()) exit(-1);
+                if (str == "FIRSHIRATIIIMPL"        && !HatScheT::Tests::firSHIRatIIImplementationsTest()) exit(-1);
+                if (str == "TCADEXAMPLE"            && !HatScheT::Tests::tcadExampleTest()) exit(-1);
+                if (str == "MAFIEGE"                && !HatScheT::Tests::maFiegeTest()) exit(-1);
+                if (str == "SCCQFAIL"               && !HatScheT::Tests::sccqFailTest()) exit(-1);
+                if (str == "IISMALLERONE"           && !HatScheT::Tests::iiSmallerOneTest()) exit(-1);
+                if (str == "MININTIIFAIL"           && !HatScheT::Tests::minIntIIFailTest()) exit(-1);
+                if (str == "FIBONACCI"              && !HatScheT::Tests::fibonacciTest()) exit(-1);
+                if (str == "SDCSOLVE"               && !HatScheT::Tests::sdcSolverTest()) exit(-1);
+                if (str == "TREEBIND"               && !HatScheT::Tests::treeBindTest()) exit(-1);
+                if (str == "TREEBINDCOMMUTATIVE"    && !HatScheT::Tests::treeBindCommutativeTest()) exit(-1);
+                if (str == "FCCMPAPER"              && !HatScheT::Tests::fccmPaperTest()) exit(-1);
+                if (str == "MULTIMINREGSCHEDULER"   && !HatScheT::Tests::multiMinRegSchedulerTest()) exit(-1);
+                if (str == "SATSCHEDULER"           && !HatScheT::Tests::satSchedulerTest()) exit(-1);
+                if (str == "SATBINDING"             && !HatScheT::Tests::satBinding()) exit(-1);
+                if (str == "ITLAYER"                && !HatScheT::Tests::iterativeLayerTest()) exit(-1);
+                if (str == "ILPLATENCY"             && !HatScheT::Tests::ilpMinMaxLatencyEstimationTest()) exit(-1);
+                if (str == "LATENCY"                && !HatScheT::Tests::utilityLatencyEstimation()) exit(-1);
+                if (str == "SDCSOLVERINCREMENTAL"   && !HatScheT::Tests::sdcSolverIncrementalTest()) exit(-1);
+                if (str == "CLOCKGATING"            && !HatScheT::Tests::clockGatingSchedulerTest()) exit(-1);
+                if (str == "SCALP"                  && !HatScheT::Tests::ScaLPTest()) exit(-1);
 #else
                 throw HatScheT::Exception("ScaLP not active! Test function disabled!");
 #endif
@@ -620,8 +609,7 @@ int main(int argc, char *args[]) {
 
 #ifdef USE_Z3
                 if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
-                if (str == "SMTCDL" && !HatScheT::Tests::smtCDLTest()) exit(-1);
-                if (str == "SCCTEMPLATE" && !HatScheT::Tests::SCCTemplateTest()) exit(-1);
+                if (str == "SMT" && !HatScheT::Tests::smtSchedulerTest()) exit(-1);
 #endif
                 exit(0);
             } else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
@@ -1204,6 +1192,7 @@ int main(int argc, char *args[]) {
                             break;
                     }
                     scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
+                    ((HatScheT::SCCSchedulerTemplate*)scheduler)->setExpandMode(HatScheT::SCCSchedulerTemplate::sccExpandMode::fast);
                     isModuloScheduler = true;
                     if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;

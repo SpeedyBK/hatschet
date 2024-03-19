@@ -5,6 +5,7 @@
 #ifdef USE_Z3
 
 #include <z3++.h>
+#include <iostream>
 
 #ifndef HATSCHET_SMTSCHEDULERBASE_H
 #define HATSCHET_SMTSCHEDULERBASE_H
