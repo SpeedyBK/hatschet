@@ -44,7 +44,7 @@ public:
   /*!
    * use this methode to solve the scheduling problem
    */
-  virtual void schedule();
+  void schedule() override;
 
 protected:
   /*!
@@ -54,11 +54,11 @@ protected:
   /*!
   * \brief constructProblem Using the graph, resource model, an II and solver settings, the problem is constructed
   */
-  virtual void constructProblem();
+  void constructProblem() override;
   /*!
   *  \brief setObjective asap
   */
-  virtual void setObjective();
+  void setObjective() override;
   /*!
    * \brief generate and store the needed ilp variables
    */
@@ -74,7 +74,7 @@ protected:
   /*!
    * not needed
    */
-  virtual void resetContainer(){}
+  void resetContainer() override{}
   /*!
    * \brief container for time variables
    */

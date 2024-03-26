@@ -322,6 +322,7 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/FibonacciHeap.h
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
+        src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -399,7 +400,8 @@ IF (Z3_H AND Z3_LIB)
     list(APPEND HatScheT_SOURCES
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
+            src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))

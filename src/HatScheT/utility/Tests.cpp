@@ -4001,8 +4001,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/ChStone/jpeg/graph17.graphml";
-      string resStr = "benchmarks/ChStone/jpeg/graph17_RM.xml";
+      string resStr = "benchmarks/ChStone/jpeg/graph19_RM.xml";
+      string graphStr = "benchmarks/ChStone/jpeg/graph19.graphml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());

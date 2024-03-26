@@ -439,7 +439,7 @@ namespace HatScheT {
 #if USE_SCALP
 		if (g->getNumberOfVertices() > 200) {
 #endif
-			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), asap.getII())) {
+			if (!HatScheT::verifyModuloSchedule(*g, *rm, asap.getSchedule(), (int)asap.getII())) {
 				throw HatScheT::Exception("Utility.calcMaxII: ASAP scheduler found invalid result!");
 			}
 			return criticalPath;
@@ -468,7 +468,7 @@ namespace HatScheT {
 	double Utility::calcRecMII(Graph *g, ResourceModel *rm) {
 
 #ifdef USE_SCALP
-		ScaLP::Solver solver({"Gurobi", "CPLEX"});
+		ScaLP::Solver solver({"Gurobi", "CPLEX", "SCIP"});
 
 		// construct decision variables
 		auto II = ScaLP::newRealVariable("II", 0, ScaLP::INF());

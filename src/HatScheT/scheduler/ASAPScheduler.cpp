@@ -50,7 +50,7 @@ void ASAPScheduler::schedule()
       //check for limited resources with no inputs
       int time = 0;
       const Resource* r = this->resourceModel.getResource(v);
-      while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time) == false) {
+      while (!Utility::resourceAvailable(this->startTimes, &this->resourceModel, r, v, time)) {
         time++;
       }
 
@@ -59,17 +59,17 @@ void ASAPScheduler::schedule()
     }
   }
 
-  if(stack.size()==0){
+  if(stack.empty()){
     for(auto it=this->g.verticesBegin(); it!=this->g.verticesEnd(); ++it){
       Vertex* v = *it;
 
       // put nodes with only register input edges to init stack
-      if(Utility::allInputsAreRegisters(&this->g,v)==true)
+      if(Utility::allInputsAreRegisters(&this->g, v))
       {
         //check for limited resources with no inputs
         int time = 0;
         const Resource* r = this->resourceModel.getResource(v);
-        while (Utility::resourceAvailable(this->startTimes,&this->resourceModel,r,v,time) == false) {
+        while (!Utility::resourceAvailable(this->startTimes, &this->resourceModel, r, v, time)) {
           time++;
         }
 
@@ -79,26 +79,23 @@ void ASAPScheduler::schedule()
     }
   }
 
-  if(stack.size()==0){
+  if(stack.empty()){
     cout << "ASAPScheduler.schedule: Error stack not initialized! No schedule found!" << endl;
     throw HatScheT::Exception("ASAPScheduler.schedule: Error stack not initialized! No schedule found!");
   }
 
   //schedule
-  while(stack.empty()==false){
+  while(!stack.empty()){
     Vertex* v = stack.top();
     const Resource* r = this->resourceModel.getResource(v);
     stack.pop();
 
     set<Vertex*> subVertices = this->g.getSuccessors(v);
 
-    for(auto it=subVertices.begin(); it!=subVertices.end(); ++it) {
-      Vertex *subV = *it;
+    for(auto subV : subVertices) {
       std::list<const Edge *> edges = this->g.getEdges(v, subV);
 
-      for (auto it = edges.begin(); it != edges.end(); ++it) {
-        const Edge *e = *it;
-
+      for (auto e : edges) {
         if (e->getDistance() > 0) {
           continue;
         }
@@ -108,7 +105,7 @@ void ASAPScheduler::schedule()
         int time = std::max(this->startTimes[v] + r->getLatency() + e->getDelay(), this->startTimes[subV]);
         const Resource *rSub = this->resourceModel.getResource(subV);
 
-        while (Utility::resourceAvailable(this->startTimes, &this->resourceModel, rSub, subV, time) == false) {
+        while (!Utility::resourceAvailable(this->startTimes, &this->resourceModel, rSub, subV, time)) {
           ++time;
         }
 
