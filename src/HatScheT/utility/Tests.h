@@ -351,6 +351,11 @@ namespace HatScheT {
          * @return if test was passed
          */
         static bool ScaLPTest();
+        /*!
+         * tests functionality of the SMT-Based ASAP Scheduler
+         * @return if test was passed
+         */
+        static bool asapSMTScheduler();
 
     };
 }

@@ -12,7 +12,7 @@
 
 namespace HatScheT {
 
-    class ASAPSMTScheduler : public SchedulerBase, public Z3SchedulerBase{
+    class ASAPSMTScheduler : public SchedulerBase, public Z3SchedulerBase {
 
     public:
 
@@ -25,20 +25,27 @@ namespace HatScheT {
 
     private:
 
-        /*!
-         * Modeling Resource constraints:
-         * First of all we define a matrix of integer Z3-Variables. First dimension is the time slot
-         * of each operation. Second Dimension are the ressourses. So a graph like
-         * A -> B
-         * A -> B
-         * B -> C
-         * with the resources A, B, C will correspond to a matrix like
-         *
-         *      A   B   C
-         * 1    2   0   0
-         * 2    0   1   0
-         * 3    0   0   1
-         */
+        void generateTVariables();
+
+        void generateBVariables();
+
+        int getLatestStarttime();
+
+        z3::check_result addNonNegativeConstraints();
+
+        z3::check_result addDependencyConstraints();
+
+        z3::check_result addVariableConnections();
+
+        z3::check_result addResourceConstraints();
+
+        z3::expr* getTVariable(Vertex* vPtr);
+
+        z3::expr *getBvariable(Vertex *v, int i);
+
+        map<Vertex*, z3::expr> tVariables;
+
+        map<std::pair<Vertex*, int>, z3::expr> bVariables;
 
     };
 

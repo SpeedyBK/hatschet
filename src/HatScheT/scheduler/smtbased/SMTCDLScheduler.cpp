@@ -72,7 +72,7 @@ namespace HatScheT {
               {
                   secondObjectiveOptimal = false;
               }
-          } while (!(getZ3Result() == z3::unsat) and !violatedEdges.empty());
+          } while (getZ3Result() != z3::unsat and !violatedEdges.empty());
 
           if (scheduleFound)
           {

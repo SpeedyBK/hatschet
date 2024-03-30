@@ -610,6 +610,7 @@ int main(int argc, char *args[]) {
 #ifdef USE_Z3
                 if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
                 if (str == "SMT" && !HatScheT::Tests::smtSchedulerTest()) exit(-1);
+                if (str == "ASAPSMT" && !HatScheT::Tests::asapSMTScheduler()) exit(-1);
 #endif
                 exit(0);
             } else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {

@@ -72,6 +72,7 @@
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
+#include <HatScheT/scheduler/smtbased/ASAPSMTScheduler.h>
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
@@ -2040,7 +2041,7 @@ namespace HatScheT {
 #endif
 #endif
 
-		SCCQScheduler sccq(g, rm, {"Gurobi"});
+		SCCQScheduler sccq(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 		//UniformRationalIISchedulerNew sccq(g,rm,{"Gurobi"});
 		//NonUniformRationalIIScheduler sccq(g,rm,{"Gurobi"});
 
@@ -2068,7 +2069,7 @@ namespace HatScheT {
 		// NO SCHEDULE POSSIBLE FOR MIN II
 		g.createEdge(v0, v1, 0);
 		g.createEdge(v1, v0, 2);
-		EichenbergerDavidson97Scheduler ed97(g, rm, {"Gurobi"});
+		EichenbergerDavidson97Scheduler ed97(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 
 		ed97.setQuiet(false);
 
@@ -2471,7 +2472,7 @@ namespace HatScheT {
 		HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
 		readerGraph.readGraph(graphStr.c_str());
 
-		std::list<std::string> sw = {"Gurobi"}; // {"Gurobi", "CPLEX", "SCIP", "LPSolve"}
+		std::list<std::string> sw = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
 
 		long timeout = 300;
 
@@ -2565,7 +2566,7 @@ namespace HatScheT {
 		portAssignments[&e6] = 0;
 
 		// schedule that badboy
-		std::list<std::string> sw = {"Gurobi"};
+		std::list<std::string> sw = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
 		int timeout = 300;
 		std::map<Vertex*,int> sched;
 		std::vector<std::map<Vertex*,int>> ratIISched;
@@ -2744,7 +2745,7 @@ namespace HatScheT {
 			std::cout << "  " << it.first->getName() << " - " << it.second << std::endl;
 		}
 
-		OptimalIntegerIIGeneralizedBinding oigb(&g, &rm, sched, II, portAssignments, {}, {"Gurobi"});
+		OptimalIntegerIIGeneralizedBinding oigb(&g, &rm, sched, II, portAssignments, {}, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 		oigb.setQuiet(false);
 		oigb.setAllowMultipleBindings(false);
 		oigb.bind();
@@ -2977,7 +2978,7 @@ namespace HatScheT {
 		portAssignments[&e6] = 0;
 
 		// schedule that badboy
-		std::list<std::string> sw = {"Gurobi"};
+		std::list<std::string> sw = {"CPLEX", "Gurobi", "SCIP", "LPSolve"};
 		int timeout = 5;
 		std::map<Vertex*,int> sched;
 		std::vector<std::map<Vertex*,int>> ratIISched;
@@ -3026,7 +3027,7 @@ namespace HatScheT {
 		std::cout << "tree-based implementation register costs: " << treeBind.registerCosts << std::endl;
 
 		// compare with ILP-based optimal binding
-		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
+		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"CPLEX", "Gurobi", "SCIP", "LPSolve"},timeout,true);
 		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind, sched);
 		std::cout << "ILP-based binding finished" << std::endl;
 		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,commutativeOps);
@@ -3137,7 +3138,7 @@ namespace HatScheT {
 		std::cout << "tree-based implementation register costs: " << treeBind.registerCosts << std::endl;
 
 		// compare with ILP-based optimal binding
-		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"Gurobi"},timeout,true);
+		auto ilpBind = Binding::getILPBasedIntIIBinding(sched,&g,&rm,(int)intII,wMux,wReg,portAssignments,maxMux,maxReg,commutativeOps,{"CPLEX", "Gurobi", "SCIP", "LPSolve"},timeout,true);
 		auto ilpGeneralBind = Utility::convertBindingContainer(&g, &rm, intII, ilpBind, sched);
 		std::cout << "ILP-based binding finished" << std::endl;
 		bool ilpValid = verifyIntIIBinding(&g,&rm,sched,(int)intII,ilpBind,commutativeOps);
@@ -3247,7 +3248,7 @@ namespace HatScheT {
 		portAssignments[&e14] = 0;
 
 		// schedule it
-		EichenbergerDavidson97Scheduler scheduler(g,rm, {"Gurobi"});
+		EichenbergerDavidson97Scheduler scheduler(g,rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"});
 		scheduler.setQuiet(true);
 		scheduler.setSolverTimeout(60);
 		scheduler.schedule();
@@ -4050,10 +4051,10 @@ namespace HatScheT {
       readerGraph.readGraph(graphStr.c_str());
 
       list<IterativeModuloSchedulerLayer*> schedulers;
-      schedulers.push_back(new MoovacScheduler(g, rm, {"Gurobi"}));
-      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"Gurobi"}));
-      schedulers.push_back(new ModuloSDCScheduler(g, rm, {"Gurobi"}));
-      schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"Gurobi"}));
+      schedulers.push_back(new MoovacScheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}));
+      schedulers.push_back(new EichenbergerDavidson97Scheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}));
+      schedulers.push_back(new ModuloSDCScheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}));
+      schedulers.push_back(new SuchaHanzalek11Scheduler(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSolve"}));
 #ifdef USE_Z3
       schedulers.push_back(new SMTUnaryScheduler(g, rm));
       schedulers.push_back(new SCCSchedulerTemplate(g, rm, SCCSchedulerTemplate::scheduler::SMT, SCCSchedulerTemplate::scheduler::ED97));
@@ -4399,6 +4400,9 @@ namespace HatScheT {
     bool Tests::ScaLPTest() {
 #ifdef USE_SCALP
 
+        /*!
+         * DO NOT CHANGE Solverwishlists in this function!
+         */
         HatScheT::Graph g;
         HatScheT::ResourceModel rm;
 
@@ -4460,7 +4464,7 @@ namespace HatScheT {
             HatScheT::MoovacScheduler sched(g, rm, {"LPSolve"});
             sched.setSolverQuiet(true);
             sched.setQuiet(true);
-            sched.setSolverTimeout(5);
+            sched.setSolverTimeout(2);
             sched.schedule();
         }catch (ScaLP::Exception &e) {
             cout << e << endl;
@@ -4487,6 +4491,24 @@ namespace HatScheT {
         std::cout << "Tests::ScaLPTest: link ScaLP to enable test" << std::endl;
       return true;
 #endif
+    }
+
+    bool Tests::asapSMTScheduler() {
+
+        HatScheT::Graph g;
+        HatScheT::ResourceModel rm;
+
+        HatScheT::XMLResourceReader readerRes(&rm);
+        string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
+        string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+        readerRes.readResourceModel(resStr.c_str());
+        HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
+        readerGraph.readGraph(graphStr.c_str());
+
+        HatScheT::ASAPSMTScheduler sched(g, rm);
+        sched.schedule();
+
+        return false;
     }
 
 }
