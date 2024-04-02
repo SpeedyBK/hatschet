@@ -12,7 +12,6 @@ namespace HatScheT {
     SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
             : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
-        lastLength = 0;
         actualLength = 0;
 
     }
@@ -29,12 +28,15 @@ namespace HatScheT {
 
         addNonNegativeConstraints();
 
+        addMaxLatencyConstraint();
+
         addDependencyConstraints();
 
         bool breakCondition = false;
         do {
-            cout << actualLength << ": " << getLatestStarttime() << endl;
+            breakCondition = actualLength >= getLatestStarttime() or getZ3Result() == z3::unsat;
             actualLength = getLatestStarttime();
+            cout << "Actual Length: " << actualLength << " II: " << II << endl;
             generateBVariables();
 
             cout << "Variable Connections ..." << endl;
@@ -42,11 +44,16 @@ namespace HatScheT {
 
             cout << "Resource Constraints ..." << endl;
             addResourceConstraints((int)II);
-            lastLength = actualLength;
-            breakCondition = actualLength >= getLatestStarttime();
         } while (!breakCondition);
 
         cout << getZ3Result() << endl;
+        if (getZ3Result() == z3::unsat){
+            bVariables.clear();
+            tVariables.clear();
+            actualLength = 0;
+            z3Reset();
+            return;
+        }
 
         if (getZ3Result() == z3::sat){
             for (auto &vIt : g.Vertices()){
@@ -171,7 +178,7 @@ namespace HatScheT {
             }
 
             for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
-                for (int i = lastLength; i < actualLength; ++i) {
+                for (int i = 0; i <= actualLength; ++i) {
                     z3::expr constraint(c);
                     constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
                     s.add(constraint);
@@ -182,8 +189,6 @@ namespace HatScheT {
     }
 
     z3::check_result SMTMODIncrementalScheduler::addResourceConstraints(int candidateII) {
-
-        cout << "addResourceConstraints(): Last Length: " << lastLength << " Actual Length: " << actualLength << " II: " << II << endl;
 
         for (auto &it: resourceModel.Resources()) {
             if (it->isUnlimited()) {
@@ -201,11 +206,24 @@ namespace HatScheT {
                     }
                 }
                 if (!b_expressions.empty()) {
+                    //z3::expr debug = z3::atmost(b_expressions, it->getLimit());
+                    //cout << debug << endl;
                     this->s.add(z3::atmost(b_expressions, it->getLimit()));
                 }
             }
         }
         return z3Check();
+    }
+
+    z3::check_result SMTMODIncrementalScheduler::addMaxLatencyConstraint() {
+        if (this->maxLatencyConstraint > 0) {
+            for (auto &vIt : g.Vertices()){
+                s.add(*getTVariable(vIt) <= maxLatencyConstraint);
+            }
+        }
+
+        return z3Check();
+
     }
 
 }

@@ -40,11 +40,11 @@ namespace HatScheT {
 
     z3::check_result addResourceConstraints(int candidateII);
 
+    z3::check_result addMaxLatencyConstraint();
+
     map<Vertex*, z3::expr> tVariables;
 
     map<std::pair<Vertex*, int>, z3::expr> bVariables;
-
-    int lastLength;
 
     int actualLength;
 
