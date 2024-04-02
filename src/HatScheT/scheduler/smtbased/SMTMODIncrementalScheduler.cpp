@@ -2,183 +2,210 @@
 // Created by bkessler on 4/1/24.
 //
 
+#include <sstream>
 #include "SMTMODIncrementalScheduler.h"
 
-namespace HatScheT{
+#include "HatScheT/utility/Verifier.h"
 
-  SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II) : IterativeModuloSchedulerLayer(g, resourceModel, II) {
+namespace HatScheT {
 
-      lastLength = 0;
-      actualLength = 0;
+    SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
+            : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
-  }
+        lastLength = 0;
+        actualLength = 0;
 
-  void SMTMODIncrementalScheduler::scheduleInit() {
-      cout << "scheduleInit(): Doing Nothing for now..." << endl;
-  }
+    }
 
-  void SMTMODIncrementalScheduler::scheduleIteration() {
+    void SMTMODIncrementalScheduler::scheduleInit() {
+        cout << "scheduleInit(): Doing Nothing for now..." << endl;
+    }
 
-      generateTVariables();
+    void SMTMODIncrementalScheduler::scheduleIteration() {
 
-      addNonNegativeConstraints();
+        auto start_t = std::chrono::high_resolution_clock::now();
 
-      addDependencyConstraints();
+        generateTVariables();
 
-      bool breakCondition = false;
-      do {
-          cout << actualLength << ": " << getLatestStarttime() << endl;
-          actualLength = getLatestStarttime();
-          generateBVariables();
+        addNonNegativeConstraints();
 
-          cout << "Variable Connections ..." << endl;
-          addVariableConnections();
+        addDependencyConstraints();
 
-          cout << "Resource Constraints ..." << endl;
-          addResourceConstraints();
-          lastLength = actualLength;
-          breakCondition = actualLength >= getLatestStarttime();
-      } while (!breakCondition);
+        bool breakCondition = false;
+        do {
+            cout << actualLength << ": " << getLatestStarttime() << endl;
+            actualLength = getLatestStarttime();
+            generateBVariables();
 
-      cout << "Modell: " << endl;
-      cout << getZ3Result() << endl;
+            cout << "Variable Connections ..." << endl;
+            addVariableConnections();
 
-      if (getZ3Result() == z3::sat) {
-          cout << m << endl;
-      }
+            cout << "Resource Constraints ..." << endl;
+            addResourceConstraints((int)II);
+            lastLength = actualLength;
+            breakCondition = actualLength >= getLatestStarttime();
+        } while (!breakCondition);
 
-      exit(-1);
-  }
+        cout << getZ3Result() << endl;
 
-  void SMTMODIncrementalScheduler::generateTVariables() {
-      tVariables.clear();
-      for (auto &vIt : g.Vertices()){
-          std::stringstream name;
-          name << vIt->getName();
-          z3::expr e(c.int_const(name.str().c_str()));
-          tVariables.insert(std::make_pair(vIt, e));
-      }
-  }
+        if (getZ3Result() == z3::sat){
+            for (auto &vIt : g.Vertices()){
+                cout << vIt->getName() << ": " << m.eval(*getTVariable(vIt)).get_numeral_int() << endl;
+                startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
+            }
+        }
+        if ( verifyModuloSchedule(g, resourceModel, startTimes, (int)II) ){
+            cout << "Schedule Valid for II = " << (int)II << endl;
+        }else {
+            cout << "Schedule NOT Valid" << endl;
+        }
 
-  z3::expr *SMTMODIncrementalScheduler::getTVariable(Vertex* vPtr) {
-      try {
-          return &tVariables.at(vPtr);
-      }catch(std::out_of_range&){
-          //cout << "Out_of_Range: " << vPtr->getName() << endl;
-          throw (HatScheT::Exception("SMTMODIncrementalScheduler: getTVariable() std::out_of_range"));
-      }
-  }
+        auto end_t = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
+        cout << "Done after " << (double)duration/1000 << " seconds." << endl;
 
-  z3::check_result SMTMODIncrementalScheduler::addNonNegativeConstraints() {
+        exit(-1);
+    }
 
-      for (auto &vIt : g.Vertices()){
-          s.add(tVariables.at(vIt) >= 0);
-      }
+    void SMTMODIncrementalScheduler::generateTVariables() {
+        tVariables.clear();
+        for (auto &vIt: g.Vertices()) {
+            std::stringstream name;
+            name << vIt->getName();
+            z3::expr e(c.int_const(name.str().c_str()));
+            tVariables.insert(std::make_pair(vIt, e));
+        }
+    }
 
-      return z3Check();
-  }
+    z3::expr *SMTMODIncrementalScheduler::getTVariable(Vertex *vPtr) {
+        try {
+            return &tVariables.at(vPtr);
+        } catch (std::out_of_range &) {
+            //cout << "Out_of_Range: " << vPtr->getName() << endl;
+            throw (HatScheT::Exception("SMTMODIncrementalScheduler: getTVariable() std::out_of_range"));
+        }
+    }
 
-  z3::check_result SMTMODIncrementalScheduler::addDependencyConstraints() {
+    z3::check_result SMTMODIncrementalScheduler::addNonNegativeConstraints() {
 
-      for(auto &eIt : g.Edges()) {
-          Vertex* src = &(eIt->getVertexSrc());
-          Vertex* dst = &(eIt->getVertexDst());
+        for (auto &vIt: g.Vertices()) {
+            s.add(tVariables.at(vIt) >= 0);
+        }
 
-          auto ti = *getTVariable(src);
-          auto tj = *getTVariable(dst);
+        return z3Check();
+    }
 
-          this->s.add(ti - tj + this->resourceModel.getVertexLatency(src) + eIt->getDelay() - (int)this->II * (eIt->getDistance()) <= 0);
-      }
+    z3::check_result SMTMODIncrementalScheduler::addDependencyConstraints() {
 
-      return z3Check();
+        for (auto &eIt: g.Edges()) {
+            Vertex *src = &(eIt->getVertexSrc());
+            Vertex *dst = &(eIt->getVertexDst());
 
-  }
+            auto ti = *getTVariable(src);
+            auto tj = *getTVariable(dst);
 
-  int SMTMODIncrementalScheduler::getLatestStarttime() {
-      int tMax = 0;
-      for (auto &vIt: g.Vertices()) {
-          if (resourceModel.getResource(vIt)->isUnlimited()){
-              continue;
-          }
-          if (tMax < m.eval(*getTVariable(vIt)).get_numeral_int()){
-              tMax = m.eval(*getTVariable(vIt)).get_numeral_int();
-          }
-      }
-      return tMax;
-  }
+            this->s.add(ti - tj + this->resourceModel.getVertexLatency(src) + eIt->getDelay() -
+                        (int) this->II * (eIt->getDistance()) <= 0);
+        }
 
-  void SMTMODIncrementalScheduler::generateBVariables() {
+        return z3Check();
 
-      auto tMax = getLatestStarttime();
+    }
 
-      for (auto &rIt: resourceModel.Resources()) {
-          if (rIt->isUnlimited()) {
-              continue;
-          }
-          for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
+    int SMTMODIncrementalScheduler::getLatestStarttime() {
+        int tMax = 0;
+        for (auto &vIt: g.Vertices()) {
+            if (resourceModel.getResource(vIt)->isUnlimited()) {
+                continue;
+            }
+            if (tMax < m.eval(*getTVariable(vIt)).get_numeral_int()) {
+                tMax = m.eval(*getTVariable(vIt)).get_numeral_int();
+            }
+        }
+        return tMax;
+    }
 
-              for (int i = 0; i <= tMax; ++i) {
+    void SMTMODIncrementalScheduler::generateBVariables() {
 
-                  try {
-                      getBvariable((Vertex*)vIt, i);
-                  }catch (HatScheT::Exception&){
+        auto tMax = getLatestStarttime();
 
-                      std::stringstream name;
-                      name << "B_" << vIt->getName() << "_" << i;
-                      z3::expr e(c.bool_const(name.str().c_str()));
-                      auto key = std::make_pair((Vertex *) vIt, i);
-                      bVariables.insert(std::make_pair(key, e));
+        for (auto &rIt: resourceModel.Resources()) {
+            if (rIt->isUnlimited()) {
+                continue;
+            }
+            for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
 
-                  }
-              }
-          }
-      }
-  }
+                for (int i = 0; i <= tMax; ++i) {
 
-  z3::expr *SMTMODIncrementalScheduler::getBvariable(Vertex *v, int i) {
-      auto key = std::make_pair(v, i);
-      try {
-          return &bVariables.at(key);
-      }catch(std::out_of_range&){
-          //cout << "Out_of_Range: " << v->getName() << "_" << i << endl;
-          throw (HatScheT::Exception("smtbased Scheduler: getBvariable std::out_of_range"));
-      }
-  }
+                    try {
+                        getBvariable((Vertex *) vIt, i);
+                    } catch (HatScheT::Exception &) {
 
-  z3::check_result SMTMODIncrementalScheduler::addVariableConnections() {
+                        std::stringstream name;
+                        name << "B_" << vIt->getName() << "_" << i;
+                        z3::expr e(c.bool_const(name.str().c_str()));
+                        auto key = std::make_pair((Vertex *) vIt, i);
+                        bVariables.insert(std::make_pair(key, e));
 
-      for (auto &rIt : resourceModel.Resources()){
-          if (rIt->isUnlimited()){
-              continue;
-          }
+                    }
+                }
+            }
+        }
+    }
 
-          for (auto &vIt : resourceModel.getVerticesOfResource(rIt)){
-              for (int i = lastLength; i < actualLength; ++i) {
-                  z3::expr constraint(c);
-                  constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
-                  s.add(constraint);
-              }
-          }
-      }
-      return z3Check();
-  }
+    z3::expr *SMTMODIncrementalScheduler::getBvariable(Vertex *v, int i) {
+        auto key = std::make_pair(v, i);
+        try {
+            return &bVariables.at(key);
+        } catch (std::out_of_range &) {
+            //cout << "Out_of_Range: " << v->getName() << "_" << i << endl;
+            throw (HatScheT::Exception("smtbased Scheduler: getBvariable std::out_of_range"));
+        }
+    }
 
-  z3::check_result SMTMODIncrementalScheduler::addResourceConstraints() {
+    z3::check_result SMTMODIncrementalScheduler::addVariableConnections() {
 
-      for (auto &rIt : resourceModel.Resources()){
-          if (rIt->isUnlimited()){
-              continue;
-          }
-          for (int i = lastLength; i < actualLength; ++i) {
-              z3::expr_vector ev(c);
-              for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
-                  ev.push_back(*getBvariable((Vertex *) vIt, i));
-              }
-              this->s.add(z3::atmost(ev, rIt->getLimit()));
-          }
-      }
-      return z3Check();
+        for (auto &rIt: resourceModel.Resources()) {
+            if (rIt->isUnlimited()) {
+                continue;
+            }
 
-  }
+            for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
+                for (int i = lastLength; i < actualLength; ++i) {
+                    z3::expr constraint(c);
+                    constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
+                    s.add(constraint);
+                }
+            }
+        }
+        return z3Check();
+    }
+
+    z3::check_result SMTMODIncrementalScheduler::addResourceConstraints(int candidateII) {
+
+        cout << "addResourceConstraints(): Last Length: " << lastLength << " Actual Length: " << actualLength << " II: " << II << endl;
+
+        for (auto &it: resourceModel.Resources()) {
+            if (it->isUnlimited()) {
+                continue;
+            }
+            for (int i = 0; i < candidateII; i++) {
+                set<const Vertex *> vSet = resourceModel.getVerticesOfResource(it);
+                z3::expr_vector b_expressions(c);
+                for (auto &vIt: vSet) {
+                    for (int j = 0; j <= actualLength; j++) {
+                        if ((j % candidateII) != i) {
+                            continue;
+                        }
+                        b_expressions.push_back(*getBvariable((Vertex *) vIt, j));
+                    }
+                }
+                if (!b_expressions.empty()) {
+                    this->s.add(z3::atmost(b_expressions, it->getLimit()));
+                }
+            }
+        }
+        return z3Check();
+    }
 
 }

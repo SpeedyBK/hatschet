@@ -4501,22 +4501,27 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string resStr = "benchmarks/Origami_Pareto/fir_gen/RM1.xml";
-        string graphStr = "benchmarks/Origami_Pareto/fir_gen/fir_gen.graphml";
+        string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
+        string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
+        //HatScheT::ASAPSMTScheduler sched(g, rm);
         HatScheT::SMTMODIncrementalScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"Gurobi"});
-        sched.setMaxLatencyConstraint(400);
         sched.setQuiet(false);
         cout << "Starting ..." << endl;
+        auto start_t = std::chrono::high_resolution_clock::now();
         sched.schedule();
+        auto end_t = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
 
         for (auto &it : sched.getSchedule()) {
             cout << it.first->getName() << ": " << it.second << endl;
         }
+
+        cout << "Done after " << duration << "seconds." << endl;
 
         return false;
     }

@@ -38,7 +38,7 @@ namespace HatScheT {
 
     z3::check_result addVariableConnections();
 
-    z3::check_result addResourceConstraints();
+    z3::check_result addResourceConstraints(int candidateII);
 
     map<Vertex*, z3::expr> tVariables;
 
