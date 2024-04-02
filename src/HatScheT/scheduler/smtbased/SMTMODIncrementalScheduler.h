@@ -48,6 +48,8 @@ namespace HatScheT {
 
     int actualLength;
 
+    int lastLength;
+
   };
 
 }

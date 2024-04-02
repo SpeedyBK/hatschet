@@ -12,7 +12,8 @@ namespace HatScheT {
     SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
             : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
-        actualLength = 0;
+        actualLength = 241; // Max Latency estimation...
+        lastLength = 0;
 
     }
 
@@ -35,15 +36,18 @@ namespace HatScheT {
         bool breakCondition = false;
         do {
             breakCondition = actualLength >= getLatestStarttime() or getZ3Result() == z3::unsat;
-            actualLength = getLatestStarttime();
+            //actualLength = getLatestStarttime();
             cout << "Actual Length: " << actualLength << " II: " << II << endl;
             generateBVariables();
 
-            cout << "Variable Connections ..." << endl;
+            cout << "Variable Connections ... ";
             addVariableConnections();
+            cout << getZ3Result() << endl;
 
-            cout << "Resource Constraints ..." << endl;
+            cout << "Resource Constraints ... ";
             addResourceConstraints((int)II);
+            cout << getZ3Result() << endl;
+            //lastLength = actualLength;
         } while (!breakCondition);
 
         cout << getZ3Result() << endl;
@@ -134,7 +138,7 @@ namespace HatScheT {
 
     void SMTMODIncrementalScheduler::generateBVariables() {
 
-        auto tMax = getLatestStarttime();
+        auto tMax = actualLength;
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -178,7 +182,7 @@ namespace HatScheT {
             }
 
             for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
-                for (int i = 0; i <= actualLength; ++i) {
+                for (int i = lastLength; i <= actualLength; ++i) {
                     z3::expr constraint(c);
                     constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
                     s.add(constraint);
