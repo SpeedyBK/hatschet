@@ -4,10 +4,11 @@
 #if defined(USE_Z3)
 
 #include "Z3SchedulerBase.h"
+#include <HatScheT/utility/Exception.h>
 
 namespace HatScheT {
 
-  HatScheT::Z3SchedulerBase::Z3SchedulerBase() : m(this->c), p(this->c), s(this->c){
+  HatScheT::Z3SchedulerBase::Z3SchedulerBase() : m(this->c), p(this->c), s(this->c), o(this->c){
       this->z3Quiet = true;
       this->r = z3::unknown;
   }
@@ -62,6 +63,57 @@ namespace HatScheT {
 
   void Z3SchedulerBase::z3Reset() {
       s.reset();
+  }
+
+  z3::check_result Z3SchedulerBase::z3Optimize() {
+
+      o.set(p);
+      if (!z3Quiet){
+          std::cout << std::endl << "Checking system of " << o.assertions().size() << " assertions... " << std::endl;
+          //Too many COUTs, remove comment if needed:
+          //std::cout << s << std::endl;
+      }
+
+      z3::check_result res = o.check();
+
+      if (res == z3::sat){
+          m = o.get_model();
+          if (!z3Quiet){
+              std::cout << "Result:" << std::endl;
+              std::cout << res << std::endl;
+              //Too many COUTs, remove comment if needed:
+              //std::cout << "Model:" << std::endl;
+              //std::cout << m << std::endl;
+          }
+      } else if (res == z3::unsat) {
+          if (!z3Quiet) {
+              std::cout << "Result:" << std::endl;
+              std::cout << res << std::endl;
+              std::cout << "Unsat-Core:" << std::endl;
+              std::cout << o.unsat_core() << std::endl;
+          }
+      } else {
+          if (!z3Quiet) {
+              std::cout << "Result:" << std::endl;
+              std::cout << res << std::endl;
+          }
+      }
+
+      this->r = res;
+      return res;
+
+  }
+
+  void Z3SchedulerBase::setZ3OptimizerObjective(const std::string& objective, const z3::expr& objectiveTerm) {
+
+      if (objective == "minimize"){
+          o.minimize(objectiveTerm);
+      }else if (objective == "maximize"){
+          o.maximize(objectiveTerm);
+      }else{
+          throw (HatScheT::Exception("z3SchedulerBase: Could not set optimization objective!"));
+      }
+
   }
 }
 #endif

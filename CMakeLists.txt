@@ -166,7 +166,7 @@ ENDIF (SATSCM_H AND SATSCM_LIB)
 ####################
 FIND_LIBRARY(Z3_LIB
         NAMES libz3.so
-	HINTS "${Z3_PREFIX_PATH}/lib64"
+	HINTS "${Z3_PREFIX_PATH}/lib"
         DOC "Directory of the Z3 library")
 
 FIND_PATH(Z3_H
@@ -323,6 +323,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
         src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -401,7 +402,8 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
-            src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))

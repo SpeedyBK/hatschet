@@ -190,13 +190,6 @@ namespace HatScheT {
     void combineRelativeSchedules();
 
     /*!
-     * I think this one is replaced by calcStarttimesPerComplexSCC(), and is still a leftover from times long ago... ;)
-     * I'll leave it in until i'm sure that it is safe to remove it.
-     * @return max latency of complex SCCs.
-     */
-    int expandSCC();
-
-    /*!
      * Function to select the scheduler. Can be used to select SCC-scheduler and latency-scheduler.
      * @param schedEnum tells the function which scheduler should be used. If "None" is selected, it returns a nullptr.
      * @param gr DFG of the problem.

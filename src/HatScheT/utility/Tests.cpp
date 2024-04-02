@@ -74,10 +74,12 @@
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
 #include <HatScheT/scheduler/smtbased/ASAPSMTScheduler.h>
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
+#include <HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
 #include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
 #include <HatScheT/scheduler/dev/DeSouzaRosa23NIS.h>
+#include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4499,14 +4501,22 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string resStr = "benchmarks/Origami_Pareto/mat_inv/RM1.xml";
-        string graphStr = "benchmarks/Origami_Pareto/mat_inv/mat_inv.graphml";
+        string resStr = "benchmarks/Origami_Pareto/fir_gen/RM1.xml";
+        string graphStr = "benchmarks/Origami_Pareto/fir_gen/fir_gen.graphml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        HatScheT::ASAPSMTScheduler sched(g, rm);
+        HatScheT::SMTMODIncrementalScheduler sched(g, rm);
+        //HatScheT::ASAPILPScheduler sched(g, rm, {"Gurobi"});
+        sched.setMaxLatencyConstraint(400);
+        sched.setQuiet(false);
+        cout << "Starting ..." << endl;
         sched.schedule();
+
+        for (auto &it : sched.getSchedule()) {
+            cout << it.first->getName() << ": " << it.second << endl;
+        }
 
         return false;
     }

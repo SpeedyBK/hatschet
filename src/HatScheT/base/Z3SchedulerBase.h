@@ -6,6 +6,7 @@
 
 #include <z3++.h>
 #include <iostream>
+#include <string>
 
 #ifndef HATSCHET_SMTSCHEDULERBASE_H
 #define HATSCHET_SMTSCHEDULERBASE_H
@@ -30,6 +31,10 @@ namespace HatScheT {
 
     void z3Reset();
 
+    void setZ3OptimizerObjective(const std::string& objective, const z3::expr& objectiveTerm);
+
+    z3::check_result z3Optimize();
+
     z3::check_result z3Check();
 
     z3::check_result getZ3Result() { return this->r; };
@@ -37,6 +42,8 @@ namespace HatScheT {
     z3::context c;
 
     z3::solver s;
+
+    z3::optimize o;
 
     z3::model m;
 

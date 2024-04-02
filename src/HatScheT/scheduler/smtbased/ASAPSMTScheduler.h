@@ -31,6 +31,8 @@ namespace HatScheT {
 
         int getLatestStarttime();
 
+        z3::check_result minimizeLatency();
+
         z3::check_result addNonNegativeConstraints();
 
         z3::check_result addDependencyConstraints();
@@ -46,6 +48,10 @@ namespace HatScheT {
         map<Vertex*, z3::expr> tVariables;
 
         map<std::pair<Vertex*, int>, z3::expr> bVariables;
+
+        int acturalRow;
+
+        int lastRow;
 
     };
 

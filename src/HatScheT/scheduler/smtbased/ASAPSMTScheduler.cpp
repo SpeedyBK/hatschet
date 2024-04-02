@@ -13,6 +13,9 @@ namespace HatScheT {
 
     ASAPSMTScheduler::ASAPSMTScheduler(Graph &g, ResourceModel &rm) : SchedulerBase(g, rm) {
 
+        acturalRow = 0;
+        lastRow = 0;
+
     }
 
     void ASAPSMTScheduler::schedule() {
@@ -25,13 +28,20 @@ namespace HatScheT {
         cout << "Dependency Constraints ..." << endl;
         addDependencyConstraints();
 
-        generateBVariables();
+        bool breakCondition = false;
+        do {
+            cout << acturalRow << ": " << getLatestStarttime() << endl;
+            acturalRow = getLatestStarttime();
+            generateBVariables();
 
-        cout << "Variable Connections ..." << endl;
-        addVariableConnections();
+            cout << "Variable Connections ..." << endl;
+            addVariableConnections();
 
-        cout << "Resource Constraints ..." << endl;
-        addResourceConstraints();
+            cout << "Resource Constraints ..." << endl;
+            addResourceConstraints();
+            lastRow = acturalRow;
+            breakCondition = acturalRow >= getLatestStarttime();
+        } while (!breakCondition);
 
         cout << getZ3Result() << endl;
 
@@ -40,6 +50,17 @@ namespace HatScheT {
                 cout << vIt->getName() << ": " << m.eval(*getTVariable(vIt)).get_numeral_int() << endl;
                 startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
             }
+        }
+
+        cout << "Schedule found... minimizing Starttimes" << endl;
+        while (minimizeLatency() == z3::sat) {
+            cout << getZ3Result() << endl;
+        }
+        cout << getZ3Result() << endl;
+
+        for (auto &vIt : g.Vertices()){
+            cout << vIt->getName() << ": " << m.eval(*getTVariable(vIt)).get_numeral_int() << endl;
+            startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
         }
 
         auto L = getScheduleLength();
@@ -98,25 +119,15 @@ namespace HatScheT {
             if (rIt->isUnlimited()){
                 continue;
             }
-
-            int i = 0;
-            int end = 0;
-            do{
-                end = getLatestStarttime();
-                cout << i << ": " << end << endl;
-                ++i;
-                generateBVariables();
-                addVariableConnections();
+            for (int i = lastRow; i < acturalRow; ++i) {
                 z3::expr_vector ev(c);
-                for (auto &vIt : resourceModel.getVerticesOfResource(rIt)){
-                    ev.push_back(*getBvariable((Vertex*)vIt, i));
+                for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
+                    ev.push_back(*getBvariable((Vertex *) vIt, i));
                 }
                 this->s.add(z3::atmost(ev, rIt->getLimit()));
-                z3Check();
-            } while ( i < end );
+            }
         }
-
-        return getZ3Result();
+        return z3Check();
 
     }
 
@@ -162,13 +173,9 @@ namespace HatScheT {
                         bVariables.insert(std::make_pair(key, e));
 
                     }
-
                 }
-
             }
-
         }
-
     }
 
     int ASAPSMTScheduler::getLatestStarttime() {
@@ -192,19 +199,36 @@ namespace HatScheT {
             }
 
             for (auto &vIt : resourceModel.getVerticesOfResource(rIt)){
-                for (int i = 0; i < getLatestStarttime(); ++i) {
+                for (int i = lastRow; i < acturalRow; ++i) {
                     z3::expr constraint(c);
-                    constraint = z3::ite(*getTVariable((Vertex *) vIt) == i,
-                                         *getBvariable((Vertex *) vIt, i),
-                                         !*getBvariable((Vertex *) vIt, i));
+                    constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
                     s.add(constraint);
                 }
             }
-
         }
-
         return z3Check();
     }
+
+  z3::check_result ASAPSMTScheduler::minimizeLatency() {
+
+        z3::expr maxEx(c);
+        int maxValue = 0;
+
+        for (auto &vIt : g.Vertices()){
+            if (m.eval(*getTVariable(vIt)).get_numeral_int() > maxValue) {
+                maxValue = m.eval(*getTVariable(vIt)).get_numeral_int();
+                maxEx = *getTVariable(vIt);
+            }
+        }
+
+        cout << maxEx << ": " << maxValue << endl;
+
+        s.add(maxEx < maxValue);
+
+        setZ3Timeout(10);
+
+        return z3Check();
+  }
 
 } // HatScheT
 
