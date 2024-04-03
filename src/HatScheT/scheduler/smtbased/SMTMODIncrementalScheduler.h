@@ -16,6 +16,8 @@ namespace HatScheT {
 
     SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II=-1);
 
+    void setSolverTimeout (double seconds) override;
+
   private:
 
     void scheduleInit() override;

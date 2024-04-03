@@ -6,13 +6,14 @@
 #include "SMTMODIncrementalScheduler.h"
 
 #include "HatScheT/utility/Verifier.h"
+#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
     SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
             : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
-        actualLength = 65; // Max Latency estimation...
+        actualLength = 0; // Max Latency estimation...
         lastLength = 0;
 
     }
@@ -22,6 +23,8 @@ namespace HatScheT {
     }
 
     void SMTMODIncrementalScheduler::scheduleIteration() {
+
+        actualLength = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::maxLatency, true).maxLat;
 
         auto start_t = std::chrono::high_resolution_clock::now();
 
@@ -36,7 +39,6 @@ namespace HatScheT {
         bool breakCondition = false;
         do {
             breakCondition = actualLength >= getLatestStarttime() or getZ3Result() == z3::unsat;
-            //actualLength = getLatestStarttime();
             cout << "Actual Length: " << actualLength << " II: " << II << endl;
             generateBVariables();
 
@@ -47,14 +49,12 @@ namespace HatScheT {
             cout << "Resource Constraints ... ";
             addResourceConstraints((int)II);
             cout << getZ3Result() << endl;
-            //lastLength = actualLength;
         } while (!breakCondition);
 
         cout << getZ3Result() << endl;
         if (getZ3Result() == z3::unsat){
             bVariables.clear();
             tVariables.clear();
-            actualLength = 65;
             z3Reset();
             return;
         }
@@ -65,7 +65,8 @@ namespace HatScheT {
                 startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
             }
         }
-        if ( verifyModuloSchedule(g, resourceModel, startTimes, (int)II) ){
+        scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int)II);
+        if ( scheduleFound ){
             cout << "Schedule Valid for II = " << (int)II << endl;
         }else {
             cout << "Schedule NOT Valid" << endl;
@@ -75,7 +76,6 @@ namespace HatScheT {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
         cout << "Done after " << (double)duration/1000 << " seconds." << endl;
 
-        exit(-1);
     }
 
     void SMTMODIncrementalScheduler::generateTVariables() {
@@ -224,10 +224,19 @@ namespace HatScheT {
             for (auto &vIt : g.Vertices()){
                 s.add(*getTVariable(vIt) <= maxLatencyConstraint);
             }
+        }else{
+            for (auto &vIt : g.Vertices()){
+                s.add(*getTVariable(vIt) <= actualLength);
+            }
         }
 
         return z3Check();
 
+    }
+
+    void SMTMODIncrementalScheduler::setSolverTimeout(double seconds) {
+        setZ3Timeout((int)seconds);
+        this->solverTimeout = seconds;
     }
 
 }

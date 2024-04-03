@@ -96,6 +96,7 @@
 #include <z3++.h>
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h>
 
 #endif
 
@@ -280,6 +281,7 @@ int main(int argc, char *args[]) {
       SCC,
       SMTCDL,
       SMT,
+      SMTSIMPLE,
       SDS,
       SAT,
       SATLAT,
@@ -423,6 +425,8 @@ int main(int argc, char *args[]) {
                     schedulerSelection = SMT;
                 } else if (schedulerSelectionStr == "smtcdl") {
                     schedulerSelection = SMTCDL;
+                } else if (schedulerSelectionStr == "smtsimple") {
+                    schedulerSelection = SMTSIMPLE;
                 } else if (schedulerSelectionStr == "sat") {
                     schedulerSelection = SAT;
                 } else if (schedulerSelectionStr == "satlat") {
@@ -749,6 +753,11 @@ int main(int argc, char *args[]) {
             case LATENCYTEST:
                 cout << "LATENCYTEST";
                 break;
+            case SCC:
+                cout << "SCC" << endl;
+                break;
+            case SMTSIMPLE:
+                cout << "SMTSIMPLE" << endl;
         }
         std::cout << std::endl;
 
@@ -1198,6 +1207,11 @@ int main(int argc, char *args[]) {
                     if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
                 }
+                case SMTSIMPLE:
+                    scheduler = new HatScheT::SMTMODIncrementalScheduler(g, rm);
+                    isModuloScheduler = true;
+                    cout << "SMTSIMPLE is currently WIP" << endl; // ToDo: Finish it!
+                    break;
                 case SMT:
                     scheduler = new HatScheT::SMTUnaryScheduler(g, rm);
                     isModuloScheduler = true;
