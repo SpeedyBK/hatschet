@@ -4501,8 +4501,8 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/Origami_Pareto/r22_FFT/r22_FFT.graphml";
-        string resStr = "benchmarks/Origami_Pareto/r22_FFT/RM1.xml";
+        string graphStr = "benchmarks/MachSuite/aes2/graph4.graphml";
+        string resStr = "benchmarks/MachSuite/aes2/graph4_RM.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
@@ -4511,7 +4511,7 @@ namespace HatScheT {
         HatScheT::SMTMODIncrementalScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"Gurobi"});
         sched.setQuiet(false);
-        sched.setMaxLatencyConstraint(241);
+        sched.setMaxLatencyConstraint(65);
         cout << "Starting ..." << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
         sched.schedule();

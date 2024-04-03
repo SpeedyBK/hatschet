@@ -12,7 +12,7 @@ namespace HatScheT {
     SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
             : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
-        actualLength = 241; // Max Latency estimation...
+        actualLength = 65; // Max Latency estimation...
         lastLength = 0;
 
     }
@@ -54,7 +54,7 @@ namespace HatScheT {
         if (getZ3Result() == z3::unsat){
             bVariables.clear();
             tVariables.clear();
-            actualLength = 0;
+            actualLength = 65;
             z3Reset();
             return;
         }
