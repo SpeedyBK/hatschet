@@ -44,6 +44,8 @@ namespace HatScheT {
 
     z3::check_result addMaxLatencyConstraint();
 
+    void z3CheckWithTimeTracking();
+
     map<Vertex*, z3::expr> tVariables;
 
     map<std::pair<Vertex*, int>, z3::expr> bVariables;

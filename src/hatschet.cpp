@@ -1209,6 +1209,7 @@ int main(int argc, char *args[]) {
                 }
                 case SMTSIMPLE:
                     scheduler = new HatScheT::SMTMODIncrementalScheduler(g, rm);
+                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     isModuloScheduler = true;
                     cout << "SMTSIMPLE is currently WIP" << endl; // ToDo: Finish it!
                     break;

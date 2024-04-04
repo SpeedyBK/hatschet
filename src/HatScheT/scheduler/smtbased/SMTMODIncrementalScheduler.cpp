@@ -19,14 +19,23 @@ namespace HatScheT {
     }
 
     void SMTMODIncrementalScheduler::scheduleInit() {
-        cout << "scheduleInit(): Doing Nothing for now..." << endl;
+        if(!quiet) {
+            cout << "Scheduling with " << this->getName() <<":" << endl;
+            cout << "Rec-Min-II: " << recMinII << endl;
+            cout << "Res-Min-II: " << resMinII << endl;
+            cout << "Max. II: " << maxII << endl;
+            cout << "Vertices of G: " << g.getNumberOfVertices() << endl;
+            cout << "Edges of G: " << g.getNumberOfEdges() << endl;
+        }
     }
 
     void SMTMODIncrementalScheduler::scheduleIteration() {
 
-        actualLength = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::maxLatency, true).maxLat;
+        if (this->solverTimeout > 0) {
+            setZ3Timeout((int) solverTimeout);
+        }
 
-        auto start_t = std::chrono::high_resolution_clock::now();
+        actualLength = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::maxLatency, true).maxLat;
 
         generateTVariables();
 
@@ -36,9 +45,13 @@ namespace HatScheT {
 
         addDependencyConstraints();
 
+        if(getZ3Result() != z3::sat){
+            return;
+        }
+
         bool breakCondition = false;
         do {
-            breakCondition = actualLength >= getLatestStarttime() or getZ3Result() == z3::unsat;
+            breakCondition = actualLength >= getLatestStarttime() or getZ3Result() == z3::unsat or getZ3Result()==z3::unknown;
             cout << "Actual Length: " << actualLength << " II: " << II << endl;
             generateBVariables();
 
@@ -52,29 +65,27 @@ namespace HatScheT {
         } while (!breakCondition);
 
         cout << getZ3Result() << endl;
-        if (getZ3Result() == z3::unsat){
-            bVariables.clear();
-            tVariables.clear();
-            z3Reset();
-            return;
+
+        if (getZ3Result() == z3::unknown){
+            firstObjectiveOptimal = false;
         }
 
         if (getZ3Result() == z3::sat){
             for (auto &vIt : g.Vertices()){
-                cout << vIt->getName() << ": " << m.eval(*getTVariable(vIt)).get_numeral_int() << endl;
                 startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
             }
         }
+
         scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int)II);
         if ( scheduleFound ){
             cout << "Schedule Valid for II = " << (int)II << endl;
         }else {
             cout << "Schedule NOT Valid" << endl;
+            bVariables.clear();
+            tVariables.clear();
+            z3Reset();
+            return;
         }
-
-        auto end_t = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
-        cout << "Done after " << (double)duration/1000 << " seconds." << endl;
 
     }
 
@@ -92,7 +103,6 @@ namespace HatScheT {
         try {
             return &tVariables.at(vPtr);
         } catch (std::out_of_range &) {
-            //cout << "Out_of_Range: " << vPtr->getName() << endl;
             throw (HatScheT::Exception("SMTMODIncrementalScheduler: getTVariable() std::out_of_range"));
         }
     }
@@ -103,7 +113,9 @@ namespace HatScheT {
             s.add(tVariables.at(vIt) >= 0);
         }
 
-        return z3Check();
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
     }
 
     z3::check_result SMTMODIncrementalScheduler::addDependencyConstraints() {
@@ -119,7 +131,9 @@ namespace HatScheT {
                         (int) this->II * (eIt->getDistance()) <= 0);
         }
 
-        return z3Check();
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
 
     }
 
@@ -189,7 +203,10 @@ namespace HatScheT {
                 }
             }
         }
-        return z3Check();
+
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
     }
 
     z3::check_result SMTMODIncrementalScheduler::addResourceConstraints(int candidateII) {
@@ -216,7 +233,10 @@ namespace HatScheT {
                 }
             }
         }
-        return z3Check();
+
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
     }
 
     z3::check_result SMTMODIncrementalScheduler::addMaxLatencyConstraint() {
@@ -230,13 +250,27 @@ namespace HatScheT {
             }
         }
 
-        return z3Check();
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
 
     }
 
     void SMTMODIncrementalScheduler::setSolverTimeout(double seconds) {
         setZ3Timeout((int)seconds);
-        this->solverTimeout = seconds;
+        this->solverTimeout = (int)seconds;
     }
+
+  void SMTMODIncrementalScheduler::z3CheckWithTimeTracking() {
+
+      setZ3Timeout((uint32_t)(ceil(timeRemaining)));
+      if (!this->quiet){
+          printZ3Params();
+      }
+      startTimeTracking();
+      z3Check();
+      endTimeTracking();
+
+  }
 
 }

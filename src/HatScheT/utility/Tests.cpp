@@ -4501,17 +4501,17 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/MachSuite/aes2/graph4.graphml";
-        string resStr = "benchmarks/MachSuite/aes2/graph4_RM.xml";
+        string graphStr = "benchmarks/ChStone/aes/graph12.graphml";
+        string resStr = "benchmarks/ChStone/aes/graph12_RM.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
         //HatScheT::ASAPSMTScheduler sched(g, rm);
-        HatScheT::SMTMODIncrementalScheduler sched(g, rm);
+        HatScheT::SMTMODIncrementalScheduler sched(g, rm, 83);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"Gurobi"});
+        sched.setSolverTimeout(600);
         sched.setQuiet(false);
-        sched.setMaxLatencyConstraint(65);
         cout << "Starting ..." << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
         sched.schedule();
@@ -4522,7 +4522,7 @@ namespace HatScheT {
             cout << it.first->getName() << ": " << it.second << endl;
         }
 
-        cout << "Done after " << duration << "seconds." << endl;
+        cout << "Done after " << (double)duration/1000 << " seconds." << endl;
 
         return false;
     }

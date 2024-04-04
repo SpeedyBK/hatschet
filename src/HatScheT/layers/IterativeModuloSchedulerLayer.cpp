@@ -108,7 +108,7 @@ void HatScheT::IterativeModuloSchedulerLayer::schedule() {
             cout << "IterativeModuloSchedulerLayer: Iteration done in " << this->solvingTimePerIteration << " seconds, time remaining: ";
             cout << this->timeRemaining << endl << endl;
         }
-			updateSolvingTimeTotal();
+        updateSolvingTimeTotal();
         // If a schedule is found, we break the loop.
         // Scheduler has to fill the solution structure by itself!!!
         if (scheduleFound)
