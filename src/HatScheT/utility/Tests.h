@@ -355,7 +355,7 @@ namespace HatScheT {
          * tests functionality of the SMT-Based ASAP Scheduler
          * @return if test was passed
          */
-        static bool asapSMTScheduler();
+        static bool SMTMinLatNonModScheduler();
 
     };
 }

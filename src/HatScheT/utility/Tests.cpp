@@ -72,9 +72,9 @@
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
-#include <HatScheT/scheduler/smtbased/ASAPSMTScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h>
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
-#include <HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSimpleScheduler.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
 #include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
@@ -4495,21 +4495,21 @@ namespace HatScheT {
 #endif
     }
 
-    bool Tests::asapSMTScheduler() {
+    bool Tests::SMTMinLatNonModScheduler() {
 
         HatScheT::Graph g;
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/ChStone/aes/graph12.graphml";
-        string resStr = "benchmarks/ChStone/aes/graph12_RM.xml";
+        string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
+        string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        //HatScheT::ASAPSMTScheduler sched(g, rm);
-        HatScheT::SMTMODIncrementalScheduler sched(g, rm, 83);
-        //HatScheT::ASAPILPScheduler sched(g, rm, {"Gurobi"});
+        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
+        //HatScheT::SMTSimpleScheduler sched(g, rm, 83);
+        //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         sched.setSolverTimeout(600);
         sched.setQuiet(false);
         cout << "Starting ..." << endl;
@@ -4523,6 +4523,8 @@ namespace HatScheT {
         }
 
         cout << "Done after " << (double)duration/1000 << " seconds." << endl;
+
+        cout << "Valid: " << verifyModuloSchedule(g, rm, sched.getSchedule(), (int)sched.getII()) << endl;
 
         return false;
     }

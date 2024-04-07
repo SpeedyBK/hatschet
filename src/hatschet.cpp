@@ -96,7 +96,8 @@
 #include <z3++.h>
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTSimpleScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h>
 
 #endif
 
@@ -282,6 +283,7 @@ int main(int argc, char *args[]) {
       SMTCDL,
       SMT,
       SMTSIMPLE,
+      SMTMINLATNONMOD,
       SDS,
       SAT,
       SATLAT,
@@ -427,6 +429,8 @@ int main(int argc, char *args[]) {
                     schedulerSelection = SMTCDL;
                 } else if (schedulerSelectionStr == "smtsimple") {
                     schedulerSelection = SMTSIMPLE;
+                } else if (schedulerSelectionStr == "smtminlatnonmod") {
+                    schedulerSelection = SMTMINLATNONMOD;
                 } else if (schedulerSelectionStr == "sat") {
                     schedulerSelection = SAT;
                 } else if (schedulerSelectionStr == "satlat") {
@@ -614,7 +618,7 @@ int main(int argc, char *args[]) {
 #ifdef USE_Z3
                 if (str == "Z3" && !HatScheT::Tests::z3Test()) exit(-1);
                 if (str == "SMT" && !HatScheT::Tests::smtSchedulerTest()) exit(-1);
-                if (str == "ASAPSMT" && !HatScheT::Tests::asapSMTScheduler()) exit(-1);
+                if (str == "SMTMINLATNONMOD" && !HatScheT::Tests::SMTMinLatNonModScheduler()) exit(-1);
 #endif
                 exit(0);
             } else if ((args[i][0] != '-') && getCmdParameter(args[i], "", value)) {
@@ -758,6 +762,10 @@ int main(int argc, char *args[]) {
                 break;
             case SMTSIMPLE:
                 cout << "SMTSIMPLE" << endl;
+                break;
+            case SMTMINLATNONMOD:
+                cout << "SMTMINLATNONMOD" << endl;
+                break;
         }
         std::cout << std::endl;
 
@@ -1208,7 +1216,7 @@ int main(int argc, char *args[]) {
                     break;
                 }
                 case SMTSIMPLE:
-                    scheduler = new HatScheT::SMTMODIncrementalScheduler(g, rm);
+                    scheduler = new HatScheT::SMTSimpleScheduler(g, rm);
                     if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     isModuloScheduler = true;
                     cout << "SMTSIMPLE is currently WIP" << endl; // ToDo: Finish it!
@@ -1222,6 +1230,12 @@ int main(int argc, char *args[]) {
                     scheduler = new HatScheT::SMTCDLScheduler(g, rm);
                     isModuloScheduler = true;
                     ((HatScheT::SMTCDLScheduler *) scheduler)->setLayerQuiet(false);
+                    if (timeout > 0) ((HatScheT::SMTCDLScheduler *) scheduler)->setSolverTimeout(timeout);
+                    break;
+                case SMTMINLATNONMOD:
+                    scheduler = new HatScheT::SMTMinLatNonModScheduler(g, rm);
+                    isModuloScheduler = false;
+                    cout << "SMTMINLATNONMOD is currently WIP" << endl; // ToDo: Finish it!
                     if (timeout > 0) ((HatScheT::SMTCDLScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
 
@@ -1307,6 +1321,14 @@ int main(int argc, char *args[]) {
                     cout << ">>> Modulo schedule verification failed! <<<" << endl;
                     exit(-1);
                 }
+            }else if (!isModuloScheduler and scheduler->getScheduleFound()) {
+                if (HatScheT::verifyResourceConstrainedSchedule(g, rm, scheduler->getSchedule(), (int) scheduler->getScheduleLength())) {
+                    cout << "Modulo schedule verified successfully" << endl;
+                    cout << "Found Latency: " << scheduler->getScheduleLength() << endl;
+                } else {
+                    cout << ">>> Schedule verification failed! <<<" << endl;
+                    exit(-1);
+                }
             }
 
 #ifdef USE_SCALP
@@ -1382,6 +1404,9 @@ int main(int argc, char *args[]) {
                 }
                 std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
                 std::pair<bool, bool> objectivesOptimal(false, false);
+                if (schedulerSelection == SMTMINLATNONMOD) {
+                    objectivesOptimal.second = dynamic_cast<HatScheT::SMTMinLatNonModScheduler *>(scheduler)->isLatencyOptimal();
+                }
 #ifdef USE_SCALP
                 auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase *>(scheduler);
                 if (modSchedBase != nullptr) {

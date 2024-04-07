@@ -2,19 +2,19 @@
 // Created by bkessler on 4/1/24.
 //
 
-#ifndef HATSCHET_SMTMODINCREMENTALSCHEDULER_H
-#define HATSCHET_SMTMODINCREMENTALSCHEDULER_H
+#ifndef HATSCHET_SMTSIMPLESCHEDULER_H
+#define HATSCHET_SMTSIMPLESCHEDULER_H
 
 #include "HatScheT/layers/IterativeModuloSchedulerLayer.h"
 #include "HatScheT/base/Z3SchedulerBase.h"
 
 namespace HatScheT {
 
-  class SMTMODIncrementalScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase {
+  class SMTSimpleScheduler : public IterativeModuloSchedulerLayer, public Z3SchedulerBase {
 
   public:
 
-    SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II=-1);
+    SMTSimpleScheduler(Graph &g, ResourceModel &resourceModel, int II=-1);
 
     void setSolverTimeout (double seconds) override;
 
@@ -59,4 +59,4 @@ namespace HatScheT {
 }
 
 
-#endif //HATSCHET_SMTMODINCREMENTALSCHEDULER_H
+#endif //HATSCHET_SMTSIMPLESCHEDULER_H

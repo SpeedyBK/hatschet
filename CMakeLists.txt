@@ -322,8 +322,8 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/FibonacciHeap.h
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
-        src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.h
-        src/HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h
+        src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -402,8 +402,8 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
-            src/HatScheT/scheduler/smtbased/ASAPSMTScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTMODIncrementalScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))

@@ -3,14 +3,14 @@
 //
 
 #include <sstream>
-#include "SMTMODIncrementalScheduler.h"
+#include "SMTSimpleScheduler.h"
 
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
-    SMTMODIncrementalScheduler::SMTMODIncrementalScheduler(Graph &g, ResourceModel &resourceModel, int II)
+    SMTSimpleScheduler::SMTSimpleScheduler(Graph &g, ResourceModel &resourceModel, int II)
             : IterativeModuloSchedulerLayer(g, resourceModel, II) {
 
         actualLength = 0; // Max Latency estimation...
@@ -18,7 +18,7 @@ namespace HatScheT {
 
     }
 
-    void SMTMODIncrementalScheduler::scheduleInit() {
+    void SMTSimpleScheduler::scheduleInit() {
         if(!quiet) {
             cout << "Scheduling with " << this->getName() <<":" << endl;
             cout << "Rec-Min-II: " << recMinII << endl;
@@ -29,7 +29,7 @@ namespace HatScheT {
         }
     }
 
-    void SMTMODIncrementalScheduler::scheduleIteration() {
+    void SMTSimpleScheduler::scheduleIteration() {
 
         if (this->solverTimeout > 0) {
             setZ3Timeout((int) solverTimeout);
@@ -89,7 +89,7 @@ namespace HatScheT {
 
     }
 
-    void SMTMODIncrementalScheduler::generateTVariables() {
+    void SMTSimpleScheduler::generateTVariables() {
         tVariables.clear();
         for (auto &vIt: g.Vertices()) {
             std::stringstream name;
@@ -99,15 +99,15 @@ namespace HatScheT {
         }
     }
 
-    z3::expr *SMTMODIncrementalScheduler::getTVariable(Vertex *vPtr) {
+    z3::expr *SMTSimpleScheduler::getTVariable(Vertex *vPtr) {
         try {
             return &tVariables.at(vPtr);
         } catch (std::out_of_range &) {
-            throw (HatScheT::Exception("SMTMODIncrementalScheduler: getTVariable() std::out_of_range"));
+            throw (HatScheT::Exception("SMTSimpleScheduler: getTVariable() std::out_of_range"));
         }
     }
 
-    z3::check_result SMTMODIncrementalScheduler::addNonNegativeConstraints() {
+    z3::check_result SMTSimpleScheduler::addNonNegativeConstraints() {
 
         for (auto &vIt: g.Vertices()) {
             s.add(tVariables.at(vIt) >= 0);
@@ -118,7 +118,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::check_result SMTMODIncrementalScheduler::addDependencyConstraints() {
+    z3::check_result SMTSimpleScheduler::addDependencyConstraints() {
 
         for (auto &eIt: g.Edges()) {
             Vertex *src = &(eIt->getVertexSrc());
@@ -137,7 +137,7 @@ namespace HatScheT {
 
     }
 
-    int SMTMODIncrementalScheduler::getLatestStarttime() {
+    int SMTSimpleScheduler::getLatestStarttime() {
         int tMax = 0;
         for (auto &vIt: g.Vertices()) {
             if (resourceModel.getResource(vIt)->isUnlimited()) {
@@ -150,7 +150,7 @@ namespace HatScheT {
         return tMax;
     }
 
-    void SMTMODIncrementalScheduler::generateBVariables() {
+    void SMTSimpleScheduler::generateBVariables() {
 
         auto tMax = actualLength;
 
@@ -178,7 +178,7 @@ namespace HatScheT {
         }
     }
 
-    z3::expr *SMTMODIncrementalScheduler::getBvariable(Vertex *v, int i) {
+    z3::expr *SMTSimpleScheduler::getBvariable(Vertex *v, int i) {
         auto key = std::make_pair(v, i);
         try {
             return &bVariables.at(key);
@@ -188,7 +188,7 @@ namespace HatScheT {
         }
     }
 
-    z3::check_result SMTMODIncrementalScheduler::addVariableConnections() {
+    z3::check_result SMTSimpleScheduler::addVariableConnections() {
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -209,7 +209,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::check_result SMTMODIncrementalScheduler::addResourceConstraints(int candidateII) {
+    z3::check_result SMTSimpleScheduler::addResourceConstraints(int candidateII) {
 
         for (auto &it: resourceModel.Resources()) {
             if (it->isUnlimited()) {
@@ -239,7 +239,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::check_result SMTMODIncrementalScheduler::addMaxLatencyConstraint() {
+    z3::check_result SMTSimpleScheduler::addMaxLatencyConstraint() {
         if (this->maxLatencyConstraint > 0) {
             for (auto &vIt : g.Vertices()){
                 s.add(*getTVariable(vIt) <= maxLatencyConstraint);
@@ -256,12 +256,12 @@ namespace HatScheT {
 
     }
 
-    void SMTMODIncrementalScheduler::setSolverTimeout(double seconds) {
+    void SMTSimpleScheduler::setSolverTimeout(double seconds) {
         setZ3Timeout((int)seconds);
         this->solverTimeout = (int)seconds;
     }
 
-  void SMTMODIncrementalScheduler::z3CheckWithTimeTracking() {
+  void SMTSimpleScheduler::z3CheckWithTimeTracking() {
 
       setZ3Timeout((uint32_t)(ceil(timeRemaining)));
       if (!this->quiet){

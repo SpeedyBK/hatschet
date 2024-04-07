@@ -2,8 +2,8 @@
 // Created by Benjamin on 19.03.24.
 //
 
-#ifndef HATSCHET_ASAPSMTSCHEDULER_H
-#define HATSCHET_ASAPSMTSCHEDULER_H
+#ifndef HATSCHET_SMTMINLATNONMODSCHEDULER_H
+#define HATSCHET_SMTMINLATNONMODSCHEDULER_H
 
 #if USE_Z3
 
@@ -12,16 +12,20 @@
 
 namespace HatScheT {
 
-    class ASAPSMTScheduler : public SchedulerBase, public Z3SchedulerBase {
+    class SMTMinLatNonModScheduler : public SchedulerBase, public Z3SchedulerBase {
 
     public:
 
-        ASAPSMTScheduler(Graph& g, ResourceModel& rm);
+        SMTMinLatNonModScheduler(Graph& g, ResourceModel& rm);
 
         /*!
          * use this methode to solve the scheduling problem
          */
         void schedule() override;
+
+        void setSolverTimeout(double seconds) override;
+
+        bool isLatencyOptimal() const { return latencyOptimal; };
 
     private:
 
@@ -45,6 +49,8 @@ namespace HatScheT {
 
         z3::expr *getBvariable(Vertex *v, int i);
 
+        void z3CheckWithTimeTracking();
+
         map<Vertex*, z3::expr> tVariables;
 
         map<std::pair<Vertex*, int>, z3::expr> bVariables;
@@ -53,10 +59,12 @@ namespace HatScheT {
 
         int lastRow;
 
+        bool latencyOptimal;
+
     };
 
 } // HatScheT
 
 #endif
 
-#endif //HATSCHET_ASAPSMTSCHEDULER_H
+#endif //HATSCHET_SMTMINLATNONMODSCHEDULER_H
