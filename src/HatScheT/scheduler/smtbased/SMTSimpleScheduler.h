@@ -34,6 +34,8 @@ namespace HatScheT {
 
     z3::expr* getTVariable(Vertex* vPtr);
 
+    z3::check_result minimizeLatency();
+
     z3::check_result addNonNegativeConstraints();
 
     z3::check_result addDependencyConstraints();

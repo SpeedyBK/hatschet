@@ -4501,14 +4501,15 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/Origami_Pareto/iir_sos16/iir_sos16.graphml";
-        string resStr = "benchmarks/Origami_Pareto/iir_sos16/RM1.xml";
+        string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
+        string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
-        //HatScheT::SMTSimpleScheduler sched(g, rm, 83);
+        //HatScheT::SMTMinLatNonModScheduler sched(g, rm);
+        HatScheT::SMTSimpleScheduler sched(g, rm);
+        //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         sched.setSolverTimeout(600);
         sched.setQuiet(false);

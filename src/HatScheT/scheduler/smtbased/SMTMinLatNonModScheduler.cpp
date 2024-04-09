@@ -264,7 +264,6 @@ namespace HatScheT {
         startTimeTracking();
         z3Check();
         endTimeTracking();
-        solverTimeout -= solvingTimePerIteration;
 
     }
 

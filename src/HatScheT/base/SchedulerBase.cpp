@@ -183,7 +183,7 @@ namespace HatScheT {
   void HatScheT::SchedulerBase::endTimeTracking() {
       this->end_t = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_t - start_t).count();
-      solvingTimePerIteration = (double) duration / 1000000;
+      solvingTimePerIteration += (double) duration / 1000000;
       timeRemaining = solverTimeout - solvingTimePerIteration;
   }
 

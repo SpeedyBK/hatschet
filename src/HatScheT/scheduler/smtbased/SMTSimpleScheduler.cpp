@@ -66,15 +66,40 @@ namespace HatScheT {
 
         cout << getZ3Result() << endl;
 
-        if (getZ3Result() == z3::unknown){
-            firstObjectiveOptimal = false;
-        }
-
-        if (getZ3Result() == z3::sat){
-            for (auto &vIt : g.Vertices()){
+        if (getZ3Result() == z3::sat)
+        {
+            for (auto &vIt : g.Vertices())
+            {
                 startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
             }
         }
+        else if (getZ3Result() == z3::unknown)
+        {
+            firstObjectiveOptimal = false;
+            bVariables.clear();
+            tVariables.clear();
+            z3Reset();
+            return;
+        }
+        else
+        {
+            bVariables.clear();
+            tVariables.clear();
+            z3Reset();
+            return;
+        }
+
+        cout << "Schedule found... minimizing Starttimes" << endl;
+        while (minimizeLatency() == z3::sat) {
+            cout << getZ3Result() << endl;
+        }
+        cout << getZ3Result() << endl;
+
+        for (auto &vIt : g.Vertices()){
+            startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
+        }
+
+        secondObjectiveOptimal = (getZ3Result() == z3::unsat);
 
         scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int)II);
         if ( scheduleFound ){
@@ -272,5 +297,28 @@ namespace HatScheT {
       endTimeTracking();
 
   }
+
+    z3::check_result SMTSimpleScheduler::minimizeLatency() {
+
+        z3::expr ex(c);
+        int maxValue = 0;
+
+        for (auto &vIt: g.Vertices()) {
+            if (m.eval(*getTVariable(vIt)).get_numeral_int() > maxValue) {
+                maxValue = m.eval(*getTVariable(vIt)).get_numeral_int();
+            }
+        }
+
+        cout << "Latest Starttime: " << maxValue << endl;
+
+        for (auto &vIt : g.Vertices()){
+            ex = *getTVariable(vIt);
+            s.add(ex < maxValue);
+        }
+
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
+    }
 
 }
