@@ -4507,20 +4507,21 @@ namespace HatScheT {
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        //HatScheT::SMTMinLatNonModScheduler sched(g, rm);
-        HatScheT::SMTSimpleScheduler sched(g, rm);
+        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
+        //HatScheT::SMTSimpleScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
-        sched.setSolverTimeout(600);
+        sched.setSolverTimeout(30);
         sched.setQuiet(false);
-        cout << "Starting ..." << endl;
+        cout << "Starting scheudling for ";
+        cout << graphStr << " ... " << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
         sched.schedule();
         auto end_t = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
 
         for (auto &it : sched.getSchedule()) {
-            cout << it.first->getName() << ": " << it.second << endl;
+            //cout << it.first->getName() << ": " << it.second << endl;
         }
 
         cout << "Done after " << (double)duration/1000 << " seconds." << endl;

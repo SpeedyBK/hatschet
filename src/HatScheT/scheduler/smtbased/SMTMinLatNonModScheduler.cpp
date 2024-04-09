@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "HatScheT/utility/Verifier.h"
+#include "HatScheT/scheduler/ASAPScheduler.h"
 
 #if USE_Z3
 
@@ -17,75 +18,16 @@ namespace HatScheT {
         acturalRow = 0;
         lastRow = 0;
         latencyOptimal = false;
+        mode = "ASAPHC";
 
     }
 
     void SMTMinLatNonModScheduler::schedule() {
 
-        generateTVariables();
-
-        cout << "Non Negative Constraints ..." << endl;
-        addNonNegativeConstraints();
-
-        cout << "Dependency Constraints ..." << endl;
-        addDependencyConstraints();
-
-        int i = 0;
-        bool breakCondition = false;
-        do {
-            i++;
-            cout << acturalRow << ": " << getLatestStarttime() << endl;
-            acturalRow = getLatestStarttime();
-            generateBVariables();
-
-            cout << i << ": Variable Connections ..." << endl;
-            addVariableConnections();
-
-            cout << i << ": Resource Constraints ..." << endl;
-            addResourceConstraints();
-            lastRow = acturalRow;
-            breakCondition = (acturalRow >= getLatestStarttime()) or i > 1000;
-        } while (!breakCondition);
-
-        cout << getZ3Result() << endl;
-
-        if (getZ3Result() == z3::sat) {
-            for (auto &vIt: g.Vertices()) {
-                startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
-            }
-        }
-
-        cout << "Schedule found... minimizing Starttimes" << endl;
-        while (minimizeLatency() == z3::sat) {
-            cout << getZ3Result() << endl;
-        }
-        cout << getZ3Result() << endl;
-
-        latencyOptimal = (getZ3Result() == z3::unsat);
-
-        for (auto &vIt : g.Vertices()){
-            startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
-        }
-
-        auto L = getScheduleLength();
-
-        if (verifyResourceConstrainedSchedule(this->g, this->resourceModel, this->startTimes, L)) {
-            cout << endl << "Schedule Valid" << endl;
-            this->scheduleFound = true;
-            this->II = getScheduleLength();
-            cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl;
-
-            cout << "******************" << endl;
-            cout << "* Final Schedule *" << endl;
-            cout << "******************" << endl << endl;
-
-            for (auto &vIt : g.Vertices()){
-                cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
-            }
-
-        } else {
-            this->scheduleFound = false;
-            cout << "Schedule not Valid" << endl;
+        if (mode == "Auto"){
+            scheduleAutoSearch();
+        }else if (mode == "ASAPHC"){
+            scheduleASAPHCSearch();
         }
 
     }
@@ -98,6 +40,26 @@ namespace HatScheT {
             z3::expr e(c.int_const(name.str().c_str()));
             tVariables.insert(std::make_pair(vIt, e));
         }
+    }
+
+    z3::check_result SMTMinLatNonModScheduler::findMaxLatencyConstraints() {
+
+        int tMax = 0;
+        for (auto &It : startTimes){
+            if (It.second > tMax){
+                tMax = It.second;
+            }
+        }
+
+        for (auto &vIt : g.Vertices()){
+            z3::expr e = *getTVariable(vIt) <= tMax;
+            s.add(e);
+        }
+
+        z3CheckWithTimeTracking();
+
+        return getZ3Result();
+
     }
 
     z3::check_result SMTMinLatNonModScheduler::addDependencyConstraints() {
@@ -173,7 +135,19 @@ namespace HatScheT {
 
     void SMTMinLatNonModScheduler::generateBVariables() {
 
-        auto tMax = getLatestStarttime();
+        int tMax = 0;
+
+        if (mode == "Auto"){
+            tMax = getLatestStarttime();
+        }else if (mode == "ASAPHC"){
+            lastRow = 0;
+            for (auto &it : startTimes){
+                if (it.second > tMax){
+                    tMax = it.second;
+                }
+            }
+            acturalRow = tMax;
+        }
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -230,6 +204,7 @@ namespace HatScheT {
         z3CheckWithTimeTracking();
 
         return getZ3Result();
+
     }
 
     z3::check_result SMTMinLatNonModScheduler::minimizeLatency() {
@@ -258,9 +233,7 @@ namespace HatScheT {
     void SMTMinLatNonModScheduler::z3CheckWithTimeTracking() {
 
         setZ3Timeout((uint32_t) (round(timeRemaining)));
-        if (!this->quiet) {
-            printZ3Params();
-        }
+        //printZ3Params();
         startTimeTracking();
         z3Check();
         endTimeTracking();
@@ -270,6 +243,144 @@ namespace HatScheT {
     void SMTMinLatNonModScheduler::setSolverTimeout(double seconds) {
         setZ3Timeout((int)seconds);
         this->solverTimeout = (int)seconds;
+    }
+
+    void SMTMinLatNonModScheduler::scheduleAutoSearch() {
+
+        cout << "Generating T-Variables ..." << endl;
+        generateTVariables();
+
+        cout << "Non Negative Constraints ..." << endl;
+        addNonNegativeConstraints();
+
+        cout << "Adding Dependency Constraints ..." << endl;
+        addDependencyConstraints();
+
+        int i = 0;
+        bool breakCondition = false;
+        do {
+            i++;
+            cout << acturalRow << ": " << getLatestStarttime() << endl;
+            acturalRow = getLatestStarttime();
+            generateBVariables();
+
+            cout << i << ": Variable Connections ..." << endl;
+            addVariableConnections();
+
+            cout << i << ": Resource Constraints ..." << endl;
+            addResourceConstraints();
+            lastRow = acturalRow;
+            breakCondition = (acturalRow >= getLatestStarttime()) or i > 1000;
+        } while (!breakCondition);
+
+        cout << getZ3Result() << endl;
+
+        if (getZ3Result() == z3::sat) {
+            for (auto &vIt: g.Vertices()) {
+                startTimes.insert(std::make_pair(vIt, m.eval(*getTVariable(vIt)).get_numeral_int()));
+            }
+        }
+
+        cout << "Schedule found... minimizing Starttimes" << endl;
+        while (minimizeLatency() == z3::sat) {
+            cout << getZ3Result() << endl;
+        }
+        cout << getZ3Result() << endl;
+
+        latencyOptimal = (getZ3Result() == z3::unsat);
+
+        for (auto &vIt : g.Vertices()){
+            startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
+        }
+
+        auto L = getScheduleLength();
+
+        if (verifyResourceConstrainedSchedule(this->g, this->resourceModel, this->startTimes, L)) {
+            cout << endl << "Schedule Valid" << endl;
+            this->scheduleFound = true;
+            this->II = getScheduleLength();
+            cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl;
+
+            cout << "******************" << endl;
+            cout << "* Final Schedule *" << endl;
+            cout << "******************" << endl << endl;
+
+            for (auto &vIt : g.Vertices()){
+                cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
+            }
+
+        } else {
+            this->scheduleFound = false;
+            cout << "Schedule not Valid" << endl;
+        }
+
+    }
+
+    void SMTMinLatNonModScheduler::scheduleASAPHCSearch() {
+
+        cout << endl << "Generating ASAPHC Schedule ..." << endl << endl;
+        ASAPScheduler asapSched(this->g, this->resourceModel);
+        asapSched.schedule();
+        startTimes = asapSched.getSchedule();
+
+        cout << "****************************************************" << endl;
+        cout << "* Searching optimal Latency ... Building Model ... *" << endl;
+        cout << "****************************************************" << endl;
+
+        cout << "Generating T-Variables ... " << endl;
+        generateTVariables();
+
+        cout << "Adding Non Negative Constraints ... " << endl;
+        addNonNegativeConstraints();
+
+        cout << "Finding / Adding Max Latency Constaints ... " << endl;
+        findMaxLatencyConstraints();
+
+        cout << "Adding Dependency Constraints ... " << endl;
+        addDependencyConstraints();
+
+        cout << "Generating B-Variables ... " << endl;
+        generateBVariables();
+
+        cout << "Connecting Variables ... " << endl;
+        addVariableConnections();
+
+        cout << "Adding Resource Constraints ... Solving" << endl;
+        addResourceConstraints();
+
+        cout << getZ3Result() << endl;
+
+        while (minimizeLatency() == z3::sat) {
+            cout << getZ3Result() << endl;
+        }
+
+        latencyOptimal = (getZ3Result() == z3::unsat);
+
+        for (auto &vIt : g.Vertices()){
+            startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
+        }
+
+        auto L = getScheduleLength();
+
+        if (verifyResourceConstrainedSchedule(this->g, this->resourceModel, this->startTimes, L)) {
+            cout << endl << "Schedule Valid" << endl;
+            this->scheduleFound = true;
+            this->II = getScheduleLength();
+            cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl;
+
+            cout << "******************" << endl;
+            cout << "* Final Schedule *" << endl;
+            cout << "******************" << endl << endl;
+
+            for (auto &vIt : g.Vertices()){
+                cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
+            }
+
+        } else {
+            this->scheduleFound = false;
+            cout << "Schedule not Valid" << endl;
+        }
+
     }
 
 } // HatScheT

@@ -25,13 +25,21 @@ namespace HatScheT {
 
         void setSolverTimeout(double seconds) override;
 
+        void setSearchMode(string &sreachMode) { mode = sreachMode; };
+
         bool isLatencyOptimal() const { return latencyOptimal; };
 
     private:
 
+        void scheduleAutoSearch();
+
+        void scheduleASAPHCSearch();
+
         void generateTVariables();
 
         void generateBVariables();
+
+        z3::check_result findMaxLatencyConstraints();
 
         int getLatestStarttime();
 
@@ -60,6 +68,8 @@ namespace HatScheT {
         int lastRow;
 
         bool latencyOptimal;
+
+        string mode;
 
     };
 

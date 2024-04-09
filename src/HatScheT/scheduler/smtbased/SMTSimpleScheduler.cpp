@@ -104,6 +104,7 @@ namespace HatScheT {
         scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int)II);
         if ( scheduleFound ){
             cout << "Schedule Valid for II = " << (int)II << endl;
+            cout << maxII << endl;
         }else {
             cout << "Schedule NOT Valid" << endl;
             bVariables.clear();
