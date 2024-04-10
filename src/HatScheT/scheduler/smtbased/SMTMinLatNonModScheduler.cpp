@@ -218,7 +218,7 @@ namespace HatScheT {
             }
         }
 
-        cout << "Latest Starttime: " << maxValue << endl;
+        if (!this->quiet) { cout << "Latest Starttime: " << maxValue << endl; }
 
         for (auto &vIt : g.Vertices()){
             ex = *getTVariable(vIt);
@@ -318,40 +318,41 @@ namespace HatScheT {
 
     void SMTMinLatNonModScheduler::scheduleASAPHCSearch() {
 
-        cout << endl << "Generating ASAPHC Schedule ..." << endl << endl;
+        if (!this->quiet) { cout << endl << "Generating ASAPHC Schedule ..." << endl << endl; }
         ASAPScheduler asapSched(this->g, this->resourceModel);
+        asapSched.setQuiet(true);
         asapSched.schedule();
         startTimes = asapSched.getSchedule();
 
-        cout << "****************************************************" << endl;
-        cout << "* Searching optimal Latency ... Building Model ... *" << endl;
-        cout << "****************************************************" << endl;
+        if (!this->quiet) { cout << "****************************************************" << endl; }
+        if (!this->quiet) { cout << "* Searching optimal Latency ... Building Model ... *" << endl; }
+        if (!this->quiet) { cout << "****************************************************" << endl; }
 
-        cout << "Generating T-Variables ... " << endl;
+        if (!this->quiet) { cout << "Generating T-Variables ... " << endl; }
         generateTVariables();
 
-        cout << "Adding Non Negative Constraints ... " << endl;
+        if (!this->quiet) { cout << "Adding Non Negative Constraints ... " << endl; }
         addNonNegativeConstraints();
 
-        cout << "Finding / Adding Max Latency Constaints ... " << endl;
+        if (!this->quiet) { cout << "Finding / Adding Max Latency Constaints ... " << endl; }
         findMaxLatencyConstraints();
 
-        cout << "Adding Dependency Constraints ... " << endl;
+        if (!this->quiet) { cout << "Adding Dependency Constraints ... " << endl; }
         addDependencyConstraints();
 
-        cout << "Generating B-Variables ... " << endl;
+        if (!this->quiet) { cout << "Generating B-Variables ... " << endl; }
         generateBVariables();
 
-        cout << "Connecting Variables ... " << endl;
+        if (!this->quiet) { cout << "Connecting Variables ... " << endl;}
         addVariableConnections();
 
-        cout << "Adding Resource Constraints ... Solving" << endl;
+        if (!this->quiet) { cout << "Adding Resource Constraints ... Solving" << endl; }
         addResourceConstraints();
 
-        cout << getZ3Result() << endl;
+        if (!this->quiet) { cout << getZ3Result() << endl; }
 
         while (minimizeLatency() == z3::sat) {
-            cout << getZ3Result() << endl;
+            if (!this->quiet) { cout << getZ3Result() << endl;}
         }
 
         latencyOptimal = (getZ3Result() == z3::unsat);
@@ -363,14 +364,14 @@ namespace HatScheT {
         auto L = getScheduleLength();
 
         if (verifyResourceConstrainedSchedule(this->g, this->resourceModel, this->startTimes, L)) {
-            cout << endl << "Schedule Valid" << endl;
+            if (!this->quiet) { cout << endl << "Schedule Valid" << endl; }
             this->scheduleFound = true;
             this->II = getScheduleLength();
-            cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl;
+            if (!this->quiet) { cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl; }
 
-            cout << "******************" << endl;
-            cout << "* Final Schedule *" << endl;
-            cout << "******************" << endl << endl;
+            if (!this->quiet) { cout << "******************" << endl; }
+            if (!this->quiet) { cout << "* Final Schedule *" << endl; }
+            if (!this->quiet) { cout << "******************" << endl << endl; }
 
             for (auto &vIt : g.Vertices()){
                 cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
@@ -378,7 +379,7 @@ namespace HatScheT {
 
         } else {
             this->scheduleFound = false;
-            cout << "Schedule not Valid" << endl;
+            if (!this->quiet) { cout << "Schedule not Valid" << endl; }
         }
 
     }

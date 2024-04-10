@@ -4497,6 +4497,8 @@ namespace HatScheT {
 
     bool Tests::SMTMinLatNonModScheduler() {
 
+#if defined(USE_Z3) && defined(USE_XERCESC)
+
         HatScheT::Graph g;
         HatScheT::ResourceModel rm;
 
@@ -4512,7 +4514,7 @@ namespace HatScheT {
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         sched.setSolverTimeout(30);
-        sched.setQuiet(false);
+        sched.setQuiet(true);
         cout << "Starting scheudling for ";
         cout << graphStr << " ... " << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
@@ -4520,15 +4522,19 @@ namespace HatScheT {
         auto end_t = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
 
-        for (auto &it : sched.getSchedule()) {
+        for (auto &it: sched.getSchedule()) {
             //cout << it.first->getName() << ": " << it.second << endl;
         }
 
-        cout << "Done after " << (double)duration/1000 << " seconds." << endl;
+        cout << "Done after " << (double) duration / 1000 << " seconds." << endl;
 
-        cout << "Valid: " << verifyModuloSchedule(g, rm, sched.getSchedule(), (int)sched.getII()) << endl;
+        cout << "Valid: " << verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII()) << endl;
 
-        return false;
+        return verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII());
+
+#else
+        std::cout << "Tests::SMTMinLatNonModScheduler: Test Disabled - Z3 and Xerces needed." << std::endl;
+        return true;
+#endif
     }
-
 }

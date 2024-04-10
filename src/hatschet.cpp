@@ -1404,9 +1404,13 @@ int main(int argc, char *args[]) {
                 }
                 std::unique_ptr<HatScheT::ScheduleAndBindingWriter> sBWriter;
                 std::pair<bool, bool> objectivesOptimal(false, false);
+
+#ifdef USE_Z3
                 if (schedulerSelection == SMTMINLATNONMOD) {
                     objectivesOptimal.second = dynamic_cast<HatScheT::SMTMinLatNonModScheduler *>(scheduler)->isLatencyOptimal();
                 }
+#endif
+
 #ifdef USE_SCALP
                 auto modSchedBase = dynamic_cast<HatScheT::ModuloSchedulerBase *>(scheduler);
                 if (modSchedBase != nullptr) {

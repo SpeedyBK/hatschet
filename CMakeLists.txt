@@ -362,11 +362,11 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
 ENDIF (SCALP_H AND SCALP_LIB)
 
-IF (SCALP_H AND SCALP_LIB AND Z3_H AND Z3_LIB)
+IF ((SCALP_H AND SCALP_LIB) OR (Z3_H AND Z3_LIB))
     list(APPEND HatScheT_SOURCES
             src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.cpp
             )
-ENDIF (SCALP_H AND SCALP_LIB AND Z3_H AND Z3_LIB)
+ENDIF ((SCALP_H AND SCALP_LIB) OR (Z3_H AND Z3_LIB))
 
 IF (SCALP_H AND SCALP_LIB AND CADICAL_H AND CADICAL_LIB)
     list(APPEND HatScheT_SOURCES
@@ -405,12 +405,6 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
-
-IF ((Z3_H AND Z3_LIB) OR (SCALP_H AND SCALP_LIB))
-    list(APPEND HatScheT_SOURCES
-            src/HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h
-            )
-ENDIF ()
 
 add_library(hatschet ${HatScheT_SOURCES})
 add_executable(hatschet-bin src/hatschet.cpp)

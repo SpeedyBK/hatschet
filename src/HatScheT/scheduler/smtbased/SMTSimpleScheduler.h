@@ -5,6 +5,10 @@
 #ifndef HATSCHET_SMTSIMPLESCHEDULER_H
 #define HATSCHET_SMTSIMPLESCHEDULER_H
 
+#pragma once
+
+#ifdef USE_Z3
+
 #include "HatScheT/layers/IterativeModuloSchedulerLayer.h"
 #include "HatScheT/base/Z3SchedulerBase.h"
 
@@ -60,5 +64,5 @@ namespace HatScheT {
 
 }
 
-
+#endif //USE_Z3
 #endif //HATSCHET_SMTSIMPLESCHEDULER_H
