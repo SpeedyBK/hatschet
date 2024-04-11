@@ -218,7 +218,7 @@ namespace HatScheT {
             }
         }
 
-        if (!this->quiet) { cout << "Latest Starttime: " << maxValue << endl; }
+        if (!this->quiet) { cout << "Latest Starttime: " << maxValue << " Time Remaining: " << timeRemaining << endl; }
 
         for (auto &vIt : g.Vertices()){
             ex = *getTVariable(vIt);
@@ -227,11 +227,18 @@ namespace HatScheT {
 
         z3CheckWithTimeTracking();
 
+        if (timeRemaining <= 0){
+            return z3::unknown;
+        }
+
         return getZ3Result();
     }
 
     void SMTMinLatNonModScheduler::z3CheckWithTimeTracking() {
 
+        if (timeRemaining <= 0){
+            timeRemaining = 0;
+        }
         setZ3Timeout((uint32_t) (round(timeRemaining)));
         //printZ3Params();
         startTimeTracking();

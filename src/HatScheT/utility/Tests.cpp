@@ -4514,7 +4514,7 @@ namespace HatScheT {
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         sched.setSolverTimeout(30);
-        sched.setQuiet(true);
+        sched.setQuiet(false);
         cout << "Starting scheudling for ";
         cout << graphStr << " ... " << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
