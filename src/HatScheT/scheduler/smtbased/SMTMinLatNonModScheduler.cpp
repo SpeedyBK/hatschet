@@ -240,7 +240,7 @@ namespace HatScheT {
             timeRemaining = 0;
         }
         setZ3Timeout((uint32_t) (round(timeRemaining)));
-        //printZ3Params();
+        printZ3Params();
         startTimeTracking();
         z3Check();
         endTimeTracking();
@@ -335,33 +335,36 @@ namespace HatScheT {
         if (!this->quiet) { cout << "* Searching optimal Latency ... Building Model ... *" << endl; }
         if (!this->quiet) { cout << "****************************************************" << endl; }
 
-        if (!this->quiet) { cout << "Generating T-Variables ... " << endl; }
-        generateTVariables();
+        this->timeRemaining = this->solverTimeout;
 
-        if (!this->quiet) { cout << "Adding Non Negative Constraints ... " << endl; }
-        addNonNegativeConstraints();
+        if (!this->quiet) { cout << "Generating T-Variables ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { generateTVariables(); }
 
-        if (!this->quiet) { cout << "Finding / Adding Max Latency Constaints ... " << endl; }
-        findMaxLatencyConstraints();
+        if (!this->quiet) { cout << "Adding Non Negative Constraints ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { addNonNegativeConstraints(); }
 
-        if (!this->quiet) { cout << "Adding Dependency Constraints ... " << endl; }
-        addDependencyConstraints();
+        if (!this->quiet) { cout << "Finding / Adding Max Latency Constaints ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { findMaxLatencyConstraints(); }
 
-        if (!this->quiet) { cout << "Generating B-Variables ... " << endl; }
-        generateBVariables();
+        if (!this->quiet) { cout << "Adding Dependency Constraints ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { addDependencyConstraints(); }
 
-        if (!this->quiet) { cout << "Connecting Variables ... " << endl;}
-        addVariableConnections();
+        if (!this->quiet) { cout << "Generating B-Variables ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { generateBVariables(); }
 
-        if (!this->quiet) { cout << "Adding Resource Constraints ... Solving" << endl; }
-        addResourceConstraints();
+        if (!this->quiet) { cout << "Connecting Variables ... Time Remaining: " << timeRemaining << endl;}
+        if (timeRemaining > 0) { addVariableConnections(); }
+
+        if (!this->quiet) { cout << "Adding Resource Constraints ... Time Remaining: " << timeRemaining << endl; }
+        if (timeRemaining > 0) { addResourceConstraints(); }
 
         if (!this->quiet) { cout << getZ3Result() << endl; }
 
         while (minimizeLatency() == z3::sat) {
-            if (!this->quiet) { cout << getZ3Result() << endl;}
+            if (!this->quiet) { cout << getZ3Result() << endl; }
         }
 
+        if (!this->quiet) { cout << getZ3Result() << endl; }
         latencyOptimal = (getZ3Result() == z3::unsat);
 
         for (auto &vIt : g.Vertices()){

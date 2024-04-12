@@ -46,6 +46,12 @@ public:
    */
   void schedule() override;
 
+  /*!
+   * Used to set a timeout for ILP-Solvers;
+   * @param seconds
+   */
+  void setSolverTimeout(double seconds) override;
+
 protected:
   /*!
    * \brief setGeneralConstraints e.g. depencies, recurrences, latencies

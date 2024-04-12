@@ -29,7 +29,12 @@ namespace HatScheT {
     }
 
     void ASAPILPScheduler::schedule() {
+
+        if (!this->quiet) { cout << "Timeout: " << this->solver->timeout << " seconds." << endl; }
+
         this->constructProblem();
+
+        if (!this->quiet) { cout << "Problem Construction Done!" << endl; }
 
         if (this->maxLatencyConstraint <= 0) throw HatScheT::Exception(
                     "ASAPILP Scheduler::schedule: irregular maxLatencyConstraint " +
@@ -44,6 +49,9 @@ namespace HatScheT {
         startTimeTracking();
         stat = this->solver->solve();
         endTimeTracking();
+
+        if (!this->quiet) { cout << "Solving Done!" << endl; }
+        if (!this->quiet) { cout << stat << endl; }
 
         if (stat == ScaLP::status::OPTIMAL || stat == ScaLP::status::FEASIBLE ||
             stat == ScaLP::status::TIMEOUT_FEASIBLE)
@@ -159,6 +167,9 @@ namespace HatScheT {
         }
     }
 
+    void ASAPILPScheduler::setSolverTimeout(double seconds) {
+        this->solver->timeout = (long)seconds;
+    }
 
 
 }

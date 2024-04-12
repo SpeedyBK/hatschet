@@ -324,6 +324,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
         src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h
         src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.h
+        src/HatScheT/scheduler/dev/NonModIlpTestScheduler.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -359,7 +360,9 @@ IF (SCALP_H AND SCALP_LIB)
             src/HatScheT/utility/Tests.cpp
             src/HatScheT/utility/OptimalIntegerIIBinding.cpp
             src/HatScheT/utility/OptimalIntegerIIBindingCong.cpp
-            src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp)
+            src/HatScheT/utility/OptimalIntegerIIGeneralizedBinding.cpp
+            src/HatScheT/scheduler/dev/NonModIlpTestScheduler.cpp
+            )
 ENDIF (SCALP_H AND SCALP_LIB)
 
 IF ((SCALP_H AND SCALP_LIB) OR (Z3_H AND Z3_LIB))

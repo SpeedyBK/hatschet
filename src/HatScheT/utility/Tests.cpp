@@ -47,7 +47,6 @@
 #include "HatScheT/scheduler/ALAPScheduler.h"
 #include "HatScheT/utility/Utility.h"
 #include "HatScheT/utility/subgraphs/OccurrenceSetCombination.h"
-#include "HatScheT/scheduler/graphBased/SGMScheduler.h"
 #include "HatScheT/scheduler/ULScheduler.h"
 #include "HatScheT/utility/Verifier.h"
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
@@ -59,7 +58,6 @@
 #include "HatScheT/utility/SDCSolver.h"
 #include "HatScheT/utility/SDCSolverIncremental.h"
 #include "HatScheT/utility/writer/ScheduleAndBindingWriter.h"
-#include <HatScheT/scheduler/ilpbased/RationalIIScheduler.h>
 #include <HatScheT/scheduler/dev/ModuloQScheduler.h>
 #include <HatScheT/scheduler/dev/SCCQScheduler.h>
 #include <HatScheT/scheduler/dev/RationalIIModuloSDCScheduler.h>
@@ -80,6 +78,7 @@
 #include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
 #include <HatScheT/scheduler/dev/DeSouzaRosa23NIS.h>
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
+#include <HatScheT/scheduler/dev/NonModIlpTestScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4509,10 +4508,12 @@ namespace HatScheT {
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
+        //HatScheT::SMTMinLatNonModScheduler sched(g, rm);
         //HatScheT::SMTSimpleScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
+        HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
+
         sched.setSolverTimeout(30);
         sched.setQuiet(false);
         cout << "Starting scheudling for ";
@@ -4529,6 +4530,8 @@ namespace HatScheT {
         cout << "Done after " << (double) duration / 1000 << " seconds." << endl;
 
         cout << "Valid: " << verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII()) << endl;
+
+        cout << "Length: " << sched.getScheduleLength() << endl;
 
         return verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII());
 
