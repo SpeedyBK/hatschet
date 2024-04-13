@@ -582,6 +582,8 @@ namespace HatScheT {
                                                latencyBounds lb = latencyBounds::both,
                                                bool quiet = true);
 
+    static int calcMaxIIWithSMT(Graph *g, ResourceModel *rm);
+
   private:
 
     /*!

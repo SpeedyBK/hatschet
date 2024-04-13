@@ -74,11 +74,11 @@
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
 #include <HatScheT/scheduler/smtbased/SMTSimpleScheduler.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
-#include <HatScheT/base/Z3SchedulerBase.h>
 #include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
 #include <HatScheT/scheduler/dev/DeSouzaRosa23NIS.h>
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/dev/NonModIlpTestScheduler.h>
+#include <HatScheT/base/Z3SchedulerBase.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4508,11 +4508,11 @@ namespace HatScheT {
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        //HatScheT::SMTMinLatNonModScheduler sched(g, rm);
+        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
         //HatScheT::SMTSimpleScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
-        HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
+        //HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
 
         sched.setSolverTimeout(30);
         sched.setQuiet(false);

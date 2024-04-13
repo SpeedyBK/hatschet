@@ -458,9 +458,6 @@ ENDIF (SATSCM_H AND SATSCM_LIB)
 ####################
 IF (Z3_H AND Z3_LIB)
     target_link_libraries(hatschet-bin ${Z3_LIB})
-ENDIF (Z3_H AND Z3_LIB)
-
-IF (Z3_H AND Z3_LIB)
     include_directories(${Z3_H})
 ENDIF (Z3_H AND Z3_LIB)
 
@@ -526,6 +523,9 @@ IF (SCALP_H AND SCALP_LIB)
     add_executable(example-bin example/example.cpp)
     target_link_libraries(example-bin hatschet)
     target_link_libraries(example-bin ${SCALP_LIB})
+    IF (Z3_H AND Z3_LIB)
+        target_link_libraries(example-bin ${Z3_LIB})
+    ENDIF()
 ENDIF (SCALP_H AND SCALP_LIB)
 
 ####################

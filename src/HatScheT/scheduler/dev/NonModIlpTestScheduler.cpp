@@ -50,6 +50,7 @@ namespace HatScheT {
                 cout << "NonModIlpTestScheduler: Schedule Valid" << endl;
                 cout << "Schedule minimized by " << initialScheduleLength - this->getScheduleLength() << " Timesteps." << endl;
             }
+            isOptimal = asapILP.getScaLPStatus() == ScaLP::status::OPTIMAL;
             this->scheduleFound = true;
         }else{
             cout << "NonModIlpTestScheduler: Schedule NOT Valid" << endl;

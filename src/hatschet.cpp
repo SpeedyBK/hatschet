@@ -73,6 +73,7 @@
 #include <HatScheT/utility/reader/XMLTargetReader.h>
 #include "HatScheT/scheduler/ilpbased/ModuloSDCScheduler.h"
 #include "HatScheT/scheduler/graphBased/SGMScheduler.h"
+#include "HatScheT/scheduler/dev/NonModIlpTestScheduler.h"
 
 #endif
 
@@ -278,6 +279,7 @@ int main(int argc, char *args[]) {
     bool writeLPFile = false;
 
     enum SchedulersSelection {
+      NONMODILP,
       ILPSLSWEEPER,
       SCC,
       SMTCDL,
@@ -421,6 +423,8 @@ int main(int argc, char *args[]) {
                     schedulerSelection = ASAP;
                 } else if (schedulerSelectionStr == "alap") {
                     schedulerSelection = ALAP;
+                } else if (schedulerSelectionStr == "nonmodilp") {
+                    schedulerSelection = NONMODILP;
                 } else if (schedulerSelectionStr == "ilpslsweeper") {
                     schedulerSelection = ILPSLSWEEPER;
                 } else if (schedulerSelectionStr == "smt") {
@@ -647,6 +651,9 @@ int main(int argc, char *args[]) {
         switch (schedulerSelection) {
             case ASAP:
                 cout << "ASAP";
+                break;
+            case NONMODILP:
+                cout << "NONMODILP";
                 break;
             case ILPSLSWEEPER:
                 cout << "ILPSLSWEEPER";
@@ -973,6 +980,12 @@ int main(int argc, char *args[]) {
                     break;
 #endif
 #ifdef USE_SCALP
+                case NONMODILP:
+                    scheduler = new HatScheT::NonModIlpTestScheduler(g, rm, solverWishList);
+                    if (timeout > 0) ((HatScheT::NonModIlpTestScheduler *) scheduler)->setSolverTimeout(timeout);
+                    isModuloScheduler = false;
+                    ((HatScheT::NonModIlpTestScheduler *) scheduler)->setQuiet(false);
+                    break;
                 case ILPSLSWEEPER:
                     if (scheduleFile.empty()) {
                         std::cerr << "specify result file for ILP schedule length sweeper" << std::endl;
@@ -1408,6 +1421,9 @@ int main(int argc, char *args[]) {
 #ifdef USE_Z3
                 if (schedulerSelection == SMTMINLATNONMOD) {
                     objectivesOptimal.second = dynamic_cast<HatScheT::SMTMinLatNonModScheduler *>(scheduler)->isLatencyOptimal();
+                }
+                if (schedulerSelection == NONMODILP) {
+                    objectivesOptimal.second = dynamic_cast<HatScheT::NonModIlpTestScheduler *>(scheduler)->isLatencyOptimal();
                 }
 #endif
 

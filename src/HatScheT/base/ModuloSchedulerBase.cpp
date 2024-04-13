@@ -22,26 +22,29 @@
 #include <HatScheT/base/ModuloSchedulerBase.h>
 #include <HatScheT/utility/Utility.h>
 
-namespace HatScheT
-{
+namespace HatScheT {
 
-ModuloSchedulerBase::ModuloSchedulerBase() :
-	firstObjectiveOptimal(false), secondObjectiveOptimal(false) {
+    ModuloSchedulerBase::ModuloSchedulerBase() :
+            firstObjectiveOptimal(false), secondObjectiveOptimal(false) {
 
-}
+    }
 
-void ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm, Target* t) {
-  this->resMinII = Utility::calcResMII(rm,t);
-  this->recMinII = Utility::calcRecMII(g,rm);
-  this->minII = Utility::calcMinII(this->resMinII,this->recMinII);
-}
+    void ModuloSchedulerBase::computeMinII(Graph *g, ResourceModel *rm, Target *t) {
+        this->resMinII = Utility::calcResMII(rm, t);
+        this->recMinII = Utility::calcRecMII(g, rm);
+        this->minII = Utility::calcMinII(this->resMinII, this->recMinII);
+    }
 
-void ModuloSchedulerBase::computeMaxII(Graph *g, ResourceModel *rm) {
-  this->maxII = Utility::calcMaxII(g, rm);
-}
+    void ModuloSchedulerBase::computeMaxII(Graph *g, ResourceModel *rm) {
+#if USE_Z3
+        this->maxII = Utility::calcMaxIIWithSMT(g, rm);
+#else
+        this->maxII = Utility::calcMaxII(g, rm);
+#endif
+    }
 
-std::pair<bool, bool> ModuloSchedulerBase::getObjectivesOptimal() const {
-	return std::make_pair(this->firstObjectiveOptimal, this->secondObjectiveOptimal);
-}
+    std::pair<bool, bool> ModuloSchedulerBase::getObjectivesOptimal() const {
+        return std::make_pair(this->firstObjectiveOptimal, this->secondObjectiveOptimal);
+    }
 
 }

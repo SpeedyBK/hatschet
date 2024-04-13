@@ -18,10 +18,13 @@ namespace HatScheT {
 
         void schedule() override;
 
+        bool isLatencyOptimal() {return isOptimal;}
+
     private:
 
         std::list<std::string> sW;
 
+        bool isOptimal;
     };
 
 } // HatScheT
