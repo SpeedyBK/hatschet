@@ -322,8 +322,8 @@ set(HatScheT_HEADERS
         src/HatScheT/utility/FibonacciHeap.h
         src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.h
         src/HatScheT/scheduler/smtbased/SMTCDLScheduler.h
-        src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h
-        src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.h
+        src/HatScheT/scheduler/smtbased/SMASHMinLatNonMod.h
+        src/HatScheT/scheduler/smtbased/SMASHScheduler.h
         src/HatScheT/scheduler/dev/NonModIlpTestScheduler.h
         )
 
@@ -405,8 +405,8 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/base/Z3SchedulerBase.cpp
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.cpp
-            src/HatScheT/scheduler/smtbased/SMTSimpleScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/SMASHMinLatNonMod.cpp
+            src/HatScheT/scheduler/smtbased/SMASHScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})

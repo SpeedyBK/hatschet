@@ -97,8 +97,8 @@
 #include <z3++.h>
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTSimpleScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMASHScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMASHMinLatNonMod.h>
 
 #endif
 
@@ -284,8 +284,8 @@ int main(int argc, char *args[]) {
       SCC,
       SMTCDL,
       SMT,
-      SMTSIMPLE,
-      SMTMINLATNONMOD,
+      SMASH,
+      SMASHMINLATNONMOD,
       SDS,
       SAT,
       SATLAT,
@@ -431,10 +431,10 @@ int main(int argc, char *args[]) {
                     schedulerSelection = SMT;
                 } else if (schedulerSelectionStr == "smtcdl") {
                     schedulerSelection = SMTCDL;
-                } else if (schedulerSelectionStr == "smtsimple") {
-                    schedulerSelection = SMTSIMPLE;
-                } else if (schedulerSelectionStr == "smtminlatnonmod") {
-                    schedulerSelection = SMTMINLATNONMOD;
+                } else if (schedulerSelectionStr == "smash") {
+                    schedulerSelection = SMASH;
+                } else if (schedulerSelectionStr == "smashminlatnonmod") {
+                    schedulerSelection = SMASHMINLATNONMOD;
                 } else if (schedulerSelectionStr == "sat") {
                     schedulerSelection = SAT;
                 } else if (schedulerSelectionStr == "satlat") {
@@ -767,11 +767,11 @@ int main(int argc, char *args[]) {
             case SCC:
                 cout << "SCC" << endl;
                 break;
-            case SMTSIMPLE:
-                cout << "SMTSIMPLE" << endl;
+            case SMASH:
+                cout << "SMASH" << endl;
                 break;
-            case SMTMINLATNONMOD:
-                cout << "SMTMINLATNONMOD" << endl;
+            case SMASHMINLATNONMOD:
+                cout << "SMASHMINLATNONMOD" << endl;
                 break;
         }
         std::cout << std::endl;
@@ -1228,11 +1228,11 @@ int main(int argc, char *args[]) {
                     if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
                 }
-                case SMTSIMPLE:
-                    scheduler = new HatScheT::SMTSimpleScheduler(g, rm);
-                    if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
+                case SMASH:
+                    scheduler = new HatScheT::SMASHScheduler(g, rm);
+                    if (timeout > 0) ((HatScheT::SMASHScheduler *) scheduler)->setSolverTimeout(timeout);
                     isModuloScheduler = true;
-                    cout << "SMTSIMPLE is currently WIP" << endl; // ToDo: Finish it!
+                    cout << "SMASH is currently WIP" << endl; // ToDo: Finish it!
                     break;
                 case SMT:
                     scheduler = new HatScheT::SMTUnaryScheduler(g, rm);
@@ -1245,10 +1245,10 @@ int main(int argc, char *args[]) {
                     ((HatScheT::SMTCDLScheduler *) scheduler)->setLayerQuiet(false);
                     if (timeout > 0) ((HatScheT::SMTCDLScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
-                case SMTMINLATNONMOD:
-                    scheduler = new HatScheT::SMTMinLatNonModScheduler(g, rm);
+                case SMASHMINLATNONMOD:
+                    scheduler = new HatScheT::SMASHMinLatNonMod(g, rm);
                     isModuloScheduler = false;
-                    cout << "SMTMINLATNONMOD is currently WIP" << endl; // ToDo: Finish it!
+                    cout << "SMASHMINLATNONMOD is currently WIP" << endl; // ToDo: Finish it!
                     if (timeout > 0) ((HatScheT::SMTCDLScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;
 
@@ -1419,8 +1419,8 @@ int main(int argc, char *args[]) {
                 std::pair<bool, bool> objectivesOptimal(false, false);
 
 #ifdef USE_Z3
-                if (schedulerSelection == SMTMINLATNONMOD) {
-                    objectivesOptimal.second = dynamic_cast<HatScheT::SMTMinLatNonModScheduler *>(scheduler)->isLatencyOptimal();
+                if (schedulerSelection == SMASHMINLATNONMOD) {
+                    objectivesOptimal.second = dynamic_cast<HatScheT::SMASHMinLatNonMod *>(scheduler)->isLatencyOptimal();
                 }
                 if (schedulerSelection == NONMODILP) {
                     objectivesOptimal.second = dynamic_cast<HatScheT::NonModIlpTestScheduler *>(scheduler)->isLatencyOptimal();

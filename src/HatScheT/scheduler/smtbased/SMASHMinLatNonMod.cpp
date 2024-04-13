@@ -2,7 +2,7 @@
 // Created by Benjamin on 19.03.24.
 //
 
-#include "SMTMinLatNonModScheduler.h"
+#include "SMASHMinLatNonMod.h"
 #include <sstream>
 #include <cmath>
 
@@ -13,7 +13,7 @@
 
 namespace HatScheT {
 
-    SMTMinLatNonModScheduler::SMTMinLatNonModScheduler(Graph &g, ResourceModel &rm) : SchedulerBase(g, rm) {
+    SMASHMinLatNonMod::SMASHMinLatNonMod(Graph &g, ResourceModel &rm) : SchedulerBase(g, rm) {
 
         acturalRow = 0;
         lastRow = 0;
@@ -22,7 +22,7 @@ namespace HatScheT {
 
     }
 
-    void SMTMinLatNonModScheduler::schedule() {
+    void SMASHMinLatNonMod::schedule() {
 
         if (mode == "Auto"){
             scheduleAutoSearch();
@@ -32,7 +32,7 @@ namespace HatScheT {
 
     }
 
-    void SMTMinLatNonModScheduler::generateTVariables() {
+    void SMASHMinLatNonMod::generateTVariables() {
         tVariables.clear();
         for (auto &vIt: g.Vertices()) {
             std::stringstream name;
@@ -42,7 +42,7 @@ namespace HatScheT {
         }
     }
 
-    z3::check_result SMTMinLatNonModScheduler::findMaxLatencyConstraints() {
+    z3::check_result SMASHMinLatNonMod::findMaxLatencyConstraints() {
 
         int tMax = 0;
         for (auto &It : startTimes){
@@ -62,7 +62,7 @@ namespace HatScheT {
 
     }
 
-    z3::check_result SMTMinLatNonModScheduler::addDependencyConstraints() {
+    z3::check_result SMASHMinLatNonMod::addDependencyConstraints() {
 
         for (auto &eIt: g.Edges()) {
 
@@ -83,7 +83,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::check_result SMTMinLatNonModScheduler::addNonNegativeConstraints() {
+    z3::check_result SMASHMinLatNonMod::addNonNegativeConstraints() {
 
         for (auto &vIt: g.Vertices()) {
             s.add(tVariables.at(vIt) >= 0);
@@ -94,7 +94,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::check_result SMTMinLatNonModScheduler::addResourceConstraints() {
+    z3::check_result SMASHMinLatNonMod::addResourceConstraints() {
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -114,16 +114,16 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    z3::expr *SMTMinLatNonModScheduler::getTVariable(Vertex *vPtr) {
+    z3::expr *SMASHMinLatNonMod::getTVariable(Vertex *vPtr) {
         try {
             return &tVariables.at(vPtr);
         } catch (std::out_of_range &) {
             //cout << "Out_of_Range: " << vPtr->getName() << endl;
-            throw (HatScheT::Exception("SMTMinLatNonModScheduler: getTVariable std::out_of_range"));
+            throw (HatScheT::Exception("SMASHMinLatNonMod: getTVariable std::out_of_range"));
         }
     }
 
-    z3::expr *SMTMinLatNonModScheduler::getBvariable(Vertex *v, int i) {
+    z3::expr *SMASHMinLatNonMod::getBvariable(Vertex *v, int i) {
         auto key = std::make_pair(v, i);
         try {
             return &bVariables.at(key);
@@ -133,7 +133,7 @@ namespace HatScheT {
         }
     }
 
-    void SMTMinLatNonModScheduler::generateBVariables() {
+    void SMASHMinLatNonMod::generateBVariables() {
 
         int tMax = 0;
 
@@ -172,7 +172,7 @@ namespace HatScheT {
         }
     }
 
-    int SMTMinLatNonModScheduler::getLatestStarttime() {
+    int SMASHMinLatNonMod::getLatestStarttime() {
         int tMax = 0;
         for (auto &vIt: g.Vertices()) {
             if (resourceModel.getResource(vIt)->isUnlimited()) {
@@ -185,7 +185,7 @@ namespace HatScheT {
         return tMax;
     }
 
-    z3::check_result SMTMinLatNonModScheduler::addVariableConnections() {
+    z3::check_result SMASHMinLatNonMod::addVariableConnections() {
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -207,7 +207,7 @@ namespace HatScheT {
 
     }
 
-    z3::check_result SMTMinLatNonModScheduler::minimizeLatency() {
+    z3::check_result SMASHMinLatNonMod::minimizeLatency() {
 
         z3::expr ex(c);
         int maxValue = 0;
@@ -234,7 +234,7 @@ namespace HatScheT {
         return getZ3Result();
     }
 
-    void SMTMinLatNonModScheduler::z3CheckWithTimeTracking() {
+    void SMASHMinLatNonMod::z3CheckWithTimeTracking() {
 
         if (timeRemaining <= 0){
             timeRemaining = 0;
@@ -247,12 +247,12 @@ namespace HatScheT {
 
     }
 
-    void SMTMinLatNonModScheduler::setSolverTimeout(double seconds) {
+    void SMASHMinLatNonMod::setSolverTimeout(double seconds) {
         setZ3Timeout((int)seconds);
         this->solverTimeout = (int)seconds;
     }
 
-    void SMTMinLatNonModScheduler::scheduleAutoSearch() {
+    void SMASHMinLatNonMod::scheduleAutoSearch() {
 
         cout << "Generating T-Variables ..." << endl;
         generateTVariables();
@@ -323,7 +323,7 @@ namespace HatScheT {
 
     }
 
-    void SMTMinLatNonModScheduler::scheduleASAPHCSearch() {
+    void SMASHMinLatNonMod::scheduleASAPHCSearch() {
 
         if (!this->quiet) { cout << endl << "Generating ASAPHC Schedule ..." << endl << endl; }
         ASAPScheduler asapSched(this->g, this->resourceModel);

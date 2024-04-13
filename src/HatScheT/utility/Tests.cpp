@@ -70,9 +70,9 @@
 #include <HatScheT/scheduler/smtbased/SMTUnaryScheduler.h>
 #include <HatScheT/utility/OptimalIntegerIISATBinding.h>
 #include <HatScheT/scheduler/smtbased/SMTCDLScheduler.h>
-#include <HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMASHMinLatNonMod.h>
 #include <HatScheT/scheduler/SCCPreprocessingSchedulers/SCCSchedulerTemplate.h>
-#include <HatScheT/scheduler/smtbased/SMTSimpleScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMASHScheduler.h>
 #include <HatScheT/scheduler/ilpbased/SuchaHanzalek11Scheduler.h>
 #include <HatScheT/scheduler/dev/ClockGatingModuloScheduler.h>
 #include <HatScheT/scheduler/dev/DeSouzaRosa23NIS.h>
@@ -4508,8 +4508,8 @@ namespace HatScheT {
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        HatScheT::SMTMinLatNonModScheduler sched(g, rm);
-        //HatScheT::SMTSimpleScheduler sched(g, rm);
+        HatScheT::SMASHMinLatNonMod sched(g, rm);
+        //HatScheT::SMASHScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         //HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
@@ -4536,7 +4536,7 @@ namespace HatScheT {
         return verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII());
 
 #else
-        std::cout << "Tests::SMTMinLatNonModScheduler: Test Disabled - Z3 and Xerces needed." << std::endl;
+        std::cout << "Tests::SMASHMinLatNonMod: Test Disabled - Z3 and Xerces needed." << std::endl;
         return true;
 #endif
     }

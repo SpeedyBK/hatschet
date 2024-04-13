@@ -2,8 +2,8 @@
 // Created by Benjamin on 19.03.24.
 //
 
-#ifndef HATSCHET_SMTMINLATNONMODSCHEDULER_H
-#define HATSCHET_SMTMINLATNONMODSCHEDULER_H
+#ifndef HATSCHET_SMASHMINLATNONMOD_H
+#define HATSCHET_SMASHMINLATNONMOD_H
 
 #if USE_Z3
 
@@ -12,11 +12,11 @@
 
 namespace HatScheT {
 
-    class SMTMinLatNonModScheduler : public SchedulerBase, public Z3SchedulerBase {
+    class SMASHMinLatNonMod : public SchedulerBase, public Z3SchedulerBase {
 
     public:
 
-        SMTMinLatNonModScheduler(Graph& g, ResourceModel& rm);
+        SMASHMinLatNonMod(Graph& g, ResourceModel& rm);
 
         /*!
          * use this methode to solve the scheduling problem
@@ -60,7 +60,7 @@ namespace HatScheT {
        *****************************/
         /*!
          * Main schedule-function if "Auto" is selected. Probably buggy, since in a few examples the schedule length
-         * increased to infinity. Main reason to leave it in is for documenting. "ASAPHC" is the recomended schedule mode!
+         * increased to infinity. Main reason to leave it in is for documenting. "ASAPHC" is the recommended schedule mode!
          */
         void scheduleAutoSearch();
         /*!
@@ -72,7 +72,7 @@ namespace HatScheT {
        * T-Variables *
        ***************/
         /*!
-         * T-Variables are Z3-Integer-Expresions which contain the information in which timestep an operation is startet.
+         * T-Variables are Z3-Integer-Expressions which contain the information in which timestep an operation is started.
          */
         map<Vertex*, z3::expr> tVariables;
         /*!
@@ -115,9 +115,9 @@ namespace HatScheT {
          */
         z3::check_result addNonNegativeConstraints();
         /*!
-         * Uses the edges of graph g to model the dependency constaints in the following way:
+         * Uses the edges of graph g to model the dependency constraints in the following way:
          * t_oi − t_oj + L_oi ≤ 0
-         * Edges with weight can be ignored for a non-modulo schedule. Since the previous iteration is allready completed
+         * Edges with weight can be ignored for a non-modulo schedule. Since the previous iteration is already completed
          * when the current iteration starts and the data will be present.
          * @return Result after checking the constraints.
          */
@@ -181,4 +181,4 @@ namespace HatScheT {
 
 #endif
 
-#endif //HATSCHET_SMTMINLATNONMODSCHEDULER_H
+#endif //HATSCHET_SMASHMINLATNONMOD_H

@@ -46,7 +46,7 @@
 
 #include <z3++.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
-#include <HatScheT/scheduler/smtbased/SMTMinLatNonModScheduler.h>
+#include <HatScheT/scheduler/smtbased/SMASHMinLatNonMod.h>
 
 #endif
 
@@ -2264,13 +2264,13 @@ namespace HatScheT {
     int Utility::calcMaxIIWithSMT(Graph *g, ResourceModel *rm) {
 #if USE_Z3
 
-        HatScheT::SMTMinLatNonModScheduler minLatScheduler(*g, *rm);
+        HatScheT::SMASHMinLatNonMod minLatScheduler(*g, *rm);
         minLatScheduler.setSolverTimeout(30);
         minLatScheduler.setQuiet(true);
         minLatScheduler.schedule();
 
         if (!HatScheT::verifyModuloSchedule(*g, *rm, minLatScheduler.getSchedule(), (int) minLatScheduler.getII())) {
-            throw HatScheT::Exception("Utility.calcMaxII: SMTMinLatNonModScheduler found invalid result!");
+            throw HatScheT::Exception("Utility.calcMaxII: SMASHMinLatNonMod found invalid result!");
         }
 
         return minLatScheduler.getScheduleLength();
