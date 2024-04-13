@@ -4494,7 +4494,7 @@ namespace HatScheT {
 #endif
     }
 
-    bool Tests::SMTMinLatNonModScheduler() {
+    bool Tests::smashTest() {
 
 #if defined(USE_Z3) && defined(USE_XERCESC)
 

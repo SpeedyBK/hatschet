@@ -240,7 +240,7 @@ namespace HatScheT {
             timeRemaining = 0;
         }
         setZ3Timeout((uint32_t) (round(timeRemaining)));
-        printZ3Params();
+        //printZ3Params();
         startTimeTracking();
         z3Check();
         endTimeTracking();
@@ -383,9 +383,11 @@ namespace HatScheT {
             if (!this->quiet) { cout << "* Final Schedule *" << endl; }
             if (!this->quiet) { cout << "******************" << endl << endl; }
 
-            for (auto &vIt : g.Vertices()){
+        if (!this->quiet) {
+            for (auto &vIt: g.Vertices()) {
                 cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
             }
+        }
 
         } else {
             this->scheduleFound = false;
