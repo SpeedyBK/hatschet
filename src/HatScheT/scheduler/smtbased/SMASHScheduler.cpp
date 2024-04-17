@@ -92,16 +92,18 @@ namespace HatScheT {
         }
 
         cout << "Schedule found... minimizing Starttimes" << endl;
-        while (minimizeLatency() == z3::sat) {
+        if (!disableSecObj) {
+            while (minimizeLatency() == z3::sat) {
+                cout << getZ3Result() << endl;
+            }
             cout << getZ3Result() << endl;
-        }
-        cout << getZ3Result() << endl;
 
-        for (auto &vIt : g.Vertices()){
-            startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
+            for (auto &vIt: g.Vertices()) {
+                startTimes.at(vIt) = m.eval(*getTVariable(vIt)).get_numeral_int();
+            }
         }
 
-        secondObjectiveOptimal = (getZ3Result() == z3::unsat);
+        secondObjectiveOptimal = (getZ3Result() == z3::unsat and !disableSecObj);
 
         scheduleFound = verifyModuloSchedule(g, resourceModel, startTimes, (int)II);
         if ( scheduleFound ){
@@ -269,6 +271,7 @@ namespace HatScheT {
 
     z3::check_result SMASHScheduler::addMaxLatencyConstraint() {
         if (this->maxLatencyConstraint > 0) {
+            actualLength = maxLatencyConstraint;
             for (auto &vIt : g.Vertices()){
                 s.add(*getTVariable(vIt) <= maxLatencyConstraint);
             }

@@ -27,6 +27,7 @@ option(USE_XERCESC "Use XercesC for parsing" ON)
 #option(USE_CADICAL "Use CaDiCaL SAT solving" ON)
 option(OLD_CXX_ABI "Build with an old C++-abi (activate if you get undefined references with '__cxx11')" OFF)
 
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -O3)
 
 # Deactivate C++11-abi?
 if (OLD_CXX_ABI)

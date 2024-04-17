@@ -10,6 +10,7 @@
 
 #include "HatScheT/scheduler/smtbased/SMTUnaryScheduler.h"
 #include "HatScheT/scheduler/smtbased/SMTCDLScheduler.h"
+#include "HatScheT/scheduler/smtbased/SMASHScheduler.h"
 
 #endif
 
@@ -70,7 +71,7 @@ namespace HatScheT {
 
   void SCCSchedulerTemplate::scheduleInit() {
 
-      string names[8] = {"MOOVAC", "ED97", "SMT", "SAT", "SH11", "MODSDC", "SMTCDL", "NONE"};
+      string names[10] = {"MOOVAC", "ED97", "SMT", "SAT", "SH11", "MODSDC", "SMTCDL", "SDS", "SMASH", "NONE"};
       if (!this->quiet) { cout << endl << "Scheduling with " << this->getName() << "!" << endl; }
       if (!this->quiet) { cout << "1st-Stage-Scheduler: " << names[(int) sccScheduler] << endl; }
       if (!this->quiet) { cout << "2nd-Stage-Scheduler: " << names[(int) finalScheduler] << endl << endl; }
@@ -404,6 +405,16 @@ namespace HatScheT {
               return schedulePtr;
 #else
               throw (HatScheT::Exception("SCC-Template: SMT-Unary-Scheduler needs Z3... Z3 not linked"));
+#endif
+          }
+          case scheduler::SMASH: {
+#if defined(USE_Z3)
+              auto schedulePtr = std::make_shared<SMASHScheduler>(gr, rm, this->II);
+              if (!quiet) { cout << "Using " << schedulePtr->getName() << endl; }
+              if (!quiet) schedulePtr->getDebugPrintouts();
+              return schedulePtr;
+#else
+              throw (HatScheT::Exception("SCC-Template: SMASHScheduler needs Z3... Z3 not linked"));
 #endif
           }
           case scheduler::ED97: {

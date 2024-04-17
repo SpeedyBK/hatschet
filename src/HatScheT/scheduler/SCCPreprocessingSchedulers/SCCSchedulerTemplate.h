@@ -28,7 +28,7 @@ namespace HatScheT {
      * Enum class to switch the schedulers.
      */
     enum class scheduler {
-      MOOVAC, ED97, SMT, SAT, SH11, MODSDC, SMTCDL, SDS, NONE
+      MOOVAC, ED97, SMT, SAT, SH11, MODSDC, SMTCDL, SDS, SMASH, NONE
     };
     /*!
      * sccExpandMode:

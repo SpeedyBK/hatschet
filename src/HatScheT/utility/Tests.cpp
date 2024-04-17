@@ -4003,13 +4003,13 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string resStr = "benchmarks/ChStone/jpeg/graph19_RM.xml";
-      string graphStr = "benchmarks/ChStone/jpeg/graph19.graphml";
+      string graphStr = "benchmarks/MachSuite/aes2/graph2.graphml";
+      string resStr = "benchmarks/MachSuite/aes2/graph2_RM.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
 
-      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::ED97, SCCSchedulerTemplate::scheduler::ED97);
+      SCCSchedulerTemplate scc(g, rm, SCCSchedulerTemplate::scheduler::SMASH, SCCSchedulerTemplate::scheduler::SMASH);
       auto start_t = std::chrono::high_resolution_clock::now();
       scc.setQuiet(false);
       scc.setSolverTimeout(600);
@@ -4502,19 +4502,19 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/ChStone/blowfish/graph1.graphml";
-        string resStr = "benchmarks/ChStone/blowfish/graph1_RM.xml";
+        string graphStr = "benchmarks/MachSuite/aes2/graph4.graphml";
+        string resStr = "benchmarks/MachSuite/aes2/graph4_RM.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
-        HatScheT::SMASHMinLatNonMod sched(g, rm);
-        //HatScheT::SMASHScheduler sched(g, rm);
+        //HatScheT::SMASHMinLatNonMod sched(g, rm);
+        HatScheT::SMASHScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         //HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
 
-        sched.setSolverTimeout(30);
+        sched.setSolverTimeout(3600*5);
         sched.setQuiet(false);
         cout << "Starting scheudling for ";
         cout << graphStr << " ... " << endl;

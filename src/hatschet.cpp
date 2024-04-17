@@ -497,8 +497,6 @@ int main(int argc, char *args[]) {
                     schedulerSelection = RATIONALIISCCQ;
                 } else if (schedulerSelectionStr == "subgrreduction") {
                     schedulerSelection = SUGRREDUCTION;
-                } else if (schedulerSelectionStr == "latencytest") {
-                    schedulerSelection = LATENCYTEST;
                 } else if (schedulerSelectionStr == "scc") {
                     schedulerSelection = SCC;
                 } else {
@@ -520,6 +518,8 @@ int main(int argc, char *args[]) {
                     sccSchedulerSelection = MODULOSDC;
                 } else if (schedulerSelectionStr == "sds") {
                     sccSchedulerSelection = SDS;
+                } else if (schedulerSelectionStr == "smash"){
+                    sccSchedulerSelection = SMASH;
                 } else {
                     sccSchedulerSelection = SMT;
                 }
@@ -539,6 +539,8 @@ int main(int argc, char *args[]) {
                     finalSchedulerSelection = MODULOSDC;
                 } else if (schedulerSelectionStr == "sds") {
                     finalSchedulerSelection = SDS;
+                } else if (schedulerSelectionStr == "smash"){
+                    finalSchedulerSelection = SMASH;
                 } else if (schedulerSelectionStr == "none") {
                     finalSchedulerSelection = NONE;
                 } else {
@@ -666,6 +668,7 @@ int main(int argc, char *args[]) {
                 break;
             case SAT:
                 cout << "SAT";
+                break;
             case SATLAT:
                 cout << "SATLAT";
                 break;
@@ -686,6 +689,7 @@ int main(int argc, char *args[]) {
                 break;
             case SATCOMBINED:
                 cout << "SATCOMBINED";
+                break;
             case SATCOMBINEDLAT:
                 cout << "SATCOMBINEDLAT";
                 break;
@@ -1188,6 +1192,9 @@ int main(int argc, char *args[]) {
                         case SDS :
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SDS;
                             break;
+                        case SMASH:
+                            sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMASH;
+                            break;
                         default:
                             sccSched = HatScheT::SCCSchedulerTemplate::scheduler::SMT;
                             break;
@@ -1217,6 +1224,9 @@ int main(int argc, char *args[]) {
                             break;
                         case SDS :
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::SDS;
+                            break;
+                        case SMASH:
+                            finSched = HatScheT::SCCSchedulerTemplate::scheduler::SMASH;
                             break;
                         default:
                             finSched = HatScheT::SCCSchedulerTemplate::scheduler::NONE;
