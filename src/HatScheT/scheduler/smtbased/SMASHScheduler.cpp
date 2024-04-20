@@ -6,7 +6,6 @@
 #include "SMASHScheduler.h"
 
 #include "HatScheT/utility/Verifier.h"
-#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
@@ -15,6 +14,7 @@ namespace HatScheT {
 
         actualLength = 0; // Max Latency estimation...
         lastLength = 0;
+        this->latencyEstimation = Utility::LatencyEstimation();
 
     }
 
@@ -37,7 +37,9 @@ namespace HatScheT {
 
     void SMASHScheduler::scheduleIteration() {
 
-        actualLength = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::maxLatency, true).maxLat;
+        this->latencyEstimation = Utility::getLatencyEstimation(&g, &resourceModel, II, Utility::latencyBounds::both, true);
+
+        actualLength = latencyEstimation.maxLat;
 
         generateTVariables();
 
@@ -157,11 +159,12 @@ namespace HatScheT {
             auto ti = *getTVariable(src);
             auto tj = *getTVariable(dst);
 
-            this->s.add(ti - tj + this->resourceModel.getVertexLatency(src) + eIt->getDelay() -
-                        (int) this->II * (eIt->getDistance()) <= 0);
+            z3::expr e = ti - tj + this->resourceModel.getVertexLatency(src) + eIt->getDelay() - (int) this->II * (eIt->getDistance()) <= 0;
+            e = e.simplify();
+            this->s.add(e);
         }
 
-        z3CheckWithTimeTracking();
+        //z3CheckWithTimeTracking();
 
         return getZ3Result();
 
@@ -182,7 +185,7 @@ namespace HatScheT {
 
     void SMASHScheduler::generateBVariables() {
 
-        auto tMax = actualLength;
+        auto l = getScheduleLengthOfGivenSchedule(latencyEstimation.alapStartTimes, &resourceModel);
 
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
@@ -190,12 +193,16 @@ namespace HatScheT {
             }
             for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
 
-                for (int i = 0; i <= tMax; ++i) {
-
+                for (int i = 0; i <= actualLength; ++i) {
+                    if (i < latencyEstimation.asapStartTimes.at((Vertex*)vIt)){
+                        continue;
+                    }
+                    if (i > actualLength - (l - latencyEstimation.alapStartTimes.at((Vertex*)vIt))){
+                        continue;
+                    }
                     try {
                         getBvariable((Vertex *) vIt, i);
                     } catch (HatScheT::Exception &) {
-
                         std::stringstream name;
                         name << "B_" << vIt->getName() << "_" << i;
                         z3::expr e(c.bool_const(name.str().c_str()));
@@ -220,6 +227,8 @@ namespace HatScheT {
 
     z3::check_result SMASHScheduler::addVariableConnections() {
 
+        auto l = getScheduleLengthOfGivenSchedule(latencyEstimation.alapStartTimes, &resourceModel);
+
         for (auto &rIt: resourceModel.Resources()) {
             if (rIt->isUnlimited()) {
                 continue;
@@ -227,19 +236,28 @@ namespace HatScheT {
 
             for (auto &vIt: resourceModel.getVerticesOfResource(rIt)) {
                 for (int i = lastLength; i <= actualLength; ++i) {
+                    if (i < latencyEstimation.asapStartTimes.at((Vertex*)vIt)){
+                        continue;
+                    }
+                    if (i > actualLength - (l - latencyEstimation.alapStartTimes.at((Vertex*)vIt))){
+                        continue;
+                    }
                     z3::expr constraint(c);
                     constraint = (*getTVariable((Vertex *) vIt) == i) == *getBvariable((Vertex *) vIt, i);
+                    constraint = constraint.simplify();
                     s.add(constraint);
                 }
             }
         }
 
-        z3CheckWithTimeTracking();
+        //z3CheckWithTimeTracking();
 
         return getZ3Result();
     }
 
     z3::check_result SMASHScheduler::addResourceConstraints(int candidateII) {
+
+        auto l = getScheduleLengthOfGivenSchedule(latencyEstimation.alapStartTimes, &resourceModel);
 
         for (auto &it: resourceModel.Resources()) {
             if (it->isUnlimited()) {
@@ -253,13 +271,21 @@ namespace HatScheT {
                         if ((j % candidateII) != i) {
                             continue;
                         }
+                        if (j < latencyEstimation.asapStartTimes.at((Vertex*)vIt)){
+                            continue;
+                        }
+                        if (j > actualLength - (l - latencyEstimation.alapStartTimes.at((Vertex*)vIt))){
+                            continue;
+                        }
                         b_expressions.push_back(*getBvariable((Vertex *) vIt, j));
                     }
                 }
                 if (!b_expressions.empty()) {
                     //z3::expr debug = z3::atmost(b_expressions, it->getLimit());
                     //cout << debug << endl;
-                    this->s.add(z3::atmost(b_expressions, it->getLimit()));
+                    z3::expr e = z3::atmost(b_expressions, it->getLimit());
+                    e = e.simplify();
+                    this->s.add(e);
                 }
             }
         }
@@ -271,17 +297,24 @@ namespace HatScheT {
 
     z3::check_result SMASHScheduler::addMaxLatencyConstraint() {
         if (this->maxLatencyConstraint > 0) {
-            actualLength = maxLatencyConstraint;
+            std:array<int, 2> len = {actualLength, maxLatencyConstraint };
+            actualLength = *std::min_element(len.begin(), len.end());
+            auto l = getScheduleLengthOfGivenSchedule(latencyEstimation.alapStartTimes, &resourceModel);
             for (auto &vIt : g.Vertices()){
-                s.add(*getTVariable(vIt) <= maxLatencyConstraint);
+                z3::expr e = (*getTVariable(vIt) >= latencyEstimation.asapStartTimes.at(vIt)) && (*getTVariable(vIt) <= actualLength - (l - latencyEstimation.alapStartTimes.at(vIt)));
+                e = e.simplify();
+                s.add(e);
             }
         }else{
+            auto l = getScheduleLengthOfGivenSchedule(latencyEstimation.alapStartTimes, &resourceModel);
             for (auto &vIt : g.Vertices()){
-                s.add(*getTVariable(vIt) <= actualLength);
+                z3::expr e = (*getTVariable(vIt) >= latencyEstimation.asapStartTimes.at(vIt)) && (*getTVariable(vIt) <= actualLength - (l - latencyEstimation.alapStartTimes.at(vIt)));
+                e = e.simplify();
+                s.add(e);
             }
         }
 
-        z3CheckWithTimeTracking();
+        //z3CheckWithTimeTracking();
 
         return getZ3Result();
 
@@ -325,6 +358,27 @@ namespace HatScheT {
         z3CheckWithTimeTracking();
 
         return getZ3Result();
+    }
+
+    int SMASHScheduler::getScheduleLengthOfGivenSchedule(map<Vertex *, int> &vertexStarttimes, ResourceModel *rm) {
+        int maxTime = -1;
+        for (std::pair<Vertex *, int> vtPair: vertexStarttimes) {
+            try {
+                Vertex *v = vtPair.first;
+                if ((vtPair.second + rm->getVertexLatency(v)) > maxTime) {
+                    maxTime = (vtPair.second + rm->getVertexLatency(v));
+                    //Debugging:
+                    if (!quiet) {
+                        //cout << vtPair.first->getName() << ": " << vtPair.second << " + "
+                        //     << rm->getVertexLatency(v) << " = " << maxTime << endl;
+                    }
+                }
+            } catch (std::out_of_range &) {
+                cout << vtPair.first->getName() << ": " << vtPair.second << endl;
+                throw (HatScheT::Exception("Utility::getSDCScheduleLength(): OUT_OF_RANGE"));
+            }
+        }
+        return maxTime;
     }
 
 }

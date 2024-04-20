@@ -1233,7 +1233,7 @@ int main(int argc, char *args[]) {
                             break;
                     }
                     scheduler = new HatScheT::SCCSchedulerTemplate(g, rm, sccSched, finSched);
-                    ((HatScheT::SCCSchedulerTemplate*)scheduler)->setExpandMode(HatScheT::SCCSchedulerTemplate::sccExpandMode::fast);
+                    ((HatScheT::SCCSchedulerTemplate *) scheduler)->setExpandMode(HatScheT::SCCSchedulerTemplate::sccExpandMode::fast);
                     isModuloScheduler = true;
                     if (timeout > 0) ((HatScheT::SMTUnaryScheduler *) scheduler)->setSolverTimeout(timeout);
                     break;

@@ -29,6 +29,7 @@
 
 #include "HatScheT/layers/IterativeModuloSchedulerLayer.h"
 #include "HatScheT/base/Z3SchedulerBase.h"
+#include "HatScheT/utility/Utility.h"
 
 namespace HatScheT {
 
@@ -154,6 +155,10 @@ namespace HatScheT {
          * as well.
          */
         void z3CheckWithTimeTracking();
+
+        int getScheduleLengthOfGivenSchedule(map<Vertex *, int> &vertexStarttimes, ResourceModel *rm);
+
+        Utility::LatencyEstimation latencyEstimation;
 
         /*!
          * Used as latency bounds.

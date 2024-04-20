@@ -4003,8 +4003,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/MachSuite/aes2/graph2.graphml";
-      string resStr = "benchmarks/MachSuite/aes2/graph2_RM.xml";
+      string graphStr = "benchmarks/ChStone/mips/graph1.graphml";
+      string resStr = "benchmarks/ChStone/mips/graph1_RM.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4502,8 +4502,8 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/MachSuite/aes2/graph4.graphml";
-        string resStr = "benchmarks/MachSuite/aes2/graph4_RM.xml";
+        string graphStr = "benchmarks/ChStone/mips/graph1.graphml";
+        string resStr = "benchmarks/ChStone/mips/graph1_RM.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
@@ -4514,7 +4514,7 @@ namespace HatScheT {
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         //HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
 
-        sched.setSolverTimeout(3600*5);
+        sched.setSolverTimeout(600);
         sched.setQuiet(false);
         cout << "Starting scheudling for ";
         cout << graphStr << " ... " << endl;
