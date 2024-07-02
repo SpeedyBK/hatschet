@@ -329,6 +329,7 @@ namespace HatScheT {
         ASAPScheduler asapSched(this->g, this->resourceModel);
         asapSched.setQuiet(true);
         asapSched.schedule();
+        auto asapHcStartTimes = asapSched.getSchedule();
         startTimes = asapSched.getSchedule();
 
         if (!this->quiet) { cout << "****************************************************" << endl; }
@@ -377,21 +378,25 @@ namespace HatScheT {
             if (!this->quiet) { cout << endl << "Schedule Valid" << endl; }
             this->scheduleFound = true;
             this->II = getScheduleLength();
-            if (!this->quiet) { cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl; }
+            if (!this->quiet) {
+                cout << "Length of schedule: " << II << " is optimal: " << latencyOptimal << endl << endl;
+            }
 
             if (!this->quiet) { cout << "******************" << endl; }
             if (!this->quiet) { cout << "* Final Schedule *" << endl; }
             if (!this->quiet) { cout << "******************" << endl << endl; }
 
-        if (!this->quiet) {
-            for (auto &vIt: g.Vertices()) {
-                cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
+            if (!this->quiet) {
+                for (auto &vIt: g.Vertices()) {
+                    cout << vIt->getName() << ": " << startTimes.at(vIt) << endl;
+                }
             }
-        }
 
         } else {
-            this->scheduleFound = false;
-            if (!this->quiet) { cout << "Schedule not Valid" << endl; }
+            if (!this->quiet) { cout << "Schedule not Valid, using ASAPHC Fallback Schedule." << endl; }
+            this->scheduleFound = true;
+            startTimes = asapHcStartTimes;
+            this->II = getScheduleLength();
         }
 
     }

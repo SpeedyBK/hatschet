@@ -79,6 +79,7 @@
 #include <HatScheT/scheduler/ilpbased/ASAPILPScheduler.h>
 #include <HatScheT/scheduler/dev/NonModIlpTestScheduler.h>
 #include <HatScheT/base/Z3SchedulerBase.h>
+#include <HatScheT/scheduler/smtbased/SMASHIntegerScheduler.h>
 
 #ifdef USE_CADICAL
 #include "cadical.hpp"
@@ -4003,8 +4004,8 @@ namespace HatScheT {
       HatScheT::ResourceModel rm;
 
       HatScheT::XMLResourceReader readerRes(&rm);
-      string graphStr = "benchmarks/ChStone/mips/graph1.graphml";
-      string resStr = "benchmarks/ChStone/mips/graph1_RM.xml";
+      string graphStr = "benchmarks/ChStone/aes/graph4.graphml";
+      string resStr = "benchmarks/ChStone_Pareto/aes/graph4_RM1.xml";
       readerRes.readResourceModel(resStr.c_str());
       HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
       readerGraph.readGraph(graphStr.c_str());
@@ -4502,20 +4503,22 @@ namespace HatScheT {
         HatScheT::ResourceModel rm;
 
         HatScheT::XMLResourceReader readerRes(&rm);
-        string graphStr = "benchmarks/ChStone/mips/graph1.graphml";
-        string resStr = "benchmarks/ChStone/mips/graph1_RM.xml";
+        string graphStr = "benchmarks/Origami_Pareto/fir_SAM/fir_SAM.graphml";
+        string resStr = "benchmarks/Origami_Pareto/fir_SAM/RM1.xml";
         readerRes.readResourceModel(resStr.c_str());
         HatScheT::GraphMLGraphReader readerGraph(&rm, &g);
         readerGraph.readGraph(graphStr.c_str());
 
         //HatScheT::SMASHMinLatNonMod sched(g, rm);
         HatScheT::SMASHScheduler sched(g, rm);
+        //HatScheT::SMASHIntegerScheduler sched(g, rm);
         //HatScheT::SATCombinedScheduler sched(g, rm);
         //HatScheT::ASAPILPScheduler sched(g, rm, {"CPLEX"});
         //HatScheT::NonModIlpTestScheduler sched(g, rm, {"CPLEX", "Gurobi", "SCIP", "LPSOLVE"});
 
         sched.setSolverTimeout(600);
         sched.setQuiet(false);
+        sched.disableSecObjective(false);
         cout << "Starting scheudling for ";
         cout << graphStr << " ... " << endl;
         auto start_t = std::chrono::high_resolution_clock::now();
@@ -4523,15 +4526,15 @@ namespace HatScheT {
         auto end_t = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_t - start_t).count();
 
-        for (auto &it: sched.getSchedule()) {
+        //for (auto &it: sched.getSchedule()) {
             //cout << it.first->getName() << ": " << it.second << endl;
-        }
+        //}
 
         cout << "Done after " << (double) duration / 1000 << " seconds." << endl;
 
         cout << "Valid: " << verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII()) << endl;
 
-        cout << "Length: " << sched.getScheduleLength() << endl;
+        cout << "II: " << sched.getII() << " Length: " << sched.getScheduleLength() << endl;
 
         return verifyModuloSchedule(g, rm, sched.getSchedule(), (int) sched.getII());
 

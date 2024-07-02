@@ -326,6 +326,7 @@ set(HatScheT_HEADERS
         src/HatScheT/scheduler/smtbased/SMASHMinLatNonMod.h
         src/HatScheT/scheduler/smtbased/SMASHScheduler.h
         src/HatScheT/scheduler/dev/NonModIlpTestScheduler.h
+        src/HatScheT/scheduler/smtbased/SMASHIntegerScheduler.h
         )
 
 IF (SCALP_H AND SCALP_LIB)
@@ -407,7 +408,8 @@ IF (Z3_H AND Z3_LIB)
             src/HatScheT/scheduler/smtbased/SMTUnaryScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMTCDLScheduler.cpp
             src/HatScheT/scheduler/smtbased/SMASHMinLatNonMod.cpp
-            src/HatScheT/scheduler/smtbased/SMASHScheduler.cpp)
+            src/HatScheT/scheduler/smtbased/SMASHScheduler.cpp
+            src/HatScheT/scheduler/smtbased/SMASHIntegerScheduler.cpp)
 ENDIF (Z3_H AND Z3_LIB)
 
 add_library(hatschet ${HatScheT_SOURCES})

@@ -2266,10 +2266,10 @@ namespace HatScheT {
 
         HatScheT::SMASHMinLatNonMod minLatScheduler(*g, *rm);
         minLatScheduler.setSolverTimeout(30);
-        minLatScheduler.setQuiet(true);
+        minLatScheduler.setQuiet(false);
         minLatScheduler.schedule();
 
-        if (!HatScheT::verifyModuloSchedule(*g, *rm, minLatScheduler.getSchedule(), (int) minLatScheduler.getII())) {
+        if (!HatScheT::verifyResourceConstrainedSchedule(*g, *rm, minLatScheduler.getSchedule(), (int) minLatScheduler.getII())) {
             throw HatScheT::Exception("Utility.calcMaxII: SMASHMinLatNonMod found invalid result!");
         }
 
